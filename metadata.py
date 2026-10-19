@@ -6,6 +6,7 @@ transactions explicitly bound atomic changes and nested savepoints. Reads do
 not leave implicit transactions open. This is not a second domain repository.
 """
 from contextlib import contextmanager
+from contextvars import ContextVar
 import hashlib
 import fcntl
 import ipaddress
@@ -14,6 +15,7 @@ import os
 from pathlib import Path
 import stat
 import threading
+import time
 import uuid
 
 import psycopg
@@ -23,6 +25,8 @@ from psycopg.conninfo import conninfo_to_dict
 SCHEMA_VERSION = 10
 SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 MANIFEST = '.tuldok.json'
+CATALOG_LOCAL_TIMEOUT = 60
+_COMMAND_DEADLINE = ContextVar('tuldok_metadata_command_deadline', default=None)
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
     definition_sha256 TEXT NOT NULL, catalog_sha256 TEXT NOT NULL)'''
@@ -34,6 +38,10 @@ class StorageError(ValueError):
 
 class CommitOutcomeUnknown(StorageError):
     """Commit response lost: retain files and resolve the saved receipt after reopen."""
+
+
+class CatalogBusy(StorageError):
+    """Local command ownership timed out; no catalog command was dispatched."""
 
 
 class Row(tuple):
@@ -129,7 +137,8 @@ class CatalogLock:
         self.depth = 0
 
     def __enter__(self):
-        self.mutex.acquire()
+        if not self.mutex.acquire(timeout=CATALOG_LOCAL_TIMEOUT):
+            raise CatalogBusy('Catalog command ownership did not become available within its local wait bound.')
         try:
             if not self.depth:
                 self.metadata.connection.execute('SELECT pg_advisory_lock(%s)', (self.metadata._lock_key,))
@@ -146,6 +155,28 @@ class CatalogLock:
                 self.metadata.connection.execute('SELECT pg_advisory_unlock(%s)', (self.metadata._lock_key,))
         finally:
             self.mutex.release()
+
+    @contextmanager
+    def bounded(self, deadline, cancelled=None):
+        """Recovery acquires local ownership with a deadline and never waits for a peer backend."""
+        while not self.mutex.acquire(timeout=min(.1, max(0, deadline-time.monotonic()))):
+            if (cancelled and cancelled()) or time.monotonic() >= deadline:
+                raise StorageError('Catalog command ownership did not become available within the recovery deadline.')
+        entered = False
+        try:
+            if (cancelled and cancelled()) or time.monotonic() >= deadline:
+                raise StorageError('Catalog command ownership was cancelled or reached its deadline.')
+            if not self.depth and not self.metadata.connection.execute(
+                    'SELECT pg_try_advisory_lock(%s)', (self.metadata._lock_key,)).fetchone()[0]:
+                raise StorageError('A peer still owns the catalog command lock; recovery remains fenced.')
+            self.depth += 1
+            entered = True
+            yield self
+        finally:
+            if entered:
+                self.__exit__(None, None, None)
+            else:
+                self.mutex.release()
 
 
 class Metadata:
@@ -309,7 +340,33 @@ class Metadata:
     def execute(self, statement, parameters=None):
         if parameters is not None and any(isinstance(value, str) and '\x00' in value for value in parameters):
             raise StorageError('PostgreSQL text cannot contain NUL. Input was not saved; no characters were stripped.')
+        bounded = _COMMAND_DEADLINE.get()
+        if bounded is not None and bounded[0] is self:
+            remaining = bounded[1] - time.monotonic()
+            if remaining <= 0:
+                raise StorageError('Catalog command reached its recovery deadline.')
+            self.connection.execute("SELECT set_config('statement_timeout',%s,false)",
+                                    (str(max(1, int(remaining*1000))),))
         return self.connection.execute(statement, parameters)
+
+    @contextmanager
+    def commands_before(self, deadline):
+        """Bound each recovery SQL command by the remaining shared wall budget.
+
+        The caller retains CatalogLock throughout, so session settings cannot
+        leak into another operation. Native transaction completion remains under
+        the last remaining budget; the ordinary timeout is restored afterward.
+        """
+        if not self.lock.depth:
+            raise RuntimeError('A command deadline requires exclusive catalog ownership.')
+        old = self.connection.execute('SHOW statement_timeout').fetchone()[0]
+        marker = _COMMAND_DEADLINE.set((self, deadline))
+        try:
+            yield
+        finally:
+            _COMMAND_DEADLINE.reset(marker)
+            if not self.connection.closed:
+                self.connection.execute("SELECT set_config('statement_timeout',%s,false)", (old,))
 
     @contextmanager
     def transaction(self, *, force_rollback=False):
@@ -375,6 +432,15 @@ class Metadata:
                 self._runtime_claims[name] = bool(self.execute('SELECT pg_try_advisory_lock(%s)',
                     (_key(self.schema + ':worker:' + name),)).fetchone()[0])
             return self._runtime_claims[name]
+
+    def runtime_owned(self, name):
+        """Observe this session's existing lock without stacking or claiming a peer's lock."""
+        if self.connection.closed or not self._runtime_claims.get(name):
+            return False
+        key = _key(self.schema + ':worker:' + name) & ((1 << 64) - 1)
+        return bool(self.execute("SELECT EXISTS(SELECT 1 FROM pg_locks WHERE locktype='advisory' "
+            "AND pid=pg_backend_pid() AND granted AND objsubid=1 AND classid=%s::oid AND objid=%s::oid)",
+            (key >> 32, key & 0xffffffff)).fetchone()[0])
 
     def _signature(self, schema=None):
         """Catalog structures, not formatted CREATE strings, detect unsupported drift."""

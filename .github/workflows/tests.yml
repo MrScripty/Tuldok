@@ -51,6 +51,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_run_preflight*.py' -v
       - name: Verify same-attempt publication retention and recovery boundaries
         run: python -m unittest discover -s tests -p 'test_run_publication*.py' -v
+      - name: Verify coordinator fault fences and explicit recovery with PostgreSQL
+        run: python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v
       - run: python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json
       - run: python -m venv build/workspace-training
       - run: build/workspace-training/bin/python -m pip install -r requirements.txt -r requirements-training.txt

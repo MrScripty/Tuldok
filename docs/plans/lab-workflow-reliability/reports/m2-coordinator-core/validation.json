@@ -1,0 +1,54 @@
+{
+  "state": "source_group_passed; independent final review and exact-head hosted qualification pending",
+  "base": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+  "scope": "M2 coordinator core and selected HTTP/CLI transport; no UI/timing/fullM2/science claim",
+  "qualified": {
+    "combined": {
+      "tests": 27,
+      "seconds": 108.033,
+      "skips": 0,
+      "log": "tuldok-m2-coordinator-core-qualification.log"
+    },
+    "prior_coordinator": {
+      "tests": 14,
+      "seconds": 30.277,
+      "skips": 0
+    },
+    "postgres": "actual disposable17.6",
+    "custody": "actual neutral helpers and receipts; CPU resource-headroom control explicitly simulated in queue-release case",
+    "http_cli": "actual selected health and concurrentowner recovery, privatefixture CLI status/recovery, corruptreply no-retry and ownerallowlist refusal"
+  },
+  "failure_history": [
+    "Initial expanded7:6passed and1GO counter harness signature failure; corrected7 passed13.665s.",
+    "First12-case bound group failed1 queue-headroom fixture and errored1 unknown-ack boundary classification; logs retained. Controlled capacity function remained bound to mockedzero afterpatchended; changedfixture to mutableavailability underunchangedpolicy. UnknownCOMMITnowtypedcommit_unknownandfenced; corrected12 passed34.380s.",
+    "Diagnosticfaulthandler queue run retained; not a pass."
+  ],
+  "review_fixes": [
+    "healthy/stale refusal has no stop sideeffect",
+    "completedreceipt follows actual replacement start and failedstart samekey retryable",
+    "catalog->lifecycle lock order with final currentauthority/runtimeproof",
+    "freshunknownfences installed onlyafter acknowledged reconciliationCOMMIT",
+    "cancellable catalog/lifecycle waits and remaining per-SQL deadline",
+    "GO send serializes with globalstopfence"
+  ],
+  "pending": [
+    "independent final source/test/docs review",
+    "composed branch regression",
+    "exact-head mandatory hosted lifecycle and capturedCPU",
+    "postmerge main qualification",
+    "coordinator UI",
+    "phase timings and fullM2 acceptance",
+    "other M1-M6 acceptance and missing private diagnostic/scientific inputs"
+  ],
+  "source_sha256": {
+    "run_coordinator.py": "8e1947874bb872769276ebe9f4a0f28ff40653a6a37b626bb7b6b311d13a0c43",
+    "runs.py": "ae126e0d6493d925b171d2c9da874f16d7b76e881160e98f6f6b2e2f144ad0c2",
+    "metadata.py": "3d4b585585c07cc8909c51584551da1342cd801cc0a2640c866154e0bcc4b99d",
+    "agent_api.py": "b14fa9eca9416199a5b4704b015dd0116d342ebf0d7bb7aeeda085594913e77d",
+    "app.py": "38111b4ee39a20b9b41b3b3fe1688f6325a26fb090fae47e4d661d9aa51ebf6b",
+    "project_cli.py": "662e6d4ee845cf45f45b658a8626f9d950cb7bca6e5d8a2c5a15a3361010329e",
+    "tests/test_run_coordinator_recovery.py": "4326b22b4ef9ec733d75641ff190c9929095139ea058839e70087cf25191c1ea",
+    ".github/workflows/tests.yml": "e349e747dab77d6daa500dc4cda9d649b08213dc86c3d509cc171ca883cc7ffc",
+    "docs/contracts/run-coordinator-recovery.md": "df2b5d4c995ff93db43cc2ba452e991a63c41e2e6bf0246bff89e4ed57899ef9"
+  }
+}

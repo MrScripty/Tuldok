@@ -1,0 +1,17 @@
+test_external_admission_does_not_load_terminal_history_for_capacity (test_run_scheduling_reads.ExternalSchedulingReads.test_external_admission_does_not_load_terminal_history_for_capacity) ... ok
+test_builtin_admission_does_not_load_terminal_history_for_capacity (test_run_scheduling_reads.SchedulingReadTests.test_builtin_admission_does_not_load_terminal_history_for_capacity) ... ok
+test_empty_coordinator_waits_for_an_event_and_shutdown_wakes_it (test_run_scheduling_reads.SchedulingReadTests.test_empty_coordinator_waits_for_an_event_and_shutdown_wakes_it) ... ok
+test_idle_coordinator_never_loads_terminal_runs (test_run_scheduling_reads.SchedulingReadTests.test_idle_coordinator_never_loads_terminal_runs) ... ok
+test_new_admission_wakes_an_empty_coordinator (test_run_scheduling_reads.SchedulingReadTests.test_new_admission_wakes_an_empty_coordinator) ... ok
+test_queued_resource_shortage_retries_without_a_new_admission (test_run_scheduling_reads.SchedulingReadTests.test_queued_resource_shortage_retries_without_a_new_admission) ... ok
+test_selected_queued_run_still_rejects_a_corrupt_envelope (test_run_scheduling_reads.SchedulingReadTests.test_selected_queued_run_still_rejects_a_corrupt_envelope) ... ok
+test_busy_cuda_slot_does_not_block_cpu_and_next_cuda_waits (test_run_concurrency.ConcurrentRuns.test_busy_cuda_slot_does_not_block_cpu_and_next_cuda_waits) ... ok
+test_memory_shortage_preserves_queue_and_queued_cancel_creates_no_child (test_run_concurrency.ConcurrentRuns.test_memory_shortage_preserves_queue_and_queued_cancel_creates_no_child) ... ok
+test_two_cpu_custodians_overlap_and_cancel_independently (test_run_concurrency.ConcurrentRuns.test_two_cpu_custodians_overlap_and_cancel_independently) ... ok
+test_all_prior_full_publication_and_legacy_contracts_remain_equal (test_run_publication_http.PublicationContractCompatibilityTests.test_all_prior_full_publication_and_legacy_contracts_remain_equal) ... ok
+test_exact_checkpoint_and_slice_replies_are_correlated_without_retry (test_run_publication_http.PublicationContractCompatibilityTests.test_exact_checkpoint_and_slice_replies_are_correlated_without_retry) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 24.331s
+
+OK

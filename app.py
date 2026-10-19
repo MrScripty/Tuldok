@@ -44,7 +44,7 @@ import json
 import math
 import re
 import shutil
-from metadata import Metadata, StorageError, CommitOutcomeUnknown
+from metadata import Metadata, StorageError, CommitOutcomeUnknown, CatalogBusy
 import tempfile
 import threading
 import uuid
@@ -795,6 +795,9 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.runs.input_candidates())
                     if parts == ['runs']:
                         return self.reply(dataset.runs.list())
+                    if parts == ['coordinator']:
+                        agent_api.require_selection(self._contract_selection, 'runs.coordinator_health')
+                        return self.reply(dataset.runs.coordinator_health())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'publication':
@@ -959,6 +962,8 @@ def make_handler(dataset, observer=None):
                 return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
             except CommitOutcomeUnknown as error:
                 return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
+            except CatalogBusy as error:
+                return self.reply({'error': str(error), 'code': 'storage'}, 503)
             except access.AccessError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except workbench.WorkbenchError as error:
@@ -1000,6 +1005,9 @@ def make_handler(dataset, observer=None):
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['coordinator', 'recover']:
+                        agent_api.require_selection(self._contract_selection, 'runs.recover_coordinator')
+                        return self.reply(dataset.runs.recover_coordinator(body))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] in ('recover-publication', 'cancel-publication'):
                         operation = 'runs.recover_publication' if parts[2] == 'recover-publication' else 'runs.cancel_publication'
                         agent_api.require_selection(self._contract_selection, operation)
@@ -1283,6 +1291,8 @@ def make_handler(dataset, observer=None):
                 return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
             except CommitOutcomeUnknown as error:
                 return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
+            except CatalogBusy as error:
+                return self.reply({'error': str(error), 'code': 'storage'}, 503)
             except access.AccessError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except workbench.WorkbenchError as error:

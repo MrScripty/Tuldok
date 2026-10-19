@@ -1,0 +1,74 @@
+test_preserved_queue_executes_once_after_headroom_returns (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_preserved_queue_executes_once_after_headroom_returns) ... Timeout (0:00:12)!
+Thread 0x00007f1803a136c0 (most recent call first):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 359 in wait
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 655 in wait
+  File "/workspace/Tuldok-lab-coordinator-m2/runs.py", line 1552 in _loop
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 1012 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x00007f180c44d740 (most recent call first):
+  File "/workspace/Tuldok-lab-coordinator-m2/projects.py", line 33 in text
+  File "/workspace/Tuldok-lab-coordinator-m2/projects.py", line 83 in closed
+  File "/workspace/Tuldok-lab-coordinator-m2/recipe_contract.py", line 942 in validate_material
+  File "/workspace/Tuldok-lab-coordinator-m2/recipe_contract.py", line 955 in spec_for_material
+  File "/workspace/Tuldok-lab-coordinator-m2/recipe_contract.py", line 1004 in validate_spec
+  File "/workspace/Tuldok-lab-coordinator-m2/runs.py", line 179 in _load
+  File "/workspace/Tuldok-lab-coordinator-m2/runs.py", line 396 in get
+  File "/workspace/Tuldok-lab-coordinator-m2/access.py", line 73 in guarded
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_external_runs.py", line 101 in await_state
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_run_coordinator_recovery.py", line 239 in test_preserved_queue_executes_once_after_headroom_returns
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py", line 589 in _callTestMethod
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py", line 634 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py", line 690 in __call__
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 122 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 84 in __call__
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 122 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 84 in __call__
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/runner.py", line 240 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/main.py", line 281 in runTests
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/main.py", line 105 in __init__
+  File "<stdin>", line 3 in <module>
+Timeout (0:00:12)!
+Thread 0x00007f1803a136c0 (most recent call first):
+  File "/workspace/tuldok-runtime/lib/python3.12/site-packages/psycopg/connection.py", line 495 in wait
+  File "/workspace/tuldok-runtime/lib/python3.12/site-packages/psycopg/cursor.py", line 113 in execute
+  File "/workspace/tuldok-runtime/lib/python3.12/site-packages/psycopg/connection.py", line 302 in execute
+  File "/workspace/Tuldok-lab-coordinator-m2/metadata.py", line 344 in execute
+  File "/workspace/Tuldok-lab-coordinator-m2/runs.py", line 256 in _in_states
+  File "/workspace/Tuldok-lab-coordinator-m2/runs.py", line 1531 in _loop
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 1012 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x00007f180c44d740 (most recent call first):
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_external_runs.py", line 104 in await_state
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_run_coordinator_recovery.py", line 239 in test_preserved_queue_executes_once_after_headroom_returns
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py", line 589 in _callTestMethod
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py", line 634 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py", line 690 in __call__
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 122 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 84 in __call__
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 122 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py", line 84 in __call__
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/runner.py", line 240 in run
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/main.py", line 281 in runTests
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/main.py", line 105 in __init__
+  File "<stdin>", line 3 in <module>
+FAIL
+
+======================================================================
+FAIL: test_preserved_queue_executes_once_after_headroom_returns (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_preserved_queue_executes_once_after_headroom_returns)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_run_coordinator_recovery.py", line 239, in test_preserved_queue_executes_once_after_headroom_returns
+    runs.recover_coordinator({'expected_generation': 1, 'request_key': 'pending-first-go-0001'})
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_external_runs.py", line 105, in await_state
+    self.fail(f'External run did not reach {states}: ' + repr({key: run.get(key) for key in ('id', 'state', 'custody_phase', 'progress', 'error')}))
+AssertionError: External run did not reach ('completed',): {'id': '48a4525277414653812b8ba8f7321e25', 'state': 'queued', 'custody_phase': 'prepared', 'progress': {'completed': None, 'stage': 'queued', 'total': None}, 'error': None}
+
+----------------------------------------------------------------------
+Ran 1 test in 31.990s
+
+FAILED (failures=1)

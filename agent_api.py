@@ -630,6 +630,22 @@ model_operation('runs.cancel_publication', 'POST', '/api/workspace/runs/{run_id}
     scopes=('inspect', 'cancel'), mutation=True)
 _OWNER_OPERATION_IDS.update(('runs.recover_publication', 'runs.cancel_publication'))
 _MODEL_RECEIPT_IDS.add('runs.recover_publication')
+_COORDINATOR_HEALTH = obj({'format': const('run_coordinator_health_v1'), 'catalog_id': ID,
+    'generation': integer(1, 2**31-1),
+    'state': {'enum': ['healthy', 'idle', 'blocked', 'recovering', 'stopped', 'faulted']},
+    'updated_at': text(64), 'admission_ready': {'type': 'boolean'},
+    'recovery_request': {'oneOf': [{'type': 'null'}, obj({'actor_id': ID, 'request_key': KEY,
+        'request_sha256': SHA, 'expected_generation': integer(1, 2**31-1),
+        'completed_generation': {'oneOf': [{'type': 'null'}, integer(1, 2**31-1)]}})]},
+    'fault': {'oneOf': [{'type': 'null'}, obj({'category': text(80), 'at': text(64)})]}})
+model_operation('runs.coordinator_health', 'GET', '/api/workspace/coordinator', {}, output=_COORDINATOR_HEALTH,
+    description='Current Runs-owned coordinator readiness and bounded fault; ordinary idle event waiting is healthy.')
+model_operation('runs.recover_coordinator', 'POST', '/api/workspace/coordinator/recover',
+    {'expected_generation': integer(1, 2**31-1), 'request_key': KEY}, output=_COORDINATOR_HEALTH,
+    scopes=('inspect', 'approve-execution'), mutation=True,
+    description='Explicit owner recovery of one stopped coordinator generation; reconcile original custody without compute replay.')
+_OWNER_OPERATION_IDS.add('runs.recover_coordinator')
+_MODEL_RECEIPT_IDS.add('runs.recover_coordinator')
 model_operation('runs.publication_result', 'POST', '/api/workspace/publication-results',
     {'ref': PUBLICATION_RESULT_REF}, output=_PUBLICATION_RESULT)
 _PUBLICATION_SEGMENT = copy.deepcopy(SEGMENT_SCHEMA)
@@ -1415,6 +1431,23 @@ class AgentClient:
         observe_stage(observer, observation, 'dispatch')
         envelope = self._request(method, path, body, selection=selection)
         result = validate_output(name, envelope, version)
+        if op['operation_id'] in ('runs.coordinator_health', 'runs.recover_coordinator') and result['status'] < 400:
+            value = result['result']; request = value['recovery_request']
+            if value['catalog_id'] != self.catalog_id:
+                raise AgentAPIError('Coordinator health belongs to another catalog.', 'transport', 502)
+            if value['admission_ready'] and value['state'] not in ('healthy', 'idle'):
+                raise AgentAPIError('Coordinator readiness contradicts its state.', 'transport', 502)
+            if request is not None:
+                body = {key: request[key] for key in ('request_key', 'expected_generation')}
+                expected = hashlib.sha256(encoded({'catalog_id': self.catalog_id,
+                    'operation': 'runs.recover_coordinator', 'actor_id': request['actor_id'], 'body': body})).hexdigest()
+                completed = request['completed_generation']
+                if (request['request_sha256'] != expected or request['expected_generation'] > value['generation'] or
+                        completed is not None and not request['expected_generation'] < completed <= value['generation']):
+                    raise AgentAPIError('Coordinator recovery receipt is inconsistent.', 'transport', 502)
+            if op['operation_id'] == 'runs.recover_coordinator' and (
+                    request is None or any(request[key] != arguments[key] for key in ('request_key', 'expected_generation'))):
+                raise AgentAPIError('Coordinator recovery acknowledgement differs from its exact request.', 'transport', 502)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
         if op['operation_id'] == 'runs.publication_artifact_chunk' and result['status'] < 400:
@@ -1482,6 +1515,22 @@ class PublicationOwnerClient(AgentClient):
     def call(self, name, arguments, **kwargs):
         if name not in self.OPERATIONS:
             raise AgentAPIError('Owner publication client only supports explicit publication operations.', 'operation_unsupported', 409)
+        return super().call(name, arguments, **kwargs)
+
+
+class CoordinatorOwnerClient(AgentClient):
+    """Explicit recovery command using an existing owner configuration only."""
+    OPERATIONS = frozenset(('runs.coordinator_health', 'runs.recover_coordinator'))
+
+    def bootstrap(self):
+        result = self._bootstrap('owner')
+        self._selected = {name: version for name, version in self._selected.items() if name in self.OPERATIONS}
+        result['operations'] = sorted(self._selected)
+        return result
+
+    def call(self, name, arguments, **kwargs):
+        if name not in self.OPERATIONS:
+            raise AgentAPIError('Owner coordinator client only supports explicit coordinator operations.', 'operation_unsupported', 409)
         return super().call(name, arguments, **kwargs)
 
 
