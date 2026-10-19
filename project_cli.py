@@ -11,7 +11,7 @@ import stat
 import sys
 import tempfile
 
-from agent_api import (AgentAPIError, AgentClient, PublicationOwnerClient, REQUEST_LIMIT, decode,
+from agent_api import (AgentAPIError, AgentClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
                        validate_arguments, verify_artifact, verify_publication_artifact)
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
@@ -109,6 +109,10 @@ def parser():
     artifact.add_argument('--out', type=Path, required=True)
     publication = commands.add_parser('publication-status', help='Inspect saved publication status without retrying compute')
     publication.add_argument('--run-id', required=True)
+    commands.add_parser('coordinator-status', help='Inspect saved coordinator generation, current readiness and recovery receipt')
+    coordinator = commands.add_parser('recover-coordinator', help='Explicit owner recovery without replaying compute')
+    coordinator.add_argument('--arguments', type=Path, required=True,
+                             help='Exact expected_generation and stable request_key JSON')
     for command in ('recover-publication', 'cancel-publication'):
         recovery = commands.add_parser(command, help='Explicit owner publication action using existing owner configuration')
         recovery.add_argument('--arguments', type=Path, required=True)
@@ -170,6 +174,8 @@ def main(argv=None, *, observer=None):
     try:
         status, http_status = 200, None
         client_type = PublicationOwnerClient if args.command in ('recover-publication', 'cancel-publication') else AgentClient
+        if args.command == 'recover-coordinator':
+            client_type = CoordinatorOwnerClient
         client = client_type.from_config(args.config)
         if args.command in ('download', 'download-publication'):
             ref = read_arguments(args.ref) if args.command == 'download-publication' else None
@@ -186,6 +192,10 @@ def main(argv=None, *, observer=None):
         else:
             if args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
+            elif args.command == 'coordinator-status':
+                operation, arguments = 'runs.coordinator_health', {}
+            elif args.command == 'recover-coordinator':
+                operation, arguments = 'runs.recover_coordinator', read_arguments(args.arguments)
             elif args.command in ('recover-publication', 'cancel-publication'):
                 operation = 'runs.recover_publication' if args.command == 'recover-publication' else 'runs.cancel_publication'
                 arguments = read_arguments(args.arguments)

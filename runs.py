@@ -25,7 +25,7 @@ import text_training
 import audio_training
 import release_validation
 import psycopg
-from metadata import CommitOutcomeUnknown
+from metadata import CommitOutcomeUnknown, StorageError
 from workbench import WorkbenchError, encode, timestamp, text_value
 from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment, model_aware_graph, model_contract
 
@@ -87,7 +87,8 @@ class Runs:
         self.path.mkdir(exist_ok=True)
         self._wake, self._stop = threading.Event(), threading.Event()
         self._thread = None
-        self._thread_lock = threading.Lock()
+        self._thread_lock = threading.RLock()
+        self._dispatch_lock = threading.RLock()
         self._publication_lock = threading.Lock()
         self._publication_cancel = threading.Event()
         self._publication_active = None
@@ -101,6 +102,8 @@ class Runs:
             self.runtime_owner = self.db.claim_runtime('workspace_runs')
             if self.runtime_owner:
                 self._recover()
+        from run_coordinator import Coordinator
+        self._coordinator = Coordinator(self)
 
     def _study_attempt_metadata(self, trial, limit=5):
         """Bounded saved status for experiment overviews, without byte verification.
@@ -463,6 +466,7 @@ class Runs:
             raise WorkbenchError('Another application owns this catalog’s training supervisor.', 'unavailable', 409)
         if self._blocked:
             raise WorkbenchError('A prior worker has unconfirmed cessation. Close the old application before reopening this catalog.', 'unavailable', 409)
+        self._coordinator.require_ready()
         if sys.platform != 'linux':
             raise WorkbenchError('The qualified CPU worker lifecycle currently requires Linux.', 'unsupported', 400)
 
@@ -1038,7 +1042,11 @@ class Runs:
                             run['progress']['stage'] = 'execute'
                             self._save(run)
                         # No GO is sent when either transaction acknowledgement is unknown.
-                        handle.go(handle.expected_identity['helper'])
+                        with self._dispatch_lock:
+                            if self._stop.is_set():
+                                handle.cancel('cancelled')
+                            else:
+                                handle.go(handle.expected_identity['helper'])
                         # Runtime inventory is verified cancellably after GO,
                         # before child wall time starts, under its own bound.
                         recheck_seconds = recipe_process.verification_seconds(run['spec'])
@@ -1450,6 +1458,56 @@ class Runs:
                 self._thread.start()
         self._wake.set()
 
+    def _fence_coordinator(self):
+        # Serialize the stop decision with the one bounded nonblocking GO send.
+        # A remembered GO intent is never replay authority after this fence.
+        with self._dispatch_lock:
+            self._stop.set()
+            self._wake.set()
+
+    def coordinator_health(self):
+        with self._coordinator.catalog(time.monotonic()+5):
+            self.access.require('inspect', 'runs.coordinator_health')
+        return self._coordinator.projection()
+
+    def recover_coordinator(self, body):
+        # The coordinator bounds catalog/lifecycle ownership before authorizing;
+        # ordinary decorators acquire the catalog mutex without a deadline.
+        return self._coordinator.recover(body)
+
+    def _reconcile_coordinator(self, deadline):
+        """Same-application recovery preserves only acknowledged, never-started queue items."""
+        blocked = external_blocked = False
+        with self.access._reconcile(), self._coordinator.catalog(deadline), self.db.transaction():
+            self._coordinator.check_deadline(deadline)
+            milliseconds = max(1, int((deadline-time.monotonic())*1000))
+            self.db.execute("SELECT set_config('statement_timeout',%s,true)", (str(milliseconds),))
+            if not self.runtime_owner or not self.db.runtime_owned('workspace_runs'):
+                raise WorkbenchError('Current PostgreSQL session does not own this coordinator.', 'unavailable', 409)
+            # Preserve unknown fences. A missing receipt on this boot is never
+            # repaired by a joined Python thread or an empty process scan.
+            for run in self._in_states((*ACTIVE, 'unknown')):
+                self._coordinator.check_deadline(deadline)
+                if run['state'] == 'queued' and (
+                    (self._external(run) and run['id'] in self._confirmed_external and
+                     run['custody_phase'] == 'prepared' and run.get('custody_identity') is None) or
+                    (not self._external(run) and run['process_phase'] == 'not_started')):
+                    continue
+                if self._external(run):
+                    state = self._external_recovery_state(run)
+                    external_blocked |= state == 'unknown'
+                else:
+                    worker = run.get('worker')
+                    state = ('interrupted' if run['process_phase'] == 'not_started' else
+                             'interrupted' if worker and process_status(worker) == 'ceased' else
+                             'unknown' if worker else self._reconcile_start(run))
+                    blocked |= state == 'unknown'
+                self._event(run, state, 'Coordinator recovery reconciled this original attempt; compute was not replayed.')
+                self._save(run)
+        # Clear old fences only after the authoritative reconciliation COMMIT
+        # acknowledged, and only if no retained attempt remains uncertain.
+        self._blocked, self._external_blocked = blocked, external_blocked
+
     def _loop(self):
         from concurrent.futures import ThreadPoolExecutor
         from run_capacity import available_memory, MAX_ATTEMPTS
@@ -1466,6 +1524,7 @@ class Runs:
                     with self.lock:
                         blocked = self._blocked or self._external_blocked or not self.runtime_owner
                     if blocked:
+                        self._coordinator.transition('blocked')
                         self._wake.wait(.25)
                         self._wake.clear()
                         continue
@@ -1490,12 +1549,16 @@ class Runs:
                             active[run['id']] = (executor.submit(self._run_attempt, run, cpus, claim), claim, cpus)
                     # With no pending work only admission/stop can change the queue.
                     # Queued resource waits still retry when headroom changes.
+                    self._coordinator.transition('healthy' if active or queued else 'idle')
                     self._wake.wait(.05 if active else .25 if queued else None)
                     self._wake.clear()
+            except Exception as error:
+                self._coordinator.fault('catalog_lock_timeout' if isinstance(error, psycopg.errors.LockNotAvailable) else
+                                        'storage' if isinstance(error, psycopg.Error) else 'coordinator_exception')
             finally:
                 # On coordinator/storage failure, active attempts observe stop
                 # and drain before executor shutdown releases ownership.
-                self._stop.set()
+                self._fence_coordinator()
 
     def _run_attempt(self, admitted, cpus, claim):
         affinity = os.sched_getaffinity(0)
@@ -1534,7 +1597,7 @@ class Runs:
                         self._event(run, state, run['error']['message'])
                         self._save(run)
             except psycopg.Error:
-                self._stop.set()
+                self._coordinator.fault('attempt_reconciliation_storage')
         finally:
             os.sched_setaffinity(0, affinity)
             self._wake.set()
@@ -1722,7 +1785,7 @@ class Runs:
                     except BaseException:
                         # CatalogLock acquisition can itself fail after storage
                         # loss. Stop dispatch even when no durable fence is possible.
-                        self._stop.set()
+                        self._coordinator.fault('worker_cessation_storage')
                         raise
             if process is not None and process.stdout is not None:
                 process.stdout.close()
@@ -2359,26 +2422,29 @@ class Runs:
 
 
     def close(self):
+        deadline = time.monotonic() + 60
         with self._thread_lock:
             self._closed = True
-            self._stop.set()
-            self._wake.set()
+            self._fence_coordinator()
             thread = self._thread
+        self._coordinator.transition('stopped')
         if thread is not None:
-            thread.join(timeout=60)
+            thread.join(timeout=max(0, deadline-time.monotonic()))
             if thread.is_alive():
                 raise RuntimeError('Training supervisor did not drain; metadata must remain open.')
-        if not self._publication_lock.acquire(timeout=60):
+        if not self._publication_lock.acquire(timeout=max(0, deadline-time.monotonic())):
             raise RuntimeError('Publication recovery did not drain; metadata must remain open.')
         self._publication_lock.release()
         if self.runtime_owner:
             try:
-                with self.lock, self.db.transaction():
+                with self.lock.bounded(deadline), self.db.transaction():
+                    self.db.execute("SELECT set_config('statement_timeout',%s,true)",
+                                    (str(max(1, int((deadline-time.monotonic())*1000))),))
                     for run in self._in_states(('queued',)):
                         if run['state'] == 'queued':
                             self._event(run, 'cancelled', 'Application closed before this queued attempt started.')
                             self._save(run)
-            except psycopg.Error:
+            except (psycopg.Error, StorageError):
                 # Drain local resources independently of database availability.
                 # No successful durable transition is claimed after a lost write.
                 pass

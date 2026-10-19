@@ -1,0 +1,8 @@
+test_completed_request_does_not_recover_a_later_fault (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_completed_request_does_not_recover_a_later_fault) ... ok
+test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt) ... ok
+test_failed_replacement_start_keeps_same_request_retryable (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_failed_replacement_start_keeps_same_request_retryable) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 3.853s
+
+OK

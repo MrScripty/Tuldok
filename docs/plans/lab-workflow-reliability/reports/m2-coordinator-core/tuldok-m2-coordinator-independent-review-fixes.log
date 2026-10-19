@@ -1,0 +1,7 @@
+test_secondary_opener_cannot_replace_primary_journal_on_recovery_or_close (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_secondary_opener_cannot_replace_primary_journal_on_recovery_or_close) ... ok
+test_unknown_commit_survives_timeout_restore_failure_and_retains_fence (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_unknown_commit_survives_timeout_restore_failure_and_retains_fence) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.664s
+
+OK

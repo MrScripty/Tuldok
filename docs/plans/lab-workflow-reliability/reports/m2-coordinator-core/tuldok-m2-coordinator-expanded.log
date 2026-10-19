@@ -1,0 +1,20 @@
+test_actual_active_custodian_drains_before_recovery_without_second_go (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_actual_active_custodian_drains_before_recovery_without_second_go) ... FAIL
+test_close_wins_while_recovery_waits_for_owned_thread (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_close_wins_while_recovery_waits_for_owned_thread) ... ok
+test_failed_replacement_start_keeps_same_request_retryable (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_failed_replacement_start_keeps_same_request_retryable) ... ok
+test_real_lock_timeout_http_health_fences_and_concurrent_owner_recovery (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_real_lock_timeout_http_health_fences_and_concurrent_owner_recovery) ... ok
+test_refused_recovery_never_stops_a_healthy_coordinator (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_refused_recovery_never_stops_a_healthy_coordinator) ... ok
+test_runtime_session_lock_loss_stays_fenced_without_reclaim (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_runtime_session_lock_loss_stays_fenced_without_reclaim) ... ok
+test_same_boot_missing_receipt_stays_unknown_and_fenced (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_same_boot_missing_receipt_stays_unknown_and_fenced) ... ok
+
+======================================================================
+FAIL: test_actual_active_custodian_drains_before_recovery_without_second_go (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_actual_active_custodian_drains_before_recovery_without_second_go)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-coordinator-m2/tests/test_run_coordinator_recovery.py", line 191, in test_actual_active_custodian_drains_before_recovery_without_second_go
+    self.assertEqual(len(calls), 1)
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 7 tests in 14.516s
+
+FAILED (failures=1)
