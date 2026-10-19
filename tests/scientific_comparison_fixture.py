@@ -193,7 +193,11 @@ def main():
     try:
         server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(fixture.dataset))
         thread=threading.Thread(target=server.serve_forever);thread.start()
-        print(json.dumps({'port':server.server_port,'data':str(fixture.dataset.path),
+        source_fixture=json.loads((PACKAGE/'fixture.json').read_bytes())
+        source_case=next(row for row in source_fixture['cases'] if row['id']==source_fixture['probe_member_id'])
+        expected={'baseline':source_case['target'][0],'candidate':source_case['target'][0]+2,'delta':2,
+            'units':fixture.definition['model_evidence']['fields'][0]['contract']['output']['units']}
+        print(json.dumps({'expected_point_zero':expected,'port':server.server_port,'data':str(fixture.dataset.path),
             'baseline':fixture.runs[0]['id'],'candidate':fixture.runs[1]['id'],'recovered':fixture.runs[2]['id'],
             'trial_id':fixture.trials[1]['id'],'ref':fixture.refs[0]}),flush=True)
         for line in sys.stdin:

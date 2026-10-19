@@ -51,8 +51,8 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   assert.equal(JSON.parse(first.body).operands[0].run_id,info.baseline);
   assert.equal(JSON.parse(first.body).operands[1].run_id,info.candidate);
   assert.ok(first.headers['Tuldok-Operation-Contract']?.startsWith('runs.compare_scientific_evidence/1/'));
-  const pair=await evaluate(`Array.from(document.querySelectorAll('#scientific-result table:first-of-type tbody td')).map(node=>node.textContent)`);
-  assert.ok((await text('#scientific-result')).includes('2 pressure_unit')||(await text('#scientific-result')).includes('2 '),'Independent expected diagnostic delta absent');
+  const pair=await evaluate(`Array.from(document.querySelector('#scientific-result table').querySelectorAll('tbody td')).map(node=>node.textContent)`);
+  assert.deepEqual(pair.slice(0,3),[String(info.expected_point_zero.baseline)+' / '+String(info.expected_point_zero.baseline)+' '+info.expected_point_zero.units,String(info.expected_point_zero.candidate)+' / '+String(info.expected_point_zero.baseline)+' '+info.expected_point_zero.units,String(info.expected_point_zero.delta)+' '+info.expected_point_zero.units],'Independently authored source-fixture values must equal the actual DOM table');
   checks.push('Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.');
   for(const width of [1440,390]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
