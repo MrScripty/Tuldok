@@ -1,0 +1,62 @@
+{
+  "pr": 99,
+  "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+  "base_at_acceptance": "51c081cd8534728e91e3b76294b8526b6ee47269",
+  "tested_base": "f866252782310211b887301a674ba2a62c353709",
+  "source_and_current_merge_tree": "6d9059b51ed8efae9ad32fff9012fdcb9d489ec2",
+  "qualification": "all relevant hosted checks passed; exactpublicationsUI andownedbrowsercleanupscopes reviewed",
+  "limitations": [
+    "FullPython1601 passedwith72explicit skips. IsolatedAgent74/MCP19 andpublication32passedwithoutskips.",
+    "SeparatecapturedCPU job proves actualtrainingbrowserpluscapturedTinyCNNforwardinference, notcapturedtraining/CUDA/scienceacceptance."
+  ],
+  "lifecycle": {
+    "run": 39330890531,
+    "job": 118328484057,
+    "conclusion": "success",
+    "all_steps": 162,
+    "non_success_steps": 0,
+    "log_sha256": "a4010d2971058abf155f82865c73c629a03b56a34a6f15759e7ed596a0e6d802",
+    "summaries": [
+      "2026-10-19T21:58:12.8701397Z Ran 30 tests in 8.954s",
+      "2026-10-19T21:58:12.8701740Z OK",
+      "2026-10-19T22:00:50.0964944Z Ran 32 tests in 156.645s",
+      "2026-10-19T22:00:50.0965382Z OK",
+      "2026-10-19T22:01:56.2882943Z Ran 15 tests in 22.115s",
+      "2026-10-19T22:01:56.2883494Z OK",
+      "2026-10-19T22:01:57.0626699Z Ran 11 tests in 0.583s",
+      "2026-10-19T22:01:57.0627071Z OK",
+      "2026-10-19T22:01:57.2785042Z Ran 9 tests in 0.107s",
+      "2026-10-19T22:01:57.2834969Z OK",
+      "2026-10-19T22:02:01.0638024Z Ran 12 tests in 3.602s",
+      "2026-10-19T22:02:01.0638602Z OK (skipped=1)",
+      "2026-10-19T22:02:01.4869289Z Ran 9 tests in 0.278s",
+      "2026-10-19T22:02:01.4869647Z OK (skipped=1)",
+      "2026-10-19T22:12:55.5676312Z Ran 74 tests in 644.983s",
+      "2026-10-19T22:12:55.5676697Z OK",
+      "2026-10-19T22:13:44.7620871Z Ran 19 tests in 49.015s",
+      "2026-10-19T22:13:44.7621259Z OK",
+      "2026-10-19T22:15:35.6249652Z Ran 22 tests in 110.657s",
+      "2026-10-19T22:15:35.6250061Z OK",
+      "2026-10-19T22:19:25.6311846Z Ran 24 tests in 229.451s",
+      "2026-10-19T22:19:25.6312149Z OK",
+      "2026-10-19T22:21:24.4405820Z Ran 34 tests in 118.238s",
+      "2026-10-19T22:21:24.4408724Z OK",
+      "2026-10-19T22:21:59.6428447Z Ran 13 tests in 34.558s",
+      "2026-10-19T22:21:59.6428803Z OK",
+      "2026-10-19T22:22:12.9386776Z Ran 5 tests in 12.580s",
+      "2026-10-19T22:22:12.9387093Z OK",
+      "2026-10-19T22:57:23.8109268Z Ran 1601 tests in 2109.598s",
+      "2026-10-19T22:57:23.8109974Z OK (skipped=72)"
+    ]
+  },
+  "cpu": {
+    "run": 39330890527,
+    "job": 118328484468,
+    "conclusion": "success",
+    "all_steps": 13,
+    "non_success_steps": 0,
+    "log_sha256": "d6c785125e9d64e9d6f5735bb03e82eea1d3a7cb42da9edd2ab767e57eded430",
+    "summaries": []
+  },
+  "relevant_browser": "New actual publicationbrowser +controller passed; actualnative_text_import+ownedcleanup passed; lateactualmodel/fitbrowserspassed."
+}

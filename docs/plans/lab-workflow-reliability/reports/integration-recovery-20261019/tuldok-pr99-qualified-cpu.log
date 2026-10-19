@@ -1,0 +1,631 @@
+﻿2026-10-19T21:54:45.0799108Z Current runner version: '2.337.0'
+2026-10-19T21:54:45.0846207Z ##[group]Runner Image Provisioner
+2026-10-19T21:54:45.0847074Z Hosted Compute Agent
+2026-10-19T21:54:45.0847679Z Version: 20261012.601
+2026-10-19T21:54:45.0848674Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-19T21:54:45.0849414Z Build Date: 2026-10-12T17:48:21Z
+2026-10-19T21:54:45.0850100Z Worker ID: {3d8792e6-5877-4f91-8549-2fa8130ff909}
+2026-10-19T21:54:45.0850864Z Region: centralus
+2026-10-19T21:54:45.0851422Z Cloud: Azure
+2026-10-19T21:54:45.0852033Z ##[endgroup]
+2026-10-19T21:54:45.0853681Z ##[group]Operating System
+2026-10-19T21:54:45.0854312Z Ubuntu
+2026-10-19T21:54:45.0855345Z 24.04.5
+2026-10-19T21:54:45.0855867Z LTS
+2026-10-19T21:54:45.0856409Z ##[endgroup]
+2026-10-19T21:54:45.0856983Z ##[group]Runner Image
+2026-10-19T21:54:45.0857618Z Image: ubuntu-24.04
+2026-10-19T21:54:45.0858573Z Version: 20261012.334.1
+2026-10-19T21:54:45.0859859Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-19T21:54:45.0861483Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-19T21:54:45.0862489Z ##[endgroup]
+2026-10-19T21:54:45.0863661Z ##[group]GITHUB_TOKEN Permissions
+2026-10-19T21:54:45.0865767Z Contents: read
+2026-10-19T21:54:45.0866508Z Metadata: read
+2026-10-19T21:54:45.0867100Z ##[endgroup]
+2026-10-19T21:54:45.0869598Z Secret source: Actions
+2026-10-19T21:54:45.0870563Z Cache mode: write
+2026-10-19T21:54:45.0871464Z Prepare workflow directory
+2026-10-19T21:54:45.1311537Z Prepare all required actions
+2026-10-19T21:54:45.1361040Z Getting action download info
+2026-10-19T21:54:45.4028969Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-19T21:54:45.5213985Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-19T21:54:45.6161164Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-19T21:54:45.8272921Z Complete job name: captured-cpu
+2026-10-19T21:54:45.8790691Z ##[group]Checking docker version
+2026-10-19T21:54:45.8803899Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-10-19T21:54:45.9812815Z '1.48'
+2026-10-19T21:54:45.9829206Z Docker daemon API version: '1.48'
+2026-10-19T21:54:45.9830236Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-10-19T21:54:45.9986869Z '1.48'
+2026-10-19T21:54:45.9999412Z Docker client API version: '1.48'
+2026-10-19T21:54:46.0004170Z ##[endgroup]
+2026-10-19T21:54:46.0007065Z ##[group]Clean up resources from previous jobs
+2026-10-19T21:54:46.0013210Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=708f3b"
+2026-10-19T21:54:46.0154349Z ##[command]/usr/bin/docker network prune --force --filter "label=708f3b"
+2026-10-19T21:54:46.0273444Z ##[endgroup]
+2026-10-19T21:54:46.0273962Z ##[group]Create local container network
+2026-10-19T21:54:46.0283837Z ##[command]/usr/bin/docker network create --label 708f3b github_network_9448fce6d5784257b7bd07085f7817e6
+2026-10-19T21:54:46.0805640Z c8cbe0c1a7febcfc11025e91ac38d9317b5c454943095dece4ec440e93a79e6c
+2026-10-19T21:54:46.0823215Z ##[endgroup]
+2026-10-19T21:54:46.0847671Z ##[group]Starting postgres service container
+2026-10-19T21:54:46.0869903Z ##[command]/usr/bin/docker pull postgres:17
+2026-10-19T21:54:46.6413680Z 17: Pulling from library/postgres
+2026-10-19T21:54:46.8044879Z ecc510c1e359: Pulling fs layer
+2026-10-19T21:54:46.8046308Z fcdd3a481359: Pulling fs layer
+2026-10-19T21:54:46.8048165Z b86134c2eeb6: Pulling fs layer
+2026-10-19T21:54:46.8049426Z 57644501a07f: Pulling fs layer
+2026-10-19T21:54:46.8050483Z affbe3357b39: Pulling fs layer
+2026-10-19T21:54:46.8051495Z 3be737420556: Pulling fs layer
+2026-10-19T21:54:46.8052291Z e30751283c57: Pulling fs layer
+2026-10-19T21:54:46.8053057Z c5602f014e9e: Pulling fs layer
+2026-10-19T21:54:46.8053821Z c9432d362cca: Pulling fs layer
+2026-10-19T21:54:46.8054599Z dc30f2779c66: Pulling fs layer
+2026-10-19T21:54:46.8055670Z d43ee31e40df: Pulling fs layer
+2026-10-19T21:54:46.8056455Z 8aebe6431dc8: Pulling fs layer
+2026-10-19T21:54:46.8057257Z 52fc2be321a4: Pulling fs layer
+2026-10-19T21:54:46.8058772Z 99ce35cabaf9: Pulling fs layer
+2026-10-19T21:54:46.8059937Z 57644501a07f: Waiting
+2026-10-19T21:54:46.8060676Z affbe3357b39: Waiting
+2026-10-19T21:54:46.8061405Z c9432d362cca: Waiting
+2026-10-19T21:54:46.8062129Z 3be737420556: Waiting
+2026-10-19T21:54:46.8062846Z e30751283c57: Waiting
+2026-10-19T21:54:46.8063571Z c5602f014e9e: Waiting
+2026-10-19T21:54:46.8064295Z 52fc2be321a4: Waiting
+2026-10-19T21:54:46.8065055Z dc30f2779c66: Waiting
+2026-10-19T21:54:46.8066049Z d43ee31e40df: Waiting
+2026-10-19T21:54:46.8066997Z 99ce35cabaf9: Waiting
+2026-10-19T21:54:46.8068082Z 8aebe6431dc8: Waiting
+2026-10-19T21:54:46.9364696Z fcdd3a481359: Verifying Checksum
+2026-10-19T21:54:46.9366421Z fcdd3a481359: Download complete
+2026-10-19T21:54:47.0944783Z b86134c2eeb6: Verifying Checksum
+2026-10-19T21:54:47.0946362Z b86134c2eeb6: Download complete
+2026-10-19T21:54:47.1122899Z 57644501a07f: Verifying Checksum
+2026-10-19T21:54:47.1124336Z 57644501a07f: Download complete
+2026-10-19T21:54:47.2138504Z ecc510c1e359: Verifying Checksum
+2026-10-19T21:54:47.2139009Z ecc510c1e359: Download complete
+2026-10-19T21:54:47.3630232Z e30751283c57: Verifying Checksum
+2026-10-19T21:54:47.3632683Z e30751283c57: Download complete
+2026-10-19T21:54:47.3742598Z 3be737420556: Verifying Checksum
+2026-10-19T21:54:47.3743959Z 3be737420556: Download complete
+2026-10-19T21:54:47.4133282Z affbe3357b39: Verifying Checksum
+2026-10-19T21:54:47.4134231Z affbe3357b39: Download complete
+2026-10-19T21:54:47.4952141Z c5602f014e9e: Verifying Checksum
+2026-10-19T21:54:47.4952796Z c5602f014e9e: Download complete
+2026-10-19T21:54:47.5544849Z dc30f2779c66: Verifying Checksum
+2026-10-19T21:54:47.5545520Z dc30f2779c66: Download complete
+2026-10-19T21:54:47.6326046Z d43ee31e40df: Verifying Checksum
+2026-10-19T21:54:47.6327050Z d43ee31e40df: Download complete
+2026-10-19T21:54:47.7187686Z 8aebe6431dc8: Verifying Checksum
+2026-10-19T21:54:47.7189722Z 8aebe6431dc8: Download complete
+2026-10-19T21:54:47.7591939Z 52fc2be321a4: Verifying Checksum
+2026-10-19T21:54:47.7592916Z 52fc2be321a4: Download complete
+2026-10-19T21:54:47.8680664Z 99ce35cabaf9: Verifying Checksum
+2026-10-19T21:54:47.8681256Z 99ce35cabaf9: Download complete
+2026-10-19T21:54:47.9764563Z c9432d362cca: Verifying Checksum
+2026-10-19T21:54:47.9765231Z c9432d362cca: Download complete
+2026-10-19T21:54:48.3216580Z ecc510c1e359: Pull complete
+2026-10-19T21:54:48.6051908Z fcdd3a481359: Pull complete
+2026-10-19T21:54:48.7790653Z b86134c2eeb6: Pull complete
+2026-10-19T21:54:48.8195742Z 57644501a07f: Pull complete
+2026-10-19T21:54:49.1165444Z affbe3357b39: Pull complete
+2026-10-19T21:54:49.1891200Z 3be737420556: Pull complete
+2026-10-19T21:54:49.1981216Z e30751283c57: Pull complete
+2026-10-19T21:54:49.2073644Z c5602f014e9e: Pull complete
+2026-10-19T21:54:52.1716160Z c9432d362cca: Pull complete
+2026-10-19T21:54:52.1857070Z dc30f2779c66: Pull complete
+2026-10-19T21:54:52.1936882Z d43ee31e40df: Pull complete
+2026-10-19T21:54:52.2019200Z 8aebe6431dc8: Pull complete
+2026-10-19T21:54:52.2111966Z 52fc2be321a4: Pull complete
+2026-10-19T21:54:52.2184207Z 99ce35cabaf9: Pull complete
+2026-10-19T21:54:52.2222453Z Digest: sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3
+2026-10-19T21:54:52.2232506Z Status: Downloaded newer image for postgres:17
+2026-10-19T21:54:52.2240370Z docker.io/library/postgres:17
+2026-10-19T21:54:52.2301128Z ##[command]/usr/bin/docker create --name 7a098d10f81640d68a983a59629164c6_postgres17_211178 --label 708f3b --network github_network_9448fce6d5784257b7bd07085f7817e6 --network-alias postgres -p 127.0.0.1:5432:5432 --health-cmd "pg_isready -U tuldok_candidate -d tuldok_candidate" --health-interval 5s --health-timeout 5s --health-retries 12 -e "POSTGRES_USER=tuldok_candidate" -e "POSTGRES_PASSWORD=isolated-ci-candidate" -e "POSTGRES_DB=tuldok_candidate" -e GITHUB_ACTIONS=true -e CI=true postgres:17
+2026-10-19T21:54:52.2548175Z 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:52.2568350Z ##[command]/usr/bin/docker start 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:52.4744669Z 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:52.4767585Z ##[command]/usr/bin/docker ps --all --filter id=4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-10-19T21:54:52.4898924Z 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5 Up Less than a second (health: starting)
+2026-10-19T21:54:52.4925827Z ##[command]/usr/bin/docker port 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:52.5059368Z 5432/tcp -> 127.0.0.1:5432
+2026-10-19T21:54:52.5102933Z ##[endgroup]
+2026-10-19T21:54:52.5112028Z ##[group]Waiting for all services to be ready
+2026-10-19T21:54:52.5126013Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:52.5258931Z starting
+2026-10-19T21:54:52.5279082Z postgres service is starting, waiting 2 seconds before checking again.
+2026-10-19T21:54:54.5286302Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:54.5412365Z starting
+2026-10-19T21:54:54.5424048Z postgres service is starting, waiting 3 seconds before checking again.
+2026-10-19T21:54:58.2130737Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:54:58.2256361Z healthy
+2026-10-19T21:54:58.2271827Z postgres service is healthy.
+2026-10-19T21:54:58.2272188Z ##[endgroup]
+2026-10-19T21:54:58.2564799Z ##[group]Run actions/checkout@v4
+2026-10-19T21:54:58.2565503Z with:
+2026-10-19T21:54:58.2565715Z   repository: MrScripty/Tuldok
+2026-10-19T21:54:58.2568241Z   token: ***
+2026-10-19T21:54:58.2568456Z   ssh-strict: true
+2026-10-19T21:54:58.2568660Z   ssh-user: git
+2026-10-19T21:54:58.2568865Z   persist-credentials: true
+2026-10-19T21:54:58.2569096Z   clean: true
+2026-10-19T21:54:58.2569310Z   sparse-checkout-cone-mode: true
+2026-10-19T21:54:58.2569556Z   fetch-depth: 1
+2026-10-19T21:54:58.2569751Z   fetch-tags: false
+2026-10-19T21:54:58.2569954Z   show-progress: true
+2026-10-19T21:54:58.2570154Z   lfs: false
+2026-10-19T21:54:58.2570337Z   submodules: false
+2026-10-19T21:54:58.2570538Z   set-safe-directory: true
+2026-10-19T21:54:58.2570776Z   allow-unsafe-pr-checkout: false
+2026-10-19T21:54:58.2571268Z env:
+2026-10-19T21:54:58.2571800Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:54:58.2572126Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:54:58.2572423Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:54:58.2572656Z ##[endgroup]
+2026-10-19T21:54:58.3550037Z Syncing repository: MrScripty/Tuldok
+2026-10-19T21:54:58.3551835Z ##[group]Getting Git version info
+2026-10-19T21:54:58.3552432Z Working directory is '/home/runner/work/Tuldok/Tuldok'
+2026-10-19T21:54:58.3553324Z [command]/usr/bin/git version
+2026-10-19T21:54:58.3634142Z git version 2.55.0
+2026-10-19T21:54:58.3665104Z ##[endgroup]
+2026-10-19T21:54:58.3677145Z Temporarily overriding HOME='/home/runner/work/_temp/f1552528-c5b2-4c74-929b-6448afbce72e' before making global git config changes
+2026-10-19T21:54:58.3678903Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-19T21:54:58.3685037Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Tuldok/Tuldok
+2026-10-19T21:54:58.3742771Z Deleting the contents of '/home/runner/work/Tuldok/Tuldok'
+2026-10-19T21:54:58.3747315Z ##[group]Initializing the repository
+2026-10-19T21:54:58.3753448Z [command]/usr/bin/git init /home/runner/work/Tuldok/Tuldok
+2026-10-19T21:54:58.3878409Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-19T21:54:58.3879403Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-19T21:54:58.3880460Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-19T21:54:58.3881144Z hint: call:
+2026-10-19T21:54:58.3881465Z hint:
+2026-10-19T21:54:58.3881963Z hint: 	git config --global init.defaultBranch <name>
+2026-10-19T21:54:58.3882483Z hint:
+2026-10-19T21:54:58.3882981Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-19T21:54:58.3883893Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-19T21:54:58.3884566Z hint:
+2026-10-19T21:54:58.3884977Z hint: 	git branch -m <name>
+2026-10-19T21:54:58.3885443Z hint:
+2026-10-19T21:54:58.3886049Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-19T21:54:58.3887029Z Initialized empty Git repository in /home/runner/work/Tuldok/Tuldok/.git/
+2026-10-19T21:54:58.3896672Z [command]/usr/bin/git remote add origin https://github.com/MrScripty/Tuldok
+2026-10-19T21:54:58.3948210Z ##[endgroup]
+2026-10-19T21:54:58.3948882Z ##[group]Disabling automatic garbage collection
+2026-10-19T21:54:58.3953948Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-19T21:54:58.3984853Z ##[endgroup]
+2026-10-19T21:54:58.3985422Z ##[group]Setting up auth
+2026-10-19T21:54:58.3992335Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-19T21:54:58.4026537Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-19T21:54:58.4435932Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-19T21:54:58.4475381Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-19T21:54:58.4705031Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-19T21:54:58.4740920Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-19T21:54:58.4968520Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-19T21:54:58.5010277Z ##[endgroup]
+2026-10-19T21:54:58.5011473Z ##[group]Fetching the repository
+2026-10-19T21:54:58.5021477Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +81aa1b10c8971816821a6183bfa61bb7e5749b7e:refs/remotes/pull/99/merge
+2026-10-19T21:54:59.9870740Z From https://github.com/MrScripty/Tuldok
+2026-10-19T21:54:59.9871283Z  * [new ref]         81aa1b10c8971816821a6183bfa61bb7e5749b7e -> pull/99/merge
+2026-10-19T21:54:59.9875732Z ##[endgroup]
+2026-10-19T21:54:59.9876353Z ##[group]Determining the checkout info
+2026-10-19T21:54:59.9878806Z ##[endgroup]
+2026-10-19T21:54:59.9884574Z [command]/usr/bin/git sparse-checkout disable
+2026-10-19T21:54:59.9946088Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-19T21:54:59.9977099Z ##[group]Checking out the ref
+2026-10-19T21:54:59.9981014Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/99/merge
+2026-10-19T21:55:00.1974955Z Note: switching to 'refs/remotes/pull/99/merge'.
+2026-10-19T21:55:00.1975449Z 
+2026-10-19T21:55:00.1975811Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-19T21:55:00.1976372Z changes and commit them, and you can discard any commits you make in this
+2026-10-19T21:55:00.1976888Z state without impacting any branches by switching back to a branch.
+2026-10-19T21:55:00.1977185Z 
+2026-10-19T21:55:00.1977416Z If you want to create a new branch to retain commits you create, you may
+2026-10-19T21:55:00.1978305Z do so (now or later) by using -c with the switch command. Example:
+2026-10-19T21:55:00.1978578Z 
+2026-10-19T21:55:00.1978694Z   git switch -c <new-branch-name>
+2026-10-19T21:55:00.1978881Z 
+2026-10-19T21:55:00.1978997Z Or undo this operation with:
+2026-10-19T21:55:00.1979157Z 
+2026-10-19T21:55:00.1979256Z   git switch -
+2026-10-19T21:55:00.1979400Z 
+2026-10-19T21:55:00.1979627Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-19T21:55:00.1979942Z 
+2026-10-19T21:55:00.1980295Z HEAD is now at 81aa1b1 Merge e0357c20af9c9213422eb95861ef385c9caed2dd into f866252782310211b887301a674ba2a62c353709
+2026-10-19T21:55:00.1991274Z ##[endgroup]
+2026-10-19T21:55:00.2039617Z [command]/usr/bin/git log -1 --format=%H
+2026-10-19T21:55:00.2065601Z 81aa1b10c8971816821a6183bfa61bb7e5749b7e
+2026-10-19T21:55:00.2324239Z ##[group]Run actions/setup-node@v4
+2026-10-19T21:55:00.2324524Z with:
+2026-10-19T21:55:00.2324714Z   node-version: 24
+2026-10-19T21:55:00.2324918Z   always-auth: false
+2026-10-19T21:55:00.2325142Z   check-latest: false
+2026-10-19T21:55:00.2327396Z   token: ***
+2026-10-19T21:55:00.2327582Z env:
+2026-10-19T21:55:00.2328404Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:55:00.2328742Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:55:00.2329004Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:55:00.2329237Z ##[endgroup]
+2026-10-19T21:55:00.3704155Z Found in cache @ /opt/hostedtoolcache/node/24.21.0/x64
+2026-10-19T21:55:00.3708725Z (node:2745) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-19T21:55:00.3709648Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-19T21:55:00.3711889Z ##[group]Environment details
+2026-10-19T21:55:00.8113242Z node: v24.21.0
+2026-10-19T21:55:00.8113683Z npm: 11.19.0
+2026-10-19T21:55:00.8113880Z yarn: 1.22.22
+2026-10-19T21:55:00.8114753Z ##[endgroup]
+2026-10-19T21:55:00.8249100Z ##[group]Run sudo apt-get update
+2026-10-19T21:55:00.8249558Z [36;1msudo apt-get update[0m
+2026-10-19T21:55:00.8249975Z [36;1msudo apt-get install --no-install-recommends -y python3.12-venv[0m
+2026-10-19T21:55:00.8250500Z [36;1mcandidate_prefix="$RUNNER_TEMP/tuldok-candidate-python312-base"[0m
+2026-10-19T21:55:00.8251009Z [36;1mcandidate_venv="$RUNNER_TEMP/tuldok-candidate-python312"[0m
+2026-10-19T21:55:00.8251404Z [36;1mtest ! -e "$candidate_prefix"[0m
+2026-10-19T21:55:00.8251700Z [36;1mtest ! -e "$candidate_venv"[0m
+2026-10-19T21:55:00.8252049Z [36;1m/usr/bin/python3.12 - "$candidate_prefix" <<'PY'[0m
+2026-10-19T21:55:00.8252438Z [36;1mimport hashlib, json, shutil, stat, sys[0m
+2026-10-19T21:55:00.8252774Z [36;1mfrom pathlib import Path[0m
+2026-10-19T21:55:00.8253063Z [36;1mdestination = Path(sys.argv[1])[0m
+2026-10-19T21:55:00.8253363Z [36;1mdestination.mkdir()[0m
+2026-10-19T21:55:00.8253628Z [36;1m(destination / 'bin').mkdir()[0m
+2026-10-19T21:55:00.8253951Z [36;1m(destination / 'lib').mkdir()[0m
+2026-10-19T21:55:00.8254226Z [36;1mreceipts = [][0m
+2026-10-19T21:55:00.8254475Z [36;1mdef checksum(path):[0m
+2026-10-19T21:55:00.8254753Z [36;1m    with path.open('rb') as stream:[0m
+2026-10-19T21:55:00.8255153Z [36;1m        return hashlib.file_digest(stream, 'sha256').hexdigest()[0m
+2026-10-19T21:55:00.8255554Z [36;1mdef copy_verified(source, target):[0m
+2026-10-19T21:55:00.8255907Z [36;1m    source, target = Path(source), Path(target)[0m
+2026-10-19T21:55:00.8256271Z [36;1m    resolved = source.resolve(strict=True)[0m
+2026-10-19T21:55:00.8256769Z [36;1m    assert (resolved.is_relative_to('/usr/lib') or resolved == Path('/usr/bin/python3.12')[0m
+2026-10-19T21:55:00.8257466Z [36;1m            or resolved == Path('/etc/python3.12/sitecustomize.py')), 'Unexpected stdlib source escape'[0m
+2026-10-19T21:55:00.8258502Z [36;1m    assert stat.S_ISREG(resolved.stat().st_mode), 'Only regular distro files are supported'[0m
+2026-10-19T21:55:00.8258998Z [36;1m    before = checksum(resolved)[0m
+2026-10-19T21:55:00.8259310Z [36;1m    shutil.copy2(resolved, target)[0m
+2026-10-19T21:55:00.8259972Z [36;1m    assert before == checksum(resolved) == checksum(target), 'Distro copy bytes changed'[0m
+2026-10-19T21:55:00.8260537Z [36;1m    receipts.append(dict(source=str(source), resolved=str(resolved),[0m
+2026-10-19T21:55:00.8261156Z [36;1m        target=target.relative_to(destination).as_posix(), bytes=target.stat().st_size, sha256=before))[0m
+2026-10-19T21:55:00.8261669Z [36;1m    return str(target)[0m
+2026-10-19T21:55:00.8261997Z [36;1mdef reject_directory_links(directory, entries):[0m
+2026-10-19T21:55:00.8262520Z [36;1m    assert not any((Path(directory) / name).is_symlink() and (Path(directory) / name).is_dir()[0m
+2026-10-19T21:55:00.8263134Z [36;1m                   for name in entries), 'Directory symlinks are unsupported'[0m
+2026-10-19T21:55:00.8263526Z [36;1m    return [][0m
+2026-10-19T21:55:00.8263895Z [36;1mcopy_verified('/usr/bin/python3.12', destination / 'bin/python3.12')[0m
+2026-10-19T21:55:00.8264427Z [36;1mshutil.copytree('/usr/lib/python3.12', destination / 'lib/python3.12',[0m
+2026-10-19T21:55:00.8264944Z [36;1m                copy_function=copy_verified, ignore=reject_directory_links)[0m
+2026-10-19T21:55:00.8265424Z [36;1mbuild_scope = 'lib/python3.12/config-3.12-x86_64-linux-gnu'[0m
+2026-10-19T21:55:00.8265963Z [36;1mbuild_files = [item for item in receipts if item['target'].startswith(build_scope + '/')][0m
+2026-10-19T21:55:00.8266650Z [36;1massert (destination / build_scope).is_dir() and build_files, 'Expected explicit CPython build scope'[0m
+2026-10-19T21:55:00.8267192Z [36;1mfor item in build_files:[0m
+2026-10-19T21:55:00.8267675Z [36;1m    assert checksum(Path(item['resolved'])) == checksum(destination / item['target']) == item['sha256'][0m
+2026-10-19T21:55:00.8268567Z [36;1mshutil.rmtree(destination / build_scope)[0m
+2026-10-19T21:55:00.8269251Z [36;1mreceipts = [item for item in receipts if not item['target'].startswith(build_scope + '/')][0m
+2026-10-19T21:55:00.8269821Z [36;1moutput = Path('build/qa/candidate-python-provisioning')[0m
+2026-10-19T21:55:00.8270215Z [36;1moutput.mkdir(parents=True)[0m
+2026-10-19T21:55:00.8270572Z [36;1mwith (output / 'distro-copy.json').open('x') as stream:[0m
+2026-10-19T21:55:00.8271132Z [36;1m    json.dump(dict(format='candidate_ci_distro_copy_v1', source='/usr', root=str(destination),[0m
+2026-10-19T21:55:00.8271784Z [36;1m        normalization='dereference_exact_file_bytes_without_ELF_edits', files=receipts,[0m
+2026-10-19T21:55:00.8272349Z [36;1m        excluded_build_scope=dict(path=build_scope, files=build_files,[0m
+2026-10-19T21:55:00.8273167Z [36;1m            reason='CPython development build/link configuration and objects are outside the inference runtime; strict native dependency closure still applies.')),[0m
+2026-10-19T21:55:00.8273884Z [36;1m        stream, sort_keys=True)[0m
+2026-10-19T21:55:00.8274170Z [36;1m    stream.write('\n')[0m
+2026-10-19T21:55:00.8274433Z [36;1mPY[0m
+2026-10-19T21:55:00.8274751Z [36;1m"$candidate_prefix/bin/python3.12" -m venv "$candidate_venv"[0m
+2026-10-19T21:55:00.8275185Z [36;1mcandidate_python="$candidate_venv/bin/python3"[0m
+2026-10-19T21:55:00.8275576Z [36;1m"$candidate_python" - "$candidate_prefix" <<'PY'[0m
+2026-10-19T21:55:00.8275929Z [36;1mimport hashlib, sys, sysconfig[0m
+2026-10-19T21:55:00.8276229Z [36;1mfrom pathlib import Path[0m
+2026-10-19T21:55:00.8276525Z [36;1massert sys.version_info[:2] == (3, 12)[0m
+2026-10-19T21:55:00.8276910Z [36;1massert Path(sys.base_prefix).resolve() == Path(sys.argv[1])[0m
+2026-10-19T21:55:00.8277484Z [36;1massert Path(sysconfig.get_path('stdlib')).resolve() == Path(sys.argv[1]) / 'lib/python3.12'[0m
+2026-10-19T21:55:00.8278588Z [36;1massert hashlib.sha256(Path(sys.executable).read_bytes()).digest() == hashlib.sha256(Path('/usr/bin/python3.12').read_bytes()).digest()[0m
+2026-10-19T21:55:00.8279197Z [36;1mPY[0m
+2026-10-19T21:55:00.8279590Z [36;1m"$candidate_python" -m pip install -r requirements.txt -r requirements-training.txt[0m
+2026-10-19T21:55:00.8280253Z [36;1mprintf '%s\n' "$candidate_venv/bin" >> "$GITHUB_PATH"[0m
+2026-10-19T21:55:00.8280725Z [36;1mprintf 'TULDOK_TRAINING_PYTHON=%s\n' "$candidate_python" >> "$GITHUB_ENV"[0m
+2026-10-19T21:55:00.8515845Z shell: /usr/bin/bash -e {0}
+2026-10-19T21:55:00.8516137Z env:
+2026-10-19T21:55:00.8516767Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:55:00.8517145Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:55:00.8517445Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:55:00.8518073Z ##[endgroup]
+2026-10-19T21:55:00.9337617Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-19T21:55:00.9645542Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-10-19T21:55:00.9660894Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-10-19T21:55:00.9668625Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-10-19T21:55:00.9702694Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-10-19T21:55:00.9728094Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-10-19T21:55:01.1113098Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [618 kB]
+2026-10-19T21:55:01.1311806Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [557 kB]
+2026-10-19T21:55:01.1451893Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [12.4 kB]
+2026-10-19T21:55:01.1568793Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1397 kB]
+2026-10-19T21:55:01.1648917Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [308 kB]
+2026-10-19T21:55:01.1674804Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1704 kB]
+2026-10-19T21:55:01.1799344Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [342 kB]
+2026-10-19T21:55:01.1814100Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1805 kB]
+2026-10-19T21:55:01.1915678Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [411 kB]
+2026-10-19T21:55:01.3006595Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1145 kB]
+2026-10-19T21:55:01.3083742Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [231 kB]
+2026-10-19T21:55:01.3104543Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1222 kB]
+2026-10-19T21:55:01.3186871Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [246 kB]
+2026-10-19T21:55:01.3640372Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1713 kB]
+2026-10-19T21:55:01.3735259Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [392 kB]
+2026-10-19T21:55:04.1680315Z Fetched 12.5 MB in 1s (9738 kB/s)
+2026-10-19T21:55:05.0376575Z Reading package lists...
+2026-10-19T21:55:05.0683176Z Reading package lists...
+2026-10-19T21:55:05.2426940Z Building dependency tree...
+2026-10-19T21:55:05.2434185Z Reading state information...
+2026-10-19T21:55:05.3993133Z python3.12-venv is already the newest version (3.12.3-1ubuntu0.17).
+2026-10-19T21:55:05.3993944Z python3.12-venv set to manually installed.
+2026-10-19T21:55:05.3994783Z 0 upgraded, 0 newly installed, 0 to remove and 81 not upgraded.
+2026-10-19T21:55:12.3062196Z Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+2026-10-19T21:55:13.1729388Z Collecting Pillow<13,>=10.2 (from -r requirements.txt (line 1))
+2026-10-19T21:55:13.2408164Z   Downloading pillow-12.3.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+2026-10-19T21:55:13.3232256Z Collecting psycopg==3.3.6 (from psycopg[binary]==3.3.6->-r requirements.txt (line 2))
+2026-10-19T21:55:13.3385968Z   Downloading psycopg-3.3.6-py3-none-any.whl.metadata (4.4 kB)
+2026-10-19T21:55:13.4372507Z Collecting jsonschema==4.26.0 (from -r requirements.txt (line 3))
+2026-10-19T21:55:13.4525520Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-10-19T21:55:13.6268927Z Collecting torch==2.8.0+cpu (from -r requirements-training.txt (line 3))
+2026-10-19T21:55:13.7437595Z   Downloading https://download-r2.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (29 kB)
+2026-10-19T21:55:13.9346907Z Collecting torchvision==0.23.0+cpu (from -r requirements-training.txt (line 4))
+2026-10-19T21:55:13.9689961Z   Downloading https://download-r2.pytorch.org/whl/cpu/torchvision-0.23.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (6.1 kB)
+2026-10-19T21:55:14.1266088Z Collecting scikit-learn==1.7.2 (from -r requirements-training.txt (line 5))
+2026-10-19T21:55:14.1422851Z   Downloading scikit_learn-1.7.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (11 kB)
+2026-10-19T21:55:14.2293933Z Collecting typing-extensions>=4.6 (from psycopg==3.3.6->psycopg[binary]==3.3.6->-r requirements.txt (line 2))
+2026-10-19T21:55:14.2448235Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-10-19T21:55:14.3339059Z Collecting attrs>=22.2.0 (from jsonschema==4.26.0->-r requirements.txt (line 3))
+2026-10-19T21:55:14.3493388Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-10-19T21:55:14.4303265Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema==4.26.0->-r requirements.txt (line 3))
+2026-10-19T21:55:14.4467179Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-10-19T21:55:14.5417279Z Collecting referencing>=0.28.4 (from jsonschema==4.26.0->-r requirements.txt (line 3))
+2026-10-19T21:55:14.5570784Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-10-19T21:55:14.9614460Z Collecting rpds-py>=0.25.0 (from jsonschema==4.26.0->-r requirements.txt (line 3))
+2026-10-19T21:55:14.9773354Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-10-19T21:55:15.0780928Z Collecting filelock (from torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:15.0937082Z   Downloading filelock-4.2.4-py3-none-any.whl.metadata (2.0 kB)
+2026-10-19T21:55:15.2939891Z Collecting setuptools (from torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:15.3093541Z   Downloading setuptools-84.2.0-py3-none-any.whl.metadata (6.6 kB)
+2026-10-19T21:55:15.3744576Z Collecting sympy>=1.13.3 (from torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:15.3901046Z   Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+2026-10-19T21:55:15.4712871Z Collecting networkx (from torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:15.4871289Z   Downloading networkx-3.7-py3-none-any.whl.metadata (6.7 kB)
+2026-10-19T21:55:15.5349488Z Collecting jinja2 (from torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:15.5461668Z   Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-10-19T21:55:15.6290921Z Collecting fsspec (from torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:15.6444026Z   Downloading fsspec-2026.9.0-py3-none-any.whl.metadata (10 kB)
+2026-10-19T21:55:16.2705195Z Collecting numpy (from torchvision==0.23.0+cpu->-r requirements-training.txt (line 4))
+2026-10-19T21:55:16.2865249Z   Downloading numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-10-19T21:55:16.6080193Z Collecting scipy>=1.8.0 (from scikit-learn==1.7.2->-r requirements-training.txt (line 5))
+2026-10-19T21:55:16.6234594Z   Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2026-10-19T21:55:16.6413652Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.4/62.4 kB 3.3 MB/s eta 0:00:00
+2026-10-19T21:55:16.7298139Z Collecting joblib>=1.2.0 (from scikit-learn==1.7.2->-r requirements-training.txt (line 5))
+2026-10-19T21:55:16.7453570Z   Downloading joblib-1.6.0-py3-none-any.whl.metadata (6.5 kB)
+2026-10-19T21:55:16.8813144Z Collecting threadpoolctl>=3.1.0 (from scikit-learn==1.7.2->-r requirements-training.txt (line 5))
+2026-10-19T21:55:16.8968597Z   Downloading threadpoolctl-3.7.0-py3-none-any.whl.metadata (24 kB)
+2026-10-19T21:55:17.2071503Z Collecting psycopg-binary==3.3.6 (from psycopg[binary]==3.3.6->-r requirements.txt (line 2))
+2026-10-19T21:55:17.2226405Z   Downloading psycopg_binary-3.3.6-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.7 kB)
+2026-10-19T21:55:17.3626702Z Collecting cloudpickle>=3.0 (from joblib>=1.2.0->scikit-learn==1.7.2->-r requirements-training.txt (line 5))
+2026-10-19T21:55:17.3779809Z   Downloading cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+2026-10-19T21:55:17.5086203Z Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:17.5240467Z   Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+2026-10-19T21:55:17.6890411Z Collecting MarkupSafe>=2.0 (from jinja2->torch==2.8.0+cpu->-r requirements-training.txt (line 3))
+2026-10-19T21:55:17.7048214Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2026-10-19T21:55:17.8034553Z Downloading psycopg-3.3.6-py3-none-any.whl (215 kB)
+2026-10-19T21:55:17.8330154Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 215.5/215.5 kB 7.4 MB/s eta 0:00:00
+2026-10-19T21:55:17.8483404Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-10-19T21:55:17.8526901Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 kB 30.9 MB/s eta 0:00:00
+2026-10-19T21:55:17.8884511Z Downloading https://download-r2.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (183.9 MB)
+2026-10-19T21:55:19.1394562Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 183.9/183.9 MB 31.4 MB/s eta 0:00:00
+2026-10-19T21:55:19.1750566Z Downloading https://download-r2.pytorch.org/whl/cpu/torchvision-0.23.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (1.9 MB)
+2026-10-19T21:55:19.1876234Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 175.0 MB/s eta 0:00:00
+2026-10-19T21:55:19.2034214Z Downloading scikit_learn-1.7.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.5 MB)
+2026-10-19T21:55:19.3551083Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.5/9.5 MB 63.1 MB/s eta 0:00:00
+2026-10-19T21:55:19.3707679Z Downloading psycopg_binary-3.3.6-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.2 MB)
+2026-10-19T21:55:19.4022030Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 176.8 MB/s eta 0:00:00
+2026-10-19T21:55:19.4179888Z Downloading pillow-12.3.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.9 MB)
+2026-10-19T21:55:19.4553378Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.9/6.9 MB 194.0 MB/s eta 0:00:00
+2026-10-19T21:55:19.4707675Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-10-19T21:55:19.4742856Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.5/67.5 kB 31.4 MB/s eta 0:00:00
+2026-10-19T21:55:19.4894062Z Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+2026-10-19T21:55:19.4940931Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 306.1/306.1 kB 102.5 MB/s eta 0:00:00
+2026-10-19T21:55:19.5094148Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-10-19T21:55:19.5291869Z Downloading numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+2026-10-19T21:55:19.6323789Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 151.4 MB/s eta 0:00:00
+2026-10-19T21:55:19.6478402Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-10-19T21:55:19.6659016Z Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-10-19T21:55:19.6714304Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 371.3/371.3 kB 103.3 MB/s eta 0:00:00
+2026-10-19T21:55:19.6879658Z Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+2026-10-19T21:55:19.8911150Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 120.9 MB/s eta 0:00:00
+2026-10-19T21:55:19.9064869Z Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-10-19T21:55:19.9402349Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 196.7 MB/s eta 0:00:00
+2026-10-19T21:55:19.9555187Z Downloading threadpoolctl-3.7.0-py3-none-any.whl (26 kB)
+2026-10-19T21:55:19.9726376Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-10-19T21:55:19.9758823Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 22.1 MB/s eta 0:00:00
+2026-10-19T21:55:19.9910319Z Downloading filelock-4.2.4-py3-none-any.whl (162 kB)
+2026-10-19T21:55:19.9950338Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 162.5/162.5 kB 67.0 MB/s eta 0:00:00
+2026-10-19T21:55:20.0105133Z Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-10-19T21:55:20.0146549Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 221.7/221.7 kB 83.9 MB/s eta 0:00:00
+2026-10-19T21:55:20.0263353Z Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-10-19T21:55:20.0301436Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 kB 56.0 MB/s eta 0:00:00
+2026-10-19T21:55:20.0461060Z Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-10-19T21:55:20.0594249Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 183.5 MB/s eta 0:00:00
+2026-10-19T21:55:20.0750262Z Downloading setuptools-84.2.0-py3-none-any.whl (875 kB)
+2026-10-19T21:55:20.0823912Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 875.8/875.8 kB 154.3 MB/s eta 0:00:00
+2026-10-19T21:55:20.0978553Z Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+2026-10-19T21:55:20.1150567Z Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-10-19T21:55:20.1322736Z Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-10-19T21:55:20.1380566Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 132.1 MB/s eta 0:00:00
+2026-10-19T21:55:20.8188391Z Installing collected packages: mpmath, typing-extensions, threadpoolctl, sympy, setuptools, rpds-py, psycopg-binary, Pillow, numpy, networkx, MarkupSafe, fsspec, filelock, cloudpickle, attrs, scipy, referencing, psycopg, joblib, jinja2, torch, scikit-learn, jsonschema-specifications, torchvision, jsonschema
+2026-10-19T21:55:45.6458520Z Successfully installed MarkupSafe-3.0.4 Pillow-12.3.0 attrs-26.1.0 cloudpickle-3.1.2 filelock-4.2.4 fsspec-2026.9.0 jinja2-3.1.6 joblib-1.6.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mpmath-1.3.0 networkx-3.7 numpy-2.5.4 psycopg-3.3.6 psycopg-binary-3.3.6 referencing-0.37.0 rpds-py-2026.9.1 scikit-learn-1.7.2 scipy-1.18.1 setuptools-84.2.0 sympy-1.14.0 threadpoolctl-3.7.0 torch-2.8.0+cpu torchvision-0.23.0+cpu typing-extensions-4.16.0
+2026-10-19T21:55:46.1005203Z ##[group]Run test "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"
+2026-10-19T21:55:46.1005746Z [36;1mtest "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"[0m
+2026-10-19T21:55:46.1006143Z [36;1mnode tests/browser_model_development.cjs[0m
+2026-10-19T21:55:46.1072179Z shell: /usr/bin/bash -e {0}
+2026-10-19T21:55:46.1072441Z env:
+2026-10-19T21:55:46.1073019Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:55:46.1073364Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:55:46.1073627Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:55:46.1074047Z   TULDOK_TRAINING_PYTHON: /home/runner/work/_temp/tuldok-candidate-python312/bin/python3
+2026-10-19T21:55:46.1074486Z ##[endgroup]
+2026-10-19T21:55:49.0511045Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data
+2026-10-19T21:55:53.3066908Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls
+2026-10-19T21:55:53.6151255Z PASS invalid held-out class coverage blocks release before training
+2026-10-19T21:55:54.1725317Z PASS fixed split preview, exact reviewed source release and immutable ZIP download
+2026-10-19T21:56:15.6246116Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states
+2026-10-19T21:56:15.9170798Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked
+2026-10-19T21:56:33.7220182Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge
+2026-10-19T21:56:34.4121097Z PASS Compatible frozen validation membership supports measured comparison across actual trained models
+2026-10-19T21:56:35.5024738Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload
+2026-10-19T21:56:56.8525765Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode
+2026-10-19T21:56:56.9352215Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas
+2026-10-19T21:56:57.3140581Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers
+2026-10-19T21:56:57.6825209Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout
+2026-10-19T21:56:58.2855741Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-9GF03s
+2026-10-19T21:56:58.3416372Z ##[group]Run "$TULDOK_TRAINING_PYTHON" - <<'PY'
+2026-10-19T21:56:58.3416794Z [36;1m"$TULDOK_TRAINING_PYTHON" - <<'PY'[0m
+2026-10-19T21:56:58.3417089Z [36;1mfrom pathlib import Path[0m
+2026-10-19T21:56:58.3417349Z [36;1mimport subprocess, sys[0m
+2026-10-19T21:56:58.3417987Z [36;1mreceipts = list(Path('build/qa/model-development').glob('*/receipt.json'))[0m
+2026-10-19T21:56:58.3418649Z [36;1massert len(receipts) == 1, 'Expected exactly one preceding actual model browser receipt'[0m
+2026-10-19T21:56:58.3419254Z [36;1msubprocess.run([sys.executable, 'tests/prepare_candidate_runtime.py',[0m
+2026-10-19T21:56:58.3419731Z [36;1m    '--output', 'build/qa/candidate-runtime-preparation',[0m
+2026-10-19T21:56:58.3420159Z [36;1m    '--model-browser-receipt', str(receipts[0])], check=True)[0m
+2026-10-19T21:56:58.3420494Z [36;1mPY[0m
+2026-10-19T21:56:58.3420828Z [36;1mcat build/qa/candidate-runtime-preparation/runtime.env >> "$GITHUB_ENV"[0m
+2026-10-19T21:56:58.3486474Z shell: /usr/bin/bash -e {0}
+2026-10-19T21:56:58.3486727Z env:
+2026-10-19T21:56:58.3487296Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:56:58.3487635Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:56:58.3488192Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:56:58.3488599Z   TULDOK_TRAINING_PYTHON: /home/runner/work/_temp/tuldok-candidate-python312/bin/python3
+2026-10-19T21:56:58.3489031Z ##[endgroup]
+2026-10-19T21:57:07.7730172Z {"config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13", "excluded_unused_scope": ["torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.", "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.", "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."], "file_count": 21042, "format": "candidate_ci_runtime_preparation_v1", "interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3", "inventory_sha256": "15956e195838cdcf41161ffa707c5e3fba346f6ceca1ff6cf259b7d44873e909", "model_browser_receipt": {"catalog_path": "/tmp/tuldok-model-development-L6gLsI/data", "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-9GF03s/receipt.json", "run_ids": ["bf0b3ed9081d461fac38603201caccfe", "848b032883754452be8bd8cb4fa983cd", "fe4ebfd84d134aedb48ef5e483bda9d9"], "sha256": "f462dfc5c8d53c9ae3b1ee15b5c1ad433fb9b5e41ccc0bb75197f32e15575d63"}, "profile": "captured_cpu_python_v1", "rights": "Upstream metadata/notices are retained; no new redistribution permission is asserted.", "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.", "source_sha256": {"candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547", "recipe_process.py": "247c573d6a9bfdc4e189b3a940650c91102cb40273751225f0fef6dd79999e6f", "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e", "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"}, "total_bytes": 823402896, "versions": {"filelock": "4.2.4", "fsspec": "2026.9.0", "jinja2": "3.1.6", "markupsafe": "3.0.4", "mpmath": "1.3.0", "networkx": "3.7", "numpy": "2.5.4", "pillow": "12.3.0", "sympy": "1.14.0", "torch": "2.8.0+cpu", "typing-extensions": "4.16.0"}}
+2026-10-19T21:57:07.9710417Z ##[group]Run test "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"
+2026-10-19T21:57:07.9711282Z [36;1mtest "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"[0m
+2026-10-19T21:57:07.9712061Z [36;1mnode tests/browser_candidate_package.cjs[0m
+2026-10-19T21:57:07.9806200Z shell: /usr/bin/bash -e {0}
+2026-10-19T21:57:07.9806613Z env:
+2026-10-19T21:57:07.9807991Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:57:07.9808601Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:57:07.9809061Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:57:07.9809827Z   TULDOK_TRAINING_PYTHON: /home/runner/work/_temp/tuldok-candidate-python312/bin/python3
+2026-10-19T21:57:07.9811133Z   TULDOK_PACKAGE_RUNTIME_CONFIG: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-runtime-preparation/runtime-config.json
+2026-10-19T21:57:07.9812551Z   TULDOK_PACKAGE_RUNTIME_INVENTORY: 15956e195838cdcf41161ffa707c5e3fba346f6ceca1ff6cf259b7d44873e909
+2026-10-19T21:57:07.9813983Z   TULDOK_MODEL_BROWSER_RECEIPT: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-9GF03s/receipt.json
+2026-10-19T21:57:07.9814962Z ##[endgroup]
+2026-10-19T21:57:08.0240250Z Capturing the explicitly selected runtime in the stopped browser catalog…
+2026-10-19T21:58:38.5106633Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots
+2026-10-19T21:58:38.5108225Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic
+2026-10-19T21:58:38.5253736Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-4shIwu
+2026-10-19T21:58:38.5805087Z ##[group]Run actions/upload-artifact@v4
+2026-10-19T21:58:38.5805559Z with:
+2026-10-19T21:58:38.5805913Z   name: candidate-package-captured-cpu
+2026-10-19T21:58:38.5806376Z   path: build/qa/**
+2026-10-19T21:58:38.5806746Z   if-no-files-found: error
+2026-10-19T21:58:38.5807148Z   compression-level: 6
+2026-10-19T21:58:38.5807438Z   overwrite: false
+2026-10-19T21:58:38.5807658Z   include-hidden-files: false
+2026-10-19T21:58:38.5808416Z env:
+2026-10-19T21:58:38.5808981Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_candidate
+2026-10-19T21:58:38.5809348Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:58:38.5809704Z   PYTHONDONTWRITEBYTECODE: 1
+2026-10-19T21:58:38.5810219Z   TULDOK_TRAINING_PYTHON: /home/runner/work/_temp/tuldok-candidate-python312/bin/python3
+2026-10-19T21:58:38.5811174Z   TULDOK_PACKAGE_RUNTIME_CONFIG: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-runtime-preparation/runtime-config.json
+2026-10-19T21:58:38.5812137Z   TULDOK_PACKAGE_RUNTIME_INVENTORY: 15956e195838cdcf41161ffa707c5e3fba346f6ceca1ff6cf259b7d44873e909
+2026-10-19T21:58:38.5813075Z   TULDOK_MODEL_BROWSER_RECEIPT: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-9GF03s/receipt.json
+2026-10-19T21:58:38.5813687Z ##[endgroup]
+2026-10-19T21:58:38.7460949Z (node:5697) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-19T21:58:38.7462328Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-19T21:58:38.7621352Z With the provided path, there will be 45 files uploaded
+2026-10-19T21:58:38.7627062Z Artifact name is valid!
+2026-10-19T21:58:38.7627574Z Root directory input is valid!
+2026-10-19T21:58:39.0393112Z Beginning upload of artifact content to blob storage
+2026-10-19T21:58:39.2671526Z (node:5697) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-19T21:58:39.6507400Z Uploaded bytes 3790942
+2026-10-19T21:58:39.6895707Z Finished uploading artifact content to blob storage!
+2026-10-19T21:58:39.6896712Z SHA256 digest of uploaded artifact zip is 6c3d8a3280619297343c3da3e7e75ef0de28016a0678b27509a46b1934513d9f
+2026-10-19T21:58:39.6899140Z Finalizing artifact upload
+2026-10-19T21:58:39.9202678Z Artifact candidate-package-captured-cpu.zip successfully finalized. Artifact ID 12224138943
+2026-10-19T21:58:39.9204504Z Artifact candidate-package-captured-cpu has been successfully uploaded! Final size is 3790942 bytes. Artifact ID is 12224138943
+2026-10-19T21:58:39.9209955Z Artifact download URL: https://github.com/MrScripty/Tuldok/actions/runs/39330890527/artifacts/12224138943
+2026-10-19T21:58:39.9399836Z Post job cleanup.
+2026-10-19T21:58:40.0612893Z (node:5709) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-19T21:58:40.0613889Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-19T21:58:40.0772632Z Post job cleanup.
+2026-10-19T21:58:40.1736718Z [command]/usr/bin/git version
+2026-10-19T21:58:40.1795735Z git version 2.55.0
+2026-10-19T21:58:40.1855777Z Temporarily overriding HOME='/home/runner/work/_temp/eece8abc-bd22-47e2-af92-5507531f5a57' before making global git config changes
+2026-10-19T21:58:40.1858408Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-19T21:58:40.1859984Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Tuldok/Tuldok
+2026-10-19T21:58:40.1891786Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-19T21:58:40.1939708Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-19T21:58:40.2216302Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-19T21:58:40.2252977Z http.https://github.com/.extraheader
+2026-10-19T21:58:40.2271509Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-19T21:58:40.2316711Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-19T21:58:40.2582842Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-19T21:58:40.2623346Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-19T21:58:40.3006602Z Print service container logs: 7a098d10f81640d68a983a59629164c6_postgres17_211178
+2026-10-19T21:58:40.3011811Z ##[command]/usr/bin/docker logs --details 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:58:40.3162264Z  The files belonging to this database system will be owned by user "postgres".
+2026-10-19T21:58:40.3164981Z  initdb: warning: enabling "trust" authentication for local connections
+2026-10-19T21:58:40.3165935Z  This user must also own the server process.
+2026-10-19T21:58:40.3167173Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-10-19T21:58:40.3169020Z  2026-10-19 21:54:53.399 UTC [1] LOG:  starting PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-10-19T21:58:40.3170333Z  2026-10-19 21:54:53.399 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-10-19T21:58:40.3171206Z  2026-10-19 21:54:53.399 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-10-19T21:58:40.3172091Z  2026-10-19 21:54:53.400 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-10-19T21:58:40.3173054Z  2026-10-19 21:54:53.403 UTC [64] LOG:  database system was shut down at 2026-10-19 21:54:53 UTC
+2026-10-19T21:58:40.3173944Z  2026-10-19 21:54:53.406 UTC [1] LOG:  database system is ready to accept connections
+2026-10-19T21:58:40.3174612Z  
+2026-10-19T21:58:40.3175087Z  The database cluster will be initialized with locale "en_US.utf8".
+2026-10-19T21:58:40.3175843Z  The default database encoding has accordingly been set to "UTF8".
+2026-10-19T21:58:40.3176574Z  The default text search configuration will be set to "english".
+2026-10-19T21:58:40.3177153Z  
+2026-10-19T21:58:40.3177486Z  Data page checksums are disabled.
+2026-10-19T21:58:40.3178100Z  
+2026-10-19T21:58:40.3178607Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2026-10-19T21:58:40.3179286Z  creating subdirectories ... ok
+2026-10-19T21:58:40.3179819Z  selecting dynamic shared memory implementation ... posix
+2026-10-19T21:58:40.3180421Z  selecting default "max_connections" ... 100
+2026-10-19T21:58:40.3180962Z  selecting default "shared_buffers" ... 128MB
+2026-10-19T21:58:40.3181474Z  selecting default time zone ... Etc/UTC
+2026-10-19T21:58:40.3181961Z  creating configuration files ... ok
+2026-10-19T21:58:40.3182427Z  running bootstrap script ... ok
+2026-10-19T21:58:40.3182928Z  performing post-bootstrap initialization ... ok
+2026-10-19T21:58:40.3183444Z  syncing data to disk ... ok
+2026-10-19T21:58:40.3183805Z  
+2026-10-19T21:58:40.3184072Z  
+2026-10-19T21:58:40.3184435Z  Success. You can now start the database server using:
+2026-10-19T21:58:40.3184927Z  
+2026-10-19T21:58:40.3185316Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2026-10-19T21:58:40.3185875Z  
+2026-10-19T21:58:40.3186922Z  waiting for server to start....2026-10-19 21:54:53.097 UTC [48] LOG:  starting PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-10-19T21:58:40.3188591Z  2026-10-19 21:54:53.098 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-10-19T21:58:40.3189510Z  2026-10-19 21:54:53.100 UTC [51] LOG:  database system was shut down at 2026-10-19 21:54:53 UTC
+2026-10-19T21:58:40.3190254Z  2026-10-19 21:54:53.103 UTC [48] LOG:  database system is ready to accept connections
+2026-10-19T21:58:40.3190669Z   done
+2026-10-19T21:58:40.3190863Z  server started
+2026-10-19T21:58:40.3191061Z  CREATE DATABASE
+2026-10-19T21:58:40.3191247Z  
+2026-10-19T21:58:40.3191410Z  
+2026-10-19T21:58:40.3191721Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2026-10-19T21:58:40.3192431Z  
+2026-10-19T21:58:40.3192786Z  waiting for server to shut down...2026-10-19 21:54:53.280 UTC [48] LOG:  received fast shutdown request
+2026-10-19T21:58:40.3193597Z  .2026-10-19 21:54:53.280 UTC [48] LOG:  aborting any active transactions
+2026-10-19T21:58:40.3194210Z  2026-10-19 21:54:53.282 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+2026-10-19T21:58:40.3194747Z  2026-10-19 21:54:53.284 UTC [49] LOG:  shutting down
+2026-10-19T21:58:40.3195157Z  2026-10-19 21:54:53.284 UTC [49] LOG:  checkpoint starting: shutdown immediate
+2026-10-19T21:58:40.3197273Z  2026-10-19 21:54:53.299 UTC [49] LOG:  checkpoint complete: wrote 925 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.012 s, sync=0.003 s, total=0.016 s; sync files=301, longest=0.002 s, average=0.001 s; distance=4256 kB, estimate=4256 kB; lsn=0/19179C0, redo lsn=0/19179C0
+2026-10-19T21:58:40.3200053Z  2026-10-19 21:54:53.306 UTC [48] LOG:  database system is shut down
+2026-10-19T21:58:40.3200631Z   done
+2026-10-19T21:58:40.3200853Z  server stopped
+2026-10-19T21:58:40.3201045Z  
+2026-10-19T21:58:40.3201292Z  PostgreSQL init process complete; ready for start up.
+2026-10-19T21:58:40.3201607Z  
+2026-10-19T21:58:40.3207288Z Stop and remove container: 7a098d10f81640d68a983a59629164c6_postgres17_211178
+2026-10-19T21:58:40.3212661Z ##[command]/usr/bin/docker rm --force 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:58:40.4562153Z 4452f695cd90ca4d79a7f2d72709c7eef46a770f2eb83a3a8f2a63a1dcfef7f5
+2026-10-19T21:58:40.4589837Z Remove container network: github_network_9448fce6d5784257b7bd07085f7817e6
+2026-10-19T21:58:40.4594067Z ##[command]/usr/bin/docker network rm github_network_9448fce6d5784257b7bd07085f7817e6
+2026-10-19T21:58:40.5642230Z github_network_9448fce6d5784257b7bd07085f7817e6
+2026-10-19T21:58:40.5714144Z Cleaning up orphan processes
+2026-10-19T21:58:40.6084210Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

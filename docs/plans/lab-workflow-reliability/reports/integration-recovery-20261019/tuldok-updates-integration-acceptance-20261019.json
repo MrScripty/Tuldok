@@ -1208,13 +1208,13 @@
     "99": "e0357c20af9c9213422eb95861ef385c9caed2dd",
     "100": "4e533adb073c3d9ad71191695ba4f551c69072b5",
     "101": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
-    "102": "4bcf43063ff780fd5e44894701d65338abdc0579",
-    "103": "c919c663cedb71df3002ef4b8f9767211ed39e22",
-    "104": "1c9f01cb7e4adafd169dd56e95e02f0f5025b35d",
-    "105": "9f852f58bb8c4551c24348c4ec4d4f64f6e33bf4",
-    "106": "0e7b3cbf5047107e7d62b95f3d202ecf4aab9b85",
+    "102": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "103": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+    "104": "e9f0061fca37e27886bcf1c43395450c18e3a0a4",
+    "105": "43591e14c64540d4110b74971430e13762909bd7",
+    "106": "e17875a926c89aa00cc9d313ce30c89a398b8e83",
     "107": "07dde98df856619cab929eb9dc8d3275151c69bd",
-    "108": "70dcaeb0382a97d051275319881acf589bfb931d",
+    "108": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
     "109": "98380228a7edb8eefb4715cba27ca76722756cf9",
     "110": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625"
   },
@@ -1438,7 +1438,25 @@
     "correctness": "Independently10purePASS0.352s; actualinitial16 had15passes+1test-envelopeTypeError, correctedONLYaffectedshutdown1PASS6.439s; originalfailedlogretained; productionhashunchanged",
     "review": "tuldok-m4-refinement-independent-review.json",
     "final_source_proof": "tuldok-m4-refinement-frozen-source.json",
-    "performance": "Newfullsamehead983matrixrunningquiet; one-itemregressionstillobserved. No usefulgain/retentionclaim untilfull20/Refresults."
+    "performance": {
+      "state": "FULL54pairedobservations/108arms complete exit0",
+      "source": "98380228a7edb8eefb4715cba27ca76722756cf9",
+      "twenty_item_paired_ratios": {
+        "Run_history8": 0.7,
+        "Run_history55": 0.695,
+        "publication_history56": 0.71
+      },
+      "all27_twenty_item_pairs_faster": true,
+      "one_item_regression_ratios": [
+        2.717,
+        2.577,
+        2.123
+      ],
+      "root_disposition": "Retainexplicitboundedmanysmallartifactcollectionforscopedmeasuredneutraloutputs; defaultindividualunchanged. Noautomatic/generic/facade/fullworkflowgainclaim.",
+      "hash_counts_events_equal": true,
+      "cleanup": "bothknownschemasindependentlyabsent",
+      "archive": "authorwritingfinalpositive+negativefullraw; candidateheadimmutable983"
+    }
   },
   "batch_consumer_final_independent_review": {
     "qualified_source": "fd42361f043c201290c5b6297a384652320044ed",
@@ -1446,7 +1464,15 @@
     "current_composed": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625",
     "actual": "8pass145.991s",
     "independent": "clear inclbothschemaabsenceSELECTs; limitsreceipt",
-    "pending": "3affectedactualafternewproducerquietexit+hosted/serial"
+    "pending": "3affectedactualafternewproducerquietexit+hosted/serial",
+    "affected_actual": {
+      "source": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625",
+      "passed": 3,
+      "seconds": 37.842,
+      "local_report_head": "8d57fb59142d468ee63b4fd7e218c56eb4dc1bd0",
+      "scope": "20SDKsuccess/deliveryrevocation/exactpublicationRef",
+      "cleanup": "authorindependent2schemaabsencequeries; rootawaitingfinalarchive/normalhistory"
+    }
   },
   "indexed_final_composition": {
     "remote": "70dcaeb0382a97d051275319881acf589bfb931d",
@@ -1456,7 +1482,16 @@
     "conflicts": "Onlydocsectionconflict; retainedbothindexedcontractandscientificRefparagraph. No productconflicts.",
     "root_added_test": "ActualC2sameRef viaWorkflowClientcollect_batch(index+2shards wholeSHA/mode0600/oneSDKbatch/nosegmentfallback) and scientificsameRefdelta0unknowncriterion; afterhelperoriginalcounts/charge/reservation/eventsconservation",
     "review": "70helperindependentlyclearaftermissingmkdirfixed; finalmetadataUUIDpreregistrationreviewpending",
-    "actual": "2actualC2casespendingquietrelease; no exactcomposedacceptanceclaim",
+    "actual": {
+      "source": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
+      "passed": 2,
+      "seconds": 22.431,
+      "skipped": 0,
+      "all_earlier_limits_retained": true,
+      "composed_sdk_batch_and_scientific_same_ref": "passed",
+      "cleanup": "bothpre-registeredschemasindependentlyabsent",
+      "review": "final9dfixtureownershipindependentlyclear; helper70reviewclear"
+    },
     "old_unknown_schemas": "Original2unownednamespacecandidatesremainuntouched; newfixturespreregisterexactUUIDbeforeconstructors"
   },
   "preservation_final_independent": {
@@ -1468,5 +1503,77 @@
     "changed_or_missing_registrations": 0,
     "original_paths_all_exist": true,
     "cleanup": "NONE; originalworknotdeleted/pruned/edited"
+  },
+  "pr99_final_qualified": {
+    "pr": 99,
+    "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+    "base_at_acceptance": "51c081cd8534728e91e3b76294b8526b6ee47269",
+    "tested_base": "f866252782310211b887301a674ba2a62c353709",
+    "source_and_current_merge_tree": "6d9059b51ed8efae9ad32fff9012fdcb9d489ec2",
+    "qualification": "all relevant hosted checks passed; exactpublicationsUI andownedbrowsercleanupscopes reviewed",
+    "limitations": [
+      "FullPython1601 passedwith72explicit skips. IsolatedAgent74/MCP19 andpublication32passedwithoutskips.",
+      "SeparatecapturedCPU job proves actualtrainingbrowserpluscapturedTinyCNNforwardinference, notcapturedtraining/CUDA/scienceacceptance."
+    ],
+    "lifecycle": {
+      "run": 39330890531,
+      "job": 118328484057,
+      "conclusion": "success",
+      "all_steps": 162,
+      "non_success_steps": 0,
+      "log_sha256": "a4010d2971058abf155f82865c73c629a03b56a34a6f15759e7ed596a0e6d802",
+      "summaries": [
+        "2026-10-19T21:58:12.8701397Z Ran 30 tests in 8.954s",
+        "2026-10-19T21:58:12.8701740Z OK",
+        "2026-10-19T22:00:50.0964944Z Ran 32 tests in 156.645s",
+        "2026-10-19T22:00:50.0965382Z OK",
+        "2026-10-19T22:01:56.2882943Z Ran 15 tests in 22.115s",
+        "2026-10-19T22:01:56.2883494Z OK",
+        "2026-10-19T22:01:57.0626699Z Ran 11 tests in 0.583s",
+        "2026-10-19T22:01:57.0627071Z OK",
+        "2026-10-19T22:01:57.2785042Z Ran 9 tests in 0.107s",
+        "2026-10-19T22:01:57.2834969Z OK",
+        "2026-10-19T22:02:01.0638024Z Ran 12 tests in 3.602s",
+        "2026-10-19T22:02:01.0638602Z OK (skipped=1)",
+        "2026-10-19T22:02:01.4869289Z Ran 9 tests in 0.278s",
+        "2026-10-19T22:02:01.4869647Z OK (skipped=1)",
+        "2026-10-19T22:12:55.5676312Z Ran 74 tests in 644.983s",
+        "2026-10-19T22:12:55.5676697Z OK",
+        "2026-10-19T22:13:44.7620871Z Ran 19 tests in 49.015s",
+        "2026-10-19T22:13:44.7621259Z OK",
+        "2026-10-19T22:15:35.6249652Z Ran 22 tests in 110.657s",
+        "2026-10-19T22:15:35.6250061Z OK",
+        "2026-10-19T22:19:25.6311846Z Ran 24 tests in 229.451s",
+        "2026-10-19T22:19:25.6312149Z OK",
+        "2026-10-19T22:21:24.4405820Z Ran 34 tests in 118.238s",
+        "2026-10-19T22:21:24.4408724Z OK",
+        "2026-10-19T22:21:59.6428447Z Ran 13 tests in 34.558s",
+        "2026-10-19T22:21:59.6428803Z OK",
+        "2026-10-19T22:22:12.9386776Z Ran 5 tests in 12.580s",
+        "2026-10-19T22:22:12.9387093Z OK",
+        "2026-10-19T22:57:23.8109268Z Ran 1601 tests in 2109.598s",
+        "2026-10-19T22:57:23.8109974Z OK (skipped=72)"
+      ]
+    },
+    "cpu": {
+      "run": 39330890527,
+      "job": 118328484468,
+      "conclusion": "success",
+      "all_steps": 13,
+      "non_success_steps": 0,
+      "log_sha256": "d6c785125e9d64e9d6f5735bb03e82eea1d3a7cb42da9edd2ab767e57eded430",
+      "summaries": []
+    },
+    "relevant_browser": "New actual publicationbrowser +controller passed; actualnative_text_import+ownedcleanup passed; lateactualmodel/fitbrowserspassed."
+  },
+  "pr102_pr103_ci_repair": {
+    "original_failed": "1024bc/103c919 lifecycle failedsameAbortController missing VM fixture; full1622/1636Pythonpassed72skips; bothCPU13success",
+    "published102": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "published103": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+    "scope": "2fixturelinereplacements only; no product/assertionchanges",
+    "independent": "102NodescriptPASSexit0/0.208stoolwall, sourceclear; root103exact5cdNodePASS0.217stoolwall",
+    "104_106": "wholehistory normallymerged; ONLY6evidencefilecontentchanges sincefixturealreadycorrectin104",
+    "109_110_108": "pendingnormalhistorycompositionaftercompletedmatrix/actualgates; theirfixturealreadycorrect",
+    "fresh_hosted": "pendingcorrectedheads; oldfailedjobsnotacceptance"
   }
 }
