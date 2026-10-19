@@ -48,7 +48,8 @@ retargets it. No merge is permitted before independent review and qualification.
 
 The bounded first slice adds deterministic required-field-payload capacity
 checks to the existing evidence-policy owner. Write set: `extension_evidence.py`,
-`tests/test_run_preflight_publication.py`, affected canonical contract docs and
+`tests/test_run_preflight_publication.py`, affected canonical contract docs,
+`.github/workflows/tests.yml` for an early existing-host PostgreSQL gate, and
 this plan directory. It adds no persistent representation, wire version, grant,
 process, scheduler or runtime dependency. Required array payload sizes must fit
 per-file, selected shard and aggregate caps; shared files count once. Headers,

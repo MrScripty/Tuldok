@@ -72,3 +72,13 @@
 - Affected focused group:43 tests,40 passed and3 PostgreSQL skips in4.611s.
   [Exact reports/logs](reports/m1-output-bounds/validation.json) retain the
   before/after witnesses and evidence limits. No local PostgreSQL pass claimed.
+
+- Tightened the new PostgreSQL negative fixture: raw Project input SHA now
+  comes from the manifest, with a valid graph-creation control before changing
+  the output bound. Independent follow-up review cleared this test-only repair;
+  local module remains9 passed/1 PostgreSQL skip.
+- Added the focused module immediately after existing CI dependency setup,
+  against the existing PostgreSQL17 service, so its actual no-effect proof runs
+  before long training/agent/full suites. This directly affected workflow is
+  added to the slice write set; read-only permissions and existing full suite
+  remain unchanged. Hosted result remains pending.
