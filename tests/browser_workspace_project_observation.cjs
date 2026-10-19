@@ -6,6 +6,7 @@ const {spawn}=require('node:child_process');
 const {waitForDebugger}=require('./browser_startup.cjs');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-project-observation-'));
 const id='a'.repeat(32),sha='b'.repeat(64),changedSha='c'.repeat(64),roles=['task','model','trainer','evaluator','view'];
+const recipeContract='recipes.inspect/4/0080ae0e39bf758b9c96c3208ef1614a9335f257731cfde935a23d8b486dedb1',recipeHeaders=[];
 const reference={id:'recipe',label:'Authored recipe',path:'recipe.json',status:'available',integrity:'verified',observed_sha256:sha};
 let observation={schema_version:2,id,name:'Authored observation fixture',mode:'inspection',execution:'unsupported',manifest_status:'unchanged',manifest_sha256:sha,data:[],recipes:[reference],evidence:[{id:'note',label:'Live evidence',path:'note.txt',status:'available',integrity:'unverified',observed_sha256:sha}],requirements:[],activity:{available:true,phase:'Fixture',message:'External observation',state:'running',producer:'Authored fixture',updated_at:new Date().toISOString(),progress:{completed:1,total:2}}};
 const selection=Object.fromEntries(roles.map(kind=>[kind,{id:kind,version:'1',sha256:sha}]));
@@ -15,20 +16,25 @@ const html=`<!doctype html><title>Project observation regression</title><body>
 <div id="data"></div><div id="pipeline"></div><div id="runs"></div>
 <dialog id="project-import-dialog"><button id="project-import-close"></button><form id="project-import-form"></form><button id="project-import-submit"></button></dialog>
 <dialog id="project-open-dialog"><button id="project-open-close"></button><button id="project-roots-refresh"></button><form id="project-open-form"></form><select id="project-root"></select><button id="project-open-submit"></button><p id="project-open-status"></p><input id="project-manifest"></dialog><button id="open-project"></button>
-<script>window.workspaceEscape=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');window.WorkspaceExternalProject=()=>({cancel(){}});window.TuldokAuth={identity:()=>({kind:'owner',actor_id:'fixture-owner',credential_id:'fixture-session'}),fetch:(...args)=>fetch(...args)};</script>
-<script src="/workspace-service.js"></script><script src="/workspace-project-activity.js"></script><script src="/workspace-projects.js"></script>
+<script>window.workspaceEscape=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');window.TuldokAuth={identity:()=>({kind:'owner',actor_id:'fixture-owner',credential_id:'fixture-session'}),fetch:(...args)=>fetch(...args)};</script>
+<script src="/workspace-service.js"></script><script src="/workspace-external.js"></script><script src="/workspace-project-activity.js"></script><script src="/workspace-projects.js"></script>
 <script>window.projectUI=WorkspaceProjects({select:document.getElementById('source'),roots:Object.fromEntries(['data','pipeline','runs'].map(name=>[name,document.getElementById(name)])),announce(){},switchSource(){},contextChanged(){},openCatalogRecord(){},openExternalGraph(){},openExternalRun(){}});window.showProject=view=>projectUI.show(document.getElementById('source').value,view);</script>`;
-let snapshotReads=0,recipeReads=0,holdRecipe=0,heldRecipe=null,holdEvidence=false,heldEvidence=null,mutations=0;
+let snapshotReads=0,recipeReads=0,ordinaryReads=0,holdRecipe=0,heldRecipe=null,holdEvidence=false,heldEvidence=null,mutations=0;
 function reply(response,value){response.setHeader('Content-Type','application/json');response.end(JSON.stringify(value));}
 const server=http.createServer((request,response)=>{
   if(request.method!=='GET'){mutations++;response.writeHead(405);response.end();return;}
   if(request.url==='/'){response.setHeader('Content-Type','text/html');response.end(html);return;}
-  if(['/workspace-service.js','/workspace-project-activity.js','/workspace-projects.js'].includes(request.url)){response.setHeader('Content-Type','text/javascript');response.end(fs.readFileSync(path.join(root,'static',request.url.slice(1))));return;}
+  if(['/workspace-service.js','/workspace-external.js','/workspace-project-activity.js','/workspace-projects.js'].includes(request.url)){response.setHeader('Content-Type','text/javascript');response.end(fs.readFileSync(path.join(root,'static',request.url.slice(1))));return;}
   if(request.url==='/api/workspace/project-snapshots/'+id){snapshotReads++;reply(response,observation);return;}
   if(request.url.startsWith('/api/workspace/projects/'+id+'/recipes/')){
+    recipeHeaders.push(request.headers['tuldok-operation-contract']);
+    if(recipeHeaders.at(-1)!==recipeContract){response.statusCode=409;reply(response,{error:'Expected current recipe inspection contract',code:'unsupported'});return;}
+    if(request.url.includes('/recipes/ordinary?')){ordinaryReads++;reply(response,{definition:{schema_version:1,format:'external_recipe_v1',name:'Authored CPU restore recipe',runtime:'managed_torch_python_v1'},inputs:{},parameter_definitions:{}});return;}
     recipeReads++;if(recipeReads===holdRecipe){heldRecipe=()=>reply(response,inspection);return;}
     reply(response,inspection);return;
   }
+  if(request.url==='/api/workbench/releases/input-candidates'){reply(response,{releases:[]});return;}
+  if(request.url==='/api/workspace/run-artifact-inputs'){reply(response,{runs:[]});return;}
   if(request.url==='/api/workspace/projects/'+id+'/evidence/note'){
     const value={id:'note',external:true,label:'Live evidence',text:'Evidence '+observation.evidence[0].observed_sha256,sha256:observation.evidence[0].observed_sha256};
     if(holdEvidence){holdEvidence=false;heldEvidence=()=>reply(response,value);return;}
@@ -101,6 +107,13 @@ function check(name,value){checks.push({name,passed:value});if(!value)failures.p
   await holdInner();await evaluate('document.getElementById("source").value="catalog";showProject("pipeline")');await releaseInner();
   check('Project-context changes cancel the inner inspection',await evaluate('!document.getElementById("extension-model-dialog").open'));
   const stopped=snapshotReads;await pause(1200);check('Leaving the project stops its polling lifetime',snapshotReads===stopped);
+  observation={...observation,recipes:[{...reference,id:'ordinary'}]};
+  await evaluate(`document.getElementById("source").value="project:${id}";showProject("pipeline")`);
+  await until(()=>evaluate('!!document.querySelector("[data-project-recipe=ordinary]")'));
+  await activate('[data-project-recipe=ordinary]');await until(()=>evaluate('!!document.querySelector("#external-create-form")'));
+  check('Ordinary managed recipe inspection selects version 4 through both project and graph authoring',ordinaryReads===2&&await evaluate('document.getElementById("external-create-dialog").open'));
+  await activate('#external-create-close');await evaluate('document.getElementById("source").value="catalog";showProject("pipeline")');
+  check('Every current bound and ordinary recipe inspection uses the exact version 4 pin',recipeHeaders.length>2&&recipeHeaders.every(value=>value===recipeContract));
   assert.equal(mutations,0,'Observation regression must not submit any mutation');assert.deepEqual(errors,[]);
   console.log(JSON.stringify({scope:'Actual JavaScript/Chromium lifecycle and focus with synthetic observations; no catalog, execution or scientific qualification',browser:(await send('Browser.getVersion')).product,checks,mutations},null,2));
   assert.deepEqual(failures,[],'Project observation regressions');

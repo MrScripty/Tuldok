@@ -1259,7 +1259,10 @@
 (() => {
   if(typeof window==='undefined')return;
   const pins=/* AUTHOR_CONTRACTS_START */ {
-    "recipes.inspect/2":"22b4904a36bd547e7d07a10faeef4453d0d9b2b61cbcbca67d212fe986d67817",
+    "recipes.inspect/2":"be0cfb596b3ae741e2903be57413684bac28e9fa3c59987086fde49e514284ea",
+    "recipes.inspect/3":"5b5c6a4eefe84df8da4c31d779a468c7bdbacf4296c294076010fbbaed167458",
+    "recipes.inspect/4":"0080ae0e39bf758b9c96c3208ef1614a9335f257731cfde935a23d8b486dedb1",
+    "project_snapshots.get/2":"770e999697f069af13e9cf0d48daaf930ee26db4d7415169edecb414f68bdd01",
     "models.create":"693d1514f44e92bb6c6635427db822acfc079a6e438d5d721630087157d1b8d5",
     "models.publish":"bb84c1fd72b3617135a8246353db797bba270430121fbae6f9d46cdbfdd26235",
     "graphs.create_external":"219f3c28bcb73e6d5445bdbd9b97e563bde3bd90487796b4680f36e02d338ffa",
@@ -1469,7 +1472,7 @@
       const validEpoch=++generation;project=copy(detail);reference=copy(item);key=project.id+':'+reference.id+':'+reference.observed_sha256;inspected=null;roles=null;reviewed=false;modelEditor=null;trainerEditor=null;draft=null;
       const saved=history.state?.extensionModelTrials?.[key];foreign=!!(saved&&saved.actor!==identity()?.actor_id&&!saved.run);job=saved?.actor===identity()?.actor_id?{...saved,key}:null;
       status='Inspecting the exact bound contributions. No project code is executed.';failed=false;dialog.showModal();render();const credential=identity()?.credential_id;
-      try{const value=await send('recipes.inspect','projects/'+enc(project.id)+'/recipes/'+enc(reference.id)+'?expected_sha256='+enc(reference.observed_sha256),undefined,2);if(validEpoch!==generation||credential!==identity()?.credential_id||!dialog.open)return;roles=binding(value);inspected=value;draft={name:value.definition.name,inputs:{},budget:{attempts:3,wall:10800,retained:1024,staging:2048}};makeEditors();status='Configure the declared model separately from trainer controls. Preparation does not execute a Run.';render();dialog.querySelector('#extension-model-name')?.focus();}
+      try{const value=await send('recipes.inspect','projects/'+enc(project.id)+'/recipes/'+enc(reference.id)+'?expected_sha256='+enc(reference.observed_sha256),undefined,4);if(validEpoch!==generation||credential!==identity()?.credential_id||!dialog.open)return;roles=binding(value);inspected=value;draft={name:value.definition.name,inputs:{},budget:{attempts:3,wall:10800,retained:1024,staging:2048}};makeEditors();status='Configure the declared model separately from trainer controls. Preparation does not execute a Run.';render();dialog.querySelector('#extension-model-name')?.focus();}
       catch(error){if(validEpoch===generation&&credential===identity()?.credential_id&&dialog.open){status=error.message;failed=true;render();}}
     }};
   };

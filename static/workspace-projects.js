@@ -75,9 +75,9 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
   async function inspectRecipe(item,button){
     const epoch=++recipeGeneration,project=detail,selection=generation;button.disabled=true;
     try{
-      const pin=window.WorkspaceExtensionAuthorContracts?.['recipes.inspect/2'];
+      const pin=window.WorkspaceExtensionAuthorContracts?.['recipes.inspect/4'];
       if(!pin)throw Error('Current recipe inspection is unavailable.');
-      const value=await api('/'+encodeURIComponent(project.id)+'/recipes/'+encodeURIComponent(item.id)+'?expected_sha256='+encodeURIComponent(item.observed_sha256),{headers:{'Tuldok-Operation-Contract':'recipes.inspect/2/'+pin}});
+      const value=await api('/'+encodeURIComponent(project.id)+'/recipes/'+encodeURIComponent(item.id)+'?expected_sha256='+encodeURIComponent(item.observed_sha256),{headers:{'Tuldok-Operation-Contract':'recipes.inspect/4/'+pin}});
       const current=detail?.recipes.find(ref=>ref.id===item.id);
       if(epoch!==recipeGeneration||selection!==generation||detail?.id!==project.id||detail.manifest_sha256!==project.manifest_sha256||detail.manifest_status!=='unchanged'||current?.observed_sha256!==item.observed_sha256||current?.status!=='available'||current.integrity==='mismatch'||active!==project.id||view!=='pipeline')return;
       const definition=value.definition;
