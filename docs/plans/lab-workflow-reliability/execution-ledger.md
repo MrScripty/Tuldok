@@ -301,3 +301,30 @@ The existing CI workflow adds only the new focused Node controller and neutral
 browser steps, using the existing PostgreSQL/Chromium/dependencies. Root review,
 hosted qualification, lineage integration and indexed diagnostics remain
 pending; this implementation is not self-cleared.
+
+### M1 publication links in existing experiment lineage
+
+Implemented separately from reviewed UI `61d2c2d`. The selected Trial's bounded
+failed/interrupted attempts expose explicit saved status/2 inspection and a link
+to the original Run's exact recovered Ref inspector. Original outcomes and
+publication states stay separate. Lineage performs only explicit reads; no
+status fanout, new polling owner, recovery, compute replay, candidate selection
+or import is introduced. The existing panel and lineage reuse one closed
+source/Ref/status/request-hash decoder instead of maintaining independent
+versions. No Python domain/API or lineage contract changes occur.
+
+Controlled Node tests cover original-state/Ref correlation, no fanout/mutation,
+unknown/extra/malformed identities, source/request-hash contradictions and late
+navigation/session responses. Existing lineage and Run-panel controller tests
+continue to pass. A new fresh PostgreSQL17/Chromium fixture creates a real
+neutral Model, Study, Trial, intent, grant and actual custodian copy fault; it
+uses the existing Run panel for recovery, then follows a fresh lineage Ref link
+back to the real result verifier. It checks unchanged Study reservation/charge,
+lineage projection, counts, events, original state and legacy failed reader
+refusal. No numerical producer, training or science claim is made.
+
+The initial Node harness used a synthetic button click where the existing
+lineage refresh is a form submission. That harness call was corrected to submit
+the form, preserving all product assertions. The actual first neutral browser
+journey passed. Exact-source qualification, receipts and root independent review
+follow; hosted acceptance, indexed diagnostics and full M1 remain pending.
