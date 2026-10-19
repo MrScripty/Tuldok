@@ -2350,10 +2350,8 @@ class Runs:
                 with self._coordinator.catalog(deadline):
                     checkpoint()
                     if source['kind'] == 'run':
-                        run = self._load(source['run_id'])
-                        if not self._external(run):
-                            raise WorkbenchError('Batch segments currently support external Runs only.', 'unsupported', 400)
-                        value = self.artifact_segment(source['run_id'], name, selectors, _checkpoint=checkpoint)
+                        value = self.artifact_segment(source['run_id'], name, selectors,
+                            _checkpoint=checkpoint, _external_only=True)
                     else:
                         value = run_publication.artifact_segment(self, source['ref'], name, selectors,
                             deadline=deadline, checkpoint=checkpoint)
@@ -2368,7 +2366,14 @@ class Runs:
             outcomes.append(outcome)
         def final_authority():
             global_authority()
+            # Identity only, never a saved authority/proof. Rebuild at each
+            # domain/delivery stage, retaining the old last-refresh order.
+            sources = {}
             for source in successful:
+                key = json.dumps(source, sort_keys=True, separators=(',', ':'))
+                sources.pop(key, None)
+                sources[key] = source
+            for source in sources.values():
                 with self._coordinator.catalog(deadline):
                     checkpoint()
                     run_id = source['run_id'] if source['kind'] == 'run' else source['ref']['run_id']
@@ -2387,7 +2392,7 @@ class Runs:
         return {'format':'artifact_segments_v1', 'items':outcomes}
 
     @authorized('inspect', 'runs.artifact_segment')
-    def artifact_segment(self, run_id, name, body, *, _checkpoint=None):
+    def artifact_segment(self, run_id, name, body, *, _checkpoint=None, _external_only=False):
         """Read a bounded segment; only the client can verify the whole digest.
 
         Every call rechecks credentials. External Runs use retained custody;
@@ -2408,6 +2413,8 @@ class Runs:
             raise WorkbenchError('Artifact segment requires a declared flat output name.')
         with self.lock:
             run = self._load(run_id)
+        if _external_only and not self._external(run):
+            raise WorkbenchError('Batch segments currently support external Runs only.', 'unsupported', 400)
         if self._external(run):
             inventory = self._external_inventory(run,checkpoint=_checkpoint)
         else:

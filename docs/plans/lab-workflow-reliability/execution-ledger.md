@@ -516,3 +516,17 @@ global checkpoints, caps, typed outcomes and whole-hash requirement remain.
 No loaded proof/authorization cache across stages/calls is admitted. Whole PR106
 composition precedes final refined qualification; the next performance window
 waits for the queued M5/M6 actual gates to finish.
+
+
+Implemented only the admitted Runs refinement. Three new before-change witnesses
+failed(two assertions/one missing-private-keyword error); the initial nine pure
+cases then passed0.363s. Expanded16-case qualification ran41.111s with15 passed
+and one new test-harness error: after proving HTTP409/noitems, the shutdown test
+indexed the established string error as an object. Only its assertion changed to
+the top-level code; the affected actual case then passed1/6.439s, zero skips.
+Both logs are retained. Production remained identical during that correction.
+Actual duplicate reads retain every canonical initial call, now three reads/five
+loads. Injected A/B/A authority loss refuses at both domain and post-serialization
+boundaries; duplicate late credential revocation/shutdown discard bytes. M1
+independently cleared the narrow source and passed all10 current pure cases.
+No wall-time improvement is inferred before new same-head paired measurements.

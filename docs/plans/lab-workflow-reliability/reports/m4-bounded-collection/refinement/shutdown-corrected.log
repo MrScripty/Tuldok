@@ -1,0 +1,6 @@
+test_owned_shutdown_after_serialization_discards_duplicate_results (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_owned_shutdown_after_serialization_discards_duplicate_results) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 6.439s
+
+OK

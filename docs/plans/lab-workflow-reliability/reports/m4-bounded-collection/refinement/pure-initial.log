@@ -1,0 +1,14 @@
+test_all_existing_full_contracts_remain_equal (test_run_artifact_segments.ArtifactSegmentsTests.test_all_existing_full_contracts_remain_equal) ... ok
+test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) ... ok
+test_final_sources_keep_kind_and_complete_ref_identity (test_run_artifact_segments.ArtifactSegmentsTests.test_final_sources_keep_kind_and_complete_ref_identity) ... ok
+test_final_stage_cancellation_still_discards_all_results (test_run_artifact_segments.ArtifactSegmentsTests.test_final_stage_cancellation_still_discards_all_results) ... ok
+test_foreign_order_or_identity_is_not_correlated (test_run_artifact_segments.ArtifactSegmentsTests.test_foreign_order_or_identity_is_not_correlated) ... ok
+test_ordered_segments_and_typed_partial_failure (test_run_artifact_segments.ArtifactSegmentsTests.test_ordered_segments_and_typed_partial_failure) ... ok
+test_private_external_only_refuses_before_builtin_dispatch_default_unchanged (test_run_artifact_segments.ArtifactSegmentsTests.test_private_external_only_refuses_before_builtin_dispatch_default_unchanged) ... ok
+test_repeated_sources_refresh_in_last_occurrence_order_each_stage (test_run_artifact_segments.ArtifactSegmentsTests.test_repeated_sources_refresh_in_last_occurrence_order_each_stage) ... ok
+test_shutdown_cancel_and_deadline_discard_buffered_results (test_run_artifact_segments.ArtifactSegmentsTests.test_shutdown_cancel_and_deadline_discard_buffered_results) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.363s
+
+OK

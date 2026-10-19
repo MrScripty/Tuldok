@@ -33,8 +33,8 @@ catalog command ownership and SQL deadlines are reused. Optional domain
 cancellation and owned shutdown are checked between items and through canonical
 copy/semantic checkpoints. There is no persistent cancellation request, mutation
 retry or new compute authority. The request rechecks current inspection and
-transitive authority for every item, then every successful source before domain
-return. HTTP repeats the delivery fence after output-schema validation and
+transitive authority for every item, then every distinct exact successful source
+before domain return, retaining last-occurrence order. HTTP repeats the delivery fence after output-schema validation and
 serialization. Current credential loss, delivery authority loss, shutdown,
 cancellation or exhausted budget discards all buffered bytes. Individual
 ordinary readers retain their previous defaults; optional private checkpoints
@@ -87,3 +87,14 @@ quiet-window overlap are retained under `reports/m4-bounded-collection/paired-99
 No sample/outlier was filtered. A separately admitted narrow refinement may remove
 repeated request-local source loads, preserving initial canonical checks and
 independent domain/HTTP final authority; it requires new review/qualification.
+
+The request-local refinement removes only the outer Run eligibility load: the
+canonical decorated reader receives a private external-only flag defaulting
+false and refuses unsupported built-ins immediately after its own load. Each
+item still performs its canonical authorization/inventory/read. Each final stage
+rebuilds exact-source identities in last-occurrence order (A,B,A becomes B,A),
+then reloads current Run/transitive authority and exact attached Ref. No loaded
+Run, authority result or seen set survives between domain return, HTTP delivery
+or requests. Current global checks and shared checkpoints remain on every stage.
+Actual repeated ordinary reads observe N+2U loads, with U distinct exact sources;
+this structural reduction alone is not a wall-time improvement claim.
