@@ -66,8 +66,8 @@ dispatch. No catalog schema, retained evidence format or migration changes.
 
 The Runs-owned continuation core below is implemented separately from preflight.
 Selected HTTP/agent operations and CLI/SDK collection are implemented below;
-Lineage integration and indexed diagnostics remain pending M1 work; the existing
-Run-panel controls below have separate browser qualification.
+Indexed diagnostics remain pending M1 work; the existing Run-panel and lineage
+controls below have separate browser qualification.
 The exact Ref evidence/comparison methods below have separate qualification.
 The preflight report itself grants no recovery or publication authority.
 
@@ -273,6 +273,31 @@ Neutral results retain the typed unsupported field-evidence response. The panel
 never retries compute, selects a candidate, imports a binding or widens legacy
 failed-Run readers. Field metadata is structural/identity evidence; numerical
 acceptance remains separate.
+
+## Publication links in existing experiment lineage
+
+The existing Trial detail keeps its actual saved failed/interrupted Run outcome.
+For each such attempt in the bounded latest-five window, an explicit **Inspect
+saved publication status** action reads selected `publication_status/2`. It never
+fans out status reads when the graph loads and starts no publication polling.
+The lineage and Run panel share one closed metadata/source/result-Ref/request-hash
+decoder, correlating the original Run, catalog and original outcome. Contradictory
+metadata refuses instead of manufacturing an empty or ready result.
+
+Publication state and the exact recovered Ref appear separately from the
+original Run label. Both remain labelled saved metadata. **Open original Run to
+inspect this Ref** opens that same Run's existing panel, where current owner
+recovery/pause and explicit byte inspection remain owned. Lineage supplies no
+recovery, replay, promotion or import action. Selecting another node, refreshing
+the graph, navigating or changing session clears inspected publication metadata;
+late responses are fenced before disclosure.
+
+A fresh real neutral Model/Study/Trial/admission/custodian fixture qualifies this
+link through a retained copy fault and same-Run recovery. Its Study reservation,
+conservative charge, original lineage projection, Run state and lifecycle events
+remain unchanged. This is byte-custody and interaction evidence, with no
+numerical producer, model-quality or scientific acceptance claim. Existing
+lineage contracts, ancestry, intent and attempt schemas are unchanged.
 
 ## Current large-output storage observation
 

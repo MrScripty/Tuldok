@@ -213,14 +213,35 @@ window.WorkspacePublicationContracts = {
   'runs.publication_artifact_chunk/1': '6cdbc3fa18b569558918eab1672386546d05c70e98bf31f2694ece8d889bf9d2',
   'runs.publication_model_evidence/1': 'd2f34f0df4d54b82bf4f52508de405f6d743d404c78648d6c4c19c65e7e4f1d2'
 };
+// Shared read-only decoder for the exact publication metadata contract.
+window.WorkspacePublicationDocuments = (() => {
+  const id=value=>typeof value==='string'&&/^[a-f0-9]{32}$/.test(value);
+  const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+  const key=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(value);
+  const closed=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(',');
+  const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+  const canonical=value=>JSON.stringify(ordered(value)), same=(a,b)=>canonical(a)===canonical(b);
+  async function digest(value){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value)))),byte=>byte.toString(16).padStart(2,'0')).join('');}
+  function source(value, expected){return closed(value,['kind','schema_version','catalog_id','run_id','sha256'])&&value.kind==='external_publication_source'&&value.schema_version===1&&id(value.catalog_id)&&id(value.run_id)&&value.catalog_id===expected.catalog_id&&value.run_id===expected.run_id&&hash(value.sha256);}
+  function resultRef(value, expected){return closed(value,['kind','schema_version','catalog_id','run_id','material_sha256','inventory_sha256','custody_receipt_sha256','sha256'])&&value.kind==='recovered_publication_result'&&value.schema_version===1&&id(value.catalog_id)&&id(value.run_id)&&value.catalog_id===expected.catalog_id&&value.run_id===expected.run_id&&['material_sha256','inventory_sha256','custody_receipt_sha256','sha256'].every(k=>hash(value[k]));}
+  async function status(value, expected){
+    const bounded=(text,max)=>typeof text==='string'&&text.length>0&&text.length<=max;
+    if(!closed(value,['run_id','original_run_state','verification','eligibility','source_ref','original_fault','continuation','limits','continuation_request'])||!id(expected.catalog_id)||!id(expected.run_id)||value.run_id!==expected.run_id||value.original_run_state!==expected.original_run_state||!bounded(value.original_run_state,64)||value.verification!=='saved_metadata_only'||!['requires_verification','unavailable'].includes(value.eligibility)||value.source_ref!==null&&!source(value.source_ref,expected)||!closed(value.limits,['wall_seconds','max_attempts','copy_bytes'])||value.limits.wall_seconds!==60||value.limits.max_attempts!==20||!Number.isSafeInteger(value.limits.copy_bytes)||value.limits.copy_bytes<0)throw Error('Publication status differs from this exact Run.');
+    const fault=value.original_fault,c=value.continuation,request=value.continuation_request;
+    if(fault!==null&&(!closed(fault,['format','source_sha256','code','message','recorded_at'])||fault.format!=='external_publication_fault_v1'||fault.source_sha256!==value.source_ref?.sha256||!bounded(fault.code,80)||!bounded(fault.message,240)||!bounded(fault.recorded_at,64)))throw Error('Publication fault differs from its retained source.');
+    if(value.eligibility==='requires_verification'&&(!value.source_ref||!fault||!['failed','interrupted'].includes(value.original_run_state)))throw Error('Publication eligibility has no retained fault/source.');
+    if(c!==null&&(!value.source_ref||!fault||!closed(c,['run_id','state','original_run_state','attempt_count','cancel_requested','result_ref'])||c.run_id!==expected.run_id||c.original_run_state!==value.original_run_state||!['failed','interrupted'].includes(c.original_run_state)||!['recovering','paused','blocked','published'].includes(c.state)||!Number.isInteger(c.attempt_count)||c.attempt_count<1||c.attempt_count>20||typeof c.cancel_requested!=='boolean'||c.result_ref!==null&&!resultRef(c.result_ref,expected)||(c.state==='published')!==(c.result_ref!==null)))throw Error('Publication continuation identity differs.');
+    if(c&&(!closed(request,['actor_id','request_key','request_sha256'])||!id(request.actor_id)||!key(request.request_key)||!hash(request.request_sha256))||!c&&request!==null)throw Error('Publication request identity is unavailable.');
+    if(request&&request.request_sha256!==await digest({actor_id:request.actor_id,operation:'runs.recover_publication',body:{run_id:expected.run_id,source_ref:value.source_ref,request_key:request.request_key}}))throw Error('Publication request hash differs from its exact actor, key and source.');
+    return value;
+  }
+  return {source,resultRef,status,digest,same};
+})();
 window.WorkspacePublication = function ({api, render, identity=()=>window.TuldokAuth?.identity(),
   schedule=setTimeout, unschedule=clearTimeout, getStorage=()=>window.sessionStorage}) {
   const esc=window.workspaceEscape, enc=encodeURIComponent, clone=structuredClone;
   const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
-  const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
-  const canonical=value=>JSON.stringify(ordered(value));
-  const same=(a,b)=>canonical(a)===canonical(b);
-  async function digest(value){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value)))),byte=>byte.toString(16).padStart(2,'0')).join('');}
+  const documents=window.WorkspacePublicationDocuments, {same,digest}=documents;
   let epoch=0, timer=null, selected=null, saved=null, result=null, evidence=null, message='', busy=false, cancelBusy=false, reading=false, storageError='', current=()=>false;
   const actor=()=>identity(), session=()=>JSON.stringify([actor()?.catalog_id,actor()?.actor_id,actor()?.credential_id]);
   function stop(){if(timer!==null)unschedule(timer);timer=null;}
@@ -250,17 +271,9 @@ window.WorkspacePublication = function ({api, render, identity=()=>window.Tuldok
     getStorage().setItem(storeKey,raw);
     history.replaceState({...history.state,publicationRequests:{...history.state?.publicationRequests,[key()]:clone(value)}},'');
   }
-  function source(value){return value?.kind==='external_publication_source'&&value.schema_version===1&&value.catalog_id===selected.dataset_id&&value.run_id===selected.id&&hash(value.sha256);}
-  function ref(value){return value?.kind==='recovered_publication_result'&&value.schema_version===1&&value.catalog_id===selected.dataset_id&&value.run_id===selected.id&&['sha256','inventory_sha256','material_sha256','custody_receipt_sha256'].every(k=>hash(value[k]));}
-  async function checkStatus(value){
-    if(value?.run_id!==selected.id||value.original_run_state!==selected.state||value.verification!=='saved_metadata_only'||!['requires_verification','unavailable'].includes(value.eligibility)||!value.limits||value.limits.max_attempts!==20||value.limits.wall_seconds!==60||!Number.isSafeInteger(value.limits.copy_bytes)||value.limits.copy_bytes<0||value.source_ref!==null&&!source(value.source_ref))throw Error('Publication status differs from this exact Run.');
-    const c=value.continuation, request=value.continuation_request;
-    if(c&&(!['recovering','paused','blocked','published'].includes(c.state)||c.run_id!==selected.id||c.original_run_state!==selected.state||!Number.isInteger(c.attempt_count)||c.attempt_count<1||c.attempt_count>20||c.result_ref!==null&&!ref(c.result_ref)||(c.state==='published')!==(c.result_ref!==null)))throw Error('Publication continuation identity differs.');
-    if(c&&(!request||!(/^[a-f0-9]{32}$/.test(request.actor_id||''))||!(/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(request.request_key||''))||!hash(request.request_sha256))||!c&&request!==null)throw Error('Publication request identity is unavailable.');
-    if(value.original_fault&&value.original_fault.source_sha256!==value.source_ref?.sha256)throw Error('Publication fault differs from its retained source.');
-    if(request&&request.request_sha256!==await digest({actor_id:request.actor_id,operation:'runs.recover_publication',body:{run_id:selected.id,source_ref:value.source_ref,request_key:request.request_key}}))throw Error('Publication request hash differs from its exact actor, key and source.');
-    return value;
-  }
+  const expected=()=>({catalog_id:selected.dataset_id,run_id:selected.id,original_run_state:selected.state});
+  const source=value=>documents.source(value,expected());
+  const checkStatus=value=>documents.status(value,expected());
   function body(){
     const request=saved?.continuation_request;
     if(request){

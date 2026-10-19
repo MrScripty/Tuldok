@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — qualify existing Run-panel publication controls; lineage and indexed diagnostics remain pending
+**Current phase:** M1 — qualify publication links in existing lineage; indexed diagnostics remain pending
 
-**Next slice:** Independently review and qualify the exact Run-panel branch, then implement lineage links and indexed diagnostics.
+**Next slice:** Independently review the exact lineage branch and qualify the composed UI; then implement indexed diagnostics.
 
 **Acceptance status:** `pending`
 
@@ -430,3 +430,13 @@ fixture, the existing CI workflow, this plan/ledger, the canonical publication
 doc and bounded receipts. No Python domain/API or persisted/public contract is
 changed by this UI slice. Root owns independent review and serial integration;
 hosted qualification and full M1 acceptance remain pending.
+
+### M1 lineage publication-link admission
+
+Isolated branch `feature/lab-publication-lineage-20261019` starts at reviewed UI
+`61d2c2d`. Its write set is the existing lineage JS and shared publication JS
+read-only decoder, focused Node/browser tests plus their genuine neutral Study
+fixture, the existing CI workflow, this plan/ledger, canonical publication doc
+and bounded evidence. No Python domain/API, persisted schema, lineage wire
+contract or original outcome is changed. Root retains independent review and
+serial integration ownership. Hosted acceptance and full M1 remain pending.

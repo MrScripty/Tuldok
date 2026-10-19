@@ -8,7 +8,7 @@ const sourceRef={kind:'external_publication_source',schema_version:1,catalog_id:
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const digest=v=>crypto.createHash('sha256').update(JSON.stringify(ordered(v))).digest('hex');
 function status(state=null,key='retained-key',actor=actorId){
-  const value={run_id:runId,original_run_state:'interrupted',verification:'saved_metadata_only',eligibility:'requires_verification',source_ref:sourceRef,original_fault:{code:'unavailable',message:'Original copy fault',source_sha256:sha},continuation:null,continuation_request:null,limits:{max_attempts:20,wall_seconds:60,copy_bytes:4096}};
+  const value={run_id:runId,original_run_state:'interrupted',verification:'saved_metadata_only',eligibility:'requires_verification',source_ref:sourceRef,original_fault:{format:'external_publication_fault_v1',code:'unavailable',message:'Original copy fault',source_sha256:sha,recorded_at:'2026-10-19T20:00:00Z'},continuation:null,continuation_request:null,limits:{max_attempts:20,wall_seconds:60,copy_bytes:4096}};
   if(state){value.continuation={run_id:runId,original_run_state:'interrupted',state,attempt_count:1,cancel_requested:false,result_ref:null};value.continuation_request={actor_id:actor,request_key:key,request_sha256:digest({actor_id:actor,operation:'runs.recover_publication',body:{run_id:runId,source_ref:sourceRef,request_key:key}})};}
   return value;
 }

@@ -24,7 +24,7 @@
   window.WorkspaceExperimentLineage=function({api,announce,getIntent,getView,getGraph,isDirty,openRecipe,openRun,compare}) {
     const esc=value=>window.workspaceEscape(value), identity=()=>window.TuldokAuth?.identity();
     let root=null,catalog=null,nodes=new Map(),revision=null,next=null,selected='',filter='',appliedFilter='',journalScope=null,message='',failed=false,
-      related=[],generation=0,query=0,busy=null,zoom=1,form=null,draft={},job=null;
+      related=[],generation=0,query=0,busy=null,zoom=1,form=null,draft={},job=null,publicationGeneration=0,publications=new Map();
     const owner=()=>identity()?.kind==='owner',canEdit=()=>identity()?.scopes?.includes('edit');
     const journalKey=()=>catalog+':'+identity()?.actor_id;
     function remember(value=job,key=journalKey()){history.replaceState({...history.state,experimentBranches:{...history.state?.experimentBranches,[key]:value}},'');}
@@ -32,10 +32,11 @@
     function scope(){const version=generation,intent=getIntent(),credential=identity()?.credential_id,id=catalog;
       return()=>version===generation&&intent===getIntent()&&credential===identity()?.credential_id&&id===catalog&&getView()==='pipeline';}
     function note(value,error=false){message=value;failed=error;announce(value,error);}
-    function invalidate(clear=false){generation++;query++;busy=null;if(clear){nodes.clear();related=[];revision=null;next=null;selected='';form=null;draft={};job=null;journalScope=null;appliedFilter='';filter='';message='';}}
+    function clearPublications(){publicationGeneration++;publications.clear();}
+    function invalidate(clear=false){generation++;query++;busy=null;clearPublications();if(clear){nodes.clear();related=[];revision=null;next=null;selected='';form=null;draft={};job=null;journalScope=null;appliedFilter='';filter='';message='';}}
     function ref(node){return {catalog_id:catalog,trial_id:node.trial.id,material_sha256:node.trial.material.sha256};}
     async function page(append=false){
-      if(busy)return;const current=scope(),own=++query,token={},requestedFilter=append?appliedFilter:filter;busy=token;render();
+      if(busy)return;clearPublications();const current=scope(),own=++query,token={},requestedFilter=append?appliedFilter:filter;busy=token;render();
       try{
         const params=new URLSearchParams({limit:'20'});if(requestedFilter)params.set('cohort',requestedFilter);
         if(append){params.set('cursor',next);params.set('revision',revision);}
@@ -82,7 +83,24 @@
       const node=nodes.get(selected);if(!node)return '<p>Select a Trial to inspect its intent, exact material and outcomes.</p>';
       const intent=node.lineage?.intent,target=intent?.target;
       const link=(label,value)=>value?`<button type="button" data-lineage-related="${esc(value.trial_id)}">${label} ${esc(short(value.trial_id))}</button>`:`<span>${label}: ${label==='Parent'?'unknown / none declared':'none declared'}</span>`;
-      return `<h3 tabindex="-1">Trial ${esc(short(node.trial.id))}</h3><p>${esc(node.study.name)} · ${node.attempt_count} admitted attempts${node.runs_truncated?' (latest five shown)':''}</p><p class="lineage-hash">Exact material ${esc(node.trial.material.sha256)}</p>${intent?`<p><strong>${esc(intent.cohort)}</strong> · ${esc(intent.ancestry)} · ${esc(node.lineage.timing)}</p><dl><dt>Hypothesis</dt><dd>${esc(intent.hypothesis)}</dd><dt>Change</dt><dd>${esc(intent.change_summary)}</dd><dt>Target</dt><dd>${esc(target.metric_id)} · ${esc(target.direction)} ${target.threshold===null?'(no numeric threshold)':esc(target.threshold)}<br>${esc(target.acceptance)}<br>Metric definition: ${esc(target.metric_definition_sha256||'unknown')}</dd></dl>`:'<p>Historical ancestry and intent are unknown. No relationships are inferred.</p>'}<div class="actions">${link('Parent',intent?.parent)}${link('Baseline',intent?.baseline)}</div><div class="actions"><button type="button" id="lineage-recipe">Open current recipe (Trial retained r${node.recipe.revision})</button>${!node.lineage&&canEdit()&&!job?'<button type="button" id="lineage-record">Record intent</button>':''}${canEdit()&&!job?'<button type="button" id="lineage-branch">Branch from Trial</button>':''}</div><h4>Actual saved outcomes</h4><p>Saved status and validation summaries. Open a Run to verify its checkpoint, probes and retained evidence.</p>${node.runs.map(run=>`<div class="lineage-attempt"><button type="button" data-lineage-run="${esc(run.id)}">${esc(run.state)} · ${esc(short(run.id))}</button>${run.parent_run_id?`<p>Execution retry of Run ${esc(short(run.parent_run_id))}</p>`:''}<p>${Object.entries(run.validation).map(([k,v])=>esc(k)+': '+esc(v)).join(' · ')||'No saved validation summary.'}</p></div>`).join('')||'<p>No admitted Run. Preparation does not execute a recipe.</p>'}${intent?.baseline&&node.runs.some(r=>r.state==='completed')?'<button type="button" id="lineage-compare">Compare completed Run with baseline</button>':''}${intentForm()}`;
+      return `<h3 tabindex="-1">Trial ${esc(short(node.trial.id))}</h3><p>${esc(node.study.name)} · ${node.attempt_count} admitted attempts${node.runs_truncated?' (latest five shown)':''}</p><p class="lineage-hash">Exact material ${esc(node.trial.material.sha256)}</p>${intent?`<p><strong>${esc(intent.cohort)}</strong> · ${esc(intent.ancestry)} · ${esc(node.lineage.timing)}</p><dl><dt>Hypothesis</dt><dd>${esc(intent.hypothesis)}</dd><dt>Change</dt><dd>${esc(intent.change_summary)}</dd><dt>Target</dt><dd>${esc(target.metric_id)} · ${esc(target.direction)} ${target.threshold===null?'(no numeric threshold)':esc(target.threshold)}<br>${esc(target.acceptance)}<br>Metric definition: ${esc(target.metric_definition_sha256||'unknown')}</dd></dl>`:'<p>Historical ancestry and intent are unknown. No relationships are inferred.</p>'}<div class="actions">${link('Parent',intent?.parent)}${link('Baseline',intent?.baseline)}</div><div class="actions"><button type="button" id="lineage-recipe">Open current recipe (Trial retained r${node.recipe.revision})</button>${!node.lineage&&canEdit()&&!job?'<button type="button" id="lineage-record">Record intent</button>':''}${canEdit()&&!job?'<button type="button" id="lineage-branch">Branch from Trial</button>':''}</div><h4>Actual saved outcomes</h4><p>Saved status and validation summaries. Open a Run to verify its checkpoint, probes and retained evidence.</p>${node.runs.map(run=>`<div class="lineage-attempt"><button type="button" data-lineage-run="${esc(run.id)}">${esc(run.state)} · ${esc(short(run.id))}</button>${run.parent_run_id?`<p>Execution retry of Run ${esc(short(run.parent_run_id))}</p>`:''}<p>${Object.entries(run.validation).map(([k,v])=>esc(k)+': '+esc(v)).join(' · ')||'No saved validation summary.'}</p>${publicationHTML(run)}</div>`).join('')||'<p>No admitted Run. Preparation does not execute a recipe.</p>'}${intent?.baseline&&node.runs.some(r=>r.state==='completed')?'<button type="button" id="lineage-compare">Compare completed Run with baseline</button>':''}${intentForm()}`;
+    }
+    function publicationHTML(run){
+      if(!['failed','interrupted'].includes(run.state))return '';
+      const value=publications.get(run.id),continuation=value?.continuation;
+      return `<div class="lineage-publication"><button type="button" data-lineage-publication="${esc(run.id)}" ${busy?'disabled':''}>Inspect saved publication status</button>${value?`<p>Original Run: <strong>${esc(value.original_run_state)}</strong> · publication: <strong>${esc(continuation?.state||'not recorded')}</strong>. Saved metadata only; current bytes require Run inspection.</p><p>${continuation?`Publication attempt ${continuation.attempt_count} of ${value.limits.max_attempts}`:`Eligibility: ${esc(value.eligibility)}`}</p>${value.original_fault?`<p>Original publication fault: ${esc(value.original_fault.code)} · ${esc(value.original_fault.message)}</p>`:''}${continuation?.result_ref?`<details><summary>Exact recovered publication Ref</summary><pre>${esc(JSON.stringify(continuation.result_ref,null,2))}</pre></details><button type="button" data-lineage-publication-run="${esc(run.id)}">Open original Run to inspect this Ref</button>`:'<p>Open the original Run for current-owner recovery or pause controls.</p>'}`:''}</div>`;
+    }
+    async function inspectPublication(runId){
+      const node=nodes.get(selected),run=node?.runs.find(item=>item.id===runId);
+      if(!run||!['failed','interrupted'].includes(run.state))return;
+      const selectedTrial=selected,own=++publicationGeneration;publications.clear();
+      await perform(async current=>{
+        const result=await api('runs/'+enc(run.id)+'/publication',undefined,2);
+        if(!current()||selected!==selectedTrial||own!==publicationGeneration)return;
+        const checked=await window.WorkspacePublicationDocuments.status(result,{catalog_id:catalog,run_id:run.id,original_run_state:run.state});
+        if(!current()||selected!==selectedTrial||own!==publicationGeneration)return;
+        publications.set(run.id,structuredClone(checked));note('Saved publication metadata inspected for the original '+run.state+' Run. Open Runs for current byte verification.');
+      });
     }
     const canClose=()=>!!job?.branch&&!busy&&!job.approvalUnknown&&(!job.prepare||!!job.trial)&&(!job.continue||!!job.run)&&(!job.admission||!!job.run);
     function jobHTML(){
@@ -107,9 +125,9 @@
       const on=(id,event,handler)=>root.querySelector('#'+id)?.addEventListener(event,handler);
       on('lineage-filter','input',event=>filter=event.target.value);
       on('lineage-filter-form','submit',event=>{event.preventDefault();page();});on('lineage-more','click',()=>page(true));
-      for(const button of root.querySelectorAll('[data-lineage-node]'))button.onclick=()=>{if(busy)return;selected=button.dataset.lineageNode;form=null;render();};
+      for(const button of root.querySelectorAll('[data-lineage-node]'))button.onclick=()=>{if(busy)return;selected=button.dataset.lineageNode;form=null;clearPublications();render();};
       for(const button of root.querySelectorAll('[data-lineage-related]'))button.onclick=()=>perform(async current=>{
-        const id=button.dataset.lineageRelated;if(!nodes.has(id)){if(nodes.size>=100)throw Error('Refine the cohort before loading more than 100 trials.');const node=await api('experiment-lineage/'+enc(id));if(!current())return;nodes.set(id,node);}selected=id;form=null;
+        const id=button.dataset.lineageRelated;if(!nodes.has(id)){if(nodes.size>=100)throw Error('Refine the cohort before loading more than 100 trials.');const node=await api('experiment-lineage/'+enc(id));if(!current())return;nodes.set(id,node);}selected=id;form=null;clearPublications();
       });
       for(const [id,delta] of [['lineage-zoom-in',0.2],['lineage-zoom-out',-0.2],['lineage-zoom-reset',null]])on(id,'click',()=>{zoom=delta===null?1:Math.min(1.6,Math.max(0.6,zoom+delta));render();});
       on('lineage-record','click',()=>startForm('record'));on('lineage-branch','click',()=>startForm('branch'));on('lineage-form-cancel','click',()=>{form=null;render();});
@@ -122,6 +140,8 @@
       });
       on('lineage-reconcile','click',()=>perform(current=>commitIntent(current)));
       on('lineage-recipe','click',()=>perform(current=>openRecipe(nodes.get(selected).recipe.id,current)));
+      for(const button of root.querySelectorAll('[data-lineage-publication]'))button.onclick=()=>inspectPublication(button.dataset.lineagePublication);
+      for(const button of root.querySelectorAll('[data-lineage-publication-run]'))button.onclick=()=>perform(current=>openRun(button.dataset.lineagePublicationRun,current));
       for(const button of root.querySelectorAll('[data-lineage-run]'))button.onclick=()=>perform(current=>openRun(button.dataset.lineageRun,current));
       on('lineage-compare','click',()=>perform(async current=>{
         const node=nodes.get(selected),baseline=await api('experiment-lineage/'+enc(node.lineage.intent.baseline.trial_id));if(!current())return;
