@@ -104,6 +104,17 @@
       "outcome": "confirmed",
       "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
       "base": "main"
+    },
+    {
+      "action": "Publish exact preflight report branch",
+      "outcome": "confirmed",
+      "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465"
+    },
+    {
+      "action": "Create dependent draft PR93",
+      "outcome": "confirmed",
+      "base": "feature/lab-preflight-output-bounds-20261019",
+      "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465"
     }
   ],
   "protected_original_heads": 82,
@@ -612,7 +623,8 @@
     "89->90;retarget90tomainbefore89branchdelete",
     "90->92;retarget92tomainbefore90branchdelete",
     "91independentmainbase;preserve",
-    "checkpointbranchretainedpersistentarchive;notordinaryfeaturecleanup"
+    "checkpointbranchretainedpersistentarchive;notordinaryfeaturecleanup",
+    "92->93; retarget93 before any92 source retirement"
   ],
   "historical_resume_after_auth_restoration": [
     "Verify remote89=33069a859836953960a06dfd6001cba54aba0aa0 and90=429d0c4ff44dba16bc95313d2a0980169dbc9b9f before publication; no prior pending writes.",
@@ -672,8 +684,24 @@
     "branch": "feature/lab-exact-preflight-report-20261019",
     "worktree": "/workspace/Tuldok-lab-preflight-report-m1",
     "base": "750332ac64244526127075feb14cb8db268a7ab9",
-    "state": "14 final focused tests passed; broader API regression running; independent review cleared source/tests, final cosmetic docs acknowledgement pending",
+    "state": "published dependent draft, hosted qualification pending",
     "scope": "Selected exact prepared preflight report only, partial C1/T1; structured refusal and publication continuation pending",
-    "local_pg": "Unavailable; no actual HTTP/no-effect claim"
+    "local_pg": "Unavailable; no actual HTTP/no-effect claim",
+    "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+    "pr": 93,
+    "url": "https://github.com/MrScripty/Tuldok/pull/93",
+    "final_affected_tests": {
+      "ran": 42,
+      "passed": 40,
+      "skipped": 2,
+      "seconds": 83.543
+    },
+    "review": "Independent code/test/docs clearance; no merge acceptance.",
+    "restore": "Fetched exact commit into independent standalone recovery clone; verified parent 750332a."
+  },
+  "durable_pr89_merge_receipt": {
+    "head": "876cec37bc45477f697f9223cb2de78c3a3b9c4d",
+    "verified_files": 24,
+    "restore": "independent clone verified every size and SHA256"
   }
 }

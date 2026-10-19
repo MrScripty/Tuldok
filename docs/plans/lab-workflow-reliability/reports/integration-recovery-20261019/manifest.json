@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 28289,
-      "sha256": "a27a281251da92353f25384646abc4ffbdafcf44c8ac3d21addbf6da7f491c36"
+      "bytes": 29237,
+      "sha256": "025a1bda22cbfe0678a748121acd37b185beebbff59df6ee72997f36b1e32ec8"
     },
     {
       "path": "tuldok-20261019-protected-local-heads.txt",
@@ -130,5 +130,12 @@
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
   "later_implementation_head": "750332ac64244526127075feb14cb8db268a7ab9",
   "later_implementation_pr": 92,
-  "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7"
+  "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
+  "exact_report_implementation": {
+    "branch": "feature/lab-exact-preflight-report-20261019",
+    "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+    "pr": 93,
+    "parent": "750332ac64244526127075feb14cb8db268a7ab9",
+    "restore_verified": true
+  }
 }
