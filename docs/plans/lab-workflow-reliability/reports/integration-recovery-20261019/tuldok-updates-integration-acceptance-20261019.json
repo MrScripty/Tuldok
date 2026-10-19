@@ -41,10 +41,11 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "fresh exact-head hosted CI (including fullMCP and previously skipped downstreamsteps)",
-    "serial merges/dependencyretarget",
-    "post-merge CI",
-    "safe merged-taskcleanup"
+    "freshhead89/90lifecycleCI",
+    "independentPR92review/CI",
+    "serial89merge then90retarget+merge whenready",
+    "postmergeCI",
+    "safecleanupmergedtaskbranches only; retaincheckpointand92untilqualified"
   ],
   "external_mutations": [
     {
@@ -365,14 +366,14 @@
   },
   "current_exact_head_runs": {
     "PR89": [
-      39286812538,
-      39286812518,
-      39286812482,
-      39286812519
+      39301693918,
+      39301693917,
+      39301694222,
+      39301694092
     ],
     "PR90": [
-      39286833738,
-      39286833487
+      39302006431,
+      39302006445
     ]
   },
   "status_reporting_correction": "The16:14API snapshot reported queued/no steps, but later fetched job logs show execution16:05\u201316:18. Treat the old queued snapshot as delayed GitHub status reporting, not proof that no execution had happened. Current-head merges still require settled successful checks.",
@@ -394,21 +395,16 @@
   },
   "fresh_hosted_gate_progress": {
     "PR89": {
-      "head": "33069a859836953960a06dfd6001cba54aba0aa0",
-      "job": 118175676315,
-      "agent_step": "success16:48:48Z",
-      "mcp_step": "success16:49:35Z"
+      "head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+      "job": 118228240739,
+      "overall": "inprogress MCPobserver; prioragent/MCPsuccess; allfocusedjobs green"
     },
     "PR90": {
-      "head": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
-      "job": 118175770705,
-      "agent_step": "success16:48:53Z",
-      "mcp_step": "success16:49:39Z",
-      "overall": "failure at full Python discovery31"
+      "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+      "job": 118229327303,
+      "overall": "inprogress agentsuite; nofailedstep"
     },
-    "counts_and_skips": "awaitcompletedjoblogs",
-    "overall": "PR90 failed stale unsupported-version test fixture; PR89 lastknown full discovery inprogress; no merge accepted",
-    "latest": "Both exact heads passed lifecycle steps1\u201330; full Python discovery31 running at17:20UTC; no failed step. All other current-head jobs successful. Unchanged main remains300f12d."
+    "overall": "pending; neither acceptedformerge"
   },
   "repository_merge_settings": {
     "allow_merge_commit": true,
@@ -527,5 +523,42 @@
     "read": "success",
     "new_credentials": false,
     "permissions_expanded": false
-  }
+  },
+  "verified_persistent_storage": {
+    "repository": "MrScripty/Tuldok",
+    "branch": "checkpoint/lab-integration-20261019",
+    "original_checkpoint": "96afae56ca41c2a90f87ea3bc6a27ee4ed6291b5",
+    "tip": "3612e14",
+    "restoration": "fresh standaloneclone;22sizes/SHA256 verified;taskrepairancestry verified;separateplanb446fetchedexact",
+    "evidence_directory": "docs/plans/lab-workflow-reliability/reports/integration-recovery-20261019",
+    "contains_runtime_catalog_data": false,
+    "keep_branch": true
+  },
+  "m1_implementation": {
+    "user_authorization": "later2026-10-19 18:19UTC instruction tocontinuewithpersistentstorage",
+    "branch": "feature/lab-preflight-output-bounds-20261019",
+    "worktree": "/workspace/Tuldok-lab-preflight-m1",
+    "base": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+    "head": "cbc648deed222879e8f7654a5e6283c581eabb9f",
+    "pr": 92,
+    "draft": true,
+    "publication": "confirmed;fetchintoindependentcloneconfirmedcommit",
+    "scope": "requiredfieldpayload file/shard/aggregatecapacityrefusal; sharedfilenamescountonce",
+    "focused_tests": {
+      "tests": 43,
+      "passed": 40,
+      "skipped": 3,
+      "seconds": 4.611
+    },
+    "red_witness": {
+      "failures": 5,
+      "skips": 1
+    },
+    "real_postgres": "pending hosted no-effecttest",
+    "independent_review": "pending existingextensionsreviewer; no newworker",
+    "full_M1": "incomplete;structuredreport/indexeddiagnostics/recoverypending",
+    "separatePR91": "unchanged/unmergedb446d9a",
+    "plan_copy": "8originalplanfilesfromb446copiedtoimplementationbranch;statusActive onlyimplementationcopy"
+  },
+  "updated_at": "2026-10-19T18:28:41.138032+00:00"
 }
