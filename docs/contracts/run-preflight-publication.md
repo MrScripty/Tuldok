@@ -70,6 +70,46 @@ publish, promote or reinterpret a failed Run, nor replay compute or consume gran
 Those capabilities require their separate storage/custody/authority acceptance
 before being advertised.
 
+## Retained original-attempt publication source
+
+New external attempts retain a private `external_publication_source_v1` before
+copying outputs into the published result directory. It binds catalog, Run,
+request, material and execution graph identities, the validated completed/drained
+custody receipt, the original measured declared-output inventory and its hash.
+Its `evidence_semantics: not_verified` is explicit: structural byte verification
+does not establish valid extension evidence, numerical acceptance or a result.
+
+The existing output verifier gains an opt-in durable path. It syncs each measured
+output and directory while holding anchored descriptors and checking file/root
+identity, with the existing bounded reads and file/aggregate limits. The source
+proof is canonical finite UTF-8 JSON, capped at 48 KiB, written owner-only and
+synced before atomic no-replacement publication in the original private
+`.external-<Run>` directory as `publication-source-v1.json`. Existing unequal
+proof bytes refuse; a later call cannot adopt newly changed outputs. The
+temporary link shares the same file bytes and is removed by its writer.
+
+Only its versioned `external_publication_source` Ref is saved in the original
+Run document. Drainage and that Ref commit in a separate acknowledged transaction
+before result copying starts. Unknown commit acknowledgement starts no copying;
+it does not imply retry or cleanup authority. The next transaction reloads current
+Run/cancellation state. A copy fault therefore leaves the original drained proof
+and receipt inspectable on reopen rather than rolling their metadata back.
+
+The proof belongs outside the final published directory, whose exact inventory
+remains unchanged. Source bytes are not a third output copy. The bounded file
+and small Ref use the existing custody metadata allowance; no new attempt,
+reservation, grant consumption or Study refund is introduced. Existing backup
+already retains ordinary private staging files and opaque Run documents. The
+new file/Ref each carry schema version 1; metadata schema versions 1–10 and old
+Run/wire projections remain unchanged. No proof includes a rebased execution
+path. Historical absolute execution specs remain historical evidence after restore.
+
+This retention prerequisite does not expose a recovered-result Ref, reinterpret
+a legacy failed Run as completed, or implement a recovery command. Current
+authority, original hashes, semantic evidence, bounded partial-copy reconciliation,
+accounting and supported result readers still need their separate continuation
+acceptance before recovery can be advertised.
+
 ## Current large-output storage observation
 
 Selected v3 preflight checks the existing `captured_cpu_large_outputs_v1`

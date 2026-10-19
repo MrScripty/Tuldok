@@ -1,0 +1,16 @@
+test_cancel_after_proof_ack_prevents_publication (test_run_publication_continuation.PublicationSourceIntegrationTests.test_cancel_after_proof_ack_prevents_publication) ... ok
+test_copy_fault_preserves_acknowledged_drainage_and_frozen_source (test_run_publication_continuation.PublicationSourceIntegrationTests.test_copy_fault_preserves_acknowledged_drainage_and_frozen_source) ... ok
+test_unknown_proof_commit_ack_cannot_start_publication (test_run_publication_continuation.PublicationSourceIntegrationTests.test_unknown_proof_commit_ack_cannot_start_publication) ... ok
+test_durable_output_verification_syncs_bytes_before_returning_inventory (test_run_publication_continuation.PublicationSourceTests.test_durable_output_verification_syncs_bytes_before_returning_inventory) ... ok
+test_frozen_source_binds_original_attempt_receipt_and_inventory (test_run_publication_continuation.PublicationSourceTests.test_frozen_source_binds_original_attempt_receipt_and_inventory) ... ok
+test_idempotent_proof_refuses_adopting_new_inventory_or_custody (test_run_publication_continuation.PublicationSourceTests.test_idempotent_proof_refuses_adopting_new_inventory_or_custody) ... ok
+test_acknowledged_commit_may_wake_before_later_delivery_failure (test_study_admission.OwnedAdmissionSeamTests.test_acknowledged_commit_may_wake_before_later_delivery_failure) ... ok
+test_nested_admission_wakes_only_after_outer_commit (test_study_admission.OwnedAdmissionSeamTests.test_nested_admission_wakes_only_after_outer_commit) ... ok
+test_outer_rollback_restores_grant_run_and_private_capture_without_wake (test_study_admission.OwnedAdmissionSeamTests.test_outer_rollback_restores_grant_run_and_private_capture_without_wake) ... ok
+test_receipt_lookup_never_wakes_a_committed_queue (test_study_admission.OwnedAdmissionSeamTests.test_receipt_lookup_never_wakes_a_committed_queue) ... ok
+test_unacknowledged_real_commit_retains_run_grant_and_files_without_wake (test_study_admission.OwnedAdmissionSeamTests.test_unacknowledged_real_commit_retains_run_grant_and_files_without_wake) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 16.157s
+
+OK

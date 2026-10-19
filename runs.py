@@ -37,6 +37,7 @@ TEST_FILES = {'test-metrics.json', 'predictions-test.json'}
 REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$')
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
 MAX_ARTIFACT_SEGMENT_BYTES = 8 * 1024 * 1024
+MAX_PUBLICATION_SOURCE_BYTES = 48 * 1024
 _DOWNLOAD_PERMIT = threading.BoundedSemaphore(1)
 
 
@@ -180,6 +181,14 @@ class Runs:
                         or run['custody_phase'] not in ('prepared', 'barrier_ready', 'go_intent', 'drained')):
                     raise ValueError('Invalid external execution identity.')
                 identity = run.get('custody_identity')
+                if 'publication_source' in run:
+                    source = run['publication_source']
+                    if (type(source) is not dict or set(source) != {'kind', 'schema_version', 'catalog_id', 'run_id', 'sha256'}
+                            or source['kind'] != 'external_publication_source' or type(source['schema_version']) is not int
+                            or source['schema_version'] != 1 or source['catalog_id'] != run['dataset_id']
+                            or source['run_id'] != run['id'] or type(source['sha256']) is not str
+                            or not re.fullmatch('[a-f0-9]{64}', source['sha256'])):
+                        raise ValueError('Invalid retained publication source reference.')
                 if identity is not None and (identity.get('attempt_id') != run['id']
                         or identity.get('request_sha256') != run['request_sha256']
                         or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
@@ -834,10 +843,65 @@ class Runs:
             raise WorkbenchError('Progress response exceeds its encoded bound.', 'unavailable', 409)
         return result
 
-    def _publish_external(self, run, receipt):
+    def _retain_external_publication_source(self, run, receipt, inventory):
+        """Freeze acknowledged compute facts, not semantic evidence or a result."""
+        import recipe_process
+        try:
+            receipt = recipe_process.validate_receipt(recipe_process.encoded(receipt), run['custody_identity'])
+        except (ValueError, TypeError, KeyError) as error:
+            raise WorkbenchError('Successful drained custody is required for publication retention.', 'unavailable', 409) from error
+        if not receipt['drained'] or receipt['outcome'] != 'completed':
+            raise WorkbenchError('Successful drained custody is required for publication retention.', 'unavailable', 409)
+        proof = {'format': 'external_publication_source_v1', 'schema_version': 1,
+                 'catalog_id': run['dataset_id'], 'run_id': run['id'],
+                 'request_sha256': run['request_sha256'], 'material_sha256': run['material_sha256'],
+                 'graph_sha256': run['graph_sha256'], 'custody_receipt': receipt,
+                 'inventory': inventory, 'inventory_sha256': digest(inventory),
+                 'evidence_semantics': 'not_verified'}
+        raw = encode(proof).encode()
+        if len(raw) > MAX_PUBLICATION_SOURCE_BYTES:
+            raise WorkbenchError('Publication source proof exceeds its admitted metadata bound.', 'unsupported', 409)
+        ref = {'kind': 'external_publication_source', 'schema_version': 1,
+               'catalog_id': run['dataset_id'], 'run_id': run['id'], 'sha256': hashlib.sha256(raw).hexdigest()}
+        directory = self._diagnostic_directory(self._external_directory(run))
+        temporary = '.publication-source-' + uuid.uuid4().hex
+        created = False
+        try:
+            descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                 0o600, dir_fd=directory)
+            created = True
+            with os.fdopen(descriptor, 'wb') as output:
+                output.write(raw); output.flush()
+                os.fchmod(output.fileno(), 0o400)
+                os.fsync(output.fileno())
+            try:
+                os.link(temporary, 'publication-source-v1.json', src_dir_fd=directory,
+                        dst_dir_fd=directory, follow_symlinks=False)
+            except FileExistsError:
+                retained, _, _ = self._diagnostic_read(directory, 'publication-source-v1.json', MAX_PUBLICATION_SOURCE_BYTES)
+                if retained != raw:
+                    raise WorkbenchError('Frozen publication source differs; changed outputs cannot replace it.', 'stale', 409)
+            os.unlink(temporary, dir_fd=directory)
+            created = False
+            os.fsync(directory)
+        except (OSError, ValueError) as error:
+            if isinstance(error, WorkbenchError):
+                raise
+            raise WorkbenchError('Publication source could not be durably retained.', 'unavailable', 409) from error
+        finally:
+            if created:
+                try:
+                    os.unlink(temporary, dir_fd=directory)
+                except FileNotFoundError:
+                    pass
+            os.close(directory)
+        return ref
+
+    def _publish_external(self, run, receipt, *, inventory=None):
         import recipe_contract
         source = Path(run['spec']['output_dir'])
-        checked = recipe_contract.verify_outputs(source, run['outputs'], run['spec']['max_output_bytes'])
+        checked = (recipe_contract.verify_outputs(source, run['outputs'], run['spec']['max_output_bytes'])
+                   if inventory is None else inventory)
         destination = self.path / run['id']
         destination.mkdir(mode=0o700)
         artifacts = []
@@ -964,8 +1028,19 @@ class Runs:
                 run = self._load(run_id)
                 run['custody_phase'] = 'drained'
                 cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
+                inventory = None
                 if not cancelled and receipt['outcome'] == 'completed':
-                    artifacts, receipt_hash = self._publish_external(run, receipt)
+                    inventory = recipe_contract.verify_outputs(Path(run['spec']['output_dir']),
+                        run['outputs'], run['spec']['max_output_bytes'], durable=True)
+                    run['publication_source'] = self._retain_external_publication_source(run, receipt, inventory)
+                self._save(run)
+            # Only an acknowledged drainage/proof commit permits copying. Cancellation
+            # can arrive across that boundary, so read current owner state again.
+            with self.lock, self.db.transaction():
+                run = self._load(run_id)
+                cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
+                if not cancelled and receipt['outcome'] == 'completed':
+                    artifacts, receipt_hash = self._publish_external(run, receipt, inventory=inventory)
                     run['artifacts'], run['custody_receipt_sha256'] = artifacts, receipt_hash
                     self._event(run, 'completed', 'All descendants drained; declared outputs verified and retained.')
                     for node in run['node_attempts']:

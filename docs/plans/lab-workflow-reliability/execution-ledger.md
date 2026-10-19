@@ -153,3 +153,31 @@
   skip. A task-owned local PostgreSQL build was investigated: compiler exists,
   but ordinary downloads of the official source archive/checksum returned HTTP
   403. No server was installed or compiled; database acceptance remains hosted.
+
+## 2026-10-19 — Publication source retention prerequisite
+
+- Local PostgreSQL unblocked after the earlier download failures: the published
+  PostgreSQL 17.6 test bundle from Maven Central matched its published SHA256.
+  Started a task-owned disposable cluster on a private workspace Unix socket,
+  with no network listener or real lab catalog. Retained tooling provenance and
+  exact test logs on the remote checkpoint; independent clone verified all
+  29 evidence sizes/hashes and exact PR93/94 source ancestry.
+- Exact PR92 real field-refusal case passed; PR93's four actual HTTP/AgentClient/
+  legacy projection/CLI submission/neutral execution/download cases passed.
+  PR94's new storage module plus existing large-admission no-grant/cleanup case
+  passed all 10; independent reviewer reran the new database case successfully.
+  The complete early preflight CI command ran 30 tests with zero skips in 5.187s.
+  These are boundary/control-fixture results, not new runtime/hardware science.
+- Created the next C2 branch at PR94. Four before-change witnesses failed/errored:
+  no durable source proof, no durable verifier path, and a real copy fault rolled
+  drainage back to GO intent. Added bounded private immutable source retention,
+  optional file/directory sync in the existing output verifier, a separately
+  acknowledged drainage/Ref commit, and current-state reload before copying.
+- Initial four source-retention cases passed against real PostgreSQL/custody in
+  2.806s. Added actual unknown-proof-COMMIT-acknowledgement and cancellation-window
+  witnesses plus existing execution/copy regressions: all 11 passed in 18.958s.
+  Additional source/Study admission authority and commit group: all 11 passed in
+  16.157s. Independent source/persistence review cleared the prerequisite and
+  independently ran all 6 new cases successfully. [Exact retained evidence](reports/m1-publication-source/validation.json)
+  distinguishes these from recovery commands/readers, indexed diagnostic capture
+  and full A1/A2/M1, which remain pending.

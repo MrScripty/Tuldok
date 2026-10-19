@@ -1031,7 +1031,7 @@ def capture(preflight, captured, staging):
     return dict(preflight, spec=spec_for_material(preflight['material'], staging))
 
 
-def verify_outputs(output_dir, outputs, max_output_bytes):
+def verify_outputs(output_dir, outputs, max_output_bytes, *, durable=False):
     """Hash declared outputs with bounded memory and anchored file descriptors."""
     root = Path(output_dir).absolute()
     root_fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
@@ -1070,6 +1070,8 @@ def verify_outputs(output_dir, outputs, max_output_bytes):
                         if measured > rule['max_bytes'] or total + measured > max_output_bytes:
                             raise WorkbenchError('Output total exceeds declared limit.')
                         checksum.update(raw)
+                    if durable:
+                        os.fsync(fd)
                     after = os.fstat(fd)
                     current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                     if measured != info.st_size or identity(info) != identity(after) or identity(info) != identity(current):
@@ -1079,6 +1081,8 @@ def verify_outputs(output_dir, outputs, max_output_bytes):
                                        'bytes': measured, 'sha256': checksum.hexdigest()}
                 finally:
                     os.close(fd)
+            if durable:
+                os.fsync(directory_fd)
         current_root = os.stat(root, follow_symlinks=False)
         if (root_info.st_dev, root_info.st_ino) != (current_root.st_dev, current_root.st_ino):
             raise WorkbenchError('Output root changed during verification.')

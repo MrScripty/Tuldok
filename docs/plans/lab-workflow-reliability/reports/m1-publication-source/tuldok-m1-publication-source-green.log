@@ -1,0 +1,9 @@
+test_copy_fault_preserves_acknowledged_drainage_and_frozen_source (test_run_publication_continuation.PublicationSourceIntegrationTests.test_copy_fault_preserves_acknowledged_drainage_and_frozen_source) ... ok
+test_durable_output_verification_syncs_bytes_before_returning_inventory (test_run_publication_continuation.PublicationSourceTests.test_durable_output_verification_syncs_bytes_before_returning_inventory) ... ok
+test_frozen_source_binds_original_attempt_receipt_and_inventory (test_run_publication_continuation.PublicationSourceTests.test_frozen_source_binds_original_attempt_receipt_and_inventory) ... ok
+test_idempotent_proof_refuses_adopting_new_inventory_or_custody (test_run_publication_continuation.PublicationSourceTests.test_idempotent_proof_refuses_adopting_new_inventory_or_custody) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.806s
+
+OK

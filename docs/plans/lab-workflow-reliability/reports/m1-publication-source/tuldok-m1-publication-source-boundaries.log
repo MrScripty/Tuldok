@@ -1,0 +1,16 @@
+test_cancel_after_proof_ack_prevents_publication (test_run_publication_continuation.PublicationSourceIntegrationTests.test_cancel_after_proof_ack_prevents_publication) ... ok
+test_copy_fault_preserves_acknowledged_drainage_and_frozen_source (test_run_publication_continuation.PublicationSourceIntegrationTests.test_copy_fault_preserves_acknowledged_drainage_and_frozen_source) ... ok
+test_unknown_proof_commit_ack_cannot_start_publication (test_run_publication_continuation.PublicationSourceIntegrationTests.test_unknown_proof_commit_ack_cannot_start_publication) ... ok
+test_durable_output_verification_syncs_bytes_before_returning_inventory (test_run_publication_continuation.PublicationSourceTests.test_durable_output_verification_syncs_bytes_before_returning_inventory) ... ok
+test_frozen_source_binds_original_attempt_receipt_and_inventory (test_run_publication_continuation.PublicationSourceTests.test_frozen_source_binds_original_attempt_receipt_and_inventory) ... ok
+test_idempotent_proof_refuses_adopting_new_inventory_or_custody (test_run_publication_continuation.PublicationSourceTests.test_idempotent_proof_refuses_adopting_new_inventory_or_custody) ... ok
+test_real_running_cancel_retains_consumed_approval (test_external_runs.ExternalExecutionTests.test_real_running_cancel_retains_consumed_approval) ... ok
+test_real_unicode_parameter_descendant_output_cold_download_and_restart (test_external_runs.ExternalExecutionTests.test_real_unicode_parameter_descendant_output_cold_download_and_restart) ... ok
+test_unknown_go_commit_ack_never_sends_go_to_real_helper (test_external_runs.ExternalExecutionTests.test_unknown_go_commit_ack_never_sends_go_to_real_helper) ... ok
+test_chunk_bound_same_size_mutation_and_link_refusal (test_external_artifacts.BoundedCopyTests.test_chunk_bound_same_size_mutation_and_link_refusal) ... ok
+test_bounded_reads_exact_hashes_and_unsafe_paths (test_large_recipe_contract.StreamedOutputChecks.test_bounded_reads_exact_hashes_and_unsafe_paths) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 18.958s
+
+OK
