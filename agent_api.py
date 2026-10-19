@@ -691,6 +691,22 @@ _PUBLICATION_SEGMENT['required'].append('result_ref')
 model_operation('runs.publication_artifact_chunk', 'POST', '/api/workspace/publication-results/artifact-segment/{name}',
     {'ref': PUBLICATION_RESULT_REF, 'name': ARTIFACT, 'expected_sha256': SHA, 'offset': integer(),
      'max_bytes': integer(1, 8*1024*1024)}, output=_PUBLICATION_SEGMENT)
+_ARTIFACT_SEGMENT_SOURCE = {'oneOf': [obj({'kind':const('run'),'run_id':ID}),
+    obj({'kind':const('publication'),'ref':PUBLICATION_RESULT_REF})]}
+_ARTIFACT_SEGMENT_KEY = {'type':'string','pattern':'^[A-Za-z0-9_.:-]{1,64}$'}
+_ARTIFACT_SEGMENT_REQUEST = obj({'key':_ARTIFACT_SEGMENT_KEY,'source':_ARTIFACT_SEGMENT_SOURCE,
+    'name':ARTIFACT,'expected_sha256':SHA,'offset':integer(0,512*1024**2),
+    'max_bytes':integer(1,8*1024**2)})
+_ARTIFACT_SEGMENT_OUTCOME = {'oneOf': [
+    obj({'key':_ARTIFACT_SEGMENT_KEY,'source':_ARTIFACT_SEGMENT_SOURCE,'status':const(200),
+         'result':{'oneOf':[SEGMENT_SCHEMA,_PUBLICATION_SEGMENT]}}),
+    obj({'key':_ARTIFACT_SEGMENT_KEY,'source':_ARTIFACT_SEGMENT_SOURCE,'status':integer(400,599),
+         'error':obj({'code':text(120),'message':text(240)})})]}
+_ARTIFACT_SEGMENTS_RESULT = obj({'format':const('artifact_segments_v1'),
+    'items':array(_ARTIFACT_SEGMENT_OUTCOME,20,1)})
+model_operation('runs.artifact_segments','POST','/api/workspace/artifact-segments',
+    {'items':array(_ARTIFACT_SEGMENT_REQUEST,20,1)},output=_ARTIFACT_SEGMENTS_RESULT,
+    description='Explicit sequential external-Run or attached-publication segment collection; max20 items/8MiB requested raw bytes/60s. Typed item outcomes; current authority and client whole hashes remain required.')
 model_operation('runs.publication_model_evidence', 'POST', '/api/workspace/publication-results/model-evidence',
     {'ref': PUBLICATION_RESULT_REF, 'selectors': JSON_OBJECT}, ['ref'])
 model_operation('runs.compare_publication_evidence', 'POST', '/api/workspace/publication-results/compare-model-evidence',
@@ -1208,6 +1224,8 @@ def validate_output(name, envelope, version=None):
     op = operation(name, version)
     if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if op['operation_id'] == 'runs.artifact_segments' and envelope['status'] < 400:
+        validate_artifact_segments(envelope['result'])
     if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and envelope['status'] < 400:
         value = envelope['result']; records = value['records']
         if len({item['clock_id'] for item in records}) != len(records):
@@ -1289,6 +1307,12 @@ def validate_arguments(name, arguments, version=None):
         raise AgentAPIError('Inline import exceeds 512 KiB; use the supported HTTP/UI or scientific references.', 'too_large', 413)
     if op['operation_id'] == 'graphs.save' and len(json.dumps(arguments['document'], ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')) > 32768:
         raise AgentAPIError('Graph exceeds the 32 KiB bound.', 'too_large', 413)
+    if op['operation_id'] == 'runs.artifact_segments':
+        items = arguments['items']
+        if len({item['key'] for item in items}) != len(items):
+            raise AgentAPIError('Collection item keys must be unique.')
+        if sum(item['max_bytes'] for item in items) > 8*1024**2:
+            raise AgentAPIError('Collection requested raw bytes exceed 8 MiB.', 'too_large', 413)
     return copy.deepcopy(arguments)
 
 
@@ -1835,3 +1859,33 @@ def verify_artifact(client, run_id, name, expected_sha256, *, consume=None, chun
             if checksum.hexdigest() != expected_sha256 or offset != total:
                 raise AgentAPIError('Whole artifact SHA256 differs; discard provisional bytes.', 'artifact_mismatch', 409)
             return {'sha256': expected_sha256, 'bytes': total, 'verification': 'whole_sha256_verified'}
+
+
+def validate_artifact_segments(value, request=None):
+    """Check correlation/segments; callers still verify each reassembled whole hash."""
+    if next(_validator(_ARTIFACT_SEGMENTS_RESULT).iter_errors(value), None) is not None:
+        raise AgentAPIError('Collection result shape differs.', 'transport', 502)
+    outcomes = value['items']
+    if len({item['key'] for item in outcomes}) != len(outcomes):
+        raise AgentAPIError('Collection result keys are duplicated.', 'transport', 502)
+    if request is not None and (len(outcomes) != len(request['items']) or any(
+            value['key'] != expected['key'] or value['source'] != expected['source']
+            for value, expected in zip(outcomes, request['items']))):
+        raise AgentAPIError('Collection result order or exact source differs.', 'transport', 502)
+    total = 0
+    for index, outcome in enumerate(outcomes):
+        if outcome['status'] != 200: continue
+        segment = outcome['result']; source = outcome['source']
+        selectors = request['items'][index] if request is not None else dict(segment, max_bytes=8*1024**2)
+        if source['kind'] == 'run':
+            if 'result_ref' in segment:
+                raise AgentAPIError('Ordinary segment carries a foreign result reference.', 'transport', 502)
+            selected = dict(selectors, run_id=source['run_id'])
+            raw = validate_segment(segment, selected)
+        else:
+            selected = dict(selectors, ref=source['ref'])
+            raw = validate_publication_segment(segment, selected)
+        total += len(raw)
+    if total > 8*1024**2:
+        raise AgentAPIError('Collection result exceeds its aggregate byte bound.', 'transport', 502)
+    return value

@@ -1,0 +1,65 @@
+{
+  "base": "2d8b7d79110f210896dcdda8df08f6385cabf2d3",
+  "baseline": "07dde98df856619cab929eb9dc8d3275151c69bd",
+  "contract_pin": "510198cf8617f297b45b5b5100692e76aa3de5f865019730843b18d1d8ee7e39",
+  "initial_actual_pure_group": {
+    "passed": 8,
+    "ran": 8,
+    "skipped": 0,
+    "wall_seconds": 47.251
+  },
+  "logs": {
+    "actual-initial.log": {
+      "bytes": 1507,
+      "sha256": "6b660d8f0784acd326c113eecc1a2c7c40d690c5a9814fb1f34c549b661ce4f4"
+    },
+    "before.log": {
+      "bytes": 8637,
+      "sha256": "633dbcc9eed8b231e1db766acaa347926e064be3abd9418a4c42c65b319b5566"
+    },
+    "pure-initial.log": {
+      "bytes": 914,
+      "sha256": "184d9192d2d3a066bc062a478d593b09115aef09b89b936a7879a49c971a2891"
+    }
+  },
+  "pending": [
+    "Independent source review",
+    "Broader regressions",
+    "Same-candidate paired measurement",
+    "Explicit consumer integration",
+    "Hosted acceptance/candidate retention"
+  ],
+  "prior_full_contracts_equal": 122,
+  "source_fingerprint": "e5b4e0d62c11f6a5f24c7c63dad741d61841829b5be254fb13fac9f7731a0437",
+  "source_manifest": {
+    "agent_api.py": {
+      "bytes": 128259,
+      "sha256": "50d9e6c820c4f749609ea32599205e06bc782b3b947716c28c1f9fece8699317"
+    },
+    "app.py": {
+      "bytes": 89967,
+      "sha256": "22c9443a94cbd4fb5a21b5e212ca98ef66d4f16a862c021b3a0938edd6dda016"
+    },
+    "docs/contracts/run-artifact-segments.md": {
+      "bytes": 3605,
+      "sha256": "f42c6c2a492e272db491dd79649e72984b1816e02c24056abe75797e835779bd"
+    },
+    "run_publication.py": {
+      "bytes": 37890,
+      "sha256": "34129247fc8fa5caf81c641897568247ae1b81cb855c1a9e59cc134dffe83400"
+    },
+    "runs.py": {
+      "bytes": 165581,
+      "sha256": "dd48c2680743d1c9c77dded8cefd15ea7edb914e95158631adfe0575ef9fb537"
+    },
+    "tests/fixtures/agent_contracts_collection2d8b7d7.json": {
+      "bytes": 502518,
+      "sha256": "54e41b1bfc0b4779e88363c74fa6e95d2371ae558b88f0252904e044b81036ce"
+    },
+    "tests/test_run_artifact_segments.py": {
+      "bytes": 12055,
+      "sha256": "4395bc5bcb3c740b000191596332834d4a482f97d0ab32622ba0efa0cf6ec78a"
+    }
+  },
+  "subject": "Initial coherent bounded collection candidate; independent review/performance pending"
+}

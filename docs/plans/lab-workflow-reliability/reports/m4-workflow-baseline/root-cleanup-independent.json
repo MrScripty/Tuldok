@@ -1,0 +1,15 @@
+{
+  "source": "83d7e8f52df92d10d3ff85709da6eff3231a0b06",
+  "known_task_schemas": [
+    "catalog_cab77c5e28904f30aab7a9fa5834da65",
+    "catalog_560e5559c5254180a8d460928bfa6229",
+    "catalog_18f63af737b846fa806acd3f7b82968c",
+    "catalog_36fde244c5fe487ca49ea5e0ce9f3b79",
+    "catalog_a87993fa19cf4079b52787460a7316aa",
+    "catalog_04d71dddd9fa462a81042837ea0b3540",
+    "catalog_4e0aa512a9f4488391f3a6505dd2e3ad",
+    "catalog_4b86314d1591490cbee251f1d0fd9cc2"
+  ],
+  "remaining": [],
+  "result": "all8_absent"
+}

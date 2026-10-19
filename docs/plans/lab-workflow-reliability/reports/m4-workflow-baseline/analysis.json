@@ -1,0 +1,51 @@
+{
+  "all_cycles": 54,
+  "all_read_workers": 18,
+  "cleanup_confirmations": [
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_cab77c5e28904f30aab7a9fa5834da65"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_560e5559c5254180a8d460928bfa6229"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_18f63af737b846fa806acd3f7b82968c"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_36fde244c5fe487ca49ea5e0ce9f3b79"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_a87993fa19cf4079b52787460a7316aa"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_04d71dddd9fa462a81042837ea0b3540"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_4e0aa512a9f4488391f3a6505dd2e3ad"
+    },
+    {
+      "dropped": true,
+      "owned_temporary_directory_removed": true,
+      "schema": "catalog_4b86314d1591490cbee251f1d0fd9cc2"
+    }
+  ],
+  "preparation_samples": 54,
+  "proof_metadata_samples": 36,
+  "proof_metadata_wall_ms_median": 0.4021835,
+  "runtime_identity_inclusive_fraction_median": 0.9364820442075461,
+  "scope": "Descriptive baseline only; cohort grouping by raw filename, no outcome filtering."
+}
