@@ -1,0 +1,67 @@
+{
+  "audited_source": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+  "method": "Read-only accepted-plan, production/test-source and retained qualification review; no tests, browsing, remote writes or product edits.",
+  "conclusion": "No additional unconditional code defect or mandatory missing CPU-training gate established. Generic admitted mechanisms have scoped implementation/test evidence; full-plan acceptance is not established.",
+  "unsatisfied": [
+    {
+      "id": "PUB-1",
+      "owner": "Lab supplies original evidence; evidence-profile and Runs publication owners classify it.",
+      "gap": "Original failed diagnostic bytes/path, admitted caps/profile and failure receipt are absent. Generic indexing/recovery does not classify or repair that original failure.",
+      "sources": [
+        "docs/plans/lab-workflow-reliability/issues.md:6",
+        "docs/plans/lab-workflow-reliability/reports/m1-indexed-diagnostics/report.md"
+      ]
+    },
+    {
+      "id": "SCI-1 / C6-T7",
+      "owner": "Lab/model/evaluator owns real criterion/pair; evidence/API/UI owners implement supported versioned projection once authority is selected.",
+      "gap": "Owned qualified criterion and compatible lab pair are missing. Current result/UI supports diagnostic deltas and unknown only; qualified per-case pass/fail remains input-dependent implementation/acceptance. Never invent threshold, units or error operator.",
+      "sources": [
+        "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md:287",
+        "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md:432",
+        "extension_evidence.py:657",
+        "extension_evidence.py:662",
+        "static/workspace-scientific-comparison.js:46"
+      ]
+    },
+    {
+      "id": "T8 final activation",
+      "owner": "Integration lead / required CI owners.",
+      "gap": "Root must confirm exact latest-head required CI, cross-owner acceptance and serial integration. This audit did not query hosted status or relabel earlier receipts as final-head acceptance. No CI failure asserted.",
+      "sources": [
+        "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md:454"
+      ]
+    }
+  ],
+  "cpu": {
+    "mandatory_missing_flow_established": false,
+    "actual_training": "P3 classifier training/correction and P4 text/audio one-fit evidence are qualified separately. M5 source563 actual guard case passed60.889s; its fixture submits and awaits a fresh two-epoch CPU Run before HTTP/CLI comparison.",
+    "captured_inference": "candidate-packages.yml:123 performs actual browser training using full CPU runtime before:127 captures the inference subset and:139 verifies package/fresh inference. The inference-only subset is not claimed to train; separate training evidence exists.",
+    "indexed_limit": "Indexed fixture serializes actual captured SDK source in the harness before /usr/bin/true with dummy0.0 packages. It proves real custody/recovery/read/accounting and makes no captured-Python/training/science claim. Treat as explicit fidelity limit, not invented missing gate: T1 requests actual writer/host/cold reader; T2 permits optimizer OR observed execution counter.",
+    "sources": [
+      "docs/plans/end-to-end-model-development/reports/implementation-handoff.md",
+      "docs/plans/end-to-end-model-development/reports/product-implementation-status.md",
+      "docs/plans/end-to-end-model-development/reports/p3-real-workspace-qualification.md",
+      "docs/plans/end-to-end-model-development/reports/p4-one-fit-browser-qualification.md",
+      "tests/test_model_evidence.py:59",
+      "tests/test_workflow_client_http.py:533",
+      "docs/plans/lab-workflow-reliability/reports/m5-workflow-client/comparison-guard-http.log",
+      ".github/workflows/candidate-packages.yml:123",
+      "tests/test_indexed_diagnostics_publication.py:235",
+      "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md:340"
+    ]
+  },
+  "bounded_performance_disposition": {
+    "owner": "M4 performance owner / lead.",
+    "scope": "Only explicit many-small twenty-item collection accepted; one-item cells regress and ordinary collect stays individual. No preparation/facade/end-to-end/science speedup or fullM4/T5 claim. Broader PERF-2 is an owner scope/acceptance disposition, not proof of a mandatory missing cache: C4 expressly allows omitting unsafe/unhelpful reuse.",
+    "sources": [
+      "docs/plans/lab-workflow-reliability/plan.md:505",
+      "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md:186"
+    ]
+  },
+  "not_gaps": [
+    "Historical design pauses/Planned labels are not absent code; later authorization and product implementation record supersede them.",
+    "CUDA/physical validity, native pressure inputs, resume, hard quotas, adaptive/distributed execution and public redistribution remain conditional/excluded claims.",
+    "No new captured-Python producer gate inferred from accurately bounded synthetic/no-op evidence."
+  ]
+}

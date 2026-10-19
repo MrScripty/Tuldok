@@ -1,0 +1,2166 @@
+{
+  "kind": "Independent read-only terminal cleanup postcheck",
+  "snapshot_utc": "2026-10-19T23:34:56.891261+00:00",
+  "scope": "Exact task-owned merged PR92\u2013101 ten branch/worktree retirements",
+  "assessment": "PASS",
+  "expected_main": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+  "local_origin_main": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+  "live_remote_main": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+  "live_and_local_main_match_expected": true,
+  "retirement_proof": [
+    {
+      "pr": 92,
+      "accepted_head": "750332ac64244526127075feb14cb8db268a7ab9",
+      "branch": "refs/heads/feature/lab-preflight-output-bounds-20261019",
+      "path": "/workspace/Tuldok-lab-preflight-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-preflight-output-bounds-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 93,
+      "accepted_head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+      "branch": "refs/heads/feature/lab-exact-preflight-report-20261019",
+      "path": "/workspace/Tuldok-lab-preflight-report-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-exact-preflight-report-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 94,
+      "accepted_head": "0039a330253c088b68578e268afe6fc21fc36038",
+      "branch": "refs/heads/feature/lab-preflight-storage-20261019",
+      "path": "/workspace/Tuldok-lab-preflight-storage-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-preflight-storage-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 95,
+      "accepted_head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+      "branch": "refs/heads/feature/lab-publication-continuation-20261019",
+      "path": "/workspace/Tuldok-lab-publication-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-publication-continuation-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 96,
+      "accepted_head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+      "branch": "refs/heads/feature/lab-publication-recovery-20261019",
+      "path": "/workspace/Tuldok-lab-publication-recovery-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-publication-recovery-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 97,
+      "accepted_head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+      "branch": "refs/heads/feature/lab-publication-interfaces-20261019",
+      "path": "/workspace/Tuldok-lab-publication-interfaces-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-publication-interfaces-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 98,
+      "accepted_head": "f866252782310211b887301a674ba2a62c353709",
+      "branch": "refs/heads/feature/lab-publication-evidence-20261019",
+      "path": "/workspace/Tuldok-lab-publication-evidence-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-publication-evidence-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 99,
+      "accepted_head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+      "branch": "refs/heads/feature/lab-publication-run-panel-20261019",
+      "path": "/workspace/Tuldok-lab-publication-ui-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-publication-run-panel-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 100,
+      "accepted_head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+      "branch": "refs/heads/feature/lab-publication-lineage-20261019",
+      "path": "/workspace/Tuldok-lab-publication-lineage-m1",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-publication-lineage-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    },
+    {
+      "pr": 101,
+      "accepted_head": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+      "branch": "refs/heads/feature/lab-coordinator-recovery-20261019",
+      "path": "/workspace/Tuldok-lab-coordinator-m2",
+      "exact_scope_matches_prior_inventory": true,
+      "path_absent_including_symlink": true,
+      "worktree_registration_absent": true,
+      "branch_registration_absent": true,
+      "local_ref_absent": true,
+      "local_remote_tracking_ref": "refs/remotes/origin/feature/lab-coordinator-recovery-20261019",
+      "local_remote_tracking_ref_absent": true,
+      "live_remote_ref_absent": true,
+      "live_remote_notfound_code": "NOT_FOUND",
+      "live_remote_status": "404",
+      "accepted_head_ancestor_main": true,
+      "ancestry_exit": 0,
+      "retained_local_ref": "refs/remotes/origin/main",
+      "retained_live_remote_ref": "refs/heads/main",
+      "pass": true
+    }
+  ],
+  "preservation": {
+    "protected_refs": [
+      {
+        "ref": "refs/heads/docs/canonical-a-505-package-qualification",
+        "original_oid": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "current_oid": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/canonical-a-50502-qualification",
+        "original_oid": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "current_oid": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/e4-ab-final-qualification",
+        "original_oid": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "current_oid": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/e4-core-cross-grant-qualification",
+        "original_oid": "a479be12130845abca6387f1dacb7c464139215a",
+        "current_oid": "a479be12130845abca6387f1dacb7c464139215a",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/extension-current-status-cleanup",
+        "original_oid": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "current_oid": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/extension-final-acceptance",
+        "original_oid": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "current_oid": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/extension-final-functional-status",
+        "original_oid": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "current_oid": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/extension-x3-acceptance",
+        "original_oid": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "current_oid": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/independent-b-decisive-qualification",
+        "original_oid": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "current_oid": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/docs/product-api-source-provenance",
+        "original_oid": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "current_oid": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feat/e1-e2-contribution-bindings",
+        "original_oid": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "current_oid": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feat/e2-canonical-owner-glue",
+        "original_oid": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "current_oid": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/canonical-a-package",
+        "original_oid": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "current_oid": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/experiment-lineage",
+        "original_oid": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "current_oid": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-a-retention",
+        "original_oid": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "current_oid": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-bound-recipe-api",
+        "original_oid": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "current_oid": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-canonical-fixture",
+        "original_oid": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "current_oid": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-field-api",
+        "original_oid": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "current_oid": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-inference-product",
+        "original_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "current_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-model-author-workspace",
+        "original_oid": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "current_oid": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-retention-product",
+        "original_oid": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "current_oid": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-runtime-nomination",
+        "original_oid": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "current_oid": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/extension-sdk-evidence",
+        "original_oid": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "current_oid": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/external-candidate-evidence-view",
+        "original_oid": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "current_oid": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/field-surrogate-b-independent",
+        "original_oid": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "current_oid": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-fields-native",
+        "original_oid": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "current_oid": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-p3",
+        "original_oid": "767f66f8c9435561e68aee216b0dc54808997908",
+        "current_oid": "767f66f8c9435561e68aee216b0dc54808997908",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-p4",
+        "original_oid": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "current_oid": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-p4-browser",
+        "original_oid": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "current_oid": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-p5",
+        "original_oid": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "current_oid": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-p5-field",
+        "original_oid": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "current_oid": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-p6",
+        "original_oid": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "current_oid": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/feature/model-development-workspace",
+        "original_oid": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "current_oid": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/author-oracle-resume",
+        "original_oid": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "current_oid": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/candidate-packages-distro-python",
+        "original_oid": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "current_oid": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/extension-sdk-utf8-canonical",
+        "original_oid": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "current_oid": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/external-graph-keyboard-focus",
+        "original_oid": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "current_oid": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/operator-runtime-identity",
+        "original_oid": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "current_oid": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/p2-cold-composition-marker",
+        "original_oid": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "current_oid": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/p3-strict-evidence-decoding",
+        "original_oid": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "current_oid": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/p4-export-browser-recipe-set",
+        "original_oid": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "current_oid": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/fix/sdk-conformance-public-graph",
+        "original_oid": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "current_oid": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/integration/extension-pressure-current-main",
+        "original_oid": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "current_oid": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/integration/extension-scalar-current-main",
+        "original_oid": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "current_oid": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/integration/model-development-final-publication",
+        "original_oid": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "current_oid": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/integration/model-development-p2-final",
+        "original_oid": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "current_oid": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/integration/model-development-product",
+        "original_oid": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "current_oid": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/integration/p5-after-p4-prep",
+        "original_oid": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "current_oid": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/qa/field-interface-observation",
+        "original_oid": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "current_oid": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/qa/independent-b-cold-actual",
+        "original_oid": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "current_oid": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/qa/independent-b-sdk-frozen",
+        "original_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "current_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/qa/restored-ab-official-interfaces",
+        "original_oid": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "current_oid": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/review/independent-b-host-compatibility",
+        "original_oid": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "current_oid": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/review/independent-b-host-corrected",
+        "original_oid": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "current_oid": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/author-review-freeze",
+        "original_oid": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "current_oid": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/canonical-a-package-actual",
+        "original_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "current_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/canonical-author-50502-review",
+        "original_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "current_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/canonical-owner-review",
+        "original_oid": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "current_oid": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/e4-ab-retention",
+        "original_oid": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "current_oid": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/e4-ab-retention-execution",
+        "original_oid": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "current_oid": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-author-native-browser",
+        "original_oid": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "current_oid": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-author-qualification",
+        "original_oid": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "current_oid": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-bound-http",
+        "original_oid": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "current_oid": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-canonical-final-review",
+        "original_oid": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "current_oid": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-canonical-independent-review",
+        "original_oid": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "current_oid": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-local-50502-qualification",
+        "original_oid": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "current_oid": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/extension-modality-descriptors",
+        "original_oid": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "current_oid": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/external-browser-handler-readiness",
+        "original_oid": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "current_oid": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/external-graph-focus-regression",
+        "original_oid": "6702be2e08420d781e60665b15f27bc974160552",
+        "current_oid": "6702be2e08420d781e60665b15f27bc974160552",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/frozen-release-authority",
+        "original_oid": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "current_oid": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/main505-agent-authoring",
+        "original_oid": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "current_oid": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/main505-agent-authoring-recovery",
+        "original_oid": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "current_oid": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/model-activation-ci",
+        "original_oid": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "current_oid": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/model-browser-candidate-readiness",
+        "original_oid": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "current_oid": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/native-ab-retention-ui",
+        "original_oid": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "current_oid": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/native-author-ab-actual",
+        "original_oid": "e958db578da805f4352d282c02430edc78985a3c",
+        "current_oid": "e958db578da805f4352d282c02430edc78985a3c",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/native-author-ab-evidence",
+        "original_oid": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "current_oid": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/one-fit-host-dependencies",
+        "original_oid": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "current_oid": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/p5-captured-runtime-ci",
+        "original_oid": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "current_oid": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/p5-transitive-authority",
+        "original_oid": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "current_oid": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/test/x3-b-semantic-refusals",
+        "original_oid": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "current_oid": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "exact": true
+      },
+      {
+        "ref": "refs/heads/work",
+        "original_oid": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "current_oid": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "exact": true
+      }
+    ],
+    "protected_worktrees": [
+      {
+        "path": "/workspace/Tuldok",
+        "expected_oid": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "current_oid": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-ab-retention",
+        "expected_oid": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "current_oid": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-activation-ci-fix",
+        "expected_oid": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "current_oid": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-agent-snapshots-review",
+        "expected_oid": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "current_oid": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-api-source-provenance",
+        "expected_oid": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "current_oid": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-author-browser",
+        "expected_oid": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "current_oid": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-author-freeze-test",
+        "expected_oid": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "current_oid": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-author-qualification",
+        "expected_oid": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "current_oid": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-author-resume",
+        "expected_oid": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "current_oid": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-author-ui",
+        "expected_oid": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "current_oid": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-cold-independent-review",
+        "expected_oid": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "current_oid": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-host-corrected",
+        "expected_oid": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "current_oid": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-host-review",
+        "expected_oid": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "current_oid": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-independent",
+        "expected_oid": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "current_oid": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-public-sdk-host",
+        "expected_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "current_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-qualification-docs",
+        "expected_oid": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "current_oid": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-b-refusals",
+        "expected_oid": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "current_oid": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-bound-http",
+        "expected_oid": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "current_oid": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-candidate-permissions",
+        "expected_oid": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "current_oid": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-a-report",
+        "expected_oid": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "current_oid": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-author-qa",
+        "expected_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "current_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-final-review",
+        "expected_oid": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "current_oid": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-glue",
+        "expected_oid": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "current_oid": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-independent-review",
+        "expected_oid": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "current_oid": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-inference-review",
+        "expected_oid": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+        "current_oid": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-masked-actual",
+        "expected_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "current_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-owner-review",
+        "expected_oid": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "current_oid": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-package-actual",
+        "expected_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "current_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-canonical-package-report",
+        "expected_oid": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "current_oid": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e2-api",
+        "expected_oid": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "current_oid": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e2-author-review",
+        "expected_oid": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "current_oid": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e2-binding-api",
+        "expected_oid": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "current_oid": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e2-glue-review",
+        "expected_oid": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+        "current_oid": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e2-review",
+        "expected_oid": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "current_oid": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e2-ui",
+        "expected_oid": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "current_oid": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e4-core-report",
+        "expected_oid": "a479be12130845abca6387f1dacb7c464139215a",
+        "current_oid": "a479be12130845abca6387f1dacb7c464139215a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e4-execution",
+        "expected_oid": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "current_oid": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e4-final-report",
+        "expected_oid": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "current_oid": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-e4-retention",
+        "expected_oid": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "current_oid": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-experiment-lineage",
+        "expected_oid": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "current_oid": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-bindings",
+        "expected_oid": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "current_oid": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-canonical",
+        "expected_oid": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "current_oid": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-final-acceptance",
+        "expected_oid": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "current_oid": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-final-functional-status",
+        "expected_oid": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "current_oid": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-inference",
+        "expected_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "current_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-local-qa",
+        "expected_oid": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "current_oid": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-modalities",
+        "expected_oid": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "current_oid": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-retention",
+        "expected_oid": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "current_oid": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-runtime",
+        "expected_oid": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "current_oid": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-status-cleanup",
+        "expected_oid": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "current_oid": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-extension-x3-acceptance",
+        "expected_oid": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "current_oid": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-external-browser-readiness",
+        "expected_oid": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "current_oid": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-external-package-ui",
+        "expected_oid": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "current_oid": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-final-publication",
+        "expected_oid": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "current_oid": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-graph-focus",
+        "expected_oid": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "current_oid": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-graph-focus-old",
+        "expected_oid": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+        "current_oid": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-graph-focus-regression",
+        "expected_oid": "6702be2e08420d781e60665b15f27bc974160552",
+        "current_oid": "6702be2e08420d781e60665b15f27bc974160552",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-inference-review",
+        "expected_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "current_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-legacy-p3-qa",
+        "expected_oid": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+        "current_oid": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-main505-agent-authoring",
+        "expected_oid": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "current_oid": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-main505-agent-authoring-recovery",
+        "expected_oid": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "current_oid": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-model-browser-fix",
+        "expected_oid": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "current_oid": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-native-ab-actual",
+        "expected_oid": "e958db578da805f4352d282c02430edc78985a3c",
+        "current_oid": "e958db578da805f4352d282c02430edc78985a3c",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-native-ab-browser",
+        "expected_oid": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "current_oid": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-native-ab-retention",
+        "expected_oid": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "current_oid": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-one-fit-host-ci",
+        "expected_oid": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "current_oid": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-operator-runtime-fix",
+        "expected_oid": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "current_oid": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p2-final",
+        "expected_oid": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "current_oid": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p2-review-fix",
+        "expected_oid": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "current_oid": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p3",
+        "expected_oid": "767f66f8c9435561e68aee216b0dc54808997908",
+        "current_oid": "767f66f8c9435561e68aee216b0dc54808997908",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p3-activation-verify",
+        "expected_oid": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+        "current_oid": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p3-decoder-fix",
+        "expected_oid": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "current_oid": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p4",
+        "expected_oid": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "current_oid": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p4-browser",
+        "expected_oid": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "current_oid": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p4-export-browser-fix",
+        "expected_oid": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "current_oid": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5",
+        "expected_oid": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "current_oid": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-canonical-a",
+        "expected_oid": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "current_oid": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-canonical-final-review",
+        "expected_oid": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+        "current_oid": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-canonical-review",
+        "expected_oid": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+        "current_oid": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-ci",
+        "expected_oid": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "current_oid": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-ci-runtime",
+        "expected_oid": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "current_oid": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-field",
+        "expected_oid": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "current_oid": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p5-p4-composition",
+        "expected_oid": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "current_oid": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p6",
+        "expected_oid": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "current_oid": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p6-agent-api-review",
+        "expected_oid": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "current_oid": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-p6-field-qa",
+        "expected_oid": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "current_oid": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-prep-review",
+        "expected_oid": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+        "current_oid": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-prep68",
+        "expected_oid": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "current_oid": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-prep69",
+        "expected_oid": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "current_oid": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-product",
+        "expected_oid": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "current_oid": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-release-authority",
+        "expected_oid": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "current_oid": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-restored-interface-qa",
+        "expected_oid": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "current_oid": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-sdk-canonical",
+        "expected_oid": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "current_oid": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-sdk-evidence",
+        "expected_oid": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "current_oid": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-sdk-graph-fix",
+        "expected_oid": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "current_oid": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "exact_registration_lines": true,
+        "directory_present": true
+      },
+      {
+        "path": "/workspace/Tuldok-ui",
+        "expected_oid": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "current_oid": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "exact_registration_lines": true,
+        "directory_present": true
+      }
+    ],
+    "unique_protected_original_oids": 91,
+    "terminal_original_oid_set_matches_independently_rederived": true,
+    "retention_root_count": 91,
+    "reachability_method": "git rev-list --stdin seeded ONLY by current values of original82 preserved refs and original96 preserved worktree HEADs; deletion targets and main not needed as protected-retention roots. Membership checked for every original OID; not merely cat-file existence.",
+    "oids": [
+      {
+        "original_oid": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/native-author-ab-evidence",
+          "worktree_HEAD:/workspace/Tuldok-native-ab-browser"
+        ]
+      },
+      {
+        "original_oid": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-e2-author-review",
+          "worktree_HEAD:/workspace/Tuldok-e2-review"
+        ]
+      },
+      {
+        "original_oid": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-model-author-workspace",
+          "worktree_HEAD:/workspace/Tuldok-author-ui"
+        ]
+      },
+      {
+        "original_oid": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/e4-ab-final-qualification",
+          "worktree_HEAD:/workspace/Tuldok-e4-final-report"
+        ]
+      },
+      {
+        "original_oid": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feat/e1-e2-contribution-bindings",
+          "worktree_HEAD:/workspace/Tuldok-extension-bindings"
+        ]
+      },
+      {
+        "original_oid": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-p3-activation-verify"
+        ]
+      },
+      {
+        "original_oid": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/qa/independent-b-cold-actual",
+          "worktree_HEAD:/workspace/Tuldok-b-cold-independent-review"
+        ]
+      },
+      {
+        "original_oid": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/p3-strict-evidence-decoding",
+          "worktree_HEAD:/workspace/Tuldok-p3-decoder-fix"
+        ]
+      },
+      {
+        "original_oid": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-workspace",
+          "worktree_HEAD:/workspace/Tuldok-ui"
+        ]
+      },
+      {
+        "original_oid": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/p5-captured-runtime-ci",
+          "worktree_HEAD:/workspace/Tuldok-p5-ci"
+        ]
+      },
+      {
+        "original_oid": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-fields-native",
+          "worktree_HEAD:/workspace/Tuldok-e2-ui"
+        ]
+      },
+      {
+        "original_oid": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/product-api-source-provenance",
+          "worktree_HEAD:/workspace/Tuldok-api-source-provenance"
+        ]
+      },
+      {
+        "original_oid": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p4",
+          "worktree_HEAD:/workspace/Tuldok-p4"
+        ]
+      },
+      {
+        "original_oid": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/x3-b-semantic-refusals",
+          "worktree_HEAD:/workspace/Tuldok-b-refusals"
+        ]
+      },
+      {
+        "original_oid": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-sdk-evidence",
+          "worktree_HEAD:/workspace/Tuldok-sdk-evidence"
+        ]
+      },
+      {
+        "original_oid": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/external-browser-handler-readiness",
+          "worktree_HEAD:/workspace/Tuldok-external-browser-readiness"
+        ]
+      },
+      {
+        "original_oid": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/e4-ab-retention",
+          "worktree_HEAD:/workspace/Tuldok-ab-retention"
+        ]
+      },
+      {
+        "original_oid": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-local-50502-qualification",
+          "worktree_HEAD:/workspace/Tuldok-extension-local-qa"
+        ]
+      },
+      {
+        "original_oid": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/integration/model-development-p2-final",
+          "worktree_HEAD:/workspace/Tuldok-p2-final"
+        ]
+      },
+      {
+        "original_oid": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-prep-review"
+        ]
+      },
+      {
+        "original_oid": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/main505-agent-authoring-recovery",
+          "worktree_HEAD:/workspace/Tuldok-main505-agent-authoring-recovery"
+        ]
+      },
+      {
+        "original_oid": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/author-oracle-resume",
+          "worktree_HEAD:/workspace/Tuldok-author-resume"
+        ]
+      },
+      {
+        "original_oid": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p4-browser",
+          "worktree_HEAD:/workspace/Tuldok-p4-browser"
+        ]
+      },
+      {
+        "original_oid": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-author-qualification",
+          "worktree_HEAD:/workspace/Tuldok-author-qualification"
+        ]
+      },
+      {
+        "original_oid": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p5",
+          "worktree_HEAD:/workspace/Tuldok-p5"
+        ]
+      },
+      {
+        "original_oid": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/one-fit-host-dependencies",
+          "worktree_HEAD:/workspace/Tuldok-one-fit-host-ci"
+        ]
+      },
+      {
+        "original_oid": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/canonical-owner-review",
+          "worktree_HEAD:/workspace/Tuldok-canonical-owner-review"
+        ]
+      },
+      {
+        "original_oid": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/canonical-a-505-package-qualification",
+          "worktree_HEAD:/workspace/Tuldok-canonical-package-report"
+        ]
+      },
+      {
+        "original_oid": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-p5-canonical-review"
+        ]
+      },
+      {
+        "original_oid": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-final-acceptance",
+          "worktree_HEAD:/workspace/Tuldok-extension-final-acceptance"
+        ]
+      },
+      {
+        "original_oid": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-p5-canonical-final-review"
+        ]
+      },
+      {
+        "original_oid": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-modality-descriptors",
+          "worktree_HEAD:/workspace/Tuldok-extension-modalities"
+        ]
+      },
+      {
+        "original_oid": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/canonical-a-package",
+          "worktree_HEAD:/workspace/Tuldok-p5-canonical-a"
+        ]
+      },
+      {
+        "original_oid": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-final-functional-status",
+          "worktree_HEAD:/workspace/Tuldok-extension-final-functional-status"
+        ]
+      },
+      {
+        "original_oid": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-canonical-independent-review",
+          "worktree_HEAD:/workspace/Tuldok-canonical-independent-review"
+        ]
+      },
+      {
+        "original_oid": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-field-api",
+          "worktree_HEAD:/workspace/Tuldok-e2-api"
+        ]
+      },
+      {
+        "original_oid": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-canonical-fixture",
+          "worktree_HEAD:/workspace/Tuldok-extension-canonical"
+        ]
+      },
+      {
+        "original_oid": "6702be2e08420d781e60665b15f27bc974160552",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/external-graph-focus-regression",
+          "worktree_HEAD:/workspace/Tuldok-graph-focus-regression"
+        ]
+      },
+      {
+        "original_oid": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/external-candidate-evidence-view",
+          "worktree_HEAD:/workspace/Tuldok-external-package-ui"
+        ]
+      },
+      {
+        "original_oid": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/p4-export-browser-recipe-set",
+          "worktree_HEAD:/workspace/Tuldok-p4-export-browser-fix"
+        ]
+      },
+      {
+        "original_oid": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/review/independent-b-host-corrected",
+          "worktree_HEAD:/workspace/Tuldok-b-host-corrected"
+        ]
+      },
+      {
+        "original_oid": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/independent-b-decisive-qualification",
+          "worktree_HEAD:/workspace/Tuldok-b-qualification-docs"
+        ]
+      },
+      {
+        "original_oid": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-bound-http",
+          "worktree_HEAD:/workspace/Tuldok-bound-http"
+        ]
+      },
+      {
+        "original_oid": "767f66f8c9435561e68aee216b0dc54808997908",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p3",
+          "worktree_HEAD:/workspace/Tuldok-p3"
+        ]
+      },
+      {
+        "original_oid": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/integration/extension-pressure-current-main",
+          "worktree_HEAD:/workspace/Tuldok-prep68"
+        ]
+      },
+      {
+        "original_oid": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-a-retention",
+          "worktree_HEAD:/workspace/Tuldok-e4-retention"
+        ]
+      },
+      {
+        "original_oid": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/work",
+          "worktree_HEAD:/workspace/Tuldok"
+        ]
+      },
+      {
+        "original_oid": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p6",
+          "worktree_HEAD:/workspace/Tuldok-p6"
+        ]
+      },
+      {
+        "original_oid": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-current-status-cleanup",
+          "worktree_HEAD:/workspace/Tuldok-extension-status-cleanup"
+        ]
+      },
+      {
+        "original_oid": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/extension-sdk-utf8-canonical",
+          "worktree_HEAD:/workspace/Tuldok-sdk-canonical"
+        ]
+      },
+      {
+        "original_oid": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-retention-product",
+          "worktree_HEAD:/workspace/Tuldok-extension-retention"
+        ]
+      },
+      {
+        "original_oid": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-canonical-final-review",
+          "worktree_HEAD:/workspace/Tuldok-canonical-final-review"
+        ]
+      },
+      {
+        "original_oid": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/model-activation-ci",
+          "worktree_HEAD:/workspace/Tuldok-activation-ci-fix"
+        ]
+      },
+      {
+        "original_oid": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/review/independent-b-host-compatibility",
+          "worktree_HEAD:/workspace/Tuldok-b-host-review"
+        ]
+      },
+      {
+        "original_oid": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/frozen-release-authority",
+          "worktree_HEAD:/workspace/Tuldok-release-authority"
+        ]
+      },
+      {
+        "original_oid": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/model-browser-candidate-readiness",
+          "worktree_HEAD:/workspace/Tuldok-model-browser-fix"
+        ]
+      },
+      {
+        "original_oid": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/canonical-a-50502-qualification",
+          "worktree_HEAD:/workspace/Tuldok-canonical-a-report"
+        ]
+      },
+      {
+        "original_oid": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-e2-glue-review"
+        ]
+      },
+      {
+        "original_oid": "a479be12130845abca6387f1dacb7c464139215a",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/e4-core-cross-grant-qualification",
+          "worktree_HEAD:/workspace/Tuldok-e4-core-report"
+        ]
+      },
+      {
+        "original_oid": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feat/e2-canonical-owner-glue",
+          "worktree_HEAD:/workspace/Tuldok-canonical-glue"
+        ]
+      },
+      {
+        "original_oid": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-bound-recipe-api",
+          "worktree_HEAD:/workspace/Tuldok-e2-binding-api"
+        ]
+      },
+      {
+        "original_oid": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/candidate-packages-distro-python",
+          "worktree_HEAD:/workspace/Tuldok-p5-ci-runtime"
+        ]
+      },
+      {
+        "original_oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/canonical-a-package-actual",
+          "worktree_HEAD:/workspace/Tuldok-canonical-masked-actual",
+          "worktree_HEAD:/workspace/Tuldok-canonical-package-actual"
+        ]
+      },
+      {
+        "original_oid": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/author-review-freeze",
+          "worktree_HEAD:/workspace/Tuldok-author-freeze-test"
+        ]
+      },
+      {
+        "original_oid": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/qa/restored-ab-official-interfaces",
+          "worktree_HEAD:/workspace/Tuldok-restored-interface-qa"
+        ]
+      },
+      {
+        "original_oid": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/native-ab-retention-ui",
+          "worktree_HEAD:/workspace/Tuldok-native-ab-retention"
+        ]
+      },
+      {
+        "original_oid": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-runtime-nomination",
+          "worktree_HEAD:/workspace/Tuldok-extension-runtime"
+        ]
+      },
+      {
+        "original_oid": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/integration/extension-scalar-current-main",
+          "worktree_HEAD:/workspace/Tuldok-prep69"
+        ]
+      },
+      {
+        "original_oid": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/e4-ab-retention-execution",
+          "worktree_HEAD:/workspace/Tuldok-e4-execution"
+        ]
+      },
+      {
+        "original_oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-inference-product",
+          "worktree_HEAD:/workspace/Tuldok-extension-inference",
+          "worktree_HEAD:/workspace/Tuldok-inference-review"
+        ]
+      },
+      {
+        "original_oid": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/integration/model-development-product",
+          "worktree_HEAD:/workspace/Tuldok-product"
+        ]
+      },
+      {
+        "original_oid": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/sdk-conformance-public-graph",
+          "worktree_HEAD:/workspace/Tuldok-sdk-graph-fix"
+        ]
+      },
+      {
+        "original_oid": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/field-surrogate-b-independent",
+          "worktree_HEAD:/workspace/Tuldok-b-independent"
+        ]
+      },
+      {
+        "original_oid": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/main505-agent-authoring",
+          "worktree_HEAD:/workspace/Tuldok-main505-agent-authoring"
+        ]
+      },
+      {
+        "original_oid": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/extension-author-native-browser",
+          "worktree_HEAD:/workspace/Tuldok-author-browser"
+        ]
+      },
+      {
+        "original_oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/qa/independent-b-sdk-frozen",
+          "refs/heads/test/canonical-author-50502-review",
+          "worktree_HEAD:/workspace/Tuldok-b-public-sdk-host",
+          "worktree_HEAD:/workspace/Tuldok-canonical-author-qa"
+        ]
+      },
+      {
+        "original_oid": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/operator-runtime-identity",
+          "worktree_HEAD:/workspace/Tuldok-operator-runtime-fix"
+        ]
+      },
+      {
+        "original_oid": "e958db578da805f4352d282c02430edc78985a3c",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/native-author-ab-actual",
+          "worktree_HEAD:/workspace/Tuldok-native-ab-actual"
+        ]
+      },
+      {
+        "original_oid": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/external-graph-keyboard-focus",
+          "worktree_HEAD:/workspace/Tuldok-graph-focus"
+        ]
+      },
+      {
+        "original_oid": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/fix/p2-cold-composition-marker",
+          "worktree_HEAD:/workspace/Tuldok-p2-review-fix"
+        ]
+      },
+      {
+        "original_oid": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/integration/model-development-final-publication",
+          "worktree_HEAD:/workspace/Tuldok-final-publication"
+        ]
+      },
+      {
+        "original_oid": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/integration/p5-after-p4-prep",
+          "worktree_HEAD:/workspace/Tuldok-p5-p4-composition"
+        ]
+      },
+      {
+        "original_oid": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/experiment-lineage",
+          "worktree_HEAD:/workspace/Tuldok-experiment-lineage"
+        ]
+      },
+      {
+        "original_oid": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/test/p5-transitive-authority",
+          "worktree_HEAD:/workspace/Tuldok-candidate-permissions"
+        ]
+      },
+      {
+        "original_oid": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-legacy-p3-qa"
+        ]
+      },
+      {
+        "original_oid": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p5-field",
+          "worktree_HEAD:/workspace/Tuldok-p5-field"
+        ]
+      },
+      {
+        "original_oid": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/qa/field-interface-observation",
+          "worktree_HEAD:/workspace/Tuldok-p6-field-qa"
+        ]
+      },
+      {
+        "original_oid": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-agent-snapshots-review",
+          "worktree_HEAD:/workspace/Tuldok-p6-agent-api-review"
+        ]
+      },
+      {
+        "original_oid": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-x3-acceptance",
+          "worktree_HEAD:/workspace/Tuldok-extension-x3-acceptance"
+        ]
+      },
+      {
+        "original_oid": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-canonical-inference-review"
+        ]
+      },
+      {
+        "original_oid": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+        "reachable_from_preserved_ref_or_worktree_HEAD": true,
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-graph-focus-old"
+        ]
+      }
+    ]
+  },
+  "counts": {
+    "exact_cleanup_targets": 10,
+    "retirements_pass": 10,
+    "protected_refs_exact": 82,
+    "protected_worktrees_exact": 96,
+    "protected_original_oids_reachable": 91
+  },
+  "script_review": {
+    "path": "/tmp/tuldok-retire-accepted-task-resources.py",
+    "sha256": "3b30dea6fd47b173f4cdde2abe2ea2ec45514c024e403dcf76fb94ed60b72316",
+    "executed_by_reviewer": false,
+    "assessment": "No blocking scope/CAS issue found for supplied exact ten-target record.",
+    "reviewed_properties": [
+      "Prechecks exact main/local+remote heads, merged ancestry, protected exclusions, open base dependencies, worktree identity/no locked/prunable state and clean --untracked-files=all status.",
+      "Remote deletion uses one atomic push with an explicit expected-OID force-with-lease for every exact ref; concurrent update refuses transaction.",
+      "Normal worktree remove has no force; local update-ref -d supplies expected old OID; every target checked absent and original head remains ancestor main.",
+      "No generic prune, reset, process termination or schema/catalog cleanup.",
+      "Script preservation itself checked original OID existence; this independent postcheck supplies stronger requested reachability from preserved protected roots."
+    ]
+  },
+  "root_terminal_record": {
+    "path": "/tmp/tuldok-task-merged-cleanup-terminal.json",
+    "sha256": "92dc1cc5982ad099bf887eac32c6d2cff498761890880189141143539db38fbe",
+    "reported_execution_state": "complete; all ten exact branches/worktrees removed-reachable",
+    "independent_scope_matches": true
+  },
+  "remote_postcheck_proof": {
+    "path": "/tmp/tuldok-task-cleanup-independent-remote-postcheck.json",
+    "sha256": "427b0cd18eb41655b42b877fccf780653efc4f8dbfaa32da7ed032f7fd3c136b",
+    "method": "Read-only MCP Github exact git/ref GET per ten retired refs returns NOT_FOUND404; same connection main GET succeeds and matches expected. No remote mutation."
+  },
+  "protected_baseline_inputs": [
+    {
+      "path": "/tmp/tuldok-20261019-protected-local-heads.txt",
+      "sha256": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8"
+    },
+    {
+      "path": "/tmp/tuldok-20261019-protected-worktrees.txt",
+      "sha256": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+    }
+  ],
+  "forbidden_exclusions": "No PR77/README67/oldRheon/schema queries or deletions; aliases, unmerged branches and all protected paths preserved.",
+  "reviewer_actions": "Read-only Git metadata/ancestry/reachability, path existence and MCP refs; write /tmp proof only. No deletion/prune/source edits or cleanup script execution.",
+  "remaining_blockers": []
+}

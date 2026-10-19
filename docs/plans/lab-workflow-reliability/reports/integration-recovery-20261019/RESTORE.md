@@ -10,11 +10,14 @@ git fetch origin docs/lab-workflow-reliability-plan
 
 Use normal configured GitHub authentication. This checkpoint contains no credentials.
 Verify every evidence file against `manifest.json` using SHA-256 before use.
-The checkpoint source parent is the unmerged composed PR89/90 dependency tree
-`76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114`, not main.
-PR89 repair `cd5c029a6d4bde8a570064bac6687cb17394a1ac` and prior integration
-repair commits are reachable in that history. Create new implementation branches
-from the recorded source parent, keeping this evidence checkpoint separate.
+The checkpoint originally branched from the historical PR89/90 dependency tree
+`76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114`. That is historical recovery context,
+not the current implementation base. PR89/90 and PR92–101 are now merged.
+Main after PR101 is `8c9c0b07d90fd78657539cdcbcd23fbf289c4f95`; its tree exactly
+matches the qualified PR101 source. Fetch current main and inspect the latest
+`tuldok-updates-integration-acceptance-20261019.json` and source-specific receipts
+before resuming. Continue the published pending implementation stack; do not
+restart completed design or implementation from the historical source parent.
 The independent PR91 plan remains at
 `b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb` on its own remote branch.
 
@@ -33,3 +36,11 @@ commit's ancestry there before using it. Do not substitute the latest tree for
 the recorded source without reviewing its changes. This checkpoint and the
 implementation/plan branches remain separate; fetching is not product merge
 or acceptance. Check fresh CI and independent-review disposition after restore.
+
+PR92–101 feature refs and their ten clean task worktrees were safely retired
+after dependent PRs were retargeted. Their exact accepted commits remain on main;
+`tuldok-task-merged-cleanup-terminal.json` records the heads, retained ref and
+terminal disposition. Original refs/worktrees and unrelated aliases are protected.
+PR102–110 remain active pending source-qualified CI and serial integration.
+The original lab failure bytes and an owned scientific criterion/compatible lab
+pair are still missing inputs; synthetic diagnostics do not satisfy those claims.

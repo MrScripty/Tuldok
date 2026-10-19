@@ -122,7 +122,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.202657+00:00"
     },
     {
       "pr": 93,
@@ -135,7 +137,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.347301+00:00"
     },
     {
       "pr": 94,
@@ -148,7 +152,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.461146+00:00"
     },
     {
       "pr": 95,
@@ -161,7 +167,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.590319+00:00"
     },
     {
       "pr": 96,
@@ -174,7 +182,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.718862+00:00"
     },
     {
       "pr": 97,
@@ -187,7 +197,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.841862+00:00"
     },
     {
       "pr": 98,
@@ -200,7 +212,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:47.964864+00:00"
     },
     {
       "pr": 99,
@@ -213,7 +227,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:48.108576+00:00"
     },
     {
       "pr": 100,
@@ -226,7 +242,9 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:48.246336+00:00"
     },
     {
       "pr": 101,
@@ -239,9 +257,23 @@
       "reachability": "retained-ref",
       "commit_disposition": "retained",
       "purpose_ended": true,
-      "planned_outcome": "removed-reachable"
+      "planned_outcome": "removed-reachable",
+      "outcome": "removed-reachable",
+      "removed_at_utc": "2026-10-19T23:33:48.373550+00:00"
     }
   ],
-  "execution_state": "prepared; no deletion yet",
-  "limits": "Original82refs/96worktrees, aliases, unknown schemas and unmerged work excluded. Nine inaccessible infrastructure PIDs do not establish full process absence; explicit workers confirm no source use and root has no active process in candidates. No process termination or generic prune is authorized."
+  "execution_state": "complete; all ten exact branches/worktrees removed-reachable",
+  "limits": "Original82refs/96worktrees, aliases, unknown schemas and unmerged work excluded. Nine inaccessible infrastructure PIDs do not establish full process absence; explicit workers confirm no source use and root has no active process in candidates. No process termination or generic prune is authorized.",
+  "immediate_precheck": {
+    "refs_exact": 82,
+    "worktrees_exact": 96,
+    "original_oids_exist": 91
+  },
+  "remote_delete_intent_recorded_utc": "2026-10-19T23:33:45.683516+00:00",
+  "remote_branches_removed": true,
+  "postcheck": {
+    "refs_exact": 82,
+    "worktrees_exact": 96,
+    "original_oids_exist": 91
+  }
 }

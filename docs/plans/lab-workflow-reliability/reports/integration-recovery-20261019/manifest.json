@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "RESTORE.md",
-      "bytes": 1905,
-      "sha256": "38828ccfb0f7689391bf7ebf8acbe3201d25d711b2d1ff5082850df52e11a3f4"
+      "bytes": 2736,
+      "sha256": "44eb9e70fb4dd060d71ed54428f75299257901fadf0150b37021449bf5078ce6"
     },
     {
       "path": "indexed-final-9d563ceb-independent-review.json",
@@ -75,6 +75,11 @@
       "path": "tuldok-cleanup-gate-independent-review.json",
       "bytes": 7946,
       "sha256": "f1599f6331dfa9080ce8870e7f426daaa5c1e1e65d3d2243d733bc86d0a5d18e"
+    },
+    {
+      "path": "tuldok-final-plan-claims-audit.json",
+      "bytes": 5006,
+      "sha256": "dcae548e423d6c3fb359df7579a7aeaa57e49ad6179ab500eea9b015b6511910"
     },
     {
       "path": "tuldok-indexed-composed-actual.log",
@@ -922,9 +927,24 @@
       "sha256": "59e730ed30e61922bdc482aa99e3be5393c84cda7b934ea4888134fa56c2c91a"
     },
     {
+      "path": "tuldok-retire-accepted-task-resources.py",
+      "bytes": 5009,
+      "sha256": "3b30dea6fd47b173f4cdde2abe2ea2ec45514c024e403dcf76fb94ed60b72316"
+    },
+    {
       "path": "tuldok-task-cleanup-current-remote-ref-snapshots.json",
       "bytes": 118456,
       "sha256": "551be568b74755c3e28e791db3afc3ed3055cf9304d45065f925c6e62878f3fb"
+    },
+    {
+      "path": "tuldok-task-cleanup-independent-remote-postcheck.json",
+      "bytes": 10742,
+      "sha256": "427b0cd18eb41655b42b877fccf780653efc4f8dbfaa32da7ed032f7fd3c136b"
+    },
+    {
+      "path": "tuldok-task-merged-cleanup-independent-postcheck.json",
+      "bytes": 87705,
+      "sha256": "f07393b4c135f40565036c0ee64ea2d281a019087b4537971947970198dd96b1"
     },
     {
       "path": "tuldok-task-merged-cleanup-inventory-current.json",
@@ -938,13 +958,13 @@
     },
     {
       "path": "tuldok-task-merged-cleanup-terminal.json",
-      "bytes": 11293,
-      "sha256": "0755fbfba77b7f2d76fafff5e47516cdec735f7dd593d7d5f66f4c7323e70dd2"
+      "bytes": 12629,
+      "sha256": "92dc1cc5982ad099bf887eac32c6d2cff498761890880189141143539db38fbe"
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 124989,
-      "sha256": "644d2f275f0a09ee7b16881a247c5e9e15ebd1efa08257bd94236fe684ffa882"
+      "bytes": 143461,
+      "sha256": "5ee667d9b0e962c563ae9f028ee2a9468b588a553e23d683419df238ba606cac"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
