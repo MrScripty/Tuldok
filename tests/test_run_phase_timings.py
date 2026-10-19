@@ -366,7 +366,8 @@ class ActualPhaseTimingTests(unittest.TestCase):
             sidecar = runs._external_directory(saved)/'custody'/'phase-timings-v1.json'
             actual = sidecar.read_bytes(); forged = json.loads(actual)
             forged['spec_sha256'] = 'f'*64
-            for raw in (json.dumps(forged).encode(), b'{malformed'):
+            empty = json.loads(actual); empty['timing']['spans'] = []
+            for raw in (json.dumps(forged).encode(), b'{malformed', json.dumps(empty).encode()):
                 sidecar.write_bytes(raw)
                 observed = runs.phase_timings(run['id'])
                 self.assertEqual(observed['evidence'], 'partial')

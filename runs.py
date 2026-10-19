@@ -323,7 +323,8 @@ class Runs:
                                 for key in ('attempt_id', 'request_sha256', 'spec_sha256'))):
                         raise ValueError('Custodian diagnostic identity differs.')
                     record = phase_timings.validate_record(value['timing'])
-                    if record['owner'] != 'custodian': raise ValueError('Wrong diagnostic owner.')
+                    if record['owner'] != 'custodian' or not record['spans']:
+                        raise ValueError('Missing custodian diagnostic observation.')
                     # A sealed helper reports its own offsets. Never extrapolate
                     # elapsed time from another process or after a cold reopen.
                     records.append(record if live is not None and process_status(expected['helper']) == 'alive'

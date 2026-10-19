@@ -405,3 +405,12 @@ requires at least one span in each returned record. The actual old-Run HTTP
 witness explicitly creates that empty-clock condition and still requires
 unknown_granularity. This strengthens evidence labels without changing authority
 or reconstructing history; final exact-source qualification follows.
+
+Exactbdcc5ca affected qualification passed all53 cases in59.147 seconds, zero
+skips. Root independent review then found that an exact-identity empty custodian
+sidecar still reached the min1 wire projection. The narrow reader boundary now
+rejects that optional sample before append and preserves valid parent timing as
+partial. The real completed-result witness includes that exact empty sample and
+continues to require unchanged public Run/result bytes. Final timing-module
+qualification covers the refined reader; prior53-case evidence is retained with
+its actual source head rather than attributed to this followup.
