@@ -1,0 +1,15 @@
+test_cancel_active_publication_pauses_without_changing_original_outcome (test_run_publication_recovery.PublicationRecoveryTests.test_cancel_active_publication_pauses_without_changing_original_outcome) ... ok
+test_cancel_or_budget_during_existing_file_verification_preserves_bytes (test_run_publication_recovery.PublicationRecoveryTests.test_cancel_or_budget_during_existing_file_verification_preserves_bytes) ... ok
+test_changed_source_output_or_capture_refuses_before_copy (test_run_publication_recovery.PublicationRecoveryTests.test_changed_source_output_or_capture_refuses_before_copy) ... ok
+test_concurrent_identical_requests_share_one_continuation (test_run_publication_recovery.PublicationRecoveryTests.test_concurrent_identical_requests_share_one_continuation) ... ok
+test_partial_copy_capacity_counts_remaining_bytes_before_replacement (test_run_publication_recovery.PublicationRecoveryTests.test_partial_copy_capacity_counts_remaining_bytes_before_replacement) ... ok
+test_recovery_is_owner_only_and_exact_source_ref_is_required (test_run_publication_recovery.PublicationRecoveryTests.test_recovery_is_owner_only_and_exact_source_ref_is_required) ... ok
+test_revocation_during_result_storage_prevents_attachment (test_run_publication_recovery.PublicationRecoveryTests.test_revocation_during_result_storage_prevents_attachment) ... ok
+test_same_run_recovers_exact_result_without_replay_or_new_run_or_grant (test_run_publication_recovery.PublicationRecoveryTests.test_same_run_recovers_exact_result_without_replay_or_new_run_or_grant) ... ok
+test_twenty_attempt_limit_stops_without_compute_or_unbounded_history (test_run_publication_recovery.PublicationRecoveryTests.test_twenty_attempt_limit_stops_without_compute_or_unbounded_history) ... ok
+test_unknown_final_commit_reply_reconciles_exact_result_without_recopy (test_run_publication_recovery.PublicationRecoveryTests.test_unknown_final_commit_reply_reconciles_exact_result_without_recopy) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 49.832s
+
+OK

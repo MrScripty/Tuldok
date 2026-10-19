@@ -44,11 +44,11 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "Complete exact PR92 and PR93 hosted CI; inspect actual relevant boundary results",
-    "Serial merge PR92 and retarget PR93 before any PR92 source retirement",
     "Qualify required main post-merge workflows before terminal cleanup",
     "Continue M1 known pre-compute resource failures, structured diagnostic and same-Run publication continuation",
-    "Retain durable checkpoint, original 82 heads/96 worktrees, PR91 and unrelated resources"
+    "Retain durable checkpoint, original 82 heads/96 worktrees, PR91 and unrelated resources",
+    "Qualify exact PR93/94/95 CI and serially merge with dependent retargets",
+    "Complete and independently qualify same-Run publication recovery and readers"
   ],
   "external_mutations": [
     {
@@ -142,6 +142,18 @@
       "outcome": "confirmed",
       "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
       "base": "feature/lab-preflight-storage-20261019"
+    },
+    {
+      "action": "Merge PR92 exact reviewed head using normal merge commit",
+      "outcome": "confirmed",
+      "head": "750332ac64244526127075feb14cb8db268a7ab9",
+      "merge_sha": "2f333f960b80ca7fe23c90269b32f647b2c827a8"
+    },
+    {
+      "action": "Retarget PR93 to main before any PR92 source retirement",
+      "outcome": "confirmed",
+      "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+      "base": "main"
     }
   ],
   "protected_original_heads": 82,
@@ -866,5 +878,36 @@
       "seconds": 7.868
     },
     "restore": "Independent clone fetched exact e9336ed and verified parent0039a330"
+  },
+  "main_after_pr92": "2f333f960b80ca7fe23c90269b32f647b2c827a8",
+  "pr92_final_qualification": {
+    "head": "750332ac64244526127075feb14cb8db268a7ab9",
+    "run": 39303732490,
+    "job": 118235282725,
+    "conclusion": "success",
+    "early_pg_tests": 10,
+    "early_pg_skips": 0,
+    "full_python_tests": 1545,
+    "full_python_skips": 72,
+    "receipt": "tuldok-pr92-final-qualified-evidence.json"
+  },
+  "main_pr92_postmerge_runs": {
+    "lifecycle": 39314430439,
+    "captured_cpu": 39314430431,
+    "workspace": 39314430330,
+    "catalog": 39314430303,
+    "static_kit": 39314430352,
+    "qualification": "pending; parent owns passive monitoring"
+  },
+  "publication_recovery_in_progress": {
+    "branch": "feature/lab-publication-recovery-20261019",
+    "base": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+    "state": "uncommitted active core; not full C2 acceptance",
+    "actual_pg_core_tests": 10,
+    "core_seconds": 49.832,
+    "actual_study_charge_conservation_tests": 1,
+    "study_seconds": 4.249,
+    "independent_review": "follow-up active; no full feature clearance",
+    "pending": "wire/UI/CLI/SDK/lineage/backup and semantic/fault qualification"
   }
 }
