@@ -1633,6 +1633,12 @@ class AgentClient:
                 raise AgentAPIError('Coordinator recovery acknowledgement differs from its exact request.', 'transport', 502)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
+        if op['operation_id'] == 'runs.artifact_segments' and result['status'] < 400:
+            validate_artifact_segments(result['result'], arguments)
+            if any(item['status'] == 200 and item['source']['kind'] == 'publication'
+                   and item['source']['ref']['catalog_id'] != self.catalog_id
+                   for item in result['result']['items']):
+                raise AgentAPIError('Collection publication belongs to another catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_artifact_chunk' and result['status'] < 400:
             if arguments['ref']['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Publication segment belongs to another catalog.', 'transport', 502)
