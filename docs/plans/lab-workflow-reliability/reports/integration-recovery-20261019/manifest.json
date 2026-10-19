@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "tuldok-20261019-preservation-audit-current.json",
-      "bytes": 373,
-      "sha256": "65b8509e451554714a9c7b0f6920830db069f25fa3980f1f76662ded8e06e46d"
+      "bytes": 562,
+      "sha256": "3c6f17b9e604087a7aaffa965face8b3004b433acf10b3de88b162a583635ad8"
     },
     {
       "path": "tuldok-20261019-protected-local-heads.txt",
@@ -30,6 +30,11 @@
       "path": "tuldok-branch-ancestry-before-20261019.json",
       "bytes": 5384,
       "sha256": "9b99d9a34878ee56d7f1c9891f97a416dd5a3ddd9f60039e31f541aacde6ae31"
+    },
+    {
+      "path": "tuldok-local-pg17-qualified-tooling.json",
+      "bytes": 2281,
+      "sha256": "84ae4ca6d886c8e1aedd47418b7478cc954e0ca20c3c7ec703ed890113e05c4a"
     },
     {
       "path": "tuldok-m1-additional-profile-regression.log",
@@ -92,6 +97,21 @@
       "sha256": "d01965e991a9abdcd3a7538f590356b7194449b86675abccedfcd5b7f556f01b"
     },
     {
+      "path": "tuldok-pr92-actual-pg17-boundaries.log",
+      "bytes": 312,
+      "sha256": "499ec6215bdd417f215c6437ae4d2f7e556a56026beb95bfb9d95e9fef75572b"
+    },
+    {
+      "path": "tuldok-pr93-actual-pg17-boundaries.log",
+      "bytes": 979,
+      "sha256": "fa2cbebb3469f0ebc7e285641ead978272125149753e91885327cf5026f9fcd7"
+    },
+    {
+      "path": "tuldok-pr94-actual-pg17-boundaries.log",
+      "bytes": 2055,
+      "sha256": "4537f8603a57f8547da69c149de80b2fb9f0fde75c591845685ffdf51177eed7"
+    },
+    {
       "path": "tuldok-project-inspect-v4-browser-final.log",
       "bytes": 2125,
       "sha256": "c6ad2f7ceff616edaa197c8cb141cc7c5d350103077711612fbe96489d08a7f5"
@@ -128,8 +148,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 32560,
-      "sha256": "2154c868d626ffc718ebd03fa14361831b46584aca4c2f275d0d27c7fa695d62"
+      "bytes": 34063,
+      "sha256": "f3f6f8c7d6cf6ead18bb5bf2b040bc6dcd97735f8dcd1be78f266eff5e8d782b"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
@@ -143,5 +163,12 @@
     "parent": "750332ac64244526127075feb14cb8db268a7ab9",
     "restore_verified": true
   },
-  "main_after_pr90": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c"
+  "main_after_pr90": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c",
+  "storage_implementation": {
+    "branch": "feature/lab-preflight-storage-20261019",
+    "head": "0039a330253c088b68578e268afe6fc21fc36038",
+    "parent": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+    "pr": 94,
+    "restore_verified": true
+  }
 }

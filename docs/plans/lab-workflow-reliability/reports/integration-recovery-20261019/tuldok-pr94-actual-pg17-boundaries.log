@@ -1,0 +1,15 @@
+test_real_preparation_storage_refusal_has_no_admission_or_staging_effect (test_run_preflight_storage.PreflightStorageIntegrationTests.test_real_preparation_storage_refusal_has_no_admission_or_staging_effect) ... ok
+test_admission_keeps_existing_exact_policy_and_boundary (test_run_preflight_storage.PreflightStorageTests.test_admission_keeps_existing_exact_policy_and_boundary) ... ok
+test_generated_model_context_uses_existing_context_capture_limit (test_run_preflight_storage.PreflightStorageTests.test_generated_model_context_uses_existing_context_capture_limit) ... ok
+test_preflight_includes_capture_that_admission_already_staged (test_run_preflight_storage.PreflightStorageTests.test_preflight_includes_capture_that_admission_already_staged) ... ok
+test_report_labels_current_observation_without_claiming_a_reservation (test_run_preflight_storage.PreflightStorageTests.test_report_labels_current_observation_without_claiming_a_reservation) ... ok
+test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph (test_run_preflight_storage.PreflightStorageTests.test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph) ... ok
+test_storage_observation_cannot_hide_graph_drift_or_missing_owner (test_run_preflight_storage.PreflightStorageTests.test_storage_observation_cannot_hide_graph_drift_or_missing_owner) ... ok
+test_storage_refusal_cannot_emit_report_or_change_old_projections (test_run_preflight_storage.PreflightStorageTests.test_storage_refusal_cannot_emit_report_or_change_old_projections) ... ok
+test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior (test_run_preflight_storage.PreflightStorageTests.test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior) ... ok
+test_large_admission_capacity_refuses_before_grant_consumption_and_cleans_capture (test_external_artifacts.ExternalArtifactTests.test_large_admission_capacity_refuses_before_grant_consumption_and_cleans_capture) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 4.825s
+
+OK

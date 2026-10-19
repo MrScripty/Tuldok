@@ -4,7 +4,11 @@
   "head_differences": {},
   "worktree_differences": {},
   "additional_worktrees": [
+    "/workspace/Tuldok-integration-checkpoint",
     "/workspace/Tuldok-lab-integration-review",
+    "/workspace/Tuldok-lab-preflight-m1",
+    "/workspace/Tuldok-lab-preflight-report-m1",
+    "/workspace/Tuldok-lab-preflight-storage-m1",
     "/workspace/Tuldok-live-project-fix",
     "/workspace/Tuldok-project-contract-fix",
     "/workspace/Tuldok-request-latency-review",

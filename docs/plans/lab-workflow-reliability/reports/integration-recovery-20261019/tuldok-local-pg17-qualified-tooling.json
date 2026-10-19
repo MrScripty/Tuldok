@@ -1,0 +1,53 @@
+{
+  "purpose": "Disposable local PostgreSQL qualification only; no real catalog data, product dependency or GitHub credential change.",
+  "source_project": "https://github.com/zonkyio/embedded-postgres-binaries",
+  "artifact": "https://repo.maven.apache.org/maven2/io/zonky/test/postgres/embedded-postgres-binaries-linux-amd64/17.6.0/embedded-postgres-binaries-linux-amd64-17.6.0.jar",
+  "published_checksum_url": "https://repo.maven.apache.org/maven2/io/zonky/test/postgres/embedded-postgres-binaries-linux-amd64/17.6.0/embedded-postgres-binaries-linux-amd64-17.6.0.jar.sha256",
+  "sha256": "23da5a044b4fb7a5a081a45008c95749c873305328d73f86aefd56922ce1d29d",
+  "published_checksum_matches": true,
+  "postgres_version": "PostgreSQL 17.6, x86_64-pc-linux-gnu",
+  "executed_tools": [
+    "postgres --version",
+    "initdb --version",
+    "initdb private new cluster",
+    "pg_ctl private Unix socket start",
+    "SQL SELECT version()"
+  ],
+  "binary_root": "/workspace/tuldok-local-postgresql17",
+  "disposable_data": "/workspace/tuldok-local-pg17-data",
+  "private_socket": "/workspace/tuldok-local-pg17-socket",
+  "port": 55439,
+  "network_listen_addresses": "empty; Unix socket only",
+  "earlier_official_source_download": "403, no source compiled; later alternate bundle succeeded",
+  "real_pg94": {
+    "source": "0039a330253c088b68578e268afe6fc21fc36038",
+    "ran": 10,
+    "passed": 10,
+    "skipped": 0,
+    "seconds": 4.825,
+    "scope": "new storage module plus existing large admission no-grant/cleanup boundary"
+  },
+  "real_pg93": {
+    "source": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+    "ran": 4,
+    "passed": 4,
+    "skipped": 0,
+    "seconds": 104.806,
+    "scope": "actual field refusal, HTTP/AgentClient report and old1/2/headerless projection, CLI missing grant/stale source, real neutral external execution and verified download"
+  },
+  "real_pg92": {
+    "source": "750332ac64244526127075feb14cb8db268a7ab9",
+    "ran": 1,
+    "passed": 1,
+    "skipped": 0,
+    "seconds": 1.525,
+    "scope": "impossible field declaration refuses before graph/Run/grant effects"
+  },
+  "independent_pg94": {
+    "source": "0039a330253c088b68578e268afe6fc21fc36038",
+    "ran": 1,
+    "passed": 1,
+    "seconds": 2.874,
+    "agent": "/root/mcp_contract_ci_review"
+  }
+}

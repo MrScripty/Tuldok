@@ -33,8 +33,11 @@
     "scope": "capacity, managed inventory/process helpers, fake installed assets; no real CUDA/scientific computation"
   },
   "local_postgres": {
-    "state": "unavailable",
-    "reason": "package proxy returned403 on ordinary and approved fetch; no packages installed, no catalog opened; no retry ongoing"
+    "state": "resolved for disposable tests",
+    "version": "17.6",
+    "receipt": "tuldok-local-pg17-qualified-tooling.json",
+    "earlier_package_and_official_source_403": "historical; alternate matching-checksum Maven Central bundle succeeded",
+    "scope": "private Unix socket task cluster; no real lab catalog opened"
   },
   "cuda": {
     "available": false,
@@ -127,6 +130,12 @@
       "outcome": "confirmed",
       "head": "750332ac64244526127075feb14cb8db268a7ab9",
       "base": "main"
+    },
+    {
+      "action": "Publish storage preflight source and draft PR94",
+      "outcome": "confirmed",
+      "head": "0039a330253c088b68578e268afe6fc21fc36038",
+      "base": "feature/lab-exact-preflight-report-20261019"
     }
   ],
   "protected_original_heads": 82,
@@ -636,7 +645,8 @@
     "90->92;retarget92tomainbefore90branchdelete",
     "91independentmainbase;preserve",
     "checkpointbranchretainedpersistentarchive;notordinaryfeaturecleanup",
-    "92->93; retarget93 before any92 source retirement"
+    "92->93; retarget93 before any92 source retirement",
+    "93->94; retarget94 before any93 source retirement"
   ],
   "historical_resume_after_auth_restoration": [
     "Verify remote89=33069a859836953960a06dfd6001cba54aba0aa0 and90=429d0c4ff44dba16bc95313d2a0980169dbc9b9f before publication; no prior pending writes.",
@@ -698,7 +708,7 @@
     "base": "750332ac64244526127075feb14cb8db268a7ab9",
     "state": "published dependent draft, hosted qualification pending",
     "scope": "Selected exact prepared preflight report only, partial C1/T1; structured refusal and publication continuation pending",
-    "local_pg": "Unavailable; no actual HTTP/no-effect claim",
+    "local_pg": "Available task-owned PostgreSQL17.6; actual report/old-wire/no-effect/CLI boundaries passed. Hosted full acceptance remains pending.",
     "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
     "pr": 93,
     "url": "https://github.com/MrScripty/Tuldok/pull/93",
@@ -709,7 +719,13 @@
       "seconds": 83.543
     },
     "review": "Independent code/test/docs clearance; no merge acceptance.",
-    "restore": "Fetched exact commit into independent standalone recovery clone; verified parent 750332a."
+    "restore": "Fetched exact commit into independent standalone recovery clone; verified parent 750332a.",
+    "real_postgresql": {
+      "passed": 4,
+      "skipped": 0,
+      "seconds": 104.806,
+      "log": "tuldok-pr93-actual-pg17-boundaries.log"
+    }
   },
   "durable_pr89_merge_receipt": {
     "head": "876cec37bc45477f697f9223cb2de78c3a3b9c4d",
@@ -775,6 +791,36 @@
       "catalog": 39310022353,
       "workspace": 39310022600,
       "static_kit": 39310022335
+    }
+  },
+  "active_m1_storage_slice": {
+    "branch": "feature/lab-preflight-storage-20261019",
+    "head": "0039a330253c088b68578e268afe6fc21fc36038",
+    "pr": 94,
+    "base": "feature/lab-exact-preflight-report-20261019",
+    "state": "independently reviewed draft; hosted qualification pending",
+    "restoration": "exact source and parent fetched in independent clone",
+    "real_postgresql": {
+      "ran": 10,
+      "passed": 10,
+      "skipped": 0,
+      "seconds": 4.825,
+      "log": "tuldok-pr94-actual-pg17-boundaries.log"
+    },
+    "independent_postgresql": {
+      "ran": 1,
+      "passed": 1,
+      "seconds": 2.874
+    },
+    "pure_affected": {
+      "ran": 39,
+      "passed": 37,
+      "skipped": 2,
+      "seconds": 12.418
+    },
+    "io_runtime": {
+      "passed": 8,
+      "seconds": 1.152
     }
   }
 }

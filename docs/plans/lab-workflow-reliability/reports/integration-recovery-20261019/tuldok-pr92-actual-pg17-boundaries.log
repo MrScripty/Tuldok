@@ -1,0 +1,6 @@
+test_impossible_declaration_refuses_before_graph_run_or_grant_effect (test_run_preflight_publication.BoundOutputPreflightIntegrationTests.test_impossible_declaration_refuses_before_graph_run_or_grant_effect) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.525s
+
+OK

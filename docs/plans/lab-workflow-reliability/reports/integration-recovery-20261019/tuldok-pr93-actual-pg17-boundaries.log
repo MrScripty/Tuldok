@@ -1,0 +1,10 @@
+test_impossible_declaration_refuses_before_graph_run_or_grant_effect (test_run_preflight_publication.BoundOutputPreflightIntegrationTests.test_impossible_declaration_refuses_before_graph_run_or_grant_effect) ... ok
+test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget)
+Tiny non-runnable runtime bytes prove static capture, never CPU execution. ... ok
+test_missing_grant_invalid_selection_and_stale_source_leave_no_run (test_agent_project_cli.ProjectCLIHTTPTests.test_missing_grant_invalid_selection_and_stale_source_leave_no_run) ... ok
+test_open_prepare_approve_run_and_download_share_real_saved_owners (test_agent_project_cli.ProjectCLIHTTPTests.test_open_prepare_approve_run_and_download_share_real_saved_owners) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 104.806s
+
+OK
