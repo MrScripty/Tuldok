@@ -1,0 +1,93 @@
+{
+  "acceptance_limit": "No implementation, performance improvement, final integration or scientific acceptance is claimed by this feasibility review.",
+  "expected_structural_cost": {
+    "limit": "This is a structural count estimate, not an observed speedup. Initial inventory/scientific verification, permission and SQL costs remain.",
+    "publication": "All existing publication canonical-reader subloads remain. Only the two repeated final-stage portions are reduced from2N to2U.",
+    "simple_ordinary_source": "With no recursive Run inputs, current ordinary load count is 4N over HTTP; proposed count is N+2U, with U distinct successful exact sources. Twenty items from one source: 80 to22; one item:4 to3."
+  },
+  "external_only_precheck": {
+    "assessment": "Safe to remove the batch outer load if canonical artifact_segment receives a private keyword flag defaulting False and tests it immediately after its own existing load, before any built-in dispatch or evidence verification.",
+    "current_lines": "runs.py2352-2356 outer duplicate load; canonical load at2409-2410",
+    "failure_precedence_note": "Canonical authorization runs before its load. This can move an already-revoked/denied actor refusal earlier than the old outer eligibility load; that is the existing canonical owner boundary and must not disclose bytes.",
+    "must_preserve": [
+      "Every initial item still invokes the decorated canonical reader, including current inspect authorization and transitive/retained inventory proof.",
+      "The batch passes the private flag True; ordinary individual calls preserve their existing default and qualified built-in reader behavior.",
+      "Keep current unsupported/400 meaning for built-in batch items, existing per-item errors/order and overall selector/byte caps.",
+      "Do not return a loaded Run from the batch layer or reuse a prior loaded Run as authorization.",
+      "Keep shared catalog/SQL deadline and private copy/semantic checkpoints unchanged."
+    ]
+  },
+  "final_authority_deduplication": {
+    "assessment": "Deduplicate source identities only within each invocation of final_authority, keeping both domain-return and HTTP-delivery invocations fully fresh.",
+    "current_lines": "runs.py2369-2386; app.py post-schema/serialization delivery guard",
+    "key": "Entire exact source, including kind and Run ID or every field of the complete publication Ref; use existing canonical encoding or an exact tuple. Never key only by run_id, artifact name or item key.",
+    "must_preserve": [
+      "No cache of authorization decisions, loaded Runs, transitive proofs or attached-Ref results across stages or requests.",
+      "Keep global current inspect/deadline/cancellation checks before and after every final stage, even for all-error batches.",
+      "For every distinct successful source at each stage, reload current Run, require current inspect, authorize transitive inputs, and for publication revalidate the exact Ref and published attachment.",
+      "Final-stage failure discards all buffered results; do not downgrade it into a per-item error.",
+      "Initial per-item canonical reads/auth remain independent, including repeated sources.",
+      "Keep response schema validation/serialization before the HTTP delivery fence and keep whole-file hashes provisional."
+    ],
+    "ordering": "Preserve last-occurrence order: A,B,A becomes B,A. Rebuild the seen set within each final_authority invocation."
+  },
+  "format": "tuldok_proposed_refinement_review_v1",
+  "meaningful_qualification_required_after_matrix_exit": [
+    {
+      "case": "Real duplicate-source HTTP round trip and load trace",
+      "criterion": "Multiple artifacts/segments from one completed external Run retain exact order/hash/bytes and every initial canonical call. On a simple source, observe N+2U source loads with two independent final-stage proofs; record count and payload I/O, not just wall time."
+    },
+    {
+      "case": "Mixed/repeated exact sources",
+      "criterion": "Use a completed external source and a recovered exact Ref with repeated items. Every initial reader still runs; each exact source is checked once per final stage, and errors/whole hashes are unchanged. Distinct source kinds/Refs must not collapse."
+    },
+    {
+      "case": "Late refresh ordering A,B,A",
+      "criterion": "In an actual HTTP fixture, inject a named source-A transitive/attachment failure when final validation reaches B. The later A proof must run and abort the buffered response; this distinguishes last-occurrence dedup from unsafe first-occurrence ordering. Repeat at post-serialization delivery."
+    },
+    {
+      "case": "No cross-stage or cross-call cache",
+      "criterion": "Revoke the actual credential after output validation/serialization for a duplicate-source batch and require a top-level refusal with no items/data. Retain existing current transitive-denial and attached-Ref delivery fault tests. A later separate call after authority loss must refuse."
+    },
+    {
+      "case": "Initial-read and eligibility boundaries",
+      "criterion": "A built-in batch source must be refused unsupported/400 before built-in payload access; qualified individual built-in reads keep their old path/default. Wrong hashes, missing outputs and failed ordinary Run reads retain their per-item outcomes; every initial read stays canonical."
+    },
+    {
+      "case": "Cancellation/budget with duplicates",
+      "criterion": "Exercise initial-item interruption, domain-final interruption and post-serialization interruption. Preserve complete buffered-response discard, shared deadline, no fallback/replay and unchanged Run/grant/reservation/events."
+    },
+    {
+      "case": "Independent paired performance requalification",
+      "criterion": "Preserve the complete immutable 99741e5 matrix. Measure the refined candidate in a new exact-head receipt, alternating individual/batch order under equal catalog/inventory/history conditions for1 and20 items and the selected histories. Record SQL/load/byte counts, spread and whole-hash equality. Do not infer a speedup from removed calls."
+    },
+    {
+      "case": "Compatibility/static scope",
+      "criterion": "Prior full public contracts, selected pin, individual-reader defaults and caller method compatibility remain unchanged; production delta stays inside Runs eligibility/final-authority control flow."
+    }
+  ],
+  "race_semantics": [
+    "A set captured outside final_authority would survive domain return into HTTP delivery and incorrectly skip the fresh delivery proofs: blocker.",
+    "First-occurrence dedup A,B,A -> A,B removes the old late A refresh. If a source-specific transitive/attachment fault appears while B is checked, A could become stale before return. Preserve last-occurrence order at the same dedup cost.",
+    "Existing final validation is a sequence of current per-source checks, not one atomic all-source ACL snapshot. The refinement must not advertise atomic snapshot semantics.",
+    "Mutable facts must be fetched again at HTTP delivery; exact-source identity is not itself an authority proof."
+  ],
+  "read_only": true,
+  "remaining_gates": [
+    "Root admission after immutable paired matrix exits.",
+    "Implementation and meaningful actual qualification on a new frozen source.",
+    "New paired measurements; the reported current batch slowdown remains valid for99741e5."
+  ],
+  "reviewer": "/root/indexed_diagnostics_m1",
+  "source_commit": "99741e5807e4260c58b53badafc5b6c549421645",
+  "source_modified": false,
+  "source_sha256": {
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "runs.py": "73c1b1518379f69c1bc8ce639853a8ce9d62708f1b414636b20b49ebf7dc12b3"
+  },
+  "state": "feasible_subject_to_listed_semantic_constraints_and_new_qualification",
+  "target": "Proposed M4 duplicate-load and final-authority reduction",
+  "tests_run": false,
+  "worktree": "/workspace/Tuldok-lab-bounded-collection-m4"
+}

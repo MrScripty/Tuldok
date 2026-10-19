@@ -1,0 +1,13 @@
+test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted (test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted) ... ok
+test_actual_cancellation_interrupts_held_http_read_without_cancel_or_retry (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_cancellation_interrupts_held_http_read_without_cancel_or_retry) ... ok
+test_actual_cli_known_collision_refuses_before_bootstrap_and_race_preserves_sentinel (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_cli_known_collision_refuses_before_bootstrap_and_race_preserves_sentinel) ... ok
+test_actual_http_response_whole_corruption_and_identity_mismatch_never_fallback (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_http_response_whole_corruption_and_identity_mismatch_never_fallback) ... ok
+test_actual_item_refusal_yields_partial_then_only_explicit_ordinary_resume_restarts (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_item_refusal_yields_partial_then_only_explicit_ordinary_resume_restarts) ... ok
+test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing) ... ok
+test_actual_sdk_twenty_wholes_use_one_batch_without_compute (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute) ... ok
+test_clean_cli_twenty_wholes_and_ordinary_explicit_resume (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_clean_cli_twenty_wholes_and_ordinary_explicit_resume) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 145.991s
+
+OK

@@ -1,0 +1,93 @@
+{
+  "kind": "Independent read-only code and regression review of bounded collection refinement",
+  "worktree": "/workspace/Tuldok-lab-bounded-collection-m4",
+  "head": "37727fce2e49eaf4b1b1d8868286fc0e5a628539",
+  "source_status": "Dirty frozen owner gate source; final commit not yet assigned at review",
+  "comparison": "Production runs.py refinement against99741e5807e4260c58b53badafc5b6c549421645; normal composition source at37727fc otherwise unchanged by this refinement",
+  "source_sha256": {
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "tests/test_run_artifact_segments.py": "601d8931b79799c5d8c5401bf7c71343706bf58468854899c04eac80139cc540",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89"
+  },
+  "production_findings": [],
+  "production_assessment": "Clear within narrow admitted scope; no blocking source defect found",
+  "invariants_checked": [
+    "runs.py2353 batch delegates every ordinary initial item to canonical decorated artifact_segment with private _external_only=True; duplicate outer _load removed only.",
+    "artifact_segment _external_only defaultsFalse. Existing authorized inspect decorator remains before body, canonical _load remains before external-only refusal, and refusal occurs before builtin adapter/inventory dispatch. Existing single-read external and builtin default path remains.",
+    "Every initial successful item still performs canonical current credential/read/inventory proof, bounded read checks and shared deadline/cancellation checkpoints; no initial per-item dedup or preloaded Run sharing.",
+    "final_authority rebuilds a new dict inside each invocation. Key canonicalizes full source object including kind and every publicationRef field; no run-id-only/source-kind collision. Pop/reinsert yields last-occurrence order B,A for A,B,A.",
+    "Dedup stores source selectors only, no authority decision/Run/transitive proof. Each domain and HTTP-delivery stage independently loads each unique source and checks targeted inspect, transitive input authority and current exact published attachment for publicationRefs.",
+    "Global authority/checkpoint begins and ends each final stage including empty-success/all-error results. Final errors escape top-level and discard buffered response rather than becoming per-item successes.",
+    "HTTP reply still validates schema and serializes before delivery closure, then guards before send_response/body. No source changes to this delivery boundary/public contracts/AgentClient decoder.",
+    "No cross-call cache; sequential multi-source final proof remains non-atomic across sources, matching previous authority model."
+  ],
+  "independent_tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=tests:. /workspace/tuldok-runtime/bin/python -m unittest test_run_artifact_segments.ArtifactSegmentsTests -v",
+    "result": "PASS",
+    "tests": 10,
+    "seconds": 0.352,
+    "skips": 0,
+    "log": "/tmp/tuldok-m4-refinement-independent-pure.log",
+    "coverage": [
+      "Closed existing full contracts equal retained fixture; selector/cap/key/ref failures before reads.",
+      "Last-occurrence B,A proof order, fresh loaded object each domain/delivery stage and second invocation; three initial canonical calls preserved.",
+      "Full publicationRef and run/publication kind distinctness; different Ref SHA prevents collapse; two final-stage fresh validations.",
+      "Private external-only refusal after one canonical load before builtin adapter, defaultFalse still enters adapter branch.",
+      "Shared deadline and cancellation/shutdown discard at initial/domain/delivery boundaries.",
+      "Typed partial failure and request-aware output correlation."
+    ],
+    "log_sha256": "7c2880ae3df552f0350e6437a78e695dd9593f79be984aef6a69a231f4286ec1"
+  },
+  "owner_actual_gate_observed": {
+    "log": "/tmp/tuldok-m4-refinement-actual.log",
+    "result": "FAILED(errors=1)",
+    "tests": 16,
+    "seconds": 41.111,
+    "passed": 15,
+    "failures": 0,
+    "errors": 1,
+    "skips": 0,
+    "reviewer_role": "Observed retained owner log only; did not run actual PG/HTTP/compute gate",
+    "passed_actual_http_cases": [
+      "Mixed ordinary completed Run + attached recovered publication actual readers; whole bytes/digest checks; wrong-hash/missing/legacy-failed partial errors and headerless refusal; read-phase compute launch prohibited and accounting/events unchanged.",
+      "Actual delivery-stage transitive proof refusal with controlled AccessError injection after schema validation; buffered payload discarded403.",
+      "A,B,A real mixed Run/publication reads; controlled source-A loss while final-checking B yields403 at both domain and delivery stages, expected final source order B,A, no items; accounting/events unchanged.",
+      "Three repeated ordinary items use three canonical reads plus five total _load calls (N+2U), exact returned raw bytes/correlation and unchanged accounting/events.",
+      "Real credential revocation after schema validation for three duplicate items yields401 with no items/data_base64, unchanged accounting/events."
+    ],
+    "harness_error": {
+      "location": "tests/test_run_artifact_segments.py:348",
+      "cause": "value[error][code] indexes the HTTP string error, but code is a top-level field.",
+      "preceding_assertions_passed": "HTTP409 and no items confirmed before TypeError.",
+      "required_correction": "assert value[code] == cancelled using top-level code, retain failed log and rerun affected actual case only.",
+      "classification": "Harness envelope assertion defect; not a demonstrated production cancellation failure."
+    },
+    "coverage_limits": [
+      "Transitive/source-A loss is injected at production proof boundary; not a real persisted transitive-policy change. Shutdown uses owned _stop flag injection; not an externally invoked shutdown command.",
+      "Actual exact publication attachment change after initial read is not separately injected by these cases; its unchanged final proof code was reviewed.",
+      "Builtin defaultFalse pure test confirms adapter dispatch on unqualified fixture; it does not independently qualify a real builtin positive roundtrip.",
+      "No new performance result yet; N+2U call-count reduction is demonstrated by actual gate log, latency improvement remains unmeasured."
+    ],
+    "log_sha256": "51d44a4b3011253037a7b051cbe4eb3e554fd7e6c3214554cc8ecc612a238ed8"
+  },
+  "remaining": [
+    "Root reviews final frozen commit identity.",
+    "Fresh paired performance measurement must retain prior997 matrix; no latency/speedup claim from this review."
+  ],
+  "mutations_by_reviewer": "Only /tmp review receipt and independent pure-test log. No author source edits, actual PG/network/compute/cleanup, remotes, or new workers.",
+  "owner_actual_shutdown_correction_observed": {
+    "review": "Read-only corrected assertion and isolated owner log verified",
+    "source_runs_sha256": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "source_test_sha256": "e6cf7ec4fb1571bed04b6d3e091fd91f0a9cff2411f536d816c7cde7103bd895",
+    "change": "Only affected shutdown assertion now checks top-level value[code] == cancelled",
+    "log": "/tmp/tuldok-m4-refinement-shutdown-corrected.log",
+    "log_sha256": "43cf8d680083ac343633dbe13e24191602cb3a2292a7cb06200f8cf6e4177477",
+    "tests": 1,
+    "seconds": 6.439,
+    "skips": 0,
+    "result": "PASS",
+    "attribution": "Owner executed; reviewer read log/source only. Earlier15 passes retained without repeat; original failed16 gate remains recorded."
+  }
+}

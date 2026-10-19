@@ -454,3 +454,49 @@ fixture, the existing CI workflow, this plan/ledger, canonical publication doc
 and bounded evidence. No Python domain/API, persisted schema, lineage wire
 contract or original outcome is changed. Root retains independent review and
 serial integration ownership. Hosted acceptance and full M1 remain pending.
+
+## M4 C4/T5 baseline-only admission — 2026-10-19
+
+The lead authorized an isolated measurement slice from composed M3 source
+`96c2adebc3a46b9fe92b179097474e08474689c3`, branch
+`test/lab-workflow-baseline-20261019`. Its write set is
+`tests/benchmark_lab_workflow.py`, a focused pure reporting test,
+`docs/contracts/lab-workflow-baseline.md`, this plan/ledger and retained report
+receipts. No domain/API/static/dependency/workflow or optimization change is
+admitted. The lead separately owns phase UI and serial remote integration.
+
+Measure actual neutral cold-process/repeated preparation, capture, proof,
+publication, individual collection and empty/8/55 completed-history boundaries
+with same-size one/many artifacts; retain descriptive distributions, owner CPU/
+RSS/I/O/hash/request/body counts and exact integrity. Caches, batching, runtime
+installation/mutation and representative scientific/CUDA workloads are outside
+this baseline. Candidate reuse/invalidation work requires a later bounded scope.
+
+## M4 bounded collection candidate admission — 2026-10-19
+
+After independently reviewing the frozen descriptive baseline, the lead admitted
+an isolated candidate from PR105 source `2d8b7d79110f210896dcdda8df08f6385cabf2d3`
+in branch `feature/lab-bounded-collection-20261019`. The full baseline branch was
+normally merged locally, preserving immutable baseline `07dde98`. Scoped writes
+are a new selected bounded sequential segment operation in `agent_api.py`, one
+route/delivery fence in `app.py`, Runs orchestration/canonical optional checkpoint
+plumbing, narrow `run_publication.py` shared-deadline plumbing, tests/fixtures,
+paired benchmark support and canonical docs/this plan/evidence. AgentClient class,
+client CLI and consumer integration remain lead/M5-owned.
+
+The selected candidate supports 1–20 exact external-Run or attached-publication
+segment items, <=8 MiB requested aggregate bytes and a shared 60-second wall
+budget, typed ordered partial outcomes and current per-item/final authority.
+It adds no cache, compute or old-contract change. Initial eight-case qualification
+is checkpointed before broader tests and same-head alternating paired performance
+measurement. Retention and full T5 acceptance remain pending those results and
+independent review; historical83d baseline is context, not a paired candidate arm.
+
+
+M4 candidate99741e5 completed the full fixed same-head paired matrix. All six
+median wall ratios regress despite fewer requests; retain all raw observations
+and no improvement claim. The lead admitted a narrow request-local load
+refinement only after archival, with independent exact-source final fences in
+last-occurrence order and all initial canonical checks preserved. Refined
+correctness and a new same-head paired matrix remain pending; no cross-call
+mutable-runtime cache or automatic collection selection is admitted.

@@ -1,0 +1,29 @@
+AssertionError [ERR_ASSERTION]: Read-only comparison dispatched an unexpected workspace mutation
++ actual - expected
+
++ [
++   {
++     body: '{"revision":1}',
++     headers: {
++       'Content-Type': 'application/json',
++       'Tuldok-Operation-Contract': 'graphs.preparation_timings/1/94f848f833254da60a4843ca4f943e1c4fcc62d036c7be2f2b44731fb559fd17',
++       'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36',
++       'sec-ch-ua': '"Chromium";v="151", "Not=A?Brand";v="99"',
++       'sec-ch-ua-mobile': '?0',
++       'sec-ch-ua-platform': '"Linux"',
++       Referer: 'http://127.0.0.1:39089/workspaces'
++     },
++     method: 'POST',
++     url: 'http://127.0.0.1:39089/api/workspace/graphs/0563e77a6b9f4d8a82b26b8240746fa8/preparation-timings'
++   }
++ ]
+- []
+
+    at /workspace/Tuldok-lab-field-comparison-m6/tests/browser_scientific_comparison.cjs:94:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

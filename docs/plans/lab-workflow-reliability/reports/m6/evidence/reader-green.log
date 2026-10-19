@@ -1,0 +1,10 @@
+test_actual_completed_and_attached_publication_readers_preserve_failed_state_and_counts (test_scientific_comparison.ScientificReaderTests.test_actual_completed_and_attached_publication_readers_preserve_failed_state_and_counts) ... ok
+test_actual_http_requires_exact_contract_and_serves_both_custody_forms (test_scientific_comparison.ScientificReaderTests.test_actual_http_requires_exact_contract_and_serves_both_custody_forms) ... ok
+test_current_material_blob_and_retained_root_removal_are_refused (test_scientific_comparison.ScientificReaderTests.test_current_material_blob_and_retained_root_removal_are_refused) ... ok
+test_exact_ref_and_evaluation_refuse_before_projection (test_scientific_comparison.ScientificReaderTests.test_exact_ref_and_evaluation_refuse_before_projection) ... ok
+test_revocation_during_owner_projection_fences_all_result_delivery (test_scientific_comparison.ScientificReaderTests.test_revocation_during_owner_projection_fences_all_result_delivery) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 32.480s
+
+OK

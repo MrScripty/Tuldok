@@ -486,6 +486,12 @@ def make_handler(dataset, observer=None):
                                     'code': 'contract_output'}, 502
             if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
+            if selected is not None and selected[0] == 'runs.artifact_segments':
+                guard = getattr(self, '_artifact_segments_guard', None)
+                if guard is not None:
+                    del self._artifact_segments_guard
+                if guard is not None and status < 400:
+                    guard()  # Current authority after schema validation and serialization.
             observe_stage(observer, getattr(self, '_observation', None), 'returned',
                           outcome=outcome(status), envelope_status=status, http_status=status)
             self.send_response(status)
@@ -952,6 +958,7 @@ def make_handler(dataset, observer=None):
                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-phase-timings.js': ('workspace-phase-timings.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
+                    '/workspace-scientific-comparison.js': ('workspace-scientific-comparison.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
                     '/runs-view.js': ('runs-view.js', 'text/javascript'),
@@ -1009,6 +1016,15 @@ def make_handler(dataset, observer=None):
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['scientific-comparison']:
+                        agent_api.require_selection(self._contract_selection, 'runs.compare_scientific_evidence')
+                        return self.reply(dataset.runs.compare_scientific_evidence(body))
+                    if parts == ['artifact-segments']:
+                        agent_api.require_selection(self._contract_selection, 'runs.artifact_segments')
+                        guards = []
+                        value = dataset.runs.artifact_segments(body, _delivery_guard=guards.append)
+                        self._artifact_segments_guard = guards[0]
+                        return self.reply(value)
                     if parts == ['coordinator', 'recover']:
                         agent_api.require_selection(self._contract_selection, 'runs.recover_coordinator')
                         return self.reply(dataset.runs.recover_coordinator(body))

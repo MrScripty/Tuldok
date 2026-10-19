@@ -195,3 +195,70 @@ Configured observation preserves a single JSON stderr failure diagnostic exactly
 It emits no operator-health lines into that command channel, including when
 observer configuration/storage fails. Invoke the independent operator reader
 separately to inspect store health; CLI health emission is quiet by default.
+
+## Consumer workflow commands
+
+The [small Python consumer facade](workflow-client.md) also backs these explicit
+convenience commands. Existing `submit`, `status`, `cancel`, `download`, `call`
+and owner recovery commands keep their existing JSON and exit contracts.
+
+```sh
+$PYTHON project_cli.py --config "$CONFIG" submission-manifest \
+  --graph-id GRAPH_ID --revision 1 --approval-id EXISTING_GRANT_ID \
+  --request-key lab-attempt-0001 > submission-manifest.json
+$PYTHON project_cli.py --config "$CONFIG" submit-workflow --manifest submission-manifest.json
+$PYTHON project_cli.py --config "$CONFIG" monitor --run-id RUN_ID --timeout 60
+$PYTHON project_cli.py --config "$CONFIG" cancel-workflow --run-id RUN_ID
+$PYTHON project_cli.py --config "$CONFIG" collection-manifest --run-id RUN_ID \
+  --name weights.npz --name receipt.json > collection-manifest.json
+$PYTHON project_cli.py --config "$CONFIG" collect --manifest collection-manifest.json \
+  --directory /private/existing-results > collection-receipt.json
+$PYTHON project_cli.py --config "$CONFIG" collect --manifest collection-manifest.json \
+  --directory /private/existing-results --resume collection-receipt.json
+```
+
+Redirect JSON only to newly selected files. For Trial admission use
+`submission-manifest --trial-id TRIAL_ID --approval-id EXISTING_GRANT_ID
+--request-key STABLE_KEY`; its Study revision/epoch come from selected results.
+A lost reply returns `unknown` and the unchanged manifest. Save that receipt,
+then explicitly use `reconcile-submission --manifest UNKNOWN_RECEIPT.json`.
+No command invents an owner grant, request key, scheduler or retry. `monitor`
+has a finite overall budget; Ctrl-C stops monitoring only. `cancel-workflow`
+explicitly shows requested, drained or cancelled-before-start, separately.
+
+Collection may select `--ref EXACT_PUBLICATION_REF.json` instead of `--run-id`.
+A partial/stopped receipt preserves successes and outstanding/refused items;
+resume rechecks exact inventory/current access/local whole hashes and restarts
+incomplete artifacts at offset0. Ctrl-C discards provisional bytes. Use a new
+receipt output path when explicitly resuming; never overwrite the receipt being
+read through shell redirection.
+
+`collect-batch --manifest COLLECTION_MANIFEST.json --directory /private/existing-results`
+explicitly selects whole-artifact batching through `runs.artifact_segments/1`.
+It accepts the same single-source manifest with at most20 selected artifacts and
+at most8MiB aggregate requested bounds (`max(1, bytes)` per artifact). Larger
+selections refuse before dispatch; ordinary `collect` remains the segmented
+path. A complete batch exits0; a partial/stopped batch exits1 with the same
+collection receipt JSON on stdout. Service/authority/transport/decoding errors
+retain the existing stderr diagnostic and exit1. No error triggers fallback or
+retry. The command has no `--resume`; explicitly use ordinary `collect --resume`
+with the saved batch receipt to recheck successes and restart incomplete items.
+Ctrl-C interrupts reads or stops before the next output publication, preserves
+earlier verified outputs and requests no compute cancellation.
+
+`comparison-manifest --run-id BASELINE --other-run-id CANDIDATE
+--checkpoint-sha256 BASELINE_CHECKPOINT --other-checkpoint-sha256 CANDIDATE_CHECKPOINT
+--metric-id METRIC_ID [--mode paired|side_by_side]` exports selected exact operands.
+Both `--ref` and `--other-ref` may select supported attached publication results.
+Then `compare --manifest COMPARISON_MANIFEST.json` returns the existing owner's
+status/result envelope, including typed incompatibility. It calculates no metrics
+and chooses no scientific winner.
+
+New commands return0 for an acknowledged submission, complete collection, observed
+terminal monitor or successful comparison operation. Unknown/refused submission,
+partial/stopped collection, stopped/deadline monitor and refused comparison exit1
+with their structured workflow JSON on stdout. Argument/bootstrap/local errors
+retain the existing one JSON diagnostic on stderr and exit1. A terminal failed or
+unknown Run remains explicitly so in monitor JSON; exit0 means observation reached
+its terminal state, not that computation succeeded. There is no implicit compute
+cancel, admission retry or alternate transport.

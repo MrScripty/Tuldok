@@ -1,0 +1,10 @@
+test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success (test_workflow_client_http.WorkflowHTTPTests.test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success) ... ok
+test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional (test_workflow_client_http.WorkflowHTTPTests.test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional) ... ok
+test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber (test_workflow_client_http.WorkflowHTTPTests.test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber) ... ok
+test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation (test_workflow_client_http.RetainedWorkflowHTTPTests.test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation) ... ok
+test_exact_attached_publication_collection_and_revocation_on_resume (test_workflow_client_http.RetainedWorkflowHTTPTests.test_exact_attached_publication_collection_and_revocation_on_resume) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 82.269s
+
+OK

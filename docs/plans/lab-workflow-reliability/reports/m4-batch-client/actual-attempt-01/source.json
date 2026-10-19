@@ -1,0 +1,18 @@
+{
+  "source_head": "fd42361f043c201290c5b6297a384652320044ed",
+  "source_tree": "1597cba6c88d49a9de28d2541db2dadead8ffbe6",
+  "worktree_status": "",
+  "prepared_at": "2026-10-19T22:46:23.435155+00:00",
+  "file_sha256": {
+    "tuldok_client.py": "33bec87a6fe85f6386e5982ff561c6ae4ff20d5027a18e8745cf94b23de3fab4",
+    "project_cli.py": "3f25368e2035279c39bcc032b110d4fe554cde251ca16ab43f4b24259cb56719",
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "runs.py": "73c1b1518379f69c1bc8ce639853a8ce9d62708f1b414636b20b49ebf7dc12b3",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "tests/test_workflow_batch_client.py": "84b18c1c19f9daebb8bf412e0be81519a43196df2ffb6a17613026048cb45b9d",
+    "tests/test_workflow_batch_client_http.py": "6e92e5fef0137c222bda6f70f7243824e3e96e8d91cbb2d372658fdd6c912b22",
+    "tests/benchmark_lab_workflow.py": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1"
+  },
+  "actual_attempt_state": "prepared; not started during quiet measurement window",
+  "scope": "Neutral CPU byte-copy custody and supported consumer/HTTP/cleanCLI contract; no model/training/CUDA/science or benchmark-performance claim."
+}

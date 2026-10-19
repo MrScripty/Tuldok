@@ -559,18 +559,22 @@ def artifact(runs, ref, name, expected_sha256):
 
 
 @_reader_boundary
-def artifact_segment(runs, ref, name, body):
+def artifact_segment(runs, ref, name, body, *, deadline=None, checkpoint=None):
     """Current exact-result authority, bounded bytes, provisional whole hash."""
     closed(body, ('expected_sha256', 'offset', 'max_bytes'))
     expected, offset, maximum = body['expected_sha256'], body['offset'], body['max_bytes']
     _require(_hash(expected) and type(offset) is int and 0 <= offset <= 512 * 1024**2
              and type(maximum) is int and 1 <= maximum <= 8 * 1024**2,
              'Publication segment needs exact hash, nonnegative offset and 1 through 8 MiB bound.', 'invalid')
-    deadline = time.monotonic() + WALL_SECONDS
+    deadline = time.monotonic() + WALL_SECONDS if deadline is None else deadline
+    def guard():
+        _read_check(runs, deadline)
+        if checkpoint is not None: checkpoint()
+    guard()
     # An attached immutable inventory permits provisional bounded reads. Full
     # result/semantic verification remains the explicit result reader's promise;
     # segmented clients must verify the reassembled whole digest themselves.
-    value = result(runs, ref, deadline=deadline, _verify_payloads=False)
+    value = result(runs, ref, deadline=deadline, checkpoint=checkpoint, _verify_payloads=False)
     item = next((item for item in value['artifacts'] if item['name'] == name), None)
     _require(item is not None and item['sha256'] == expected, 'Exact recovered artifact identity is required.', 'stale')
     _require(offset <= item['bytes'], 'Publication segment offset exceeds the artifact length.', 'invalid')
@@ -582,7 +586,7 @@ def artifact_segment(runs, ref, name, body):
         before = os.fstat(descriptor)
         _require(stat.S_ISREG(before.st_mode) and before.st_uid == os.getuid()
                  and before.st_nlink == 1 and before.st_size == item['bytes'], 'Recovered segment source changed.')
-        _read_check(runs, deadline)
+        guard()
         raw = os.pread(descriptor, min(maximum, item['bytes'] - offset), offset)
         after = os.fstat(descriptor); current = os.stat(name, dir_fd=directory, follow_symlinks=False)
         keys = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode', 'st_uid', 'st_nlink')
@@ -598,7 +602,7 @@ def artifact_segment(runs, ref, name, body):
     finally:
         if descriptor is not None: os.close(descriptor)
         if directory is not None: os.close(directory)
-    _read_check(runs, deadline)
+    guard()
     _current_read(runs, ref['run_id'])
     next_offset = offset + len(raw)
     return {'result_ref': copy.deepcopy(ref), 'run_id': ref['run_id'], 'name': name,
@@ -650,3 +654,79 @@ def compare_evidence(runs, ref, other_ref, body):
     _read_check(runs, deadline)
     for item in (ref, other_ref): _current_read(runs, item['run_id'])
     return {'result_refs': [copy.deepcopy(ref), copy.deepcopy(other_ref)], 'comparison': comparison}
+
+
+@_reader_boundary
+def compare_scientific(runs, body):
+    """Read both supported custody forms through their existing authoritative owners."""
+    closed(body, ('operands', 'selection', 'point'))
+    _require(type(body['operands']) is list and len(body['operands']) == 2,
+             'Select an exact baseline and candidate.', 'invalid')
+    selection = body['selection']
+    closed(selection, ('checkpoint_sha256', 'other_checkpoint_sha256', 'evaluation_sha256',
+        'other_evaluation_sha256', 'metric_id', 'metric_definition_sha256', 'other_metric_definition_sha256', 'mode'))
+    _require(selection['mode'] in ('paired', 'side_by_side') and type(selection['metric_id']) is str
+             and 1 <= len(selection['metric_id']) <= 64
+             and all(_hash(value) for key, value in selection.items() if key.endswith('sha256')),
+             'Select exact checkpoint, evaluation and metric identities.', 'invalid')
+    deadline = time.monotonic() + WALL_SECONDS
+    selected = []; metadata = []
+    for index, operand in enumerate(body['operands']):
+        _require(type(operand) is dict, 'Invalid comparison operand.', 'invalid')
+        if operand.get('kind') == 'publication_result':
+            closed(operand, ('kind', 'ref'))
+            value, run, verified = _evidence(runs, operand['ref'], deadline)
+            artifacts = value['artifacts']
+        elif operand.get('kind') == 'completed_run':
+            closed(operand, ('kind', 'catalog_id', 'run_id'))
+            _require(operand['catalog_id'] == runs.db.dataset_id, 'Comparison catalog differs.', 'stale')
+            identifier(operand['run_id'], 'Comparison Run ID')
+            runs.access.require('inspect', 'runs.compare_scientific_evidence', operand['run_id'])
+            with runs.lock: run = runs._load(operand['run_id'])
+            _require(run['state'] == 'completed' and runs._extension(run),
+                     'Use an exact attached publication Ref for a recovered failed Run; legacy evidence is unsupported.', 'unsupported')
+            runs._external_inventory(run)
+            verified = runs._verify_extension(runs.path / run['id'], run,
+                                             checkpoint=lambda: _read_check(runs, deadline))
+            artifacts = run['artifacts']
+        else:
+            _require(False, 'Unsupported comparison operand kind.', 'unsupported')
+        item = next((row for row in artifacts if row['name'] == 'model-evidence.json'), None)
+        expected = selection[('other_' if index else '')+'evaluation_sha256']
+        _require(item is not None and item['sha256'] == expected, 'Exact evaluation identity differs.', 'stale')
+        selected.append((run, verified, copy.deepcopy(artifacts)))
+        context = run['extension_context']
+        association = runs.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',
+                                      (run['id'],)).fetchone()
+        membership = (dict(association, catalog_id=runs.db.dataset_id,
+                           material_sha256=context['composition']['sha256']) if association is not None else None)
+        metadata.append({'operand':copy.deepcopy(operand), 'original_run_state':run['state'],
+            'model':copy.deepcopy(context['static']['model']), 'material':copy.deepcopy(context['composition']),
+            'study_membership':membership,
+            'configuration':copy.deepcopy(context['static']['policy']['model_specification']),
+            'timings':runs.phase_timings(run['id']),
+            'memory':{'state':'unknown','reason':'memory_measurement_not_retained_by_profile'},
+            'artifacts':copy.deepcopy(artifacts), 'custody':'managed_run_artifacts'})
+        _read_check(runs, deadline)
+    import extension_evidence
+    comparison = extension_evidence.compare_scientific([item[1] for item in selected],
+        [item[0]['extension_context'] for item in selected], selection, body['point'])
+    # Authority can change while bytes are read. Fence both operands after all
+    # projection/timing work, through the same owners used for the initial read.
+    for operand, (run, _, artifacts) in zip(body['operands'], selected, strict=True):
+        if operand['kind'] == 'publication_result':
+            current = result(runs, operand['ref'], deadline=deadline, _verify_payloads=False)
+            _require(current['artifacts'] == artifacts, 'Publication inventory changed during comparison.', 'stale')
+            _current_read(runs, run['id'])
+        else:
+            runs.access.require('inspect', 'runs.compare_scientific_evidence', run['id'])
+            with runs.lock: current = runs._load(run['id'])
+            _require(current['state'] == 'completed' and current['artifacts'] == artifacts,
+                     'Completed Run inventory changed during comparison.', 'stale')
+            runs._external_inventory(current)
+        _read_check(runs, deadline)
+    for run, _, _ in selected:
+        _current_read(runs, run['id'])
+    comparison['operands'] = metadata
+    _require(len(encode(comparison).encode()) <= 2*1024**2, 'Comparison exceeds its response bound.')
+    return comparison

@@ -111,13 +111,17 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const path = route.split('?')[0].split('/');
     const modelRecipe=body?.recipe||body?.document?.recipe;
     const modelGraph=['image_classification_model_v2','text_classification_model_v2','audio_classification_model_v2'].includes(modelRecipe);
-    const operation = path[0]==='experiment-lineage' ? (path.length===1?(body===undefined?'studies.lineage':'studies.record_lineage'):path[1]==='branch'?'studies.branch_trial':'studies.lineage_trial') : path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
+    const operation = path[0]==='scientific-comparison'?'runs.compare_scientific_evidence':path[0]==='experiment-lineage' ? (path.length===1?(body===undefined?'studies.lineage':'studies.record_lineage'):path[1]==='branch'?'studies.branch_trial':'studies.lineage_trial') : path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
       path[0] === 'studies' ? (path.length === 1 ? (body === undefined ? 'studies.list' : 'studies.create') : path[2] ? ({'prepare-branch':'studies.prepare_branch','prepare-trial':'studies.prepare_trial',continue:'studies.continue',admit:'studies.admit',reconcile:'studies.reconcile',approve:'studies.approve','prepare-package':'studies.prepare_package','prepare-verifier':'studies.prepare_verifier','select-candidate':'studies.select_candidate'})[path[2]] : body === undefined ? 'studies.get' : 'studies.save') :
       path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'candidates' ? 'studies.candidates' : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
     const publicationOperation=path[0]==='publication-results'?(path.length===1?'runs.publication_result':path[1]==='model-evidence'?'runs.publication_model_evidence':path[1]==='artifact-segment'?'runs.publication_artifact_chunk':null):path[0]==='runs'?({'publication':'runs.publication_status','recover-publication':'runs.recover_publication','cancel-publication':'runs.cancel_publication'})[path[2]]:null;
     const coordinatorOperation=path[0]==='coordinator'?(path.length===1?'runs.coordinator_health':path[1]==='recover'?'runs.recover_coordinator':null):null;
     const phaseOperation=path[0]==='runs'&&path[2]==='phase-timings'?'runs.phase_timings':path[0]==='graphs'&&path[2]==='preparation-timings'?'graphs.preparation_timings':null;
-    if(phaseOperation){
+    if(operation==='runs.compare_scientific_evidence'){
+      const pin=window.WorkspaceScientificContracts?.[operation+'/1'];
+      if(selectedVersion!==1||!pin)throw Error('The exact scientific comparison contract is unavailable.');
+      headers['Tuldok-Operation-Contract']=operation+'/1/'+pin;
+    } else if(phaseOperation){
       const pin=window.WorkspacePhaseContracts?.[phaseOperation+'/1'];
       if(selectedVersion!==1||!pin)throw Error('The exact timing operation contract is unavailable.');
       headers['Tuldok-Operation-Contract']=phaseOperation+'/1/'+pin;
@@ -144,7 +148,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       if (!sha) throw Error('This model operation has no supported local contract: ' + operation);
       headers['Tuldok-Operation-Contract'] = operation + '/' + version + '/' + sha;
     }
-    const controller=publicationOperation||coordinatorOperation||phaseOperation?new AbortController():null;
+    const controller=publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'?new AbortController():null;
     const deadline=controller?setTimeout(()=>controller.abort(),Math.min(75000,Math.max(1,timeout))):null;
     const abort=()=>controller?.abort();
     if(requestSignal?.aborted)abort();else requestSignal?.addEventListener('abort',abort,{once:true});
@@ -152,9 +156,9 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, {
       ...(body === undefined ? {} : {method: "POST", body: JSON.stringify(body)}), headers, ...(controller?{signal:controller.signal}:{}),
     });
-    if(publicationOperation||coordinatorOperation||phaseOperation){
+    if(publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'){
       const length=response.headers.get('Content-Length');
-      if(!/^\d+$/.test(length||'')||Number(length)>(phaseOperation?48*1024:coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
+      if(!/^\d+$/.test(length||'')||Number(length)>(operation==='runs.compare_scientific_evidence'?2*1024**2:phaseOperation?48*1024:coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
     }
     const value = await response.json();
     if (!response.ok) {
@@ -183,11 +187,12 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const coordinator = window.WorkspaceCoordinator({api,render:renderCoordinator});
     const phases = window.WorkspacePhaseTimings({api,render:renderPhases});
     const preparation = window.WorkspacePhaseTimings({api,render:renderPreparation});
+    const scientific = window.WorkspaceScientificComparison({api,announce});
     const fieldEvidence = window.WorkspaceFieldEvidence({api,announce});
     const candidatePackages = window.WorkspaceCandidatePackageEvidence({api});
     const lineage = window.WorkspaceExperimentLineage({api,announce,getIntent:()=>loadGeneration,getView:()=>view,getGraph:()=>graph,isDirty:()=>dirty(),
       openRecipe:async(id,current)=>{if(await openGraph(id,current)){if(!graphs.some(item=>item.id===graph.id))graphs.push(copy(graph));if(current())renderPipeline();}},openRun:async(id,current)=>{if(await openRunById(id,current))openRun();},
-      compare:async(id,baseline,current)=>{if(await openRunById(id,current)){model.queueComparison(id,baseline);openRun();}}});
+      compare:async(id,baseline,current)=>{if(await openRunById(id,current)){if(run?.graph?.recipe==='external_recipe'){if(!await openRunById(baseline,current))return;scientific.queueComparison(baseline,id);}else model.queueComparison(id,baseline);openRun();}}});
     function mountModel() {
       const container=document.createElement('div');container.id='real-model-root';pipelineRoot.prepend(container);
       model.configure({definitions,releases,context});model.mount(container);
@@ -453,7 +458,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     }
     async function loadRuns(chosen = runId, quiet = false) {
       const generation = ++runGeneration,session=window.TuldokAuth?.identity()?.credential_id;
-      candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();
+      candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();scientific.invalidate();
       const current=()=>generation===runGeneration&&view==='runs'&&session===window.TuldokAuth?.identity()?.credential_id;
       const coordinatorRead=coordinator.load(current);
       if (!quiet) runsRoot.innerHTML = '<p class="real-status" role="status">Loading durable run receipts…</p>';
@@ -485,6 +490,8 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         if (!current()) return;
         await fieldEvidence.load(detail,current);
         if (!current()) return;
+        await scientific.load(detail,current);
+        if (!current()) return;
         await publication.load(detail,current);
         if (!current()) return;
         if(detail)phases.select({kind:'run',id:detail.id},current);else phases.invalidate();
@@ -494,7 +501,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         coordinatorRead.then(()=>{if(current())renderCoordinator();});
       } catch (error) {
         if (!current()) return;
-        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);return;}
+        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);return;}
         if (!quiet) {runsRoot.innerHTML = `<div id="real-coordinator-root">${coordinator.html()}</div><div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;coordinator.bind(runsRoot);coordinatorRead.then(()=>{if(current())renderCoordinator();});}
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));
@@ -518,7 +525,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
         ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
         <div id="real-phase-root">${phases.html()}</div>${externalRun ? external.runHTML(run,runProgress)+publication.html(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
-        ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run):""}
+        ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run)+scientific.html(run,runs):""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
         <div class="${externalRun?'':'run-columns'}">${!externalRun?`<section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section>`:`<details id="external-lifecycle-events" data-external-disclosure><summary>Run lifecycle events</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details>`}<section><h3>${run.artifact_status?.status==='receipt_verified'?'Recorded outputs; verified on download':'Verified artifacts'}</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">${run.artifact_status?.status==='receipt_verified'?'Output receipt verified. Payload bytes are checked individually when requested.':'Every artifact read verifies its frozen hash.'}</p></section></div>
         ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
@@ -527,6 +534,8 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       if (notice) { const target = runsRoot.querySelector('.real-status'); target.textContent = notice; target.classList.toggle('error-panel', noticeError); }
       runsRoot.querySelector("#real-runs-refresh").onclick = () => loadRuns();
       coordinator.bind(runsRoot);
+      const scientificGeneration=runGeneration,scientificRunId=run?.id;
+      scientific.bind(runsRoot,run,runs,renderRuns,()=>view==='runs'&&scientificGeneration===runGeneration&&runId===scientificRunId,id=>loadRuns(id));
       runsRoot.querySelectorAll("[data-real-run]").forEach(button => button.onclick = () => { split = "validation"; selectedCell = null; loadRuns(button.dataset.realRun); });
       for(const button of runsRoot.querySelectorAll('[data-import-run-artifact]'))button.onclick=()=>{
         const selected=run,artifact=selected.artifacts.find(item=>item.name===button.dataset.importRunArtifact);
@@ -586,10 +595,10 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         const credential=window.TuldokAuth?.identity()?.credential_id,selected=await api('runs/'+encoded(id));
         if(!isCurrent()||credential!==window.TuldokAuth?.identity()?.credential_id)return false;
         if(selected.id!==id)throw Error('The admitted Run could not be identified.');
-        ++runGeneration;coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
+        ++runGeneration;coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
     }
     window.addEventListener('tuldok-session',()=>{
-      ++runGeneration;++loadGeneration;clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();model.sessionChanged();
+      ++runGeneration;++loadGeneration;clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();model.sessionChanged();
       if(view==='pipeline'){definitions=null;graph=null;graphs=[];releases=[];pipelineRoot.innerHTML='<p>Session changed. Refreshing current catalog…</p>';if(window.TuldokAuth?.identity())loadPipeline();}
       if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
     });
@@ -598,7 +607,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       openGraph,openRunById,
       identity: () => context?.dataset_id,
       async show(next) {
-        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();candidatePackages.invalidate();
+        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();
         if (next === "pipeline") {
           if (definitions && graph) renderPipeline(); else await loadPipeline();
         } else if (next === "runs") await loadRuns();
