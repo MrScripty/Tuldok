@@ -232,8 +232,8 @@
       "disposition": "retained-protected pending required CI and merge"
     }
   ],
-  "checkpoint_at": "2026-10-19T21:49:55.192034+00:00",
-  "state": "PR99originalhostfailure diagnosed/repaired; fresh99-103exactCIpending; phaseUI+M4continue",
+  "checkpoint_at": "2026-10-19T21:59:58.775072+00:00",
+  "state": "98/99CI failures independentlydiagnosed/repaired; fresh98-104checks pending; M4matrix/M5client/M6comparison active",
   "hosted_runs": [
     {
       "id": 39282700306,
@@ -994,7 +994,7 @@
     "qualification": "initialread: lifecycle/CPUrunning, other3success; parent owns passive monitor"
   },
   "publication_evidence": {
-    "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+    "head": "f866252782310211b887301a674ba2a62c353709",
     "branch": "feature/lab-publication-evidence-20261019",
     "pr": 98,
     "base": "main",
@@ -1007,7 +1007,7 @@
     },
     "subsequent_review_fixes": "415f5e124c6bf3bc66a05b427c01e83c5f5d01b8 separately qualified; independent4pass; affectedowner28pass",
     "status_v2": "actual3pass9.618; finalsmalladdonreviewpending",
-    "hosted": "pending",
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections",
     "ui": "isolatedworker active; branch feature/lab-publication-run-panel-20261019",
     "status2_independent_review": "clear; 1 actual PG case11.831s"
   },
@@ -1023,25 +1023,25 @@
   },
   "publication_ui": {
     "pr": 99,
-    "head": "5ce38d00d54e20e7807f24586a88b0347f9b6f45",
+    "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
     "base": "feature/lab-publication-evidence-20261019",
     "independent_root_review": "clear",
     "root_controller_and_pin": "passed",
     "root_actual_pg_chromium": "passed",
     "first_root_browser_failure": "ambient python3 missing psycopg; corrected PATH only; retained log",
-    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections"
   },
   "publication_lineage": {
     "pr": 100,
-    "head": "9bef0c765228dc18ea266de16100d1cc74481141",
+    "head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
     "base": "feature/lab-publication-run-panel-20261019",
     "independent_root": "clear; source/tests/docs+actualrootStudyPG/Chromiumbrowser passed",
     "root_log": "tuldok-m1-publication-lineage-root-browser.log",
-    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections"
   },
   "coordinator_core": {
     "pr": 101,
-    "head": "837dcb0462cf142be31c6f8f6cc0b57adc14ae15",
+    "head": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
     "branch": "feature/lab-coordinator-recovery-20261019",
     "base": "feature/lab-publication-lineage-20261019",
     "core_source": "3280ebee9e4f6964cdbf73c1480ff15866962de7",
@@ -1056,7 +1056,7 @@
       "independent": "6/9.084s+2/1.768s; separateactual2Dataset andsimultaneous2cleanupfault witnesses;118oldfullcontracts+legacydiscoveryequal"
     },
     "final_head_group": "exact5a17passed52.642s; latercurrent/coldackchangesseparatelyqualified3/3.853s and3/2.265s, hostedlatest5f pending",
-    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix",
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections",
     "full_m2": "incomplete; coordinatorUI next; no scientific/hardware claim"
   },
   "pr97_archived_acceptance": {
@@ -1078,14 +1078,14 @@
     "pr": 102,
     "branch": "feature/lab-coordinator-panel-20261019",
     "source": "3c2b8d1ccc90572b371d1c7ce6d91e4a5a920a64",
-    "head": "bcab4e6b2ed1a30b562adb74e5c522e019b5051c",
+    "head": "4bcf43063ff780fd5e44894701d65338abdc0579",
     "state": "published independent review clear; delivery-boundary fix and exact-source browser passed; hosted pending",
     "base": "feature/lab-coordinator-recovery-20261019",
     "actualbrowser": "passed exact3c actualPG17/Chromium151 lockfault/lostreply/readreconcile/originalGO/sameidentity/reload/1440+390",
     "regression": "prior38c actual publication browser passed; source attribution preserved",
     "evidence": "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/validation.json",
     "corecomposition": "whole5f normalmerged; noPython/APIproductionchanges",
-    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections"
   },
   "main_after_pr96": "c4322a4832356af796692cd6536adef637a8c6d4",
   "main_after_pr97": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
@@ -1114,7 +1114,7 @@
   },
   "phase_timing_active": {
     "pr": 103,
-    "head": "b906ba6990fadfb27715b69dd9ba06e527273888",
+    "head": "c919c663cedb71df3002ef4b8f9767211ed39e22",
     "source": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb",
     "composed_source": "96c2adebc3a46b9fe92b179097474e08474689c3",
     "base": "feature/lab-coordinator-panel-20261019",
@@ -1122,12 +1122,12 @@
     "tests": "authored14pass35.783s final5c; previous53pass59.147s bdcc; root9pass23.377s5c; composed15pass40.190s96c; allzero skips",
     "state": "published draft; hosted/fullM3browserpending",
     "report": "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/integration-validation.json",
-    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections"
   },
   "phase_ui_active": {
     "worktree": "/workspace/Tuldok-lab-phase-ui-m3",
     "branch": "feature/lab-phase-panel-20261019",
-    "head": "3217ef9",
+    "head": "2bf1d4035510003c6bbcc84d94b578a7ee753d69",
     "state": "publisheddraft; independentwholeUIdelta+finalsame-selectionclear; exactfinalPG/Chromiumbrowserpassed",
     "writes": "staticphase/real/external/html/css; appstaticrouteonly; focusedcontroller/pin/browser/fixture+CI/docs",
     "no_claim": "fullM3 acceptance remainspending",
@@ -1137,13 +1137,18 @@
     "pr": 104,
     "source": "31494ec1697804f63d670ffd85e1109271e3239e",
     "report": "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/validation.json",
-    "current_pending": "freshcorrectedancestor/dependenthosted+postmergemain"
+    "current_pending": "freshcorrectedancestor/dependenthosted+postmergemain",
+    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections"
   },
   "m4_active": {
     "worker": "/root/mcp_contract_ci_review",
     "worktree": "/workspace/Tuldok-lab-benchmark-baseline-m4",
     "branch": "test/lab-workflow-baseline-20261019",
-    "state": "controlled actual T5 baseline only; no production/cache edits before measurement"
+    "state": "finalfixedmatrixrunning,1/20artifacts,0/8/55actualterminalhistory,3freshprocesses+2warmrepeats+negative/recovery/workflowtails",
+    "source": "83d7e8f52df92d10d3ff85709da6eff3231a0b06",
+    "production_base": "96c2adebc3a46b9fe92b179097474e08474689c3",
+    "scope": "neutral smallbytecopy; no OS-cache-cold/runtime-mutation/scienceclaim; quietwindow",
+    "review": "rootharnessreadreviewactive; finalvariance/retentiondecisionpending"
   },
   "pr99_cleanup_failure_repair": {
     "old_head": "61d2c2d706cac4515860a9571db85451be2ecaa8",
@@ -1179,7 +1184,7 @@
     "branch": "feature/lab-workflow-client-20261019",
     "base": "3217ef9",
     "scope": "thin client/CLI only, no server/API/static/core overlap",
-    "state": "implementationactive; explicitread-onlycollectionresume restarts incomplete artifacts offset0 aftercurrentauthority/inventoryrecheck; no prefixreuse claim"
+    "state": "430linethinclient+CLI implemented, focusedpure8+oldCLI9passed author; actualHTTPtestsdeferredmatrix; rootearlyreviewUnicode/unknownackfixed, sharedmonitorbudget/cancelincludingbootstrapunderimplementation"
   },
   "pr98_current_failure": {
     "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
@@ -1187,8 +1192,32 @@
     "job": 118293498592,
     "gate": "node tests/browser_workspace_project.cjs",
     "observed": "Passedthroughprojectshareablelink;timeout line147 selectingprojectaftercatalogreload; pagefixtureRuns. Distinctfrom99cleanup.",
-    "diagnosis_state": "Rootcontrolledrealprojectlistheldreproducer running, no confirmedfixyet",
+    "diagnosis_state": "confirmed red heldrealprojectlist setsabsentoptionvalueempty; fixedenabledrenderedoption+handlerwait, exactfullbrowserpassedeb2",
     "original": "tuldok-pr98-project-original-hosted-failure.log",
-    "state": "Hold98anddescendants pendingexactcorrection/CI"
+    "state": "locallyrepaired andnormalcomposedthrough104;freshhostedpending",
+    "source": "eb2ebe5b75d4ae69f1bb182c9757d30deee55f96",
+    "published": "f866252782310211b887301a674ba2a62c353709",
+    "independent_review": "clear",
+    "receipt": "tuldok-pr98-project-repair-validation.json"
+  },
+  "latest_published_stack": {
+    "98": "f866252782310211b887301a674ba2a62c353709",
+    "99": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+    "100": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+    "101": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+    "102": "4bcf43063ff780fd5e44894701d65338abdc0579",
+    "103": "c919c663cedb71df3002ef4b8f9767211ed39e22",
+    "104": "2bf1d4035510003c6bbcc84d94b578a7ee753d69"
+  },
+  "m6_active": {
+    "agent": "/root/scientific_comparison_m6",
+    "model": "gpt-6.1-sol/high",
+    "worktree": "/workspace/Tuldok-lab-field-comparison-m6",
+    "branch": "feature/lab-field-comparison-20261019",
+    "base": "2bf1d4035510003c6bbcc84d94b578a7ee753d69",
+    "scope": "distinct exactrun/publicationfieldcomparison +existingUI/lineage; casepointvalues/deltasdiagnostic, missingcriteria/memoryunknown; noSDK/profile/persistencechange",
+    "admitted_extra": "run_publication.py narrowexactRefownerhelper; newstaticcomparisoncontroller+appassetroute",
+    "state": "sourceimplementationactive, fixturequalificationinprogress; no fullT7claim",
+    "runtime_constraint": "no knownretainedactualcapture; earlierM1testcatalog/runtimecleaned. tinystructuralcaptureorclearlyscopedtestsubstitutiononly; integratedfullmaterial/custodygapmustbeseparate"
   }
 }

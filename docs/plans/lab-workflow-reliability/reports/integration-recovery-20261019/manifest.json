@@ -402,9 +402,34 @@
       "sha256": "303984166d68b5dacb53cd6789d539d915153a1f4ceb3ef3a014edcb9cd4798d"
     },
     {
+      "path": "tuldok-pr98-body-project-update.json",
+      "bytes": 3332,
+      "sha256": "a31d8015e6ed3e09fa3bd1bc9e1bf84920d2d29e0957ba9d9dee94c8053c4e99"
+    },
+    {
+      "path": "tuldok-pr98-project-options-final-source.log",
+      "bytes": 1282,
+      "sha256": "d13de72f6734fb1147318f67a2700a51cd9382aff81e6e2f21ba2ec0c2e19b00"
+    },
+    {
+      "path": "tuldok-pr98-project-options-held-green.log",
+      "bytes": 1282,
+      "sha256": "eac133c2a74bca27894f816569b57853072cce95e9db23783471b3c5d77b490c"
+    },
+    {
+      "path": "tuldok-pr98-project-options-held-red.log",
+      "bytes": 1904,
+      "sha256": "9740f572811966a55bedc82e739749a19f3a10a9f41d430a47430b7bfe1c9c8e"
+    },
+    {
       "path": "tuldok-pr98-project-original-hosted-failure.log",
       "bytes": 3619,
       "sha256": "929e078fef8d96abe9bea8c39be765bdc786b6a5b8d52a1d9bd12deac153c84b"
+    },
+    {
+      "path": "tuldok-pr98-project-repair-validation.json",
+      "bytes": 2145,
+      "sha256": "668f73b7f33aa9913b32cc7c6288ccde7f6e6d09b1eb9c21d113c036ff061a91"
     },
     {
       "path": "tuldok-pr99-body-cleanup-update.json",
@@ -468,8 +493,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 49096,
-      "sha256": "f9ae701b3800bf2e96bf39a34de8b675fc0064e8aaed1971ed3a9ff0c1ff86bf"
+      "bytes": 51334,
+      "sha256": "820b5f46da103b0690b25123723e9cd454f0f418bb858798aaf47567ac1d8f99"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
