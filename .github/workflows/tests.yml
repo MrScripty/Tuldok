@@ -100,6 +100,9 @@ jobs:
       - run: node tests/browser_workspace_project.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_workspace_project_observation.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node --check static/workbench.js
       - run: node --check static/audio-editor.js
       - run: node --check static/saved-selections.js
