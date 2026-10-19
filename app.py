@@ -1108,6 +1108,8 @@ def make_handler(dataset, observer=None):
                         if parts[2] == 'preflight-external':
                             projects.closed(body, ('revision',))
                             self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.preflight_external',2)
+                            if self._contract_selection is not None and self._contract_selection[:2] == ('graphs.preflight_external', 3):
+                                return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision'], contract_version=3))
                             return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)

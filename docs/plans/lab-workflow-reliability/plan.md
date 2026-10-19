@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — fixed-array preflight capacity checks; full publication recovery remains pending
+**Current phase:** M1 — exact successful-preparation reporting after the fixed-array capacity slice; full publication recovery remains pending
 
-**Next slice:** Independently review and qualify the fixed-array capacity refusal slice, then extend the exact structured preflight report and publication continuation against the verified dependency disposition.
+**Next slice:** Independently review and qualify selected preflight v3 reporting and old-version HTTP compatibility, then extend structured refusal diagnostics and publication continuation.
 
 **Acceptance status:** `pending`
 
@@ -37,8 +37,8 @@ The user explicitly requested continued development with persistent storage at
 18:19 UTC. The lead admits `start` for this exact plan path. This branch is
 `feature/lab-preflight-output-bounds-20261019`, owned and serially integrated by
 the product lead, based on composed PR89/90 source tree
-`76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114`. Main remains
-`300f12df6f48e028fd9379911703f7c89337952a`; PR89/90 are open, unmerged and
+`76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114`. At this first-slice admission, main was
+`300f12df6f48e028fd9379911703f7c89337952a`; PR89/90 were open, unmerged and
 under fresh CI at `cd5c029a6d4bde8a570064bac6687cb17394a1ac` and that composed
 head. This is an explicit development dependency, not a claim of merged support.
 The original eight plan documents were copied from PR91
@@ -59,12 +59,39 @@ This partial T1 result does not complete A1, indexed diagnostics, T2 or M1.
 Persistent source/review evidence is retained on repository checkpoint branch
 [`checkpoint/lab-integration-20261019`](https://github.com/MrScripty/Tuldok/tree/checkpoint/lab-integration-20261019)
 at `96afae56ca41c2a90f87ea3bc6a27ee4ed6291b5`. A fresh standalone clone
-verified all22 evidence file sizes/hashes, task commit reachability and the exact
+verified all 22 evidence file sizes/hashes, task commit reachability and the exact
 separate plan head. `RESTORE.md` there documents restoration without credentials
 or runtime/catalog data. New implementation commits must also be pushed to
 reviewable repository storage; local commits and `/tmp` alone are insufficient.
 Task worktree remains retained-protected until reviewed integration or explicit
 archive disposition; unrelated worktrees and refs are outside cleanup scope.
+
+## Next bounded slice — successful-preparation report
+
+The later 19:00 UTC instruction explicitly requests active implementation while
+parent-owned CI continues. Branch `feature/lab-exact-preflight-report-20261019`
+in `/workspace/Tuldok-lab-preflight-report-m1` starts at reviewed PR92 head
+`750332ac64244526127075feb14cb8db268a7ab9`. PR92 remains unchanged; this
+separate branch targets it. PR89 subsequently merged as
+`fb26e3c07abf825f040a95e6e8b90c4e8efe10e7`, with its tested tree preserved;
+PR90/92 still require qualification and serial integration.
+
+This slice implements bounded `graphs.preflight_external/3` reporting after the
+existing fresh Pipeline preparation and second graph check. Report identity binds
+catalog/graph/revision/execution/material and its own content hash, outside the
+approval material. Existing checked facts and deferred admission/resource/device/
+custody/publication boundaries are explicit. Consumer hash and request correlation
+refuse contradictory replies with no retry. This successful-preparation report is
+another partial C1/T1 outcome; it is not complete A1, structured refusal capture,
+indexed diagnostics, publication recovery, readiness or science acceptance.
+
+Exact write set: `pipeline.py`, `agent_api.py`, `app.py`,
+`tests/test_run_preflight_report.py`, `tests/test_agent_project_snapshots.py`,
+`.github/workflows/tests.yml`, affected canonical contract docs and this plan
+directory. No new persistence, schema migration, approval owner or dependency.
+Focused unit/contract tests precede actual hosted HTTP/AgentClient compatibility,
+no-effect and full qualification. Retain the branch/worktree for review until
+safe integration/archival; no accepted head or unrelated resource is rewritten.
 
 ## Objective Acceptance
 

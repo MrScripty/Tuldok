@@ -60,6 +60,15 @@ The registry is the machine-readable exact field/schema inventory:
 | runs.submit_external/cancel/expose_test | exact granted execution, scoped cancellation/disclosure |
 | runs.artifact_chunk | bounded stateless segment of a completed external Run artifact |
 
+`graphs.preflight_external/3` adds an
+[exact successful-preparation report](run-preflight-publication.md), selected once
+through the existing capability negotiation. It preserves v1/v2 identities and
+responses. The report is hash/material/catalog/execution/revision checked at the
+producer/consumer boundary; AgentClient additionally checks the requested graph
+and configured catalog. Its `prepared`/`not_reserved` state leaves admission,
+device READY/GO, actual output validation and publication explicitly deferred.
+No execution authority, retry or new client dependency is introduced.
+
 Registry restrictions narrower than HTTP are explicit: canonical freeze requires
 preview_token; draft annotations only; graph edits describe known node parameter
 variants rather than arbitrary future types; inline import bytes are at most

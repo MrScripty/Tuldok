@@ -54,7 +54,7 @@ class SnapshotRegistryTests(unittest.TestCase):
         for name in ('list', 'get', 'open'):
             self.assertEqual(selected['project_snapshots.' + name], 1 if name == 'list' else 2)
         for name, version in (('recipes.inspect', 4), ('graphs.create_external', 2),
-                ('graphs.preflight_external', 2), ('models.publish', 2),
+                ('graphs.preflight_external', 3), ('models.publish', 2),
                 ('studies.prepare_trial', 2)):
             self.assertEqual(selected[name], version)
 
@@ -391,6 +391,21 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
             graph = self.call('graphs.create_external',self.graph_body(),201)
             preflight = self.call('graphs.preflight_external',{'graph_id':graph['id'],'revision':graph['revision']})
             self.assertEqual(preflight['material']['project']['project_id'],self.fixture.selector['project_id'])
+            report = preflight['preflight_report']
+            self.assertEqual((report['graph_id'], report['graph_revision']), (graph['id'], graph['revision']))
+            self.assertEqual(report['material_sha256'], preflight['material_sha256'])
+            self.assertEqual(report['admission'], 'not_reserved')
+            preparation_counts = self.counts()
+            legacy_expected = {key: value for key, value in preflight.items() if key != 'preflight_report'}
+            for version in (1, 2):
+                status, legacy = self.http('graphs.preflight_external',
+                    {'graph_id': graph['id'], 'revision': graph['revision']},
+                    version=version, token=self.owner.token)
+                self.assertEqual((status, legacy), (200, legacy_expected))
+            status, headerless = self.http('graphs.preflight_external',
+                {'graph_id': graph['id'], 'revision': graph['revision']}, selected=False, token=self.owner.token)
+            self.assertEqual((status, headerless), (200, legacy_expected))
+            self.assertEqual(self.counts(), preparation_counts)
             study = self.dataset.studies.create({'name':'Owner finite static-only budget',
                 'policy':inspected['selection_policy'],
                 'limits':dict(attempt_slots=1,admitted_wall_seconds=60,
