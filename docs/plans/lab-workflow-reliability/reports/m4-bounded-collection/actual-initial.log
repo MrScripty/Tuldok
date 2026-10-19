@@ -1,0 +1,13 @@
+test_actual_mixed_sources_partial_errors_whole_hash_and_legacy_gate (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_actual_mixed_sources_partial_errors_whole_hash_and_legacy_gate) ... ok
+test_current_transitive_denial_at_delivery_discards_all_buffered_bytes (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_current_transitive_denial_at_delivery_discards_all_buffered_bytes) ... ok
+test_revocation_after_serialization_discards_all_buffered_bytes (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_revocation_after_serialization_discards_all_buffered_bytes) ... ok
+test_all_existing_full_contracts_remain_equal (test_run_artifact_segments.ArtifactSegmentsTests.test_all_existing_full_contracts_remain_equal) ... ok
+test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) ... ok
+test_foreign_order_or_identity_is_not_correlated (test_run_artifact_segments.ArtifactSegmentsTests.test_foreign_order_or_identity_is_not_correlated) ... ok
+test_ordered_segments_and_typed_partial_failure (test_run_artifact_segments.ArtifactSegmentsTests.test_ordered_segments_and_typed_partial_failure) ... ok
+test_shutdown_cancel_and_deadline_discard_buffered_results (test_run_artifact_segments.ArtifactSegmentsTests.test_shutdown_cancel_and_deadline_discard_buffered_results) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 47.251s
+
+OK

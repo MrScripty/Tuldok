@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 432, in <module>
+    if __name__=='__main__': main()
+                             ^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 392, in main
+    fixture=Fixture(number,args.aggregate_bytes)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 215, in __init__
+    self.graph=self.dataset.pipelines.create_external({'name':'Neutral T5','project_id':self.manifest['id'],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/access.py", line 73, in guarded
+    return function(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/pipeline.py", line 302, in create_external
+    inspected = self.inspect_external_recipe(body['project_id'], body['recipe_id'], body['expected_sha256'])
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/access.py", line 73, in guarded
+    return function(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/pipeline.py", line 292, in inspect_external_recipe
+    result=recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/recipe_contract.py", line 492, in inspect_recipe
+    definition = decode_definition(raw)
+                 ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/recipe_contract.py", line 149, in decode_definition
+    closed(rule, ('type', 'default'), ('min', 'max', 'enum', 'max_length'))
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/projects.py", line 28, in closed
+    raise WorkbenchError('Invalid project fields.')
+workbench.WorkbenchError: Invalid project fields.
