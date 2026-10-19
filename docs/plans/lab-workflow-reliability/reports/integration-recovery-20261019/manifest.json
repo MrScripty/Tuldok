@@ -72,6 +72,11 @@
       "sha256": "9b99d9a34878ee56d7f1c9891f97a416dd5a3ddd9f60039e31f541aacde6ae31"
     },
     {
+      "path": "tuldok-cancel-superseded-fixture-repair-ci.py",
+      "bytes": 3138,
+      "sha256": "c16b47695cde18db20a451b71c187c58850cf306c6604f25b2ee2ffb41122576"
+    },
+    {
       "path": "tuldok-cancel-superseded-task-ci.py",
       "bytes": 3108,
       "sha256": "01103450675088b5bf30564e4179e674e580f38074c84baf8de371dcd08cb2ce"
@@ -85,6 +90,11 @@
       "path": "tuldok-final-plan-claims-audit.json",
       "bytes": 5006,
       "sha256": "dcae548e423d6c3fb359df7579a7aeaa57e49ad6179ab500eea9b015b6511910"
+    },
+    {
+      "path": "tuldok-fixture-repair-independent-http401-metadata.json",
+      "bytes": 6227,
+      "sha256": "cf9c1104889a1ffd713d6632432c49dcd5e7406f01831fb44677aaf76c44e8d2"
     },
     {
       "path": "tuldok-indexed-composed-actual.log",
@@ -1007,6 +1017,21 @@
       "sha256": "98c97d96cd20aff731c22d313e5dfb66fc8d19b8e20985797a454351a2284a30"
     },
     {
+      "path": "tuldok-superseded-ci-fixture-repair-cancellation-results.json",
+      "bytes": 10361,
+      "sha256": "0b1e19f8370aa86e9dad20394c08b4386fa6ff22b5bfd5997cfca878b9d7244b"
+    },
+    {
+      "path": "tuldok-superseded-ci-fixture-repair-candidates.json",
+      "bytes": 50138,
+      "sha256": "e9dc5ee21731521ec3f0e2fbf78c9ab45abaa2f8652a8b013b5e80ac70f04a70"
+    },
+    {
+      "path": "tuldok-superseded-ci-fixture-repair-independent-disposition.json",
+      "bytes": 25591,
+      "sha256": "66bf03c425315cdc231e3ddbae59d9892ee5ee307a85a6b8efa06c93a8bdb4d9"
+    },
+    {
       "path": "tuldok-superseded-ci-independent-disposition.json",
       "bytes": 47658,
       "sha256": "eaab6020e65a74047d66aa4811cb7f418f83e96c6f5c7e8402d1da9c3dd55ccd"
@@ -1043,8 +1068,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 148027,
-      "sha256": "ab8a34126a00aa647c361c0d09a43383c2f02063a7b0db7b1bd8a33419dc8fe9"
+      "bytes": 161195,
+      "sha256": "dd2a51dd6ca4b8fcef8e90f4d95f925a4a5b5f43d8e3e14f847afea62d784c91"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",

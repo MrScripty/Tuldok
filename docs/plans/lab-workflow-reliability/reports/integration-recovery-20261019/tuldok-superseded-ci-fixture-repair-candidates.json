@@ -1,0 +1,1319 @@
+{
+  "allowlist": [
+    {
+      "current_head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "old_head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "pr": 104,
+      "source_branch": "feature/lab-phase-panel-20261019",
+      "source_repository": "MrScripty/Tuldok"
+    },
+    {
+      "current_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "source_repository": "MrScripty/Tuldok"
+    },
+    {
+      "current_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "source_repository": "MrScripty/Tuldok"
+    },
+    {
+      "current_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "source_repository": "MrScripty/Tuldok"
+    },
+    {
+      "current_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "source_repository": "MrScripty/Tuldok"
+    },
+    {
+      "current_head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "old_head": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "pr": 110,
+      "source_branch": "feature/lab-batch-client-20261019",
+      "source_repository": "MrScripty/Tuldok"
+    }
+  ],
+  "candidates": [
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "current_source_branch": "feature/lab-phase-panel-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888917,
+      "old_head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "pr": 104,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/104",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 477,
+      "source_branch": "feature/lab-phase-panel-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:37.727628+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888917",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "current_source_branch": "feature/lab-phase-panel-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888937,
+      "old_head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "pr": 104,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/104",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 133,
+      "source_branch": "feature/lab-phase-panel-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:36.379645+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888937",
+      "workflow": "Candidate package captured CPU",
+      "workflow_id": 386052068,
+      "workflow_path": ".github/workflows/candidate-packages.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "current_source_branch": "feature/lab-workflow-client-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888515,
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/105",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 475,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "in_progress",
+      "status_read_file_utc": "2026-10-19T23:47:36.031650+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:47:30Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888515",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "current_source_branch": "feature/lab-workflow-client-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341889978,
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/105",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 135,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:38.611616+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889978",
+      "workflow": "Candidate package captured CPU",
+      "workflow_id": 386052068,
+      "workflow_path": ".github/workflows/candidate-packages.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "current_source_branch": "feature/lab-workflow-client-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341889992,
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/105",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 480,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:37.319633+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889992",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_source_branch": "feature/lab-field-comparison-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888477,
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/106",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 474,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "in_progress",
+      "status_read_file_utc": "2026-10-19T23:47:39.719602+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:44:45Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888477",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_source_branch": "feature/lab-field-comparison-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888569,
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/106",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 132,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "in_progress",
+      "status_read_file_utc": "2026-10-19T23:47:39.887600+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:43:46Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888569",
+      "workflow": "Candidate package captured CPU",
+      "workflow_id": 386052068,
+      "workflow_path": ".github/workflows/candidate-packages.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:34Z",
+      "current_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_source_branch": "feature/lab-field-comparison-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341890228,
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/106",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 136,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:36.415644+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:34Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890228",
+      "workflow": "Candidate package captured CPU",
+      "workflow_id": 386052068,
+      "workflow_path": ".github/workflows/candidate-packages.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:34Z",
+      "current_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_source_branch": "feature/lab-field-comparison-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341890270,
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/106",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 226,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:36.067649+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:34Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890270",
+      "workflow": "M1 workspace interface",
+      "workflow_id": 381569041,
+      "workflow_path": ".github/workflows/workspaces-m1.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:34Z",
+      "current_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_source_branch": "feature/lab-field-comparison-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341890290,
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/106",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 482,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:36.131648+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:34Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890290",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "current_source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888743,
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/108",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 70,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:36.115649+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888743",
+      "workflow": "Static extension authoring kit",
+      "workflow_id": 385847326,
+      "workflow_path": ".github/workflows/extension-sdk.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "current_source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888745,
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/108",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 476,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "in_progress",
+      "status_read_file_utc": "2026-10-19T23:47:38.835613+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:42:07Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888745",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "current_source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341889182,
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/108",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 71,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:37.027637+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889182",
+      "workflow": "Static extension authoring kit",
+      "workflow_id": 385847326,
+      "workflow_path": ".github/workflows/extension-sdk.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "current_source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341889255,
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/108",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 478,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "in_progress",
+      "status_read_file_utc": "2026-10-19T23:47:38.715615+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:42:31Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889255",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:32Z",
+      "current_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "current_source_branch": "feature/lab-bounded-collection-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341887645,
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/109",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 472,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "in_progress",
+      "status_read_file_utc": "2026-10-19T23:47:40.067597+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:43:28Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341887645",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:32Z",
+      "current_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "current_source_branch": "feature/lab-bounded-collection-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341887765,
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/109",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 222,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:38.535617+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:32Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341887765",
+      "workflow": "M1 workspace interface",
+      "workflow_id": 381569041,
+      "workflow_path": ".github/workflows/workspaces-m1.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "current_source_branch": "feature/lab-bounded-collection-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341889444,
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/109",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 225,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:37.831626+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889444",
+      "workflow": "M1 workspace interface",
+      "workflow_id": 381569041,
+      "workflow_path": ".github/workflows/workspaces-m1.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "current_source_branch": "feature/lab-bounded-collection-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341889666,
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/109",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 479,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:37.343632+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889666",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:32Z",
+      "current_head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "current_source_branch": "feature/lab-batch-client-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341888115,
+      "old_head": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "pr": 110,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/110",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 473,
+      "source_branch": "feature/lab-batch-client-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:39.043611+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:32Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888115",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    {
+      "cancellation_requested": false,
+      "conclusion": null,
+      "created_at": "2026-10-19T23:29:33Z",
+      "current_head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "current_source_branch": "feature/lab-batch-client-20261019",
+      "eligibility": {
+        "exact_allowed_previous_head": true,
+        "explicit_single_pr_association": true,
+        "not_current_head_of_any_task_pr": true,
+        "not_main_push_completed_or_pr102_103_107": true,
+        "pending_state_freshly_read": true,
+        "same_live_pr_branch_repository_owner": true
+      },
+      "event": "pull_request",
+      "id": 39341890032,
+      "old_head": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "pr": 110,
+      "pr_url": "https://github.com/MrScripty/Tuldok/pull/110",
+      "recommended_action": "Eligible only for root cancellation decision after rechecking live predicates.",
+      "run_attempt": 1,
+      "run_number": 481,
+      "source_branch": "feature/lab-batch-client-20261019",
+      "source_owner": "MrScripty",
+      "source_repository": "MrScripty/Tuldok",
+      "state": "queued",
+      "status_read_file_utc": "2026-10-19T23:47:37.231634+00:00",
+      "tree_equivalence": "Not assessed; no source inspection performed for this second inventory.",
+      "updated_at": "2026-10-19T23:29:33Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890032",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_id": 373501874,
+      "workflow_path": ".github/workflows/tests.yml"
+    }
+  ],
+  "excluded_runs": [
+    {
+      "head_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+      "id": 39339868173,
+      "pr_numbers": [
+        102
+      ],
+      "reason": "outside_exact_six_pr_allowlist",
+      "status": "in_progress"
+    },
+    {
+      "head_sha": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+      "id": 39339902973,
+      "pr_numbers": [
+        103
+      ],
+      "reason": "outside_exact_six_pr_allowlist",
+      "status": "queued"
+    },
+    {
+      "head_sha": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+      "id": 39341819254,
+      "pr_numbers": [
+        107
+      ],
+      "reason": "outside_exact_six_pr_allowlist",
+      "status": "in_progress"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "id": 39341889457,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "not_pending_after_refresh",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "id": 39341890419,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "not_pending_after_refresh",
+      "status": "completed"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343580825,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343580826,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343580870,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343580883,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "id": 39343581244,
+      "pr_numbers": [
+        104
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "id": 39343581301,
+      "pr_numbers": [
+        104
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "id": 39343581315,
+      "pr_numbers": [
+        104
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "id": 39343581324,
+      "pr_numbers": [
+        104
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39343581370,
+      "pr_numbers": [
+        108
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581425,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343581432,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343581444,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581467,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39343581470,
+      "pr_numbers": [
+        108
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343581488,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581508,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39343581513,
+      "pr_numbers": [
+        109
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581553,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581563,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581572,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581605,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39343581637,
+      "pr_numbers": [
+        106
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39343581937,
+      "pr_numbers": [
+        108
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39343581959,
+      "pr_numbers": [
+        108
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "id": 39343581966,
+      "pr_numbers": [
+        110
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "id": 39343582569,
+      "pr_numbers": [
+        110
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39343583279,
+      "pr_numbers": [
+        105
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39343583318,
+      "pr_numbers": [
+        105
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39343584140,
+      "pr_numbers": [
+        105
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    },
+    {
+      "head_sha": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39343584158,
+      "pr_numbers": [
+        105
+      ],
+      "reason": "live_current_head_keep",
+      "status": "queued"
+    }
+  ],
+  "format": "tuldok_fixture_repair_superseded_ci_candidates_v1",
+  "limits": [
+    "Source/tree inspection and test evaluation were not performed.",
+    "Completed API success/failure metadata is used only to exclude those runs, not as test-pass or acceptance evidence.",
+    "Only queued/in_progress pull_request events were listed; main/push event families were not queried.",
+    "Snapshot eligibility does not guarantee later pending state or runner-capacity recovery."
+  ],
+  "live_heads_unchanged_between_reads": true,
+  "live_prs": [
+    {
+      "headRefName": "feature/lab-coordinator-panel-20261019",
+      "headRefOid": "b4070b60b0119c73284c4832610cc82ef471963a",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 102,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/102"
+    },
+    {
+      "headRefName": "feature/lab-phase-timing-20261019",
+      "headRefOid": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 103,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/103"
+    },
+    {
+      "headRefName": "feature/lab-phase-panel-20261019",
+      "headRefOid": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 104,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/104"
+    },
+    {
+      "headRefName": "feature/lab-workflow-client-20261019",
+      "headRefOid": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 105,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/105"
+    },
+    {
+      "headRefName": "feature/lab-field-comparison-20261019",
+      "headRefOid": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 106,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/106"
+    },
+    {
+      "headRefName": "test/lab-workflow-baseline-20261019",
+      "headRefOid": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 107,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/107"
+    },
+    {
+      "headRefName": "feature/lab-indexed-diagnostics-20261019",
+      "headRefOid": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 108,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/108"
+    },
+    {
+      "headRefName": "feature/lab-bounded-collection-20261019",
+      "headRefOid": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 109,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/109"
+    },
+    {
+      "headRefName": "feature/lab-batch-client-20261019",
+      "headRefOid": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "headRepository": {
+        "nameWithOwner": "MrScripty/Tuldok"
+      },
+      "headRepositoryOwner": {
+        "login": "MrScripty"
+      },
+      "number": 110,
+      "state": "OPEN",
+      "url": "https://github.com/MrScripty/Tuldok/pull/110"
+    }
+  ],
+  "observed_at_utc": "2026-10-19T23:48:18.091228+00:00",
+  "owner_revalidation_before_action": [
+    "Re-read exact run state/event/head/PR association and live PR head before cancelling.",
+    "Skip completed, new-current, unrelated, main/push and PR102/103/107 runs.",
+    "This inventory has sent no cancellation request or retry."
+  ],
+  "phase1_final_confirmation": {
+    "final_cancelled": 29,
+    "historical_archive": "/tmp/tuldok-superseded-ci-independent-disposition-phase1-historical.json",
+    "new_independent_raw": "/tmp/tuldok-superseded-ci-phase1-final-run.json",
+    "previously_completed_untouched": 2,
+    "receipt": "/tmp/tuldok-superseded-ci-independent-disposition.json",
+    "still_pending": 0
+  },
+  "raw_evidence": {
+    "/tmp/tuldok-fixture-repair-in_progress-runs-raw.json": {
+      "bytes": 112676,
+      "sha256": "24a8a446daf7add39a85a30acf99717b4d89e3fc1f47b6a5d827e11f62d840d0"
+    },
+    "/tmp/tuldok-fixture-repair-live-heads-final.json": {
+      "bytes": 2697,
+      "sha256": "ccc92e36af3b948f0ffb586b958bf575b5ea632bb3f17d5aa0d6ba7cb3d86462"
+    },
+    "/tmp/tuldok-fixture-repair-live-heads-start.json": {
+      "bytes": 2697,
+      "sha256": "ccc92e36af3b948f0ffb586b958bf575b5ea632bb3f17d5aa0d6ba7cb3d86462"
+    },
+    "/tmp/tuldok-fixture-repair-prefilter.json": {
+      "bytes": 338614,
+      "sha256": "a959df747bb62dd1b2510ba6d1c88d872e3b7f4a400753356a8a27dc04888eea"
+    },
+    "/tmp/tuldok-fixture-repair-queued-runs-raw.json": {
+      "bytes": 575618,
+      "sha256": "12776f9ee7f7cdfd5d9f9e36da2050de1844b8471c7b3530baf333e67a5bf523"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341887645.json": {
+      "bytes": 12506,
+      "sha256": "24c2441646925b3af39d3e2f1e28a7573835c517b99ac88a96be04e0319712e5"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341887765.json": {
+      "bytes": 12508,
+      "sha256": "633c38e248d527e0885f3f5b01af130739ba3635473735cd9b2ba5db37347f51"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888115.json": {
+      "bytes": 12502,
+      "sha256": "88b7521c4bceb1ab8fb382ca39b55c13e2bbd9d97c55cedc0a305842d7228ebd"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888477.json": {
+      "bytes": 12515,
+      "sha256": "c568c9e661d9996ce588e56c480a336aea7594f75a1c5050c920b5e48bff03d5"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888515.json": {
+      "bytes": 12490,
+      "sha256": "1810f1effd58cafe9a7fed476f4b81847f6adbfc6cb16a3c813d8d18e2c30292"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888569.json": {
+      "bytes": 12535,
+      "sha256": "257a99453a698e97c61997e24e2caac418eb93cbfe6f7bb8eac90a59dcc68c00"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888743.json": {
+      "bytes": 12518,
+      "sha256": "21f19b77c801b06a1fff6c13938a651165335316b935ff2fbf9fc35c316fd048"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888745.json": {
+      "bytes": 12509,
+      "sha256": "3382fbf70b1a20c95c64c06a60cd5705ee3a6626c599256feb705b15eded9fc9"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888917.json": {
+      "bytes": 12498,
+      "sha256": "7e1f42018e1ad52de5ae57004ad038ee0a66b9d056ee2a2a05faff9d77b8470a"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341888937.json": {
+      "bytes": 12518,
+      "sha256": "4fc652e860fd0050a678be5bcd2c6d9872874f77a3188a32901c3042aa1dfb05"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889182.json": {
+      "bytes": 12518,
+      "sha256": "0ad3960992d2c7198ca97e85619d2eb5bfbe1a0ca067280435d473bf1e9999bd"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889255.json": {
+      "bytes": 12509,
+      "sha256": "a48d6bfe57e4f312a53e0e0465227e48df1cc083775e6ba56a583da2b206e24c"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889444.json": {
+      "bytes": 12508,
+      "sha256": "6455c15e28cfa7c03c046d72c0b0edd31ffb81b50a862da012b7494369220dbb"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889457.json": {
+      "bytes": 12529,
+      "sha256": "1a9d156708baf4c36f7974ec28fafa6a7b3fb0881a7703b6b233765734cc1462"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889666.json": {
+      "bytes": 12501,
+      "sha256": "277b13212f194dde247bfc8b1d9f4ac04add494472e68c40ba01110cc7e04f0b"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889978.json": {
+      "bytes": 12505,
+      "sha256": "7e4e7dd0bff4289c3b1bfa55443566ca6ad785ff23393ec6410735077f7d280f"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341889992.json": {
+      "bytes": 12485,
+      "sha256": "f1d02ad28282738d272bdde1cd4868cd96f90b133daa4033e6c1dbc5b359115f"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341890032.json": {
+      "bytes": 12502,
+      "sha256": "15f72482ac431d968bff6abe97c4b80f4ba8c99967937e164cab9940e9daf84b"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341890228.json": {
+      "bytes": 12530,
+      "sha256": "ea2d6e704edbea9292f89c5edd5761438ae4679d84bd89170d052538ba0d0e9c"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341890270.json": {
+      "bytes": 12517,
+      "sha256": "1f9a059ed1d477165c6ecbc0c93d9b2e90406162414d1160084d2c779ad0a91b"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341890290.json": {
+      "bytes": 12510,
+      "sha256": "25091278c0a2749850066e2e94be6c322adc29c251cbbaf6951fce04f811d3f1"
+    },
+    "/tmp/tuldok-fixture-repair-run-details/39341890419.json": {
+      "bytes": 12523,
+      "sha256": "7e9b61ec331cd4d9bb645094130dc2949610ef15f5718030f6dca97090d6da7a"
+    }
+  },
+  "read_only": true,
+  "repository": "MrScripty/Tuldok",
+  "scope": "Only pending pull_request runs on exactly the six specified previous current source heads, superseded by owner-published browser-fixture repairs.",
+  "summary": {
+    "by_pr": {
+      "104": 2,
+      "105": 3,
+      "106": 5,
+      "108": 4,
+      "109": 4,
+      "110": 2
+    },
+    "candidate_states": {
+      "in_progress": 6,
+      "queued": 14
+    },
+    "candidates": 20,
+    "completed_after_initial_list_excluded": 2,
+    "current_head_runs_protected": 30,
+    "outside_exact_six_pr_allowlist_excluded": 3
+  }
+}

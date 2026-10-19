@@ -1,0 +1,129 @@
+{
+  "batch_semantics": "Six independent GETs were dispatched concurrently before any error was known. All returned401; no subsequent remote call was made.",
+  "client": {
+    "absolute_endpoint_pattern": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/{candidate_id}",
+    "binary": "/usr/bin/gh",
+    "endpoint_pattern": "repos/MrScripty/Tuldok/actions/runs/{candidate_id}",
+    "named_github_mcp_tool_used": false,
+    "remote_method": "GET",
+    "tool_chain": [
+      "functions.exec",
+      "tools.exec_command",
+      "/bin/bash -lc",
+      "/usr/bin/gh api"
+    ],
+    "version": "gh version 2.46.0 (2025-01-13 Debian 2.46.0-3)"
+  },
+  "credential_inspection_or_change": false,
+  "failure_cause_beyond_http401": "Not investigated or inferred.",
+  "failures": [
+    {
+      "candidate_id": 39341888917,
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39341888917",
+      "exit_code": 1,
+      "local_response_file_mtime_utc": "2026-10-19T23:49:33.386134+00:00",
+      "method": "GET",
+      "raw_response_file": "/tmp/tuldok-fixture-repair-independent-run-statuses/39341888917.json",
+      "raw_sha256": "15cefd0528700471275adcd28427cb4efc001367156b099ea3300fc79d9c1292",
+      "response_body": {
+        "documentation_url": "https://docs.github.com/rest",
+        "message": "Bad credentials",
+        "status": "401"
+      },
+      "shell_command": "gh api repos/MrScripty/Tuldok/actions/runs/39341888917 > /tmp/tuldok-fixture-repair-independent-run-statuses/39341888917.json",
+      "stderr_observed_in_tool_output": "gh: Bad credentials (HTTP 401)\n"
+    },
+    {
+      "candidate_id": 39341888937,
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39341888937",
+      "exit_code": 1,
+      "local_response_file_mtime_utc": "2026-10-19T23:49:33.322135+00:00",
+      "method": "GET",
+      "raw_response_file": "/tmp/tuldok-fixture-repair-independent-run-statuses/39341888937.json",
+      "raw_sha256": "15cefd0528700471275adcd28427cb4efc001367156b099ea3300fc79d9c1292",
+      "response_body": {
+        "documentation_url": "https://docs.github.com/rest",
+        "message": "Bad credentials",
+        "status": "401"
+      },
+      "shell_command": "gh api repos/MrScripty/Tuldok/actions/runs/39341888937 > /tmp/tuldok-fixture-repair-independent-run-statuses/39341888937.json",
+      "stderr_observed_in_tool_output": "gh: Bad credentials (HTTP 401)\n"
+    },
+    {
+      "candidate_id": 39341888515,
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39341888515",
+      "exit_code": 1,
+      "local_response_file_mtime_utc": "2026-10-19T23:49:33.278136+00:00",
+      "method": "GET",
+      "raw_response_file": "/tmp/tuldok-fixture-repair-independent-run-statuses/39341888515.json",
+      "raw_sha256": "15cefd0528700471275adcd28427cb4efc001367156b099ea3300fc79d9c1292",
+      "response_body": {
+        "documentation_url": "https://docs.github.com/rest",
+        "message": "Bad credentials",
+        "status": "401"
+      },
+      "shell_command": "gh api repos/MrScripty/Tuldok/actions/runs/39341888515 > /tmp/tuldok-fixture-repair-independent-run-statuses/39341888515.json",
+      "stderr_observed_in_tool_output": "gh: Bad credentials (HTTP 401)\n"
+    },
+    {
+      "candidate_id": 39341889978,
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39341889978",
+      "exit_code": 1,
+      "local_response_file_mtime_utc": "2026-10-19T23:49:33.354135+00:00",
+      "method": "GET",
+      "raw_response_file": "/tmp/tuldok-fixture-repair-independent-run-statuses/39341889978.json",
+      "raw_sha256": "15cefd0528700471275adcd28427cb4efc001367156b099ea3300fc79d9c1292",
+      "response_body": {
+        "documentation_url": "https://docs.github.com/rest",
+        "message": "Bad credentials",
+        "status": "401"
+      },
+      "shell_command": "gh api repos/MrScripty/Tuldok/actions/runs/39341889978 > /tmp/tuldok-fixture-repair-independent-run-statuses/39341889978.json",
+      "stderr_observed_in_tool_output": "gh: Bad credentials (HTTP 401)\n"
+    },
+    {
+      "candidate_id": 39341889992,
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39341889992",
+      "exit_code": 1,
+      "local_response_file_mtime_utc": "2026-10-19T23:49:33.218137+00:00",
+      "method": "GET",
+      "raw_response_file": "/tmp/tuldok-fixture-repair-independent-run-statuses/39341889992.json",
+      "raw_sha256": "15cefd0528700471275adcd28427cb4efc001367156b099ea3300fc79d9c1292",
+      "response_body": {
+        "documentation_url": "https://docs.github.com/rest",
+        "message": "Bad credentials",
+        "status": "401"
+      },
+      "shell_command": "gh api repos/MrScripty/Tuldok/actions/runs/39341889992 > /tmp/tuldok-fixture-repair-independent-run-statuses/39341889992.json",
+      "stderr_observed_in_tool_output": "gh: Bad credentials (HTTP 401)\n"
+    },
+    {
+      "candidate_id": 39341888477,
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39341888477",
+      "exit_code": 1,
+      "local_response_file_mtime_utc": "2026-10-19T23:49:33.294136+00:00",
+      "method": "GET",
+      "raw_response_file": "/tmp/tuldok-fixture-repair-independent-run-statuses/39341888477.json",
+      "raw_sha256": "15cefd0528700471275adcd28427cb4efc001367156b099ea3300fc79d9c1292",
+      "response_body": {
+        "documentation_url": "https://docs.github.com/rest",
+        "message": "Bad credentials",
+        "status": "401"
+      },
+      "shell_command": "gh api repos/MrScripty/Tuldok/actions/runs/39341888477 > /tmp/tuldok-fixture-repair-independent-run-statuses/39341888477.json",
+      "stderr_observed_in_tool_output": "gh: Bad credentials (HTTP 401)\n"
+    }
+  ],
+  "last_successful_read": {
+    "kind": "Read-only GraphQL live PR metadata for102\u2013110 via gh api graphql",
+    "local_file_mtime_utc": "2026-10-19T23:47:40.803588+00:00",
+    "local_response_file": "/tmp/tuldok-fixture-repair-live-heads-final.json",
+    "time_limit": "Local response-file last-write time, not a server timestamp."
+  },
+  "last_successful_rest_run_read": {
+    "id": 39341887645,
+    "local_file_mtime_utc": "2026-10-19T23:47:40.067597+00:00",
+    "local_response_file": "/tmp/tuldok-fixture-repair-run-details/39341887645.json"
+  },
+  "retries_or_cancel_or_rerun": false
+}
