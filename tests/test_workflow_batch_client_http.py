@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import threading
@@ -200,8 +201,10 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
     def test_actual_cancellation_interrupts_held_http_read_without_cancel_or_retry(self):
         watchdogs_before = {thread.ident for thread in threading.enumerate() if thread.name == 'agent-read-budget'}
         entered = threading.Event(); release = threading.Event(); stop = threading.Event(); left = threading.Event()
+        attempts = []
         original = self.dataset.runs.artifact_segments
         def held(body, **kwargs):
+            attempts.append(copy.deepcopy(body))
             entered.set()
             if not release.wait(10):
                 raise AssertionError('Held batch test did not release owner')
@@ -227,6 +230,31 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
         finally:
             release.set(); worker.join(5)
         self.assertFalse(worker.is_alive())
+        self.assertEqual(len(attempts), 1)
+        # A separate clean CLI process receives real SIGINT only after the real
+        # service has accepted its batch request; it must save a stopped receipt.
+        entered.clear(); release.clear(); left.clear()
+        arguments = [sys.executable, str(ROOT/'project_cli.py'), '--config', str(self.config),
+            'collect-batch', '--manifest', str(self.file('cancel-manifest.json', self.manifest)),
+            '--directory', str(self.output)]
+        with patch.object(self.dataset.runs, 'artifact_segments', side_effect=held):
+            process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            def interrupt_cli():
+                if entered.wait(10) and process.poll() is None:
+                    process.send_signal(signal.SIGINT)
+            interrupter = threading.Thread(target=interrupt_cli); interrupter.start()
+            try:
+                stdout, stderr = process.communicate(timeout=20)
+                self.assertEqual(process.returncode, 1, stdout+stderr)
+                self.assertNotIn(self.agent['token'], stdout+stderr)
+                self.assertEqual(json.loads(stdout)['state'], 'stopped', stdout+stderr)
+            finally:
+                release.set(); interrupter.join(5)
+                if process.poll() is None:
+                    process.kill(); process.communicate(timeout=5)
+            self.assertTrue(left.wait(5))
+        self.assertEqual(len(attempts), 2)
+        self.assertFalse(interrupter.is_alive())
         self.assertEqual(list(self.output.iterdir()), [])
         self.assertFalse(any('/cancel' in row['path'] or '/artifact-segment/' in row['path'] for row in self.calls()))
         self.assertFalse(any(thread.name == 'agent-read-budget' and thread.ident not in watchdogs_before
