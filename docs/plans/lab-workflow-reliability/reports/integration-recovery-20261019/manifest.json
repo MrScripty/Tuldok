@@ -42,6 +42,11 @@
       "sha256": "9b99d9a34878ee56d7f1c9891f97a416dd5a3ddd9f60039e31f541aacde6ae31"
     },
     {
+      "path": "tuldok-indexed-root-independent-pure.log",
+      "bytes": 1901,
+      "sha256": "b1f82469399b644020e01e08f4140957d4d0563aa4e630cf177e42c2563560f9"
+    },
+    {
       "path": "tuldok-local-pg17-qualified-tooling.json",
       "bytes": 2281,
       "sha256": "84ae4ca6d886c8e1aedd47418b7478cc954e0ca20c3c7ec703ed890113e05c4a"
@@ -250,6 +255,11 @@
       "path": "tuldok-m3-ui-validation-at314.json",
       "bytes": 3809,
       "sha256": "0a4a22e09290503364d9ab1bc1d6b2efa9105f235385594abeef95e0dcf47033"
+    },
+    {
+      "path": "tuldok-m4-root-cleanup-independent.json",
+      "bytes": 519,
+      "sha256": "9a8f7b1f7a8be296dc773c88658b01c6b8b0b3b247a272e92b72858f3cc1c1a7"
     },
     {
       "path": "tuldok-mcp-isolated-timeout-cases.log",
@@ -493,8 +503,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 53293,
-      "sha256": "7465af22fce6ffd1f4af64e101c3f4bf3df35080446d304025fb0c5fdc69b945"
+      "bytes": 55541,
+      "sha256": "68f8218c5fea094a0c9a69fff7bdb4990e4e8554eebc9ebc23389c8cbd6aa258"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",

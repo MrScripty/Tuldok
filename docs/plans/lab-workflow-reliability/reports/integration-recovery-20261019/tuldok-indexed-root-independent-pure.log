@@ -1,0 +1,14 @@
+test_addon_requires_explicit_tag_and_exact_output_roles (test_indexed_diagnostics.DiagnosticAdmissionTests.test_addon_requires_explicit_tag_and_exact_output_roles) ... ok
+test_explicit_opt_in_keeps_profile_and_closed_science_capabilities (test_indexed_diagnostics.DiagnosticAdmissionTests.test_explicit_opt_in_keeps_profile_and_closed_science_capabilities) ... ok
+test_impossible_population_record_index_and_aggregate_declarations_refuse_inertly (test_indexed_diagnostics.DiagnosticAdmissionTests.test_impossible_population_record_index_and_aggregate_declarations_refuse_inertly) ... ok
+test_current_host_inventory_hash_still_dominates_forged_coherent_index (test_indexed_diagnostics.DiagnosticRoundTripTests.test_current_host_inventory_hash_still_dominates_forged_coherent_index) ... ok
+test_diagnostic_capture_never_repairs_invalid_scientific_evidence (test_indexed_diagnostics.DiagnosticRoundTripTests.test_diagnostic_capture_never_repairs_invalid_scientific_evidence) ... ok
+test_forged_shard_case_checkpoint_phase_order_and_payload_refuse (test_indexed_diagnostics.DiagnosticRoundTripTests.test_forged_shard_case_checkpoint_phase_order_and_payload_refuse) ... ok
+test_index_identity_order_count_ranges_media_and_mandatory_coverage_refuse (test_indexed_diagnostics.DiagnosticRoundTripTests.test_index_identity_order_count_ranges_media_and_mandatory_coverage_refuse) ... ok
+test_sdk_refuses_missing_mandatory_or_unexplained_optional_records_before_writing (test_indexed_diagnostics.DiagnosticRoundTripTests.test_sdk_refuses_missing_mandatory_or_unexplained_optional_records_before_writing) ... ok
+test_supported_sdk_two_shards_cold_host_and_unchanged_public_projection (test_indexed_diagnostics.DiagnosticRoundTripTests.test_supported_sdk_two_shards_cold_host_and_unchanged_public_projection) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.079s
+
+OK
