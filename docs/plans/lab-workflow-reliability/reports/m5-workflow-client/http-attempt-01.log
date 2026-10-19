@@ -1,0 +1,90 @@
+test_actual_classifier_exact_operands_compare_through_http_and_clean_cli (test_workflow_client_http.RetainedWorkflowHTTPTests.test_actual_classifier_exact_operands_compare_through_http_and_clean_cli) ... ERROR
+test_exact_attached_publication_collection_and_revocation_on_resume (test_workflow_client_http.RetainedWorkflowHTTPTests.test_exact_attached_publication_collection_and_revocation_on_resume) ... ok
+test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation (test_workflow_client_http.RetainedWorkflowHTTPTests.test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation) ... ok
+test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown (test_workflow_client_http.WorkflowHTTPTests.test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown) ... ERROR
+test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result (test_workflow_client_http.WorkflowHTTPTests.test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result) ... ok
+test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation (test_workflow_client_http.WorkflowHTTPTests.test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation) ... ok
+test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional (test_workflow_client_http.WorkflowHTTPTests.test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional) ... ERROR
+test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event (test_workflow_client_http.WorkflowHTTPTests.test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event) ... ok
+test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback (test_workflow_client_http.WorkflowHTTPTests.test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback) ... ERROR
+test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again (test_workflow_client_http.WorkflowHTTPTests.test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again) ... ERROR
+test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains (test_workflow_client_http.WorkflowHTTPTests.test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains) ... ERROR
+test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber (test_workflow_client_http.WorkflowHTTPTests.test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber) ... ERROR
+
+======================================================================
+ERROR: test_actual_classifier_exact_operands_compare_through_http_and_clean_cli (test_workflow_client_http.RetainedWorkflowHTTPTests.test_actual_classifier_exact_operands_compare_through_http_and_clean_cli)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 495, in test_actual_classifier_exact_operands_compare_through_http_and_clean_cli
+    manifest = workflow.comparison_manifest(run['id'], run['id'],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-workflow-client-m5/tuldok_client.py", line 450, in comparison_manifest
+    self._artifact_inventory(value, source)
+  File "/workspace/Tuldok-lab-workflow-client-m5/tuldok_client.py", line 309, in _artifact_inventory
+    raise AgentAPIError('Selected artifact inventory is malformed or exceeds its bounds.', 'transport', 502) from None
+agent_api.AgentAPIError: Selected artifact inventory is malformed or exceeds its bounds.
+
+======================================================================
+ERROR: test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown (test_workflow_client_http.WorkflowHTTPTests.test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 165, in test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown
+    manifest = self.manifest('http-committed-but-uncertain')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'dict' object is not callable
+
+======================================================================
+ERROR: test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional (test_workflow_client_http.WorkflowHTTPTests.test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 268, in test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional
+    run = self.completed()
+          ^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 75, in completed
+    submitted = self.workflow.submit(self.manifest())
+                                     ^^^^^^^^^^^^^^^
+TypeError: 'dict' object is not callable
+
+======================================================================
+ERROR: test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback (test_workflow_client_http.WorkflowHTTPTests.test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 254, in test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback
+    manifest = self.manifest('insufficient-scope-client')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'dict' object is not callable
+
+======================================================================
+ERROR: test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again (test_workflow_client_http.WorkflowHTTPTests.test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 137, in test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again
+    manifest = self.manifest('http-lost-submit-reply')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'dict' object is not callable
+
+======================================================================
+ERROR: test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains (test_workflow_client_http.WorkflowHTTPTests.test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 393, in test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains
+    manifest = self.manifest('monitor-cancel-neutral')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'dict' object is not callable
+
+======================================================================
+ERROR: test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber (test_workflow_client_http.WorkflowHTTPTests.test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 188, in test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber
+    run = self.completed()
+          ^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client_http.py", line 75, in completed
+    submitted = self.workflow.submit(self.manifest())
+                                     ^^^^^^^^^^^^^^^
+TypeError: 'dict' object is not callable
+
+----------------------------------------------------------------------
+Ran 12 tests in 238.210s
+
+FAILED (errors=7)
