@@ -6,6 +6,7 @@ argument validation, never by the application discovery route.
 import base64
 import binascii
 import copy
+from contextlib import contextmanager
 import hashlib
 import http.client
 import json
@@ -1164,11 +1165,15 @@ def _validator(schema):
     return Draft202012Validator(schema)
 
 
-def validate_registry():
+def validate_registry(*, checkpoint=None):
     for versions in _CONTRACTS.values():
         for op in versions.values():
+            if checkpoint is not None:
+                checkpoint()
             _validator(op['inputSchema'])
             _validator(op['outputSchema'])
+            if checkpoint is not None:
+                checkpoint()
     return REGISTRY_DIGEST
 
 
@@ -1325,6 +1330,37 @@ class AgentClient:
         self._ready = False
         self._selected = None
         self._legacy = False
+        self._read_context = threading.local()
+
+    @contextmanager
+    def read_budget(self, deadline, cancelled=None):
+        """Bound a serial read workflow, including bootstrap, with one deadline.
+
+        The canonical request owner observes cancellation and joins its socket
+        watchdog. Mutation dispatch is prohibited inside this read-only context.
+        """
+        if type(deadline) not in (int, float) or not math.isfinite(deadline):
+            raise AgentAPIError('Read deadline must be finite.')
+        if cancelled is not None and not isinstance(cancelled, threading.Event):
+            raise AgentAPIError('Read cancellation must be a threading.Event.')
+        if getattr(self._read_context, 'value', None) is not None:
+            raise AgentAPIError('Read budgets cannot be nested.')
+        self._read_context.value = (deadline, cancelled)
+        try:
+            self._check_read_budget()
+            yield self
+        finally:
+            self._read_context.value = None
+
+    def _check_read_budget(self):
+        budget = getattr(self._read_context, 'value', None)
+        if budget is not None:
+            deadline, cancelled = budget
+            if cancelled is not None and cancelled.is_set():
+                raise AgentAPIError('Read workflow stopped; compute cancellation was not requested.', 'stopped', 409)
+            if time.monotonic() >= deadline:
+                raise AgentAPIError('Read workflow deadline reached; execution state is unchanged.', 'deadline', 408)
+        return budget
 
     @classmethod
     def from_config(cls, path):
@@ -1338,8 +1374,10 @@ class AgentClient:
         return cls(config['endpoint'], token, config['catalog_id'], config.get('timeout', 120))
 
     def _request(self, method, path, body=None, selection=None):
-        connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, self.timeout))
-        deadline = time.monotonic() + self.timeout
+        budget = self._check_read_budget()
+        deadline = min(time.monotonic() + self.timeout, budget[0]) if budget is not None else time.monotonic() + self.timeout
+        request_timeout = max(0.000001, deadline - time.monotonic())
+        connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, request_timeout))
         sockets = []
         response = None
         def expire():
@@ -1348,7 +1386,17 @@ class AgentClient:
                     owned.shutdown(socket.SHUT_RDWR)
                 except OSError:
                     pass
-        timer = threading.Timer(self.timeout, expire)
+        finished = None
+        if budget is None:
+            timer = threading.Timer(self.timeout, expire)
+        else:
+            finished = threading.Event()
+            def watch_read():
+                while not finished.wait(min(.025, max(0, deadline-time.monotonic()))):
+                    if time.monotonic() >= deadline or (budget[1] is not None and budget[1].is_set()):
+                        expire()
+                        return
+            timer = threading.Thread(target=watch_read, name='agent-read-budget')
         timer.daemon = True
         timer.start()
         try:
@@ -1360,8 +1408,10 @@ class AgentClient:
                 headers[CONTRACT_HEADER] = selected_header(*selection)
             if raw is not None:
                 headers['Content-Type'] = 'application/json'
+            self._check_read_budget()
             connection.connect()
             sockets.append(connection.sock)
+            self._check_read_budget()
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError()
@@ -1370,6 +1420,7 @@ class AgentClient:
             connection.sock.settimeout(remaining)
             connection.request(method, path, body=raw, headers=headers)
             response = connection.getresponse()
+            self._check_read_budget()
             if 300 <= response.status < 400:
                 raise AgentAPIError('Redirects are not supported.', 'transport', 502)
             lengths = response.headers.get_all('Content-Length', [])
@@ -1383,6 +1434,7 @@ class AgentClient:
                 raise AgentAPIError('HTTP response exceeds the agent receive bound.', 'response_too_large', 413)
             data = bytearray()
             while len(data) < length:
+                self._check_read_budget()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError()
@@ -1395,6 +1447,7 @@ class AgentClient:
             if time.monotonic() > deadline:
                 raise TimeoutError()
             value = decode(data)
+            self._check_read_budget()
             if response.status >= 400:
                 if not isinstance(value, dict) or not isinstance(value.get('error'), str):
                     raise AgentAPIError('Malformed HTTP error response.', 'transport', 502)
@@ -1407,15 +1460,22 @@ class AgentClient:
         except AgentAPIError:
             raise
         except (OSError, http.client.HTTPException, TimeoutError):
+            self._check_read_budget()
             raise AgentAPIError('Local HTTP request failed; inspect durable state before retrying a mutation.', 'transport', 503) from None
         finally:
-            timer.cancel()
+            if finished is None:
+                timer.cancel()
+            else:
+                finished.set()
             if response is not None:
                 response.close()
             connection.close()
             for owned in sockets:
                 owned.close()
-            timer.join(timeout=1)
+            if finished is None:
+                timer.join(timeout=1)
+            else:
+                timer.join()
 
     def _check_discovery(self):
         envelope = self._request('GET', '/api/agent/operations')
@@ -1431,7 +1491,9 @@ class AgentClient:
         return self._bootstrap('agent')
 
     def _bootstrap(self, identity_kind):
-        validate_registry()
+        self._check_read_budget()
+        validate_registry(checkpoint=self._check_read_budget)
+        self._check_read_budget()
         identity = self._request('GET', '/api/access/session')
         value = identity['result']
         if identity['status'] != 200 or not isinstance(value, dict) or value.get('kind') != identity_kind or value.get('catalog_id') != self.catalog_id:
@@ -1453,6 +1515,7 @@ class AgentClient:
             raise AgentAPIError(envelope['result']['error'], envelope['result']['code'], envelope['status'])
         else:
             self._selected = negotiate(envelope['result'], self.catalog_id)
+        self._check_read_budget()
         self._ready = True
         return {'identity': value, 'discovery': discovery(), 'mode': 'legacy' if self._legacy else 'negotiated',
                 'operations': sorted(self._selected)}
@@ -1469,6 +1532,8 @@ class AgentClient:
         from mcp_observer import observe_stage, observe_selection
         # Reject local invalid input before bootstrap/network side effects.
         op = operation(name)
+        if self._check_read_budget() is not None and op['side_effects']:
+            raise AgentAPIError('Read budgets cannot dispatch mutations.')
         errors = []
         for local_version in sorted(_CONTRACTS[op['operation_id']], reverse=True):
             try:
@@ -1493,6 +1558,7 @@ class AgentClient:
         observe_stage(observer, observation, 'dispatch')
         envelope = self._request(method, path, body, selection=selection)
         result = validate_output(name, envelope, version)
+        self._check_read_budget()
         if op['operation_id'] in ('runs.coordinator_health', 'runs.recover_coordinator') and result['status'] < 400:
             value = result['result']; request = value['recovery_request']
             if value['catalog_id'] != self.catalog_id:
