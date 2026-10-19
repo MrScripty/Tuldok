@@ -1639,6 +1639,20 @@ class AgentClient:
                                ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))
                         or value['comparison']['mode'] != choices['mode']):
                     raise AgentAPIError('Recovered comparison side differs from its exact selection.', 'transport', 502)
+        if op['operation_id'] == 'runs.compare_scientific_evidence' and result['status'] < 400:
+            value, choices = result['result'], arguments['selection']
+            operands = arguments['operands']
+            if (value['point'] != arguments['point'] or value['scalar']['mode'] != choices['mode']
+                    or [item['operand'] for item in value['operands']] != operands):
+                raise AgentAPIError('Scientific comparison differs from its exact ordered request.', 'transport', 502)
+            for index, (operand, side) in enumerate(zip(operands, value['scalar']['sides'], strict=True)):
+                source = operand['ref'] if operand['kind'] == 'publication_result' else operand
+                prefix = 'other_' if index else ''
+                if (source['catalog_id'] != self.catalog_id or side['run_id'] != source['run_id']
+                        or side['metric_id'] != choices['metric_id']
+                        or any(side[key] != choices[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))):
+                    raise AgentAPIError('Scientific comparison side differs from its exact selection/catalog.', 'transport', 502)
         if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and result['status'] < 400:
             value = result['result']
             identity = ('run_id',) if op['operation_id'] == 'runs.phase_timings' else ('graph_id',)
