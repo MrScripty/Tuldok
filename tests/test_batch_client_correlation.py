@@ -22,28 +22,29 @@ class BatchClientCorrelationTests(unittest.TestCase):
         value = copy.deepcopy(self.envelope if envelope is None else envelope)
         agent_api.validate_output('runs.artifact_segments', value)
         with patch.object(self.client, '_request', return_value=value) as transport:
-            result = self.client.call('runs.artifact_segments', self.request if request is None else request)
-        self.assertEqual(transport.call_count, 1)
-        return result
+            try:
+                return self.client.call('runs.artifact_segments', self.request if request is None else request)
+            finally:
+                self.assertEqual(transport.call_count, 1)
 
     def test_exact_reply_is_accepted_once(self):
         self.assertEqual(self.call(), self.envelope)
 
     def test_schema_valid_unrequested_segments_are_refused(self):
         mutations = [
-            lambda row: row.update(key='different'),
-            lambda row: row['result'].update(name='other.bin'),
-            lambda row: row['result'].update(expected_sha256='f' * 64),
-            lambda row: row['result'].update(offset=1, total_bytes=8, next_offset=8),
-            lambda row: (row['source'].update(run_id='3' * 32), row['result'].update(run_id='3' * 32)),
+            (lambda row: row.update(key='different'), ('transport', 502)),
+            (lambda row: row['result'].update(name='other.bin'), ('artifact_mismatch', 409)),
+            (lambda row: row['result'].update(expected_sha256='f' * 64), ('artifact_mismatch', 409)),
+            (lambda row: row['result'].update(offset=1, total_bytes=8, next_offset=8), ('artifact_mismatch', 409)),
+            (lambda row: (row['source'].update(run_id='3' * 32), row['result'].update(run_id='3' * 32)), ('transport', 502)),
         ]
-        for mutate in mutations:
+        for mutate, expected_error in mutations:
             value = copy.deepcopy(self.envelope)
             mutate(value['result']['items'][0])
             with self.subTest(mutation=mutate):
                 with self.assertRaises(agent_api.AgentAPIError) as caught:
                     self.call(envelope=value)
-                self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+                self.assertEqual((caught.exception.code, caught.exception.status), expected_error)
 
     def test_publication_catalog_is_checked_even_when_ref_echo_matches(self):
         selected = self.request['items'][0]
