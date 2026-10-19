@@ -866,7 +866,7 @@ class Runs:
             if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
-            preparation_seconds = recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in run['spec'] else recipe_process.READY_SECONDS
+            preparation_seconds = recipe_process.preparation_seconds(run['spec'])
             ready_deadline = time.monotonic() + preparation_seconds + 2
             custody_deadline = ready_deadline
             cancel_deadline = None
@@ -890,10 +890,21 @@ class Runs:
                             self._save(run)
                         # No GO is sent when either transaction acknowledgement is unknown.
                         handle.go(handle.expected_identity['helper'])
-                        # CPU snapshots are reverified after GO before recipe
-                        # wall time starts. Keep that bounded preparation separate.
-                        recheck_seconds = preparation_seconds if 'cpu_snapshot' in run['spec'] else 0
-                        custody_deadline = time.monotonic() + recheck_seconds + run['spec']['wall_seconds'] + 15
+                        # Runtime inventory is verified cancellably after GO,
+                        # before child wall time starts, under its own bound.
+                        recheck_seconds = recipe_process.verification_seconds(run['spec'])
+                        custody_deadline = (time.monotonic() + recheck_seconds + run['spec']['wall_seconds']
+                                            + recipe_process.CLEANUP_SECONDS + 5)
+                    elif event['type'] == 'verifying':
+                        with self.lock, self.db.transaction():
+                            run = self._load(run_id)
+                            run['progress']['stage'] = 'verify_runtime'
+                            self._save(run)
+                    elif event['type'] == 'started':
+                        with self.lock, self.db.transaction():
+                            run = self._load(run_id)
+                            run['progress']['stage'] = 'execute'
+                            self._save(run)
                     elif event['type'] in ('terminal', 'lost'):
                         terminal = True
                 if terminal:

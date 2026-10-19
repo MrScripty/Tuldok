@@ -1260,6 +1260,9 @@
   if(typeof window==='undefined')return;
   const pins=/* AUTHOR_CONTRACTS_START */ {
     "recipes.inspect/2":"be0cfb596b3ae741e2903be57413684bac28e9fa3c59987086fde49e514284ea",
+    "recipes.inspect/3":"5b5c6a4eefe84df8da4c31d779a468c7bdbacf4296c294076010fbbaed167458",
+    "recipes.inspect/4":"0080ae0e39bf758b9c96c3208ef1614a9335f257731cfde935a23d8b486dedb1",
+    "project_snapshots.get/2":"770e999697f069af13e9cf0d48daaf930ee26db4d7415169edecb414f68bdd01",
     "models.create":"693d1514f44e92bb6c6635427db822acfc079a6e438d5d721630087157d1b8d5",
     "models.publish":"bb84c1fd72b3617135a8246353db797bba270430121fbae6f9d46cdbfdd26235",
     "graphs.create_external":"219f3c28bcb73e6d5445bdbd9b97e563bde3bd90487796b4680f36e02d338ffa",
@@ -1278,10 +1281,33 @@
   const rejected=error=>[400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code);
   const uncertain=error=>!error.status||error.status>=500||['commit_outcome_unknown','commit_unknown','outcome_unknown','unknown'].includes(error.code);
   const identity=()=>window.TuldokAuth?.identity(),owner=()=>identity()?.kind==='owner';
+  const numericSources=new WeakMap();
+  function exactJSON(raw){
+    if(typeof JSON.rawJSON!=='function')throw Error('This browser does not support exact inspected policy transport. Use a current browser before preparing a trial.');
+    return JSON.parse(raw,function(key,value,context){
+      if(typeof value==='number'){
+        if(typeof context?.source!=='string')throw Error('This browser cannot retain inspected numeric policy identity.');
+        let leaves=numericSources.get(this);if(!leaves){leaves=new Map();numericSources.set(this,leaves);}
+        leaves.set(key,{value,source:context.source});
+      }
+      return value;
+    });
+  }
+  function exactBody(value){
+    return JSON.stringify(value,function(key,item){
+      const recorded=numericSources.get(this)?.get(key);
+      return typeof item==='number'&&recorded&&Object.is(item,recorded.value)?JSON.rawJSON(recorded.source):item;
+    });
+  }
+  function configuredSpecification(policy,configuration){
+    const value={...policy,configuration:copy(configuration)},leaves=numericSources.get(policy);
+    if(leaves)numericSources.set(value,leaves);
+    return value;
+  }
   async function request(operation,route,body,version=1){
     const pin=pins[version===1?operation:operation+'/'+version];if(!pin)throw Error('This preparation operation is unavailable.');
-    const response=await (window.TuldokAuth?.fetch||fetch)('/api/workspace/'+route,{headers:{'Content-Type':'application/json','Tuldok-Operation-Contract':operation+'/'+version+'/'+pin},...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)})});
-    const value=await response.json();if(!response.ok){const error=Error(value.error||'Bound recipe operation unavailable.');error.status=response.status;error.code=value.code;throw error;}return value;
+    const response=await (window.TuldokAuth?.fetch||fetch)('/api/workspace/'+route,{headers:{'Content-Type':'application/json','Tuldok-Operation-Contract':operation+'/'+version+'/'+pin},...(body===undefined?{}:{method:'POST',body:exactBody(body)})});
+    const value=exactJSON(await response.text());if(!response.ok){const error=Error(value.error||'Bound recipe operation unavailable.');error.status=response.status;error.code=value.code;throw error;}return value;
   }
   window.WorkspaceExtensionModelAuthor=function({announce,onRun,send=request}){
     let generation=0,busy=null,project=null,reference=null,inspected=null,roles=null,job=null,foreign=false,key='',status='',failed=false,reviewed=false,modelEditor=null,trainerEditor=null,draft=null;
@@ -1323,7 +1349,14 @@
       for(const node of dialog.querySelectorAll('[data-author-input]'))draft.inputs[node.dataset.authorInput]=node.value;
       for(const id of ['attempts','wall','retained','staging'])draft.budget[id]=dialog.querySelector('#extension-budget-'+id).value;
     }
-    function providerDeclaration(provider){return provider&&Array.isArray(provider.effects)&&provider.runtime?.profile==='captured_cpu_python_v1'&&provider.resources?provider:null;}
+    function providerDeclaration(provider){
+      const runtime=provider?.runtime,resources=provider?.resources,definition=inspected?.definition;
+      if(!Array.isArray(provider?.effects)||!['captured_cpu_python_v1','managed_torch_python_v1'].includes(runtime?.profile)||runtime.profile!==inspected?.runtime||!resources)return null;
+      const snapshot=definition?.runtime_snapshot_sha256;
+      if(!/^[a-f0-9]{64}$/.test(snapshot||'')||(runtime.snapshot_sha256!==undefined&&runtime.snapshot_sha256!==snapshot))return null;
+      if(!['wall_seconds','source_bytes','output_bytes'].every(key=>Number.isSafeInteger(resources[key])&&resources[key]>0)||resources.wall_seconds<definition.resources.wall_seconds||resources.output_bytes<definition.resources.max_output_bytes)return null;
+      return provider;
+    }
     function hasReview(j){return Object.values(roles||{}).every(item=>providerDeclaration(item.provider))&& j?.preflight?.valid===true&&typeof j.preflight.material?.permissions?.filesystem==='string'&&typeof j.preflight.material.permissions.network==='string'&&!!j?.composition&&exactRef(j.composition.ref,j.trial?.material)&&exactRef(j.composition.material?.model,j.material?.ref)&&j.composition.material.recipe_id===j.graph?.id&&j.composition.material.recipe_revision===j.graph?.revision&&!!j.composition.material.resource_envelope;}
     function makeEditors(){
       const config=job?.configuration||inspected.definition.model_evidence.model_specification.configuration;
@@ -1398,9 +1431,9 @@
       }
       if(j.actor!==identity()?.actor_id)throw Error('The preparing owner must reconcile this trial.');
       render();checked(valid);
-      const specification=copy(inspected.definition.model_evidence.model_specification);specification.configuration=copy(j.configuration);
+      const policy=inspected.definition.model_evidence,specification=configuredSpecification(policy.model_specification,j.configuration);
       const source_selector={project_id:project.id,recipe_id:reference.id,expected_sha256:reference.observed_sha256};
-      await create(j,'model','models.create','models',{name:j.name,task:inspected.model_task,kind:'captured_source',specification,source_selector,preprocessing_policy:inspected.definition.model_evidence.preprocessing_policy,output_policy:inspected.definition.model_evidence.output_policy},valid);
+      await create(j,'model','models.create','models',{name:j.name,task:inspected.model_task,kind:'captured_source',specification,source_selector,preprocessing_policy:policy.preprocessing_policy,output_policy:policy.output_policy},valid);
       if(!j.material){j.material=await send('models.publish','models/'+enc(j.model.id)+'/publish',{revision:j.model.revision,reconcile_capture:true});save(j);checked(valid);}
       await create(j,'graph','graphs.create_external','graphs/external',{name:j.name,...source_selector,inputs:j.inputs,parameters:j.parameters},valid);
       if(!j.preflight){j.preflight=await send('graphs.preflight_external','graphs/'+enc(j.graph.id)+'/preflight-external',{revision:j.graph.revision});save(j);checked(valid);}
@@ -1427,12 +1460,19 @@
       catch(error){if(!j.admissionUnknown&&rejected(error)){j.admission=null;j.continuation=null;save(j);}else if(uncertain(error)){j.admissionUnknown=true;save(j);}throw error;}
       j.run=result.run;j.admission=null;save(j);checked(valid);status='Durable Study attempt admitted.';await onRun(result.run.id);
     }
-    return {cancel,async open(detail,item){
+    return {cancel,observeProject(detail){
+      if(!dialog.open||!project||!reference)return;
+      const current=detail.recipes.find(item=>item.id===reference.id);
+      if(detail.id!==project.id||detail.manifest_sha256!==project.manifest_sha256||detail.manifest_status!=='unchanged'||current?.observed_sha256!==reference.observed_sha256||current?.status!=='available'||current.integrity==='mismatch'){
+        const pending=!!busy&&!job?.run;cancel();
+        if(!pending)announce('The selected project or recipe identity changed. Reinspect the recipe before preparing a trial.',true);
+      }
+    },async open(detail,item){
       if(busy){announce('Finish or reconcile the current preparation before opening another recipe.');return;}
       const validEpoch=++generation;project=copy(detail);reference=copy(item);key=project.id+':'+reference.id+':'+reference.observed_sha256;inspected=null;roles=null;reviewed=false;modelEditor=null;trainerEditor=null;draft=null;
       const saved=history.state?.extensionModelTrials?.[key];foreign=!!(saved&&saved.actor!==identity()?.actor_id&&!saved.run);job=saved?.actor===identity()?.actor_id?{...saved,key}:null;
       status='Inspecting the exact bound contributions. No project code is executed.';failed=false;dialog.showModal();render();const credential=identity()?.credential_id;
-      try{const value=await send('recipes.inspect','projects/'+enc(project.id)+'/recipes/'+enc(reference.id)+'?expected_sha256='+enc(reference.observed_sha256),undefined,2);if(validEpoch!==generation||credential!==identity()?.credential_id||!dialog.open)return;roles=binding(value);inspected=value;draft={name:value.definition.name,inputs:{},budget:{attempts:3,wall:10800,retained:1024,staging:2048}};makeEditors();status='Configure the declared model separately from trainer controls. Preparation does not execute a Run.';render();dialog.querySelector('#extension-model-name')?.focus();}
+      try{const value=await send('recipes.inspect','projects/'+enc(project.id)+'/recipes/'+enc(reference.id)+'?expected_sha256='+enc(reference.observed_sha256),undefined,4);if(validEpoch!==generation||credential!==identity()?.credential_id||!dialog.open)return;roles=binding(value);inspected=value;draft={name:value.definition.name,inputs:{},budget:{attempts:3,wall:10800,retained:1024,staging:2048}};makeEditors();status='Configure the declared model separately from trainer controls. Preparation does not execute a Run.';render();dialog.querySelector('#extension-model-name')?.focus();}
       catch(error){if(validEpoch===generation&&credential===identity()?.credential_id&&dialog.open){status=error.message;failed=true;render();}}
     }};
   };

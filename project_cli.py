@@ -11,7 +11,7 @@ import stat
 import sys
 import tempfile
 
-from agent_api import AgentAPIError, AgentClient, REQUEST_LIMIT, decode, verify_artifact
+from agent_api import AgentAPIError, AgentClient, REQUEST_LIMIT, decode, validate_arguments, verify_artifact
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
 
@@ -75,6 +75,13 @@ def parser():
     opening.add_argument('--manifest', required=True)
     inspecting = commands.add_parser('inspect', help='Inspect a registered project')
     inspecting.add_argument('--project-id', required=True)
+    evidence = commands.add_parser('evidence', help='Preview bounded external project evidence')
+    evidence.add_argument('--project-id', required=True)
+    evidence.add_argument('--reference-id', required=True)
+    importing = commands.add_parser('import-data', help='Import an exact inspected scientific data reference')
+    importing.add_argument('--project-id', required=True)
+    importing.add_argument('--reference-id', required=True)
+    importing.add_argument('--expected-sha256', required=True)
     recipe = commands.add_parser('recipe', help='Inspect an exact recipe and its typed parameters')
     recipe.add_argument('--project-id', required=True)
     recipe.add_argument('--reference-id', required=True)
@@ -159,9 +166,14 @@ def main(argv=None, *, observer=None):
             if args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
             elif args.command == 'open':
-                operation, arguments = 'projects.open', dict(root=args.root, manifest_path=args.manifest)
+                operation, arguments = 'project_snapshots.open', dict(root=args.root, manifest_path=args.manifest)
             elif args.command == 'inspect':
-                operation, arguments = 'projects.get', dict(project_id=args.project_id)
+                operation, arguments = 'project_snapshots.get', dict(project_id=args.project_id)
+            elif args.command in ('evidence', 'import-data'):
+                operation = 'projects.evidence' if args.command == 'evidence' else 'data.import_project_scientific'
+                arguments = dict(project_id=args.project_id, reference_id=args.reference_id)
+                if args.command == 'import-data':
+                    arguments['expected_sha256'] = args.expected_sha256
             elif args.command == 'recipe':
                 operation, arguments = 'recipes.inspect', dict(project_id=args.project_id,
                     reference_id=args.reference_id, expected_sha256=args.expected_sha256)
@@ -177,6 +189,14 @@ def main(argv=None, *, observer=None):
             else:
                 operation = 'runs.cancel' if args.command == 'cancel' else 'runs.progress' if args.progress else 'runs.get'
                 arguments = dict(run_id=args.run_id)
+            if args.command in ('open', 'inspect'):
+                # Select command semantics from validated capabilities before
+                # dispatch. A failed call never triggers a second operation.
+                validate_arguments(operation, arguments)
+                selected = client.selected_contracts()
+                legacy_operation = 'projects.open' if args.command == 'open' else 'projects.get'
+                if operation not in selected and legacy_operation in selected:
+                    operation = legacy_operation
             envelope = invoke(client, operation, arguments, observer=observer, observation=observation)
             result, status = envelope['result'], envelope['status']
             http_status = status

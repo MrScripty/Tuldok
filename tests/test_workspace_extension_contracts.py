@@ -12,6 +12,9 @@ class ExtensionAuthorContracts(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / 'static/workspace-service.js').read_text()
         pins = json.loads(re.search(r'/\* AUTHOR_CONTRACTS_START \*/\s*(.*?)\s*/\* AUTHOR_CONTRACTS_END \*/', source, re.S)[1])
         self.assertIn('recipes.inspect/2', pins)
+        self.assertIn('recipes.inspect/3', pins)
+        self.assertIn('recipes.inspect/4', pins)
+        self.assertIn('project_snapshots.get/2', pins)
         self.assertIn('studies.admit', pins)
         self.assertNotIn('runs.submit_external', pins)
         for name, sha256 in pins.items():

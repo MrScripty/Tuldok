@@ -237,11 +237,13 @@ class Pipelines:
 
     @authorized('inspect', 'pipeline.inspect_external_recipe')
     def inspect_external_recipe(self, project_id, reference_id, expected_sha256, *, contract_version=None):
-        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2,3)):
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2,3,4)):
             raise WorkbenchError('Unsupported recipe inspection version.','unsupported',409)
         result=recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
         if recipe_contract.is_bound_evidence(result['definition']) and contract_version==1:
             raise WorkbenchError('Bound recipes require inspection contract version2.','unsupported',409)
+        if result['runtime']==recipe_contract.TORCH_PROFILE and contract_version is not None and contract_version<4:
+            raise WorkbenchError('Managed Torch recipes require inspection contract version4.','unsupported',409)
         return result
 
     @authorized('edit', 'pipeline.create_external')
@@ -860,16 +862,20 @@ class Pipelines:
             if len(payloads[name])>2*1024**2:raise WorkbenchError('Recipe/profile document exceeds2MiB.')
         def definition(kind,name,value):
             return {'kind':kind,'catalog_id':self.db.dataset_id,'id':name,'revision':1,'sha256':digest(value)}
-        runtime_sha=digest(preflight['material'].get('cpu_snapshot',preflight['runtime']))
+        runtime_sha=digest(preflight['material'].get('torch_runtime',
+            preflight['material'].get('cpu_snapshot',preflight['runtime'])))
         capture_bytes=sum(map(len,payloads.values()))
         model_bytes=sum(item['blob']['bytes'] for item in model['material']['source_closure'])+sum(
             model['material'][key]['bytes'] for key in ('specification','preprocessing_policy','output_policy'))
         import recipe_process
-        ready=recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in preflight['material'] else recipe_process.READY_SECONDS
+        # The same measured runtime facets select the custody owner's readiness
+        # and post-GO verification budgets in the final execution specification.
+        ready=recipe_process.preparation_seconds(preflight['material'])
+        verification=recipe_process.verification_seconds(preflight['material'])
         output_bytes=preflight['material']['resources']['max_output_bytes']
         custody_bytes=2*recipe_process.STREAM_LIMIT+2*16384+256*1024
         envelope={'attempt_slots':1,'admitted_wall_seconds':preflight['material']['resources']['wall_seconds']+
-                  ready+2+(ready if 'cpu_snapshot' in preflight['material'] else 0)+15,
+                  ready+2+verification+15,
                   'retained_bytes':capture_bytes+model_bytes+output_bytes+custody_bytes,
                   'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+custody_bytes}
         if evidence:
@@ -1021,6 +1027,10 @@ class Pipelines:
         closed(snapshot,('format','graph','preflight','capture_paths','evidence_context'))
         execution=snapshot['preflight']['material'];graph=decode_graph(snapshot['graph'])
         recipe_contract.validate_material(execution)
+        runtime_sha=digest(execution.get('torch_runtime',execution.get('cpu_snapshot',execution['runtime'])))
+        if material['runtime']!={'kind':'runtime','catalog_id':self.db.dataset_id,
+                                  'id':runtime_sha,'sha256':runtime_sha}:
+            raise WorkbenchError('Retained extension runtime differs from its measured execution descriptor.','unavailable',409)
         if (snapshot['format']!='external_model_evidence_snapshot_v1' or
                 not recipe_contract.is_evidence(execution['recipe']) or
                 execution['catalog_id']!=self.db.dataset_id or

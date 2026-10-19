@@ -38,11 +38,22 @@ class BoundRecipeContractTests(unittest.TestCase):
         with self.assertRaises(api.AgentAPIError):
             api.validate_arguments('recipes.inspect',dict(arguments,contract_version=2),2)
         selected=api.negotiate(api.capabilities('b'*32),'b'*32)
-        self.assertEqual(selected['recipes.inspect'],3)
+        self.assertEqual(selected['recipes.inspect'],4)
+
+    def test_managed_runtime_is_an_explicit_new_output_variant(self):
+        value = self.inspection()
+        value['runtime'] = 'managed_torch_python_v1'
+        value['extension_binding']['contributions'][0]['provider']['runtime']['profile'] = value['runtime']
+        api.validate_output('recipes.inspect', {'status': 200, 'result': value}, 4)
+        for version in (2, 3):
+            with self.subTest(version=version), self.assertRaises(api.AgentAPIError):
+                api.validate_output('recipes.inspect', {'status': 200, 'result': value}, version)
 
     def test_binding_projection_is_closed_and_bounded(self):
         positive=self.inspection()
-        api.validate_output('recipes.inspect',{'status':200,'result':positive},2)
+        for version in (2,3,4):
+            with self.subTest(version=version):
+                api.validate_output('recipes.inspect',{'status':200,'result':positive},version)
         legacy=copy.deepcopy(positive)
         for key in ('extension_binding','model_task','selection_policy'):legacy.pop(key)
         api.validate_output('recipes.inspect',{'status':200,'result':legacy},2)

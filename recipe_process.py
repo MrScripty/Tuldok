@@ -81,6 +81,28 @@ CPU_FILE_LIMIT = 512 * 1024 * 1024
 CPU_TOTAL_LIMIT = 2 * 1024 * 1024 * 1024
 CPU_FILE_COUNT = 40000
 CPU_READY_SECONDS = 60
+TORCH_READY_SECONDS = 60
+TORCH_VERIFY_SECONDS = 60
+
+
+def preparation_seconds(spec):
+    """Custody readiness budget; independent of the recipe's child wall time."""
+    if 'torch_runtime' in spec:
+        return TORCH_READY_SECONDS
+    return CPU_READY_SECONDS if 'cpu_snapshot' in spec else READY_SECONDS
+
+
+def verification_seconds(spec):
+    if 'torch_runtime' in spec:
+        return TORCH_VERIFY_SECONDS
+    return CPU_READY_SECONDS if 'cpu_snapshot' in spec else 0
+
+
+def _torch_owner():
+    # launch seals this stdlib-only module into the isolated helper. Ordinary
+    # application callers use the same current owner, never a second decoder.
+    import torch_runtime
+    return torch_runtime
 
 
 def _cpu_relative(value):
@@ -307,7 +329,7 @@ def validate_spec(value):
     if type(value) is not dict or type(value.get('schema_version')) is not int or value['schema_version'] not in (1,2):
         raise ProcessError('Unsupported custody spec.')
     if value['schema_version']==2:keys.add('model_evidence_context')
-    if set(value)-{'native_loader_policy','cpu_snapshot','resource_profile'}!=keys:
+    if set(value)-{'native_loader_policy','cpu_snapshot','torch_runtime','resource_profile'}!=keys:
         raise ProcessError('Unsupported custody spec.')
     if not isinstance(value['attempt_id'], str) or not ID.fullmatch(value['attempt_id']):
         raise ProcessError('Invalid attempt identity.')
@@ -361,15 +383,34 @@ def validate_spec(value):
                 or not bootstrap_file or argv[7] not in inventory
                 or Path(argv[4]).name != 'recipe_process.py' or Path(argv[6]).name != 'snapshot.json'):
             raise ProcessError('CPU bootstrap, descriptor and entry must be exact captured files.')
+    if 'torch_runtime' in value:
+        if 'cpu_snapshot' in value or 'resource_profile' in value:
+            raise ProcessError('Managed Torch requires its own single runtime profile.')
+        try:
+            descriptor = _torch_owner().validate_descriptor(value['torch_runtime'])
+        except ValueError as error:
+            raise ProcessError('Invalid managed Torch descriptor.') from error
+        if (len(argv) < 9 or argv[1:4] != ['-I', '-S', '-B'] or argv[5] != '--launch'
+                or argv[7] not in ('cpu', 'cuda') or not all(absolute(argv[i]) for i in (4, 6, 8))
+                or env != {}):
+            raise ProcessError('Managed Torch requires its exact bootstrap and explicit device.')
+        inventory = {item['path']: item for item in files}
+        manifest_file = inventory.get(argv[6]); bootstrap_file = inventory.get(argv[4])
+        root = Path(value['cwd']) / 'runtime-bootstrap'
+        if (not manifest_file or manifest_file['bytes'] != descriptor['manifest_bytes']
+                or manifest_file['sha256'] != descriptor['manifest_sha256'] or not bootstrap_file
+                or Path(argv[4]) != root / 'torch_runtime.py' or Path(argv[6]) != root / 'torch-manifest.json'
+                or argv[8] not in inventory or not Path(argv[8]).is_relative_to(Path(value['cwd']) / 'source')):
+            raise ProcessError('Managed Torch manifest, bootstrap and entry must be exact captured files.')
     if value['schema_version']==2:
         context=value['model_evidence_context']
         if (type(context) is not dict or set(context)!={'path','sha256','bytes'} or
                 context not in files or context.get('path')!=str(Path(value['cwd'])/MODEL_CONTEXT_PATH) or
                 type(context.get('bytes')) is not int or not 1<=context['bytes']<=MODEL_CONTEXT_LIMIT or
-                argv.count(context['path'])!=1 or 'cpu_snapshot' not in value):
-            raise ProcessError('Model context must be one exact bounded captured CPU argument.')
+                argv.count(context['path'])!=1 or not {'cpu_snapshot','torch_runtime'} & set(value)):
+            raise ProcessError('Model context must be one exact bounded captured runtime argument.')
     capture_limit = 64 * 1024 * 1024
-    if 'cpu_snapshot' in value:
+    if 'cpu_snapshot' in value or 'torch_runtime' in value:
         # The complete descriptor/bootstrap contract above qualifies this profile.
         capture_limit = 320 * 1024 * 1024
         input_root = Path(value['cwd']) / 'input'
@@ -464,7 +505,8 @@ def verify_model_context(spec):
             if handle is not None:os.close(handle)
 
 
-def verify_captures(spec, *, checkpoint=None, include_cpu=True):
+def verify_captures(spec, *, checkpoint=None, include_cpu=True, include_torch=True,
+                    on_torch_inventory=None):
     verify_model_context(spec)
     if 'cpu_snapshot' in spec and include_cpu:
         verify_cpu_snapshot(spec['cpu_snapshot'], checkpoint=checkpoint)
@@ -475,6 +517,21 @@ def verify_captures(spec, *, checkpoint=None, include_cpu=True):
         raw = read_regular(item['path'], item['bytes'])
         if len(raw) != item['bytes'] or digest(raw) != item['sha256']:
             raise ProcessError('Captured input/source identity changed.', 'stale')
+    if 'torch_runtime' in spec:
+        owner = _torch_owner()
+        try:
+            manifest = owner.verify_descriptor(spec['torch_runtime'], owner.load(spec['argv'][6]))
+            if include_torch:
+                inventory_started = False
+                def inventory_checkpoint():
+                    nonlocal inventory_started
+                    if not inventory_started:
+                        inventory_started = True
+                        if on_torch_inventory is not None: on_torch_inventory()
+                    if checkpoint is not None: checkpoint()
+                owner.verify(manifest, checkpoint=inventory_checkpoint)
+        except ValueError as error:
+            raise ProcessError('Managed Torch inventory verification failed.', 'stale') from error
 
 
 def identity(pid):
@@ -532,6 +589,7 @@ class Handle:
     def __init__(self, process, channel, spec, directory):
         self.process, self.channel, self.spec, self.directory = process, channel, spec, directory
         self.ready = None
+        self.verifying = False
         self.sent_go = self.terminal = self.lost = self.sent_cancel = False
         self.started = time.monotonic()
         self.spec_sha256 = digest(encoded(spec))
@@ -563,13 +621,17 @@ class Handle:
                 break
             common = {'schema_version':1,'attempt_id':self.spec['attempt_id'],'request_sha256':self.spec['request_sha256'],'spec_sha256':self.spec_sha256}
             kind = event.get('type') if type(event) is dict else None
-            fields = {'ready':{'helper'},'started':{'leader'},'terminal':{'receipt_sha256','drained','outcome'}}
+            fields = {'ready':{'helper'},'verifying':set(),'started':{'leader'},'terminal':{'receipt_sha256','drained','outcome'}}
             if kind not in fields or set(event) != set(common)|{'type'}|fields[kind] or any(event[key] != val for key,val in common.items()):
                 self.cancel('protocol_error'); raise ProcessError('Invalid custodian event.')
             if kind == 'ready':
                 if self.ready is not None or not valid_identity(event['helper']) or event['helper'] != identity(self.process.pid):
                     self.cancel('protocol_error'); raise ProcessError('Invalid custodian READY identity.')
                 self.ready = event['helper']
+            elif kind == 'verifying':
+                if not self.sent_go or self.verifying or 'torch_runtime' not in self.spec:
+                    self.cancel('protocol_error'); raise ProcessError('Invalid runtime verification observation.')
+                self.verifying = True
             elif kind == 'started':
                 if not self.sent_go or not valid_identity(event['leader']):
                     self.cancel('protocol_error'); raise ProcessError('Invalid recipe STARTED identity.')
@@ -579,7 +641,7 @@ class Handle:
                     raise ProcessError('Terminal receipt differs from custodian event.')
                 self.terminal = True
             events.append(event)
-        if self.ready is None and not self.lost and time.monotonic()-self.started > (CPU_READY_SECONDS if 'cpu_snapshot' in self.spec else READY_SECONDS):
+        if self.ready is None and not self.lost and time.monotonic()-self.started > preparation_seconds(self.spec):
             self.close_control(wait=False)
             raise ProcessError('Custodian readiness deadline exceeded.', 'unavailable')
         self.process.poll()
@@ -618,7 +680,9 @@ class Handle:
 
 def launch(spec, custody_dir):
     spec = validate_spec(spec)
-    verify_captures(spec)
+    # Full managed inventory hashing belongs to the cancellable custodian after
+    # admission/GO. Synchronous dispatch only checks the bounded captured files.
+    verify_captures(spec, include_torch=False)
     executable = read_regular(spec['argv'][0], 128*1024*1024)
     if digest(executable) != spec['executable_sha256']:
         raise ProcessError('Executable identity changed.', 'stale')
@@ -632,6 +696,14 @@ def launch(spec, custody_dir):
             descriptors.append(sealed(name,raw))
         directory_fd = os.open(directory, os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
         descriptors.append(directory_fd)
+        if 'torch_runtime' in spec:
+            # The helper runs from sealed source with -I; it cannot import an
+            # application file through cwd or an ambient PYTHONPATH.
+            raw = read_regular(spec['argv'][4], CAPTURE_FILE_LIMIT)
+            capture = next(item for item in spec['captured_files'] if item['path'] == spec['argv'][4])
+            if len(raw) != capture['bytes'] or digest(raw) != capture['sha256']:
+                raise ProcessError('Managed Torch bootstrap changed before sealing.', 'stale')
+            descriptors.append(sealed('tuldok-torch-owner',raw))
         command = [_trusted_python(spec['trusted_install_owner_uid']),'-I','-B',f'/proc/self/fd/{descriptors[0]}','--helper',str(child.fileno()),*(str(fd) for fd in descriptors[1:])]
         process = subprocess.Popen(command, stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
             pass_fds=(child.fileno(),*descriptors),close_fds=True,env={'PATH':'/usr/bin:/bin','LANG':'C.UTF-8'})
@@ -843,14 +915,18 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
     logs={};hashes={name:hashlib.sha256() for name in ('stdout','stderr')};sizes={name:0 for name in hashes}
     for name in hashes: logs[name]=os.open(name+'.log',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600,dir_fd=directory_fd)
     selector=selectors.DefaultSelector();selector.register(channel,selectors.EVENT_READ,'control')
-    leader=None;code=None;go=False;stopping=None;reason='not_started';drained=False
-    started=time.monotonic();deadline=started+(CPU_READY_SECONDS if 'cpu_snapshot' in spec else READY_SECONDS)
+    leader=None;code=None;go=False;go_received=False;stopping=None;reason='not_started';drained=False
+    started=time.monotonic();deadline=started+preparation_seconds(spec)
+    verification_deadline=None
     def stop(why):
         nonlocal stopping,reason
         if stopping is None: stopping=time.monotonic();reason=why
     class PreparationStopped(Exception):
         pass
     def preparation_checkpoint():
+        if verification_deadline is not None and time.monotonic() >= verification_deadline:
+            stop('verification_timeout')
+            raise PreparationStopped()
         try:
             message = _receive(channel)
         except BlockingIOError:
@@ -869,7 +945,7 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
     try:
         # Parent launch already verified the complete CPU snapshot. Keep READY
         # responsive; recheck it cancellably at GO, before any recipe fork.
-        verify_captures(spec, include_cpu=False)
+        verify_captures(spec, include_cpu=False, include_torch=False)
         _packet(channel,dict(common,type='ready',helper=who))
         while True:
             now=time.monotonic()
@@ -903,9 +979,15 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                     if type(message) is dict and set(message)=={'type','reason'} and message['type']=='cancel' and message['reason'] in ('cancelled','shutdown','protocol_error'):
                         stop(message['reason']);continue
                     expected={'type':'go','attempt_id':spec['attempt_id'],'request_sha256':spec['request_sha256'],'helper':who}
-                    if message!=expected or go or stopping is not None:stop('protocol_error');continue
+                    if message!=expected or go_received or stopping is not None:stop('protocol_error');continue
+                    # GO authorizes verification, then recipe creation. Receipt
+                    # truth must retain that command even when hashing stops
+                    # before a leader exists; `go` tracks successful preparation.
+                    go_received=True
                     try:
-                        verify_captures(spec, checkpoint=preparation_checkpoint if 'cpu_snapshot' in spec else None)
+                        verification_deadline=time.monotonic()+verification_seconds(spec)
+                        verify_captures(spec, checkpoint=preparation_checkpoint if verification_seconds(spec) else None,
+                            on_torch_inventory=lambda: _packet(channel,dict(common,type='verifying')))
                     except PreparationStopped:
                         continue
                     go=True;deadline=time.monotonic()+spec['wall_seconds']
@@ -960,7 +1042,7 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
         try:verify_model_context(spec)
         except (OSError,ProcessError):reason='model_context_changed'
     outcome='unknown' if not drained else 'completed' if go and code==0 and reason=='exited' else 'cancelled' if reason in ('cancelled','shutdown','controller_lost') else 'failed'
-    receipt=dict(common,helper=who,go_received=go,spawn_closed=True,drained=drained,echild=drained,outcome=outcome,reason=reason,
+    receipt=dict(common,helper=who,go_received=go_received,spawn_closed=True,drained=drained,echild=drained,outcome=outcome,reason=reason,
         leader_returncode=code,streams={name:{'bytes':sizes[name],'sha256':hashes[name].hexdigest()} for name in hashes})
     for fd in logs.values():os.fsync(fd);os.close(fd)
     fd=os.open('receipt.tmp',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600,dir_fd=directory_fd)
@@ -1093,8 +1175,15 @@ def _cpu_child(descriptor_path, entry, arguments):
 
 if __name__=='__main__':
     import sys
-    if len(sys.argv)==6 and sys.argv[1]=='--helper':
-        _helper(*(int(value) for value in sys.argv[2:]))
+    if len(sys.argv) in (6,7) and sys.argv[1]=='--helper':
+        if len(sys.argv)==7:
+            import types
+            module=types.ModuleType('torch_runtime')
+            module.__file__=f'/proc/self/fd/{sys.argv[6]}'
+            exec(compile(os.pread(int(sys.argv[6]),CAPTURE_FILE_LIMIT+1,0),module.__file__,'exec'),module.__dict__)
+            sys.modules['torch_runtime']=module
+            os.close(int(sys.argv[6]))
+        _helper(*(int(value) for value in sys.argv[2:6]))
     elif len(sys.argv)>=4 and sys.argv[1] in ('--cpu-launch', '--cpu-child'):
         (_cpu_launch_runtime if sys.argv[1]=='--cpu-launch' else _cpu_child)(sys.argv[2], sys.argv[3], sys.argv[4:])
     else:

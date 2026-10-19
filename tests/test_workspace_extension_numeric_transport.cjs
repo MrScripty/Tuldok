@@ -1,0 +1,22 @@
+'use strict';
+// Exercise the actual authoring transport functions; no custom parser or backend relaxation.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../static/workspace-service.js'),'utf8');
+const block=source.slice(source.indexOf('  const numericSources=new WeakMap();'),source.indexOf('  async function request(operation,route,body,version=1){',source.indexOf('  const numericSources=new WeakMap();')));
+assert.ok(block.includes('function exactBody')&&block.includes('function configuredSpecification'));
+const build=(implementation=JSON)=>new Function('JSON','copy',block+'\nreturn {exactJSON,exactBody,configuredSpecification};')(implementation,structuredClone);
+const transport=build(),value=transport.exactJSON('{"specification":{"format":"current","root_float":2.0,"architecture":{"zero":0.0,"unit":1e0,"signed":-0.0,"width":8,"levels":[0.0,2]},"configuration":{"editable":0.0}},"preprocessing":{"gain":1.0}}');
+assert.equal(typeof value.specification.architecture.zero,'number');
+assert.ok(Object.is(value.specification.architecture.signed,-0));
+const specification=transport.configuredSpecification(value.specification,{editable:0});
+const raw=transport.exactBody({specification,preprocessing:value.preprocessing});
+for(const literal of ['"root_float":2.0','"zero":0.0','"unit":1e0','"signed":-0.0','"width":8','"levels":[0.0,2]','"gain":1.0','"editable":0'])assert.ok(raw.includes(literal),literal+' missing from '+raw);
+assert.deepEqual(JSON.parse(raw).specification.configuration,{editable:0});
+value.specification.architecture.zero=0.25;
+assert.ok(transport.exactBody(specification).includes('"zero":0.25'),'An edit must invalidate original number spelling');
+assert.equal(transport.exactBody({unrecorded:1}),'{"unrecorded":1}');
+assert.throws(()=>build({rawJSON:undefined,parse:JSON.parse,stringify:JSON.stringify}).exactJSON('{"value":0.0}'),/does not support exact/);
+const noSource={rawJSON:JSON.rawJSON,stringify:JSON.stringify,parse:(raw,reviver)=>JSON.parse(raw,function(key,value){return reviver.call(this,key,value);})};
+assert.throws(()=>build(noSource).exactJSON('{"value":0.0}'),/cannot retain inspected numeric/);
+assert.throws(()=>JSON.rawJSON('0,"injected":true'));
+console.log('PASS actual native numeric transport: immutable 0.0/1e0/-0.0 and root/nested/array numbers retained; controls normal; edits invalidate; unavailable native API/source rejected; native raw injection refused.');

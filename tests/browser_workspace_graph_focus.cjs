@@ -11,7 +11,7 @@ const {qaDirectory}=require('./qa_artifacts.cjs');
 const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'workspace-graph-focus');
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-graph-focus-browser-')),projectRoot=path.join(temporary,'project');fs.mkdirSync(projectRoot);
 const sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');
-const errors=[],children=[];
+const errors=[],children=[],inspectionRequests=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let ws,send,evaluate,serverErrors='',paused=null;
 async function until(fn,message='Timed out'){for(let i=0;i<600;i++){const value=await fn();if(value)return value;await pause(100);}throw Error(message);}
@@ -35,7 +35,7 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   let next=0;const pending=new Map();
   send=(method,params={})=>new Promise((resolve,reject)=>{const id=++next,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},20000);pending.set(id,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});ws.send(JSON.stringify({id,method,params}));});
-  ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.method==='Fetch.requestPaused')paused=message.params;if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.method==='Fetch.requestPaused')paused=message.params;if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Network.requestWillBeSent'){const request=message.params.request;if(request.url.includes('/project-snapshots/')||request.url.includes('/recipes/'))inspectionRequests.push({url:request.url,contract:Object.entries(request.headers).find(([name])=>name.toLowerCase()==='tuldok-operation-contract')?.[1]});}};
   evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   const element=selector=>`document.querySelector(${JSON.stringify(selector)})`,text=selector=>evaluate(`${element(selector)}?.textContent`);
   async function click(selector){const box=await until(()=>evaluate(`(async()=>{const e=${element(selector)};if(!e||e.disabled||!e.getClientRects().length)return null;e.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const b=e.getBoundingClientRect(),x=b.x+b.width/2,y=b.y+b.height/2,hit=document.elementFromPoint(x,y);return hit&&(hit===e||e.contains(hit))?{x,y}:null})()`),'Click target unavailable '+selector);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...box});}
@@ -52,6 +52,12 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await select('[data-external-input="sample"]','sample');await fill('#external-create-name','Neutral exact bytes');
   await evaluate('document.getElementById("external-create-submit").focus()');await key('Enter');
   await until(()=>evaluate('!!document.getElementById("external-preflight")'));
+  const beforeChoices=inspectionRequests.length;await click('#external-input-choices');
+  await until(()=>evaluate('(()=>{const input=document.querySelector("#real-pipeline-root [data-external-input-kind=sample]");return !!input&&!input.disabled;})()'));
+  assert.equal(await evaluate('document.querySelector("#real-pipeline-root [data-external-input=sample]").value'),'sample','Current snapshot choices retain the exact saved binding');
+  const choiceRequests=inspectionRequests.slice(beforeChoices);
+  assert.ok(choiceRequests.some(item=>item.url===base+'/api/workspace/project-snapshots/'+project.id&&item.contract==='project_snapshots.get/2/770e999697f069af13e9cf0d48daaf930ee26db4d7415169edecb414f68bdd01'),'Saved graph choices select the scoped current snapshot contract');
+  assert.ok(choiceRequests.some(item=>item.url.includes('/recipes/neutral?')&&item.contract==='recipes.inspect/4/0080ae0e39bf758b9c96c3208ef1614a9335f257731cfde935a23d8b486dedb1'),'Saved graph choices select the current recipe contract');
 
   await click('#external-clone');await until(()=>text('#external-name').then(()=>evaluate('document.getElementById("external-name").value.endsWith("copy")')));
   await click('#external-clone');await until(()=>text('#external-name').then(()=>evaluate('document.getElementById("external-name").value.endsWith("copy copy")')));

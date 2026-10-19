@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import importlib.util
+import io
 from http.server import ThreadingHTTPServer
 import json
 import os
@@ -14,9 +15,84 @@ import unittest
 from unittest.mock import patch
 
 from agent_api import AgentAPIError
+import agent_api
 from app import make_handler
 import project_cli
 from test_external_runs import ExternalCase
+from test_agent_api import CATALOG, TOKEN, sample
+
+
+class CommandSelectionTests(unittest.TestCase):
+    def cli(self, client, *arguments):
+        output, errors = io.StringIO(), io.StringIO()
+        with patch.object(project_cli.AgentClient, 'from_config', return_value=client), \
+                patch('sys.stdout', output), patch('sys.stderr', errors):
+            status = project_cli.main(['--config', '/not-read/private.json', *arguments])
+        return status, json.loads(output.getvalue() if status == 0 else errors.getvalue())
+
+    def client(self, capabilities=None, *, failure=None):
+        client = agent_api.AgentClient('http://127.0.0.1:12345', TOKEN, CATALOG)
+        def request(method, path, body=None, **kwargs):
+            if path == '/api/access/session':
+                return {'status': 200, 'result': {'kind': 'agent', 'catalog_id': CATALOG}}
+            if path == '/api/workspace/context':
+                return {'status': 200, 'result': {'dataset_id': CATALOG}}
+            if path == '/api/agent/capabilities':
+                return capabilities or {'status': 200, 'result': agent_api.capabilities(CATALOG)}
+            if failure is not None:
+                return failure
+            name, version = kwargs['selection']
+            return sample(agent_api.operation(name, version)['outputSchema'])
+        client._request = unittest.mock.Mock(side_effect=request)
+        return client
+
+    def test_open_and_inspect_select_snapshots_or_published_legacy_operations_before_dispatch(self):
+        for command, arguments, current, legacy in (
+                ('open', ['--root', 'fixture', '--manifest', 'project.json'], 'project_snapshots.open', 'projects.open'),
+                ('inspect', ['--project-id', CATALOG], 'project_snapshots.get', 'projects.get')):
+            for snapshots in (True, False):
+                capabilities = agent_api.capabilities(CATALOG)
+                if not snapshots:
+                    capabilities['operations'] = [op for op in capabilities['operations']
+                                                   if not op['id'].startswith('project_snapshots.')]
+                client = self.client({'status': 200, 'result': capabilities})
+                with self.subTest(command=command, snapshots=snapshots):
+                    status, result = self.cli(client, command, *arguments)
+                    self.assertEqual(status, 0, result)
+                    selected = client._request.call_args.kwargs['selection']
+                    self.assertEqual(selected[0], current if snapshots else legacy)
+                    self.assertEqual(client._request.call_count, 4)
+
+    def test_invalid_command_arguments_refuse_before_capability_bootstrap(self):
+        for arguments in (('open', '--root', '', '--manifest', 'project.json'),
+                          ('inspect', '--project-id', 'invalid')):
+            client = self.client()
+            status, result = self.cli(client, *arguments)
+            self.assertEqual((status, result['code']), (1, 'invalid'))
+            client._request.assert_not_called()
+
+    def test_authentication_and_invalid_capabilities_never_select_legacy_dispatch(self):
+        duplicate = agent_api.capabilities(CATALOG)
+        duplicate['operations'].append(duplicate['operations'][0])
+        for response in ({'status': 401, 'result': {'code': 'unauthenticated', 'error': 'Revoked'}},
+                         {'status': 403, 'result': {'code': 'forbidden', 'error': 'Denied'}},
+                         {'status': 500, 'result': {'code': 'storage', 'error': 'Unavailable'}},
+                         {'status': 200, 'result': {'malformed': True}},
+                         {'status': 200, 'result': duplicate}):
+            client = self.client(response)
+            with self.subTest(response_status=response['status']):
+                status, result = self.cli(client, 'open', '--root', 'fixture', '--manifest', 'project.json')
+                self.assertEqual(status, 1, result)
+                self.assertEqual(client._request.call_count, 3)
+                self.assertEqual(client._request.call_args.args[1], '/api/agent/capabilities')
+
+    def test_selected_command_failure_never_retries_the_legacy_operation(self):
+        for code, status in (('unauthenticated', 401), ('forbidden', 403), ('unsupported', 409)):
+            client = self.client(failure={'status': status, 'result': {'code': code, 'error': 'Refused'}})
+            result_status, result = self.cli(client, 'open', '--root', 'fixture', '--manifest', 'project.json')
+            self.assertEqual((result_status, result['code']), (1, code))
+            self.assertEqual(client._request.call_count, 4)
+            self.assertEqual(client._request.call_args.kwargs['selection'][0], 'project_snapshots.open')
 
 
 class SegmentFixture:

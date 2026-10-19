@@ -81,7 +81,9 @@ required). Admission requires charged+open+requested<=limit in all dimensions:
 
 - Every admitted attempt, including failed/cancelled/retry, consumes one slot.
 - Wall charge retains the declared process ceiling plus READY allowances and15s
-  supervisor/drainage margin; captured CPU includes its second verification phase.
+  supervisor/drainage margin; captured CPU and managed Torch include their
+  separate runtime-verification phase, selected by the same custody-owner
+  `preparation_seconds` and `verification_seconds` functions as actual execution.
 - Retained bytes conservatively include captured source/input/model/profile,
   declared outputs, two bounded stdout/stderr streams and custody/manifest margin.
 - Staging reserves capture duplication and output publication duplication. Shared
@@ -378,3 +380,55 @@ grants. It never changes a budget after failed admission or reuses a source gran
 The authored `test_scalar_candidate_packages.py` states are boundary fixtures;
 they are not completed Runs or E4 acceptance. Actual E4 producer/package evidence
 and any separately nominated runtime/source variant remain required.
+
+
+## Bound field evidence with managed Torch
+
+The existing current bound recipe (`schema_version:3`,
+`external_model_evidence_recipe_v2`) accepts `managed_torch_python_v1` with an
+explicit `cuda` or `cpu` device and its exact measured manifest identity.
+Managed execution retains its own descriptor/bootstrap, runtime origin checks,
+finite deadlines and CUDA visibility policy. It is never relabeled as a captured
+CPU snapshot. Unbound model-evidence variants and native-source combinations
+remain unsupported for this managed field profile.
+
+Project v2 can also declare ordinary `external_recipe_v1` managed Torch recipes.
+Their source, recipe and Project data reads use current rooted snapshot capture,
+including the unchanged manifest proof before/after capture. This permits the
+same current project to hold a typed CUDA trainer and an ordinary fresh CPU
+restore recipe. It adds no old-manifest decoder, alias or alternate runner.
+
+An exact Model source selector still binds its selected recipe and provider
+closure. Trial composition identifies the measured managed descriptor, rather
+than the bootstrap system Python, and reserves both readiness and runtime
+verification before admission. The same existing finite Study budget, owner
+grant, attempt context, immutable captures and drained artifact publication apply.
+The bound context remains one exact read-only argument of at most64KiB and is
+reverified after child drainage. Inspection and Model/Trial preparation never
+execute the trainer or load model arrays.
+
+The pressure migration authoring helper is the lab's
+`experiments/dependency-migration-v1/typed_pressure_project.py`. It assembles a
+fresh current project from exact captured trainer bytes, task-owned tensor
+ports and scalar physical context, the unchanged evidence SDK, and one explicitly
+previously consumed validation frame. The large measured runtime manifest is an
+explicit Project data reference while the managed runtime owner retains its own
+exact bootstrap manifest. This keeps the provider/Model source closure within
+8MiB without changing runtime identity, data custody, numerical values or bounds.
+Its `assembly.json` records source-to-current paths/hashes and actual new Project
+identity. Assembly and static Model publication make no optimizer, acceptance or
+historical ancestry claim.
+
+This profile keeps the existing fixed validation population and evaluator
+semantics. Pa, exact float64 ZYX geometry, solved-prior lineage, the gauge, float32
+network compute and pressure reconstruction are declared by the pressure task
+and captured source. Structural field verification is distinct from numerical or
+physical acceptance; a diagnostic Trial cannot promote a model automatically.
+
+The fresh CPU restore stays outside the bound evidence profile. It consumes the
+training Run's exact artifacts through ordinary `run_artifact` receipts and
+existing transitive authorization/custody. The restore evidence explicitly links
+the training Model, Trial, Run and checkpoint hashes; no extra restore Model or
+validation-population capability is invented. Historical Runs keep unknown
+ancestry. Bound field profiles continue to reject unsupported Run/frozen inputs,
+including unused inputs. Untouched holdout access remains unsupported.

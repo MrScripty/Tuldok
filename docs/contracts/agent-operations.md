@@ -46,7 +46,7 @@ The registry is the machine-readable exact field/schema inventory:
 | --- | --- |
 | context.get, identity.get | workspace context and authenticated identity |
 | projects.list/get/open/evidence | configured project roots and bounded declared evidence |
-| project_snapshots.list/get/open | selected bounded v1/v2 snapshot inspection and registration; legacy projects.* stays v1-only |
+| project_snapshots.list/get/open | selected bounded v1/v2 snapshot inspection and registration; projects list/get/open stay v1-only; evidence and import accept current v2 |
 | recipes.list/inspect | recipe declarations, exact expected recipe SHA |
 | data.query/get/history/responses/preferences | all eight record kinds, existing metadata/history |
 | data.audio/mesh/pointcloud/volume/scientific | existing bounded typed inspections/slices |
@@ -210,16 +210,21 @@ tracebacks or arbitrary response formats are not accepted as authoritative error
 
 ## Negotiated project snapshots and bound authoring
 
-Ordinary agents use three additive version1 operations through the same selected
-HTTP, CLI and MCP registry:
+Ordinary agents use three additive snapshot operations through the same selected
+HTTP, CLI and MCP registry. List remains version1; get/open support versions1
+and2 with exact per-version output schemas:
 
 - `project_snapshots.list` accepts optional `cursor` and `limit` (1–20, default20).
   Its closed page contains `mode:inspection`, configured root aliases, immutable
   v1/v2 project summaries, `limit` and nullable `next_cursor`. Pagination uses
   project ID order. Summaries explicitly identify `schema_version`.
-- `project_snapshots.get` accepts exactly `project_id`. Its closed v1/v2 result
-  reports saved declarations and current bounded inspection; v2 adds the inert
-  extension catalog. It does not return captured source blobs.
+- `project_snapshots.get` accepts exactly `project_id`. Its closed result
+  reports saved declarations and current bounded inspection; project schema v2
+  adds the inert extension catalog. Contract version2 adds an optional external `activity` observation from
+  ordinary evidence id `activity`, with measured hash and explicit external
+  authority; unavailable activity preserves the rest of inspection. It does not
+  return captured source blobs. Version1 retains its installed closed result
+  without `activity`, even when that evidence reference exists.
 - `project_snapshots.open` accepts exactly `root` and `manifest_path` and requires
   inspect plus edit. It registers immutable metadata and returns inspection.
   Root is a configured alias; callers cannot nominate an absolute root.
@@ -230,10 +235,13 @@ and source integrity checks. Cached capabilities convey no authority after
 credential revocation. Package declaration, host compatibility, runtime evidence
 and execution permission remain distinct facets. Inspection never imports source,
 probes a runtime or executes a process. Unselected owner-browser snapshot routes
-and all legacy discovery documents retain their existing shapes and owner gates.
+and the separate upstream v1 discovery documents retain their existing shapes
+and owner gates. Existing `projects.evidence` and `data.import_project_scientific`
+operations accept current project v2 through the same bounded evidence and
+strict source-capture owners; no snapshot alias or historical decoder is added.
 
 The following explicit new versions permit static authoring from project-v2
-source for ordinary scoped agents: `recipes.inspect/3`,
+source for ordinary scoped agents: `recipes.inspect/3` and `/4`,
 `graphs.create_external/2`, `graphs.preflight_external/2`, `models.publish/2`
 and `studies.prepare_trial/2`. The trusted selected contract header controls this
 boundary; request-body flags cannot opt into it. Earlier selected versions retain
@@ -245,6 +253,12 @@ project-v2 source access; new authoring uses preflight/2 and unchanged Study
 admission instead. Project-v1 behavior is unchanged.
 Source capture reconciliation and orphan adoption remain
 owner-only even with the new publication version.
+
+Recipe inspection v4 adds `managed_torch_python_v1` to the declared recipe and
+provider runtime variants. Versions2/3 retain their published CPU schemas and
+exact hashes; older selected inspection versions return `unsupported` for a
+managed Torch recipe. Inspection is inert and conveys no runtime availability
+or execution authority.
 
 An agent may inspect declared parameters, create/publish a captured Model, create
 and preflight a bound graph, and prepare a Trial in an owner-created Study.
@@ -265,3 +279,12 @@ The [shared observation contract](mcp-observer.md#shared-interface-observation-v
 owns the closed projection, independent health reader, private retention and
 actual delivery semantics. Passive records cannot establish a domain commit,
 Run completion, client receipt or permission to retry.
+
+
+Current bound recipe inspection projects `managed_torch_python_v1` in both the
+recipe runtime and selected provider declaration, alongside the existing captured
+CPU profile. The exact negotiated output contract changes with that current
+vocabulary. Source inspection remains inert; declaration does not prove runtime
+availability, grant permission or numerical acceptance. The current Project v2
+reader also accepts an ordinary managed recipe, preserving exact manifest/source
+capture and the current operation scope gate.

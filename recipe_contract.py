@@ -22,6 +22,11 @@ TYPES = ('input', 'execute', 'output')
 PORTS = {'input': (None, 'data'), 'execute': ('data', 'artifacts'), 'output': ('artifacts', None)}
 TRUST = 'Trusted local code; filesystem and network are not sandboxed. Runtime installation must remain immutable for the attempt.'
 CPU_PROFILE = 'captured_cpu_python_v1'
+TORCH_PROFILE = 'managed_torch_python_v1'
+TORCH_MANIFEST = 'runtime-bootstrap/torch-manifest.json'
+TORCH_BOOTSTRAP = 'runtime-bootstrap/torch_runtime.py'
+TORCH_HOST_NAMES = ('torch_runtime.py', 'torch_runtimes.py')
+IMPORTED_TORCH_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in TORCH_HOST_NAMES}
 LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
 INPUT_EVIDENCE = 'runtime-bootstrap/input-evidence.json'
 CPU_DESCRIPTOR = 'runtime-bootstrap/snapshot.json'
@@ -88,7 +93,7 @@ def decode_definition(raw):
         raise WorkbenchError('Recipe definition exceeds 64 KiB.')
     value = decode(raw)
     closed(value, ('schema_version', 'format', 'id', 'name', 'version', 'runtime', 'sources', 'entrypoint',
-                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','model_evidence','extension_selection'))
+                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','runtime_device','model_evidence','extension_selection'))
     evidence = is_evidence(value)
     bound = is_bound_evidence(value)
     if bound != ('extension_selection' in value):
@@ -100,20 +105,26 @@ def decode_definition(raw):
         raise WorkbenchError('Unsupported explicit external recipe version.', 'unsupported', 400)
     if evidence != ('model_evidence' in value):
         raise WorkbenchError('Model evidence policy requires its explicit recipe version.', 'unsupported', 400)
-    if evidence and (value['runtime'] != CPU_PROFILE or 'native_sources' in value):
-        raise WorkbenchError('Initial model evidence requires captured CPU Python without native sources.', 'unsupported', 400)
+    if evidence and ('native_sources' in value or not (value['runtime']==CPU_PROFILE
+            or (bound and not is_canonical_evidence(value) and value['runtime']==TORCH_PROFILE))):
+        raise WorkbenchError('Model evidence requires captured CPU or bound managed Torch without native sources.', 'unsupported', 400)
     named(value['id'])
     bounded_int(value['version'], 1, 1, 'Recipe version')
     if not isinstance(value['name'], str) or not 1 <= len(value['name']) <= 120:
         raise WorkbenchError('Supply a bounded recipe name.')
-    if value['runtime'] not in ('system_python', CPU_PROFILE):
+    if value['runtime'] not in ('system_python', CPU_PROFILE, TORCH_PROFILE):
         raise WorkbenchError('Unsupported recipe runtime profile.', 'unsupported', 400)
-    if value['runtime'] == CPU_PROFILE:
+    if value['runtime'] in (CPU_PROFILE, TORCH_PROFILE):
         snapshot = value.get('runtime_snapshot_sha256')
         if not isinstance(snapshot, str) or not SHA.fullmatch(snapshot):
-            raise WorkbenchError('Captured CPU recipes require a runtime snapshot SHA256.')
+            raise WorkbenchError('Measured recipes require a runtime manifest SHA256.')
     elif 'runtime_snapshot_sha256' in value:
-        raise WorkbenchError('System Python recipes cannot select a CPU snapshot.')
+        raise WorkbenchError('System Python recipes cannot select a runtime manifest.')
+    if value['runtime'] == TORCH_PROFILE:
+        if value.get('runtime_device') not in ('cpu','cuda'):
+            raise WorkbenchError('Managed Torch recipes require an explicit CPU or CUDA device.')
+    elif 'runtime_device' in value:
+        raise WorkbenchError('Only managed Torch recipes select a device.')
     sources = value['sources']
     if not isinstance(sources, list) or not 1 <= len(sources) <= 64:
         raise WorkbenchError('Declare 1–64 source files.')
@@ -155,7 +166,7 @@ def decode_definition(raw):
     for key, rule in value['inputs'].items():
         named(key); closed(rule, ('max_bytes',))
         bounded_int(rule['max_bytes'], 1, 40 * 1024 * 1024, 'Input bytes')
-    argument_limit = 56 if value['runtime'] == CPU_PROFILE else 59
+    argument_limit = 56 if value['runtime'] == CPU_PROFILE else 55 if value['runtime'] == TORCH_PROFILE else 59
     if not isinstance(value['arguments'], list) or len(value['arguments']) > argument_limit:
         raise WorkbenchError('Recipe arguments exceed the runtime argument bound.')
     for token in value['arguments']:
@@ -469,18 +480,15 @@ def graph_parameters(graph):
 
 
 def inspect_recipe(projects, project_id, reference_id, expected_sha256):
-    snapshot = False
-    try:
-        raw, receipt = projects.read_recipe_reference(project_id, reference_id, expected_sha256)
-    except WorkbenchError as error:
-        if error.code != 'unsupported':
-            raise
-        raw, receipt = projects.read_snapshot_recipe_reference(project_id, reference_id, expected_sha256)
-        snapshot = True
+    saved = projects._saved(project_id, extensions=True)
+    snapshot = saved['manifest']['schema_version'] == 2
+    raw, receipt = projects.read_recipe_reference(project_id, reference_id, expected_sha256)
     definition = decode_definition(raw)
     bound = is_bound_evidence(definition)
-    if snapshot != bound:
-        raise WorkbenchError('Only the explicit bound recipe uses a Project v2 snapshot.', 'unsupported', 400)
+    if bound and not snapshot:
+        raise WorkbenchError('Bound model evidence requires a current Project v2 snapshot.', 'unsupported', 400)
+    if snapshot and not bound and not (not is_evidence(definition) and definition['runtime']==TORCH_PROFILE):
+        raise WorkbenchError('Project v2 execution requires bound model evidence or an ordinary managed Torch recipe.', 'unsupported', 400)
     result = {'definition': definition, 'receipt': receipt, 'parameter_definitions': definition['parameters'],
               'inputs': definition['inputs'], 'outputs': definition['outputs'], 'runtime': definition['runtime']}
     if bound:
@@ -586,13 +594,17 @@ def validate_canonical_captures(material, captured, *, outputs=None):
     return inputs
 
 
-def host_identity(*, evidence=False, bound=False, canonical=False):
+def host_identity(*, evidence=False, bound=False, canonical=False, torch=False):
     import recipe_process
     root = Path(__file__).resolve().parent
     imported = IMPORTED_CANONICAL_EVIDENCE_HOST_FILES if canonical else IMPORTED_BOUND_EVIDENCE_HOST_FILES if bound else IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
     if imported is None:
         raise WorkbenchError('Canonical field evidence dependency is unavailable; restart after explicit provisioning.', 'unavailable', 409)
-    current = {name: file_digest((root/name).read_bytes()) for name in (CANONICAL_EVIDENCE_HOST_NAMES if canonical else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES)}
+    names = CANONICAL_EVIDENCE_HOST_NAMES if canonical else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES
+    if torch:
+        names = (*names, *TORCH_HOST_NAMES)
+        imported = {**imported, **IMPORTED_TORCH_HOST_FILES}
+    current = {name: file_digest((root/name).read_bytes()) for name in names}
     if current != imported or file_digest(recipe_process.SOURCE) != current['recipe_process.py']:
         raise WorkbenchError('Execution host changed after import. Restart before preflight or execution.', 'stale', 409)
     return current
@@ -600,7 +612,7 @@ def host_identity(*, evidence=False, bound=False, canonical=False):
 
 
 def recipe_host_identity(definition):
-    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition),canonical=is_canonical_evidence(definition))
+    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition),canonical=is_canonical_evidence(definition),torch=definition['runtime']==TORCH_PROFILE)
 
 
 def revalidate_bound_material(projects, material, captured, profile=None, *, releases=None):
@@ -660,11 +672,18 @@ def revalidate_bound_material(projects, material, captured, profile=None, *, rel
         raise WorkbenchError('Bound Project, provider, recipe or input changed after review.','stale',409) from None
     if recipe_host_identity(material['recipe'])!=material['host_files'] or runtime_identity(profile)!=material['runtime']:
         raise WorkbenchError('Bound execution host or runtime changed after preparation.','stale',409)
-    from runtime_snapshots import RuntimeSnapshots
-    snapshot=RuntimeSnapshots(projects.db,projects.access,projects.db.path).get(
-        material['recipe']['runtime_snapshot_sha256'],verify=True)
-    if encode(snapshot)!=encode(material['cpu_snapshot']):
-        raise WorkbenchError('Bound CPU snapshot changed after preparation.','stale',409)
+    if material['recipe']['runtime']==TORCH_PROFILE:
+        from torch_runtimes import TorchRuntimes
+        descriptor,raw=TorchRuntimes(projects.db,projects.access,projects.db.path).get(
+            material['recipe']['runtime_snapshot_sha256'],verify=True)
+        if encode(descriptor)!=encode(material['torch_runtime']) or raw!=captured[TORCH_MANIFEST]:
+            raise WorkbenchError('Bound managed Torch runtime changed after preparation.','stale',409)
+    else:
+        from runtime_snapshots import RuntimeSnapshots
+        snapshot=RuntimeSnapshots(projects.db,projects.access,projects.db.path).get(
+            material['recipe']['runtime_snapshot_sha256'],verify=True)
+        if encode(snapshot)!=encode(material['cpu_snapshot']):
+            raise WorkbenchError('Bound CPU snapshot changed after preparation.','stale',409)
     return material
 
 
@@ -713,8 +732,8 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         validate_canonical_captures(prefix,captured)
     if {'input_evidence': True} in definition['arguments']:
         captured[INPUT_EVIDENCE] = encode(inputs).encode()
-    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
-    input_limit = CPU_INPUT_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
+    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
+    input_limit = CPU_INPUT_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
     if sum(len(raw) for path,raw in captured.items() if path.startswith('input/')) > input_limit:
         raise WorkbenchError('Captured inputs exceed the runtime profile byte bound.')
     if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
@@ -743,6 +762,16 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         captured[CPU_BOOTSTRAP] = recipe_process.SOURCE
         if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
             raise WorkbenchError('Generated CPU bootstrap exceeds the capture bound.')
+    torch_runtime = None
+    if definition['runtime'] == TORCH_PROFILE:
+        from torch_runtimes import TorchRuntimes
+        import torch_runtime as bootstrap
+        torch_runtime, manifest_raw = TorchRuntimes(projects.db,projects.access,projects.db.path).get(
+            definition['runtime_snapshot_sha256'], verify=True)
+        captured[TORCH_MANIFEST] = manifest_raw
+        captured[TORCH_BOOTSTRAP] = Path(bootstrap.__file__).read_bytes()
+        if len(captured)>MAX_FILES or sum(map(len,captured.values()))>capture_limit:
+            raise WorkbenchError('Managed Torch bootstrap exceeds capture bound.')
     evidence = is_evidence(definition)
     if evidence and (len(captured)>=MAX_FILES or sum(map(len,captured.values()))+EVIDENCE_CONTEXT_LIMIT>CPU_CAPTURE_BYTES):
         raise WorkbenchError('Capture must reserve one bounded generated context file.')
@@ -751,10 +780,11 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
                 'recipe': definition, 'parameters': values, 'inputs': inputs,
                 'captures': {path: {'bytes':len(raw),'sha256':file_digest(raw)} for path,raw in sorted(captured.items())},
                 'runtime': runtime, 'host_files': host, 'permissions': {'filesystem':'trusted-local', 'network':'not_isolated'},
-                'environment': {'LANG':'C.UTF-8'}, 'resources': definition['resources']}
+                'environment': {} if definition['runtime']==TORCH_PROFILE else {'LANG':'C.UTF-8'}, 'resources': definition['resources']}
     if bound: material['extension_binding'] = inspected['extension_binding']
     if policies is not None: material['native_policies'] = policies
     if cpu_snapshot is not None: material['cpu_snapshot'] = cpu_snapshot
+    if torch_runtime is not None: material['torch_runtime'] = torch_runtime
     validate_material(material)
     return {'valid':True, 'status':'valid', 'material':material, 'material_sha256':digest(material), 'validation_token':digest(material),
             'parameter_definitions':definition['parameters'], 'outputs':definition['outputs'], 'runtime':runtime,
@@ -764,7 +794,7 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
 def validate_material(material):
     """Cold structural custody checks; no filesystem access or current-code comparison."""
     closed(material, ('schema_version', 'catalog_id', 'project', 'graph_execution_sha256', 'recipe',
-                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot','extension_binding'))
+                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot','torch_runtime','extension_binding'))
     if type(material['schema_version']) is not int or material['schema_version'] not in (1,2,3) or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
         raise WorkbenchError('Invalid execution material identity.')
     def sha(value):
@@ -787,7 +817,7 @@ def validate_material(material):
         raise WorkbenchError('Material leaves no generated context capacity.')
     if encode(validate_parameters(definition, material['parameters'])) != encode(material['parameters']):
         raise WorkbenchError('Retained parameters must include every typed value.')
-    if material['resources'] != definition['resources'] or material['environment'] != {'LANG':'C.UTF-8'} or material['permissions'] != {'filesystem':'trusted-local', 'network':'not_isolated'}:
+    if material['resources'] != definition['resources'] or material['environment'] != ({} if definition['runtime']==TORCH_PROFILE else {'LANG':'C.UTF-8'}) or material['permissions'] != {'filesystem':'trusted-local', 'network':'not_isolated'}:
         raise WorkbenchError('Material execution policy is inconsistent.')
     if not isinstance(material['inputs'], dict) or set(material['inputs']) != set(definition['inputs']): raise WorkbenchError('Material input inventory differs.')
     expected = {'source/'+item['path']:item['sha256'] for item in definition['sources']}
@@ -855,6 +885,22 @@ def validate_material(material):
         sha(expected[CPU_BOOTSTRAP])
     elif 'cpu_snapshot' in material:
         raise WorkbenchError('System Python material cannot contain a CPU snapshot.')
+    if definition['runtime'] == TORCH_PROFILE:
+        import torch_runtime
+        try:
+            descriptor = torch_runtime.validate_descriptor(material.get('torch_runtime'))
+        except ValueError as error:
+            raise WorkbenchError(str(error)) from None
+        if descriptor['catalog_id'] != material['catalog_id'] or descriptor['manifest_sha256'] != definition['runtime_snapshot_sha256']:
+            raise WorkbenchError('Managed Torch runtime differs from the approved catalog and recipe.')
+        expected[TORCH_MANIFEST] = descriptor['manifest_sha256']
+        if material['captures'].get(TORCH_MANIFEST,{}).get('bytes') != descriptor['manifest_bytes']:
+            raise WorkbenchError('Managed Torch manifest size differs.')
+        if not isinstance(material['host_files'],dict):raise WorkbenchError('Invalid retained host closure.')
+        expected[TORCH_BOOTSTRAP] = material['host_files'].get('torch_runtime.py')
+        sha(expected[TORCH_BOOTSTRAP])
+    elif 'torch_runtime' in material:
+        raise WorkbenchError('Only managed Torch material can contain its runtime descriptor.')
     expected.update({path:file_digest(raw) for path,raw in generated.items()})
     captures = material['captures']
     if not isinstance(captures, dict) or set(captures) != set(expected) or len(captures) > MAX_FILES:
@@ -863,6 +909,7 @@ def validate_material(material):
     for path, item in captures.items():
         relative_path(path); closed(item, ('bytes','sha256')); sha(item['sha256'])
         limit = MAX_SOURCE_BYTES if path.startswith(('source/','native-policy/','runtime-bootstrap/')) else definition['inputs'][path.split('/',1)[1]]['max_bytes']
+        if path == TORCH_MANIFEST and definition['runtime'] == TORCH_PROFILE: limit = 32*1024*1024
         bounded_int(item['bytes'],0,limit,'Capture bytes'); total += item['bytes']
         if path.startswith('input/'):
             input_total += item['bytes']
@@ -871,8 +918,8 @@ def validate_material(material):
                 raise WorkbenchError('Frozen input receipt and captured size differ.')
         if path in generated and item['bytes'] != len(generated[path]): raise WorkbenchError('Generated native policy size differs.')
         if item['sha256'] != expected[path]: raise WorkbenchError('Captured digest contradicts source/input identity.')
-    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
-    input_limit = CPU_INPUT_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
+    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
+    input_limit = CPU_INPUT_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
     if total > capture_limit or input_total > input_limit:
         raise WorkbenchError('Captured material exceeds runtime profile byte bound.')
     runtime = material['runtime']
@@ -890,7 +937,9 @@ def validate_material(material):
         bounded_int(item['bytes'],0,64*1024*1024,'Runtime file bytes'); total += item['bytes']
     if total > RUNTIME_LIMIT or runtime['executable'] not in files or files[runtime['executable']]['sha256'] != runtime['executable_sha256'] or digest(files) != runtime['closure_sha256']:
         raise WorkbenchError('Runtime closure identity is inconsistent.')
-    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(CANONICAL_EVIDENCE_HOST_NAMES if is_canonical_evidence(definition) else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
+    host_names = CANONICAL_EVIDENCE_HOST_NAMES if is_canonical_evidence(definition) else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES
+    if definition['runtime'] == TORCH_PROFILE: host_names = (*host_names, *TORCH_HOST_NAMES)
+    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(host_names): raise WorkbenchError('Invalid retained host closure.')
     for value in material['host_files'].values(): sha(value)
     return material
 
@@ -906,6 +955,9 @@ def spec_for_material(material, staging, *, context=None):
     if definition['runtime'] == CPU_PROFILE:
         argv = [runtime['executable'], *runtime['flags'], str(staging/CPU_BOOTSTRAP),
                 '--cpu-launch', str(staging/CPU_DESCRIPTOR), str(staging/'source'/definition['entrypoint'])]
+    elif definition['runtime'] == TORCH_PROFILE:
+        argv = [runtime['executable'], *runtime['flags'], str(staging/TORCH_BOOTSTRAP), '--launch',
+                str(staging/TORCH_MANIFEST), definition['runtime_device'], str(staging/'source'/definition['entrypoint'])]
     for token in definition['arguments']:
         kind, value = next(iter(token.items()))
         if kind == 'literal': arg = value
@@ -925,6 +977,7 @@ def spec_for_material(material, staging, *, context=None):
             'trusted_install_owner_uid':runtime['trusted_install_owner_uid']}
     if 'native_policies' in material or 'cpu_snapshot' in material: spec['native_loader_policy'] = NATIVE_POLICY
     if 'cpu_snapshot' in material: spec['cpu_snapshot'] = material['cpu_snapshot']
+    if 'torch_runtime' in material: spec['torch_runtime'] = material['torch_runtime']
     if 'profile' in definition['resources']: spec['resource_profile'] = definition['resources']['profile']
     if is_evidence(definition):
         spec['schema_version']=2

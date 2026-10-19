@@ -517,11 +517,27 @@ _SNAPSHOT_CATALOG=obj({'mode':const('inspection'),'execution':const('unsupported
     'schema_sha256':obj({name:SHA for name in ('extension','contribution','parameter')},[]),
     'bytes_inspected':integer(0,8*1024**2),'inspection_budget_consumed':integer(0,8*1024**2),
     'packages':array(_SNAPSHOT_PACKAGE,64)})
+# External activity is a bounded projection of ordinary evidence id "activity".
+# It cannot make a Run or establish custody or scientific acceptance.
+_ACTIVITY_COMMON={'authority':const('external_observation'),'reference_id':const('activity')}
+_ACTIVITY={'oneOf':[
+    obj(dict(_ACTIVITY_COMMON,available=const(False),reason=text(1000))),
+    obj(dict(_ACTIVITY_COMMON,available=const(True),schema_version=const(1),
+        producer=text(120),sequence=SAFE_NAT,updated_at=text(80),
+        state={'enum':['idle','running','completed','failed','cancelled']},
+        phase=text(120),message=text(1000),
+        progress=obj({'completed':SAFE_NAT,'total':{'oneOf':[SAFE_NAT,{'type':'null'}]}}),
+        age_s={'type':'number','minimum':0},stale={'type':'boolean'},sha256=SHA))]}
 _SNAPSHOT_FIELDS=dict(_SNAPSHOT_SUMMARY,mode=const('inspection'),execution=const('unsupported'),
     manifest_status={'enum':['unavailable','unchanged','changed','missing']},
     **{name:array(_SNAPSHOT_REFERENCE,64) for name in ('data','recipes','evidence','requirements')})
 _SNAPSHOT_VIEW={'oneOf':[obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1))),
     obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG))]}
+_ACTIVITY_SNAPSHOT_VIEW={'oneOf':[
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1),activity=_ACTIVITY),
+        list(_SNAPSHOT_FIELDS)),
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG,activity=_ACTIVITY),
+        list(_SNAPSHOT_FIELDS)+['extensions'])]}
 model_operation('project_snapshots.list','GET','/api/workspace/project-snapshots',
     {'cursor':ID,'limit':integer(1,20)},[],query=('cursor','limit'),
     output=obj({'mode':const('inspection'),'roots':array(text(160),10000),
@@ -584,6 +600,12 @@ _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# Activity changes the closed output schema, so installed snapshot v1 contracts
+# retain their exact identity and wire projection.
+for _name in ('project_snapshots.get','project_snapshots.open'):
+    _activity_snapshot=copy.deepcopy(_CONTRACTS[_name][1])
+    _activity_snapshot['outputSchema']['oneOf'][0]['properties']['result']=_ACTIVITY_SNAPSHOT_VIEW
+    _CONTRACTS[_name][2]=_activity_snapshot
 # A distinct graph contract accepts typed TinyCNN architecture. Existing
 # installed v1 clients retain their exact grammar and discovery digest.
 _model_create=copy.deepcopy(_CONTRACTS['graphs.create'][1])
@@ -704,6 +726,16 @@ for _name,_old,_new in (('recipes.inspect',2,3),('graphs.create_external',1,2),
     _scoped=copy.deepcopy(_CONTRACTS[_name][_old])
     _scoped['description']+=' Ordinary inspect/edit agents may use exact project-v2 source; no execution or approval authority is conferred.'
     _CONTRACTS[_name][_new]=_scoped
+# Managed Torch extends the recipe/runtime variants without rewriting the
+# independently deployed v2/v3 inspection contracts.
+_managed_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][3])
+for _variant in _managed_inspection['outputSchema']['oneOf'][0]['properties']['result']['oneOf']:
+    _variant['properties']['runtime']={'enum':['system_python','captured_cpu_python_v1','managed_torch_python_v1']}
+    if 'extension_binding' in _variant['properties']:
+        _contribution=_variant['properties']['extension_binding']['properties']['contributions']['items']
+        _provider_runtime=_contribution['properties']['provider']['properties']['runtime']
+        _provider_runtime['properties']['profile']={'enum':['captured_cpu_python_v1','managed_torch_python_v1']}
+_CONTRACTS['recipes.inspect'][4]=_managed_inspection
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
