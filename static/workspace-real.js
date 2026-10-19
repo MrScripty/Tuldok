@@ -205,7 +205,9 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     }
     function retainFocus(root, render) {
       const focused = root.contains(document.activeElement) ? document.activeElement.id : null;
+      const phaseScroll=Array.from(root.querySelectorAll('.phase-timing-table[id]')).map(node=>[node.id,node.scrollLeft]);
       render();
+      for(const [id,left] of phaseScroll){const node=root.querySelector('#'+CSS.escape(id));if(node)node.scrollLeft=left;}
       if (focused) root.querySelector("#" + CSS.escape(focused))?.focus({ preventScroll: true });
     }
     function adopt(document) {

@@ -48,6 +48,10 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   await evaluate('location.hash="#runs"');
   await until(()=>text('#real-run-state').then(value=>value==='queued'));
   await until(()=>phaseText().then(value=>value?.includes('capacity')),'Actual queue-capacity wait missing');
+  await evaluate('document.querySelector("#phase-run-refresh").focus()');
+  await pause(2300);assert.equal(await evaluate('document.activeElement.id'),'phase-run-refresh','Timing refresh must retain keyboard focus');
+  await evaluate('(()=>{const region=document.querySelector("#real-phase-root .phase-timing-table");region.scrollLeft=50;window.phaseRegion={id:region.id,left:region.scrollLeft};})()');
+  await pause(2300);assert.equal(await evaluate('document.getElementById(window.phaseRegion.id).scrollLeft'),await evaluate('window.phaseRegion.left'),'Live refresh must retain table scroll');
   await command('lock-wait');
   await activate('#real-phase-root [data-phase-refresh]');
   await until(()=>phaseText().then(value=>value?.includes('catalog lock wait')),'Actual catalog lock span missing');
