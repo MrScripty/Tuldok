@@ -1,0 +1,3 @@
+Error: {"exceptionId":1,"text":"Uncaught","lineNumber":189,"columnNumber":30,"scriptId":"10","exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: window.WorkspaceScientificComparison is not a function\n    at window.WorkspaceReal (<anonymous>:190:31)\n    at <anonymous>:1:13","objectId":"-1678073719902497836.2.2"}}
+    at ev (/workspace/Tuldok-lab-field-comparison-m6/tests/browser_workspace_recovery.cjs:15:146)
+    at async /workspace/Tuldok-lab-field-comparison-m6/tests/browser_workspace_recovery.cjs:40:1
