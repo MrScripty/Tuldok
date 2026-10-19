@@ -160,6 +160,12 @@
       "outcome": "confirmed",
       "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
       "base": "feature/lab-publication-continuation-20261019"
+    },
+    {
+      "action": "Publish publication transport and SDK collection draft PR97",
+      "outcome": "confirmed",
+      "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+      "base": "feature/lab-publication-recovery-20261019"
     }
   ],
   "protected_original_heads": 82,
@@ -680,10 +686,10 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": {
-    "worktree": "/workspace/Tuldok-lab-publication-interfaces-m1",
-    "branch": "feature/lab-publication-interfaces-20261019",
-    "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
-    "next": "Implement negotiated exact publication status/action/result/segment and SDK/CLI/UI/lineage integration; full C2/M1 pending",
+    "worktree": "/workspace/Tuldok-lab-publication-evidence-m1",
+    "branch": "feature/lab-publication-evidence-20261019",
+    "base": "0da7a811d252cc4c6774260b98ee2a707efec517",
+    "next": "Implement exact Ref evidence queries/comparison; independent actual synthetic witness active on isolated branch; UI/lineage/indexed diagnostics pending",
     "parent_role": "passive hosted CI monitoring; root serial acceptance/retarget/merge and source"
   },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
@@ -927,5 +933,37 @@
       "skipped": 0,
       "seconds": 81.968
     }
+  },
+  "publication_interfaces": {
+    "branch": "feature/lab-publication-interfaces-20261019",
+    "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+    "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+    "pr": 97,
+    "restore_verified": true,
+    "review": "independent interface review pending; core separately cleared",
+    "actual_http_cli": {
+      "passed": 4,
+      "seconds": 70.531
+    },
+    "actual_sdk_collection_plus_representative": {
+      "passed": 17,
+      "seconds": 68.982
+    },
+    "large_neutral_segment": {
+      "passed": 1,
+      "seconds": 14.583,
+      "payload_reads": [
+        8388608,
+        17
+      ]
+    },
+    "old_full_contracts_equal": 110,
+    "hosted_ci": "pending"
+  },
+  "parent_latest_ci": {
+    "pr94_head": "0039a330253c088b68578e268afe6fc21fc36038",
+    "pr94_lifecycle": "success reported by parent; archive acceptance pending root",
+    "pr94_cpu": "success reported by parent",
+    "pr93_lifecycle": "running; preserve dependency order"
   }
 }
