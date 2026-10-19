@@ -1,0 +1,11 @@
+{
+  "checkpoint_restored": "96afae56ca41c2a90f87ea3bc6a27ee4ed6291b5",
+  "source": "https://github.com/MrScripty/Tuldok.git",
+  "method": "fresh standalone single-branch clone; normalconfiguredcredential; no local object sharing",
+  "verified_evidence_files": 22,
+  "size_and_sha256": "all matchedmanifest",
+  "task_commit_ancestry": "all reachable",
+  "separate_plan_fetched": "b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb",
+  "verification_time": "2026-10-19T18:27:35.140860+00:00",
+  "contains_private_runtime_data": false
+}
