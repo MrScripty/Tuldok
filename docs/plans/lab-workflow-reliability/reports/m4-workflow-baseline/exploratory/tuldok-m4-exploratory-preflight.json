@@ -1,0 +1,39 @@
+{
+  "scope": "Exploratory same-process repeated system-Python neutral preflight, no cache/OS-cold claim",
+  "samples": [
+    {
+      "wall_ms": 711.444522,
+      "cpu_ms": 696.1,
+      "runtime_files": 1315,
+      "runtime_bytes": 64063492,
+      "recipe_contract_file_digest": {
+        "calls": 1322,
+        "bytes": 64401525
+      },
+      "material_sha256": "9cacfcb7b8d9d0173c43146867e915c4310b098ba639b041e83623f912eb9cc7"
+    },
+    {
+      "wall_ms": 536.159621,
+      "cpu_ms": 529.2680000000003,
+      "runtime_files": 1315,
+      "runtime_bytes": 64063492,
+      "recipe_contract_file_digest": {
+        "calls": 1322,
+        "bytes": 64401525
+      },
+      "material_sha256": "9cacfcb7b8d9d0173c43146867e915c4310b098ba639b041e83623f912eb9cc7"
+    },
+    {
+      "wall_ms": 398.435747,
+      "cpu_ms": 395.2060000000001,
+      "runtime_files": 1315,
+      "runtime_bytes": 64063492,
+      "recipe_contract_file_digest": {
+        "calls": 1322,
+        "bytes": 64401525
+      },
+      "material_sha256": "9cacfcb7b8d9d0173c43146867e915c4310b098ba639b041e83623f912eb9cc7"
+    }
+  ],
+  "material_equal": true
+}

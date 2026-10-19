@@ -1,0 +1,5 @@
+{"progress": "measured", "artifacts": 2, "terminal_history": 0, "process_sample": 0}
+{"progress": "real_history", "artifacts": 2, "completed": 1, "target": 2}
+{"progress": "real_history", "artifacts": 2, "completed": 2, "target": 2}
+{"progress": "measured", "artifacts": 2, "terminal_history": 2, "process_sample": 0}
+{"progress": "fresh_supported_workflow", "artifacts": 2, "sample": 0}
