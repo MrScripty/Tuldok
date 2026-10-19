@@ -122,6 +122,18 @@ class DiagnosticAdmissionTests(unittest.TestCase):
                 change()
                 with self.assertRaises(WorkbenchError): self.decode()
 
+    def test_bound_recipe_selects_the_same_addon_with_its_existing_target_contract(self):
+        self.definition = json.loads((Path(__file__).resolve().parents[1] /
+            'examples/extensions/field-surrogate-b-independent/v1/recipe.json').read_bytes())
+        self.capture = opt_in(self.definition)
+        self.capture['coverage'][0]['checkpoint_point'] = 32
+        self.capture['coverage'][1]['checkpoint_point'] = 64
+        self.assertEqual(self.decode(), self.definition)
+        self.assertTrue(recipe_contract.is_bound_evidence(self.definition))
+        self.assertIn('field_targets', self.definition['model_evidence'])
+        self.assertEqual(set(recipe_contract.recipe_host_identity(self.definition)),
+            set(recipe_contract.BOUND_EVIDENCE_HOST_NAMES) | set(recipe_contract.DIAGNOSTIC_HOST_NAMES))
+
 
 class DiagnosticRoundTripTests(unittest.TestCase):
     def setUp(self):

@@ -1,0 +1,35 @@
+test_impossible_population_refuses_before_graph_run_grant_or_reservation (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_impossible_population_refuses_before_graph_run_grant_or_reservation) ... ERROR
+test_real_custody_cold_recovery_and_exact_inventory_read_with_no_replay (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_real_custody_cold_recovery_and_exact_inventory_read_with_no_replay) ... ERROR
+
+======================================================================
+ERROR: test_impossible_population_refuses_before_graph_run_grant_or_reservation (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_impossible_population_refuses_before_graph_run_grant_or_reservation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/test_indexed_diagnostics_publication.py", line 74, in setUp
+    self.dataset = Dataset(self.root / 'catalog', project_roots={'synthetic': self.root / 'project'})
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/app.py", line 158, in __init__
+    self.projects = projects.Projects(self, project_roots)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/projects.py", line 126, in __init__
+    raise WorkbenchError('Cannot open configured project roots; check aliases and local directories.') from None
+workbench.WorkbenchError: Cannot open configured project roots; check aliases and local directories.
+
+======================================================================
+ERROR: test_real_custody_cold_recovery_and_exact_inventory_read_with_no_replay (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_real_custody_cold_recovery_and_exact_inventory_read_with_no_replay)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/test_indexed_diagnostics_publication.py", line 74, in setUp
+    self.dataset = Dataset(self.root / 'catalog', project_roots={'synthetic': self.root / 'project'})
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/app.py", line 158, in __init__
+    self.projects = projects.Projects(self, project_roots)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/projects.py", line 126, in __init__
+    raise WorkbenchError('Cannot open configured project roots; check aliases and local directories.') from None
+workbench.WorkbenchError: Cannot open configured project roots; check aliases and local directories.
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.744s
+
+FAILED (errors=2)

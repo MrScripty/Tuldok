@@ -17,6 +17,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import uuid
 from unittest.mock import patch
 
 from workbench import WorkbenchError
@@ -68,12 +69,17 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
     def setUp(self):
         from app import Dataset
         from auth_helpers import ExplicitOwnerFixture
+        from metadata import Metadata
         from runtime_snapshots import RuntimeSnapshots
         self.temp = tempfile.TemporaryDirectory(prefix='indexed-diagnostics-'); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.dataset = Dataset(self.root / 'catalog', project_roots={'synthetic': self.root / 'project'})
-        self.schema = self.dataset.db.schema
+        (self.root / 'project').mkdir()
+        metadata = Metadata(self.root / 'catalog')
+        self.schema = metadata.schema
+        metadata.close()
+        self.dataset = None
         self.addCleanup(self.cleanup_catalog)
+        self.dataset = Dataset(self.root / 'catalog', project_roots={'synthetic': self.root / 'project'})
         self.owner = ExplicitOwnerFixture.bootstrap(self.dataset)
         python = self.root / 'python'; site = self.root / 'packages'
         (python / 'bin').mkdir(parents=True); (python / 'lib/python3.12/lib-dynload').mkdir(parents=True)
@@ -91,15 +97,21 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
             snapshots = RuntimeSnapshots(self.dataset.db, self.dataset.access, self.dataset.path)
             identity = snapshots.inspect(config)['inventory_sha256']
             self.runtime = snapshots.create(config, identity, quiesced=True, reserve_bytes=0)
-            self.definition, self.manifest, self.recipe_sha = project_fixture(self.root / 'project', identity)
+            # The directory must predate Dataset's configured-root descriptor.
+            # The established fixture builder creates its own new directory.
+            self.definition, self.manifest, self.recipe_sha = project_fixture(self.root / 'prepared-project', identity)
+            for source in (self.root / 'prepared-project').iterdir():
+                shutil.move(str(source), self.root / 'project' / source.name)
+            (self.root / 'prepared-project').rmdir()
             self.project = self.dataset.projects.open_snapshot({'root': 'synthetic', 'manifest_path': 'project.json'})
 
     def cleanup_catalog(self):
         import psycopg
         from psycopg import sql
-        self.dataset.close()
+        if self.dataset is not None: self.dataset.close()
         with psycopg.connect(os.environ['TULDOK_DATABASE_URL'], autocommit=True) as connection:
             connection.execute(sql.SQL('DROP SCHEMA {} CASCADE').format(sql.Identifier(self.schema)))
+        print('Removed exact recorded fresh schema: ' + self.schema)
 
     def graph_body(self):
         return dict(name='Indexed synthetic diagnostics; metadata runtime only', project_id=self.project['id'],
@@ -143,10 +155,11 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
         self.definition['model_evidence']['diagnostic_capture']['coverage'][0]['required_count'] = 7
         raw = extension_evidence.canonical(self.definition); (self.root / 'project/recipe.json').write_bytes(raw)
         self.recipe_sha = hashlib.sha256(raw).hexdigest()
+        self.manifest['id'] = uuid.uuid4().hex
         self.manifest['recipes'][0]['sha256'] = self.recipe_sha
         (self.root / 'project/project.json').write_bytes(extension_evidence.canonical(self.manifest))
         with self.owner.bound(self.dataset):
-            self.dataset.projects.open_snapshot({'root': 'synthetic', 'manifest_path': 'project.json'})
+            self.project = self.dataset.projects.open_snapshot({'root': 'synthetic', 'manifest_path': 'project.json'})
             before = self.counts()
             with patch('subprocess.Popen', side_effect=AssertionError('Invalid declaration launched compute')):
                 with self.assertRaises(WorkbenchError) as caught: self.dataset.pipelines.create_external(self.graph_body())
@@ -215,3 +228,13 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
             self.assertEqual(self.dataset.runs._load(run['id'])['events'], events)
         self.assertTrue(any('.external-' in path for path in checked), checked)
         self.assertTrue(any('.external-' not in path for path in checked), checked)
+        print('INDEXED_DIAGNOSTIC_QUALIFICATION ' + json.dumps(dict(
+            scope='harness SDK serialization; actual no-op metadata runtime custody and semantic recovery',
+            captured_python_producer_executed=False, training_executed=False, numerical_acceptance='not_evaluated',
+            schema=self.schema, run_id=run['id'], runtime_snapshot_sha256=self.runtime['manifest_sha256'],
+            runtime_packages=self.runtime['packages'], custody_outcome=custody['outcome'],
+            result_ref=recovered['result_ref'], artifacts=[indexed[capture['name']] for capture in
+                [self.definition['model_evidence']['diagnostic_capture']['index'],
+                 *self.definition['model_evidence']['diagnostic_capture']['shards']]], coverage=index['coverage'],
+            verification_scope='source_destination_and_cold_exact_ref_reader', counts_before=before_counts,
+            counts_after=self.counts(), accounting_and_events_unchanged=True, original_state=saved['state']), sort_keys=True))
