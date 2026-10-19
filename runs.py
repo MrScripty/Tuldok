@@ -424,9 +424,11 @@ class Runs:
         return run_publication.result(self, ref)
 
     @authorized('inspect', 'runs.publication_status')
-    def publication_status(self, run_id):
+    def publication_status(self, run_id, *, contract_version=None):
         import run_publication
-        return run_publication.status(self, run_id)
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1, 2)):
+            raise WorkbenchError('Unsupported publication status contract.', 'unsupported', 409)
+        return run_publication.status(self, run_id, include_request=contract_version == 2)
 
     @authorized('inspect', 'runs.publication_artifact')
     def publication_artifact(self, ref, name, expected_sha256):
@@ -437,6 +439,16 @@ class Runs:
     def publication_artifact_segment(self, ref, name, body):
         import run_publication
         return run_publication.artifact_segment(self, ref, name, body)
+
+    @authorized('inspect', 'runs.publication_model_evidence')
+    def publication_model_evidence(self, ref, body=None):
+        import run_publication
+        return run_publication.model_evidence(self, ref, body)
+
+    @authorized('inspect', 'runs.compare_publication_evidence')
+    def compare_publication_evidence(self, ref, other_ref, body):
+        import run_publication
+        return run_publication.compare_evidence(self, ref, other_ref, body)
 
     def _receipt(self, key, request_hash):
         row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()

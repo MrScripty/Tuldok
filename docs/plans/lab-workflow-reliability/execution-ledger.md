@@ -1,5 +1,38 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-19 — Exact recovered evidence and comparison
+
+- Continued from reviewed PR97 `0da7a81`; preserved independent synthetic witness
+  branch `b6a2ccb` by a normal merge, without dropping its initial harness-failure
+  record. Root independently reviewed its fresh catalog/runtime/custody/semantic/
+  charge/event/cleanup checks. The witness serializes explicitly synthetic states;
+  it runs no optimizer, numerical producer or oracle.
+- Added two selected inspect operations over exact result Refs: existing field
+  selectors and exact paired/side-by-side comparison. Field comparison supplies
+  verified-context policies to the scalar owner and refuses field contract/
+  geometry/gauge drift. Old failed readers and promotion gates remain closed.
+  SDK comparison invokes the selected sealed public CLI with exact identities.
+- Actual composed source `904922c` and its exact driver passed117.976s: fresh
+  verified20804-file/896562621-byte CPU capture, real process drainage, copy fault,
+  cold recovery, supported semantics, HTTP field slice, exact synthetic paired
+  comparison, foreign-evaluation refusal and sealed CLI SDK comparison. One
+  original Run/grant/consumption/reservation, settled charges and events remain
+  unchanged; own temporary catalog/schema/root cleanup is confirmed.
+- Independent review found and root fixed a displaced target decoder decorator
+  and missing requested checkpoint/field response correlation. Fixed subject
+  `415f5e1` has separate pure positive/negative witnesses; the combined117.976s
+  run is explicitly the earlier904922 subject. Independent final4 tests passed
+  zero skips; root affected field-owner/compatibility group28 passed3.469s.
+- Additive status/2 exposes actual saved request actor/key/hash for reconciliation
+  across CLI/UI. Old status/1 and all115 prior complete contracts remain equal.
+  Actual PostgreSQL/HTTP v2/old-projection/forged-key tests3 passed9.618s.
+- PR93 merged031df28, then PR94 merged2652b06, each merge tree equal to its
+  exact qualified source tree; PR95 retargeted main unchanged. New main required
+  qualification remains pending; all branches/worktrees are retained.
+- Independent isolated Run-panel implementation is active. Browser/lineage,
+  indexed diagnostics and full M1–M6 remain pending; numerical/CUDA/real-lab
+  acceptance is not inferred from protocol or existing runtime success.
+
 ## 2026-10-19 — Explicit publication interfaces and collection
 
 - PR96 core is published at `6cc5943`; exact early PostgreSQL gate22 passed,

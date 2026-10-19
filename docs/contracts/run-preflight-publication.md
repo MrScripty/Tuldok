@@ -66,8 +66,8 @@ dispatch. No catalog schema, retained evidence format or migration changes.
 
 The Runs-owned continuation core below is implemented separately from preflight.
 Selected HTTP/agent operations and CLI/SDK collection are implemented below;
-browser/lineage integration, extension evidence queries/comparison and indexed
-diagnostics remain pending M1 work and separate acceptance.
+browser/lineage integration and indexed diagnostics remain pending M1 work.
+The exact Ref evidence/comparison methods below have separate qualification.
 The preflight report itself grants no recovery or publication authority.
 
 ## Retained original-attempt publication source
@@ -149,8 +149,8 @@ extension semantics. Their 60-second verification budget checks shutdown and
 chunk/semantic boundaries; an individual artifact response is at most 8 MiB.
 Malformed or changed retained bytes return typed unavailable. Explicit selected
 transport operations below expose the new result independently. Evidence queries/
-comparison and candidate/package promotion from recovered failed Runs remain
-outside this slice; existing promotion gates are unchanged.
+comparison accept explicit Refs as described below. Candidate/package promotion
+from recovered failed Runs remains unsupported; existing gates are unchanged.
 
 No SQL migration, supported metadata version change, dependency or legacy wire
 projection change is introduced. Existing stopped backup/restore retains the
@@ -169,6 +169,14 @@ Headerless calls refuse; old operation contracts and frozen legacy discovery
 remain unchanged. Recovery/cancellation are owner-only mutations; ordinary agent
 inspection cannot gain that authority by selecting the new operation. A stable
 recovery key reconciles the original continuation, with no automatic retry.
+
+Selected status/2 adds the saved continuation's actor, request key and exact
+request hash, or null before a continuation exists. Status/1 and the original
+domain projection stay unchanged. Clients correlate this metadata with the
+source Ref, Run and stable request body before using it to reconcile an existing
+CLI/UI continuation. The key is an identity, not a credential or grant; recovery
+and cancellation still require current owner authority. No new request is
+inferred from an unknown acknowledgement.
 
 The new artifact-segment operation accepts the exact attached result Ref, flat
 artifact name, expected whole SHA256, offset and at most 8 MiB per call. It checks
@@ -196,6 +204,40 @@ inventory bytes match. Its finite command deadline and 4 GiB collection ceiling
 do not enlarge any Run/evidence contract. Partial local collections remain
 inspectable on refusal; `numerical: not_evaluated` stays explicit. This command
 does not substitute for original SDK execution conformance or science acceptance.
+
+## Exact recovered field evidence and comparison
+
+Selected-v1 `runs.publication_model_evidence` accepts the exact result Ref and
+optional existing field selectors. Runs validates attached proof/manifest and
+current transitive access, then invokes the supported extension verifier with
+the original interrupted/failed Run and its recovered inventory. It never
+substitutes completed state or widens old evidence readers. Checkpoint/member/
+field/axis/index and validation-only restrictions retain their existing meaning.
+Neutral external results without supported field evidence return unsupported.
+
+Selected-v1 `runs.compare_publication_evidence` accepts two exact result Refs
+and the existing complete checkpoint/evaluation/metric-definition selection.
+Both manifests must match the inventory's explicitly selected evaluation hashes.
+The field owner supplies authoritative preprocessing/output policies to the
+existing exact scalar comparison, rather than treating a field model
+specification as a classifier definition. Task, frozen membership/input/target,
+metric, policy and field contract/geometry/gauge mismatches return incompatibility
+with no paired delta. Side-by-side mode also returns no paired delta. Observed
+and undefined arithmetic retain the existing explicit states and reasons.
+All returned Ref/Run/catalog and selection identities are correlated by the
+client; contradictions fail without an alternate request.
+
+Readers have one shared 60-second budget across proof and semantic work and
+recheck current inspect/transitive authority before disclosure. Segment capture
+also rechecks authority after its bounded payload read; revocation withholds the
+response without deleting the committed result. Legacy failed Run readers and
+candidate/package promotion retain their refusal.
+
+SDK `compare-publication` takes two Ref JSON files and an exact selection JSON
+through the explicitly selected sealed public CLI. It collects no model state,
+performs no inference/admission/recovery and marks numerical acceptance
+`not_evaluated`. Compatible fixture arithmetic establishes comparison behavior,
+not the scientific validity or performance of any model.
 
 ## Current large-output storage observation
 

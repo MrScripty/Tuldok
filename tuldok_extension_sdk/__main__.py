@@ -19,10 +19,14 @@ def main(argv=None):
     for option in ('config', 'cli', 'cli-sha256', 'ref', 'output'):
         collection.add_argument('--' + option, required=True)
     collection.add_argument('--deadline-seconds', type=int, default=180)
+    comparison = commands.add_parser('compare-publication', help='Compare two exact recovered results through the selected public CLI; never execute or promote.')
+    for option in ('config', 'cli', 'cli-sha256', 'ref', 'other-ref', 'selection'):
+        comparison.add_argument('--' + option, required=True)
+    comparison.add_argument('--deadline-seconds', type=int, default=180)
     args = parser.parse_args(argv)
     if args.command == 'conformance':
         return conformance_main(args)
-    if args.command == 'collect-publication':
+    if args.command in ('collect-publication', 'compare-publication'):
         return publication_main(args)
     try:
         result = validate(args.root, args.manifest)
@@ -152,7 +156,7 @@ class _CLI:
         import tempfile
         from pathlib import Path
         from .evidence import canonical, require
-        require(operation in ('identity.get', 'studies.get', 'studies.trial', 'recipes.material', 'models.material', 'graphs.get', 'studies.admit', 'runs.get', 'runs.model_evidence', 'runs.publication_result'), 'Unsupported conformance operation.', 'unsupported')
+        require(operation in ('identity.get', 'studies.get', 'studies.trial', 'recipes.material', 'models.material', 'graphs.get', 'studies.admit', 'runs.get', 'runs.model_evidence', 'runs.publication_result', 'runs.compare_publication_evidence'), 'Unsupported conformance operation.', 'unsupported')
         self.calls.append(operation)
         with tempfile.TemporaryDirectory(prefix='tuldok-sdk-call-') as temporary:
             path = Path(temporary)/'arguments.json'; path.write_bytes(canonical(arguments)); path.chmod(0o600)
@@ -287,14 +291,19 @@ def _conformance(selection, client, output):
 
 def publication_main(args):
     from .evidence import EvidenceError, decode, read_regular
-    from .publication import collect, result_reference
+    from .publication import collect, compare, result_reference
     client = None
     try:
         ref = result_reference(decode(read_regular(args.ref, 65536), 65536))
         client = _CLI(args)
-        result = collect(client, ref, args.output)
+        if args.command == 'compare-publication':
+            other_ref = result_reference(decode(read_regular(args.other_ref, 65536), 65536))
+            selection = decode(read_regular(args.selection, 65536), 65536)
+            result = compare(client, ref, other_ref, selection)
+        else:
+            result = collect(client, ref, args.output)
     except (EvidenceError, OSError, ImportError, KeyError, TypeError, ValueError, KeyboardInterrupt) as error:
-        result = {'format': 'extension_sdk_publication_collection_v1', 'state': error.state if isinstance(error, EvidenceError) else 'unavailable',
+        result = {'format': 'extension_sdk_publication_comparison_v1' if args.command == 'compare-publication' else 'extension_sdk_publication_collection_v1', 'state': error.state if isinstance(error, EvidenceError) else 'unavailable',
                   'error': str(error) if isinstance(error, EvidenceError) else 'Publication collection is unavailable.',
                   'numerical': 'not_evaluated'}
         print(json.dumps(result, ensure_ascii=True, allow_nan=False)); return 2

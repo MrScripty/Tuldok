@@ -98,6 +98,31 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, code)
                 self.assertEqual(len(calls), 1)
 
+    def test_exact_field_comparison_uses_authoritative_policies_and_geometry(self):
+        verified = self.verify(); context = self.run['extension_context']
+        selected = verified['checkpoint_index']['entries'][0]['checkpoint']['sha256']
+        metric = verified['metric_definitions'][0]
+        selection = {'checkpoint_sha256': selected, 'other_checkpoint_sha256': selected,
+            'evaluation_sha256': hashlib.sha256((self.root / 'model-evidence.json').read_bytes()).hexdigest(),
+            'other_evaluation_sha256': hashlib.sha256((self.root / 'model-evidence.json').read_bytes()).hexdigest(),
+            'metric_id': metric['id'], 'metric_definition_sha256': evidence.digest(metric),
+            'other_metric_definition_sha256': evidence.digest(metric), 'mode': 'paired'}
+        compared = evidence.compare([verified, verified], [context, context], selection)
+        self.assertEqual(compared['state'], 'compatible')
+        self.assertEqual(compared['delta'], {'state': 'observed', 'value': 0, 'units': metric['units']})
+        # These are structural synthetic states, never a numerical acceptance.
+        changed = copy.deepcopy(context)
+        changed['static']['policy']['fields'][0]['geometry']['origin_xyz'][0] += 1
+        refused = evidence.compare([verified, verified], [context, changed], selection)
+        self.assertEqual(refused['state'], 'incompatible'); self.assertIsNone(refused['delta'])
+        self.assertIn('Field contracts, geometry or gauge semantics differ.', refused['reasons'])
+        wrong = dict(selection, metric_definition_sha256='f' * 64)
+        with self.assertRaises(WorkbenchError): evidence.compare([verified, verified], [context, context], wrong)
+
+    def test_malformed_target_decoder_context_keeps_typed_refusal(self):
+        with self.assertRaises(WorkbenchError):
+            evidence.verify_target_payload({}, {}, {}, {}, b'')
+
     def refresh_synthetic_host_inventory(self):
         """Explicit synthetic prepublication hash snapshot, never an admitted Run."""
         for item in self.run['artifacts']:
