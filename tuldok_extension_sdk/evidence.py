@@ -292,6 +292,17 @@ class Evidence:
         """Blobs actually consumed/written by this builder, not an export permission."""
         return [copy.deepcopy(self._inventory[key]) for key in sorted(self._inventory)]
 
+    @boundary
+    def diagnostics(self, records, omitted):
+        """Capture an opted-in diagnostic index after complete scientific evidence.
+
+        Callers supply every retained record and all optional omission ranges.
+        This does not infer numerical acceptance or repair invalid evidence.
+        """
+        require(self._finished, 'Finish complete scientific evidence before diagnostics.')
+        from .diagnostics import write
+        return write(self, records, omitted)
+
 
 @boundary
 def validate_projection(value, context_raw, blobs):
