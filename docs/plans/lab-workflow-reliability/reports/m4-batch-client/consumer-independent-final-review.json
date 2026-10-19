@@ -1,0 +1,84 @@
+{
+  "actual_receipt": {
+    "author_observed_exit_code": 0,
+    "independently_read_log": "8 tests all ok, 145.991s, no skips/failures/retries in retained log",
+    "log_sha256": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9",
+    "source_hashes": {
+      "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+      "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+      "project_cli.py": "3f25368e2035279c39bcc032b110d4fe554cde251ca16ab43f4b24259cb56719",
+      "runs.py": "73c1b1518379f69c1bc8ce639853a8ce9d62708f1b414636b20b49ebf7dc12b3",
+      "tests/benchmark_lab_workflow.py": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+      "tests/test_workflow_batch_client.py": "84b18c1c19f9daebb8bf412e0be81519a43196df2ffb6a17613026048cb45b9d",
+      "tests/test_workflow_batch_client_http.py": "6e92e5fef0137c222bda6f70f7243824e3e96e8d91cbb2d372658fdd6c912b22",
+      "tuldok_client.py": "33bec87a6fe85f6386e5982ff561c6ae4ff20d5027a18e8745cf94b23de3fab4"
+    }
+  },
+  "cleanup": {
+    "author_receipts": [
+      {
+        "dropped": true,
+        "schema": "catalog_0964c0b47aa643a58201b6b82d310d5d"
+      },
+      {
+        "dropped": true,
+        "owned_temporary_directory_removed": true,
+        "schema": "catalog_2b3cfb84cbc74ad888407eed44283c00"
+      }
+    ],
+    "checked_at_utc": "2026-10-19T22:54:37.880271+00:00",
+    "independent_read_only_query": "SELECT to_regnamespace(%s),to_regnamespace(%s)",
+    "independent_result": [
+      null,
+      null
+    ],
+    "ownership": "Both names come only from exact fresh fixture cleanup receipts; only SELECT used by reviewer.",
+    "schemas": [
+      "catalog_0964c0b47aa643a58201b6b82d310d5d",
+      "catalog_2b3cfb84cbc74ad888407eed44283c00"
+    ]
+  },
+  "nonblocking_coverage_limits": [
+    "Actual collision-race case does not independently assert every later item state/file; source break and controlled batch test explicitly cover stopping later writes.",
+    "Known oversize and empty-item boundaries are controlled tests, not actual8 cap-stress cases; actual neutral fixture is20x64bytes.",
+    "Batch cancellation case proves stopped receipt but does not itself resume that same receipt; actual partial and complete ordinary-resume cases plus unchanged ordinary collector cover resume composition.",
+    "No new test execution, performance measurement, scientific/model-quality acceptance, server redesign review or full-plan acceptance by this reviewer."
+  ],
+  "prior_reviewed_source": "a4ff908fca0ef72ca58554e1473fce2bcfc2d7a8",
+  "qualified_tree": "1597cba6c88d49a9de28d2541db2dadead8ffbe6",
+  "receipt_files": {
+    "actual-http-cli.log": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9",
+    "cleanup-independent.json": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02",
+    "cleanup-publication.json": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995",
+    "cleanup-twenty.json": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427",
+    "source.json": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944"
+  },
+  "result": "Clear in the requested final batch consumer qualification scope; no blocking false-green gap found",
+  "reviewed_at_utc": "2026-10-19T22:54:37.880691+00:00",
+  "reviewed_source": "fd42361f043c201290c5b6297a384652320044ed",
+  "reviewer": "M5 independent consumer/CLI source and qualification audit",
+  "source_verification": {
+    "all_eight_recorded_hashes_match_frozen_and_current_files": true,
+    "m5_exact_guard_hunk_equal": true,
+    "m5_focused_test_file_equal": true,
+    "production_files_unchanged_from_prior_review": [
+      "tuldok_client.py",
+      "project_cli.py",
+      "agent_api.py",
+      "app.py",
+      "runs.py",
+      "run_publication.py"
+    ],
+    "whole_m5_563_ancestor": true
+  },
+  "witness_audit": [
+    "20-whole SDK/clean CLI compare actual bytes and SHA256, mode0600, wholeverified receipts; exact batch request count and no individual automatic fallback; compute counts/events preserved.",
+    "Real per-item owner refusal produces ordered verified/refused/outstanding receipt and preserved typed error; only explicit ordinary CLI resume restarts collection and rechecks prior success.",
+    "Revocation injection runs in server selected-output validation before final HTTP serialization/disclosure guard, so no batch200 bytes are authorized after revocation; client sees401 and no local publication. It does not claim post-disclosure client reauthorization.",
+    "Whole corruption occurs after genuine HTTP delivery, recomputes segment SHA, and still fails whole SHA before publication; wrong exact source is rejected without individual fallback.",
+    "SDK Event cancellation waits actual accepted batch POST and asserts prompt stopped, exact two transport paths, one accepted batch and no files. Clean CLI receives real SIGINT only after accepted POST; exit1/stoppedstdout/tokenabsence, exactly second accepted batch, no files/compute cancel/individualfallback and no newly leaked watchdog asserted.",
+    "Interrupt helper owns doneEvent, bounded wait/join and forced subprocess cleanup in finally; held service release/left witness prevents background handler work escaping test.",
+    "Known collision clean CLI causes no network and preserves existing file; raced atomic link preserves sentinel and refuses. Shared cleanup checks leave no provisional files.",
+    "Actual recovered-publication Ref preserved in receipt, bytes and private mode checked, original interrupted Run/events/counts preserved."
+  ]
+}

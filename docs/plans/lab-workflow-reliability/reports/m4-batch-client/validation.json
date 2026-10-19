@@ -33,7 +33,8 @@
     "all_prior_WorkflowClient_methods_ast_equal_to_final_m5": true,
     "only_added_method": "collect_batch",
     "old_collect_loop_authored_edits": false,
-    "all_prior_WorkflowClient_methods_ast_equal_to_final_m5_563": true
+    "all_prior_WorkflowClient_methods_ast_equal_to_final_m5_563": true,
+    "comment_only_followup_entire_client_ast_unchanged": true
   },
   "actual_http_cli": {
     "outcome": "pass",
@@ -63,11 +64,13 @@
     ]
   },
   "independent_review": {
-    "outcome": "source clear; final evidence audit requested",
+    "outcome": "source clear and exactfd42361 final consumer evidence audit clear",
     "reviewer": "/root/workflow_client_m5",
     "frozen_source": "a4ff908fca0ef72ca58554e1473fce2bcfc2d7a8",
     "receipt_owner_path": "docs/plans/lab-workflow-reliability/reports/m5-workflow-client/batch-consumer-independent-review.json",
-    "scope": "Independent read-only source review, no independent test execution claim."
+    "scope": "Independent read-only source/log/hash audit and two actual schema absence SELECTs; no independent test execution, no new-server/performance/scientific acceptance claim.",
+    "final_qualified_source": "fd42361f043c201290c5b6297a384652320044ed",
+    "final_receipt": "consumer-independent-final-review.json"
   },
   "qualified_source": "fd42361f043c201290c5b6297a384652320044ed",
   "evidence_sha256": {
@@ -75,10 +78,44 @@
     "actual-attempt-01/cleanup-independent.json": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02",
     "actual-attempt-01/cleanup-publication.json": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995",
     "actual-attempt-01/cleanup-twenty.json": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427",
-    "actual-attempt-01/source.json": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944"
+    "actual-attempt-01/source.json": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944",
+    "actual-attempt-02/actual-affected.log": "963638318440f9d9dbc8ce6248c3d4dfaf69f51f3381ca084ab60b8b1dac56f4",
+    "actual-attempt-02/cleanup-independent.json": "a75daf7106aac666c03070a3cfd9bd0a7d5a59c50f79a659c0cd9f302b27b6b9",
+    "actual-attempt-02/cleanup-publication.json": "681a74e3ed8b693214849ca2a307dcec4bdb9556e63a2e21f6715708ae4a6de2",
+    "actual-attempt-02/cleanup-twenty.json": "b509c5a5ecec4d1282fe8160b01142c6651907db1a83a8c6eb23dcc9cfb0ee3b",
+    "actual-attempt-02/preparation.json": "4f913b405f852e8f153e35e594d2a08b60c8669761bb9bb117e6f2bd7871e469",
+    "actual-attempt-02/source-before-comment.json": "a2bdd8a392636950def849c766bce70db3d229de56077f363276925fc872cb65",
+    "actual-attempt-02/source.json": "6c273d2df2f2242cc6ec9a7579026c79701fd543126d95cfb55f5f1f2ecae572",
+    "consumer-independent-final-review.json": "29c982b6c2423877fe0f512f2842bda2fd5bbb7e892bc4fcb8d30efe13b71a60"
   },
   "remaining_acceptance": [
-    "Root final CI and serial integration/remote publication.",
-    "Batch service usefulness/performance disposition remains owned by M4 and root; this consumer supplies no speedup claim."
-  ]
+    "Root final CI and latest-history serial integration/remote publication.",
+    "Measured service usefulness/performance disposition remains owned by M4 and root; this consumer supplies no speedup claim."
+  ],
+  "composed_qualified_source": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625",
+  "producer_parent": "98380228a7edb8eefb4715cba27ca76722756cf9",
+  "affected_composition_gate": {
+    "outcome": "pass",
+    "tests": 3,
+    "seconds": 37.842,
+    "source": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625",
+    "source_capture": "actual-attempt-02/source.json",
+    "log": "actual-attempt-02/actual-affected.log",
+    "selected_cases": [
+      "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+      "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+      "test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted"
+    ],
+    "first_attempt": true,
+    "no_failures_or_retries": true,
+    "after_direct_m4_quiet_release": true,
+    "head_and_recorded_file_hashes_checked_before_execution": true,
+    "head_unchanged_during_gate": true,
+    "cleanup": [
+      "actual-attempt-02/cleanup-twenty.json",
+      "actual-attempt-02/cleanup-publication.json",
+      "actual-attempt-02/cleanup-independent.json"
+    ],
+    "scope": "Affected server refinement only; prior full8 remains attributed to fd42361, not relabeled as current-head execution."
+  }
 }

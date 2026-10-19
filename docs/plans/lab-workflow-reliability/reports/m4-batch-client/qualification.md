@@ -43,9 +43,33 @@ The independent M5 author cleared the frozen `a4ff908` source/default CLI review
 including ordinary method equality, publisher cleanup and atomic no-clobber,
 caps, exact inventory/ref/hash validation, failure behavior and explicit ordinary
 resume. This is independent source review, not a claim of separate test execution;
-its receipt is owned by the M5 report directory. Final exact-source evidence audit
-is pending receipt publication by that reviewer. Root CI/serial integration and
-the independently owned M4 service usefulness disposition remain pending.
+its receipt is owned by the M5 report directory. The independent final `fd42361`
+source/log/hash audit also cleared and independently queried both exact schemas
+absent; its unchanged receipt is retained as `consumer-independent-final-review.json`.
+The review ran no second test suite and makes no performance/scientific claim.
+
+The whole final M5/M6 receipt histories and producer refinement
+`98380228a7edb8eefb4715cba27ca76722756cf9` were merged normally. A separate
+comment-only correction explains that ordinary collect retains individual reads;
+the entire client AST is unchanged by that correction. Exact composed source is
+`4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625`. After direct M4 quiet-window release,
+the three affected actual cases passed on their first attempt in37.842seconds:
+20-artifact SDK whole collection, delivery-time revocation without publication,
+and exact attached publication Ref with original interrupted Run unchanged.
+Head and recorded source hashes matched before execution, and head remained
+unchanged throughout the gate. Both fresh schemas were closed/dropped and then
+independently queried absent. Exact selection, hashes, full log and cleanup
+proofs are retained in `actual-attempt-02/`. The earlier full eight-case execution
+retains its `fd42361` attribution; it is not relabeled as this later composition.
+
+Known oversize and empty-item boundaries are controlled tests; the actual neutral
+fixture uses20x64bytes. The actual collision-race case preserves the sentinel and
+refuses publication; later-item stopping is additionally proved by source and
+controlled tests. Cancellation returns a stopped receipt; actual partial/complete
+ordinary resume and unchanged ordinary collector supply the separate resume
+composition evidence. Root CI/latest-history serial integration and the
+independently owned M4 measured usefulness disposition remain pending. Test times
+here are execution receipts, not a performance comparison.
 
 The change uses the repository's Core/Router, Implementation, Verification,
 Commit, Documentation, Contracts/Security/Resilience and Library/Launcher/IPC/
