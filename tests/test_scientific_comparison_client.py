@@ -90,4 +90,3 @@ class ScientificComparisonClientTests(unittest.TestCase):
         with self.assertRaises(agent_api.AgentAPIError) as caught:
             self.call(arguments, envelope)
         self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
-
