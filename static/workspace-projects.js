@@ -5,7 +5,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
   let active=null, view=null, detail=null, generation=0, controller=null, evidenceController=null, selectedEvidence=null;
   const activityView=WorkspaceProjectActivity({read:(id,signal)=>api('/'+encodeURIComponent(id),{signal}),onDetail:next=>{
     const before=detail,old=before?.evidence.find(ref=>ref.id===selectedEvidence),current=next.evidence.find(ref=>ref.id===selectedEvidence);
-    detail=next;
+    detail=next;modelAuthor.observeProject(next);
     const group=view==='data'?'data':view==='pipeline'?'recipes':'evidence';
     if(JSON.stringify(before?.[group])!==JSON.stringify(next[group])){
       const list=roots[view].querySelector('.project-reference-list');
@@ -25,7 +25,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     }
     if(selectedEvidence&&old&&(old.observed_sha256!==current?.observed_sha256||old.status!==current?.status)){
       if(current?.status==='available'&&current.integrity!=='mismatch')loadEvidence(selectedEvidence,false);
-      else {evidenceController?.abort();evidenceController=null;roots[view].querySelector('.project-evidence-output').textContent='Selected evidence is unavailable or differs from its declared identity.';}
+      else {evidenceController?.abort();evidenceController=null;paintEvidence(roots[view].querySelector('.project-evidence-output'),'Selected evidence is unavailable or differs from its declared identity.');}
     }
   }});
   let recipeGeneration=0;
@@ -78,7 +78,8 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
       const pin=window.WorkspaceExtensionAuthorContracts?.['recipes.inspect/2'];
       if(!pin)throw Error('Current recipe inspection is unavailable.');
       const value=await api('/'+encodeURIComponent(project.id)+'/recipes/'+encodeURIComponent(item.id)+'?expected_sha256='+encodeURIComponent(item.observed_sha256),{headers:{'Tuldok-Operation-Contract':'recipes.inspect/2/'+pin}});
-      if(epoch!==recipeGeneration||selection!==generation||detail?.id!==project.id||detail.manifest_sha256!==project.manifest_sha256||detail.recipes.find(ref=>ref.id===item.id)?.observed_sha256!==item.observed_sha256||detail.recipes.find(ref=>ref.id===item.id)?.integrity==='mismatch'||active!==project.id||view!=='pipeline')return;
+      const current=detail?.recipes.find(ref=>ref.id===item.id);
+      if(epoch!==recipeGeneration||selection!==generation||detail?.id!==project.id||detail.manifest_sha256!==project.manifest_sha256||detail.manifest_status!=='unchanged'||current?.observed_sha256!==item.observed_sha256||current?.status!=='available'||current.integrity==='mismatch'||active!==project.id||view!=='pipeline')return;
       const definition=value.definition;
       if(definition?.schema_version===3&&definition.format==='external_model_evidence_recipe_v2'&&value.extension_binding?.format==='tuldok_extension_binding_v1')await modelAuthor.open(project,item);
       else if(definition?.schema_version===1&&definition.format==='external_recipe_v1'&&!value.extension_binding)await externalCreator.open(project,item);
@@ -121,19 +122,24 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
       }
     }finally{if(controller===request)controller=null;}
   }
+  function paintEvidence(output,html,focus=false){
+    const restore=output.contains(document.activeElement);
+    output.tabIndex=-1;output.innerHTML=html;output.setAttribute('aria-busy','false');
+    if(focus||restore)(output.querySelector('h3')||output).focus({preventScroll:true});
+  }
   async function loadEvidence(id,focus=true) {
     selectedEvidence=id;
     evidenceController?.abort();const request=new AbortController();evidenceController=request;
     const project=active,epoch=generation,root=roots[view],output=root.querySelector('.project-evidence-output');
-    output.textContent='Loading external evidence…';
+    if(focus)paintEvidence(output,'Loading external evidence…');
+    output.setAttribute('aria-busy','true');
     try{
       const value=await api('/'+encodeURIComponent(project)+'/evidence/'+encodeURIComponent(id),{signal:request.signal});
       if(evidenceController!==request||epoch!==generation||project!==active||view!=='runs')return;
       if(value.id!==id||value.external!==true||typeof value.text!=='string')throw Error('Unsupported external evidence response.');
-      output.innerHTML=`<section class="panel panel-pad"><h3 tabindex="-1">${esc(value.label)} · external evidence</h3><p class="muted">Referenced source text; not a Tuldok run or scientific validation.</p><p class="project-path">SHA256 ${esc(value.sha256)}</p><pre>${esc(value.text)}</pre></section>`;
-      if(focus)output.querySelector('h3').focus({preventScroll:true});
-    }catch(error){if(evidenceController===request&&epoch===generation&&error.name!=='AbortError')output.textContent=error.message;}
-    finally{if(evidenceController===request)evidenceController=null;}
+      paintEvidence(output,`<section class="panel panel-pad"><h3 tabindex="-1">${esc(value.label)} · external evidence</h3><p class="muted">Referenced source text; not a Tuldok run or scientific validation.</p><p class="project-path">SHA256 ${esc(value.sha256)}</p><pre>${esc(value.text)}</pre></section>`,focus);
+    }catch(error){if(evidenceController===request&&epoch===generation&&error.name!=='AbortError')paintEvidence(output,esc(error.message));}
+    finally{if(evidenceController===request){evidenceController=null;output.setAttribute('aria-busy','false');}}
   }
   function openImport(id) {
     const item=detail?.data.find(ref=>ref.id===id);

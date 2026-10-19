@@ -1457,7 +1457,14 @@
       catch(error){if(!j.admissionUnknown&&rejected(error)){j.admission=null;j.continuation=null;save(j);}else if(uncertain(error)){j.admissionUnknown=true;save(j);}throw error;}
       j.run=result.run;j.admission=null;save(j);checked(valid);status='Durable Study attempt admitted.';await onRun(result.run.id);
     }
-    return {cancel,async open(detail,item){
+    return {cancel,observeProject(detail){
+      if(!dialog.open||!project||!reference)return;
+      const current=detail.recipes.find(item=>item.id===reference.id);
+      if(detail.id!==project.id||detail.manifest_sha256!==project.manifest_sha256||detail.manifest_status!=='unchanged'||current?.observed_sha256!==reference.observed_sha256||current?.status!=='available'||current.integrity==='mismatch'){
+        const pending=!!busy&&!job?.run;cancel();
+        if(!pending)announce('The selected project or recipe identity changed. Reinspect the recipe before preparing a trial.',true);
+      }
+    },async open(detail,item){
       if(busy){announce('Finish or reconcile the current preparation before opening another recipe.');return;}
       const validEpoch=++generation;project=copy(detail);reference=copy(item);key=project.id+':'+reference.id+':'+reference.observed_sha256;inspected=null;roles=null;reviewed=false;modelEditor=null;trainerEditor=null;draft=null;
       const saved=history.state?.extensionModelTrials?.[key];foreign=!!(saved&&saved.actor!==identity()?.actor_id&&!saved.run);job=saved?.actor===identity()?.actor_id?{...saved,key}:null;
