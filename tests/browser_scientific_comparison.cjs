@@ -44,6 +44,7 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   await activate('#scientific-compare',true);
   await until(()=>evaluate('!!document.getElementById("scientific-result")'),'Actual comparison table missing');
   assert.match(await text('#scientific-result'),/Exact comparison: compatible/);
+  assert.match(await text('#scientific-result'),/Declared field .*index X [01], Y 0, Z 0/);
   assert.match(await text('#scientific-result'),/Coverage: baseline 1; candidate 1; matched 1; union 1/);
   assert.match(await text('#scientific-result'),/owned_per_case_criterion_not_retained/);
   assert.match(await text('#scientific-result'),/Memory: unknown/);
@@ -90,8 +91,16 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   assert.equal(await evaluate('!!document.getElementById("scientific-result")'),false);
   assert.equal(await evaluate('document.getElementById("scientific-compare")?.disabled'),true);
   await control('restore');checks.push('Removed retained root refuses fresh candidate selection and clears prior values.');
-  const forbidden=requests.filter(row=>row.method==='POST'&&/\/api\/workspace\//.test(row.url)&&!/(\/model-evidence|\/scientific-comparison|\/publication-results)$/.test(row.url));
+  await evaluate(`(()=>{const select=document.querySelector('#scientific-candidate');select.value='${info.candidate}';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  await until(()=>evaluate('!document.querySelector("#scientific-compare")?.disabled'),'Restored exact candidate did not reload');
+  await activate('#scientific-compare',true);await until(()=>evaluate('!!document.getElementById("scientific-result")'),'Pre-revocation comparison missing');
+  const credential=await evaluate('TuldokAuth.identity().credential_id');await control('revoke '+credential);
+  await activate('#scientific-compare',true);
+  await until(()=>evaluate('!window.TuldokAuth?.identity()?.credential_id&&!document.getElementById("scientific-result")'),'Actual revoked session retained cached scientific values');
+  checks.push('Actual browser credential revocation clears the session and all cached scientific values after the refused read.');
+  const forbidden=requests.filter(row=>row.method==='POST'&&/\/api\/workspace\//.test(row.url)&&!/(\/model-evidence|\/scientific-comparison|\/publication-results|\/preparation-timings)$/.test(row.url));
   assert.deepEqual(forbidden,[],'Read-only comparison dispatched an unexpected workspace mutation');
+  assert.ok(requests.filter(row=>row.url.endsWith('/preparation-timings')).every(row=>row.headers['Tuldok-Operation-Contract']?.startsWith('graphs.preparation_timings/1/')),'Preparation timing reads must retain their explicit read-only contract');
   assert.deepEqual(errors,[],'Browser runtime exceptions');
   fixture.stdin.write('done\n');await until(()=>fixture.exitCode!==null,'Fixture did not close fresh schema');assert.equal(fixture.exitCode,0,stderr);
   const domain=JSON.parse(fs.readFileSync(path.join(report,'domain-receipt.json'),'utf8'));

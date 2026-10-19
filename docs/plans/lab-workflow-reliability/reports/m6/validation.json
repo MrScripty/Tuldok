@@ -1,0 +1,101 @@
+{
+  "state": "generic_contract_and_ui_verified; qualified_scientific_acceptance_pending",
+  "source_review_commit": "1bf5031ab45d9eab786bd9c0cd7bc4d9ae3d113d",
+  "phase_composition_parent": "871ad16dc78cf311e43b0feac916a67b7b8ab1c2",
+  "operation": "runs.compare_scientific_evidence/1",
+  "contract_sha256": "32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5",
+  "source_hashes": {
+    "agent_api.py": "40a5de266131ae783c26657fef2d9b1b09204188956ff002867c5108c7ae55eb",
+    "app.py": "bc3e53c50fe5aa295994fdd75b354231b63a4d251a93dc52faa23d68bd015d6d",
+    "extension_evidence.py": "0375f74bf37ee168b2e037b2a62e8e822c0c9fc415cfb58b1bab4049541239d6",
+    "run_publication.py": "99722ab20df6a28928ddf696d840b08cf81f02e82e5d996416d8a43693d23830",
+    "runs.py": "c5304cc65868e5ed62b7b4d9744067b432d62b4e318d60ef4f2ed7cf305d0953",
+    "static/workspace-real.js": "412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2",
+    "static/workspace-scientific-comparison.js": "e2a1068011135bf845c1d962cf1e11147419c8c9ab8da36a80267be427762ade",
+    "static/workspaces.html": "87d1f8893792b5f519047bc9907230093d7a4751f73c3a6f95111fa1d5163216",
+    "static/workspaces.css": "c074e819bc610cb3c46b7c2fd98b7467eef896d62826f949a8c959ac4604efe5",
+    "tests/test_scientific_comparison.py": "16de08e2d6f358849acbf505f16808a1a466fe947e24454e4e6b6e676ded6b04",
+    "tests/test_scientific_comparison_controller.cjs": "b1f7247aae79f99acaf37f292039f0135a7e104943836a83dbc4b62454d1fe50",
+    "tests/scientific_comparison_fixture.py": "c580c700aea4cfe0b9125200f2ad6991c9e80efe26acd405d1d5833faf87082f",
+    "tests/browser_scientific_comparison.cjs": "5d97bf5c573b6966264a9b3f0ee034301b7d57212303ef573503041e20fe9075",
+    "tests/test_workspace_external_controller.cjs": "cdf57655f2adb42e42676af825438a28b32005bbbaeb85bd20e20e24c3593d8e"
+  },
+  "tests": [
+    {
+      "command": "python3 -m unittest test_scientific_comparison.ScientificReaderTests -v",
+      "result": "5 passed in 32.480s; disposable PostgreSQL and actual HTTP",
+      "log": "evidence/reader-green.log"
+    },
+    {
+      "command": "python3 -m unittest test_scientific_comparison.ScientificComparisonTests test_extension_field_evidence test_workspace_model_contracts test_workspace_publication -v",
+      "result": "34 run,32 passed,2 database cases skipped here and separately passed below",
+      "log": "evidence/pure-green.log"
+    },
+    {
+      "command": "python3 -m unittest test_extension_field_evidence.RetainedExtensionRecordTests -v",
+      "result": "2 passed in 3.661s; real PostgreSQL/canonical retained refusal cases",
+      "log": "evidence/retained-green.log"
+    },
+    {
+      "command": "python3 -m unittest test_agent_api -v",
+      "result": "17 passed in 64.687s",
+      "log": "evidence/agent-api-green.log"
+    },
+    {
+      "command": "node tests/test_scientific_comparison_controller.cjs; node tests/test_workspace_field_controller.cjs; node tests/test_workspace_external_controller.cjs; node tests/test_workspace_coordinator_controller.cjs",
+      "result": "all four passed",
+      "logs": [
+        "evidence/controller-green.log",
+        "evidence/field-controller-green.log",
+        "evidence/external-controller-green.log",
+        "evidence/coordinator-green.log"
+      ]
+    },
+    {
+      "command": "node tests/browser_scientific_comparison.cjs",
+      "result": "passed with Chromium 151,actual HTTP/DB,keyboard,1440/390 viewport,stale real-response delivery,attached recoveredRef,root removal,live browser credential revocation",
+      "log": "evidence/browser-green.log",
+      "receipt": "evidence/browser-receipt.json"
+    }
+  ],
+  "fixture_scope": {
+    "canonical_load_and_context_substituted": false,
+    "real_owner_metadata_material_grant_study_admission": true,
+    "terminal_arrays_and_custody_receipts": "explicitly authored test-only states",
+    "runtime": "captured tiny structural inventory: /usr/bin/true and dummy torch/numpy 0.0; NOT runnable Python",
+    "producer_executed": false,
+    "scientific_acceptance": "not evaluated",
+    "clock_values": "fixture protocol labels, not executed optimizer passes or measured execution time"
+  },
+  "independent_expected_point_zero": {
+    "baseline": -0.125,
+    "candidate": 1.875,
+    "candidate_minus_baseline": 2,
+    "units": "dimensionless",
+    "authority": "original source fixture target bytes plus explicit fixture offset; not computed by comparison code"
+  },
+  "counts_before": {
+    "workspace_runs": 3,
+    "access_execution_grants": 3,
+    "access_execution_consumptions": 3,
+    "model_attempt_reservations": 3
+  },
+  "counts_after": {
+    "workspace_runs": 3,
+    "access_execution_grants": 3,
+    "access_execution_consumptions": 3,
+    "model_attempt_reservations": 3
+  },
+  "original_recovered_state": "interrupted",
+  "schemas_removed": true,
+  "screenshots": [
+    "build/qa/scientific-comparison/run-kcaI5l/comparison-1440.jpg",
+    "build/qa/scientific-comparison/run-kcaI5l/comparison-390.jpg"
+  ],
+  "remaining": [
+    "No retained owned per-case metric/criterion Ref; qualified pass/fail and diagnostic-vs-qualified criterion acceptance pending.",
+    "Actual lab baseline/candidate pair and lab scientific acceptance authority are not supplied; no SCI-1/lab improvement claim.",
+    "No fresh runnable runtime,producer,training,process-custody or CUDA qualification; synthetic terminal reader fixture only.",
+    "Full exact integrated CI and root AgentClient echo-identity guard remain integration-owner gates."
+  ]
+}

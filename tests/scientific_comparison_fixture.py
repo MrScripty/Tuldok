@@ -121,7 +121,7 @@ class ScientificFixture:
                 # Missing owner spans remain unknown; protocol checkpoint labels
                 # in diagnostics are not presented as measurements of execution.
                 run['_phase_timings']=[]
-                dataset.runs._save(run)
+                with dataset.lock,dataset.db.transaction():dataset.runs._save(run)
                 self.runs.append(dataset.runs._load(run['id']))
                 if index==2:
                     recovered=dataset.runs.recover_publication({'run_id':run['id'],'source_ref':run['publication_source'],'request_key':'m6-recover-exact'})
@@ -208,6 +208,12 @@ def main():
                 moved=root.with_name(root.name+'-held-by-fixture');root.rename(moved)
             elif command=='restore' and moved is not None:
                 moved.rename(root);moved=None
+            elif command.startswith('revoke '):
+                credential=command.removeprefix('revoke ')
+                import re
+                if not re.fullmatch('[a-f0-9]{32}',credential):raise ValueError('Invalid fixture credential ID')
+                with fixture.owner.bound(fixture.dataset):fixture.dataset.access.revoke(credential)
+                receipt['browser_credential_revoked']=True
             else:raise ValueError('Unknown fixture control command')
             print(json.dumps({'control':command}),flush=True)
         receipt.update(counts_before=fixture.before_counts,counts_after=fixture.counts(),

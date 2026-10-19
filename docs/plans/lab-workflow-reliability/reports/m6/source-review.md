@@ -1,5 +1,8 @@
 # M6 source review candidate
 
+This is the earlier source-review boundary. Actual subsequent results are in
+[qualification.md](qualification.md) and [validation.json](validation.json).
+
 Base: `2bf1d4035510003c6bbcc84d94b578a7ee753d69`, private branch
 `feature/lab-field-comparison-20261019`. Root owns integration, CI and common
 plan/ledger. This report records source readiness, not acceptance.
