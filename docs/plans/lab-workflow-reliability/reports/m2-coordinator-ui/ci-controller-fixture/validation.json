@@ -1,0 +1,44 @@
+{
+  "original_source": "4bcf43063ff780fd5e44894701d65338abdc0579",
+  "original_hosted": {
+    "run": 39330900861,
+    "job": 118328520352,
+    "state": "failure",
+    "first_failed_step": 43,
+    "error": "AbortController missing in external controller VM fixture; later browser checks skipped",
+    "full_python": "1622 tests2397.928s OK skipped72",
+    "cpu": "13stepssuccess; actualtraining/forwardinferencescopeindependentreceipt"
+  },
+  "local_reproduction": "sameReferenceError withunchangedassertions beforefixturefix",
+  "change": "Onlytests/test_workspace_external_controller.cjs VMcontext suppliesactualNodeAbortController/performance browserAPIs andinertchildDOMquery/contains methods neededcoordinatorcomposition; no productcode/assertion/phaseassetchange",
+  "local_final": "entireNodecontroller script exit0; allthreefinalPASSmarkers",
+  "independent_review": "clear; entireNodescript exit0/0.208stoolwall, allassertions/loops/prodsourceunchanged",
+  "files": [
+    {
+      "name": "tuldok-pr102-controller-composition-green.log",
+      "bytes": 829,
+      "sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c"
+    },
+    {
+      "name": "tuldok-pr102-controller-composition-red.log",
+      "bytes": 1349,
+      "sha256": "c05c7fe1e68b0f15f50eb9b636721adf6a513cdb3359d81bc1de6ed5722ac842"
+    },
+    {
+      "name": "tuldok-pr102-controller-fixture-independent-review.json",
+      "bytes": 6290,
+      "sha256": "ca19f57258c5f7bc3d01c62ec20ba80e3ab595ca0481b3e7b75f0bca80203d42"
+    },
+    {
+      "name": "tuldok-pr102-controller-independent-green.log",
+      "bytes": 829,
+      "sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c"
+    },
+    {
+      "name": "tuldok-pr102-independent-lifecycle-job-118328520352.log",
+      "bytes": 249236,
+      "sha256": "f39ba121a8c921cc5ce8cda56883d94392c6a59d9d3212ff0376a577ff5f5804"
+    }
+  ],
+  "remaining": "fresh exactheadhostedlifecycle andserialbaseintegration; no newCPUtraining/CUDA/scientificclaim"
+}

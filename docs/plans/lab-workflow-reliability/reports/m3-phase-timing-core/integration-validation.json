@@ -1,0 +1,28 @@
+{
+  "composed_source": "96c2adebc3a46b9fe92b179097474e08474689c3",
+  "parents": [
+    "1f917bf8ffb420f6bca883afac9984587664ae64",
+    "a7efd450bd3bd7f7992dbe839ea4d3d5f04f0b02"
+  ],
+  "independent_review": "root whole source/consumers clear including nonempty optional custodian sample fix; 120 baseline full contracts unchanged",
+  "independent_tests": {
+    "source": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb",
+    "passed": 9,
+    "seconds": 23.377,
+    "skipped": 0,
+    "log": "tuldok-m3-root-independent-qualification.log"
+  },
+  "composed_tests": {
+    "passed": 15,
+    "seconds": 40.19,
+    "skipped": 0,
+    "log": "tuldok-m3-core-composed-final.log",
+    "scope": "entire timing module plus coordinator panel canonical pin test"
+  },
+  "composition": "whole reviewed coordinator UI a7efd normal merge; earlier authored manifests remain exact-source attributed",
+  "pending": [
+    "hosted exact head and integrated main",
+    "full M3 phase UI/browser T4/T8"
+  ],
+  "scope": "neutral owner process/storage diagnostics; no CUDA or scientific acceptance"
+}
