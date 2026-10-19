@@ -1,0 +1,13 @@
+test_chunk_bound_same_size_mutation_and_link_refusal (test_external_artifacts.BoundedCopyTests.test_chunk_bound_same_size_mutation_and_link_refusal) ... ok
+test_cold_runtime_sitecustomize_matches_verified_python_version (test_recipe_contract.ContractTests.test_cold_runtime_sitecustomize_matches_verified_python_version) ... ok
+test_execution_reservations_are_bounded_and_captured (test_recipe_contract.ContractTests.test_execution_reservations_are_bounded_and_captured) ... ok
+test_output_inventory_refuses_extra_links_and_missing (test_recipe_contract.ContractTests.test_output_inventory_refuses_extra_links_and_missing) ... ok
+test_parameters_and_closed_tokens (test_recipe_contract.ContractTests.test_parameters_and_closed_tokens) ... ok
+test_real_runtime_closure_without_launch (test_recipe_contract.ContractTests.test_real_runtime_closure_without_launch) ... ok
+test_strict_native_elf_rejects_headers_paths_and_loader_extensions (test_recipe_contract.ContractTests.test_strict_native_elf_rejects_headers_paths_and_loader_extensions) ... ok
+test_bounded_reads_exact_hashes_and_unsafe_paths (test_large_recipe_contract.StreamedOutputChecks.test_bounded_reads_exact_hashes_and_unsafe_paths) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 1.152s
+
+OK

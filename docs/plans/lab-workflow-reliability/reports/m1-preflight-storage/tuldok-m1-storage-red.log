@@ -1,0 +1,73 @@
+test_admission_keeps_existing_exact_policy_and_boundary (test_run_preflight_storage.PreflightStorageTests.test_admission_keeps_existing_exact_policy_and_boundary) ... ERROR
+test_generated_model_context_uses_existing_context_capture_limit (test_run_preflight_storage.PreflightStorageTests.test_generated_model_context_uses_existing_context_capture_limit) ... ERROR
+test_preflight_includes_capture_that_admission_already_staged (test_run_preflight_storage.PreflightStorageTests.test_preflight_includes_capture_that_admission_already_staged) ... ERROR
+test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph (test_run_preflight_storage.PreflightStorageTests.test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph) ... FAIL
+test_storage_refusal_cannot_emit_report_or_change_old_projections (test_run_preflight_storage.PreflightStorageTests.test_storage_refusal_cannot_emit_report_or_change_old_projections) ... FAIL
+test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior (test_run_preflight_storage.PreflightStorageTests.test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior) ... ERROR
+
+======================================================================
+ERROR: test_admission_keeps_existing_exact_policy_and_boundary (test_run_preflight_storage.PreflightStorageTests.test_admission_keeps_existing_exact_policy_and_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 31, in test_admission_keeps_existing_exact_policy_and_boundary
+    observed = self.check(self.minimum)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 25, in check
+    result = Runs._check_external_storage(self.owner, self.material, pending_capture=pending_capture)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute '_check_external_storage'
+
+======================================================================
+ERROR: test_generated_model_context_uses_existing_context_capture_limit (test_run_preflight_storage.PreflightStorageTests.test_generated_model_context_uses_existing_context_capture_limit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 51, in test_generated_model_context_uses_existing_context_capture_limit
+    self.check(expected - 1, pending_capture=True)
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 25, in check
+    result = Runs._check_external_storage(self.owner, self.material, pending_capture=pending_capture)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute '_check_external_storage'
+
+======================================================================
+ERROR: test_preflight_includes_capture_that_admission_already_staged (test_run_preflight_storage.PreflightStorageTests.test_preflight_includes_capture_that_admission_already_staged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 42, in test_preflight_includes_capture_that_admission_already_staged
+    self.check(self.minimum + 97, pending_capture=True)
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 25, in check
+    result = Runs._check_external_storage(self.owner, self.material, pending_capture=pending_capture)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute '_check_external_storage'
+
+======================================================================
+ERROR: test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior (test_run_preflight_storage.PreflightStorageTests.test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 57, in test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior
+    Runs._check_external_storage(self.owner, self.material, pending_capture=True)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute '_check_external_storage'
+
+======================================================================
+FAIL: test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph (test_run_preflight_storage.PreflightStorageTests.test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 81, in test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph
+    storage.assert_called_once_with(self.material, pending_capture=True)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 960, in assert_called_once_with
+    raise AssertionError(msg)
+AssertionError: Expected 'mock' to be called once. Called 0 times.
+
+======================================================================
+FAIL: test_storage_refusal_cannot_emit_report_or_change_old_projections (test_run_preflight_storage.PreflightStorageTests.test_storage_refusal_cannot_emit_report_or_change_old_projections)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-storage-m1/tests/test_run_preflight_storage.py", line 93, in test_storage_refusal_cannot_emit_report_or_change_old_projections
+    with self.assertRaises(WorkbenchError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: WorkbenchError not raised
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.018s
+
+FAILED (failures=2, errors=4)

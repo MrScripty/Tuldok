@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — exact successful-preparation reporting after the fixed-array capacity slice; full publication recovery remains pending
+**Current phase:** M1 — current large-output storage observation after exact preparation reporting; full publication recovery remains pending
 
-**Next slice:** Independently review and qualify selected preflight v3 reporting and old-version HTTP compatibility, then extend structured refusal diagnostics and publication continuation.
+**Next slice:** Qualify Runs-owned preflight storage observation and exact report compatibility, then extend structured refusal diagnostics and publication continuation.
 
 **Acceptance status:** `pending`
 
@@ -92,6 +92,34 @@ directory. No new persistence, schema migration, approval owner or dependency.
 Focused unit/contract tests precede actual hosted HTTP/AgentClient compatibility,
 no-effect and full qualification. Retain the branch/worktree for review until
 safe integration/archival; no accepted head or unrelated resource is rewritten.
+
+## Next bounded slice — current large-output storage
+
+Continued authorized implementation uses branch
+`feature/lab-preflight-storage-20261019` in
+`/workspace/Tuldok-lab-preflight-storage-m1`, based on independently reviewed
+PR93 source `635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465`. PR93 is unchanged
+and remains a dependent draft. PR90 subsequently merged as
+`c7f3575cdb16a00c602f7698eee34d2e938d0e9c` with tested-tree equality; PR92
+now targets main at unchanged `750332a`. Hosted and post-merge qualification
+remain separate gates; original PR91 and unrelated work are preserved.
+
+This slice moves the existing large-output admission storage inequality into a
+Runs-owned observation helper. Selected v3 preflight includes still-pending
+capture/context bytes and checks the Runs destination filesystem before its
+final graph check. Admission uses zero pending bytes, preserving its original
+policy after staging. The report exposes a bounded current observation, while
+later resource/admission/publication checks stay deferred. No reservation,
+storage retention promise, grant consumption or compute is added. Old selected
+v1/v2/headerless behavior is unchanged; this remains partial C1/T1, not full A1/M1.
+
+Write set: `runs.py`, `pipeline.py`, `tests/test_run_preflight_storage.py`,
+affected canonical contract docs and this plan directory. The existing early
+preflight wildcard covers the new module without workflow changes. Pure boundary
+tests precede the actual hosted PostgreSQL no-effect case and the existing
+large-output admission/publication suites. No persistent schema or dependency
+changes are admitted. Publish the branch and recovery receipt to verified remote
+storage; retain worktree/ref until safe reviewed integration or archival.
 
 ## Objective Acceptance
 

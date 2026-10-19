@@ -115,3 +115,41 @@
   [Exact retained logs and limits](reports/m1-exact-preflight-report/validation.json)
   distinguish these results. Independent source/test/document review cleared
   the bounded slice for dependent draft publication, without merge acceptance.
+
+## 2026-10-19 — Current large-output storage observation
+
+- Executor recovery confirmed through actual edits, 42-case affected test run,
+  committed report source `635c1f8`, successful push and draft PR93 creation.
+  The independent standalone clone fetched that exact source and parent.
+- PR90 archived qualification independently cleared: all 74 agent and 19 MCP
+  cases passed, full suite 1535 ran with 72 explicit skips, required browsers
+  and captured CPU workflows succeeded. Merged exact `76d3c6a` as `c7f3575c`;
+  tested-tree equality verified. PR92 retargeted to main at unchanged `750332a`.
+  Main post-merge CI remains parent-monitored; no branches were deleted.
+- Continued the next bounded resource slice in a separate dependent worktree
+  at PR93, preserving all accepted heads. Six new before-change witnesses
+  failed/errored for the missing storage path. Reused Runs' existing large-output
+  policy with pending capture/context accounting only before staging; existing
+  admission and actual-byte publication checks keep their separate timing.
+- Added exact capacity boundary, generated context, missing-device, graph-drift,
+  missing-owner, old-projection and bounded report tests. Initial 17 storage/report
+  cases passed; affected storage/report/output-capacity/capacity/frozen-registry
+  group ran 39 cases, 37 passed and 2 PostgreSQL cases unavailable locally.
+  The new hosted PostgreSQL case checks current real preparation with an authored
+  snapshot descriptor, zero process launches and unchanged graph/Run/grant/
+  reservation counts and staging directory. It is no installed-runtime execution
+  claim and remains unverified until hosted execution.
+- Fresh preservation audit: all original 82 heads and 96 worktrees unchanged.
+  Durable checkpoint `0e6bd57` was fetched in the independent clone and all
+  25 retained evidence sizes/SHA256 values verified. Review and hosted source
+  qualification of this storage slice remain pending; full A1/M1 remains open.
+
+- Additional bounded-copy/runtime-contract/streamed-output regressions: all 8
+  passed in 1.152s. [Retained red/green logs and limits](reports/m1-preflight-storage/validation.json)
+  keep pure tests separate from the hosted PostgreSQL acceptance still pending.
+
+- Independent final source/test/docs review cleared this bounded storage slice
+  for dependent draft publication; independently ran 8 pure cases with 1 PG
+  skip. A task-owned local PostgreSQL build was investigated: compiler exists,
+  but ordinary downloads of the official source archive/checksum returned HTTP
+  403. No server was installed or compiled; database acceptance remains hosted.

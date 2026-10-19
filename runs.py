@@ -558,14 +558,7 @@ class Runs:
         # Captured/validated resource policy owns this bound. Check
         # after both reconciliation opportunities, before consuming
         # approval or persisting admission; failure uses normal cleanup.
-        if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
-            required_bytes = 2 * spec['max_output_bytes'] + 1024**3
-            try:
-                available_bytes = shutil.disk_usage(self.path).free
-            except OSError as error:
-                raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
-            if available_bytes < required_bytes:
-                raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
+        self._check_external_storage(captured['material'])
         if check_current and self.pipelines._get(graph['id']) != graph:
             raise WorkbenchError('Graph changed during capture.', 'stale', 409)
         if len(self._in_states(ACTIVE)) >= 8:
@@ -613,6 +606,27 @@ class Runs:
             return receipt if receipt['drained'] else None
         except (OSError, ValueError, KeyError):
             return None
+
+    def _check_external_storage(self, material, *, pending_capture=False):
+        """Observe Runs' existing large-output envelope; never reserve or admit."""
+        import recipe_contract
+        resources = material['resources']
+        if resources.get('profile') != recipe_contract.LARGE_OUTPUT_PROFILE:
+            return None
+        capture_bytes = 0
+        if pending_capture:
+            capture_bytes = sum(item['bytes'] for item in material['captures'].values())
+            if recipe_contract.is_evidence(material['recipe']):
+                capture_bytes += recipe_contract.EVIDENCE_CONTEXT_LIMIT
+        required_bytes = capture_bytes + 2 * resources['max_output_bytes'] + 1024**3
+        try:
+            available_bytes = shutil.disk_usage(self.path).free
+        except OSError as error:
+            raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
+        if available_bytes < required_bytes:
+            raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
+        return {'required_bytes': required_bytes, 'available_bytes': available_bytes,
+                'pending_capture_bytes': capture_bytes}
 
     def _external_recovery_state(self, run):
         if run['custody_phase'] in ('prepared', 'barrier_ready'):

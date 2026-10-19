@@ -40,7 +40,7 @@ def digest(value):
     return hashlib.sha256(encode(value).encode()).hexdigest()
 
 
-def _external_preflight_report(graph, prepared):
+def _external_preflight_report(graph, prepared, *, storage=None):
     """Project fresh prepare() proofs; this is neither admission nor a retained proof cache."""
     material = prepared['material']
     runtime = material.get('torch_runtime', material.get('cpu_snapshot', material['runtime']))
@@ -63,6 +63,11 @@ def _external_preflight_report(graph, prepared):
     check('capture_authority', 'pipeline', 'preparation', 'checked',
           digest({'project': material['project'], 'inputs': material['inputs']}),
           'Current source and input capture owners', 'Preparation used current inspection and input disclosure authority; no execution approval was consumed.')
+    if storage is not None:
+        check('storage_capacity', 'runs', 'preparation', 'checked', digest(storage),
+              'Runs current large-output storage observation',
+              f"Observed {storage['available_bytes']} free bytes against {storage['required_bytes']} required bytes "
+              f"including {storage['pending_capture_bytes']} pending capture bytes; this reserves no storage.")
     for code, phase, evidence, boundary, detail in (
             ('authority_admission', 'admission', prepared['material_sha256'], 'Runs atomic admission',
              'Current actor, exact grant, request identity and any Study reservation or budget must be checked at admission.'),
@@ -318,10 +323,16 @@ class Pipelines:
             raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
         result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
                                                     getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
+        storage = None
+        if contract_version == 3 and result['material']['resources'].get('profile') == recipe_contract.LARGE_OUTPUT_PROFILE:
+            runs = getattr(self.dataset, 'runs', None)
+            if runs is None:
+                raise WorkbenchError('Execution storage owner is unavailable.', 'unavailable', 409)
+            storage = runs._check_external_storage(result['material'], pending_capture=True)
         if self.get(graph_id) != graph:
             raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
         if contract_version == 3:
-            result = dict(result, preflight_report=_external_preflight_report(graph, result))
+            result = dict(result, preflight_report=_external_preflight_report(graph, result, storage=storage))
         return result
 
     @authorized('inspect', 'pipeline.capture_external')
