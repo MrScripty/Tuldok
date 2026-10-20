@@ -5,6 +5,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
 const {spawn,execFileSync}=require('node:child_process');
 const {authenticatedFixture}=require('./auth_helpers.cjs'),{waitForDebugger}=require('./browser_startup.cjs');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
+const {stopOwnedChildren}=require('./browser_owned_cleanup.cjs');
 const tracker=pageLoadTracker();
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'scientific-comparison'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-scientific-comparison-browser-'));
@@ -112,5 +113,6 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   if(ws)ws.close();
   for(const child of children.reverse())if(child.exitCode===null){if(child.stdin?.writable)child.stdin.end('done\n');else child.kill('SIGTERM');}
   await Promise.all(children.map(child=>child.exitCode!==null?Promise.resolve():new Promise(resolve=>{const timer=setTimeout(()=>{child.kill('SIGTERM');resolve();},3000);child.once('exit',()=>{clearTimeout(timer);resolve();});})));
-  fs.rmSync(temp,{recursive:true,force:true});
+  await stopOwnedChildren(children);
+  fs.rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});
 });
