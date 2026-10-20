@@ -133,10 +133,12 @@ def validate_policy(value, definition):
     import recipe_contract
     bound=recipe_contract.is_bound_evidence(definition)
     canonical_mode=recipe_contract.is_canonical_evidence(definition)
+    indexed=recipe_contract.is_indexed_evidence(definition)
     closed(value,('format','task','adapter_sha256','profile','probe','fit_members','fields','field_outputs',
                   'metric_definitions','model_specification','preprocessing_policy','output_policy','probe_inputs',
-                  *(['field_targets'] if bound else []),*(['canonical'] if canonical_mode else [])),'Policy')
-    require(value['format']==(recipe_contract.CANONICAL_POLICY_FORMAT if canonical_mode else POLICY_FORMAT),'Unsupported policy.','unsupported')
+                  *(['field_targets'] if bound else []),*(['canonical'] if canonical_mode else []),
+                  *(['diagnostic_capture'] if indexed else [])),'Policy')
+    require(value['format']==(recipe_contract.CANONICAL_POLICY_FORMAT if canonical_mode else recipe_contract.INDEXED_POLICY_FORMAT if indexed else POLICY_FORMAT),'Unsupported policy.','unsupported')
     require(recipe_contract.is_evidence(definition),'Policy requires the selected model-evidence recipe.','unsupported')
     require(value['adapter_sha256']==digest(sorted(definition['sources'],key=lambda item:item['path'])),'Adapter source closure differs.')
     task=value['task'];closed(task,('id','revision','definition'),'Task declaration')
@@ -251,6 +253,10 @@ def validate_policy(value, definition):
     if canonical_mode:
         import extension_canonical
         extension_canonical.validate_declaration(value['canonical'],value,definition)
+    if indexed:
+        from tuldok_extension_sdk import diagnostics
+        try:diagnostics.validate_capture(value['diagnostic_capture'],value,definition['outputs'])
+        except diagnostics.EvidenceError as exc:raise WorkbenchError(str(exc),exc.state,400) from None
     return value
 
 
@@ -562,11 +568,16 @@ def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
                                                                                'gauge_policy':field['gauge_policy']}
                 field_records.append({'checkpoint_sha256':checkpoint_sha,'member_ordinal':member['ordinal'],'field_id':field['id'],'stage':output['stage'],'shape_zyx':output['shape_zyx'],'units':output['units']})
     guard()
-    return {'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
+    result={'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
             'manifest':manifest,'checkpoint_index':index,'probe':static['probe'],'metric_definitions':policy['metric_definitions'],
             'observations':observations,'model_definition':policy['model_specification'],'fields':field_records,
             'metric_definition_hashes':{item['id']:digest(item) for item in policy['metric_definitions']},
             'checkpoints':[item['descriptor'] for item in checkpoints.values()], '_arrays':arrays}
+    if recipe_contract.is_indexed_evidence(run['material']['recipe']):
+        from tuldok_extension_sdk import diagnostics
+        try:result['_diagnostics']=diagnostics.verify(policy['diagnostic_capture'],policy,payloads,admitted_context,index,guard)
+        except diagnostics.EvidenceError as exc:raise WorkbenchError(str(exc),exc.state,400) from None
+    return result
 
 
 @boundary

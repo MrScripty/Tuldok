@@ -1,0 +1,41 @@
+{
+  "source": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
+  "state": "2actualpassed22.431seconds0skips",
+  "files": [
+    {
+      "name": "indexed-final-9d563ceb-independent-review.json",
+      "bytes": 2527,
+      "sha256": "e2156d07caec2034bf61ee36df820656948442f4383d1360956cdeb000ec072e"
+    },
+    {
+      "name": "qualification.md",
+      "bytes": 1799,
+      "sha256": "b161fd1f6e56aa78ec1122665b76e49f25103150fcefc11e12a397aed1ae0193"
+    },
+    {
+      "name": "tuldok-indexed-composed-actual.log",
+      "bytes": 3482,
+      "sha256": "efb4fd6d332c9a316b567892dd0930bd03c907f2f9b067e78596b3d2a83d8b42"
+    },
+    {
+      "name": "tuldok-indexed-composed-qualification.json",
+      "bytes": 5345,
+      "sha256": "b9cd773ea3e2cc412ab45571daf8b4dc2c7c46ca04b42fbf26040dc04d95c2b3"
+    },
+    {
+      "name": "tuldok-indexed-composed-readers-70dcaeb-independent-review.json",
+      "bytes": 4801,
+      "sha256": "be25642992e49f5a0d89cb5a34a7185470a5ce321443103bf4597ed81c577a04"
+    },
+    {
+      "name": "tuldok-indexed-composed-source.json",
+      "bytes": 1317,
+      "sha256": "c39835e804b9500b770e0d6f7cb6a7dd44bee8ec386778a47b2d37130f734588"
+    },
+    {
+      "name": "tuldok-refined-indexed-cleanup-independent.json",
+      "bytes": 505,
+      "sha256": "74e2e410c87085a81efe8fe50c2e7effe3f2b41c1a977eb6b4a4ffa8bbd84222"
+    }
+  ]
+}

@@ -34,6 +34,8 @@ CPU_DESCRIPTOR = 'runtime-bootstrap/snapshot.json'
 CPU_BOOTSTRAP = 'runtime-bootstrap/recipe_process.py'
 HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py')
 EVIDENCE_HOST_NAMES = (*HOST_NAMES, 'extension_evidence.py', 'field_evidence.py', 'scientific_fields.py', 'scientific_release.py')
+INDEXED_POLICY_FORMAT = 'extension_field_policy_indexed_v1'
+DIAGNOSTIC_HOST_NAMES = ('tuldok_extension_sdk/__init__.py', 'tuldok_extension_sdk/evidence.py', 'tuldok_extension_sdk/diagnostics.py')
 EVIDENCE_FORMAT = 'external_model_evidence_recipe_v1'
 BOUND_EVIDENCE_FORMAT = 'external_model_evidence_recipe_v2'
 BOUND_EVIDENCE_HOST_NAMES = (*EVIDENCE_HOST_NAMES, 'extension_bindings.py', 'extension_contract.py', 'agent_api.py',
@@ -49,6 +51,7 @@ IMPORTED_EVIDENCE_HOST_FILES = ({name: hashlib.sha256((Path(__file__).resolve().
     if all((Path(__file__).resolve().parent/name).is_file() for name in EVIDENCE_HOST_NAMES) else None)
 
 IMPORTED_BOUND_EVIDENCE_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in BOUND_EVIDENCE_HOST_NAMES}
+IMPORTED_DIAGNOSTIC_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in DIAGNOSTIC_HOST_NAMES}
 IMPORTED_CANONICAL_EVIDENCE_HOST_FILES = ({name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in CANONICAL_EVIDENCE_HOST_NAMES}
     if all((Path(__file__).resolve().parent/name).is_file() for name in CANONICAL_EVIDENCE_HOST_NAMES) else None)
 
@@ -61,6 +64,11 @@ def is_bound_evidence(value):
 def is_canonical_evidence(value):
     return (is_bound_evidence(value) and type(value.get('model_evidence')) is dict
             and value['model_evidence'].get('format') == CANONICAL_POLICY_FORMAT)
+
+
+def is_indexed_evidence(value):
+    return (is_evidence(value) and type(value.get('model_evidence')) is dict
+            and value['model_evidence'].get('format') == INDEXED_POLICY_FORMAT)
 
 
 def is_evidence(value):
@@ -600,13 +608,16 @@ def validate_canonical_captures(material, captured, *, outputs=None):
     return inputs
 
 
-def host_identity(*, evidence=False, bound=False, canonical=False, torch=False):
+def host_identity(*, evidence=False, bound=False, canonical=False, torch=False, indexed=False):
     import recipe_process
     root = Path(__file__).resolve().parent
     imported = IMPORTED_CANONICAL_EVIDENCE_HOST_FILES if canonical else IMPORTED_BOUND_EVIDENCE_HOST_FILES if bound else IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
     if imported is None:
         raise WorkbenchError('Canonical field evidence dependency is unavailable; restart after explicit provisioning.', 'unavailable', 409)
     names = CANONICAL_EVIDENCE_HOST_NAMES if canonical else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES
+    if indexed:
+        names = (*names, *DIAGNOSTIC_HOST_NAMES)
+        imported = {**imported, **IMPORTED_DIAGNOSTIC_HOST_FILES}
     if torch:
         names = (*names, *TORCH_HOST_NAMES)
         imported = {**imported, **IMPORTED_TORCH_HOST_FILES}
@@ -618,7 +629,8 @@ def host_identity(*, evidence=False, bound=False, canonical=False, torch=False):
 
 
 def recipe_host_identity(definition):
-    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition),canonical=is_canonical_evidence(definition),torch=definition['runtime']==TORCH_PROFILE)
+    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition),canonical=is_canonical_evidence(definition),
+                         torch=definition['runtime']==TORCH_PROFILE,indexed=is_indexed_evidence(definition))
 
 
 def revalidate_bound_material(projects, material, captured, profile=None, *, releases=None):
@@ -944,6 +956,7 @@ def validate_material(material):
     if total > RUNTIME_LIMIT or runtime['executable'] not in files or files[runtime['executable']]['sha256'] != runtime['executable_sha256'] or digest(files) != runtime['closure_sha256']:
         raise WorkbenchError('Runtime closure identity is inconsistent.')
     host_names = CANONICAL_EVIDENCE_HOST_NAMES if is_canonical_evidence(definition) else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES
+    if is_indexed_evidence(definition): host_names = (*host_names, *DIAGNOSTIC_HOST_NAMES)
     if definition['runtime'] == TORCH_PROFILE: host_names = (*host_names, *TORCH_HOST_NAMES)
     if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(host_names): raise WorkbenchError('Invalid retained host closure.')
     for value in material['host_files'].values(): sha(value)

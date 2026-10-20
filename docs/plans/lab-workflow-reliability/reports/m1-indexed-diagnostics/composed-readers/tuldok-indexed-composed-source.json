@@ -1,0 +1,17 @@
+{
+  "head": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
+  "tree": "7f64e85f6e8f84db4d9671fbb2cd06dc5d170311",
+  "scope": "Two actual indexed-diagnostic custody/admission cases including new composed SDK batch/scientific readers; explicit pre-child synthetic serialization and actual no-op child, no training/science acceptance",
+  "files": {
+    "tests/test_indexed_diagnostics_publication.py": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11",
+    "extension_evidence.py": "3265173c631453c2ec16a00a2d9c4a61cf0cb6f58f7b2413cd3b872d30ffecc2",
+    "recipe_contract.py": "dc57a657dd59cee5297cbdaf2426a2d147424a1e737cc0dad799b6084b873646",
+    "tuldok_extension_sdk/diagnostics.py": "d2439f8ab20dc7a3b829b547745fd7fa84d320ac4df2930b600cd36014689699",
+    "tuldok_extension_sdk/evidence.py": "53027c44b78fde2db62e736d9b8ed66915b17bfca3fefe36eee30cae59af0a70",
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "tuldok_client.py": "8ca08eb0a5fea9017dd56be0487b6c608e0375f10fcb83e1b26f5ac915c2ca03",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4"
+  }
+}
