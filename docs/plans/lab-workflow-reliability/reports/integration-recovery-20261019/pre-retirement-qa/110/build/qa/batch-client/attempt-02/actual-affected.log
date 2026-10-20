@@ -1,0 +1,8 @@
+test_actual_sdk_twenty_wholes_use_one_batch_without_compute (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute) ... ok
+test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing (test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing) ... ok
+test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted (test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 37.842s
+
+OK

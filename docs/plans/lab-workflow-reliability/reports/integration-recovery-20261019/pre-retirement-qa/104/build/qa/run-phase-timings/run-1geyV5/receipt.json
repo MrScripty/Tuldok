@@ -1,0 +1,16 @@
+{
+  "source_head": "8e6defdd28d0cbc2f277ac87c7ef21f6d9435b35",
+  "scope": "Actual neutral phase lifecycle UI; no model training/CUDA/science",
+  "checks": [
+    "Live real preparation before any Run, explicitly latest actor/revision observation",
+    "Actual capacity wait and separate-thread catalog mutex observation",
+    "First neutral GO, live custodian phases, explicit UI cancellation and drainage",
+    "Second neutral original publication fault, incomplete interval and same-attempt recovery intervals",
+    "Original Run failure retained, two admissions/two GO/two consumptions",
+    "Exact selected timing operations,1440/390 layout and navigation polling cleanup"
+  ],
+  "browser": "Chrome/151.0.7922.173",
+  "first_run": "1ebdf56d7a5c4dd2a9e41127407c7afd",
+  "second_run": "669b9711eb47412d84cfddd359c61923",
+  "timing_requests": 14
+}

@@ -1,0 +1,14 @@
+{
+  "source_head": "8e6defdd28d0cbc2f277ac87c7ef21f6d9435b35",
+  "scope": "Neutral coordinator UI/process custody; no training or science claim",
+  "checks": [
+    "Real separate PostgreSQL advisory lock causes coordinator timeout/fault",
+    "Keyboard explicit owner recovery names original generation and stable request",
+    "Deliberately lost HTTP acknowledgement reconciles through saved read without another mutation",
+    "Original queued neutral attempt executes first GO and completes with same admission identities",
+    "Fresh reload and mouse refresh preserve exact completed receipt",
+    "All coordinator operations pinned;1440/390 layouts without overflow"
+  ],
+  "browser": "Chrome/151.0.7922.173",
+  "run_id": "3446bb8793f24efe9a48fb903dc1e2bd"
+}

@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "RESTORE.md",
-      "bytes": 4169,
-      "sha256": "4e8318958ea5efdad8eb6df148f2d9c0a04724a0a2423ecd04e460740ae608c4"
+      "bytes": 4789,
+      "sha256": "e12efd5384f5192cefda0027d4b40017eb8c033a187a8ae83cd59db0c8a9691b"
     },
     {
       "path": "browser-cleanup-actual/coordinator/domain-receipt.json",
@@ -197,6 +197,366 @@
       "sha256": "7bb9afcaa0ab391ba7ce111dd61002c08131904d02999a9860158b7d835077b3"
     },
     {
+      "path": "pre-retirement-qa/104/build/qa/native-text-classification-import/run-GbfNNY/native-text-desktop.jpg",
+      "bytes": 120776,
+      "sha256": "784d644b0c6f448445cafa6281a663c20fe71a111918b067c05a36309eff5156"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/native-text-classification-import/run-GbfNNY/native-text-narrow.jpg",
+      "bytes": 58083,
+      "sha256": "03199cf8345195dab0469c11376d9b0a7b01c2655bcecd0c15723d566ac06d7d"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-1geyV5/domain-receipt.json",
+      "bytes": 9499,
+      "sha256": "d2c452545edec8a63569f564b490125edd178231c6e840599c694df8e962c299"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-1geyV5/phases-1440.jpg",
+      "bytes": 114982,
+      "sha256": "6e0c24e249aaaa9814d2ec7e412987fc886157392069b9b67ee3c65d2b60bbdf"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-1geyV5/phases-390.jpg",
+      "bytes": 56175,
+      "sha256": "9d987a2f7af4a52bc505092f0ad19c4edba56883a3e7a6c01072c9060c1c0d4f"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-1geyV5/receipt.json",
+      "bytes": 848,
+      "sha256": "0411bd3947764bd27d6da23a3dcbed5251344d48847c4cb51f808e351dfa9c09"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XkK5np/domain-receipt.json",
+      "bytes": 9493,
+      "sha256": "456f4d3321a78ebdb7db6733e0d1b8768eb60bdb24c4202adc2cb3b4f75568bf"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XkK5np/phases-1440.jpg",
+      "bytes": 114519,
+      "sha256": "3b38f3e67830ec9c9617b8566a1dd359ba87f670cb89faf6ecb11ba17b2dc8d4"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XkK5np/phases-390.jpg",
+      "bytes": 56214,
+      "sha256": "36e2c6354760ece13e9ebcee5e718f299d0b669fce81fd9897134e68a3e00e5f"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XkK5np/receipt.json",
+      "bytes": 848,
+      "sha256": "f5867ec3862bec1d9c28cf2523a201efc87f5d9ebb5bdcf9993ef01851a1247c"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XmFtxW/domain-receipt.json",
+      "bytes": 9489,
+      "sha256": "b03ac57070a862904bc9058ee0755d8832a816e96a41f2bb738c19e9dba300f9"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XmFtxW/phases-1440.jpg",
+      "bytes": 114630,
+      "sha256": "6bec1171ee4383d00ac90753117312c320128e65046ff0bfdd3de657748838c6"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XmFtxW/phases-390.jpg",
+      "bytes": 56164,
+      "sha256": "e3b9b6d8ced8719d3af63354f86eb0b9e412d3b9d14ad234fab73703585a34af"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-XmFtxW/receipt.json",
+      "bytes": 848,
+      "sha256": "43061ee950a121ce03b326dfd602cc53fd0d0dd20e83ecb8377d4af2c1cab25c"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-jOQUlW/domain-receipt.json",
+      "bytes": 9495,
+      "sha256": "210547cfb44f749c015bd4128c8bb5478ace98578f34aea73aaf9e9a672ab56e"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-jOQUlW/phases-1440.jpg",
+      "bytes": 114756,
+      "sha256": "e56a1ff513b590ae927234da5bdfd218edfb2c4767d9cd1a68d58a08ecfe7ec4"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-jOQUlW/phases-390.jpg",
+      "bytes": 56349,
+      "sha256": "4c20d4ce6d79d82fdb1a4b3688d28f07b7bce7f90716932ac31cc3910b5b04b3"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/run-phase-timings/run-jOQUlW/receipt.json",
+      "bytes": 848,
+      "sha256": "615fa14c9f382f039ebf6b5c1cc515ddde63b3a9156b4946d2986a2070337285"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-coordinator/run-KqWlzN/coordinator-1440.jpg",
+      "bytes": 106024,
+      "sha256": "95afdb08c32cbde42df5eeeb225e0761d21e476fc53696dbb600e3ff7e5f98c5"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-coordinator/run-KqWlzN/coordinator-390.jpg",
+      "bytes": 58019,
+      "sha256": "d9fc11d55206bf9a7b6ad735acdfafab9907304e995f57d559ad75e151cbdefd"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-coordinator/run-KqWlzN/domain-receipt.json",
+      "bytes": 1038,
+      "sha256": "f2919a6b152685ae8bd335d2d778296c475cf69c5fb8abdd72474c874cb79ee2"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-coordinator/run-KqWlzN/receipt.json",
+      "bytes": 764,
+      "sha256": "22d4628794faa46a06b88ae45d30c7c34cd44d0a145f76b581941132c8d567e3"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-publication/run-splD8f/domain-receipt.json",
+      "bytes": 1212,
+      "sha256": "a716e552a8fe85cb17a0b2f82d9633075ab8134ce0ccd841053640e99fa639cd"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-publication/run-splD8f/publication-1440.jpg",
+      "bytes": 124471,
+      "sha256": "14adb25838ad227519c46e5d8a3aaff5229b575426a0e458525635535fe6539b"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-publication/run-splD8f/publication-390.jpg",
+      "bytes": 77340,
+      "sha256": "0aeed0e469ab7f3a78f4e93eb78a5a637535a9666af40c9412194fd5a35b336d"
+    },
+    {
+      "path": "pre-retirement-qa/104/build/qa/workspace-publication/run-splD8f/receipt.json",
+      "bytes": 828,
+      "sha256": "fa576aa45fa22b85f308d04811509f4f00e9ad4ab40ae486d81bd8fcd4429c90"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/agent-api.log",
+      "bytes": 2428,
+      "sha256": "9e4a9a4609fa8fb84fff5925b2cd1bcabe859604232e482895fc5d8449ae98a9"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/browser-final.log",
+      "bytes": 805,
+      "sha256": "a53c9ba3e3c6b5eb3d0d28257981398bef31a0f00af04dd87e652632d781d05f"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/browser-first.log",
+      "bytes": 1073,
+      "sha256": "a198c4b86a31f5c7530d768a7cfd0529454ec75fdf25a65d39a7fd1afb84e111"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/browser-second.log",
+      "bytes": 690,
+      "sha256": "7772d61ace5e6f49c518fa70f96ccbe3fa06a2240726b2ddec156823358e0f9d"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/browser-selected-identities.log",
+      "bytes": 805,
+      "sha256": "972e23f3b398cbaf0db551aa694255294b1c70fd5128a208887535407a13d4b7"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/final-controller.log",
+      "bytes": 134,
+      "sha256": "64a3d88dbc854f7fdd7159454eff58d4b928fc728b95f3d399a005ef2d2fae25"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/final-coordinator.log",
+      "bytes": 165,
+      "sha256": "1f942ab438e5f0aef42f910cfd7aca4a9b5b07713e75a56b4d6be35c80a66155"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/final-external.log",
+      "bytes": 829,
+      "sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/final-field.log",
+      "bytes": 219,
+      "sha256": "2b5bdf6b101a80ef7b7627f769520cdce0e3b0cee954ba3e7d1c3b031db9a0cc"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/final-pure.log",
+      "bytes": 6718,
+      "sha256": "bbb7ecea2fb65e69cf40b9de89fec416f9e2bb78804e05a418348e61f98cecc1"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/node-controller.log",
+      "bytes": 134,
+      "sha256": "64a3d88dbc854f7fdd7159454eff58d4b928fc728b95f3d399a005ef2d2fae25"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/node-field-regression.log",
+      "bytes": 219,
+      "sha256": "2b5bdf6b101a80ef7b7627f769520cdce0e3b0cee954ba3e7d1c3b031db9a0cc"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/python-pure.log",
+      "bytes": 1547,
+      "sha256": "4fcdec3c91848d4e1af45c897e69a16f62c1e410255acf2155bfa1dcb9d6e656"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/reader-first.log",
+      "bytes": 1279,
+      "sha256": "b4f8add0e5919dbccbabd5e3895a7ce377361ee70820f1dbfe60222df055e767"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/reader-second.log",
+      "bytes": 1081,
+      "sha256": "3a4caca22f392dbce241a183e44bdf8bec7e23fa45fa91678a60f2d6c3b74d19"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/retained-extension.log",
+      "bytes": 514,
+      "sha256": "a1bf237be7e02234c735c7281ac797cf3215c822c614c82f1e05dd539d5d3371"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/schema-cleanup.json",
+      "bytes": 540,
+      "sha256": "16929591cb45c15e9c210b5c6161ba4d27c4143068d7c51898d94074136294d3"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/server.diff",
+      "bytes": 16199,
+      "sha256": "9acb7b288016349983cea17aa9e02e13321af7b3bad0d44975525d8372ba829a"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/m6-source-review/ui-integration.diff",
+      "bytes": 19036,
+      "sha256": "22d71e30aee87de659b08ab3ea627ac25fe283af0f5a4622f810c0bf62649b6e"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-8o5cKC/comparison-1440.jpg",
+      "bytes": 119088,
+      "sha256": "ab9007f64af8107bd9e2420e702b96e9887a9b69837db86d00ac1c533411d594"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-8o5cKC/comparison-390.jpg",
+      "bytes": 69411,
+      "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-8o5cKC/domain-receipt.json",
+      "bytes": 2340,
+      "sha256": "c71c9b8d4930d28fd101298ccf29a578875d7e3f0c77392ba62c50b7d70f2323"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-8o5cKC/receipt.json",
+      "bytes": 10409,
+      "sha256": "427b3ff6bf4faff687181ecd74a993a86b7370ef88458109e700d067963639f3"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-Mw8MZb/comparison-1440.jpg",
+      "bytes": 119038,
+      "sha256": "d7b77fcc6b72a6d7dc790a49762af0bfead805ce314b2a9a73ebe39399892ede"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-Mw8MZb/comparison-390.jpg",
+      "bytes": 69411,
+      "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-Mw8MZb/domain-receipt.json",
+      "bytes": 2340,
+      "sha256": "de8b3cee7add8feaa74a1479432e35bfb18dfe23b1ff482ddd44da9a164f1981"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-SPY0QK/comparison-1440.jpg",
+      "bytes": 119010,
+      "sha256": "272557a37f5920dd8a333b18453530c7445199eb4f413f4c7cfc203410c0e960"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-SPY0QK/comparison-390.jpg",
+      "bytes": 69411,
+      "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-SPY0QK/domain-receipt.json",
+      "bytes": 2378,
+      "sha256": "579c192065be3150f3e38a806bddaa6662dfae9f7221f5f304ebe5b5ef9c2923"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-SPY0QK/receipt.json",
+      "bytes": 13423,
+      "sha256": "d04b383fa3f5bef962a7c7cb17a2b50b3bc37e3e225beca1449a8ea70584dcfe"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-kcaI5l/comparison-1440.jpg",
+      "bytes": 123632,
+      "sha256": "7665d79329ca043c2bdd2110055d1baf4ab58572db076741bdbb9e078ca516fa"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-kcaI5l/comparison-390.jpg",
+      "bytes": 73047,
+      "sha256": "8eca64118605834989ca8bd181a1dcac222630d9445004be0ee35be5027eb1d5"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-kcaI5l/domain-receipt.json",
+      "bytes": 2378,
+      "sha256": "64e6e6ff4e61c4acd970bb868e2ed1213a4494e4e09bbea683aa0e3bd8903ff1"
+    },
+    {
+      "path": "pre-retirement-qa/106/build/qa/scientific-comparison/run-kcaI5l/receipt.json",
+      "bytes": 13423,
+      "sha256": "2d08ba28583fcf287b997c56e5224ef40ba463722d2f170b18593658652defa0"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-01/actual-http-cli.log",
+      "bytes": 1811,
+      "sha256": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-01/cleanup-independent.json",
+      "bytes": 294,
+      "sha256": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-01/cleanup-publication.json",
+      "bytes": 71,
+      "sha256": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-01/cleanup-twenty.json",
+      "bytes": 114,
+      "sha256": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-01/source.json",
+      "bytes": 1232,
+      "sha256": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/actual-affected.log",
+      "bytes": 726,
+      "sha256": "963638318440f9d9dbc8ce6248c3d4dfaf69f51f3381ca084ab60b8b1dac56f4"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/cleanup-independent.json",
+      "bytes": 294,
+      "sha256": "a75daf7106aac666c03070a3cfd9bd0a7d5a59c50f79a659c0cd9f302b27b6b9"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/cleanup-publication.json",
+      "bytes": 71,
+      "sha256": "681a74e3ed8b693214849ca2a307dcec4bdb9556e63a2e21f6715708ae4a6de2"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/cleanup-twenty.json",
+      "bytes": 114,
+      "sha256": "b509c5a5ecec4d1282fe8160b01142c6651907db1a83a8c6eb23dcc9cfb0ee3b"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/preparation.json",
+      "bytes": 2572,
+      "sha256": "4f913b405f852e8f153e35e594d2a08b60c8669761bb9bb117e6f2bd7871e469"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/source-before-comment.json",
+      "bytes": 2422,
+      "sha256": "a2bdd8a392636950def849c766bce70db3d229de56077f363276925fc872cb65"
+    },
+    {
+      "path": "pre-retirement-qa/110/build/qa/batch-client/attempt-02/source.json",
+      "bytes": 2650,
+      "sha256": "6c273d2df2f2242cc6ec9a7579026c79701fd543126d95cfb55f5f1f2ecae572"
+    },
+    {
       "path": "restoration-verification.json",
       "bytes": 524,
       "sha256": "7b1c0edafe1adab1b5940bb2927f1722b2eac97260ee88e256558256c2d83e2c"
@@ -345,6 +705,11 @@
       "path": "tuldok-20261019-public-heads-updated.txt",
       "bytes": 3887,
       "sha256": "c1df131ceb4437fa2c55a15b1a3b51071d8d42c0648af4a33ff4c57f1da88eb2"
+    },
+    {
+      "path": "tuldok-activate-next-qualified-merge.py",
+      "bytes": 2331,
+      "sha256": "be6e0e2eba165bdd8f40328c6b4442a501dfea281094ba015c31fc5b56cccf73"
     },
     {
       "path": "tuldok-after-102-103-107-remaining-ci.json",
@@ -1327,6 +1692,26 @@
       "sha256": "7bd85ef65566bef08911db247bbbfb0fba3aceee50dbcf922fb2a1cb72e2af3c"
     },
     {
+      "path": "tuldok-pr104-105-106-109-110-cleanup-precheck.json",
+      "bytes": 27262,
+      "sha256": "f25cc61e7060da35a99375ff3004e2ea9752325609b1a4b7fcba70a269604bcf"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-future-retirement-inventory.json",
+      "bytes": 35660,
+      "sha256": "dd3160aedf7eb40a4ef6ce11c2da6aabe27105893e36d5013840cd66c0e9ad41"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-future-retirement-open-prs.json",
+      "bytes": 2498,
+      "sha256": "59a0fe23b18152fb1777ac164fac43970c0970b028ebf2273387da52f3db8547"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-pre-retirement-qa-archive.json",
+      "bytes": 24810,
+      "sha256": "88523316c37c9893b212053a5b59c31063081461dc0d0ae678c1055f3d0b32d8"
+    },
+    {
       "path": "tuldok-pr104-105-postretirement-readiness.json",
       "bytes": 3297,
       "sha256": "e720a2ed169b9502a21eb8af18578f254321f441f34383f68d40f5391fcf279f"
@@ -1397,6 +1782,41 @@
       "sha256": "7d01890aa23905fde9cfd58484548c1974b6c0420373678dd31047c07f0eaf9e"
     },
     {
+      "path": "tuldok-pr104-8323-primary-lifecycle-completed-raw.json",
+      "bytes": 700515,
+      "sha256": "feffff65b01c5fb43d8768315fe2f076bbada9140411d8bcbcf52fe8f07d47a1"
+    },
+    {
+      "path": "tuldok-pr104-8323-primary-lifecycle-extracted.json",
+      "bytes": 59846,
+      "sha256": "3c455a8750e0d21c93f6a8f26c1685fafc67bc4c95734fd73c2d9104345622f3"
+    },
+    {
+      "path": "tuldok-pr104-8323-primary-lifecycle-independent-review.json",
+      "bytes": 109953,
+      "sha256": "70e055c7b9f98960cd2fc7de41dbda51d394ce239a115b5df99457058e7dd883"
+    },
+    {
+      "path": "tuldok-pr104-8323-primary-lifecycle-jobs-raw.json",
+      "bytes": 33861,
+      "sha256": "4ad9e6b7ad6fb6b4ddd318bc69a6973068490bec261621be7ff4b53ec0eb7bf8"
+    },
+    {
+      "path": "tuldok-pr104-8323-primary-lifecycle-metadata.json",
+      "bytes": 46410,
+      "sha256": "6ae90baf2eda6950ecd30bfafce3bd93b7c9627b7fa2b55772ac6601dfcfdcaf"
+    },
+    {
+      "path": "tuldok-pr104-8323-primary-lifecycle-pending-0308-independent-review.json",
+      "bytes": 2594,
+      "sha256": "c75be64de5f9a028edc6bfb7426b8fb2ad0dc9236349c227339c04bf5e70f1cc"
+    },
+    {
+      "path": "tuldok-pr104-8323-primary-lifecycle.log",
+      "bytes": 625924,
+      "sha256": "49ffbaf9e21125fff5992251e45228384cbfb8925253d82bed834bad3bc9e5d8"
+    },
+    {
       "path": "tuldok-pr104-8323-runtime-preparation.json",
       "bytes": 2161,
       "sha256": "c50f5e06a9cd4d7c406cb0646fda252020253464b20cd4d28c5454f58b5c7c1c"
@@ -1423,8 +1843,13 @@
     },
     {
       "path": "tuldok-pr104-final-description.md",
-      "bytes": 2046,
-      "sha256": "5c4303d0a29458369140695291f98decd05223f9286700a985a02589a4fb62ba"
+      "bytes": 2157,
+      "sha256": "7e3971b7a67028fc64febab8794fde852e164e9570195e27f7231a5e1a600533"
+    },
+    {
+      "path": "tuldok-pr104-final-merge-receipt.json",
+      "bytes": 3926,
+      "sha256": "7ad08419186c1739340e6eb3835f7451fb89f7827bc2b661bd0eb0b5caff9ebc"
     },
     {
       "path": "tuldok-pr104-latest-readiness.json",
@@ -1443,13 +1868,18 @@
     },
     {
       "path": "tuldok-pr104-merge-plan.json",
-      "bytes": 750,
-      "sha256": "251fb0449fec0eab49c3558b83b65fc170d8492a86deb0417efdb4e9a6bf4c36"
+      "bytes": 822,
+      "sha256": "715e43f5031aaaaf85caa0e37c50df0bd5b8c0adbb98ce085f8635092ab61e43"
     },
     {
       "path": "tuldok-pr104-phase-cleanup-green.log",
       "bytes": 96,
       "sha256": "89bd92bbabe32e9d106a0ce7813e1b30d85791f2283a46967fcee0d172e9932e"
+    },
+    {
+      "path": "tuldok-pr104-preintegration-readiness.json",
+      "bytes": 2008,
+      "sha256": "d38f5f98b5cde772ee4753c1fdd5affbacb313d1a6792db5194e6deacb2cb0b0"
     },
     {
       "path": "tuldok-pr104-recovery-browser-independent-review.json",
@@ -1542,9 +1972,29 @@
       "sha256": "703ac1e80ffa870e902a0a39d4ba3a2d4a548ecffa3ca6ea19bb72d078620c3d"
     },
     {
+      "path": "tuldok-pr105-final-merge-receipt.json",
+      "bytes": 2742,
+      "sha256": "429985163b64b42a676b0fd3f7e34fc1ab4fc007646ab7bd35c1c017580042ab"
+    },
+    {
       "path": "tuldok-pr105-latest-readiness.json",
       "bytes": 1101,
       "sha256": "96d15de4fe6e021212941cf263fc4ae41ec466bdb292d4cb18b9e82621cbea2e"
+    },
+    {
+      "path": "tuldok-pr105-merge-plan.json",
+      "bytes": 722,
+      "sha256": "69c94c19ff86d82893d9c7727bdda2724a44780717bbda6549edb2b9997d044c"
+    },
+    {
+      "path": "tuldok-pr105-preintegration-readiness.json",
+      "bytes": 1155,
+      "sha256": "6fe7d0ab5210ae8b056e116757cf791467254a26f83f35f7762a426d388a1368"
+    },
+    {
+      "path": "tuldok-pr105-retarget-main-receipt.json",
+      "bytes": 567,
+      "sha256": "d39762eb8b7807d4d0d513cbafd471fcbf5d3be554ef665dfe3bcbf4e93b0279"
     },
     {
       "path": "tuldok-pr106-5a83-cpu-independent-review.json",
@@ -1632,9 +2082,19 @@
       "sha256": "4b50246f66aff441e7e32d048543bbd3bad24fc929dfe84c46f76f42f0d21e2b"
     },
     {
+      "path": "tuldok-pr106-final-merge-receipt.json",
+      "bytes": 3702,
+      "sha256": "59dadf786307683408342d48bbb5c583e74732ab240b40776145e0bc7206bcd5"
+    },
+    {
       "path": "tuldok-pr106-latest-readiness.json",
       "bytes": 1986,
       "sha256": "6361907583e399fb061e1f88f58635883f202f3ede96d5951aa827b10cfbac75"
+    },
+    {
+      "path": "tuldok-pr106-merge-plan.json",
+      "bytes": 748,
+      "sha256": "324172c87a16c6529d474fb455c379cedbde879a8bd741c1c27b1c14f6ac6342"
     },
     {
       "path": "tuldok-pr106-old4a9-ci-failure-disposition.json",
@@ -1660,6 +2120,11 @@
       "path": "tuldok-pr106-recovery-browser-independent.log",
       "bytes": 1064,
       "sha256": "ab23fb83db340e498235e3a95922f64444eef17a24ef213ac4cfedbfb5f528c7"
+    },
+    {
+      "path": "tuldok-pr106-retarget-main-receipt.json",
+      "bytes": 567,
+      "sha256": "2255d7e8ce4a0ca23141714e1fdcda27c913ff890e57ad66cad9aada6ac5a182"
     },
     {
       "path": "tuldok-pr106-scientific-cleanup-green.log",
@@ -1762,6 +2227,11 @@
       "sha256": "59436f486d01cc0d4baa57e40b4397dc0a2dca03a0a06a993c00f120a3ec584c"
     },
     {
+      "path": "tuldok-pr108-retarget-main-receipt.json",
+      "bytes": 595,
+      "sha256": "8fa8a27097c249043abd8f60cbe051b8bb6d00d0d0656165c565efdbfe96f60c"
+    },
+    {
       "path": "tuldok-pr109-861b-ci-metadata.json",
       "bytes": 67280,
       "sha256": "948512f42573278d26d97b0d8baddb38a3a0b44ad99bb2dcf210cf6ee5396bc7"
@@ -1812,9 +2282,24 @@
       "sha256": "d392e445d441df29ec24bab3018bd90c5fccdb7415e2629ce8ffcfb131293bbb"
     },
     {
+      "path": "tuldok-pr109-final-merge-receipt.json",
+      "bytes": 3704,
+      "sha256": "55bc5cd3a5b118f666385843f27cd48c465c0926c6bae469bec157c5869fabca"
+    },
+    {
       "path": "tuldok-pr109-latest-readiness.json",
       "bytes": 1987,
       "sha256": "2097c2567895e542bfe742763e4c88f9dd476d9b50db38d2cb6a00cefc98ee78"
+    },
+    {
+      "path": "tuldok-pr109-merge-plan.json",
+      "bytes": 750,
+      "sha256": "5f8c106a789fe9b6daa74a246bf18ca3ef1ad0ae183e6d89f3e21128f62bb5e7"
+    },
+    {
+      "path": "tuldok-pr109-retarget-main-receipt.json",
+      "bytes": 567,
+      "sha256": "0666e9f72ebd56f5e05e1a56b57f726875b58db279fceb26d6f0f059181e658d"
     },
     {
       "path": "tuldok-pr110-a9c-lifecycle-independent-review.json",
@@ -1830,6 +2315,11 @@
       "path": "tuldok-pr110-final-description.md",
       "bytes": 1800,
       "sha256": "069ed59ecf074d550a50379d59ee2b03c955dcf58cd3fcff822dec9be162a181"
+    },
+    {
+      "path": "tuldok-pr110-final-merge-receipt.json",
+      "bytes": 2038,
+      "sha256": "d1a15bae98720405f70c1ceeaa06a5a9cb8deaa77f29a7a41ac00b527e1345c0"
     },
     {
       "path": "tuldok-pr110-job-118390130432-decoded.log",
@@ -1865,6 +2355,16 @@
       "path": "tuldok-pr110-latest-readiness.json",
       "bytes": 667,
       "sha256": "47c059494b7a2d53c1a98486fb07c4f47de16971cf90e603a68269a21e4d3497"
+    },
+    {
+      "path": "tuldok-pr110-merge-plan.json",
+      "bytes": 630,
+      "sha256": "4438dd986c6aa3d5b01a26a8f097b0129bcd43577fa79d92c82a10f53ab18822"
+    },
+    {
+      "path": "tuldok-pr110-retarget-main-receipt.json",
+      "bytes": 567,
+      "sha256": "ad102455faace5a7598f50db75a28e97a9d48236daab8cc15da67916505a63cf"
     },
     {
       "path": "tuldok-pr110-run-39349516958-raw-metadata.json",
@@ -2318,8 +2818,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 225575,
-      "sha256": "31bcddc0592381ea80ea2357818fe3d842ed6c5fb92c14f704ee40e146277093"
+      "bytes": 243321,
+      "sha256": "161711cb4348fb11f2f5090bdd8d6057a96b83caaa0345858c9736f84ea7c748"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",

@@ -1,0 +1,914 @@
+{
+  "limitations": [
+    "Heads and dependency bases are exact observed snapshots, not a promise of later state.",
+    "All ignored regular non-cache files are hashed; symlinks are recorded without traversal.",
+    "No unrelated worktree source or original protected ref was modified."
+  ],
+  "mutations": {
+    "deletion": false,
+    "remote": false,
+    "source": false,
+    "tests_or_measurements": false
+  },
+  "observed_at_utc": "2026-10-20T03:11:03.015633+00:00",
+  "remote_list_receipt": {
+    "data": {
+      "complete_first_page": true,
+      "endpoint": "GET repos/MrScripty/Tuldok/pulls?state=open&per_page=100",
+      "observed_utc": "2026-10-20T03:09:05.112715+00:00",
+      "prs": [
+        {
+          "base": "feature/lab-bounded-collection-20261019",
+          "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+          "draft": true,
+          "head": "feature/lab-batch-client-20261019",
+          "head_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+          "number": 110,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/110"
+        },
+        {
+          "base": "feature/lab-field-comparison-20261019",
+          "base_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+          "draft": true,
+          "head": "feature/lab-bounded-collection-20261019",
+          "head_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+          "number": 109,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/109"
+        },
+        {
+          "base": "feature/lab-batch-client-20261019",
+          "base_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+          "draft": true,
+          "head": "feature/lab-indexed-diagnostics-20261019",
+          "head_sha": "9f08427029d8b48c8f9b50927a1c835afb573276",
+          "number": 108,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/108"
+        },
+        {
+          "base": "feature/lab-workflow-client-20261019",
+          "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+          "draft": true,
+          "head": "feature/lab-field-comparison-20261019",
+          "head_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+          "number": 106,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/106"
+        },
+        {
+          "base": "feature/lab-phase-panel-20261019",
+          "base_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+          "draft": true,
+          "head": "feature/lab-workflow-client-20261019",
+          "head_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+          "number": 105,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/105"
+        },
+        {
+          "base": "main",
+          "base_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+          "draft": true,
+          "head": "feature/lab-phase-panel-20261019",
+          "head_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+          "number": 104,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/104"
+        }
+      ],
+      "returned_count": 10,
+      "scope": "Only requestedPRs or directopenbase dependents retained; no unrelatedPR detail/source inspected."
+    },
+    "path": "/tmp/tuldok-pr104-105-106-109-110-future-retirement-open-prs.json",
+    "sha256": "59a0fe23b18152fb1777ac164fac43970c0970b028ebf2273387da52f3db8547"
+  },
+  "schema_version": 1,
+  "scope": "Read-only future retirement inventory for PR104,105,106,109,110 only; no deletion or merge/retirement readiness clearance.",
+  "summary": {
+    "all_local_heads_and_branches_match_single_remote_snapshot": true,
+    "all_non_cache_files_are_under_build_qa": true,
+    "completed_at_utc": "2026-10-20T03:11:19.462725+00:00",
+    "direct_open_dependency_chain": [
+      104,
+      105,
+      106,
+      109,
+      110,
+      108
+    ],
+    "five_tracked_clean": true,
+    "five_without_untracked": true,
+    "future_cleanup_conditions": "All five PRs are open in this snapshot and every branch has an open direct dependent; actual merge, retarget, evidence archival/recovery verification and fresh cleanup precheck remain prerequisites.",
+    "ignored_non_cache_qa_bytes": 2149237,
+    "ignored_non_cache_qa_files": 72,
+    "retirement_readiness": "not assessed or cleared"
+  },
+  "worktrees": [
+    {
+      "branch_matches": true,
+      "expected_branch": "feature/lab-phase-panel-20261019",
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "ignored_cache_exclusion": {
+        "bytes": 2222099,
+        "files": 74,
+        "path_classification": "__pycache__, pyc/pyo, named tool/environment caches; inventory contents not retained"
+      },
+      "ignored_non_cache_bytes": 1273712,
+      "ignored_non_cache_count": 26,
+      "ignored_non_cache_other": [],
+      "ignored_non_cache_qa_evidence": [
+        {
+          "bytes": 120776,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446192879577808,
+          "path": "build/qa/native-text-classification-import/run-GbfNNY/native-text-desktop.jpg",
+          "sha256": "784d644b0c6f448445cafa6281a663c20fe71a111918b067c05a36309eff5156"
+        },
+        {
+          "bytes": 58083,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446192967576674,
+          "path": "build/qa/native-text-classification-import/run-GbfNNY/native-text-narrow.jpg",
+          "sha256": "03199cf8345195dab0469c11376d9b0a7b01c2655bcecd0c15723d566ac06d7d"
+        },
+        {
+          "bytes": 9499,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446105043844991,
+          "path": "build/qa/run-phase-timings/run-1geyV5/domain-receipt.json",
+          "sha256": "d2c452545edec8a63569f564b490125edd178231c6e840599c694df8e962c299"
+        },
+        {
+          "bytes": 114982,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446101972762304,
+          "path": "build/qa/run-phase-timings/run-1geyV5/phases-1440.jpg",
+          "sha256": "6e0c24e249aaaa9814d2ec7e412987fc886157392069b9b67ee3c65d2b60bbdf"
+        },
+        {
+          "bytes": 56175,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446102208759244,
+          "path": "build/qa/run-phase-timings/run-1geyV5/phases-390.jpg",
+          "sha256": "9d987a2f7af4a52bc505092f0ad19c4edba56883a3e7a6c01072c9060c1c0d4f"
+        },
+        {
+          "bytes": 848,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446105244719629,
+          "path": "build/qa/run-phase-timings/run-1geyV5/receipt.json",
+          "sha256": "0411bd3947764bd27d6da23a3dcbed5251344d48847c4cb51f808e351dfa9c09"
+        },
+        {
+          "bytes": 9493,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446304015916283,
+          "path": "build/qa/run-phase-timings/run-XkK5np/domain-receipt.json",
+          "sha256": "456f4d3321a78ebdb7db6733e0d1b8768eb60bdb24c4202adc2cb3b4f75568bf"
+        },
+        {
+          "bytes": 114519,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446301050186540,
+          "path": "build/qa/run-phase-timings/run-XkK5np/phases-1440.jpg",
+          "sha256": "3b38f3e67830ec9c9617b8566a1dd359ba87f670cb89faf6ecb11ba17b2dc8d4"
+        },
+        {
+          "bytes": 56214,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446301210184481,
+          "path": "build/qa/run-phase-timings/run-XkK5np/phases-390.jpg",
+          "sha256": "36e2c6354760ece13e9ebcee5e718f299d0b669fce81fd9897134e68a3e00e5f"
+        },
+        {
+          "bytes": 848,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446304250145356,
+          "path": "build/qa/run-phase-timings/run-XkK5np/receipt.json",
+          "sha256": "f5867ec3862bec1d9c28cf2523a201efc87f5d9ebb5bdcf9993ef01851a1247c"
+        },
+        {
+          "bytes": 9489,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445835320130829,
+          "path": "build/qa/run-phase-timings/run-XmFtxW/domain-receipt.json",
+          "sha256": "b03ac57070a862904bc9058ee0755d8832a816e96a41f2bb738c19e9dba300f9"
+        },
+        {
+          "bytes": 114630,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445832228248461,
+          "path": "build/qa/run-phase-timings/run-XmFtxW/phases-1440.jpg",
+          "sha256": "6bec1171ee4383d00ac90753117312c320128e65046ff0bfdd3de657748838c6"
+        },
+        {
+          "bytes": 56164,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445832372246598,
+          "path": "build/qa/run-phase-timings/run-XmFtxW/phases-390.jpg",
+          "sha256": "e3b9b6d8ced8719d3af63354f86eb0b9e412d3b9d14ad234fab73703585a34af"
+        },
+        {
+          "bytes": 848,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445835504206092,
+          "path": "build/qa/run-phase-timings/run-XmFtxW/receipt.json",
+          "sha256": "43061ee950a121ce03b326dfd602cc53fd0d0dd20e83ecb8377d4af2c1cab25c"
+        },
+        {
+          "bytes": 9495,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445921490581110,
+          "path": "build/qa/run-phase-timings/run-jOQUlW/domain-receipt.json",
+          "sha256": "210547cfb44f749c015bd4128c8bb5478ace98578f34aea73aaf9e9a672ab56e"
+        },
+        {
+          "bytes": 114756,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445918495136629,
+          "path": "build/qa/run-phase-timings/run-jOQUlW/phases-1440.jpg",
+          "sha256": "e56a1ff513b590ae927234da5bdfd218edfb2c4767d9cd1a68d58a08ecfe7ec4"
+        },
+        {
+          "bytes": 56349,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445918627134928,
+          "path": "build/qa/run-phase-timings/run-jOQUlW/phases-390.jpg",
+          "sha256": "4c20d4ce6d79d82fdb1a4b3688d28f07b7bce7f90716932ac31cc3910b5b04b3"
+        },
+        {
+          "bytes": 848,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445921763094523,
+          "path": "build/qa/run-phase-timings/run-jOQUlW/receipt.json",
+          "sha256": "615fa14c9f382f039ebf6b5c1cc515ddde63b3a9156b4946d2986a2070337285"
+        },
+        {
+          "bytes": 106024,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446107804686145,
+          "path": "build/qa/workspace-coordinator/run-KqWlzN/coordinator-1440.jpg",
+          "sha256": "95afdb08c32cbde42df5eeeb225e0761d21e476fc53696dbb600e3ff7e5f98c5"
+        },
+        {
+          "bytes": 58019,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446107956684156,
+          "path": "build/qa/workspace-coordinator/run-KqWlzN/coordinator-390.jpg",
+          "sha256": "d9fc11d55206bf9a7b6ad735acdfafab9907304e995f57d559ad75e151cbdefd"
+        },
+        {
+          "bytes": 1038,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446108160299748,
+          "path": "build/qa/workspace-coordinator/run-KqWlzN/domain-receipt.json",
+          "sha256": "f2919a6b152685ae8bd335d2d778296c475cf69c5fb8abdd72474c874cb79ee2"
+        },
+        {
+          "bytes": 764,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792446108468677459,
+          "path": "build/qa/workspace-coordinator/run-KqWlzN/receipt.json",
+          "sha256": "22d4628794faa46a06b88ae45d30c7c34cd44d0a145f76b581941132c8d567e3"
+        },
+        {
+          "bytes": 1212,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445935526374373,
+          "path": "build/qa/workspace-publication/run-splD8f/domain-receipt.json",
+          "sha256": "a716e552a8fe85cb17a0b2f82d9633075ab8134ce0ccd841053640e99fa639cd"
+        },
+        {
+          "bytes": 124471,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445934962924434,
+          "path": "build/qa/workspace-publication/run-splD8f/publication-1440.jpg",
+          "sha256": "14adb25838ad227519c46e5d8a3aaff5229b575426a0e458525635535fe6539b"
+        },
+        {
+          "bytes": 77340,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445935102922628,
+          "path": "build/qa/workspace-publication/run-splD8f/publication-390.jpg",
+          "sha256": "0aeed0e469ab7f3a78f4e93eb78a5a637535a9666af40c9412194fd5a35b336d"
+        },
+        {
+          "bytes": 828,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792445935710914787,
+          "path": "build/qa/workspace-publication/run-splD8f/receipt.json",
+          "sha256": "fa576aa45fa22b85f308d04811509f4f00e9ad4ab40ae486d81bd8fcd4429c90"
+        }
+      ],
+      "ignored_total_files": 100,
+      "local_branch_matches_observed_remote": true,
+      "local_head_matches_observed_remote": true,
+      "observed_branch": "feature/lab-phase-panel-20261019",
+      "open_direct_base_dependents": [
+        {
+          "base": "feature/lab-phase-panel-20261019",
+          "base_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+          "draft": true,
+          "head": "feature/lab-workflow-client-20261019",
+          "head_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+          "number": 105,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/105"
+        }
+      ],
+      "path": "/workspace/Tuldok-lab-phase-ui-m3",
+      "pr": 104,
+      "pr_metadata": {
+        "base": "main",
+        "base_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+        "draft": true,
+        "head": "feature/lab-phase-panel-20261019",
+        "head_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+        "number": 104,
+        "state": "open",
+        "url": "https://github.com/MrScripty/Tuldok/pull/104"
+      },
+      "tracked_clean": true,
+      "tracked_status_porcelain": "",
+      "untracked_paths": []
+    },
+    {
+      "branch_matches": true,
+      "expected_branch": "feature/lab-workflow-client-20261019",
+      "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "ignored_cache_exclusion": {
+        "bytes": 3043060,
+        "files": 88,
+        "path_classification": "__pycache__, pyc/pyo, named tool/environment caches; inventory contents not retained"
+      },
+      "ignored_non_cache_bytes": 0,
+      "ignored_non_cache_count": 0,
+      "ignored_non_cache_other": [],
+      "ignored_non_cache_qa_evidence": [],
+      "ignored_total_files": 88,
+      "local_branch_matches_observed_remote": true,
+      "local_head_matches_observed_remote": true,
+      "observed_branch": "feature/lab-workflow-client-20261019",
+      "open_direct_base_dependents": [
+        {
+          "base": "feature/lab-workflow-client-20261019",
+          "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+          "draft": true,
+          "head": "feature/lab-field-comparison-20261019",
+          "head_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+          "number": 106,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/106"
+        }
+      ],
+      "path": "/workspace/Tuldok-lab-workflow-client-m5",
+      "pr": 105,
+      "pr_metadata": {
+        "base": "feature/lab-phase-panel-20261019",
+        "base_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+        "draft": true,
+        "head": "feature/lab-workflow-client-20261019",
+        "head_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+        "number": 105,
+        "state": "open",
+        "url": "https://github.com/MrScripty/Tuldok/pull/105"
+      },
+      "tracked_clean": true,
+      "tracked_status_porcelain": "",
+      "untracked_paths": []
+    },
+    {
+      "branch_matches": true,
+      "expected_branch": "feature/lab-field-comparison-20261019",
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "ignored_cache_exclusion": {
+        "bytes": 2847362,
+        "files": 87,
+        "path_classification": "__pycache__, pyc/pyo, named tool/environment caches; inventory contents not retained"
+      },
+      "ignored_non_cache_bytes": 863154,
+      "ignored_non_cache_count": 34,
+      "ignored_non_cache_other": [],
+      "ignored_non_cache_qa_evidence": [
+        {
+          "bytes": 2428,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448209393723353,
+          "path": "build/qa/m6-source-review/agent-api.log",
+          "sha256": "9e4a9a4609fa8fb84fff5925b2cd1bcabe859604232e482895fc5d8449ae98a9"
+        },
+        {
+          "bytes": 805,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448101359117620,
+          "path": "build/qa/m6-source-review/browser-final.log",
+          "sha256": "a53c9ba3e3c6b5eb3d0d28257981398bef31a0f00af04dd87e652632d781d05f"
+        },
+        {
+          "bytes": 1073,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447973560780687,
+          "path": "build/qa/m6-source-review/browser-first.log",
+          "sha256": "a198c4b86a31f5c7530d768a7cfd0529454ec75fdf25a65d39a7fd1afb84e111"
+        },
+        {
+          "bytes": 690,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448029244058704,
+          "path": "build/qa/m6-source-review/browser-second.log",
+          "sha256": "7772d61ace5e6f49c518fa70f96ccbe3fa06a2240726b2ddec156823358e0f9d"
+        },
+        {
+          "bytes": 805,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448262533051990,
+          "path": "build/qa/m6-source-review/browser-selected-identities.log",
+          "sha256": "972e23f3b398cbaf0db551aa694255294b1c70fd5128a208887535407a13d4b7"
+        },
+        {
+          "bytes": 134,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448160866349408,
+          "path": "build/qa/m6-source-review/final-controller.log",
+          "sha256": "64a3d88dbc854f7fdd7159454eff58d4b928fc728b95f3d399a005ef2d2fae25"
+        },
+        {
+          "bytes": 165,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448161682338894,
+          "path": "build/qa/m6-source-review/final-coordinator.log",
+          "sha256": "1f942ab438e5f0aef42f910cfd7aca4a9b5b07713e75a56b4d6be35c80a66155"
+        },
+        {
+          "bytes": 829,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448161286343998,
+          "path": "build/qa/m6-source-review/final-external.log",
+          "sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c"
+        },
+        {
+          "bytes": 219,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448161090346524,
+          "path": "build/qa/m6-source-review/final-field.log",
+          "sha256": "2b5bdf6b101a80ef7b7627f769520cdce0e3b0cee954ba3e7d1c3b031db9a0cc"
+        },
+        {
+          "bytes": 6718,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448137410650382,
+          "path": "build/qa/m6-source-review/final-pure.log",
+          "sha256": "bbb7ecea2fb65e69cf40b9de89fec416f9e2bb78804e05a418348e61f98cecc1"
+        },
+        {
+          "bytes": 134,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447587593759076,
+          "path": "build/qa/m6-source-review/node-controller.log",
+          "sha256": "64a3d88dbc854f7fdd7159454eff58d4b928fc728b95f3d399a005ef2d2fae25"
+        },
+        {
+          "bytes": 219,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447587697757732,
+          "path": "build/qa/m6-source-review/node-field-regression.log",
+          "sha256": "2b5bdf6b101a80ef7b7627f769520cdce0e3b0cee954ba3e7d1c3b031db9a0cc"
+        },
+        {
+          "bytes": 1547,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447587469760678,
+          "path": "build/qa/m6-source-review/python-pure.log",
+          "sha256": "4fcdec3c91848d4e1af45c897e69a16f62c1e410255acf2155bfa1dcb9d6e656"
+        },
+        {
+          "bytes": 1279,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447881417979143,
+          "path": "build/qa/m6-source-review/reader-first.log",
+          "sha256": "b4f8add0e5919dbccbabd5e3895a7ce377361ee70820f1dbfe60222df055e767"
+        },
+        {
+          "bytes": 1081,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447921461458373,
+          "path": "build/qa/m6-source-review/reader-second.log",
+          "sha256": "3a4caca22f392dbce241a183e44bdf8bec7e23fa45fa91678a60f2d6c3b74d19"
+        },
+        {
+          "bytes": 514,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448174162178102,
+          "path": "build/qa/m6-source-review/retained-extension.log",
+          "sha256": "a1bf237be7e02234c735c7281ac797cf3215c822c614c82f1e05dd539d5d3371"
+        },
+        {
+          "bytes": 540,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448160647540378,
+          "path": "build/qa/m6-source-review/schema-cleanup.json",
+          "sha256": "16929591cb45c15e9c210b5c6161ba4d27c4143068d7c51898d94074136294d3"
+        },
+        {
+          "bytes": 16199,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447587749757060,
+          "path": "build/qa/m6-source-review/server.diff",
+          "sha256": "9acb7b288016349983cea17aa9e02e13321af7b3bad0d44975525d8372ba829a"
+        },
+        {
+          "bytes": 19036,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447587753757008,
+          "path": "build/qa/m6-source-review/ui-integration.diff",
+          "sha256": "22d71e30aee87de659b08ab3ea627ac25fe283af0f5a4622f810c0bf62649b6e"
+        },
+        {
+          "bytes": 119088,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448016500222476,
+          "path": "build/qa/scientific-comparison/run-8o5cKC/comparison-1440.jpg",
+          "sha256": "ab9007f64af8107bd9e2420e702b96e9887a9b69837db86d00ac1c533411d594"
+        },
+        {
+          "bytes": 69411,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448016688220036,
+          "path": "build/qa/scientific-comparison/run-8o5cKC/comparison-390.jpg",
+          "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff"
+        },
+        {
+          "bytes": 2340,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448028808538352,
+          "path": "build/qa/scientific-comparison/run-8o5cKC/domain-receipt.json",
+          "sha256": "c71c9b8d4930d28fd101298ccf29a578875d7e3f0c77392ba62c50b7d70f2323"
+        },
+        {
+          "bytes": 10409,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448029240058757,
+          "path": "build/qa/scientific-comparison/run-8o5cKC/receipt.json",
+          "sha256": "427b3ff6bf4faff687181ecd74a993a86b7370ef88458109e700d067963639f3"
+        },
+        {
+          "bytes": 119038,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447965460886027,
+          "path": "build/qa/scientific-comparison/run-Mw8MZb/comparison-1440.jpg",
+          "sha256": "d7b77fcc6b72a6d7dc790a49762af0bfead805ce314b2a9a73ebe39399892ede"
+        },
+        {
+          "bytes": 69411,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447965628883842,
+          "path": "build/qa/scientific-comparison/run-Mw8MZb/comparison-390.jpg",
+          "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff"
+        },
+        {
+          "bytes": 2340,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792447973768714322,
+          "path": "build/qa/scientific-comparison/run-Mw8MZb/domain-receipt.json",
+          "sha256": "de8b3cee7add8feaa74a1479432e35bfb18dfe23b1ff482ddd44da9a164f1981"
+        },
+        {
+          "bytes": 119010,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448086663305534,
+          "path": "build/qa/scientific-comparison/run-SPY0QK/comparison-1440.jpg",
+          "sha256": "272557a37f5920dd8a333b18453530c7445199eb4f413f4c7cfc203410c0e960"
+        },
+        {
+          "bytes": 69411,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448086855303037,
+          "path": "build/qa/scientific-comparison/run-SPY0QK/comparison-390.jpg",
+          "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff"
+        },
+        {
+          "bytes": 2378,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448100748881235,
+          "path": "build/qa/scientific-comparison/run-SPY0QK/domain-receipt.json",
+          "sha256": "579c192065be3150f3e38a806bddaa6662dfae9f7221f5f304ebe5b5ef9c2923"
+        },
+        {
+          "bytes": 13423,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448101359117620,
+          "path": "build/qa/scientific-comparison/run-SPY0QK/receipt.json",
+          "sha256": "d04b383fa3f5bef962a7c7cb17a2b50b3bc37e3e225beca1449a8ea70584dcfe"
+        },
+        {
+          "bytes": 123632,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448246033255337,
+          "path": "build/qa/scientific-comparison/run-kcaI5l/comparison-1440.jpg",
+          "sha256": "7665d79329ca043c2bdd2110055d1baf4ab58572db076741bdbb9e078ca516fa"
+        },
+        {
+          "bytes": 73047,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448246213253262,
+          "path": "build/qa/scientific-comparison/run-kcaI5l/comparison-390.jpg",
+          "sha256": "8eca64118605834989ca8bd181a1dcac222630d9445004be0ee35be5027eb1d5"
+        },
+        {
+          "bytes": 2378,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448261927063326,
+          "path": "build/qa/scientific-comparison/run-kcaI5l/domain-receipt.json",
+          "sha256": "64e6e6ff4e61c4acd970bb868e2ed1213a4494e4e09bbea683aa0e3bd8903ff1"
+        },
+        {
+          "bytes": 13423,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792448262533051990,
+          "path": "build/qa/scientific-comparison/run-kcaI5l/receipt.json",
+          "sha256": "2d08ba28583fcf287b997c56e5224ef40ba463722d2f170b18593658652defa0"
+        }
+      ],
+      "ignored_total_files": 121,
+      "local_branch_matches_observed_remote": true,
+      "local_head_matches_observed_remote": true,
+      "observed_branch": "feature/lab-field-comparison-20261019",
+      "open_direct_base_dependents": [
+        {
+          "base": "feature/lab-field-comparison-20261019",
+          "base_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+          "draft": true,
+          "head": "feature/lab-bounded-collection-20261019",
+          "head_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+          "number": 109,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/109"
+        }
+      ],
+      "path": "/workspace/Tuldok-lab-field-comparison-m6",
+      "pr": 106,
+      "pr_metadata": {
+        "base": "feature/lab-workflow-client-20261019",
+        "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+        "draft": true,
+        "head": "feature/lab-field-comparison-20261019",
+        "head_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+        "number": 106,
+        "state": "open",
+        "url": "https://github.com/MrScripty/Tuldok/pull/106"
+      },
+      "tracked_clean": true,
+      "tracked_status_porcelain": "",
+      "untracked_paths": []
+    },
+    {
+      "branch_matches": true,
+      "expected_branch": "feature/lab-bounded-collection-20261019",
+      "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "ignored_cache_exclusion": {
+        "bytes": 0,
+        "files": 0,
+        "path_classification": "__pycache__, pyc/pyo, named tool/environment caches; inventory contents not retained"
+      },
+      "ignored_non_cache_bytes": 0,
+      "ignored_non_cache_count": 0,
+      "ignored_non_cache_other": [],
+      "ignored_non_cache_qa_evidence": [],
+      "ignored_total_files": 0,
+      "local_branch_matches_observed_remote": true,
+      "local_head_matches_observed_remote": true,
+      "observed_branch": "feature/lab-bounded-collection-20261019",
+      "open_direct_base_dependents": [
+        {
+          "base": "feature/lab-bounded-collection-20261019",
+          "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+          "draft": true,
+          "head": "feature/lab-batch-client-20261019",
+          "head_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+          "number": 110,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/110"
+        }
+      ],
+      "path": "/workspace/Tuldok-lab-bounded-collection-m4",
+      "pr": 109,
+      "pr_metadata": {
+        "base": "feature/lab-field-comparison-20261019",
+        "base_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+        "draft": true,
+        "head": "feature/lab-bounded-collection-20261019",
+        "head_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+        "number": 109,
+        "state": "open",
+        "url": "https://github.com/MrScripty/Tuldok/pull/109"
+      },
+      "tracked_clean": true,
+      "tracked_status_porcelain": "",
+      "untracked_paths": []
+    },
+    {
+      "branch_matches": true,
+      "expected_branch": "feature/lab-batch-client-20261019",
+      "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "ignored_cache_exclusion": {
+        "bytes": 2735520,
+        "files": 80,
+        "path_classification": "__pycache__, pyc/pyo, named tool/environment caches; inventory contents not retained"
+      },
+      "ignored_non_cache_bytes": 12371,
+      "ignored_non_cache_count": 12,
+      "ignored_non_cache_other": [],
+      "ignored_non_cache_qa_evidence": [
+        {
+          "bytes": 1811,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450362526985521,
+          "path": "build/qa/batch-client/attempt-01/actual-http-cli.log",
+          "sha256": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9"
+        },
+        {
+          "bytes": 294,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450405420380959,
+          "path": "build/qa/batch-client/attempt-01/cleanup-independent.json",
+          "sha256": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02"
+        },
+        {
+          "bytes": 71,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450237238806745,
+          "path": "build/qa/batch-client/attempt-01/cleanup-publication.json",
+          "sha256": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995"
+        },
+        {
+          "bytes": 114,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450362526985521,
+          "path": "build/qa/batch-client/attempt-01/cleanup-twenty.json",
+          "sha256": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427"
+        },
+        {
+          "bytes": 1232,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792449983438155440,
+          "path": "build/qa/batch-client/attempt-01/source.json",
+          "sha256": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944"
+        },
+        {
+          "bytes": 726,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792451505003916594,
+          "path": "build/qa/batch-client/attempt-02/actual-affected.log",
+          "sha256": "963638318440f9d9dbc8ce6248c3d4dfaf69f51f3381ca084ab60b8b1dac56f4"
+        },
+        {
+          "bytes": 294,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792451540556900514,
+          "path": "build/qa/batch-client/attempt-02/cleanup-independent.json",
+          "sha256": "a75daf7106aac666c03070a3cfd9bd0a7d5a59c50f79a659c0cd9f302b27b6b9"
+        },
+        {
+          "bytes": 71,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792451505003916594,
+          "path": "build/qa/batch-client/attempt-02/cleanup-publication.json",
+          "sha256": "681a74e3ed8b693214849ca2a307dcec4bdb9556e63a2e21f6715708ae4a6de2"
+        },
+        {
+          "bytes": 114,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792451493211742447,
+          "path": "build/qa/batch-client/attempt-02/cleanup-twenty.json",
+          "sha256": "b509c5a5ecec4d1282fe8160b01142c6651907db1a83a8c6eb23dcc9cfb0ee3b"
+        },
+        {
+          "bytes": 2572,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450492445058276,
+          "path": "build/qa/batch-client/attempt-02/preparation.json",
+          "sha256": "4f913b405f852e8f153e35e594d2a08b60c8669761bb9bb117e6f2bd7871e469"
+        },
+        {
+          "bytes": 2422,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450692567817516,
+          "path": "build/qa/batch-client/attempt-02/source-before-comment.json",
+          "sha256": "a2bdd8a392636950def849c766bce70db3d229de56077f363276925fc872cb65"
+        },
+        {
+          "bytes": 2650,
+          "kind": "regular_file",
+          "mode": "0o600",
+          "mtime_ns": 1792450692613472424,
+          "path": "build/qa/batch-client/attempt-02/source.json",
+          "sha256": "6c273d2df2f2242cc6ec9a7579026c79701fd543126d95cfb55f5f1f2ecae572"
+        }
+      ],
+      "ignored_total_files": 92,
+      "local_branch_matches_observed_remote": true,
+      "local_head_matches_observed_remote": true,
+      "observed_branch": "feature/lab-batch-client-20261019",
+      "open_direct_base_dependents": [
+        {
+          "base": "feature/lab-batch-client-20261019",
+          "base_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+          "draft": true,
+          "head": "feature/lab-indexed-diagnostics-20261019",
+          "head_sha": "9f08427029d8b48c8f9b50927a1c835afb573276",
+          "number": 108,
+          "state": "open",
+          "url": "https://github.com/MrScripty/Tuldok/pull/108"
+        }
+      ],
+      "path": "/workspace/Tuldok-lab-batch-client-m4",
+      "pr": 110,
+      "pr_metadata": {
+        "base": "feature/lab-bounded-collection-20261019",
+        "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+        "draft": true,
+        "head": "feature/lab-batch-client-20261019",
+        "head_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+        "number": 110,
+        "state": "open",
+        "url": "https://github.com/MrScripty/Tuldok/pull/110"
+      },
+      "tracked_clean": true,
+      "tracked_status_porcelain": "",
+      "untracked_paths": []
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "pr": 105,
+  "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "tree": "fe7d983c3971d53c62dc56671b31cf30a8c91293",
+  "source_worktree": "/workspace/Tuldok-lab-workflow-client-m5",
+  "reviews": [
+    "/tmp/tuldok-pr105-3305-completed-lifecycle-independent-review.json",
+    "/tmp/tuldok-pr105-3305-cpu-independent-review.json"
+  ],
+  "check_names": [
+    "lifecycle",
+    "captured-cpu"
+  ],
+  "base": "81c366d182d5ae2fbae61f411251dee7d014a851",
+  "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+}

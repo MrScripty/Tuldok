@@ -1,0 +1,60 @@
+{
+  "scope": "Synthetic retained diagnostics; no producer execution, runtime, custody or scientific qualification",
+  "synthetic_terminal_setup": true,
+  "producer_executed": false,
+  "runtime_is_runnable_python": false,
+  "canonical_load_and_context_substituted": false,
+  "catalog_schema": "catalog_8045c584b503490d89b26a46be8ca837",
+  "checks": [],
+  "browser_credential_revoked": true,
+  "counts_before": {
+    "workspace_runs": 3,
+    "access_execution_grants": 3,
+    "access_execution_consumptions": 3,
+    "model_attempt_reservations": 3
+  },
+  "counts_after": {
+    "workspace_runs": 3,
+    "access_execution_grants": 3,
+    "access_execution_consumptions": 3,
+    "model_attempt_reservations": 3
+  },
+  "original_recovered_state": "interrupted",
+  "result_ref": {
+    "kind": "recovered_publication_result",
+    "schema_version": 1,
+    "catalog_id": "8045c584b503490d89b26a46be8ca837",
+    "run_id": "5803cc13bc44408990b3295669d66977",
+    "material_sha256": "bbdd495c11eaea2e4e3d23cfd873b9777e99188eb6a9a59859a6cc1711ccc9e3",
+    "inventory_sha256": "12bafb660170d338823eb39cb673961945b58d1986ef58cfbbf16d1df1e2a364",
+    "custody_receipt_sha256": "635b72d299549528b8b37ce673ec376fe254720e74982d182fd9a178bb3cb6c8",
+    "sha256": "959ecd34726985cef2a71120b33c458f40ad1428475fc608e1d55886e41ac9f6"
+  },
+  "model_ref": {
+    "kind": "model",
+    "catalog_id": "8045c584b503490d89b26a46be8ca837",
+    "id": "705a7255a42d40b2a995fb3191db5468",
+    "revision": 1,
+    "sha256": "26bb929e9ec0eecc717d5721b62d2f75f40265e5c9218dd0a8e8c8100f8c5344"
+  },
+  "material_refs": [
+    {
+      "kind": "recipe_material",
+      "catalog_id": "8045c584b503490d89b26a46be8ca837",
+      "id": "5d12b623c3c7ca6604c725fdcb13feb95c976341370effab140ca365c991e14e",
+      "sha256": "5d12b623c3c7ca6604c725fdcb13feb95c976341370effab140ca365c991e14e"
+    },
+    {
+      "kind": "recipe_material",
+      "catalog_id": "8045c584b503490d89b26a46be8ca837",
+      "id": "5d12b623c3c7ca6604c725fdcb13feb95c976341370effab140ca365c991e14e",
+      "sha256": "5d12b623c3c7ca6604c725fdcb13feb95c976341370effab140ca365c991e14e"
+    },
+    {
+      "kind": "recipe_material",
+      "catalog_id": "8045c584b503490d89b26a46be8ca837",
+      "id": "5d12b623c3c7ca6604c725fdcb13feb95c976341370effab140ca365c991e14e",
+      "sha256": "5d12b623c3c7ca6604c725fdcb13feb95c976341370effab140ca365c991e14e"
+    }
+  ]
+}

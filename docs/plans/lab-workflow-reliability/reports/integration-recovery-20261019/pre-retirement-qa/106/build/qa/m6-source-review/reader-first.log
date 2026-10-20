@@ -1,0 +1,24 @@
+setUpClass (test_scientific_comparison.ScientificReaderTests) ... ERROR
+
+======================================================================
+ERROR: setUpClass (test_scientific_comparison.ScientificReaderTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-field-comparison-m6/tests/test_scientific_comparison.py", line 145, in setUpClass
+    cls.fixture=ScientificFixture()
+                ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-field-comparison-m6/tests/scientific_comparison_fixture.py", line 36, in __init__
+    try:self.create()
+        ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-field-comparison-m6/tests/scientific_comparison_fixture.py", line 124, in create
+    dataset.runs._save(run)
+  File "/workspace/Tuldok-lab-field-comparison-m6/runs.py", line 354, in _save
+    self.access.audit(action, run['id'], evidence)
+  File "/workspace/Tuldok-lab-field-comparison-m6/access.py", line 195, in audit
+    raise RuntimeError('Success audit must share its domain mutation transaction.')
+RuntimeError: Success audit must share its domain mutation transaction.
+
+----------------------------------------------------------------------
+Ran 0 tests in 14.922s
+
+FAILED (errors=1)

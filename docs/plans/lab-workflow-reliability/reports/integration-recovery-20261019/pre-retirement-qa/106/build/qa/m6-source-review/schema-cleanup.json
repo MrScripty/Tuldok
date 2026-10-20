@@ -1,0 +1,17 @@
+[
+  {
+    "receipt": "build/qa/scientific-comparison/run-SPY0QK/domain-receipt.json",
+    "schema": "catalog_8045c584b503490d89b26a46be8ca837",
+    "exists_after_close": false
+  },
+  {
+    "receipt": "build/qa/scientific-comparison/run-Mw8MZb/domain-receipt.json",
+    "schema": "catalog_258e8398bfbc459782f32f2a66614ff7",
+    "exists_after_close": false
+  },
+  {
+    "receipt": "build/qa/scientific-comparison/run-8o5cKC/domain-receipt.json",
+    "schema": "catalog_1044eaa2346b48afa13fe49c6cfe8254",
+    "exists_after_close": false
+  }
+]

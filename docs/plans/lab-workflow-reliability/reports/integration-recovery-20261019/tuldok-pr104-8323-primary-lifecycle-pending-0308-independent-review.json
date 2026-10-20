@@ -1,0 +1,88 @@
+{
+  "format": "pr104_8323_primary_lifecycle_independent_review_v1",
+  "reviewed_at_utc": "2026-10-20T03:09:07.373562+00:00",
+  "state": "pending",
+  "run_id": 39349543888,
+  "job_id": 118390213683,
+  "job_status": "in_progress",
+  "job_conclusion": null,
+  "expected_head": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "completed_success_steps": 159,
+  "active_steps": [
+    {
+      "name": "Qualify automatic classifier evidence and independent CPU reconstruction",
+      "status": "in_progress",
+      "conclusion": null,
+      "number": 160
+    }
+  ],
+  "remaining_steps": [
+    {
+      "name": "Qualify automatic classifier evidence and independent CPU reconstruction",
+      "status": "in_progress",
+      "conclusion": null,
+      "number": 160
+    },
+    {
+      "name": "Exercise finite model development through the real browser",
+      "status": "pending",
+      "conclusion": null,
+      "number": 161
+    },
+    {
+      "name": "Exercise actual one-fit text model evidence in the browser",
+      "status": "pending",
+      "conclusion": null,
+      "number": 162
+    },
+    {
+      "name": "Exercise actual one-fit audio model evidence in the browser",
+      "status": "pending",
+      "conclusion": null,
+      "number": 163
+    },
+    {
+      "name": "Run actions/upload-artifact@v4",
+      "status": "pending",
+      "conclusion": null,
+      "number": 164
+    },
+    {
+      "name": "Post Run actions/setup-node@v4",
+      "status": "pending",
+      "conclusion": null,
+      "number": 324
+    },
+    {
+      "name": "Post Run actions/setup-python@v5",
+      "status": "pending",
+      "conclusion": null,
+      "number": 325
+    },
+    {
+      "name": "Post Check out pinned schema3 source for retained-run qualification",
+      "status": "pending",
+      "conclusion": null,
+      "number": 326
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "status": "pending",
+      "conclusion": null,
+      "number": 327
+    },
+    {
+      "name": "Stop containers",
+      "status": "pending",
+      "conclusion": null,
+      "number": 328
+    }
+  ],
+  "evidence": {
+    "path": "/tmp/tuldok-pr104-8323-primary-lifecycle-jobs-raw.json",
+    "bytes": 33861,
+    "sha256": "4ad9e6b7ad6fb6b4ddd318bc69a6973068490bec261621be7ff4b53ec0eb7bf8"
+  },
+  "scope": "One read-only workflow job metadata call. Still running, so no logs/runmetadata fetched, no furtherpoll, no exacthead/checkout/fullcounts/terminalsuccess claim. Parent will reactivate after completion.",
+  "prior_completed_duplicate_receipt": "/tmp/tuldok-pr104-8323-completed-lifecycle-independent-review.json"
+}

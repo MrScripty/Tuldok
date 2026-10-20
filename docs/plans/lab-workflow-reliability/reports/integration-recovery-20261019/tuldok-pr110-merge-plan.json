@@ -1,0 +1,14 @@
+{
+  "pr": 110,
+  "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+  "tree": "7705912b168b0eab5ebc1d429087ec61e71061d1",
+  "source_worktree": "/workspace/Tuldok-lab-batch-client-m4",
+  "reviews": [
+    "/tmp/tuldok-pr110-a9c-lifecycle-independent-review.json"
+  ],
+  "check_names": [
+    "lifecycle"
+  ],
+  "base": "13aa869725dc41661fb2aa7593a682432ef46716",
+  "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+}

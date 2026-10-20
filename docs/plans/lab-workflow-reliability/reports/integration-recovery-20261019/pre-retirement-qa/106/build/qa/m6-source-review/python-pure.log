@@ -1,0 +1,13 @@
+test_independent_expected_values_and_exact_clocks_with_no_scientific_criterion (test_scientific_comparison.ScientificComparisonTests.test_independent_expected_values_and_exact_clocks_with_no_scientific_criterion) ... ok
+test_isolated_incompatibilities_have_no_delta (test_scientific_comparison.ScientificComparisonTests.test_isolated_incompatibilities_have_no_delta) ... ok
+test_missing_cases_are_union_rows_and_never_paired_by_ordinal (test_scientific_comparison.ScientificComparisonTests.test_missing_cases_are_union_rows_and_never_paired_by_ordinal) ... ok
+test_new_contract_is_read_only_and_old_pins_unchanged (test_scientific_comparison.ScientificComparisonTests.test_new_contract_is_read_only_and_old_pins_unchanged) ... ok
+test_selection_is_exact_and_side_by_side_or_missing_fields_never_invents_values (test_scientific_comparison.ScientificComparisonTests.test_selection_is_exact_and_side_by_side_or_missing_fields_never_invents_values) ... ok
+test_browser_operation_pins_match_registry (test_workspace_model_contracts.ModelBrowserContracts.test_browser_operation_pins_match_registry) ... ok
+test_run_candidate_lookup_is_closed_bounded_and_read_only (test_workspace_model_contracts.ModelBrowserContracts.test_run_candidate_lookup_is_closed_bounded_and_read_only) ... ok
+test_publication_panel_pins_are_exact_supported_versions (test_workspace_publication.PublicationPanelPins.test_publication_panel_pins_are_exact_supported_versions) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.372s
+
+OK

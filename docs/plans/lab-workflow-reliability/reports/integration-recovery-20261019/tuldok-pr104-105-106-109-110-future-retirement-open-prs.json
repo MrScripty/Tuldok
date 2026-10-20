@@ -1,0 +1,69 @@
+{
+  "observed_utc": "2026-10-20T03:09:05.112715+00:00",
+  "endpoint": "GET repos/MrScripty/Tuldok/pulls?state=open&per_page=100",
+  "returned_count": 10,
+  "complete_first_page": true,
+  "scope": "Only requestedPRs or directopenbase dependents retained; no unrelatedPR detail/source inspected.",
+  "prs": [
+    {
+      "number": 110,
+      "url": "https://github.com/MrScripty/Tuldok/pull/110",
+      "state": "open",
+      "draft": true,
+      "head": "feature/lab-batch-client-20261019",
+      "head_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "base": "feature/lab-bounded-collection-20261019",
+      "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e"
+    },
+    {
+      "number": 109,
+      "url": "https://github.com/MrScripty/Tuldok/pull/109",
+      "state": "open",
+      "draft": true,
+      "head": "feature/lab-bounded-collection-20261019",
+      "head_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "base": "feature/lab-field-comparison-20261019",
+      "base_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e"
+    },
+    {
+      "number": 108,
+      "url": "https://github.com/MrScripty/Tuldok/pull/108",
+      "state": "open",
+      "draft": true,
+      "head": "feature/lab-indexed-diagnostics-20261019",
+      "head_sha": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "base": "feature/lab-batch-client-20261019",
+      "base_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015"
+    },
+    {
+      "number": 106,
+      "url": "https://github.com/MrScripty/Tuldok/pull/106",
+      "state": "open",
+      "draft": true,
+      "head": "feature/lab-field-comparison-20261019",
+      "head_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "base": "feature/lab-workflow-client-20261019",
+      "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7"
+    },
+    {
+      "number": 105,
+      "url": "https://github.com/MrScripty/Tuldok/pull/105",
+      "state": "open",
+      "draft": true,
+      "head": "feature/lab-workflow-client-20261019",
+      "head_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "base": "feature/lab-phase-panel-20261019",
+      "base_sha": "8323d54856296f46d01892c20f9084164c1f1ded"
+    },
+    {
+      "number": 104,
+      "url": "https://github.com/MrScripty/Tuldok/pull/104",
+      "state": "open",
+      "draft": true,
+      "head": "feature/lab-phase-panel-20261019",
+      "head_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "base": "main",
+      "base_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce"
+    }
+  ]
+}

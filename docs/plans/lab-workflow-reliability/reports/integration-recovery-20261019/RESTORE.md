@@ -63,3 +63,12 @@ only after the predecessor merge, with a fresh current-main/base/tree proof.
 PR104 latest lifecycle is still pending at the recorded03:05 snapshot;
 the independent merge-gate review explicitly grants no clearance while pending.
 Current PR descriptions have been rewritten around final behavior and evidence.
+
+PR104/105/106/109/110 have now been accepted and merged serially. Current main
+is63f689ecace7bac2f20114efde53a9c6bc05a9ed, with every actual merge tree
+verified equal to its qualified source. Their final merge receipts supersede
+older pending snapshots. PR108 is retargeted to main; its source remains9f084270.
+PR111 remains0ba4db01 based on108. Fresh repaired-head qualification is still
+pending. Do not replay completed merge operations. Five accepted worktrees
+remain pending safe retirement;72 non-cache QA files are archived with exact
+size/SHA inventory, requiring recovery verification and independent precheck.

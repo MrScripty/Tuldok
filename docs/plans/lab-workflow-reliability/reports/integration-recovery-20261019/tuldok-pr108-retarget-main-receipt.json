@@ -1,0 +1,16 @@
+{
+  "pr": 108,
+  "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "qualified_old_base": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+  "main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "base_trees_equal": true,
+  "prospective_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+  "observed_utc": "2026-10-20T03:15:39.334225+00:00",
+  "state": "retarget_confirmed",
+  "merge_clearance": false,
+  "command_exit": 0,
+  "stderr": "",
+  "observed_base": "main",
+  "observed_head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "observed_base_sha": "63f689ecace7bac2f20114efde53a9c6bc05a9ed"
+}

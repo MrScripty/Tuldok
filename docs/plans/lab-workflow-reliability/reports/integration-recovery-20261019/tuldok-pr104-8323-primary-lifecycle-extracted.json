@@ -1,0 +1,1516 @@
+{
+  "unittest_outcomes": [
+    {
+      "line": 1109,
+      "group": "python -m unittest discover -s tests -p 'test_run_preflight*.py' -v",
+      "summary": "2026-10-20T01:56:01.7336486Z Ran 30 tests in 9.841s",
+      "outcome": [
+        "2026-10-20T01:56:01.7336742Z OK"
+      ]
+    },
+    {
+      "line": 1160,
+      "group": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v",
+      "summary": "2026-10-20T01:58:40.5144170Z Ran 32 tests in 158.171s",
+      "outcome": [
+        "2026-10-20T01:58:40.5144593Z OK"
+      ]
+    },
+    {
+      "line": 1199,
+      "group": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+      "summary": "2026-10-20T01:59:22.1370690Z Ran 20 tests in 41.029s",
+      "outcome": [
+        "2026-10-20T01:59:22.1371622Z OK"
+      ]
+    },
+    {
+      "line": 1232,
+      "group": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+      "summary": "2026-10-20T01:59:49.8209214Z Ran 14 tests in 27.466s",
+      "outcome": [
+        "2026-10-20T01:59:49.8209528Z OK"
+      ]
+    },
+    {
+      "line": 1253,
+      "group": "python -m unittest discover -s tests -p 'test_workspace_phase_timings.py' -v",
+      "summary": "2026-10-20T01:59:49.9918221Z Ran 1 test in 0.001s",
+      "outcome": [
+        "2026-10-20T01:59:49.9918487Z OK"
+      ]
+    },
+    {
+      "line": 1479,
+      "group": "build/workspace-training/bin/python -c \"import numpy, sklearn, psycopg\"",
+      "summary": "2026-10-20T02:00:58.0808328Z Ran 15 tests in 21.834s",
+      "outcome": [
+        "2026-10-20T02:00:58.0808757Z OK"
+      ]
+    },
+    {
+      "line": 1498,
+      "group": "build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+      "summary": "2026-10-20T02:00:58.8566120Z Ran 11 tests in 0.579s",
+      "outcome": [
+        "2026-10-20T02:00:58.8566500Z OK"
+      ]
+    },
+    {
+      "line": 1517,
+      "group": "build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+      "summary": "2026-10-20T02:00:59.0724079Z Ran 9 tests in 0.112s",
+      "outcome": [
+        "2026-10-20T02:00:59.0734316Z OK"
+      ]
+    },
+    {
+      "line": 1536,
+      "group": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+      "summary": "2026-10-20T02:01:02.7720017Z Ran 12 tests in 3.548s",
+      "outcome": [
+        "2026-10-20T02:01:02.7720379Z OK (skipped=1)"
+      ]
+    },
+    {
+      "line": 1555,
+      "group": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+      "summary": "2026-10-20T02:01:03.1960835Z Ran 9 tests in 0.278s",
+      "outcome": [
+        "2026-10-20T02:01:03.1961121Z OK (skipped=1)"
+      ]
+    },
+    {
+      "line": 1707,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+      "summary": "2026-10-20T02:12:06.2080283Z Ran 74 tests in 652.975s",
+      "outcome": [
+        "2026-10-20T02:12:06.2081096Z OK"
+      ]
+    },
+    {
+      "line": 1726,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+      "summary": "2026-10-20T02:12:56.1488419Z Ran 19 tests in 49.768s",
+      "outcome": [
+        "2026-10-20T02:12:56.1488780Z OK"
+      ]
+    },
+    {
+      "line": 1745,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+      "summary": "2026-10-20T02:14:49.5655137Z Ran 22 tests in 113.200s",
+      "outcome": [
+        "2026-10-20T02:14:49.5655408Z OK"
+      ]
+    },
+    {
+      "line": 1764,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+      "summary": "2026-10-20T02:18:45.2228278Z Ran 24 tests in 235.094s",
+      "outcome": [
+        "2026-10-20T02:18:45.2228611Z OK"
+      ]
+    },
+    {
+      "line": 1783,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+      "summary": "2026-10-20T02:20:44.7104726Z Ran 34 tests in 118.881s",
+      "outcome": [
+        "2026-10-20T02:20:44.7107400Z OK"
+      ]
+    },
+    {
+      "line": 1802,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+      "summary": "2026-10-20T02:21:20.3559129Z Ran 13 tests in 35.022s",
+      "outcome": [
+        "2026-10-20T02:21:20.3559531Z OK"
+      ]
+    },
+    {
+      "line": 1850,
+      "group": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+      "summary": "2026-10-20T02:21:34.0136249Z Ran 5 tests in 12.923s",
+      "outcome": [
+        "2026-10-20T02:21:34.0136988Z OK"
+      ]
+    },
+    {
+      "line": 1903,
+      "group": "python -m unittest discover -s tests",
+      "summary": "2026-10-20T02:58:14.9966112Z Ran 1640 tests in 2199.698s",
+      "outcome": [
+        "2026-10-20T02:58:14.9966372Z OK (skipped=72)"
+      ]
+    }
+  ],
+  "PASS_witnesses": [
+    {
+      "line": 1256,
+      "group": "python -m unittest discover -s tests -p 'test_workspace_phase_timings.py' -v",
+      "text": "2026-10-20T01:59:50.0588840Z PASS phase identity/clock/duration/wait validation, latest-preparation labeling, bounded sequential refresh, abort and stale delivery/session cleanup"
+    },
+    {
+      "line": 1833,
+      "group": "node tests/test_experiment_lineage_controller.cjs",
+      "text": "2026-10-20T02:21:20.5431440Z PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination"
+    },
+    {
+      "line": 1934,
+      "group": "node tests/test_auth_helpers.cjs",
+      "text": "2026-10-20T02:58:15.2145612Z PASS auth fixture exact-origin credential boundary, no forwarding to debugger/provider, no redirects, explicit CDP session"
+    },
+    {
+      "line": 1949,
+      "group": "node tests/test_auth_controller.cjs",
+      "text": "2026-10-20T02:58:15.3023093Z PASS auth controller: stale identity/401 ownership, review scopes, code clearing, no mutation replay"
+    },
+    {
+      "line": 1965,
+      "group": "node tests/browser_access.cjs",
+      "text": "2026-10-20T02:58:20.1278391Z PASS access browser /home/runner/work/Tuldok/Tuldok/build/qa/access/run-Q2idjN"
+    },
+    {
+      "line": 2010,
+      "group": "node tests/browser_scientific_fields.cjs",
+      "text": "2026-10-20T02:58:23.2788208Z PASS Opening remains read-only; explicit import refuses stale observed hash before catalog writes, then imports exact bytes"
+    },
+    {
+      "line": 2011,
+      "group": "node tests/browser_scientific_fields.cjs",
+      "text": "2026-10-20T02:58:25.1695729Z PASS All authored fields and X/Y/Z planes retain exact time/stage/dtype; rotated noncubic origin and signed zero inspected"
+    },
+    {
+      "line": 2012,
+      "group": "node tests/browser_scientific_fields.cjs",
+      "text": "2026-10-20T02:58:26.1168274Z PASS Wholeasset human inspection freezes canonical release; separate NumPy reader verifies exact recovered original payload and opaque sources"
+    },
+    {
+      "line": 2013,
+      "group": "node tests/browser_scientific_fields.cjs",
+      "text": "2026-10-20T02:58:27.8330129Z PASS Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record"
+    },
+    {
+      "line": 2014,
+      "group": "node tests/browser_scientific_fields.cjs",
+      "text": "2026-10-20T02:58:27.8388517Z PASS Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted"
+    },
+    {
+      "line": 2015,
+      "group": "node tests/browser_scientific_fields.cjs",
+      "text": "2026-10-20T02:58:27.9801750Z PASS scientific field browser: /home/runner/work/Tuldok/Tuldok/build/qa/scientific-fields-neutral/run-d61vLD"
+    },
+    {
+      "line": 2044,
+      "group": "node tests/test_workspace_external_controller.cjs",
+      "text": "2026-10-20T02:58:28.1692249Z PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only."
+    },
+    {
+      "line": 2045,
+      "group": "node tests/test_workspace_external_controller.cjs",
+      "text": "2026-10-20T02:58:28.1696358Z PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only."
+    },
+    {
+      "line": 2046,
+      "group": "node tests/test_workspace_external_controller.cjs",
+      "text": "2026-10-20T02:58:28.1699016Z PASS external controller: actor-bound unresolved key survives ambiguous\u2192403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only."
+    },
+    {
+      "line": 2061,
+      "group": "node tests/test_workspace_external_package_controller.cjs",
+      "text": "2026-10-20T02:58:28.2567405Z PASS controlled external package view: owned discovery, pending versus fresh state, source identity, denial/stale clearing and passive-only reads."
+    },
+    {
+      "line": 2076,
+      "group": "node tests/test_workspace_extension_author.cjs",
+      "text": "2026-10-20T02:58:28.3500749Z PASS bound extension author controlled UI: separate typed Model/trainer values, exact composition review, separate owner approval/Study admission, invalid preflight, failed review recovery, uncertain create/admission journals, stale revision refresh, actor/navigation/changed-observation fences. No actual producer claim."
+    },
+    {
+      "line": 2091,
+      "group": "node tests/test_workspace_typed_parameters.cjs",
+      "text": "2026-10-20T02:58:28.4058059Z PASS native typed parameters: edited arrays preserve values, optional controls, numeric enums, finite/range/integer constraints, closed objects and bounded arrays/depth. No runtime or model execution."
+    },
+    {
+      "line": 2107,
+      "group": "node tests/browser_workspace_external.cjs",
+      "text": "2026-10-20T02:58:36.6551371Z PASS Real keyboard-created edited graph, exact review, stale-byte refusal, descendant execution and exact artifact custody"
+    },
+    {
+      "line": 2108,
+      "group": "node tests/browser_workspace_external.cjs",
+      "text": "2026-10-20T02:58:42.0597243Z PASS Owner creates an exact-material one-use grant; separately authenticated agent executes it without owner review controls"
+    },
+    {
+      "line": 2109,
+      "group": "node tests/browser_workspace_external.cjs",
+      "text": "2026-10-20T02:58:47.4018182Z PASS Cloned graph cancellation waits for confirmed custody termination"
+    },
+    {
+      "line": 2110,
+      "group": "node tests/browser_workspace_external.cjs",
+      "text": "2026-10-20T02:58:49.5891535Z PASS Server restart retains exact completed run and downloadable original output"
+    },
+    {
+      "line": 2111,
+      "group": "node tests/browser_workspace_external.cjs",
+      "text": "2026-10-20T02:58:49.5940670Z PASS external recipe browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-external/run-mDKch2"
+    },
+    {
+      "line": 2126,
+      "group": "node tests/test_workspace_publication_controller.cjs",
+      "text": "2026-10-20T02:58:49.7275719Z PASS publication metadata, pinned status2, owner/actor controls, unknown-ack stable request, source/hash identity, stale reads/writes and polling cleanup"
+    },
+    {
+      "line": 2142,
+      "group": "node tests/browser_workspace_publication.cjs",
+      "text": "2026-10-20T02:58:58.8145815Z PASS publication browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication/run-M1zsEF"
+    },
+    {
+      "line": 2157,
+      "group": "node tests/test_workspace_publication_lineage.cjs",
+      "text": "2026-10-20T02:58:59.0838213Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences"
+    },
+    {
+      "line": 2173,
+      "group": "node tests/browser_workspace_publication_lineage.cjs",
+      "text": "2026-10-20T02:59:07.7465991Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-nAuW3q"
+    },
+    {
+      "line": 2190,
+      "group": "node tests/browser_workspace_graph_focus.cjs",
+      "text": "2026-10-20T02:59:12.1741610Z PASS graph focus regression {\"state\":\"passed\",\"scope\":\"Inert private Project graph metadata only; no recipe execution or scientific qualification\",\"source_commit\":\"ba9e3543b987a62d2f524c954f5362b016a6b78f\",\"workspace_real_sha256\":\"527fdbf6e92304684127abab0fbba3bd0a6b38fa9fbd2db84ff23c42949b49ec\",\"harness_sha256\":\"5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684\",\"native_keys\":[\"Home\",\"ArrowDown\",\"ArrowDown\"],\"programmatic_focus_calls_in_journey\":1,\"values\":[\"cbbdce77bff9425ca2ffe8c5b38d7a84\",\"3aed278a62a446cdb06d6df13bdc86fe\",\"c84b650fdb5f4a008d95c6422773777d\"],\"observed\":[{\"focus\":true,\"value\":\"cbbdce77bff9425ca2ffe8c5b38d7a84\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"3aed278a62a446cdb06d6df13bdc86fe\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"c84b650fdb5f4a008d95c6422773777d\",\"active\":\"SELECT\"}],\"negativeChecks\":[\"held graph read preserves separately moved focus\",\"held graph read does not restore hidden Pipeline focus after navigation\"],\"recipe_runs\":0,\"browser\":\"Chrome/155.0.8059.39\"}"
+    },
+    {
+      "line": 2221,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:14.7592741Z PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct"
+    },
+    {
+      "line": 2222,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:15.4754207Z PASS Current snapshot activity refreshes without navigation and retains saved manifest identity"
+    },
+    {
+      "line": 2223,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:17.5193592Z PASS Malformed publisher status is unavailable, then recovers without fabricating progress"
+    },
+    {
+      "line": 2224,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:20.5593315Z PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers"
+    },
+    {
+      "line": 2225,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:23.7734967Z PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers"
+    },
+    {
+      "line": 2226,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:24.1217492Z PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim"
+    },
+    {
+      "line": 2227,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:26.3576002Z PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime"
+    },
+    {
+      "line": 2228,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:26.7343286Z PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence"
+    },
+    {
+      "line": 2229,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:26.8688684Z PASS Registered current project opens through a shareable project link"
+    },
+    {
+      "line": 2230,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:28.5556081Z PASS A project link initializes navigation once; explicit later catalog selection survives reload"
+    },
+    {
+      "line": 2231,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:29.6157823Z PASS Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted"
+    },
+    {
+      "line": 2232,
+      "group": "node tests/browser_workspace_project.cjs",
+      "text": "2026-10-20T02:59:29.6306590Z PASS read-only project browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-project/run-uwuvho"
+    },
+    {
+      "line": 2660,
+      "group": "node tests/test_spatial_controllers.cjs",
+      "text": "2026-10-20T02:59:54.1972337Z PASS spatial controller boundaries: persisted property key order, source identity, bounded point samples and native uint8 slice shape/coordinate fields"
+    },
+    {
+      "line": 2852,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.0985909Z PASS delayedInitialListing"
+    },
+    {
+      "line": 2853,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1010177Z PASS delayedInitialListingAfterClear"
+    },
+    {
+      "line": 2854,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1044168Z PASS pendingEditorSaveAfterFixedOpen"
+    },
+    {
+      "line": 2855,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1065800Z PASS ordinaryEditorSaveKeepsCurrentIntent"
+    },
+    {
+      "line": 2856,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1081029Z PASS laterSaveCannotAdoptAlreadyStalePair"
+    },
+    {
+      "line": 2857,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1095612Z PASS explicitClearCancelsPendingEmptyOpen"
+    },
+    {
+      "line": 2858,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1122474Z PASS samePairReselectionInvalidatesKnownStalePreview"
+    },
+    {
+      "line": 2859,
+      "group": "node tests/test_saved_selection_intent.cjs",
+      "text": "2026-10-20T02:59:58.1136171Z PASS olderSaveCannotInvalidateNewerSelectedProof"
+    },
+    {
+      "line": 2919,
+      "group": "node tests/test_preferences_controller.cjs",
+      "text": "2026-10-20T02:59:58.6363078Z PASS judgment controller stored binding, review reset, repeated saves, later intent, list/preview races and every parent-adopter ownership interleaving, relevant local saves/no-op and dirty-draft preservation."
+    },
+    {
+      "line": 3377,
+      "group": "node tests/browser_saved_selection_intent.cjs",
+      "text": "2026-10-20T03:01:03.5565199Z PASS initial list cannot override newer manual selection"
+    },
+    {
+      "line": 3379,
+      "group": "node tests/browser_saved_selection_intent.cjs",
+      "text": "2026-10-20T03:01:04.4494670Z PASS pending editor response cannot make stale fixed pairs release-eligible"
+    },
+    {
+      "line": 3381,
+      "group": "node tests/browser_saved_selection_intent.cjs",
+      "text": "2026-10-20T03:01:05.1621052Z PASS same-pair reselection drops preview after earlier editor proves staleness"
+    },
+    {
+      "line": 3669,
+      "group": "node tests/browser_caption_dataset_integration.cjs",
+      "text": "2026-10-20T03:01:47.0087301Z PASS raw import + caption stop/current-filter/editor/exact-proof retention; expanded native folder drafts; saved draft blocked; explicit fixture review; exact rights/group/review filters; stale original set; fixed reopen/navigation/filter isolation; actual ZIP download with exact pairs, caption/pixel/split equality and pinned consumer."
+    },
+    {
+      "line": 4115,
+      "group": "node tests/browser_preferences.cjs",
+      "text": "2026-10-20T03:03:55.6212773Z PASS real Chromium explicit comparison, stale/rejudge, unselected conflict/delete/history, ties/abstentions, independent review and intent, weighted splits, immutable actual download and pinned DPO preparation/collator; desktop/narrow."
+    },
+    {
+      "line": 4161,
+      "group": "node tests/browser_instruction_responses.cjs",
+      "text": "2026-10-20T03:04:08.1950756Z PASS actual Chromium two independent answers + retained entity annotation, held create and parent navigation/reload/repeated controls/later edits, exact Unicode/review, response/parent/bridge freshness, fixed file reopen/filter separation, weighted families, actual ZIP download and unchanged pinned consumer; desktop/narrow."
+    },
+    {
+      "line": 4229,
+      "group": "node tests/test_browser_owned_cleanup.cjs",
+      "text": "2026-10-20T03:04:17.7771917Z PASS owned delayed final write completes before removal; ignored TERM is bounded and already-exited handles are harmless"
+    },
+    {
+      "line": 4653,
+      "group": "node tests/test_workspace_coordinator_controller.cjs",
+      "text": "2026-10-20T03:05:51.7955792Z PASS coordinator owner controls, exact generation/request identity, immutable completion, unknown-ack retention, stale read/write/session fences and storage refusal"
+    },
+    {
+      "line": 4669,
+      "group": "node tests/browser_workspace_coordinator.cjs",
+      "text": "2026-10-20T03:05:59.4965204Z PASS coordinator browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-coordinator/run-Oeexc6"
+    },
+    {
+      "line": 4686,
+      "group": "node tests/browser_run_phase_timings.cjs",
+      "text": "2026-10-20T03:06:24.4221424Z PASS phase timing browser: /home/runner/work/Tuldok/Tuldok/build/qa/run-phase-timings/run-G4m91V"
+    },
+    {
+      "line": 4703,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:27.0897811Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4704,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:31.3261109Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls"
+    },
+    {
+      "line": 4705,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:31.6035404Z PASS invalid held-out class coverage blocks release before training"
+    },
+    {
+      "line": 4706,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:32.6249876Z PASS fixed split preview, exact reviewed source release and immutable ZIP download"
+    },
+    {
+      "line": 4707,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:33.1021252Z PASS real Pipeline loading, late-response navigation fence and explicit error retry"
+    },
+    {
+      "line": 4708,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:41.3242526Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers"
+    },
+    {
+      "line": 4709,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:41.5237748Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview"
+    },
+    {
+      "line": 4710,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:44.9885416Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run"
+    },
+    {
+      "line": 4711,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:52.8201583Z PASS one admitted real child completed; verified checkpoint, validation metrics and exact predictions; test access remains locked"
+    },
+    {
+      "line": 4712,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:53.2565159Z PASS late correction response cannot override newer Pipeline navigation or the active Data record"
+    },
+    {
+      "line": 4713,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:54.3107024Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged"
+    },
+    {
+      "line": 4714,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:54.7102346Z PASS explicit test inspection is durable; later releases containing the records/pixels are marked exposed/reused"
+    },
+    {
+      "line": 4715,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:56.0144555Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay"
+    },
+    {
+      "line": 4716,
+      "group": "node tests/browser_workspace_image_run.cjs",
+      "text": "2026-10-20T03:06:56.0363805Z PASS real image workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-image-run/run-8g3fZG"
+    },
+    {
+      "line": 4733,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:06:58.5416555Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4734,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:05.8470469Z PASS 18 authored independent texts imported, labelled and explicitly reviewed using Data controls"
+    },
+    {
+      "line": 4735,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:06.1337553Z PASS invalid held-out class coverage blocks release before training"
+    },
+    {
+      "line": 4736,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:06.7247297Z PASS fixed split preview, exact reviewed source release and immutable ZIP download"
+    },
+    {
+      "line": 4737,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:07.2174982Z PASS real Pipeline loading, late-response navigation fence and explicit error retry"
+    },
+    {
+      "line": 4738,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:10.9121153Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers"
+    },
+    {
+      "line": 4739,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:11.1064208Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview"
+    },
+    {
+      "line": 4740,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:12.3741044Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run"
+    },
+    {
+      "line": 4741,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:16.5035407Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked"
+    },
+    {
+      "line": 4742,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:16.9376285Z PASS late correction response cannot override newer Pipeline navigation or the active Data record"
+    },
+    {
+      "line": 4743,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:17.8748532Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged"
+    },
+    {
+      "line": 4744,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:18.2774443Z PASS explicit test inspection is durable; later releases containing the records/canonical text are marked exposed/reused"
+    },
+    {
+      "line": 4745,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:19.7006951Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay"
+    },
+    {
+      "line": 4746,
+      "group": "node tests/browser_workspace_text.cjs",
+      "text": "2026-10-20T03:07:19.7167920Z PASS real text workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-text-run/run-CJjbTZ"
+    },
+    {
+      "line": 4780,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:27.4867213Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4781,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:28.3334868Z PASS 18 authored stereo WAV fixtures admitted and reviewed through ordinary API; current Data shows actual source"
+    },
+    {
+      "line": 4782,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:29.3203829Z PASS Data UI previews class coverage, freezes and downloads original WAV classification release"
+    },
+    {
+      "line": 4783,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:29.8045191Z PASS real Pipeline loading, late-response navigation fence and explicit error retry"
+    },
+    {
+      "line": 4784,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:33.5772008Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers"
+    },
+    {
+      "line": 4785,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:33.7737090Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview"
+    },
+    {
+      "line": 4786,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:35.0430283Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run"
+    },
+    {
+      "line": 4787,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:39.2360302Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked"
+    },
+    {
+      "line": 4788,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:39.6702766Z PASS late correction response cannot override newer Pipeline navigation or the active Data record"
+    },
+    {
+      "line": 4789,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:40.8546632Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged"
+    },
+    {
+      "line": 4790,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:41.2646270Z PASS explicit test inspection is durable; later releases containing the records/decoded PCM are marked exposed/reused"
+    },
+    {
+      "line": 4791,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:42.6687889Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay"
+    },
+    {
+      "line": 4792,
+      "group": "node tests/browser_workspace_audio_run.cjs",
+      "text": "2026-10-20T03:07:42.6898408Z PASS real audio workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-audio-run/run-7GzJjC"
+    },
+    {
+      "line": 4809,
+      "group": "node tests/browser_workspace_mesh_run.cjs",
+      "text": "2026-10-20T03:07:45.1560168Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4810,
+      "group": "node tests/browser_workspace_mesh_run.cjs",
+      "text": "2026-10-20T03:07:45.9933741Z PASS reviewed authored native PLY frozen through real Data release controls"
+    },
+    {
+      "line": 4811,
+      "group": "node tests/browser_workspace_mesh_run.cjs",
+      "text": "2026-10-20T03:07:50.5689965Z PASS edited and cloned three-stage graph survives reload; invalid connection blocked; keyboard submits actual native validation"
+    },
+    {
+      "line": 4812,
+      "group": "node tests/browser_workspace_mesh_run.cjs",
+      "text": "2026-10-20T03:07:50.7662310Z PASS Runs exposes verified integrity report and unchanged release, counts, units/scope/limitations without training or predictions"
+    },
+    {
+      "line": 4813,
+      "group": "node tests/browser_workspace_mesh_run.cjs",
+      "text": "2026-10-20T03:07:51.9585439Z PASS application restart retains exact completed report/release and does not replay submission"
+    },
+    {
+      "line": 4814,
+      "group": "node tests/browser_workspace_mesh_run.cjs",
+      "text": "2026-10-20T03:07:51.9740775Z PASS real mesh workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-mesh-run/run-olBy7T"
+    },
+    {
+      "line": 4831,
+      "group": "node tests/browser_workspace_sequence_run.cjs",
+      "text": "2026-10-20T03:07:54.5503729Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4832,
+      "group": "node tests/browser_workspace_sequence_run.cjs",
+      "text": "2026-10-20T03:07:56.1350772Z PASS actual recorded native sequence imported/reviewed/frozen through Data; raw files and all native field bits preserved"
+    },
+    {
+      "line": 4833,
+      "group": "node tests/browser_workspace_sequence_run.cjs",
+      "text": "2026-10-20T03:08:01.2586996Z PASS edited and cloned three-stage graph survives reload; invalid connection blocked; keyboard submits actual native validation"
+    },
+    {
+      "line": 4834,
+      "group": "node tests/browser_workspace_sequence_run.cjs",
+      "text": "2026-10-20T03:08:01.5988230Z PASS Runs exposes verified integrity report and unchanged release, frame/time/grid/units/scope/limitations without training or predictions"
+    },
+    {
+      "line": 4835,
+      "group": "node tests/browser_workspace_sequence_run.cjs",
+      "text": "2026-10-20T03:08:02.9732742Z PASS application restart retains exact completed report/release and does not replay submission"
+    },
+    {
+      "line": 4836,
+      "group": "node tests/browser_workspace_sequence_run.cjs",
+      "text": "2026-10-20T03:08:02.9885130Z PASS real sequence workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-sequence-run/run-UiJ1BG"
+    },
+    {
+      "line": 4853,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:05.4021826Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4854,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:06.5923365Z PASS pointcloud real file import, keyboard inspection/review and whole-source freeze"
+    },
+    {
+      "line": 4855,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:08.0113339Z PASS volume real file import, keyboard inspection/review and whole-source freeze"
+    },
+    {
+      "line": 4856,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:08.3678294Z PASS late point projection cannot overwrite a newer dirty volume editor"
+    },
+    {
+      "line": 4857,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:08.4913978Z PASS independent plyfile/NumPy readers preserve native order/types/signed zero, all voxels and affine mapping"
+    },
+    {
+      "line": 4858,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:12.2318184Z PASS pointcloud edited/cloned graph, keyboard actual run and exact frozen downloads"
+    },
+    {
+      "line": 4859,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:15.8645348Z PASS volume edited/cloned graph, keyboard actual run and exact frozen downloads"
+    },
+    {
+      "line": 4860,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:17.1072538Z PASS both durable spatial runs and unchanged releases survive application restart"
+    },
+    {
+      "line": 4861,
+      "group": "node tests/browser_workspace_spatial.cjs",
+      "text": "2026-10-20T03:08:17.1220306Z PASS real spatial workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-spatial/run-JDPlk2"
+    },
+    {
+      "line": 4878,
+      "group": "node tests/browser_workspace_export_run.cjs",
+      "text": "2026-10-20T03:08:19.7080132Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4879,
+      "group": "node tests/browser_workspace_export_run.cjs",
+      "text": "2026-10-20T03:08:25.4820020Z PASS Real export-only run without training interpreter; recipe choice, named clone, invalid-edge refusal, Unicode release and exact download"
+    },
+    {
+      "line": 4880,
+      "group": "node tests/browser_workspace_export_run.cjs",
+      "text": "2026-10-20T03:08:27.1321722Z PASS Reopened PostgreSQL-backed app preserves report, exact release and immutable old graph after later edits"
+    },
+    {
+      "line": 4881,
+      "group": "node tests/browser_workspace_export_run.cjs",
+      "text": "2026-10-20T03:08:27.1496373Z PASS real classification export-only workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-export-run/run-SG3MNv"
+    },
+    {
+      "line": 4898,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:29.7185686Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4899,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:31.3605992Z PASS Embedded Unicode entity spans, keyboard review/history and retained draft through three workspaces"
+    },
+    {
+      "line": 4900,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:34.0968014Z PASS Embedded corpus import/review and existing byte-corpus export preserve Unicode"
+    },
+    {
+      "line": 4901,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:35.8457491Z PASS Embedded image caption editor/review and existing imagefolder export retain captions"
+    },
+    {
+      "line": 4902,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:37.7000779Z PASS Shell dirty badge stays pending through actual held save acknowledgement and clears from the editor outcome without further input"
+    },
+    {
+      "line": 4903,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:38.2318088Z PASS Embedded answer/preference forms preserve exact strings, human judgments and draft navigation; existing adapters export both"
+    },
+    {
+      "line": 4904,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:38.8861981Z PASS All embedded owners remain usable after reload; desktop and narrow shell have no horizontal overflow"
+    },
+    {
+      "line": 4905,
+      "group": "node tests/browser_workspace_breadth.cjs",
+      "text": "2026-10-20T03:08:38.9010370Z PASS embedded existing-task breadth: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-breadth/run-gaWexy"
+    },
+    {
+      "line": 4936,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:09:25.8807853Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 4937,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:09:30.2052524Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls"
+    },
+    {
+      "line": 4938,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:09:30.4948255Z PASS invalid held-out class coverage blocks release before training"
+    },
+    {
+      "line": 4939,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:09:31.0356012Z PASS fixed split preview, exact reviewed source release and immutable ZIP download"
+    },
+    {
+      "line": 4940,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:09:55.8831251Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states"
+    },
+    {
+      "line": 4941,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:09:56.0464539Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked"
+    },
+    {
+      "line": 4942,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:17.0517450Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge"
+    },
+    {
+      "line": 4943,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:17.8513294Z PASS Compatible frozen validation membership supports measured comparison across actual trained models"
+    },
+    {
+      "line": 4944,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:19.0050957Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload"
+    },
+    {
+      "line": 4945,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:44.3384143Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode"
+    },
+    {
+      "line": 4946,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:44.4207004Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas"
+    },
+    {
+      "line": 4947,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:44.8038417Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers"
+    },
+    {
+      "line": 4948,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:45.1775322Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout"
+    },
+    {
+      "line": 4949,
+      "group": "node tests/browser_model_development.cjs",
+      "text": "2026-10-20T03:10:45.6695589Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-p9olCV"
+    },
+    {
+      "line": 4966,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:09.6016284Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection"
+    },
+    {
+      "line": 4967,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:10.8975125Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked"
+    },
+    {
+      "line": 4968,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:11.2271683Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta"
+    },
+    {
+      "line": 4969,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:11.4114121Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context"
+    },
+    {
+      "line": 4970,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:11.9096468Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured"
+    },
+    {
+      "line": 4971,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:12.8483353Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-9sva0s"
+    },
+    {
+      "line": 4988,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:36.7719470Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection"
+    },
+    {
+      "line": 4989,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:38.0103897Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked"
+    },
+    {
+      "line": 4990,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:38.3592719Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta"
+    },
+    {
+      "line": 4991,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:38.5455334Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context"
+    },
+    {
+      "line": 4992,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:39.0585865Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured"
+    },
+    {
+      "line": 4993,
+      "group": "node tests/browser_one_fit_model_evidence.cjs",
+      "text": "2026-10-20T03:11:39.9917471Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-jDoSI2"
+    }
+  ],
+  "actual_training_json": [
+    {
+      "line": 4920,
+      "group": "python tests/qualify_model_development.py --task image --fixture tests/fixtures/model_development --output build/qa/model-development-cpu",
+      "value": {
+        "actual_training": true,
+        "checkpoints": 2,
+        "cold_reopen": true,
+        "compatible_correction": true,
+        "corrected_run_id": "06c5752e1097478689cedb4e38e4c862",
+        "hardware": {
+          "cpu_count": 4,
+          "machine": "x86_64"
+        },
+        "http_operations": [
+          {
+            "operation": "recipes.list",
+            "status": 200
+          },
+          {
+            "operation": "models.create",
+            "status": 201
+          },
+          {
+            "operation": "models.publish",
+            "status": 200
+          },
+          {
+            "operation": "graphs.create",
+            "status": 201
+          },
+          {
+            "operation": "graphs.save",
+            "status": 200
+          },
+          {
+            "operation": "graphs.validate",
+            "status": 200
+          },
+          {
+            "operation": "studies.create",
+            "status": 201
+          },
+          {
+            "operation": "studies.prepare_trial",
+            "status": 201
+          },
+          {
+            "operation": "studies.get",
+            "status": 200
+          },
+          {
+            "operation": "studies.continue",
+            "status": 200
+          },
+          {
+            "operation": "studies.get",
+            "status": 200
+          },
+          {
+            "operation": "studies.admit",
+            "status": 201
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.model_evidence",
+            "status": 200
+          },
+          {
+            "operation": "runs.model_evidence",
+            "status": 200
+          },
+          {
+            "operation": "runs.model_evidence",
+            "status": 200
+          },
+          {
+            "operation": "graphs.create",
+            "status": 201
+          },
+          {
+            "operation": "graphs.save",
+            "status": 200
+          },
+          {
+            "operation": "studies.reconcile",
+            "status": 200
+          },
+          {
+            "operation": "studies.get",
+            "status": 200
+          },
+          {
+            "operation": "studies.prepare_trial",
+            "status": 201
+          },
+          {
+            "operation": "studies.get",
+            "status": 200
+          },
+          {
+            "operation": "studies.admit",
+            "status": 201
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.get",
+            "status": 200
+          },
+          {
+            "operation": "runs.model_evidence",
+            "status": 200
+          },
+          {
+            "operation": "runs.compare_model_evidence",
+            "status": 200
+          }
+        ],
+        "independent_fixed_inference": true,
+        "independent_oracle_sha256": "80cb30bfc9d1c64705630d4924e3b126b3a57b18bba5b12c3f349f1b05ca8b8e",
+        "limitations": [
+          "Authored patterns qualify evidence plumbing, not generalization or useful classifier quality.",
+          "CPU only; no GPU, resume or adaptive budget."
+        ],
+        "peak_rss_bytes": 385003520,
+        "probe_members": 4,
+        "qualification_driver_sha256": "7c4a07924480494749504518697c42f4631fd2389ddd386d1c7994830b5b901d",
+        "retained_bytes": 74997,
+        "run_id": "ef68c7e099624b7798a391bece5dd1d9",
+        "runtime": {
+          "device": "cpu",
+          "python": "3.12.15",
+          "scikit_learn": "1.7.2",
+          "threads": 1,
+          "torch": "2.8.0+cpu",
+          "torchvision": "0.23.0+cpu"
+        },
+        "source_fixture_sha256": "81fb7875b79549f6635b044f4fa2a8a49ab713cae705f7b040a300ae4af972e6",
+        "study_id": "6852bdc8cfb64942ae39c7a02bd688bd",
+        "task": "image",
+        "ui_qualification": "requires separate1440/390 keyboard browser run",
+        "wall_elapsed_seconds": 43.303627667
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "observed_utc": "2026-10-20T03:12:31.936628+00:00",
+  "pr": 105,
+  "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "base": "feature/lab-phase-panel-20261019",
+  "base_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "mergeable_state": "clean",
+  "checks": [
+    {
+      "id": 118390262320,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557067/job/118390262320"
+    },
+    {
+      "id": 118390260929,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557043/job/118390260929"
+    },
+    {
+      "id": 118390149863,
+      "name": "lifecycle",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349523584/job/118390149863"
+    },
+    {
+      "id": 118390149456,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349523542/job/118390149456"
+    }
+  ]
+}

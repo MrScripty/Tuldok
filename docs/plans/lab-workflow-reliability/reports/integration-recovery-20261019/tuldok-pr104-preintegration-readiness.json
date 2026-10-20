@@ -1,0 +1,66 @@
+{
+  "observed_utc": "2026-10-20T03:12:30.698041+00:00",
+  "pr": 104,
+  "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "base": "main",
+  "base_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "mergeable_state": "clean",
+  "checks": [
+    {
+      "id": 118390213922,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543926/job/118390213922"
+    },
+    {
+      "id": 118390213683,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543888/job/118390213683"
+    },
+    {
+      "id": 118390213620,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543860/job/118390213620"
+    },
+    {
+      "id": 118390213588,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543903/job/118390213588"
+    },
+    {
+      "id": 118390120232,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511503/job/118390120232"
+    },
+    {
+      "id": 118390114562,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511760/job/118390114562"
+    },
+    {
+      "id": 118390114013,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511761/job/118390114013"
+    },
+    {
+      "id": 118390113804,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511758/job/118390113804"
+    }
+  ]
+}

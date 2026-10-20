@@ -1,0 +1,15 @@
+{
+  "pr": 110,
+  "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+  "main": "13aa869725dc41661fb2aa7593a682432ef46716",
+  "qualified_old_base": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+  "base_trees_equal": true,
+  "prospective_tree": "7705912b168b0eab5ebc1d429087ec61e71061d1",
+  "observed_utc": "2026-10-20T03:15:15.037805+00:00",
+  "state": "retarget_confirmed",
+  "command_exit": 0,
+  "stderr": "",
+  "observed_base": "main",
+  "observed_base_sha": "13aa869725dc41661fb2aa7593a682432ef46716",
+  "observed_head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015"
+}

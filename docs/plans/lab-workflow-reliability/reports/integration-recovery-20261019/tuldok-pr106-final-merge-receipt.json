@@ -1,0 +1,101 @@
+{
+  "pr": 106,
+  "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+  "tree": "01f01295c340355323e0cabe9ca41cf07b20ebe2",
+  "source_worktree": "/workspace/Tuldok-lab-field-comparison-m6",
+  "reviews": [
+    "/tmp/tuldok-pr106-5a83-cpu-independent-review.json",
+    "/tmp/tuldok-pr106-5a83-lifecycle-independent-review.json"
+  ],
+  "check_names": [
+    "lifecycle",
+    "captured-cpu",
+    "catalog",
+    "workspace-ui"
+  ],
+  "base": "c14e223c03fbbe9808d8a793d78d878a8dccea45",
+  "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper.",
+  "state": "merged_and_tree_verified",
+  "observed_utc": "2026-10-20T03:14:47.301261+00:00",
+  "review_sha256": {
+    "/tmp/tuldok-pr106-5a83-cpu-independent-review.json": "451debf0c932129099d1360609da9217fd5a0a72967bb3ba4501cd9df2ed0ac9",
+    "/tmp/tuldok-pr106-5a83-lifecycle-independent-review.json": "63e92fb28f10444b920ac19127da73102c2764d30d251a27e0170eaf9d0545e9"
+  },
+  "prospective_tree_verified": "01f01295c340355323e0cabe9ca41cf07b20ebe2",
+  "checks": [
+    {
+      "id": 118390133928,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518183/job/118390133928"
+    },
+    {
+      "id": 118390133508,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518119/job/118390133508"
+    },
+    {
+      "id": 118390133470,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518156/job/118390133470"
+    },
+    {
+      "id": 118390133409,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518133/job/118390133409"
+    },
+    {
+      "id": 118390001060,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475251/job/118390001060"
+    },
+    {
+      "id": 118390001037,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475266/job/118390001037"
+    },
+    {
+      "id": 118390001029,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475295/job/118390001029"
+    },
+    {
+      "id": 118390001014,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475306/job/118390001014"
+    }
+  ],
+  "latest_required_check_ids": {
+    "workspace-ui": 118390133928,
+    "captured-cpu": 118390133508,
+    "catalog": 118390133470,
+    "lifecycle": 118390133409
+  },
+  "command_exit": 0,
+  "response": "{\"sha\":\"36ce375115cd5ce2d24b37681495ec81cd9bf6a1\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+  "stderr": "",
+  "merge_response": {
+    "sha": "36ce375115cd5ce2d24b37681495ec81cd9bf6a1",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "merge_sha": "36ce375115cd5ce2d24b37681495ec81cd9bf6a1",
+  "merged_tree": "01f01295c340355323e0cabe9ca41cf07b20ebe2",
+  "current_main": "36ce375115cd5ce2d24b37681495ec81cd9bf6a1",
+  "merged_utc": "2026-10-20T03:14:54.343802+00:00"
+}

@@ -1,0 +1,15 @@
+{
+  "pr": 106,
+  "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+  "main": "c14e223c03fbbe9808d8a793d78d878a8dccea45",
+  "qualified_old_base": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "base_trees_equal": true,
+  "prospective_tree": "01f01295c340355323e0cabe9ca41cf07b20ebe2",
+  "observed_utc": "2026-10-20T03:14:45.689594+00:00",
+  "state": "retarget_confirmed",
+  "command_exit": 0,
+  "stderr": "",
+  "observed_base": "main",
+  "observed_base_sha": "c14e223c03fbbe9808d8a793d78d878a8dccea45",
+  "observed_head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e"
+}

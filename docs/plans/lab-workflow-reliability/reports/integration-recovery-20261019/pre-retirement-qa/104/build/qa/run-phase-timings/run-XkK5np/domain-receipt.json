@@ -1,0 +1,303 @@
+{
+  "scope": "actual neutral preparation/queue/catalog mutex/cancel/drain/publication continuation; no training/science",
+  "counts": {
+    "workspace_runs": 2,
+    "access_execution_grants": 2,
+    "access_execution_consumptions": 2
+  },
+  "go_sends": 2,
+  "cancelled_run": "4b14758d6b9141a6bb2a469d4aac8da2",
+  "publication_run": "9a7379abf1ac41c1b454be6bd44950a7",
+  "original_publication_run_state": "interrupted",
+  "result_ref": {
+    "catalog_id": "1abb662fdc814e4eb20ee343ef6d1b8b",
+    "custody_receipt_sha256": "495f6f1a130dc7eb1a6bc9e9140c82a29f0ef0e11329241a9e395a14f6216664",
+    "inventory_sha256": "84afb1364c2ecd99dbc7b34258f2d331b576f8e49b96aebd980cd73dd1450d84",
+    "kind": "recovered_publication_result",
+    "material_sha256": "0a52affc9e78b2a44ffffd30caa3be20f1ceec9c0dffaf47d0242dc4aaffb296",
+    "run_id": "9a7379abf1ac41c1b454be6bd44950a7",
+    "schema_version": 1,
+    "sha256": "19018d52d524d61fa772e98e4045114a62abb5f760dd8a2c5319f9ebcb016618"
+  },
+  "timings": [
+    {
+      "format": "run_phase_timings_v1",
+      "catalog_id": "1abb662fdc814e4eb20ee343ef6d1b8b",
+      "run_id": "4b14758d6b9141a6bb2a469d4aac8da2",
+      "original_run_state": "cancelled",
+      "evidence": "owner_observed",
+      "records": [
+        {
+          "clock_id": "939a607cbb2268389100da08e5b09108",
+          "dropped_spans": 0,
+          "format": "owner_phase_timings_v1",
+          "observed_at_ms": 1792446285289,
+          "owner": "pipeline",
+          "spans": [
+            {
+              "elapsed_ms": 360,
+              "ended_offset_ms": 360,
+              "phase": "capture",
+              "sequence": 1,
+              "started_offset_ms": 0,
+              "state": "measured",
+              "wait_reason": null
+            }
+          ]
+        },
+        {
+          "format": "owner_phase_timings_v1",
+          "owner": "runs",
+          "clock_id": "b0fbee38e36ad5aa745f3a2712ad5289",
+          "observed_at_ms": 1792446303977,
+          "dropped_spans": 0,
+          "spans": [
+            {
+              "sequence": 1,
+              "phase": "queue",
+              "state": "measured",
+              "started_offset_ms": 0,
+              "ended_offset_ms": 5661,
+              "elapsed_ms": 5661,
+              "wait_reason": null
+            },
+            {
+              "sequence": 2,
+              "phase": "catalog_lock_wait",
+              "state": "measured",
+              "started_offset_ms": 5140,
+              "ended_offset_ms": 5292,
+              "elapsed_ms": 152,
+              "wait_reason": null
+            },
+            {
+              "sequence": 3,
+              "phase": "catalog_lock_wait",
+              "state": "measured",
+              "started_offset_ms": 5516,
+              "ended_offset_ms": 5516,
+              "elapsed_ms": 0,
+              "wait_reason": null
+            },
+            {
+              "sequence": 4,
+              "phase": "launch_verification",
+              "state": "measured",
+              "started_offset_ms": 5661,
+              "ended_offset_ms": 5857,
+              "elapsed_ms": 196,
+              "wait_reason": null
+            }
+          ]
+        },
+        {
+          "clock_id": "618e9a48ec583d3cfa2883c56e04fce0",
+          "dropped_spans": 0,
+          "format": "owner_phase_timings_v1",
+          "observed_at_ms": 1792446293073,
+          "owner": "custodian",
+          "spans": [
+            {
+              "elapsed_ms": 218,
+              "ended_offset_ms": 218,
+              "phase": "custodian_preparation",
+              "sequence": 1,
+              "started_offset_ms": 0,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 148,
+              "ended_offset_ms": 366,
+              "phase": "go_wait",
+              "sequence": 2,
+              "started_offset_ms": 218,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 187,
+              "ended_offset_ms": 553,
+              "phase": "runtime_verification",
+              "sequence": 3,
+              "started_offset_ms": 366,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 1140,
+              "ended_offset_ms": 1693,
+              "phase": "leader_lifetime",
+              "sequence": 4,
+              "started_offset_ms": 553,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 61,
+              "ended_offset_ms": 1709,
+              "phase": "drain",
+              "sequence": 5,
+              "started_offset_ms": 1648,
+              "state": "measured",
+              "wait_reason": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "format": "run_phase_timings_v1",
+      "catalog_id": "1abb662fdc814e4eb20ee343ef6d1b8b",
+      "run_id": "9a7379abf1ac41c1b454be6bd44950a7",
+      "original_run_state": "interrupted",
+      "evidence": "owner_observed",
+      "records": [
+        {
+          "clock_id": "f5fb85d5e09ffe66cec0700b10b25f29",
+          "dropped_spans": 0,
+          "format": "owner_phase_timings_v1",
+          "observed_at_ms": 1792446296897,
+          "owner": "pipeline",
+          "spans": [
+            {
+              "elapsed_ms": 388,
+              "ended_offset_ms": 388,
+              "phase": "capture",
+              "sequence": 1,
+              "started_offset_ms": 0,
+              "state": "measured",
+              "wait_reason": null
+            }
+          ]
+        },
+        {
+          "format": "owner_phase_timings_v1",
+          "owner": "runs",
+          "clock_id": "74e24087657f8c989d6c3e083a61ed4c",
+          "observed_at_ms": 1792446304013,
+          "dropped_spans": 0,
+          "spans": [
+            {
+              "sequence": 1,
+              "phase": "queue",
+              "state": "measured",
+              "started_offset_ms": 0,
+              "ended_offset_ms": 199,
+              "elapsed_ms": 199,
+              "wait_reason": null
+            },
+            {
+              "sequence": 2,
+              "phase": "catalog_lock_wait",
+              "state": "measured",
+              "started_offset_ms": 73,
+              "ended_offset_ms": 73,
+              "elapsed_ms": 0,
+              "wait_reason": null
+            },
+            {
+              "sequence": 3,
+              "phase": "launch_verification",
+              "state": "measured",
+              "started_offset_ms": 199,
+              "ended_offset_ms": 636,
+              "elapsed_ms": 437,
+              "wait_reason": null
+            },
+            {
+              "sequence": 4,
+              "phase": "output_validation",
+              "state": "measured",
+              "started_offset_ms": 1560,
+              "ended_offset_ms": 1560,
+              "elapsed_ms": 0,
+              "wait_reason": null
+            },
+            {
+              "sequence": 5,
+              "phase": "publication",
+              "state": "incomplete",
+              "started_offset_ms": 1626,
+              "ended_offset_ms": null,
+              "elapsed_ms": 0,
+              "wait_reason": null
+            },
+            {
+              "sequence": 6,
+              "phase": "recovery_verification",
+              "state": "measured",
+              "started_offset_ms": 3736,
+              "ended_offset_ms": 3736,
+              "elapsed_ms": 0,
+              "wait_reason": null
+            },
+            {
+              "sequence": 7,
+              "phase": "recovery_publication",
+              "state": "measured",
+              "started_offset_ms": 3736,
+              "ended_offset_ms": 3738,
+              "elapsed_ms": 2,
+              "wait_reason": null
+            }
+          ]
+        },
+        {
+          "clock_id": "8aadb738034dc3c37e7c8c7ce9cb88da",
+          "dropped_spans": 0,
+          "format": "owner_phase_timings_v1",
+          "observed_at_ms": 1792446298325,
+          "owner": "custodian",
+          "spans": [
+            {
+              "elapsed_ms": 169,
+              "ended_offset_ms": 169,
+              "phase": "custodian_preparation",
+              "sequence": 1,
+              "started_offset_ms": 0,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 145,
+              "ended_offset_ms": 314,
+              "phase": "go_wait",
+              "sequence": 2,
+              "started_offset_ms": 169,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 138,
+              "ended_offset_ms": 452,
+              "phase": "runtime_verification",
+              "sequence": 3,
+              "started_offset_ms": 314,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 177,
+              "ended_offset_ms": 629,
+              "phase": "leader_lifetime",
+              "sequence": 4,
+              "started_offset_ms": 452,
+              "state": "measured",
+              "wait_reason": null
+            },
+            {
+              "elapsed_ms": 1,
+              "ended_offset_ms": 630,
+              "phase": "drain",
+              "sequence": 5,
+              "started_offset_ms": 629,
+              "state": "measured",
+              "wait_reason": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

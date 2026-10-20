@@ -5,7 +5,8 @@
   "source_worktree": "/workspace/Tuldok-lab-phase-ui-m3",
   "reviews": [
     "/tmp/tuldok-pr104-8323-completed-lifecycle-independent-review.json",
-    "/tmp/tuldok-pr104-8323-cpu-independent-review.json"
+    "/tmp/tuldok-pr104-8323-cpu-independent-review.json",
+    "/tmp/tuldok-pr104-8323-primary-lifecycle-independent-review.json"
   ],
   "check_names": [
     "lifecycle",

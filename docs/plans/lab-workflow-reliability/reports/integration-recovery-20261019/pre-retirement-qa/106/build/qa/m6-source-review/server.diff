@@ -1,0 +1,234 @@
+diff --git a/agent_api.py b/agent_api.py
+index 27e7ee1..ee43f27 100644
+--- a/agent_api.py
++++ b/agent_api.py
+@@ -694,6 +694,12 @@ model_operation('runs.publication_model_evidence', 'POST', '/api/workspace/publi
+     {'ref': PUBLICATION_RESULT_REF, 'selectors': JSON_OBJECT}, ['ref'])
+ model_operation('runs.compare_publication_evidence', 'POST', '/api/workspace/publication-results/compare-model-evidence',
+     {'ref': PUBLICATION_RESULT_REF, 'other_ref': PUBLICATION_RESULT_REF, 'selection': JSON_OBJECT})
++_SCIENTIFIC_OPERAND = {'oneOf': [obj({'kind':const('completed_run'), 'catalog_id':ID, 'run_id':ID}),
++    obj({'kind':const('publication_result'), 'ref':PUBLICATION_RESULT_REF})]}
++model_operation('runs.compare_scientific_evidence', 'POST', '/api/workspace/scientific-comparison',
++    {'operands':array(_SCIENTIFIC_OPERAND,2,2), 'selection':JSON_OBJECT,
++     'point':obj({'field_id':REF, **{axis:integer(0,127) for axis in 'xyz'}})},
++    output=JSON_OBJECT, description='Read exact retained validation field-point diagnostics and scalar compatibility; no scientific criterion or compute is invented.')
+ 
+ _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
+ _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
+@@ -742,6 +748,26 @@ _EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
+ _exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
+ _exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
+ _CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
++_scientific = _CONTRACTS['runs.compare_scientific_evidence'][1]
++_scientific['inputSchema']['properties']['selection'] = obj({key:copy.deepcopy(value)
++    for key,value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id','other_run_id')})
++_SCIENTIFIC_VALUE = {'oneOf':[obj({'state':const('missing'),'reason':text(120)}),
++    obj({'state':const('observed'),'member_ordinal':integer(0,7),'prediction':{'type':'number'},
++         'reference':{'type':'number'},'units':text(80)})]}
++_UNKNOWN_SCIENCE = obj({'state':const('unknown'),'reason':text(160)})
++_scientific['outputSchema']['oneOf'][0]['properties']['result'] = obj({
++    'format':const('scientific_comparison_v1'), 'scalar':copy.deepcopy(_EXACT_COMPARISON_RESULT),
++    'point':copy.deepcopy(_scientific['inputSchema']['properties']['point']),
++    'cases':array(obj({'case':JSON_OBJECT,'values':array(_SCIENTIFIC_VALUE,2,2),
++        'prediction_delta':{'oneOf':[{'type':'null'},obj({'value':{'type':'number'},'units':text(80)})]},
++        'acceptance':_UNKNOWN_SCIENCE}),16),
++    'coverage':obj({key:integer(0,16) for key in ('baseline','candidate','matched','union')}),
++    'interpretation':const('retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance'),
++    'criterion':_UNKNOWN_SCIENCE,
++    'operands':array(obj({'operand':_SCIENTIFIC_OPERAND,'original_run_state':text(32),
++        'model':JSON_OBJECT,'material':JSON_OBJECT,'study_membership':{'type':['object','null']},
++        'configuration':JSON_OBJECT,'timings':JSON_OBJECT,'memory':_UNKNOWN_SCIENCE,
++        'artifacts':array(JSON_OBJECT,256),'custody':const('managed_run_artifacts')}),2,2)})
+ _publication_comparison = _CONTRACTS['runs.compare_publication_evidence'][1]
+ _publication_comparison['inputSchema']['properties']['selection'] = obj({key: copy.deepcopy(value)
+     for key, value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id', 'other_run_id')})
+diff --git a/app.py b/app.py
+index fafe999..9d2b010 100644
+--- a/app.py
++++ b/app.py
+@@ -952,6 +952,7 @@ def make_handler(dataset, observer=None):
+                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
+                     '/workspace-phase-timings.js': ('workspace-phase-timings.js', 'text/javascript'),
+                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
++                    '/workspace-scientific-comparison.js': ('workspace-scientific-comparison.js', 'text/javascript'),
+                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
+                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
+                     '/runs-view.js': ('runs-view.js', 'text/javascript'),
+@@ -1009,6 +1010,9 @@ def make_handler(dataset, observer=None):
+                 path = urlsplit(self.path).path
+                 if path.startswith('/api/workspace/'):
+                     parts = path.removeprefix('/api/workspace/').split('/')
++                    if parts == ['scientific-comparison']:
++                        agent_api.require_selection(self._contract_selection, 'runs.compare_scientific_evidence')
++                        return self.reply(dataset.runs.compare_scientific_evidence(body))
+                     if parts == ['coordinator', 'recover']:
+                         agent_api.require_selection(self._contract_selection, 'runs.recover_coordinator')
+                         return self.reply(dataset.runs.recover_coordinator(body))
+diff --git a/extension_evidence.py b/extension_evidence.py
+index 7c45c23..8d1122d 100644
+--- a/extension_evidence.py
++++ b/extension_evidence.py
+@@ -592,6 +592,65 @@ def compare(verified, contexts, body):
+     return result
+ 
+ 
++@boundary
++def compare_scientific(verified, contexts, selection, point):
++    """Exact retained point diagnostics, not a scientific error/acceptance operator.
++
++    Case correspondence is frozen-reference identity, never ordinal or shape.
++    The existing profile retains no per-case metric or owned acceptance criterion.
++    """
++    closed(point, ('field_id', 'x', 'y', 'z'), 'Comparison point')
++    text(point['field_id'], 'Field ID', 64)
++    for axis in 'xyz': natural(point[axis], 'Point '+axis, 0, 127)
++    result = compare(verified, contexts, selection)
++    if result['delta'] is not None and result['delta']['state'] == 'observed':
++        require(math.isfinite(result['delta']['value']), 'Scalar delta exceeds the finite numeric range.')
++    left, right = verified
++    for key, reason in (('data_sha256', 'Evaluation data identities differ.'),
++                        ('profile_sha256', 'Evidence profiles differ.')):
++        if left['manifest'][key] != right['manifest'][key]: result['reasons'].append(reason)
++    if left['probe']['split'] != right['probe']['split'] or left['probe']['split'] != 'validation':
++        result['reasons'].append('Evaluation splits differ or are unsupported.')
++    if left['probe']['selection_policy_sha256'] != right['probe']['selection_policy_sha256']:
++        result['reasons'].append('Case selection policies differ.')
++    if result['reasons']: result.update(state='incompatible', delta=None)
++    members = [{canonical(row['frozen_reference']): row for row in value['probe']['members']} for value in verified]
++    require(all(len(index) == len(value['probe']['members']) for index, value in zip(members, verified, strict=True)),
++            'Frozen case identities are ambiguous.')
++    cases = []
++    for identity in sorted(set(members[0]) | set(members[1])):
++        values = []
++        for index, value in enumerate(verified):
++            member = members[index].get(identity)
++            if member is None:
++                values.append({'state':'missing','reason':'case_not_retained'}); continue
++            checkpoint = selection[('other_' if index else '')+'checkpoint_sha256']
++            record = next((row for row in value['fields'] if row['checkpoint_sha256'] == checkpoint
++                           and row['member_ordinal'] == member['ordinal'] and row['field_id'] == point['field_id']), None)
++            if record is None:
++                values.append({'state':'missing','reason':'field_not_retained'}); continue
++            require(all(point[axis] < record['shape_zyx']['zyx'.index(axis)] for axis in 'xyz'),
++                    'Selected comparison point is outside the declared field geometry.')
++            field = query(value, {'checkpoint_sha256':checkpoint, 'member_ordinal':member['ordinal'],
++                'field_id':point['field_id'], 'axis':'z', 'index':point['z'], 'split':'validation'})['field']
++            values.append({'state':'observed', 'member_ordinal':member['ordinal'],
++                'prediction':field['prediction'][point['y']][point['x']],
++                'reference':field['reference'][point['y']][point['x']], 'units':field['units']})
++        delta = None
++        if result['state'] == 'compatible' and selection['mode'] == 'paired' and all(row['state'] == 'observed' for row in values):
++            difference = values[1]['prediction'] - values[0]['prediction']
++            require(math.isfinite(difference), 'Diagnostic point delta exceeds the finite numeric range.')
++            delta = {'value':difference, 'units':values[0]['units']}
++        member = members[0].get(identity) or members[1][identity]
++        cases.append({'case':copy.deepcopy(member['frozen_reference']), 'values':values, 'prediction_delta':delta,
++                      'acceptance':{'state':'unknown','reason':'owned_per_case_criterion_not_retained'}})
++    return {'format':'scientific_comparison_v1', 'scalar':result, 'point':copy.deepcopy(point), 'cases':cases,
++        'coverage':{'baseline':len(members[0]), 'candidate':len(members[1]),
++                    'matched':len(set(members[0]) & set(members[1])), 'union':len(cases)},
++        'interpretation':'retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance',
++        'criterion':{'state':'unknown','reason':'profile_has_no_owned_per_case_metric_or_criterion'}}
++
++
+ @boundary
+ def verify_target_payload(definition, policy, member, field, raw):
+     """Check one finite reference payload against the explicit recipe semantics.
+diff --git a/run_publication.py b/run_publication.py
+index 4985919..2b174be 100644
+--- a/run_publication.py
++++ b/run_publication.py
+@@ -650,3 +650,77 @@ def compare_evidence(runs, ref, other_ref, body):
+     _read_check(runs, deadline)
+     for item in (ref, other_ref): _current_read(runs, item['run_id'])
+     return {'result_refs': [copy.deepcopy(ref), copy.deepcopy(other_ref)], 'comparison': comparison}
++
++
++@_reader_boundary
++def compare_scientific(runs, body):
++    """Read both supported custody forms through their existing authoritative owners."""
++    closed(body, ('operands', 'selection', 'point'))
++    _require(type(body['operands']) is list and len(body['operands']) == 2,
++             'Select an exact baseline and candidate.', 'invalid')
++    selection = body['selection']
++    closed(selection, ('checkpoint_sha256', 'other_checkpoint_sha256', 'evaluation_sha256',
++        'other_evaluation_sha256', 'metric_id', 'metric_definition_sha256', 'other_metric_definition_sha256', 'mode'))
++    _require(selection['mode'] in ('paired', 'side_by_side') and type(selection['metric_id']) is str
++             and 1 <= len(selection['metric_id']) <= 64
++             and all(_hash(value) for key, value in selection.items() if key.endswith('sha256')),
++             'Select exact checkpoint, evaluation and metric identities.', 'invalid')
++    deadline = time.monotonic() + WALL_SECONDS
++    selected = []; metadata = []
++    for index, operand in enumerate(body['operands']):
++        _require(type(operand) is dict, 'Invalid comparison operand.', 'invalid')
++        if operand.get('kind') == 'publication_result':
++            closed(operand, ('kind', 'ref'))
++            value, run, verified = _evidence(runs, operand['ref'], deadline)
++            artifacts = value['artifacts']
++        elif operand.get('kind') == 'completed_run':
++            closed(operand, ('kind', 'catalog_id', 'run_id'))
++            _require(operand['catalog_id'] == runs.db.dataset_id, 'Comparison catalog differs.', 'stale')
++            identifier(operand['run_id'], 'Comparison Run ID')
++            runs.access.require('inspect', 'runs.compare_scientific_evidence', operand['run_id'])
++            with runs.lock: run = runs._load(operand['run_id'])
++            _require(run['state'] == 'completed' and runs._extension(run),
++                     'Use an exact attached publication Ref for a recovered failed Run; legacy evidence is unsupported.', 'unsupported')
++            verified = runs.model_evidence(run['id'], {}, contract_version=2)
++            artifacts = run['artifacts']
++        else:
++            _require(False, 'Unsupported comparison operand kind.', 'unsupported')
++        item = next((row for row in artifacts if row['name'] == 'model-evidence.json'), None)
++        expected = selection[('other_' if index else '')+'evaluation_sha256']
++        _require(item is not None and item['sha256'] == expected, 'Exact evaluation identity differs.', 'stale')
++        selected.append((run, verified, copy.deepcopy(artifacts)))
++        context = run['extension_context']
++        association = runs.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',
++                                      (run['id'],)).fetchone()
++        membership = (dict(association, catalog_id=runs.db.dataset_id,
++                           material_sha256=context['composition']['sha256']) if association is not None else None)
++        metadata.append({'operand':copy.deepcopy(operand), 'original_run_state':run['state'],
++            'model':copy.deepcopy(context['static']['model']), 'material':copy.deepcopy(context['composition']),
++            'study_membership':membership,
++            'configuration':copy.deepcopy(context['static']['policy']['model_specification']),
++            'timings':runs.phase_timings(run['id']),
++            'memory':{'state':'unknown','reason':'memory_measurement_not_retained_by_profile'},
++            'artifacts':copy.deepcopy(artifacts), 'custody':'managed_run_artifacts'})
++        _read_check(runs, deadline)
++    import extension_evidence
++    comparison = extension_evidence.compare_scientific([item[1] for item in selected],
++        [item[0]['extension_context'] for item in selected], selection, body['point'])
++    # Authority can change while bytes are read. Fence both operands after all
++    # projection/timing work, through the same owners used for the initial read.
++    for operand, (run, _, artifacts) in zip(body['operands'], selected, strict=True):
++        if operand['kind'] == 'publication_result':
++            current = result(runs, operand['ref'], deadline=deadline, _verify_payloads=False)
++            _require(current['artifacts'] == artifacts, 'Publication inventory changed during comparison.', 'stale')
++            _current_read(runs, run['id'])
++        else:
++            runs.access.require('inspect', 'runs.compare_scientific_evidence', run['id'])
++            with runs.lock: current = runs._load(run['id'])
++            _require(current['state'] == 'completed' and current['artifacts'] == artifacts,
++                     'Completed Run inventory changed during comparison.', 'stale')
++            runs._external_inventory(current)
++        _read_check(runs, deadline)
++    for run, _, _ in selected:
++        _current_read(runs, run['id'])
++    comparison['operands'] = metadata
++    _require(len(encode(comparison).encode()) <= 2*1024**2, 'Comparison exceeds its response bound.')
++    return comparison
+diff --git a/runs.py b/runs.py
+index 92e26bc..3478e6c 100644
+--- a/runs.py
++++ b/runs.py
+@@ -537,6 +537,11 @@ class Runs:
+         import run_publication
+         return run_publication.compare_evidence(self, ref, other_ref, body)
+ 
++    @authorized('inspect', 'runs.compare_scientific_evidence')
++    def compare_scientific_evidence(self, body):
++        import run_publication
++        return run_publication.compare_scientific(self, body)
++
+     def _receipt(self, key, request_hash):
+         row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()
+         if row:

@@ -1,0 +1,18 @@
+{
+  "pr": 109,
+  "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+  "tree": "29266e6670d88b41207af07f84b13f12eb9a430a",
+  "source_worktree": "/workspace/Tuldok-lab-bounded-collection-m4",
+  "reviews": [
+    "/tmp/tuldok-pr109-861b-cpu-independent-review.json",
+    "/tmp/tuldok-pr109-861b-lifecycle-independent-review.json"
+  ],
+  "check_names": [
+    "lifecycle",
+    "captured-cpu",
+    "catalog",
+    "workspace-ui"
+  ],
+  "base": "36ce375115cd5ce2d24b37681495ec81cd9bf6a1",
+  "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+}
