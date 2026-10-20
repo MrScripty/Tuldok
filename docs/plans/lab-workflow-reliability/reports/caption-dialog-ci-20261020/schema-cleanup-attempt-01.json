@@ -1,0 +1,13 @@
+{
+  "schema": "catalog_a9ff5f061eb54f17a1e2836abcc095de",
+  "reserved_before_creation": true,
+  "recorded_catalog_matches_actual_receipt": true,
+  "owned_children_stopped": true,
+  "temporary_removed": true,
+  "counts": {
+    "workbench_records": 5,
+    "workspace_runs": 0
+  },
+  "removed_and_queried_absent": true,
+  "observed_at": "2026-10-20T03:28:45.861799+00:00"
+}

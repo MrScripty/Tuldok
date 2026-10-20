@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "command": "node tests/browser_captions.cjs",
+  "source_commit": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "source_sha256": {
+    "tests/browser_captions.cjs": "5cc3fd4b7e9dc299c8e9c22ad6d8f9100ddfa5b1c214e36f58e1b562d7349689",
+    "tests/browser_cdp_session.cjs": "ecfac048e343e0be85a02d22d284ea2c731617ec80807762a0691276f2bec40f",
+    "tests/test_browser_cdp_session.cjs": "1742a8b29c33b4ceb35ce76310df581cdb7e44b21aede4c1998526222e9eb7d2",
+    "tests/browser_owned_cleanup.cjs": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+    "static/workbench.js": "167a48d39b0831ba814c31321f0f936d969e9b322c71b11a25a3f24ca9fe889b"
+  },
+  "browser": "Chrome/151.0.7922.173",
+  "catalog_id": "b0725dd405a3495e9ca4c2dadffca047",
+  "dialog_checks": [
+    {
+      "type": "confirm",
+      "message": "Discard unsaved annotation, rights-note, response or judgment edits?",
+      "accept": false
+    },
+    {
+      "type": "confirm",
+      "message": "Discard unsaved annotation, rights-note, response or judgment edits?",
+      "accept": true
+    },
+    {
+      "type": "confirm",
+      "message": "Discard unsaved annotation, rights-note, response or judgment edits?",
+      "accept": true
+    }
+  ],
+  "exported_records": 4,
+  "zip_sha256": "9be25ae2096fda32205f4428172ae7b46e90af98007ddd14f4a010f7690d431d",
+  "checks": [
+    "cancel preserves unsaved caption",
+    "discard restores saved caption",
+    "keyboard edit resets review; discard restores human review",
+    "draft exclusion and exact caption ZIP",
+    "reopen, filters, repeated submit and390px layout"
+  ],
+  "scope": "Actual app/PostgreSQL/Chromium caption journey with existing controlled generation provider; no model-quality claim"
+}

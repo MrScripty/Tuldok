@@ -1,0 +1,8 @@
+{
+  "schema": "catalog_b0725dd405a3495e9ca4c2dadffca047",
+  "dataset_id": "b0725dd405a3495e9ca4c2dadffca047",
+  "owner": "caption dialog CI harness final qualification",
+  "state": "created-by-normal-Metadata",
+  "server": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+  "catalog_path": "/tmp/tuldok-caption-browser-hAbzQw/data"
+}

@@ -1,0 +1,3 @@
+PASS reproduced fixed100ms race: delayed180ms confirm rejects premature handling; blocked diagnostics time out
+PASS fresh delayed cancel/accept/discard, absent dialog, trigger failure, bounded request, late reply and socket-close drainage
+PASS unexpected dialog fails closed and socket error drains owned requests
