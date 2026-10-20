@@ -4272,7 +4272,7 @@
     "cleanup_terminal": "/tmp/tuldok-pr102-103-107-cleanup-terminal.json",
     "cleanup_independent": "/tmp/tuldok-pr102-103-107-cleanup-independent-postcheck.json",
     "latest_readiness": "/tmp/tuldok-pr104-latest-readiness.json",
-    "next_gate": "Fresh repaired-head PR108 lifecycle qualification pending. PR111 fresh lifecycle/CPU qualification pending. No all-plan science/physics acceptance claimed.",
+    "next_gate": "PR108 late lifecycle stillrunning at16204:21. PR111 BLOCKED knownfailedscientific-fields open-project startup gate at0ba4; otherpendinglife isnot acceptance. Separate actualstartupreproduction/repair underway.",
     "prepared_independent_reviews": {
       "104": [
         "/tmp/tuldok-pr104-8323-cpu-independent-review.json",
@@ -4298,7 +4298,7 @@
     "merge_gate_independent": "/tmp/tuldok-pr104-merge-gate-independent-review.json",
     "description_publication": "/tmp/tuldok-remaining-final-description-publication.json",
     "recovery_checkpoint_verified": "c37106eac3a80867543a5ce4d34d6db42dd9b600:438/438 entries by independent recovery clone",
-    "observed_utc": "2026-10-20T03:35:03.466151+00:00",
+    "observed_utc": "2026-10-20T04:22:23.194565+00:00",
     "cleanup_new": "Complete: five accepted remote/local/tracking refs and five worktrees removed after dependent retargets and564-entry recovery verification. Independent postcheck retained.",
     "cleanup_new_precheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json",
     "cleanup_new_terminal": "/tmp/tuldok-pr104-105-106-109-110-cleanup-terminal.json",
@@ -4815,5 +4815,40 @@
     "actual_receipt_review": "/tmp/tuldok-captions-repair-root-actual-receipt-review.json",
     "independent_review": "/tmp/tuldok-caption-dialog-ci-independent-review.json",
     "initial_ci": "/tmp/tuldok-pr112-initial-ci-readiness.json"
+  },
+  "pr111_lifecycle_failure_0ba4": {
+    "observed_utc": "2026-10-20T04:20:09.421507+00:00",
+    "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+    "run": 39360310903,
+    "job": 118424712559,
+    "conclusion": "failure",
+    "failed_steps": [
+      {
+        "name": "Run node tests/browser_scientific_fields.cjs",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 44,
+        "started_at": "2026-10-20T04:15:40Z",
+        "completed_at": "2026-10-20T04:16:43Z"
+      }
+    ],
+    "successful_steps": 48,
+    "skipped_steps": 124,
+    "failure_location": "browser_scientific_fields.cjs openProject line59column77: firstdialog.open&&!submit.disabled wait",
+    "caption_race_equivalence": false,
+    "diagnosis": "Possible open-project control interactive before initializer handler ready; cause remains unproven until deterministic actual browser reproduction. Alternative dialog/roots availability still under independent examination.",
+    "decoded_log_sha256": "0c279bc15ca1488a9445b03763192fd6f4ab85c9c8ec1b8acb36d538a18b0e2b",
+    "source_author": "/root/pr111_ci_repair",
+    "independent_diagnosis_and_review": "/root/mcp_contract_ci_review",
+    "merge_clearance": false,
+    "other_pending_lifecycle_is_not_acceptance": true
+  },
+  "pr111_cpu_0ba4": {
+    "review": "/tmp/tuldok-pr111-0ba4-cpu-independent-review.json",
+    "both_runs_success": [
+      39360311309,
+      39360310885
+    ],
+    "scope": "CPU-only; failed/pending lifecycle blocks overallmerge"
   }
 }

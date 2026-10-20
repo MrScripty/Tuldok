@@ -31,7 +31,7 @@ history as a literal later-main checkout. Use tuldok-pending-108-111-112-activat
 | PR | Published head | Base | Remaining qualification |
 | --- | --- | --- | --- |
 |108|9f08427029d8b48c8f9b50927a1c835afb573276|main63f689ec|Fresh lifecycle; catalog/static-kit passed in snapshot|
-|111|0ba4db01f04a77c262eb4b397f88849e9688b5ab|108head9f084270|Fresh lifecycle and captured-CPU gates|
+|111|0ba4db01f04a77c262eb4b397f88849e9688b5ab|108head9f084270|CPU gates passed/reviewed; lifecycle FAILED startup44, repair underway|
 |112|abbae728434fa0670478e12216a1d94603a97daf|111head0ba4db01|Fresh lifecycle; local caption qualification/review clear|
 
 PR108's repair preserves the frozen canonical source authority and verifies its
@@ -84,3 +84,11 @@ SCI-1 needs an owned qualified criterion and compatible real lab pair. Keep miss
 criteria and measurements unknown. The actual runtime-byte-integrity observation
 passed with cleanup proof; it establishes no full T5/preparation/performance gain.
 No CUDA, live-model quality or scientific acceptance is inferred from these records.
+
+Latest04:18+update: PR1110ba4 lifecycle39360310903/job118424712559 failed
+scientific-fields first Open project dialog wait atstep44. This differs from
+the caption modal race. Fullfailurelogs/metadata and independent diagnosis are
+retained. Both exact0ba4 captured-CPU jobs passed13/13 with independentreview;
+that does not override failed/pending lifecycle. Minimal actualinitializer
+readiness reproduction/repair is assigned separately before111/112republication.
+PR108 late lifecycle remains independently separate.

@@ -1,0 +1,174 @@
+{
+  "run_id": 39360310885,
+  "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "event": "pull_request",
+  "status": "completed",
+  "conclusion": "success",
+  "metadata_base": [
+    {
+      "ref": "feature/lab-indexed-diagnostics-20261019",
+      "sha": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "repo": {
+        "id": 1369762795,
+        "url": "https://api.github.com/repos/MrScripty/Tuldok",
+        "name": "Tuldok"
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": 118424712353,
+      "status": "completed",
+      "conclusion": "success",
+      "steps": 13,
+      "not_success": []
+    }
+  ],
+  "checkout": [
+    {
+      "line": 232,
+      "text": "2026-10-20T03:42:21.0854392Z HEAD is now at b899a78 Merge 0ba4db01f04a77c262eb4b397f88849e9688b5ab into 9f08427029d8b48c8f9b50927a1c835afb573276"
+    },
+    {
+      "line": 235,
+      "text": "2026-10-20T03:42:21.0940891Z b899a78edd8755d7423f2348c06f3e5326bf5bb4"
+    }
+  ],
+  "runtime": {
+    "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+    "excluded_unused_scope": [
+      "torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.",
+      "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.",
+      "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."
+    ],
+    "file_count": 21042,
+    "format": "candidate_ci_runtime_preparation_v1",
+    "interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+    "inventory_sha256": "458b4c952ae02378ee13b868a437653c0c32bff805b690daeba9b5e491fb2095",
+    "model_browser_receipt": {
+      "catalog_path": "/tmp/tuldok-model-development-GjZFAO/data",
+      "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-hn3smY/receipt.json",
+      "run_ids": [
+        "2fc3f05779884ea1aeadbe62818c095d",
+        "22e743b99b8a40f798f33dc05e264354",
+        "b1e535e01f054762af4aeb9b80e362c6"
+      ],
+      "sha256": "d2a821ebe5cd97206a424dd82a48c8bd642bd604301159e0936e93d687931b2f"
+    },
+    "profile": "captured_cpu_python_v1",
+    "rights": "Upstream metadata/notices are retained; no new redistribution permission is asserted.",
+    "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+    "source_sha256": {
+      "candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+      "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"
+    },
+    "total_bytes": 823402896,
+    "versions": {
+      "filelock": "4.2.4",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "source_checks": {
+    "candidate_packages.py": {
+      "logged": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+      "actual_exact_head": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+      "matches": true
+    },
+    "recipe_process.py": {
+      "logged": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "actual_exact_head": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "matches": true
+    },
+    "runtime_snapshots.py": {
+      "logged": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "actual_exact_head": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "matches": true
+    },
+    "tests/prepare_candidate_runtime.py": {
+      "logged": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+      "actual_exact_head": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+      "matches": true
+    }
+  },
+  "PASS_witnesses": [
+    {
+      "line": 456,
+      "text": "2026-10-20T03:43:09.4386573Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data"
+    },
+    {
+      "line": 457,
+      "text": "2026-10-20T03:43:13.5206775Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls"
+    },
+    {
+      "line": 458,
+      "text": "2026-10-20T03:43:13.8412119Z PASS invalid held-out class coverage blocks release before training"
+    },
+    {
+      "line": 459,
+      "text": "2026-10-20T03:43:14.5604667Z PASS fixed split preview, exact reviewed source release and immutable ZIP download"
+    },
+    {
+      "line": 460,
+      "text": "2026-10-20T03:43:32.5844001Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states"
+    },
+    {
+      "line": 461,
+      "text": "2026-10-20T03:43:32.7560405Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked"
+    },
+    {
+      "line": 462,
+      "text": "2026-10-20T03:43:47.3507451Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge"
+    },
+    {
+      "line": 463,
+      "text": "2026-10-20T03:43:48.3506750Z PASS Compatible frozen validation membership supports measured comparison across actual trained models"
+    },
+    {
+      "line": 464,
+      "text": "2026-10-20T03:43:49.3818032Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload"
+    },
+    {
+      "line": 465,
+      "text": "2026-10-20T03:44:07.7029202Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode"
+    },
+    {
+      "line": 466,
+      "text": "2026-10-20T03:44:07.7915040Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas"
+    },
+    {
+      "line": 467,
+      "text": "2026-10-20T03:44:08.3536177Z PASS H5 delayed query cannot override navigation; denied evidence clears all private Runs content and explicit refresh recovers the exact Run, checkpoints, metrics and retained chart"
+    },
+    {
+      "line": 468,
+      "text": "2026-10-20T03:44:08.7206957Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout"
+    },
+    {
+      "line": 469,
+      "text": "2026-10-20T03:44:09.2281596Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-hn3smY"
+    },
+    {
+      "line": 503,
+      "text": "2026-10-20T03:45:29.9873696Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots"
+    },
+    {
+      "line": 504,
+      "text": "2026-10-20T03:45:29.9874610Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic"
+    },
+    {
+      "line": 505,
+      "text": "2026-10-20T03:45:30.0026699Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-nGywqf"
+    }
+  ]
+}

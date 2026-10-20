@@ -1,0 +1,35 @@
+{
+  "bounded_hypothesis": "Early physical click before handler binding is supported by source but unproven for original run without a click/init trace. A moving-layout miss remains another compatible explanation.",
+  "direct_source_findings": [
+    "HTML open-project initially enabled; test initially waits existence and geometry/enabled/hit, not owning-handler readiness.",
+    "WorkspaceProjects constructor installs open-project onclick after earlier page assets execute; first render can precede binding.",
+    "onclick calls showModal synchronously, then focus and refreshList; slow/failing roots request alone would leave dialog open but may keep submit disabled.",
+    "Final fixture-ready DOM proves eventual initialization, not handler existence at the earlier click."
+  ],
+  "job": 118424712559,
+  "minimal_fix_constraint": "If reproduced, initial HTML disable plus enable only once owning handler is bound; preserve real enabled-control click and all current dialog/read-only/import/stale-hash/scientific-custody assertions.",
+  "observed_failure": "Step44 first openProject timeout at59:77 after real click; condition requires dialog.open and enabled submit. Final DOM is fixture-ready with no dialog content.",
+  "observed_utc": "2026-10-20T04:20:36.660641+00:00",
+  "raw_decoded_log": {
+    "path": "/tmp/tuldok-pr111-0ba4-failed-lifecycle-job-118424712559.log",
+    "sha256": "0c279bc15ca1488a9445b03763192fd6f4ab85c9c8ec1b8acb36d538a18b0e2b"
+  },
+  "recommended_reproduction": "Hold task-local workspace-projects.js/workspaces.js response, observe rendered disabled/handler readiness and dispatch a normal user click before release; preserve actual open/submit/import assertions.",
+  "run": 39360310903,
+  "scope_limits": [
+    "No implementation/test execution/remote action by reviewer.",
+    "ColdNumPy transport step success does not qualify failed browser stage or physics/model training.",
+    "PR111 remains blocked pending qualified correction and required CI; caption repair is separate."
+  ],
+  "shared_with": [
+    "/root",
+    "/root/pr111_ci_repair"
+  ],
+  "source_head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "source_sha256": {
+    "static/workspace-projects.js": "7e797ef580a74f2021521c4e2217af776d76d4b8d1a96aa0f3d9609ea4fadff2",
+    "static/workspaces.html": "a85e465d317e8aaa14c5349ef1ae6b2dc75ac440e0cea2c5c5a313dbd4fb828e",
+    "static/workspaces.js": "099c17dc3f40cfb55d5ee01e9aaac118c63f7a04fa93539d76d866f33a70daa4",
+    "tests/browser_scientific_fields.cjs": "ffd7f93378e14cd69de37e82e04a152b9698999983b296150ec16da855ba7174"
+  }
+}
