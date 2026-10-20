@@ -18,6 +18,7 @@ import socket
 import stat
 import subprocess
 import time
+import threading
 
 READY_SECONDS = 10
 GRACE_SECONDS = 3
@@ -38,6 +39,82 @@ ID = re.compile(r'^[a-f0-9]{32}$')
 # Linux UAPI values: some supported Python builds omit the symbolic constants.
 F_ADD_SEALS = getattr(fcntl, 'F_ADD_SEALS', 1033)
 IMMUTABLE_SEALS = 0x0001 | 0x0002 | 0x0004 | 0x0008
+
+
+# Diagnostic clocks never authorize GO, custody, publication, or readiness.
+PHASE_NAMES = ('catalog_lock_wait', 'prepare', 'capture', 'queue', 'launch_verification',
+    'custodian_preparation', 'go_wait', 'runtime_verification', 'leader_lifetime',
+    'drain', 'output_validation', 'publication', 'recovery_verification', 'recovery_publication')
+PHASE_WAIT_REASONS = ('catalog_lock', 'capacity', 'preparing_material', 'capturing_inputs', 'scheduler',
+    'verifying_captures', 'owner_go', 'leader', 'descendants', 'validating_outputs', 'copying_outputs')
+PHASE_MAX_MS = 7 * 24 * 60 * 60 * 1000
+
+
+class PhaseTimings:
+    """One owner's clock; offsets may overlap and must never be summed.
+
+    This class is also sealed into the custodian source. It has no application
+    imports, reads no authority, and records transitions rather than poll ticks.
+    """
+    def __init__(self, owner, *, clock=None, wall=None):
+        self.owner = owner
+        self.clock_id = os.urandom(16).hex()
+        self._clock = clock or time.monotonic_ns
+        self._wall = wall or time.time_ns
+        self._origin = self._clock()
+        self._spans = []
+        self._next = 0
+        self._dropped = 0
+        self._lock = threading.RLock()
+
+    def _offset(self):
+        return min(PHASE_MAX_MS, max(0, (self._clock() - self._origin) // 1000000))
+
+    def begin(self, phase, wait_reason=None):
+        if phase not in PHASE_NAMES or wait_reason not in (*PHASE_WAIT_REASONS, None):
+            raise ValueError('Unknown diagnostic phase.')
+        with self._lock:
+            if len(self._spans) >= 32:
+                completed = next((item for item in self._spans if item['state'] != 'open'), None)
+                if completed is None:
+                    self._dropped += 1
+                    return None
+                self._spans.remove(completed); self._dropped += 1
+            self._next += 1
+            item = {'sequence': self._next, 'phase': phase, 'state': 'open',
+                'started_offset_ms': self._offset(), 'ended_offset_ms': None,
+                'elapsed_ms': 0, 'wait_reason': wait_reason}
+            self._spans.append(item)
+            return self._next
+
+    def waiting(self, phase, reason):
+        if reason not in PHASE_WAIT_REASONS: raise ValueError('Unknown diagnostic wait.')
+        with self._lock:
+            for item in self._spans:
+                if item['phase'] == phase and item['state'] == 'open': item['wait_reason'] = reason
+
+    def finish(self, sequence, *, complete=True):
+        with self._lock:
+            item = next((item for item in self._spans if item['sequence'] == sequence), None)
+            if item is None or item['state'] != 'open':
+                return
+            end = self._offset()
+            item.update(state='measured' if complete and end < PHASE_MAX_MS else 'incomplete',
+                elapsed_ms=max(0, end-item['started_offset_ms']), wait_reason=None)
+            if item['state'] == 'measured': item['ended_offset_ms'] = end
+
+    def snapshot(self):
+        with self._lock:
+            now = self._offset()
+            spans = [dict(item) for item in self._spans]
+            for item in spans:
+                if item['state'] == 'open':
+                    item['elapsed_ms'] = max(0, now-item['started_offset_ms'])
+                    if now == PHASE_MAX_MS:
+                        item.update(state='incomplete', wait_reason=None)
+            return {'format': 'owner_phase_timings_v1', 'owner': self.owner,
+                'clock_id': self.clock_id, 'observed_at_ms': self._wall() // 1000000,
+                'dropped_spans': self._dropped, 'spans': spans}
 
 
 class ProcessError(ValueError):
@@ -928,9 +1005,36 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
     leader=None;code=None;go=False;go_received=False;stopping=None;reason='not_started';drained=False
     started=time.monotonic();deadline=started+preparation_seconds(spec)
     verification_deadline=None
+    timing=PhaseTimings('custodian')
+    timing_enabled=True
+    def timing_write(*, durable=False):
+        nonlocal timing_enabled
+        if not timing_enabled: return
+        temporary='.phase-timings-'+os.urandom(16).hex()+'.tmp'
+        try:
+            raw=encoded(dict(common,timing=timing.snapshot()))
+            if len(raw)>16384: raise ValueError('Diagnostic timing bound exceeded.')
+            fd=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=directory_fd)
+            with os.fdopen(fd,'wb') as output:
+                output.write(raw);output.flush()
+                if durable: os.fsync(output.fileno())
+            os.rename(temporary,'phase-timings-v1.json',src_dir_fd=directory_fd,dst_dir_fd=directory_fd)
+            if durable: os.fsync(directory_fd)
+        except (OSError,ValueError):
+            # A diagnostic failure cannot turn computation into a custody claim.
+            timing_enabled=False
+        finally:
+            try: os.unlink(temporary,dir_fd=directory_fd)
+            except OSError: pass
+    preparation_span=timing.begin('custodian_preparation','verifying_captures')
+    wait_span=verify_span=leader_span=drain_span=None
+    timing_write()
     def stop(why):
         nonlocal stopping,reason
-        if stopping is None: stopping=time.monotonic();reason=why
+        nonlocal drain_span
+        if stopping is None:
+            stopping=time.monotonic();reason=why
+            drain_span=timing.begin('drain','descendants');timing_write()
     class PreparationStopped(Exception):
         pass
     def preparation_checkpoint():
@@ -956,6 +1060,8 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
         # Parent launch already verified the complete CPU snapshot. Keep READY
         # responsive; recheck it cancellably at GO, before any recipe fork.
         verify_captures(spec, include_cpu=False, include_torch=False)
+        timing.finish(preparation_span)
+        wait_span=timing.begin('go_wait','owner_go');timing_write()
         _packet(channel,dict(common,type='ready',helper=who))
         while True:
             now=time.monotonic()
@@ -973,7 +1079,9 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                     if stopping is not None or go:drained=True
                     break
                 if pid==0:break
-                if pid==leader:code=os.waitstatus_to_exitcode(status)
+                if pid==leader:
+                    code=os.waitstatus_to_exitcode(status)
+                    timing.finish(leader_span);timing_write()
             if go and code is not None and stopping is None:stop('exited' if code==0 else 'nonzero_exit')
             streams_open=any(key.data!='control' for key in selector.get_map().values())
             if drained and not streams_open:break
@@ -994,15 +1102,19 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                     # truth must retain that command even when hashing stops
                     # before a leader exists; `go` tracks successful preparation.
                     go_received=True
+                    timing.finish(wait_span)
+                    verify_span=timing.begin('runtime_verification','verifying_captures');timing_write()
                     try:
                         verification_deadline=time.monotonic()+verification_seconds(spec)
                         verify_captures(spec, checkpoint=preparation_checkpoint if verification_seconds(spec) else None,
                             on_torch_inventory=lambda: _packet(channel,dict(common,type='verifying')))
                     except PreparationStopped:
                         continue
+                    timing.finish(verify_span)
                     go=True;deadline=time.monotonic()+spec['wall_seconds']
                     input_fd=sealed('tuldok-stdin',base64.b64decode(spec['stdin_base64']))
                     pipes={name:os.pipe() for name in hashes}
+                    leader_span=timing.begin('leader_lifetime','leader')
                     leader=os.fork()
                     if leader==0:
                         try:
@@ -1019,6 +1131,7 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                     os.close(input_fd)
                     for name,(read_fd,write_fd) in pipes.items():
                         os.close(write_fd);os.set_blocking(read_fd,False);selector.register(read_fd,selectors.EVENT_READ,name)
+                    timing_write()
                     _packet(channel,dict(common,type='started',leader=identity(leader)))
                 else:
                     data=os.read(key.fd,65536)
@@ -1052,6 +1165,10 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
         try:verify_model_context(spec)
         except (OSError,ProcessError):reason='model_context_changed'
     outcome='unknown' if not drained else 'completed' if go and code==0 and reason=='exited' else 'cancelled' if reason in ('cancelled','shutdown','controller_lost') else 'failed'
+    for span in (preparation_span,wait_span,verify_span,leader_span):
+        timing.finish(span,complete=False)
+    timing.finish(drain_span,complete=drained)
+    timing_write(durable=True)
     receipt=dict(common,helper=who,go_received=go_received,spawn_closed=True,drained=drained,echild=drained,outcome=outcome,reason=reason,
         leader_returncode=code,streams={name:{'bytes':sizes[name],'sha256':hashes[name].hexdigest()} for name in hashes})
     for fd in logs.values():os.fsync(fd);os.close(fd)

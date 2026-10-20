@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 import uuid
+import phase_timings
 
 import image_training
 import text_training
@@ -96,6 +97,7 @@ class Runs:
         self._external_blocked = False
         self._confirmed_external = set()
         self._closed = False
+        self._phase_book = phase_timings.Book()
         from run_capacity import Capacity
         self._capacity = Capacity.configured()
         with self.lock:
@@ -258,7 +260,89 @@ class Runs:
                 (list(states),)).fetchall()
             return [self._load(row[0]) for row in rows]
 
+    def _phase_clock(self, run_id):
+        if not hasattr(self, '_phase_book'): self._phase_book = phase_timings.Book()
+        return self._phase_book.ensure(run_id, 'runs')
+
+    @contextmanager
+    def _phase_catalog(self, run_id):
+        clock = self._phase_clock(run_id)
+        span = clock.begin('catalog_lock_wait', 'catalog_lock')
+        try:
+            with self.lock:
+                clock.finish(span)
+                yield
+        finally:
+            clock.finish(span, complete=False)
+
+    def _snapshot_phase_timings(self, run):
+        book = getattr(self, '_phase_book', None)
+        clock = book.get(run['id']) if book is not None else None
+        if clock is None or not clock.snapshot()['spans']: return
+        try:
+            if run.get('state') in TERMINAL:
+                for span in clock.snapshot()['spans']:
+                    if span['state'] == 'open' and not span['phase'].startswith('recovery_'):
+                        clock.finish(span['sequence'], complete=False)
+            previous = phase_timings.retained(run.get('_phase_timings', []))
+            records = [phase_timings.incomplete(item) for item in previous if item['clock_id'] != clock.clock_id]
+            run['_phase_timings'] = (records + [clock.snapshot()])[-phase_timings.MAX_RECORDS:]
+        except (ValueError, TypeError):
+            # Optional diagnostics must not alter an authoritative transition.
+            return
+
+    def phase_timings(self, run_id):
+        identifier(run_id, 'Run ID')
+        with self._coordinator.catalog(time.monotonic()+5):
+            self.access.require('inspect', 'runs.phase_timings', run_id)
+            run = self._load(run_id)
+            from candidate_packages import authorize_transitive_inputs
+            authorize_transitive_inputs(self, run)
+            book = getattr(self, '_phase_book', None)
+            live = book.get(run_id) if book is not None else None
+            evidence = 'unknown_granularity'
+            records = []
+            base_records = []
+            try:
+                records = [phase_timings.incomplete(item) for item in
+                           phase_timings.retained(run.get('_phase_timings', [])) if item['spans']]
+                if live is not None and not live.snapshot()['spans']: live = None
+                if live is not None:
+                    records = [item for item in records if item['clock_id'] != live.clock_id] + [live.snapshot()]
+                base_records = copy.deepcopy(records)
+                if self._external(run) and run.get('custody_identity') is not None:
+                    descriptor = self._diagnostic_directory(self._external_directory(run) / 'custody')
+                    try:
+                        raw, _, _ = self._diagnostic_read(descriptor, 'phase-timings-v1.json', 16384)
+                    finally:
+                        os.close(descriptor)
+                    value = self._progress_json(raw)
+                    expected = run['custody_identity']
+                    if (type(value) is not dict or set(value) != {'schema_version', 'attempt_id', 'request_sha256', 'spec_sha256', 'timing'}
+                            or value['schema_version'] != 1 or any(value[key] != expected[key]
+                                for key in ('attempt_id', 'request_sha256', 'spec_sha256'))):
+                        raise ValueError('Custodian diagnostic identity differs.')
+                    record = phase_timings.validate_record(value['timing'])
+                    if record['owner'] != 'custodian' or not record['spans']:
+                        raise ValueError('Missing custodian diagnostic observation.')
+                    # A sealed helper reports its own offsets. Never extrapolate
+                    # elapsed time from another process or after a cold reopen.
+                    records.append(record if live is not None and process_status(expected['helper']) == 'alive'
+                                   else phase_timings.incomplete(record))
+                records = phase_timings.retained(records[-phase_timings.MAX_RECORDS:])
+                if records: evidence = 'owner_observed'
+            except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError):
+                # Keep valid parent observations when the optional helper sample
+                # is absent/corrupt; the response makes that limitation explicit.
+                records = base_records
+                evidence = 'partial' if records else 'unavailable'
+            self.access.require('inspect', 'runs.phase_timings', run_id)
+            return {'format': 'run_phase_timings_v1', 'catalog_id': self.db.dataset_id,
+                'run_id': run_id, 'original_run_state': run['state'], 'evidence': evidence,
+                'records': records}
+
     def _save(self, run):
+        self._snapshot_phase_timings(run)
         self.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (encode(run), run['id']))
         action = 'runs.reconcile' if self.access.identity().get('mode') == 'system' else 'runs.update'
         evidence = {'state': run['state'], 'request_sha256': run['request_sha256'], 'graph_sha256': run['graph_sha256']}
@@ -354,7 +438,7 @@ class Runs:
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
         hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context'}
+                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context', '_phase_timings'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
         association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
         if association is not None or run['graph'].get('recipe')==image_training.MODEL_RECIPE:
@@ -646,6 +730,11 @@ class Runs:
                'custody_receipt_sha256': None, 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if captured.get('phase_timings'):
+            try: run['_phase_timings'] = phase_timings.retained(captured['phase_timings'])
+            except (ValueError, TypeError): pass
+        self._phase_clock(run_id).begin('queue', 'scheduler')
+        self._snapshot_phase_timings(run)
         if extension_context is not None:run['extension_context']=extension_context
         if approval_material_sha256 is not None:
             run['approval_material_sha256']=approved_sha
@@ -1005,6 +1094,8 @@ class Runs:
         handle = None
         run = None
         receipt = None
+        clock = self._phase_clock(run_id)
+        launch_span = None
         try:
             with self.lock, self.db.transaction():
                 run = self._load(run_id)
@@ -1013,12 +1104,16 @@ class Runs:
                     return
                 if run['spec']['cwd'] != str(self._external_directory(run)):
                     raise WorkbenchError('Restored execution paths cannot be dispatched. Approve a new attempt.', 'stale', 409)
+                for item in clock.snapshot()['spans']:
+                    if item['phase'] == 'queue' and item['state'] == 'open': clock.finish(item['sequence'])
+                launch_span = clock.begin('launch_verification', 'verifying_captures')
                 self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
                 run['started_at'] = timestamp()
                 self._save(run)
             if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
+            clock.finish(launch_span)
             preparation_seconds = recipe_process.preparation_seconds(run['spec'])
             ready_deadline = time.monotonic() + preparation_seconds + 2
             custody_deadline = ready_deadline
@@ -1090,9 +1185,10 @@ class Runs:
                 cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
                 inventory = None
                 if not cancelled and receipt['outcome'] == 'completed':
-                    inventory = recipe_contract.verify_outputs(Path(run['spec']['output_dir']),
-                        run['outputs'], run['spec']['max_output_bytes'], durable=True)
-                    run['publication_source'] = self._retain_external_publication_source(run, receipt, inventory)
+                    with phase_timings.observe(clock, 'output_validation', 'validating_outputs'):
+                        inventory = recipe_contract.verify_outputs(Path(run['spec']['output_dir']),
+                            run['outputs'], run['spec']['max_output_bytes'], durable=True)
+                        run['publication_source'] = self._retain_external_publication_source(run, receipt, inventory)
                 self._save(run)
             # Only an acknowledged drainage/proof commit permits copying. Cancellation
             # can arrive across that boundary, so read current owner state again.
@@ -1100,7 +1196,8 @@ class Runs:
                 run = self._load(run_id)
                 cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
                 if not cancelled and receipt['outcome'] == 'completed':
-                    artifacts, receipt_hash = self._publish_external(run, receipt, inventory=inventory)
+                    with phase_timings.observe(clock, 'publication', 'copying_outputs'):
+                        artifacts, receipt_hash = self._publish_external(run, receipt, inventory=inventory)
                     run['artifacts'], run['custody_receipt_sha256'] = artifacts, receipt_hash
                     self._event(run, 'completed', 'All descendants drained; declared outputs verified and retained.')
                     for node in run['node_attempts']:
@@ -1109,6 +1206,7 @@ class Runs:
                     self._event(run, 'cancelled' if cancelled else 'failed', 'External process drained without successful publication.')
                 self._save(run)
         finally:
+            clock.finish(launch_span, complete=False)
             if handle is not None:
                 # Independent of database availability. EOF asks the pinned helper
                 # to stop and drain; missing evidence remains unknown on reopen.
@@ -1547,6 +1645,8 @@ class Runs:
                             used = {cpu for _, _, cpus in active.values() for cpu in cpus}
                             cpus = tuple(cpu for cpu in self._capacity.cores if cpu not in used)[:claim[2]]
                             active[run['id']] = (executor.submit(self._run_attempt, run, cpus, claim), claim, cpus)
+                        elif self._external(run):
+                            self._phase_clock(run['id']).waiting('queue', 'capacity')
                     # With no pending work only admission/stop can change the queue.
                     # Queued resource waits still retry when headroom changes.
                     self._coordinator.transition('healthy' if active or queued else 'idle')
@@ -1567,7 +1667,7 @@ class Runs:
             # other attempts and the HTTP/coordinator threads remain independent.
             os.sched_setaffinity(0, cpus)
             with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
-                with self.lock, self.db.transaction():
+                with self._phase_catalog(admitted['id']), self.db.transaction():
                     current = self._load(admitted['id'])
                     # Executor submission is provisional. This transaction is
                     # the dispatch decision shared with sibling unknown fences.

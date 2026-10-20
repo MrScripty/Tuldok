@@ -109,6 +109,11 @@ def parser():
     artifact.add_argument('--out', type=Path, required=True)
     publication = commands.add_parser('publication-status', help='Inspect saved publication status without retrying compute')
     publication.add_argument('--run-id', required=True)
+    timing = commands.add_parser('phase-timings', help='Inspect bounded owner phase observations; does not start or retry work')
+    timing.add_argument('--run-id', required=True)
+    preparation = commands.add_parser('preparation-timings', help='Inspect current actor exact graph preparation observation')
+    preparation.add_argument('--graph-id', required=True)
+    preparation.add_argument('--revision', type=int, required=True)
     commands.add_parser('coordinator-status', help='Inspect saved coordinator generation, current readiness and recovery receipt')
     coordinator = commands.add_parser('recover-coordinator', help='Explicit owner recovery without replaying compute')
     coordinator.add_argument('--arguments', type=Path, required=True,
@@ -192,6 +197,10 @@ def main(argv=None, *, observer=None):
         else:
             if args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
+            elif args.command == 'phase-timings':
+                operation, arguments = 'runs.phase_timings', {'run_id': args.run_id}
+            elif args.command == 'preparation-timings':
+                operation, arguments = 'graphs.preparation_timings', {'graph_id': args.graph_id, 'revision': args.revision}
             elif args.command == 'coordinator-status':
                 operation, arguments = 'runs.coordinator_health', {}
             elif args.command == 'recover-coordinator':

@@ -1,0 +1,11 @@
+test_client_correlates_exact_run_catalog_graph_revision_and_never_retries (test_run_phase_timings.OwnerPhaseTimingTests.test_client_correlates_exact_run_catalog_graph_revision_and_never_retries) ... ok
+test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits (test_run_phase_timings.OwnerPhaseTimingTests.test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits) ... ok
+test_full_baseline_contracts_and_legacy_discovery_are_identical (test_run_phase_timings.OwnerPhaseTimingTests.test_full_baseline_contracts_and_legacy_discovery_are_identical) ... ok
+test_history_and_long_lived_open_span_are_bounded_without_false_duration (test_run_phase_timings.OwnerPhaseTimingTests.test_history_and_long_lived_open_span_are_bounded_without_false_duration) ... ok
+test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end (test_run_phase_timings.OwnerPhaseTimingTests.test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end) ... ok
+test_overlapping_owner_spans_use_monotonic_time_and_are_not_added (test_run_phase_timings.OwnerPhaseTimingTests.test_overlapping_owner_spans_use_monotonic_time_and_are_not_added) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.408s
+
+OK

@@ -308,7 +308,21 @@ are explicit and carry no claim that they exist now.
 
 **Acceptance gate:** T4/T8: clock-controlled overlapping-span assertions plus real browser/backend lifecycle under queued capacity, lock wait, cancel and publication fault. Re-plan if span retention requires an independent telemetry service or materially affects request latency.
 
-**Status:** `Planned`
+**Source-core admission:** The lead authorized an isolated implementation from
+reviewed M2 core `5a1feac9f27e23e471c6b57d1f74c026c01c3dd6`, normally composing
+the root-authored immutable-key followup `5f1aa49af2935100b60743fb1929cb2727ac6275`.
+This slice additionally admits `phase_timings.py`, narrow `run_publication.py`
+source-verification/copy span wrapping, the canonical
+`docs/contracts/run-phase-timings.md`, frozen prior full-contract hash fixture,
+existing `.github/workflows/tests.yml` early gate, and scoped reports/ledger.
+The M2 UI owner retains all static files; this slice edits no static UI.
+
+**Status:** `Active` — bounded owner-clock source spans and selected timing reads
+implemented for detailed external preparation/custody/publication/recovery, with
+coarse historical/builtin phases left unknown. Current authority remains required;
+original publication can hold the catalog and make concurrent timing reads
+unavailable until release. Source qualification and independent root review are
+separate from full live-browser T4/T8/M3 acceptance, which remains pending.
 
 ### M4: Measured preparation reuse and batched collection
 
