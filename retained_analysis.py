@@ -14,10 +14,9 @@ from psycopg.pq import TransactionStatus
 
 from model_evidence import canonical, digest
 from pipeline import closed, identifier
+from retained_analysis_schema import QUERY_ID, QUERY_VERSION, FIELDS
 from workbench import WorkbenchError
 
-QUERY_ID = 'retained_checkpoint_examples'
-QUERY_VERSION = 1
 MAX_PAGE = 100
 MAX_OFFSET = 10000
 MAX_EXAMPLES = 10000
@@ -27,7 +26,6 @@ MAX_PROJECTION_BYTES = 2 * 1024 * 1024
 MAX_DOCUMENT_BYTES = 16 * 1024 * 1024
 SQL_TIMEOUT_MS = 2000
 LOCK_SECONDS = 2
-FIELDS = ('example_id', 'truth_index', 'predicted_index', 'confidence', 'error')
 METRICS = ('accuracy', 'loss', 'macro_f1')
 HASH = re.compile(r'^[a-f0-9]{64}$')
 

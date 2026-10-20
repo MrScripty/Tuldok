@@ -1,0 +1,56 @@
+test_actual_catalog_mutex_wait_is_measured_by_owner_without_reconstructing_events (test_run_phase_timings.ActualPhaseTimingTests.test_actual_catalog_mutex_wait_is_measured_by_owner_without_reconstructing_events) ... ok
+test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority (test_run_phase_timings.ActualPhaseTimingTests.test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority) ... ok
+test_missing_or_foreign_custodian_diagnostics_cannot_change_completed_result (test_run_phase_timings.ActualPhaseTimingTests.test_missing_or_foreign_custodian_diagnostics_cannot_change_completed_result) ... ok
+test_overlapping_same_actor_preparations_expose_latest_clock_without_rebinding_old_reply (test_run_phase_timings.ActualPhaseTimingTests.test_overlapping_same_actor_preparations_expose_latest_clock_without_rebinding_old_reply) ... ok
+test_pre_run_preparation_is_live_actor_revision_scoped_and_has_no_run_effect (test_run_phase_timings.ActualPhaseTimingTests.test_pre_run_preparation_is_live_actor_revision_scoped_and_has_no_run_effect) ... ok
+test_real_capacity_wait_single_go_and_active_cancel_keep_observations_separate (test_run_phase_timings.ActualPhaseTimingTests.test_real_capacity_wait_single_go_and_active_cancel_keep_observations_separate) ... ok
+test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait (test_run_phase_timings.ActualPhaseTimingTests.test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait) ... ok
+test_all_open_span_cap_reports_each_missing_observation_without_closing_owners (test_run_phase_timings.OwnerPhaseTimingTests.test_all_open_span_cap_reports_each_missing_observation_without_closing_owners) ... ok
+test_client_correlates_exact_run_catalog_graph_revision_and_never_retries (test_run_phase_timings.OwnerPhaseTimingTests.test_client_correlates_exact_run_catalog_graph_revision_and_never_retries) ... ok
+test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits (test_run_phase_timings.OwnerPhaseTimingTests.test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits) ... ok
+test_full_baseline_contracts_and_legacy_discovery_are_identical (test_run_phase_timings.OwnerPhaseTimingTests.test_full_baseline_contracts_and_legacy_discovery_are_identical) ... ok
+test_history_and_long_lived_open_span_are_bounded_without_false_duration (test_run_phase_timings.OwnerPhaseTimingTests.test_history_and_long_lived_open_span_are_bounded_without_false_duration) ... ok
+test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end (test_run_phase_timings.OwnerPhaseTimingTests.test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end) ... ok
+test_overlapping_owner_spans_use_monotonic_time_and_are_not_added (test_run_phase_timings.OwnerPhaseTimingTests.test_overlapping_owner_spans_use_monotonic_time_and_are_not_added) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 16.878s
+
+OK
+test_absolute_header_deadline_includes_trickle (test_agent_api.ClientTests.test_absolute_header_deadline_includes_trickle) ... ok
+test_authenticated_discovery_proxy_ignored_and_one_mutation (test_agent_api.ClientTests.test_authenticated_discovery_proxy_ignored_and_one_mutation) ... ok
+test_fixed_endpoint_and_private_configuration (test_agent_api.ClientTests.test_fixed_endpoint_and_private_configuration) ... ok
+test_framing_identity_registry_refusals (test_agent_api.ClientTests.test_framing_identity_registry_refusals) ... ok
+test_three_file_sequence_is_unsupported_before_http_dispatch (test_agent_api.ClientTests.test_three_file_sequence_is_unsupported_before_http_dispatch) ... ok
+test_unknown_commit_is_not_retried_or_secret_echoed (test_agent_api.ClientTests.test_unknown_commit_is_not_retried_or_secret_echoed) ... ok
+test_segment_reassembly_and_whole_hash_tamper (test_agent_api.OutputTests.test_segment_reassembly_and_whole_hash_tamper) ... ok
+test_typed_error_and_success_shapes (test_agent_api.OutputTests.test_typed_error_and_success_shapes) ... ok
+test_image_forwards_exact_raw_base64 (test_agent_api.ParityRegressionTests.test_image_forwards_exact_raw_base64) ... ok
+test_revoked_discovery_preserves_http_status_and_code_without_mutation (test_agent_api.ParityRegressionTests.test_revoked_discovery_preserves_http_status_and_code_without_mutation) ... ok
+test_all_operation_schemas_and_route_projections (test_agent_api.RegistryTests.test_all_operation_schemas_and_route_projections) ... ok
+test_bindings_known_graph_drafts_and_no_executable_topology_requirement (test_agent_api.RegistryTests.test_bindings_known_graph_drafts_and_no_executable_topology_requirement) ... ok
+test_discovery_is_stdlib_only_in_cold_process (test_agent_api.RegistryTests.test_discovery_is_stdlib_only_in_cold_process) ... ok
+test_draft_tasks_and_no_human_or_programmatic_review (test_agent_api.RegistryTests.test_draft_tasks_and_no_human_or_programmatic_review) ... ok
+test_exposure_grant_and_projection (test_agent_api.RegistryTests.test_exposure_grant_and_projection) ... ok
+test_import_bytes_bound_is_aggregate (test_agent_api.RegistryTests.test_import_bytes_bound_is_aggregate) ... ok
+test_integer_unicode_nonfinite_and_closed_subobjects (test_agent_api.RegistryTests.test_integer_unicode_nonfinite_and_closed_subobjects) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 37.883s
+
+OK
+test_agent_review_and_execution_denied_before_mutation (test_access_http.AccessHTTP.test_agent_review_and_execution_denied_before_mutation) ... ok
+test_all_legacy_and_current_reads_require_real_credentials (test_access_http.AccessHTTP.test_all_legacy_and_current_reads_require_real_credentials) ... ok
+test_cookie_origin_mixed_transport_and_bootstrap_replay (test_access_http.AccessHTTP.test_cookie_origin_mixed_transport_and_bootstrap_replay) ... ok
+test_denial_audit_storage_outage_still_returns_structured_error (test_access_http.AccessHTTP.test_denial_audit_storage_outage_still_returns_structured_error) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.453s
+
+OK
+test_phase_contract_pins_match_complete_selected_contracts (test_workspace_phase_timings.PhasePanelPins.test_phase_contract_pins_match_complete_selected_contracts) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

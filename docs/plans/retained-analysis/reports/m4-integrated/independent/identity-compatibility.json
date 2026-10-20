@@ -1,0 +1,10 @@
+{
+  "comparison_base": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+  "checked_prior_contract_documents": 124,
+  "changed_prior_contract_documents": [],
+  "legacy_discovery_exact_equal": true,
+  "added_operations": [
+    "runs.export_retained_analysis",
+    "runs.retained_analysis"
+  ]
+}

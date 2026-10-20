@@ -1,4 +1,4 @@
-// Prepared authenticated Runs acceptance. Requires the coordinated production hooks.
+// Authenticated Runs acceptance over the production hooks and scoped CSP.
 // Uses the existing retained fixture and normal app.py; no handler/data substitutes.
 'use strict';
 const assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path');
@@ -19,7 +19,7 @@ async function stop(child) {
   if (process.env.TULDOK_ANALYSIS_HTTP !== '1' || !process.env.TULDOK_ANALYSIS_FIXTURE) throw Error('Explicit integrated acceptance and a prepared actual retained fixture are required.');
   const fixture = JSON.parse(fs.readFileSync(path.join(process.env.TULDOK_ANALYSIS_FIXTURE, 'fixture.json'), 'utf8'));
   let output = '', serverErrors = '';
-  const server = spawn(process.env.PYTHON || 'python3', ['-u', 'app.py', '--port', '0', '--data', fixture.catalog_path], {cwd: root}); children.push(server);
+  let server = spawn(process.env.PYTHON || 'python3', ['-u', 'app.py', '--port', '0', '--data', fixture.catalog_path], {cwd: root}); children.push(server);
   server.stdout.on('data', chunk => output += chunk); server.stderr.on('data', chunk => serverErrors += chunk);
   await until(() => /127\.0\.0\.1:(\d+)/.test(output), 'Actual app did not publish its local endpoint');
   const base = 'http://127.0.0.1:' + output.match(/127\.0\.0\.1:(\d+)/)[1];
@@ -44,13 +44,15 @@ async function stop(child) {
   const targets = await (await fetch(`http://127.0.0.1:${debuggerPort}/json`)).json();
   const ws = new WebSocket(targets.find(item => item.type === 'page').webSocketDebuggerUrl);
   await new Promise(resolve => ws.addEventListener('open', resolve));
-  let sequence = 0, held; const calls = new Map(), errors = [], remote = [], actualReplies = [];
+  let sequence = 0, held, aborted=0; const calls = new Map(), errors = [], remote = [], actualReplies = [], urls = new Map();
   const send = (method, params = {}) => new Promise((resolve, reject) => { const id = ++sequence; calls.set(id, {resolve, reject}); ws.send(JSON.stringify({id, method, params})); });
   ws.addEventListener('message', event => {
     const value = JSON.parse(event.data);
     if (value.id) { const pending = calls.get(value.id); calls.delete(value.id); value.error ? pending.reject(Error(JSON.stringify(value.error))) : pending.resolve(value.result); }
     if (value.method === 'Runtime.exceptionThrown') errors.push(value.params.exceptionDetails.text);
     if (value.method === 'Network.requestWillBeSent' && /^https?:/.test(value.params.request.url) && !value.params.request.url.startsWith(base)) remote.push(value.params.request.url);
+    if (value.method === 'Network.requestWillBeSent') urls.set(value.params.requestId,value.params.request.url);
+    if (value.method === 'Network.loadingFailed' && value.params.canceled && urls.get(value.params.requestId)?.endsWith('/retained-analysis')) aborted++;
     if (value.method === 'Fetch.requestPaused') held = value.params;
     if (value.method === 'Network.responseReceived' && value.params.response.url.endsWith('/retained-analysis')) actualReplies.push(value.params.response.status);
   });
@@ -62,13 +64,21 @@ async function stop(child) {
   const host = '([...document.querySelectorAll("#real-runs-root h3")].find(node=>node.textContent==="Retained checkpoint analysis")?.parentElement)';
   const ready = () => evaluate(`!!${host}?.querySelector('svg') && ${host}?.getAttribute('aria-busy')==='false'`);
   await send('Runtime.enable'); await send('Network.enable'); await send('Page.enable');
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:"window.retainedCSPViolations=[];document.addEventListener('securitypolicyviolation',event=>window.retainedCSPViolations.push(event.violatedDirective));"});
   await fixtureAuth.browser(send, base);
   await send('Page.navigate', {url: base + '/workspaces'});
-  await until(() => evaluate('!!document.querySelector("#dataset") && !document.querySelector("#dataset").disabled'));
+  await until(() => evaluate('!!document.querySelector("#fixture-label") && !document.querySelector("#dataset").disabled'));
   await evaluate('document.querySelector("#dataset").value="catalog";document.querySelector("#dataset").dispatchEvent(new Event("change",{bubbles:true}))');
-  await until(() => evaluate('document.querySelector("#notice")?.textContent==="Collection ready."'));
+  await until(() => evaluate('document.querySelector("#dataset")?.value==="catalog" && !!document.querySelector("#catalog-frame")?.contentWindow?.TuldokWorkspaceData')).catch(async error => {
+    throw Error(error.message+' '+JSON.stringify(await evaluate('({notice:document.querySelector("#notice")?.textContent,select:document.querySelector("#dataset")?.value,frame:document.querySelector("#catalog-frame")?.src,body:document.body.textContent.slice(0,1000)})'))+' errors='+JSON.stringify(errors)+' server='+serverErrors.slice(-2000));
+  });
   await evaluate('document.querySelector("#nav-runs").click()');
   await until(ready, 'Actual authenticated Runs did not mount the retained renderer');
+  assert.match(await evaluate(`document.querySelector('meta[http-equiv="Content-Security-Policy"]').content`), /script-src 'self';/);
+  assert.deepEqual(await evaluate('window.retainedCSPViolations'),[]);
+  const cspProbe=await send('Runtime.evaluate',{expression:"(()=>{try{new Function('return 1')();return false}catch(error){return error instanceof EvalError}})()",returnByValue:true,allowUnsafeEvalBlockedByCSP:false});
+  assert.equal(cspProbe.result.value,true,'Ordinary runtime code generation must be blocked by the deployed CSP');
+  await evaluate('window.retainedCSPViolations=[]');
   for (const point of expected.curve) assert.ok((await evaluate(`${host}.textContent`)).includes(`Epoch ${point.epoch}: ${point.value}`));
   await evaluate(`${host}.querySelectorAll('button')[0].focus()`);
   await send('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', text: '\r', windowsVirtualKeyCode: 13});
@@ -82,15 +92,63 @@ async function stop(child) {
   await evaluate(`${host}.querySelectorAll('button')[1].click()`);
   await until(() => !!held, 'Expected an actual retained query response to pause');
   await evaluate('document.querySelector("#nav-data").click()');
-  await send('Fetch.continueRequest', {requestId: held.requestId}); await send('Fetch.disable'); held = null;
+  try{await send('Fetch.continueRequest', {requestId: held.requestId});}
+  catch(error){if(!error.message.includes('Invalid InterceptionId'))throw error;await until(()=>aborted>0,'Obsolete request did not report cancellation');}
+  await send('Fetch.disable'); held = null;
   await pause(100);
   assert.equal(await evaluate('document.querySelector("#view-runs").hidden'), true);
   await evaluate('document.querySelector("#nav-runs").click()'); await until(ready);
+  const downloadPath=path.join(profile,'downloads');fs.mkdirSync(downloadPath);
+  await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath});
+  await evaluate(`[...${host}.querySelectorAll('button')].find(button=>button.textContent==='Export this page').click()`);
+  await until(()=>fs.existsSync(path.join(downloadPath,'retained-analysis-page.json')),'Actual authorized export did not download');
+  const exported=JSON.parse(fs.readFileSync(path.join(downloadPath,'retained-analysis-page.json'),'utf8'));
+  assert.equal(exported.provenance.evaluation_sha256,fixture.request.evaluation_sha256);
+  assert.deepEqual(exported.curve,expected.curve);
+  const credential=await evaluate('TuldokAuth.identity().credential_id');
+  const ownerToken=fs.readFileSync(path.join(process.env.TULDOK_ANALYSIS_FIXTURE,'owner-token'),'utf8');
+  const revoked=await fetch(base+'/api/access/credentials/'+credential+'/revoke',{method:'POST',headers:{Authorization:'Bearer '+ownerToken,Origin:base,'Content-Type':'application/json'},body:'{}'});
+  assert.equal(revoked.status,200);
+  await evaluate(`[...${host}.querySelectorAll('button')].find(button=>button.textContent==='Export this page').click()`);
+  await until(()=>evaluate('!document.querySelector("#real-runs-root [data-retained-analysis]") && !document.querySelector("#real-runs-root .metric-grid")'),'Revoked export did not clear private Run content');
+  const reauth=require('./auth_helpers.cjs').authenticatedFixture();await reauth.register(base,fixture.catalog_path,root);await reauth.browser(send,base);
+  // Reopen the same catalog in a fresh application process, then reload the
+  // real browser with the newly authenticated retained session and exact result.
+  await stop(server);
+  let restarted='';server=spawn(process.env.PYTHON||'python3',['-u','app.py','--port',new URL(base).port,'--data',fixture.catalog_path],{cwd:root});children.push(server);
+  server.stdout.on('data',chunk=>restarted+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
+  await until(()=>restarted.includes(base),'Cold application process did not reopen the retained catalog');
   await send('Page.reload', {ignoreCache: true}); await until(ready);
   for (const point of expected.curve) assert.ok((await evaluate(`${host}.textContent`)).includes(`Epoch ${point.epoch}: ${point.value}`));
+  // Denial during each ordinary Run read must clear previously rendered private
+  // content even when auth.js has already set its current identity to null.
+  for(const suffix of ['', '/predictions?split=validation', '/model-evidence']){
+    await send('Fetch.enable',{patterns:[{urlPattern:base+'/api/workspace/runs/'+fixture.run_id+suffix,requestStage:'Request'}]});
+    await evaluate('document.querySelector("#real-runs-refresh").click()');
+    await until(()=>!!held,'Ordinary Run read did not pause: '+suffix);
+    const deniedCredential=await evaluate('TuldokAuth.identity().credential_id');
+    const deny=await fetch(base+'/api/access/credentials/'+deniedCredential+'/revoke',{method:'POST',headers:{Authorization:'Bearer '+ownerToken,Origin:base,'Content-Type':'application/json'},body:'{}'});
+    assert.equal(deny.status,200);
+    await send('Fetch.continueRequest',{requestId:held.requestId});held=null;await send('Fetch.disable');
+    await until(()=>evaluate('!TuldokAuth.identity() && !document.querySelector("#real-runs-root [data-retained-analysis]") && !document.querySelector("#real-runs-root .metric-grid")'),'Denied ordinary read retained private Run content: '+suffix);
+    const nextAuth=require('./auth_helpers.cjs').authenticatedFixture();await nextAuth.register(base,fixture.catalog_path,root);await nextAuth.browser(send,base);
+    await send('Page.reload',{ignoreCache:true});await until(ready);
+  }
+  await send('Fetch.enable',{patterns:[{urlPattern:base+'/api/workspace/runs/'+fixture.run_id+'/model-evidence',requestStage:'Request'}]});
+  await evaluate('document.querySelectorAll("[data-model-checkpoint]")[0].click()');
+  await until(()=>!!held,'Existing checkpoint action did not dispatch its exact read');
+  // The checkpoint action rerenders and starts a fresh retained query; let that
+  // succeed first so its authorization failure cannot mask the old action's.
+  await until(ready);
+  const checkpointCredential=await evaluate('TuldokAuth.identity().credential_id');
+  const checkpointDenied=await fetch(base+'/api/access/credentials/'+checkpointCredential+'/revoke',{method:'POST',headers:{Authorization:'Bearer '+ownerToken,Origin:base,'Content-Type':'application/json'},body:'{}'});
+  assert.equal(checkpointDenied.status,200);
+  await send('Fetch.continueRequest',{requestId:held.requestId});held=null;await send('Fetch.disable');
+  await until(()=>evaluate('!TuldokAuth.identity() && !document.querySelector("#real-runs-root [data-retained-analysis]") && !document.querySelector("#real-runs-root .metric-grid")'),'Denied checkpoint action retained private Run content');
+  assert.deepEqual(await evaluate('window.retainedCSPViolations'),[]);
   assert.deepEqual(errors, []); assert.deepEqual(remote, []);
   assert.ok(actualReplies.includes(200));
-  console.log(JSON.stringify({status: 'passed', evidence: 'actual-PostgreSQL-native-Run-authenticated-Runs-browser', run_id: fixture.run_id, evaluation_sha256: fixture.request.evaluation_sha256, exact_curve: expected.curve, checks: ['actual named query', 'retained numeric oracle', 'linked keyboard example table', '390px layout', 'held real response after navigation', 'cache-bypassed page reopen', 'local chart assets']}, null, 2));
+  console.log(JSON.stringify({status: 'passed', evidence: 'actual-PostgreSQL-native-Run-authenticated-Runs-browser', run_id: fixture.run_id, evaluation_sha256: fixture.request.evaluation_sha256, exact_curve: expected.curve, checks: ['actual named query', 'retained numeric oracle', 'linked keyboard example table', '390px layout', 'held real response cancellation after navigation', 'authorized exact JSON export', 'real credential revocation clears private Run content', 'fresh application process and cache-bypassed page reopen', 'local chart assets', 'deployed script CSP blocks runtime code generation', 'actual denial during detail/predictions/model-evidence clears private Run content', 'held existing checkpoint action denial clears already-authorized retained view']}, null, 2));
   ws.close();
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => {
   for (const child of children.reverse()) await stop(child);

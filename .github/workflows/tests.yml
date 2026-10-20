@@ -307,6 +307,20 @@ jobs:
         env:
           PYTHON: python
           BROWSER: /usr/bin/google-chrome
+      - name: Qualify retained query and authenticated Runs over one actual checkpoint fixture
+        run: |
+          mkdir -p build/qa/retained-analysis
+          python tests/retained_analysis_actual_fixture.py --directory build/retained-analysis-fixture > build/qa/retained-analysis/fixture.json
+          python -m unittest discover -s tests -p 'test_retained_analysis*.py' -v > build/qa/retained-analysis/query-http-tests.log 2>&1
+          node tests/test_workspace_model_controller.cjs
+          node tests/browser_retained_analysis.cjs > build/qa/retained-analysis/renderer.json
+          node tests/browser_retained_analysis_actual.cjs > build/qa/retained-analysis/runs-browser.json
+        env:
+          PYTHON: python
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ANALYSIS_ACTUAL: '1'
+          TULDOK_ANALYSIS_HTTP: '1'
+          TULDOK_ANALYSIS_FIXTURE: ${{ github.workspace }}/build/retained-analysis-fixture
       - name: Verify exact retained scientific comparison in the existing workspace
         run: node tests/browser_scientific_comparison.cjs
         env:

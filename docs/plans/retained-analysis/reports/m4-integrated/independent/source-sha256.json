@@ -1,0 +1,20 @@
+{
+  ".github/workflows/tests.yml": "100feb4cbcbd84cddc991602c24d196ee1a1f3e4b23b383adbcb49366453e38d",
+  "agent_api.py": "bb14a25c63840f1701b13657fa1bce4659a2c6a180068e95f461e5fa7f9327b4",
+  "app.py": "c71b8b903fa8905ff5fd3ccaef1b86d3df3ddda5393f33bf3ec9661a98d02417",
+  "retained_analysis.py": "d41f805419f6acff08175b61d3bce9a611de8025cbf5bccc3ccf08e809479501",
+  "retained_analysis_schema.py": "8d6a743567eab6b99e9132721eabd12e7a381c742c84911e6ef58478a0ea43d3",
+  "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+  "model_evidence.py": "04012022740f45fc03ad11351a7efe4946e574890bb814fcdf5871b873a5701b",
+  "static/retained-analysis.js": "d9dab53d15e6e50ecf8f1b9e182c43eb330c4731e574758a0e3026f44acb44df",
+  "static/retained-checkpoint-curve.vl.json": "6603c860ce76a434a11e6c96cf7418246ce2dd5da3d7a56a5f2448a0537ec183",
+  "static/workspace-real.js": "de4036bab21c3ca2702488658a9fa8733cf0adb822f4ec3322d5e101a96b60a2",
+  "static/workspace-service.js": "568b8258c35e6b3ca2cfe08b64d914111e16ae98d45f5d40f7aa40a20c20098b",
+  "static/workspaces.html": "a85e465d317e8aaa14c5349ef1ae6b2dc75ac440e0cea2c5c5a313dbd4fb828e",
+  "static/workspaces.css": "3d0eacbd50425b4cd2ce9cfacdf5bcdb8fe533d7a57248f16325242f625cd278",
+  "tests/test_retained_analysis_contracts.py": "44811b92c4ae847888d34d949eea8b22a79d4bd0edfc0e27e0963377a0103e5f",
+  "tests/test_retained_analysis_http.py": "eff09d89bdad94c78af4c558d79d0dabf7bd9d502f0ced6df83163023f2dee44",
+  "tests/test_workspace_model_controller.cjs": "a4ac7eab2546d4e9d27c0350219cf5bcdbe82cc29193a9553958b4e2ea650245",
+  "tests/browser_retained_analysis_actual.cjs": "615e24368965ce4e97f75a0c05d63f9ae06cc28c13d864130691141ac8eefc3d",
+  "static/vendor/retained-analysis/manifest.json": "298dbcaf1a3852db247cd781ef60c620d67c6ddfdcd646cae38a321368a280a5"
+}

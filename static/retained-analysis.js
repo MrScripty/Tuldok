@@ -1,6 +1,10 @@
 /* Host-owned renderer for one pinned Altair recipe. No dynamic chart plugins. */
 (() => {
   'use strict';
+  window.WorkspaceRetainedContracts = Object.freeze({
+    'runs.retained_analysis/1': '8ec28793a0603b206cb720d0ece573793c474fed901fb8ce99133d0154526cd5',
+    'runs.export_retained_analysis/1': '0994932e96aab5d9561a63e3447bb8ec1f6345607e247ddb5a9cadaccffc57fb'
+  });
   const SPEC_PATH = '/static/retained-checkpoint-curve.vl.json';
   const SPEC_SHA256 = '6603c860ce76a434a11e6c96cf7418246ce2dd5da3d7a56a5f2448a0537ec183';
   const HASH = /^[a-f0-9]{64}$/;

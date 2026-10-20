@@ -13,6 +13,7 @@ import threading
 import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -81,6 +82,8 @@ class ActualRetainedAnalysisHttpTests(unittest.TestCase):
                 status, value = self.request(export=export)
                 self.assertEqual(status, 200)
                 self.assertEqual(value, expected)
+                name = 'runs.export_retained_analysis' if export else 'runs.retained_analysis'
+                Draft202012Validator(self.contracts[name]['output_schema']).validate({'status': status, 'result': value})
                 self.assertLessEqual(len(value['examples']['rows']), 1)
                 self.assertNotIn('probabilities', value['examples']['rows'][0])
 
@@ -97,7 +100,7 @@ class ActualRetainedAnalysisHttpTests(unittest.TestCase):
         for body in ({'sql': 'SELECT arbitrary_data'}, {'split': 'test'}, {'limit': 101}):
             with self.subTest(body=body):
                 status, value = self.request(body=body)
-                self.assertEqual((status, value['code']), (409, 'contract_mismatch'))
+                self.assertEqual((status, value['code']), (400, 'invalid'))
                 self.assertNotIn('examples', value)
         with self.dataset.access.bind(self.token):
             self.assertFalse(self.dataset.runs.get(self.receipt['run_id'])['test_exposure']['exposed'])

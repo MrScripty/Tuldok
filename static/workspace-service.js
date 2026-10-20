@@ -676,15 +676,52 @@
     const packages=state.packages||[],verified=state.state==='fresh_verified';
     return `<div class="package-state-summary"><p><strong>Package: ${packages.length?'complete':'not exported'}.</strong> Fresh inference: ${verified?'verified in a separate consumer Run':'not verified'}.</p>${packages.map(item=>`<p><a href="/api/workspace/runs/${enc(item.run_id)}/artifacts/package.zip" download>Download verified package</a> · ${esc(item.bytes.toLocaleString())} bytes · <span class="field-hash">SHA256 ${esc(item.sha256)}</span><br>Completed package Run <span class="field-hash">${esc(item.run_id)}</span></p>`).join('')}${verified?'<p>Fresh inference reproduced the retained fixed probes. The candidate remains diagnostic.</p>':''}${(state.verifications||[]).map(item=>`<p>Separate fresh verifier Run <span class="field-hash">${esc(item.run_id)}</span> · package <span class="field-hash">${esc(item.receipt.package_sha256)}</span></p>`).join('')}${state.verifications?.length?`<details><summary>Fresh consumer verification receipts</summary><pre>${esc(JSON.stringify(state.verifications,null,2))}</pre></details>`:''}</div>`;
   };
-  window.WorkspaceModel = function ({api, announce, openRun, openRecord, getIntent, getView}) {
+  window.WorkspaceModel = function ({api:transport, announce, openRun, openRecord, getIntent, getView, onAccessFailure=()=>{}}) {
     let definition = null, releases = [], studies = [], root = null, busy = false,
       message = '', failed = false, evidence = null, evidenceError = '', comparison = null,
       checkpoint = null, probe = null, compareId = '', generation = 0, queryIntent = 0, detailPredictions = null, studyDetail = null, candidate = null, candidateBusy = false, candidateError = '', foreignPending = false, compareTarget = null, compareTargetRun = null, compareCheckpoint = '', compareMetric = '', compareMode = 'paired', compareBusy = false, compareIntent = 0, compareTargetIntent = 0, checkpointBusy = false, checkpointIntent = 0, packageState = null, packageError = '', exportSetup = null, exportJob = null, exportBusy = false, exportDraft = {mode:'package',root:'',directory:'',runtime:'',packageRun:''};
     let pendingComparison=null;
+    let retainedView=null,activeRun=null;
     let config = {name: 'TinyCNN experiment', release: '', widths: [16,32,64], input_size: 96, epochs: 3, seed: 17};
     let journal = history.state?.modelTrial || null;
     const identity = () => window.TuldokAuth?.identity();
     const owner = () => identity()?.kind === 'owner';
+    // Denials must reach the Runs owner before local presentation catches can
+    // absorb them, including after auth.js clears a revoked session identity.
+    async function api(...args){
+      const runId=activeRun,credential=identity()?.credential_id,version=generation;
+      try{return await transport(...args);}
+      catch(error){
+        if(runId&&activeRun===runId&&version===generation&&!args[4]?.aborted&&[401,403].includes(error.status))onAccessFailure(error,runId,credential);
+        throw error;
+      }
+    }
+    function disposeRetained(){retainedView?.dispose();retainedView=null;}
+    function retainedHTML(run){
+      return run?.graph?.recipe===recipe&&run.state==='completed'&&evidence?.state==='verified'&&
+        evidence.metric_definition_hashes?.accuracy&&run.artifacts?.some(item=>item.name==='model-evidence.json')?
+        '<section class="retained-analysis" data-retained-analysis aria-label="Retained checkpoint analysis"></section>':'';
+    }
+    function bindRetained(node,run,current){
+      disposeRetained();
+      const target=node.querySelector('[data-retained-analysis]');
+      if(!target||!current()||!retainedHTML(run))return;
+      if(!window.WorkspaceRetainedAnalysis){target.textContent='Retained chart assets are unavailable. Refresh to retry.';return;}
+      const artifact=run.artifacts.find(item=>item.name==='model-evidence.json');
+      const selected=evidence.checkpoint_index.entries.find(item=>item.checkpoint.sha256===checkpoint)||evidence.checkpoint_index.entries[0];
+      const authority=JSON.stringify([identity()?.catalog_id,identity()?.actor_id,identity()?.credential_id]);
+      const valid=()=>current()&&authority===JSON.stringify([identity()?.catalog_id,identity()?.actor_id,identity()?.credential_id]);
+      retainedView=window.WorkspaceRetainedAnalysis.mount(target,{load:async(request,options)=>{
+        if(!valid())throw Error('Retained result authority changed.');
+        const {run_id,...body}=request;
+        const value=await api('runs/'+enc(run_id)+'/retained-analysis'+(options.export?'/export':''),body,1,10000,options.signal);
+        if(!valid())throw Error('Retained result authority changed.');
+        return value;
+      }});
+      void retainedView.update({query_id:'retained_checkpoint_examples',query_version:1,run_id:run.id,
+        evaluation_sha256:artifact.sha256,checkpoint_sha256:selected.checkpoint.sha256,
+        metric_id:'accuracy',metric_definition_sha256:evidence.metric_definition_hashes.accuracy,limit:1,offset:0},authority);
+    }
     const remember = () => history.replaceState({...history.state, modelTrial: journal}, '');
     function notice(text, error = false) { message = text; failed = error; announce(text,error); }
     function scope() {
@@ -791,8 +828,9 @@
       sessionChanged() {pendingComparison=null;studies=[];studyDetail=null;message='';exportDraft={mode:'package',root:'',directory:'',runtime:'',packageRun:''};config={name:'TinyCNN experiment',release:'',widths:[16,32,64],input_size:96,epochs:3,seed:17};const saved=history.state?.modelTrial;foreignPending=!!(saved&&saved.actor!==identity()?.actor_id&&(saved.admission||saved.uncertain));if(journal?.actor!==identity()?.actor_id)journal=null;},
       mount(node) {root=node;render();},
       async refresh(current) {try{const result=await api('studies');if(current())studies=result.studies;}catch(error){if(current())notice('Saved studies unavailable: '+error.message,true);}},
-      invalidate(preserveComparison=false) {if(!preserveComparison)pendingComparison=null;generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;packageState=null;packageError='';exportSetup=null;exportJob=null;},
+      invalidate(preserveComparison=false) {activeRun=null;disposeRetained();if(!preserveComparison)pendingComparison=null;generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;packageState=null;packageError='';exportSetup=null;exportJob=null;},
       async load(run,current) {
+        disposeRetained();activeRun=run?.id||null;
         if(pendingComparison&&(pendingComparison.runId!==run?.id||pendingComparison.credential!==identity()?.credential_id))pendingComparison=null;
         const intent=++queryIntent;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;
         evidence=null;comparison=null;evidenceError='';candidate=null;candidateError='';packageState=null;packageError='';exportJob=null;compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareId='';compareBusy=false;
@@ -805,8 +843,8 @@
           }
           evidence=value;
           const savedCandidate=history.state?.modelCandidates?.[run.id];
-          if(savedCandidate?.actor===identity()?.actor_id){try{const saved=await api('candidates/'+enc(savedCandidate.id));if(current()&&intent===queryIntent){candidate=saved;await loadPackage(saved,current,intent);}}catch(error){if(current()&&intent===queryIntent)candidateError=error.message;}}
-        }catch(error){if(current()&&intent===queryIntent)evidenceError=error.message;}
+          if(savedCandidate?.actor===identity()?.actor_id){try{const saved=await api('candidates/'+enc(savedCandidate.id));if(current()&&intent===queryIntent){candidate=saved;await loadPackage(saved,current,intent);}}catch(error){if([401,403].includes(error.status))throw error;if(current()&&intent===queryIntent)candidateError=error.message;}}
+        }catch(error){if([401,403].includes(error.status))throw error;if(current()&&intent===queryIntent)evidenceError=error.message;}
       },
       html(run,predictions) {
         detailPredictions=predictions;
@@ -814,9 +852,9 @@
         if(evidenceError)return `<section class="model-evidence"><h3>Model evidence unavailable</h3><p class="error-panel" role="alert">${esc(evidenceError)}</p><p>No cached checkpoint or probe values are shown. Refresh saved runs to retry.</p></section>`;
         if(!evidence)return '<p>Model evidence has not been published yet.</p>';
         if(evidence.state==='unsupported')return `<p class="muted model-history">${esc(evidence.reason)}</p>`;
-        return evidenceHTML(evidence,run);
+        return evidenceHTML(evidence,run)+retainedHTML(run);
       },
-      bind(node,run,runs,rerender,current) {bindEvidence(node,run,runs,rerender,current);},
+      bind(node,run,runs,rerender,current) {bindEvidence(node,run,runs,rerender,current);bindRetained(node,run,current);},
     };
     function evidenceHTML(value,run) {
       // Index and checkpoint/probe projections are supplied by the same Runs query.
@@ -846,7 +884,7 @@
       const saved=history.state?.modelExports?.[value.ref.id];exportJob=saved?.actor===identity()?.actor_id?saved:null;
       if(!contracts['studies.package_state'])return;
       try{const state=await api('candidates/'+enc(value.ref.id)+'/package-state');if(!current()||intent!==queryIntent)return;packageState=state;}
-      catch(error){if(current()&&intent===queryIntent)packageError=error.message;}
+      catch(error){if([401,403].includes(error.status))throw error;if(current()&&intent===queryIntent)packageError=error.message;}
     }
     function exportHTML() {
       if(!contracts['studies.package_state'])return '<p>Package preparation is unavailable in this installed interface. No package or fresh verification is claimed.</p>';

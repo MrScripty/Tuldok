@@ -1,7 +1,7 @@
 # Retained checkpoint renderer adapter
 
-Status: isolated implementation under review. Not mounted in production Runs.
-The existing Runs/API/contract registry hooks await repository-lead coordination.
+Status: mounted in existing Runs for verified completed native classifier
+results, with lead-approved additive HTTP/contract and lifecycle hooks.
 
 `WorkspaceRetainedAnalysis.mount(root, {load, onSelection})` returns:
 
@@ -57,8 +57,13 @@ Self-hosted unmodified upstream browser distributions:
 The v5 family matches the v5 schema emitted by Altair 5.5 and supplies UMD
 distributions without a new application bundler. Load in the table order before
 retained-analysis.js. The interpreter extends window.vega. Embed passes ast true
-and expressionInterpreter; strict CSP does not need unsafe-eval or unsafe-inline.
-Do not weaken app CSP. `static/vendor/retained-analysis/manifest.json` records
+and expressionInterpreter. The renderer runs with script-src self, without
+unsafe-eval or inline scripts. Its isolated fixture also uses style-src self.
+The deployed /workspaces policy retains unsafe-inline for existing application
+CSS; this grants no inline script/eval permission. The meta policy precedes all
+assets and restricts data connections to the same origin, objects/base to none,
+images/media to existing local/data/blob needs, and frames/forms to self.
+No pre-existing CSP was relaxed. `static/vendor/retained-analysis/manifest.json` records
 exact asset/tarball hashes, upstream URLs, and retained notices for packages in
 the upstream source maps. Notice-source resolution versions do not claim exact
 embedded transitive versions. BSD, MIT and ISC notices are retained with the
@@ -75,39 +80,50 @@ cache-bypassed page reload and disposal. No external chart-asset request or CSP
 violation is permitted. Headless/no-sandbox/software rendering is test-only and
 does not establish an application execution sandbox.
 
-This test uses authored responses and access-failure substitutes. It establishes
-renderer behavior only. It does not establish actual Runs custody, PostgreSQL
-execution, real credential revocation, full application accessibility, or
-cold-process retained result reproducibility. The follow-up actual PostgreSQL/
-retained native Run tests now qualify the direct query boundary, including real
-Access revocation and fresh-process reopening. They are distinct from these
-authored renderer tests. The full authenticated API-to-Runs browser gate remains
-pending shared-hook integration.
+The authored renderer test establishes malformed/oversized spec and response
+rejection, precise widget lifecycle and strict-CSP compatibility. It does not
+substitute for custody or access acceptance.
 
-## Pending API dependency and shared hook proposal
+`node tests/browser_retained_analysis_actual.cjs` separately opens the normal
+application with the existing PostgreSQL catalog and a normally trained,
+retained two-epoch native classifier fixture. It checks the actual named query,
+exact retained numbers, keyboard-linked table, 390px layout, actual response
+cancellation, authorized JSON download, real credential revocation, and a fresh
+application-process/cache-bypassed reopen. It also revokes access immediately
+before normal Run detail, prediction and model-evidence requests, proving that
+denials clear previously rendered private content even after identity becomes
+null. Deployed CSP violations are captured; ordinary runtime code generation
+is explicitly checked with the DevTools CSP bypass disabled. No remote chart
+asset is requested. These are bounded workflow checks, not full-application
+accessibility or performance certification.
 
-No shared-file changes are part of this branch. Proposed additive contracts for
-lead agreement before implementation:
+## Integrated host contract
 
-1. Register new inspect operations `runs.retained_analysis/1` and
-   `runs.export_retained_analysis/1`, each with explicit closed request/response
-   schema hashes. Keep existing operations/versions unchanged.
-2. Add POST `/api/workspace/runs/<run_id>/retained-analysis` and an explicit
-   `/retained-analysis/export` sibling. Require the chosen new contract. Existing
-   selected-contract rules place run_id in the path only: reject any duplicate
-   body run_id, then inject the path ID when delegating to
-   `retained_analysis.query(dataset.runs, body_with_route_id,
-   export=host_route_choice)`. No user-controlled export flag.
-3. In the existing verified native classifier Runs section, build the request
-   from its exact artifact/metric/checkpoint inventory. Mount a separate root;
-   load through authenticated transport. Dispose on navigation, credential or
-   Run replacement; never change coordinator/phase/publication/scientific
-   comparison controllers. Include adapter cleanup in existing authority-failure
-   paths and exclude obsolete replies before any DOM update.
-4. Load self-hosted assets with the agreed current CSP; add actual authenticated
-   application/DB/browser tests and CI only after coordinated write-set approval.
-   The lead owns serial integration and merge; no approval or schema migration
-   is inferred from this proposal.
+Two new inspect/read operations, `runs.retained_analysis/1` and
+`runs.export_retained_analysis/1`, have closed typed request/response schemas and
+exact browser pins. Every prior contract/discovery document remains unchanged.
+POST `/api/workspace/runs/<run_id>/retained-analysis` and its `/export` sibling
+require an explicitly selected contract. Bodies omit run_id and reject any
+duplicate; the handler supplies the validated URL ID. The export flag is owned
+by the route.
+
+The existing verified native classifier section constructs requests from its
+exact artifact/metric/checkpoint inventory. The widget owns a separate root and
+uses authenticated bounded transport with timeout/caller-abort wiring. Mount,
+Run replacement, navigation, session change and access failure dispose its
+view. Old responses cannot update a new selection or authority. Failed access
+also clears the containing private Run. The model transport captures Run,
+credential and generation before dispatch and forwards access denials before
+local catches, including old checkpoint/candidate/package/comparison reads.
+Aborted or invalidated-generation replies cannot trigger cleanup. Existing coordinator/phase/publication/
+scientific controllers retain their ownership; no new computation starts on
+view opening. The Dataset selector starts disabled until existing initialization
+attaches its handlers, including during local vendor-asset loading.
+
+The branch composes reliability baseline 83a1e128 and adds CI commands using one
+actual retained fixture outside uploaded QA artifacts; private login material
+stays outside evidence. The repository lead alone merges this dependent PR.
+See [acceptance](../plans/retained-analysis/reports/m4-integrated/acceptance.md).
 
 Official references checked 2026-10-19/20:
 [Altair serialization](https://altair-viz.github.io/user_guide/saving_charts.html),

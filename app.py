@@ -958,6 +958,12 @@ def make_handler(dataset, observer=None):
                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-phase-timings.js': ('workspace-phase-timings.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
+                    '/static/retained-analysis.js': ('retained-analysis.js', 'text/javascript'),
+                    '/static/retained-checkpoint-curve.vl.json': ('retained-checkpoint-curve.vl.json', 'application/json'),
+                    '/static/vendor/retained-analysis/vega.min.js': ('vendor/retained-analysis/vega.min.js', 'text/javascript'),
+                    '/static/vendor/retained-analysis/vega-lite.min.js': ('vendor/retained-analysis/vega-lite.min.js', 'text/javascript'),
+                    '/static/vendor/retained-analysis/vega-embed.min.js': ('vendor/retained-analysis/vega-embed.min.js', 'text/javascript'),
+                    '/static/vendor/retained-analysis/vega-interpreter.min.js': ('vendor/retained-analysis/vega-interpreter.min.js', 'text/javascript'),
                     '/workspace-scientific-comparison.js': ('workspace-scientific-comparison.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
@@ -1173,6 +1179,14 @@ def make_handler(dataset, observer=None):
                             self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
                                 'runs.submit_external',2,graph=graph)
                         return self.reply(dataset.runs.submit_external(body,_graph_guard=graph_guard), 201)
+                    if (len(parts) == 3 or len(parts) == 4 and parts[3] == 'export') and parts[0] == 'runs' and parts[2] == 'retained-analysis':
+                        import retained_analysis
+                        operation = 'runs.export_retained_analysis' if len(parts) == 4 else 'runs.retained_analysis'
+                        agent_api.require_selection(self._contract_selection, operation)
+                        # The selected-contract decoder rejects all duplicate
+                        # body Run IDs before this path-owned identity is added.
+                        return self.reply(retained_analysis.query(dataset.runs, dict(body, run_id=parts[1]),
+                                                                  export=len(parts) == 4))
                     if len(parts) == 3 and parts[0] == 'runs':
                         if parts[2] == 'model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.model_evidence')

@@ -1,8 +1,13 @@
 # Retained checkpoint examples query v1
 
-Status: additive implementation under review, **not registered in HTTP/agent/UI**.
-Production consumers must wait for coordinated integration and actual-store
-qualification. Python entry point: `retained_analysis.query(runs, body)`.
+Status: implemented and qualified in the verified native classifier Runs view.
+Python entry point: `retained_analysis.query(runs, body)`. HTTP consumers select
+`runs.retained_analysis/1` or `runs.export_retained_analysis/1` explicitly with
+its published capability hash. POST routes are
+`/api/workspace/runs/<run_id>/retained-analysis` and its `/export` sibling.
+HTTP bodies omit run_id: the selected decoder rejects duplicate body IDs and
+the handler injects the validated URL ID. The Python example below includes it
+because the direct query entry point receives the full exact request.
 
 ```json
 {
@@ -72,10 +77,19 @@ Failures use WorkbenchError: invalid request 400; unsupported query/task 409;
 stale evaluation/metric 409; foreign checkpoint/not-found Run 404; limit 413;
 unavailable standalone/read state 503 where applicable. Existing Access and
 storage errors propagate with their established boundaries. A failed or revoked
-request must clear the future renderer, cancel obsolete requests, and exclude
+request clears the renderer, cancel obsolete requests, and exclude
 late replies. Already returned bytes cannot be recalled.
 
-The future renderer consumes an immutable base spec/result and revisioned
-allowlisted display overrides separately. Changed analysis creates a new result;
+The renderer consumes an immutable base spec/result and transient allowlisted
+selections. Persisted revisioned display overrides remain a later milestone.
+Changed analysis creates a new result;
 series/color/range/display filters cannot silently redefine metric meaning.
 No renderer or spec is accepted merely because it is JSON.
+
+
+Qualification: 27 query/contract/actual PostgreSQL/authenticated HTTP tests pass
+without skips; the actual Runs browser uses the normal app, retained native Run,
+real session revocations and a fresh application process. See
+[acceptance evidence](../plans/retained-analysis/reports/m4-integrated/acceptance.md).
+The two-epoch six-image fixture proves custody, transport and numeric behavior;
+it makes no model-quality or production-scale claim.

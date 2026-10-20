@@ -117,7 +117,12 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const publicationOperation=path[0]==='publication-results'?(path.length===1?'runs.publication_result':path[1]==='model-evidence'?'runs.publication_model_evidence':path[1]==='artifact-segment'?'runs.publication_artifact_chunk':null):path[0]==='runs'?({'publication':'runs.publication_status','recover-publication':'runs.recover_publication','cancel-publication':'runs.cancel_publication'})[path[2]]:null;
     const coordinatorOperation=path[0]==='coordinator'?(path.length===1?'runs.coordinator_health':path[1]==='recover'?'runs.recover_coordinator':null):null;
     const phaseOperation=path[0]==='runs'&&path[2]==='phase-timings'?'runs.phase_timings':path[0]==='graphs'&&path[2]==='preparation-timings'?'graphs.preparation_timings':null;
-    if(operation==='runs.compare_scientific_evidence'){
+    const retainedOperation=path[0]==='runs'&&path[2]==='retained-analysis'?(path.length===3?'runs.retained_analysis':path.length===4&&path[3]==='export'?'runs.export_retained_analysis':null):null;
+    if(retainedOperation){
+      const pin=window.WorkspaceRetainedContracts?.[retainedOperation+'/1'];
+      if(selectedVersion!==1||!pin)throw Error('The exact retained analysis contract is unavailable.');
+      headers['Tuldok-Operation-Contract']=retainedOperation+'/1/'+pin;
+    } else if(operation==='runs.compare_scientific_evidence'){
       const pin=window.WorkspaceScientificContracts?.[operation+'/1'];
       if(selectedVersion!==1||!pin)throw Error('The exact scientific comparison contract is unavailable.');
       headers['Tuldok-Operation-Contract']=operation+'/1/'+pin;
@@ -148,7 +153,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       if (!sha) throw Error('This model operation has no supported local contract: ' + operation);
       headers['Tuldok-Operation-Contract'] = operation + '/' + version + '/' + sha;
     }
-    const controller=publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'?new AbortController():null;
+    const controller=retainedOperation||publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'?new AbortController():null;
     const deadline=controller?setTimeout(()=>controller.abort(),Math.min(75000,Math.max(1,timeout))):null;
     const abort=()=>controller?.abort();
     if(requestSignal?.aborted)abort();else requestSignal?.addEventListener('abort',abort,{once:true});
@@ -156,9 +161,9 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, {
       ...(body === undefined ? {} : {method: "POST", body: JSON.stringify(body)}), headers, ...(controller?{signal:controller.signal}:{}),
     });
-    if(publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'){
+    if(retainedOperation||publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'){
       const length=response.headers.get('Content-Length');
-      if(!/^\d+$/.test(length||'')||Number(length)>(operation==='runs.compare_scientific_evidence'?2*1024**2:phaseOperation?48*1024:coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
+      if(!/^\d+$/.test(length||'')||Number(length)>(retainedOperation?256*1024:operation==='runs.compare_scientific_evidence'?2*1024**2:phaseOperation?48*1024:coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
     }
     const value = await response.json();
     if (!response.ok) {
@@ -182,6 +187,11 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       onImported:openImportedRecord,observePreparation:restart=>observePreparation(restart),
       onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     const model = WorkspaceModel({api, announce, openRecord, getIntent:()=>loadGeneration, getView:()=>view,
+      onAccessFailure:(error,id,credential)=>{
+        const currentCredential=window.TuldokAuth?.identity()?.credential_id;
+        if(view!=='runs'||runId!==id||currentCredential&&currentCredential!==credential)return;
+        ++runGeneration;run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);
+      },
       openRun:result=>{run=result;runId=result.id;remember();if(view==='runs')loadRuns(runId);else openRun();}});
     const publication = window.WorkspacePublication({api,render:()=>{if(view==='runs')renderRuns();}});
     const coordinator = window.WorkspaceCoordinator({api,render:renderCoordinator});
@@ -469,6 +479,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         if (id) {
           try { detail = await api("runs/" + encoded(id)); }
           catch (error) {
+            if ([401,403].includes(error.status)) throw error;
             // The list's durable receipt remains useful when verifying its
             // artifacts fails. Keep other runs reachable; never trust cached
             // metrics or offer artifacts from the failed detail read.
@@ -483,7 +494,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         }
         if (detail?.state === "completed" && !integrityKind(detail.graph) && !external.isGraph(detail.graph) && !detail.artifact_status) {
           try { rows = await api("runs/" + encoded(id) + "/predictions?split=" + split); }
-          catch (error) { rowsError = error.message; }
+          catch (error) { if ([401,403].includes(error.status)) throw error; rowsError = error.message; }
         }
         if (!current()) return;
         await model.load(detail,current);
@@ -500,8 +511,14 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         packageRead.then(()=>{if(current())renderRuns();});
         coordinatorRead.then(()=>{if(current())renderCoordinator();});
       } catch (error) {
-        if (!current()) return;
-        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);return;}
+        // A denied fetch may already have cleared the session identity. It must
+        // still clear this generation's private DOM, while an old credential's
+        // late denial cannot invalidate a newer session or navigation.
+        const credential=window.TuldokAuth?.identity()?.credential_id;
+        const denied=[401,403].includes(error.status);
+        const currentDenial=denied&&generation===runGeneration&&view==='runs'&&(!credential||credential===session);
+        if (!current()&&!currentDenial) return;
+        if (denied) {++runGeneration;run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);return;}
         if (!quiet) {runsRoot.innerHTML = `<div id="real-coordinator-root">${coordinator.html()}</div><div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;coordinator.bind(runsRoot);coordinatorRead.then(()=>{if(current())renderCoordinator();});}
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));

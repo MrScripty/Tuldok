@@ -1158,3 +1158,10 @@ details > p {
 .scientific-comparison th:first-child { white-space:normal; overflow-wrap:anywhere; min-width:10rem; max-width:24rem; }
 .scientific-comparison details { margin:12px 0; }
 .scientific-comparison input { max-width:100%; }
+.retained-analysis { min-width:0; max-width:100%; margin-block:1rem; }
+.retained-analysis > div { min-width:0; max-width:100%; }
+.retained-analysis table { width:100%; table-layout:fixed; border-collapse:collapse; font-size:.8rem; }
+.retained-analysis th,.retained-analysis td { padding:.4rem; vertical-align:top; overflow-wrap:anywhere; border-bottom:1px solid var(--line,#b6bfcb); }
+.retained-analysis pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.retained-analysis button { max-width:100%; margin:.25rem; white-space:normal; }
+.retained-analysis button:focus-visible,.retained-analysis input:focus-visible { outline:3px solid var(--accent,#fbbf24); outline-offset:2px; }

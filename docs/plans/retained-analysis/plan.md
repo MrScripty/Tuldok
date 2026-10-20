@@ -1,12 +1,12 @@
 # Plan: Retained checkpoint curve and linked examples
 
-**Plan status:** `Verifying`
+**Plan status:** `Accepted`
 
-**Current phase:** M2 isolated renderer qualified; shared integration pending
+**Current phase:** M4 complete; independently reviewed; lead-owned integration
 
-**Next slice:** Coordinate additive HTTP/contracts and Runs mount hooks with the repository lead via the parent.
+**Next slice:** Lead review and serial integration of the completed dependent PR.
 
-**Acceptance status:** `pending`
+**Acceptance status:** `accepted for this bounded slice`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -24,8 +24,8 @@ access, numeric, lifecycle and provenance guarantees. View opening is inert.
 | --- | --- | --- | --- | --- | --- | --- |
 | A1 | Closed named query rejects malformed identities, unknown fields and unbounded requests before reads; exact substitutions fail before result return | contract | not-applicable | automated | passed | [focused tests](reports/m1/focused-tests.log) |
 | A2 | Exact metric values, stable examples, pagination/support and frozen identity agree with retained bytes and actual PostgreSQL | integration | required-real | automated | passed | [actual retained query tests](reports/m3-actual/retained-query-tests.log) |
-| A3 | Actual Runs browser supports keyboard, linked selections, narrow layout, stale replies, revocation, malformed/large specs, offline assets and cold reopen | user-workflow | required-real | automated | partial | [isolated actual Chromium renderer](reports/m2/browser.json); shared Runs hooks pending |
-| A4 | Query/export reauthorize every retrieval, no cache authority, no computation or mutation on opening | integration | required-real | automated | partial | [real direct-query/credential tests](reports/m3-actual/retained-query-tests.log); authenticated HTTP/UI still pending |
+| A3 | Actual Runs browser supports keyboard, linked selections, narrow layout, stale replies, revocation, malformed/large specs, offline assets and cold reopen | user-workflow | required-real | automated | passed | [actual Runs browser](reports/m4-integrated/browser.json), [strict isolated renderer](reports/m4-integrated/renderer.json); complementary scopes documented |
+| A4 | Query/export reauthorize every retrieval, no cache authority, no computation or mutation on opening | integration | required-real | automated | passed | [query/HTTP tests](reports/m4-integrated/query-http-tests.log), [real Run revocation/export/cold reopen](reports/m4-integrated/browser.json) |
 
 ## Scope
 
@@ -51,7 +51,7 @@ view persistence. Revisioned overrides follow the completed immutable slice.
 | `retained_checkpoint_examples` v1 selects explicit run, evaluation, metric definition and checkpoint hashes | retained_analysis | [contract](../../contracts/retained-analysis-query.md) | none |
 | Existing text Run document remains authoritative; JSONB casts are disposable query projections | Metadata/Runs | schema v10; raw artifact hashes retained | none |
 | Vega-Lite/vega-embed with interpreter and self-hosted pinned assets | renderer | official upstream docs; later asset/browser qualification required | none |
-| Lead alone merges; shared-file hooks wait for parent coordination | repository lead | delegation; PR102–110 write-set snapshot | none |
+| Lead alone merges; shared hooks approved after composing reliability83a1e128 | repository lead | parent relay 2026-10-20; explicit approved hunks | initial pending coordination |
 
 ## Design Observations And Remaining Evidence
 
@@ -124,13 +124,28 @@ Shared integration candidates `app.py`,
 Define mount/resize/update/selection/export/dispose; deny external loaders/editor,
 use interpreter under strict CSP. Gate A3 plus actual A2/A4.
 
+### M4: Authenticated integration, approved through parent
+
+Composed dependency: `83a1e1289f3f7e4f8c3e697c1748a862a69d0897`, reliability
+PR108 branch (including its composed PR102–110 history). Local composition merge
+`252a68c5b90afdd8660f652cfa0094233ef9f64f`; no conflict resolution or reliability
+rewrites. The PR must declare this dependency until the lead integrates it.
+
+Allowed shared hunks: `agent_api.py` two new inspect contracts; `app.py` POST
+handlers and exact static asset mappings; `static/workspace-real.js` bounded
+authenticated transport; `static/workspace-service.js` verified native classifier
+mount/disposal; `static/workspaces.html` (scoped CSP before assets; initially disabled selector), scoped CSS and additive CI commands.
+Normal Run read catches propagate access denials to generation/session-aware
+private-content cleanup; no non-auth reliability fallback changes.
+New `retained_analysis_schema.py` owns the narrow schema. Preserve all existing
+coordinator/phase/publication/batch/scientific-comparison behavior and old
+operation identities. HTTP bodies omit run_id; validated path ID is injected.
+Execute actual SQL, authenticated HTTP, Runs browser, real revocation/export and
+cold-reopen acceptance, then independent review before publication readiness.
+
 ## Blockers
 
-- Parent relay/lead coordination is pending. Cross-thread collaboration send to
-  source_thread_id returns `agent ... not found`; no shared-file edits authorized
-  by coordination yet. No GitHub comment to another person is substituted.
-- Authenticated API-to-Runs acceptance awaits shared hooks. The disposable
-  PostgreSQL/native retained Run and direct-query acceptance are now available.
+- `none` for implementation or local acceptance. Lead-owned integration remains; no new user permission is needed.
 
 ## Re-Plan Triggers
 
@@ -146,6 +161,8 @@ retain source/evidence and branch for its review. No worktree deletion planned.
 
 ## Final Acceptance
 
-- Acceptance status: `pending`
-- Deferred follow-ups: M2 integration and actual-store/browser qualification
-- Final status: `Verifying`
+- Acceptance status: `accepted for this bounded slice`
+- Evidence: [M4 acceptance](reports/m4-integrated/acceptance.md)
+- Deferred follow-ups: general query recipes, persisted revisioned view overrides,
+  benchmark manifests and later scientific workflows; outside this first slice
+- Final status: `Accepted` for the implemented slice; lead alone owns merge
