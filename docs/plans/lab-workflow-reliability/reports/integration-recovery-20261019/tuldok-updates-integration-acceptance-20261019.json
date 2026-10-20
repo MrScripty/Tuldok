@@ -4297,7 +4297,7 @@
     "merge_gate_independent": "/tmp/tuldok-pr104-merge-gate-independent-review.json",
     "description_publication": "/tmp/tuldok-remaining-final-description-publication.json",
     "recovery_checkpoint_verified": "c37106eac3a80867543a5ce4d34d6db42dd9b600:438/438 entries by independent recovery clone",
-    "observed_utc": "2026-10-20T03:20:34.745638+00:00",
+    "observed_utc": "2026-10-20T03:26:09.105016+00:00",
     "cleanup_new": "Complete: five accepted remote/local/tracking refs and five worktrees removed after dependent retargets and564-entry recovery verification. Independent postcheck retained.",
     "cleanup_new_precheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json",
     "cleanup_new_terminal": "/tmp/tuldok-pr104-105-106-109-110-cleanup-terminal.json",
@@ -4793,5 +4793,18 @@
     "current_main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
     "merged_utc": "2026-10-20T03:15:23.850022+00:00"
   },
-  "main_after_pr110": "63f689ecace7bac2f20114efde53a9c6bc05a9ed"
+  "main_after_pr110": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "caption_dialog_ci_repair": {
+    "status": "implementation in progress, not qualified",
+    "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+    "branch": "fix/captions-dialog-ci-qualification-20261020",
+    "worktree": "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
+    "order": "After111; preserve111branch until repairdependent retargeted",
+    "author": "/root/pr111_ci_repair",
+    "independent_reviewer": "/root/mcp_contract_ci_review",
+    "observation": "/tmp/tuldok-caption-dialog-race-qualification-task.json",
+    "cancelled_obsolete_run": 39349523584,
+    "cancel_receipt": "/tmp/tuldok-pr105-obsolete-duplicate-cancel-receipt.json",
+    "primary_acceptance_remains_success": 39349557067
+  }
 }

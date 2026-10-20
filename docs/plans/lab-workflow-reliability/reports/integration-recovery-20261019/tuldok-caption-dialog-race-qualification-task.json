@@ -1,0 +1,29 @@
+{
+  "observed_utc": "2026-10-20T03:24:50.686741+00:00",
+  "run": 39349523584,
+  "job": 118390149863,
+  "conclusion": "cancelled",
+  "primary_acceptance_run": 39349557067,
+  "primary_conclusion": "success",
+  "observed_error": [
+    "2026-10-20T02:06:23.5114153Z { code: -32602, message: 'No dialog is showing' }"
+  ],
+  "observed": "Captions step began02:06:19; CDP No dialog is showing reported02:06:23; no Page diagnostics completion before explicit cancellation03:22:40. Original cancelledrun is not success.",
+  "source_observation": "Three fixed100ms dialog pauses and unbounded CDP send/diagnostics in tests/browser_captions.cjs. A late modal blocking diagnostic Runtime.evaluate is a supported source-based hypothesis requiring deterministic repair verification, not a proven browser trace.",
+  "assigned_repair": {
+    "agent": "/root/pr111_ci_repair",
+    "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+    "after_pr": 111,
+    "status": "implementation in progress",
+    "scope": "Caption browser harness and meaningful focused regression, actual fullPG/Chromium qualification, source-attributed reports. No product/assertion relaxation."
+  },
+  "decoded_log": {
+    "path": "/tmp/tuldok-pr105-obsolete-duplicate-cancelled-job-118390149863.log",
+    "bytes": 367915,
+    "sha256": "abbea44875271000483136d48225c05bfe3be72352bcf608e69b6405f40f5dab"
+  },
+  "raw_response": {
+    "path": "/tmp/tuldok-pr105-obsolete-duplicate-cancelled-job-118390149863-raw.json",
+    "sha256": "0b57354b2329b8c74b5ca90b9b83df31d31d295be5df061c6723b99f74b6f3c3"
+  }
+}

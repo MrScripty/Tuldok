@@ -79,3 +79,10 @@ precheck. Terminal/postcheck records supersede older pending cleanup snapshots.
 Every other local ref/worktree and original protected inventory is preserved.
 Only PR108 then PR111 remain in this implementation stack, pending exact-head
 hosted qualification. Their source worktrees and repair aliases are retained.
+
+Obsolete PR105 duplicate39349523584 is terminally cancelled after independent
+review; completed same-head primary39349557067 remains its acceptance gate.
+Original cancelled logs and modal-error observation are retained without success
+reclassification. A narrowly scoped caption-dialog CI repair is now being
+implemented in its own branch AFTER111; see caption_dialog_ci_repair in the
+latest ledger. Keep111branch until this new dependent is retargeted.

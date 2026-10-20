@@ -1,0 +1,126 @@
+{
+  "acceptance_impact": "None: preserve the already-reviewed completed latest gate, its1674tests/72skips and all merge/tree evidence. The obsolete pending execution was disclosed at merge and supplies no success claim. Any subsequently available real failure must be retained and assessed on its own merits.",
+  "accepted_gate": {
+    "ancestry_to_main_63f689": {
+      "accepted_merge": true,
+      "source": true
+    },
+    "full_tests": {
+      "command": "python -m unittest discover -s tests",
+      "raw_summary": "2026-10-20T02:34:36.1275644Z Ran 1674 tests in 2579.068s",
+      "result": "2026-10-20T02:34:36.1276030Z OK (skipped=72)",
+      "seconds": 2579.068,
+      "skipped": 72,
+      "tests": 1674
+    },
+    "independent_review": "/tmp/tuldok-pr105-3305-completed-lifecycle-independent-review.json",
+    "merge_sha": "c14e223c03fbbe9808d8a793d78d878a8dccea45",
+    "steps_success": 170
+  },
+  "allowed_action_if_root_rechecks_pending": "POST repos/MrScripty/Tuldok/actions/runs/39349523584/cancel only",
+  "checks": {
+    "both_pull_request_event": true,
+    "merge_receipt_preserves_old_pending": true,
+    "old_exact_run": true,
+    "old_still_pending": true,
+    "primary_captions_gate_success": true,
+    "primary_completed_success": true,
+    "primary_exact_run": true,
+    "primary_review_bound": true,
+    "same_exact_head": true,
+    "same_repository": true,
+    "same_task_branch": true,
+    "same_workflow_id": true,
+    "source_and_merge_reachable_main": true
+  },
+  "disposition": "CLEAR: reasonable to cancel only obsolete duplicate39349523584 to release its runner; no CI acceptance change",
+  "input_receipts": [
+    {
+      "path": "/tmp/tuldok-pr105-old-duplicate-obsolete-metadata.json",
+      "sha256": "e312c8b55e94f2e1571febae55017bb3c3e20315282aa5fdbffb62d2c9ae2146"
+    },
+    {
+      "path": "/tmp/tuldok-pr105-old-duplicate-primary-metadata.json",
+      "sha256": "edd5f3df938a1f18d0347e3010b39d75afa56f7fef688fb7075ebdec4528a168"
+    },
+    {
+      "path": "/tmp/tuldok-pr105-old-duplicate-latest-status.json",
+      "sha256": "d2d7ca9c371fd27a8986e233643ceacd0ec726cfd5bdedf3404ca1f4bb1b8a3f"
+    },
+    {
+      "path": "/tmp/tuldok-pr105-3305-completed-lifecycle-independent-review.json",
+      "sha256": "7d05c01ce463ec6035607e9d0466cb35b24bc2d4f578a78ea78212ba2024d169"
+    },
+    {
+      "path": "/tmp/tuldok-pr105-final-merge-receipt.json",
+      "sha256": "429985163b64b42a676b0fd3f7e34fc1ab4fc007646ab7bd35c1c017580042ab"
+    }
+  ],
+  "observed_utc": "2026-10-20T03:21:49.881978+00:00",
+  "obsolete": {
+    "conclusion": null,
+    "created_at": "2026-10-20T00:45:26Z",
+    "event": "pull_request",
+    "head_branch": "feature/lab-workflow-client-20261019",
+    "head_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+    "html_url": "https://github.com/MrScripty/Tuldok/actions/runs/39349523584",
+    "id": 39349523584,
+    "name": "Dataset lifecycle tests",
+    "run_started_at": "2026-10-20T00:45:26Z",
+    "status": "in_progress",
+    "updated_at": "2026-10-20T01:11:43Z",
+    "workflow_id": 373501874
+  },
+  "primary": {
+    "conclusion": "success",
+    "created_at": "2026-10-20T00:45:47Z",
+    "event": "pull_request",
+    "head_branch": "feature/lab-workflow-client-20261019",
+    "head_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+    "html_url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557067",
+    "id": 39349557067,
+    "name": "Dataset lifecycle tests",
+    "run_started_at": "2026-10-20T00:45:47Z",
+    "status": "completed",
+    "updated_at": "2026-10-20T02:48:39Z",
+    "workflow_id": 373501874
+  },
+  "primary_archived_job_metadata": {
+    "all_steps_success": true,
+    "captions_step": {
+      "conclusion": "success",
+      "name": "Run node tests/browser_captions.cjs",
+      "number": 109,
+      "status": "completed"
+    },
+    "job": 118390262320,
+    "path": "/tmp/tuldok-pr105-3305-completed-lifecycle-run-39349557067-jobs.json",
+    "run_binding": "Job ID matches the completed primary independent review and merge receipt; fresh run metadata separately verifies exact source head.",
+    "sha256": "fe5d0ea74fbf8221c0b5b261f1aa77c3f21894921fcbcda5140e679afbe23787",
+    "steps": 170
+  },
+  "protected_scope": [
+    "Do not cancel completed primary lifecycle39349557067/job118390262320.",
+    "Do not cancel either captured-CPU gate, any main push, or any PR108/111 lifecycle/CPU run.",
+    "No rerun, test assertion change, or reclassification of the obsolete run as passed.",
+    "If obsolete run becomes terminal before action, leave it untouched and retain that outcome.",
+    "Cancellation may make terminal diagnostics/logs available; availability is not guaranteed."
+  ],
+  "root_snapshot_stalled_job": {
+    "active_steps": [
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "name": "Run node tests/browser_captions.cjs",
+        "number": 109,
+        "started_at": "2026-10-20T02:06:19Z",
+        "status": "in_progress"
+      }
+    ],
+    "id": 118390149863,
+    "interpretation": "The snapshot shows browser_captions active since02:06Z. Metadata delay or a hung process remains possible; no root cause or failure outcome is inferred.",
+    "snapshot_observed_utc": "2026-10-20T03:20:41.989813+00:00",
+    "status": "in_progress"
+  },
+  "scope": "Independent read-only assessment of cancellation of exactly one obsolete PR105 duplicate workflow run; no cancellation or other remote write performed."
+}
