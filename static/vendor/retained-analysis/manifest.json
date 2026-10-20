@@ -1,0 +1,420 @@
+{
+  "purpose": "Self-hosted fixed retained-checkpoint recipe only",
+  "assets": [
+    {
+      "package": "vega",
+      "version": "5.33.0",
+      "filename": "vega.min.js",
+      "sha256": "a71f14828abacac82fbe8adb07ce65cbb82561d8eef188053c4a1c09e0164dcb",
+      "tarball_sha256": "7b61f992d1a1e196e7f2eeb3d6176e5694949d0d4bbfea237a842d523dd6e1f3",
+      "source": "https://registry.npmjs.org/vega/-/vega-5.33.0.tgz",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "package": "vega-lite",
+      "version": "5.23.0",
+      "filename": "vega-lite.min.js",
+      "sha256": "58c27358e26f2d319cf62f45bc17a4c8362f08645001df2ec8d341eee4097c7f",
+      "tarball_sha256": "e4cbfdd8f6f1abe381c59cd558fd6a559c12b1496bfdf2e0c3295263a40fe4da",
+      "source": "https://registry.npmjs.org/vega-lite/-/vega-lite-5.23.0.tgz",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "package": "vega-embed",
+      "version": "6.29.0",
+      "filename": "vega-embed.min.js",
+      "sha256": "12d02acfbe3ec59ef9a37dd4822a2e04e2961b5bbb671bbe661d2221715b99da",
+      "tarball_sha256": "ecf1ee709c2bac9e0a4ead6908114b05b62c71493e10a8a4308109bb070f8eb1",
+      "source": "https://registry.npmjs.org/vega-embed/-/vega-embed-6.29.0.tgz",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "package": "vega-interpreter",
+      "version": "1.2.0",
+      "filename": "vega-interpreter.min.js",
+      "sha256": "13002339c7e6231ef919584cbdf7391b246ea5073f686ffd707c62628b7f87df",
+      "tarball_sha256": "1eebed53f379d1c95ac7bba508b47eae8d4f8a19ecb1ec29b60b0be8b6334e5d",
+      "source": "https://registry.npmjs.org/vega-interpreter/-/vega-interpreter-1.2.0.tgz",
+      "license": "BSD-3-Clause"
+    }
+  ],
+  "notices": [
+    {
+      "package": "d3-array",
+      "version": "3.2.4",
+      "license": "ISC",
+      "notice_file": "d3-array.txt"
+    },
+    {
+      "package": "d3-color",
+      "version": "3.1.0",
+      "license": "ISC",
+      "notice_file": "d3-color.txt"
+    },
+    {
+      "package": "d3-delaunay",
+      "version": "6.0.4",
+      "license": "ISC",
+      "notice_file": "d3-delaunay.txt"
+    },
+    {
+      "package": "d3-dispatch",
+      "version": "3.0.1",
+      "license": "ISC",
+      "notice_file": "d3-dispatch.txt"
+    },
+    {
+      "package": "d3-dsv",
+      "version": "3.0.1",
+      "license": "ISC",
+      "notice_file": "d3-dsv.txt"
+    },
+    {
+      "package": "d3-force",
+      "version": "3.0.0",
+      "license": "ISC",
+      "notice_file": "d3-force.txt"
+    },
+    {
+      "package": "d3-format",
+      "version": "3.1.2",
+      "license": "ISC",
+      "notice_file": "d3-format.txt"
+    },
+    {
+      "package": "d3-geo",
+      "version": "3.1.1",
+      "license": "ISC",
+      "notice_file": "d3-geo.txt"
+    },
+    {
+      "package": "d3-geo-projection",
+      "version": "4.0.0",
+      "license": "ISC",
+      "notice_file": "d3-geo-projection.txt"
+    },
+    {
+      "package": "d3-hierarchy",
+      "version": "3.1.2",
+      "license": "ISC",
+      "notice_file": "d3-hierarchy.txt"
+    },
+    {
+      "package": "d3-interpolate",
+      "version": "3.0.1",
+      "license": "ISC",
+      "notice_file": "d3-interpolate.txt"
+    },
+    {
+      "package": "d3-path",
+      "version": "3.1.0",
+      "license": "ISC",
+      "notice_file": "d3-path.txt"
+    },
+    {
+      "package": "d3-quadtree",
+      "version": "3.0.1",
+      "license": "ISC",
+      "notice_file": "d3-quadtree.txt"
+    },
+    {
+      "package": "d3-scale",
+      "version": "4.0.2",
+      "license": "ISC",
+      "notice_file": "d3-scale.txt"
+    },
+    {
+      "package": "d3-scale-chromatic",
+      "version": "3.1.0",
+      "license": "ISC",
+      "notice_file": "d3-scale-chromatic.txt"
+    },
+    {
+      "package": "d3-shape",
+      "version": "3.2.0",
+      "license": "ISC",
+      "notice_file": "d3-shape.txt"
+    },
+    {
+      "package": "d3-time",
+      "version": "3.1.0",
+      "license": "ISC",
+      "notice_file": "d3-time.txt"
+    },
+    {
+      "package": "d3-time-format",
+      "version": "4.1.0",
+      "license": "ISC",
+      "notice_file": "d3-time-format.txt"
+    },
+    {
+      "package": "d3-timer",
+      "version": "3.0.1",
+      "license": "ISC",
+      "notice_file": "d3-timer.txt"
+    },
+    {
+      "package": "delaunator",
+      "version": "5.1.0",
+      "license": "ISC",
+      "notice_file": "delaunator.txt"
+    },
+    {
+      "package": "fast-json-patch",
+      "version": "3.1.1",
+      "license": "MIT",
+      "notice_file": "fast-json-patch.txt"
+    },
+    {
+      "package": "internmap",
+      "version": "2.0.3",
+      "license": "ISC",
+      "notice_file": "internmap.txt"
+    },
+    {
+      "package": "json-stringify-pretty-compact",
+      "version": "4.0.0",
+      "license": "MIT",
+      "notice_file": "json-stringify-pretty-compact.txt"
+    },
+    {
+      "package": "robust-predicates",
+      "version": "3.0.3",
+      "license": "Unlicense",
+      "notice_file": "robust-predicates.txt"
+    },
+    {
+      "package": "semver",
+      "version": "7.8.5",
+      "license": "ISC",
+      "notice_file": "semver.txt"
+    },
+    {
+      "package": "topojson-client",
+      "version": "3.1.0",
+      "license": "ISC",
+      "notice_file": "topojson-client.txt"
+    },
+    {
+      "package": "vega",
+      "version": "5.33.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt"
+    },
+    {
+      "package": "vega-canvas",
+      "version": "1.2.7",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-canvas.txt"
+    },
+    {
+      "package": "vega-crossfilter",
+      "version": "4.1.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-crossfilter.txt"
+    },
+    {
+      "package": "vega-dataflow",
+      "version": "5.7.8",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-embed",
+      "version": "6.29.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-embed.txt"
+    },
+    {
+      "package": "vega-encode",
+      "version": "4.10.3",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-encode.txt"
+    },
+    {
+      "package": "vega-event-selector",
+      "version": "3.0.1",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-event-selector.txt"
+    },
+    {
+      "package": "vega-expression",
+      "version": "5.2.1",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-force",
+      "version": "4.2.3",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-force.txt"
+    },
+    {
+      "package": "vega-format",
+      "version": "1.1.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-functions",
+      "version": "5.18.1",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-geo",
+      "version": "4.4.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-geo.txt"
+    },
+    {
+      "package": "vega-hierarchy",
+      "version": "4.1.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-hierarchy.txt"
+    },
+    {
+      "package": "vega-interpreter",
+      "version": "1.2.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-interpreter.txt"
+    },
+    {
+      "package": "vega-label",
+      "version": "1.3.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-label.txt"
+    },
+    {
+      "package": "vega-lite",
+      "version": "5.23.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-lite.txt"
+    },
+    {
+      "package": "vega-loader",
+      "version": "4.5.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-parser",
+      "version": "6.6.1",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-parser.txt"
+    },
+    {
+      "package": "vega-projection",
+      "version": "1.6.3",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-projection.txt"
+    },
+    {
+      "package": "vega-regression",
+      "version": "1.3.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-regression.txt"
+    },
+    {
+      "package": "vega-runtime",
+      "version": "6.2.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-runtime.txt"
+    },
+    {
+      "package": "vega-scale",
+      "version": "7.4.3",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-scenegraph",
+      "version": "4.13.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-schema-url-parser",
+      "version": "2.2.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-schema-url-parser.txt"
+    },
+    {
+      "package": "vega-selections",
+      "version": "5.6.3",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-statistics",
+      "version": "1.9.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-statistics.txt"
+    },
+    {
+      "package": "vega-themes",
+      "version": "2.15.0",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-themes.txt"
+    },
+    {
+      "package": "vega-time",
+      "version": "2.1.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-tooltip",
+      "version": "0.35.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-tooltip.txt"
+    },
+    {
+      "package": "vega-transforms",
+      "version": "4.12.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-transforms.txt"
+    },
+    {
+      "package": "vega-util",
+      "version": "1.17.4",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega.txt",
+      "notice_source": "Vega monorepo BSD-3-Clause notice in upstream vega@5.33.0 distribution"
+    },
+    {
+      "package": "vega-view",
+      "version": "5.16.1",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-view.txt"
+    },
+    {
+      "package": "vega-view-transforms",
+      "version": "4.6.2",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-view-transforms.txt"
+    },
+    {
+      "package": "vega-voronoi",
+      "version": "4.2.5",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-voronoi.txt"
+    },
+    {
+      "package": "vega-wordcloud",
+      "version": "4.1.7",
+      "license": "BSD-3-Clause",
+      "notice_file": "vega-wordcloud.txt"
+    }
+  ],
+  "notice_scope": "Packages present in upstream distribution source maps; notice package versions describe the local resolution used to retrieve notices, not an assertion about each bundled dependency version."
+}

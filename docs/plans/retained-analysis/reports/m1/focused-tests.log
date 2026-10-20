@@ -1,0 +1,18 @@
+test_parameterized_curve_and_stable_error_page_on_actual_postgres (test_retained_analysis.ActualPostgresSqlTests.test_parameterized_curve_and_stable_error_page_on_actual_postgres) ... skipped 'Existing authorized PostgreSQL configuration required; no credentials created.'
+test_exact_frozen_examples_and_retained_confidence (test_retained_analysis.ProjectionTests.test_exact_frozen_examples_and_retained_confidence) ... ok
+test_foreign_metric_checkpoint_and_population_are_distinct_failures (test_retained_analysis.ProjectionTests.test_foreign_metric_checkpoint_and_population_are_distinct_failures) ... ok
+test_unsupported_task_and_oversize_are_explicit (test_retained_analysis.ProjectionTests.test_unsupported_task_and_oversize_are_explicit) ... ok
+test_catalog_mismatch_is_refused (test_retained_analysis.QueryBoundaryTests.test_catalog_mismatch_is_refused) ... ok
+test_error_filter_does_not_change_metric_population_and_page_identity (test_retained_analysis.QueryBoundaryTests.test_error_filter_does_not_change_metric_population_and_page_identity) ... ok
+test_exact_provenance_and_values_with_fresh_access_outside_snapshot (test_retained_analysis.QueryBoundaryTests.test_exact_provenance_and_values_with_fresh_access_outside_snapshot) ... ok
+test_export_and_repeated_retrieval_do_not_bypass_current_authority (test_retained_analysis.QueryBoundaryTests.test_export_and_repeated_retrieval_do_not_bypass_current_authority) ... ok
+test_malformed_catalog_envelope_preserves_typed_failure (test_retained_analysis.QueryBoundaryTests.test_malformed_catalog_envelope_preserves_typed_failure) ... ok
+test_nested_transaction_and_oversized_response_refused (test_retained_analysis.QueryBoundaryTests.test_nested_transaction_and_oversized_response_refused) ... ok
+test_revocation_during_read_prevents_return (test_retained_analysis.QueryBoundaryTests.test_revocation_during_read_prevents_return) ... ok
+test_closed_bounds_and_types_before_evidence_read (test_retained_analysis.RequestTests.test_closed_bounds_and_types_before_evidence_read) ... ok
+test_defaults_and_explicit_field_projection (test_retained_analysis.RequestTests.test_defaults_and_explicit_field_projection) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.004s
+
+OK (skipped=1)
