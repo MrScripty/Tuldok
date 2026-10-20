@@ -1,5 +1,33 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-20 — Integrated stopped-transfer acceptance admission
+
+The integration lead selected the existing T8 composition gap after verifying
+the exact two reporting slices at `cd420c44c42ff85487965a858865170cfc0a9358`.
+Isolated branch `test/integrated-retention-acceptance-20261020` adds only a neutral
+combined M2/M3/publication backup/restore and current public-consumer witness,
+its scoped evidence and plan admission. It introduces no production behavior,
+SQL version or new design. The real process runs once; publication fault/recovery
+and a real PostgreSQL advisory-lock coordinator failure establish the retained
+state before stopping writers. Independent-database restore must preserve every
+raw table/sequence/file before activation, then immutable recovery acknowledgement,
+stored incomplete/measured clocks, original Run/events and exact result Ref under
+cold HTTP/SDK/CLI inspection and whole-file collection without compute replay.
+
+The actual source-frozen gate passed one test in16.930s, zero failures/errors/skips.
+All43 raw tables, sequence states and original files matched before restored
+activation; actual current HTTP/SDK and separate CLI inspection/collection retained
+all tables/sequences, exact result Ref, original interrupted Run/events and stored
+incomplete/measured clocks. The restore/read launch tripwire recorded zero calls.
+The original stopped catalog and backup stayed unchanged; the exact fresh source
+schema and restored database were removed with absence assertions. Source hashes,
+raw log, identities and limitations are in the
+[scoped acceptance report](reports/integrated-retention-restore-20261020/acceptance.md).
+Independent review and hosted/postmerge qualification remain pending. Historical
+source proofs, original failures, unrelated README PRs and dependent branches
+remain unchanged. No full milestone, performance or real-lab scientific acceptance
+is inferred from this test-only admission.
+
 ## 2026-10-20 — Local retained Study material preflight reports
 
 The next authorized C1 slice exposes the already named Pipeline

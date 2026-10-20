@@ -362,6 +362,26 @@ separate from full live-browser T4/T8/M3 acceptance, which remains pending.
 
 ## Compatibility, Migration And Rollback
 
+### Integrated stopped-transfer acceptance admission — 2026-10-20
+
+The fresh integration lead admits one narrow T8 witness from the exact reporting
+composition `cd420c44c42ff85487965a858865170cfc0a9358`, on isolated branch
+`test/integrated-retention-acceptance-20261020`. It composes existing M2 coordinator
+journal/immutable acknowledgement, M3 retained owner clocks and same-Run attached
+publication-result Ref in one stopped backup and independent-database restore.
+Current authenticated HTTP/SDK and separate CLI consumers then inspect and collect
+that restored result with a compute-launch tripwire. The original stopped catalog
+and immutable backup remain intact until their exact owned test cleanup.
+
+The write set is `tests/test_integrated_retention_restore.py`, this admission,
+the execution ledger and a scoped report directory. No production code, schema,
+operation identity, README, workflow, original receipt or dependent branch changes
+are admitted. Real disposable PostgreSQL/neutral process qualification, explicit
+owned schema/database cleanup, independent review and hosted integration remain
+separate gates. This witness does not close all T8/M2/M3/M5, performance, PUB-1,
+SCI-1, native training or hardware acceptance. Existing historical tests and their
+source attribution are preserved; missing real lab inputs remain missing.
+
 Preserve all installed operation identities/projections. New closed outputs use
 new negotiated versions or distinct operations, selected once from capabilities;
 auth, corrupt responses and timeouts never trigger a second mutation dispatch.

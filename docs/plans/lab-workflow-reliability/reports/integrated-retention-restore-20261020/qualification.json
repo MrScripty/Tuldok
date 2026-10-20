@@ -1,0 +1,70 @@
+{
+  "format": "integrated_retention_restore_qualification_v1",
+  "recorded_utc": "2026-10-20T23:10:47.287233+00:00",
+  "base_commit": "cd420c44c42ff85487965a858865170cfc0a9358",
+  "base_tree": "cdcfd9e2f348af530149314936c5efafbc6d8162",
+  "branch": "test/integrated-retention-acceptance-20261020",
+  "test_source_sha256": "3eeae36c3e538fd4a629893cb584e9613b805e80bcc1b1a71fdf134e09a4f64e",
+  "status": "scoped_actual_gate_passed_independent_review_and_hosted_integration_pending",
+  "command": "TULDOK_RETENTION_ACCEPTANCE_REPORT=<new-report-path> PYTHONPATH=.:tests PYTHONDONTWRITEBYTECODE=1 /workspace/tuldok-qa-venv/bin/python -m unittest test_integrated_retention_restore -v",
+  "database_requirement": "Explicit TULDOK_DATABASE_URL selecting fresh disposable PostgreSQL with CREATE DATABASE permission; no DSN/credential retained",
+  "runtime": {
+    "python": "3.12.14",
+    "psycopg": "3.3.6",
+    "jsonschema": "4.26.0",
+    "postgresql": "17.11 (parent-provisioned postgres:17)",
+    "scope": "Linux local loopback, neutral byte-copy helper; no Torch/training/runtime installation"
+  },
+  "tests": {
+    "run": 1,
+    "seconds": 16.93,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "raw_log": "qualification.log",
+    "raw_log_sha256": "799b6af7407cd49d743204d8dc81be3745be6255c410eda9486e975f503df610"
+  },
+  "domain_receipt": "domain-receipt.json",
+  "domain_receipt_sha256": "52432449b0109979013e857073133bee20c740b049f9022f14b6d26dfcb66803",
+  "source_sha256": {
+    "tests/test_integrated_retention_restore.py": "3eeae36c3e538fd4a629893cb584e9613b805e80bcc1b1a71fdf134e09a4f64e",
+    "tests/test_run_coordinator_recovery.py": "75f765418e862e95b7035c5cf957c02ab06b4938fb698554a087fe13aba7cabe",
+    "tests/test_external_runs.py": "59931dd73ebe7531e793a6dbe5ac4f9f9d5a6c8d6eb2df83930611d7e99118a4",
+    "tests/auth_helpers.py": "27a40542686a8a56df04601d765b0d4bf815d65d327b49931696a0ed161b5a7e",
+    "tests/fixtures/external_recipe.py": "06815b425a7722e0aa64d0c8739263fc2db371027b382d0c3326691305e1879c",
+    "run_coordinator.py": "b09636e6896557898c88bfc3ebc0bba01077cbb1769bafb3497d45283c89de1d",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "phase_timings.py": "03406d957da7da1305a07793a3be0830f2169c02971fdd9fb2e855f54ac627bc",
+    "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "backup_metadata.py": "4d050ed173b686c249157f513506eea9485f4cd6bbd05cb919a0f10113ba4a7d",
+    "metadata.py": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+    "tuldok_client.py": "3cdfb0a9823ec7527833a8838911c3a1d62ecc0d8376c438e3100c6c9f30aee6",
+    "agent_api.py": "b2c11bb56dd7688850cbfce5dc6445210056fbd7c966481e614e9eeb15a397c8",
+    "project_cli.py": "16f9da9c2d7d180a0bb43e403d4088c9bea73f7d175170f9e816157cb510f88d",
+    "app.py": "0c8dc4da95fc803136ad2731a2e643e0fd14839535d740ef0d263ac117f9d276",
+    "access.py": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4"
+  },
+  "coverage": [
+    "Actual neutral helper completes/drains once before an authored original publication copy fault",
+    "Actual separate PostgreSQL advisory-lock holder faults coordinator; explicit owner recovery produces completed immutable acknowledgement",
+    "Same-Run owner publication continuation attaches exact result Ref without second compute launch",
+    "All 43 table representations, identity sequence states and complete ordinary-file tree match after stopped backup and independent-database restore before activation",
+    "Restored activation advances diagnostic coordinator generation while preserving original fault/immutable recovery acknowledgement and exact stored Run",
+    "Actual stored publication incomplete span and measured recovery-publication span survive; cold clocks have no invented open continuation",
+    "Current authenticated HTTP/SDK and separate CLI inspect coordinator/timings/result Ref and collect exact private whole artifacts",
+    "All restored tables/sequences and original Run remain unchanged after consumer calls; ordinary old failed-Run artifact path still refuses",
+    "Original stopped catalog SQL/files and immutable backup tree remain unchanged; launch tripwire sees zero calls throughout restore/activation/reads",
+    "Only exact newly created source schema and restored database are dropped; post-drop catalog lookups assert absence"
+  ],
+  "limitations": [
+    "One direct external neutral attempt, one grant and consumption, zero Study reservations; no populated Study-accounting transfer claim",
+    "This is a composed schema10 stopped-transfer witness, not a rerun of every historical version/upgrade/interruption/old-binary gate",
+    "No interrupted transfer or corrupted backup injected by this witness; existing storage tests own those separate boundaries",
+    "No performance inference from test duration, no installed-runtime mutation, no numerical/CUDA/scientific acceptance",
+    "PUB-1 original real failed Run/custody/profile/output inventory and SCI-1 real pair/criterion/environment remain missing",
+    "Independent exact-source review, hosted candidate qualification and postmerge bookend remain lead-owned; no full T8/M2/M3/M5 completion claimed"
+  ],
+  "production_changes": false,
+  "schema_changes": false,
+  "historical_failures_overwritten": false
+}
