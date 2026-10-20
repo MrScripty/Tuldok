@@ -1,5 +1,53 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-20 — Local graph preflight refusal reporting
+
+The user selected continuation of this canonical plan's C1/T1 structured-refusal
+slice after PR114 merged. Local branch
+`feature/preflight-refusal-reports-20261020` starts at verified main
+`360bbda950cc48ed3c3d9193539039b68e0ac8cb` (tree
+`30b951bc8f6fa5fd19750be383f2214aaad59eda`). No publication, merge, deletion,
+credential change or expired CLI-authentication retry is selected.
+
+Pipeline remains the sole preparation/report owner; Runs still owns storage,
+admission, process custody and publication. Graph v4 extends the existing report
+and typed error envelope, leaving installed v1–v3 and headerless behavior intact.
+Classified preparation refusals retain code/status and bounded request-only
+provenance; unknown material/execution hashes stay null and later checks deferred.
+AgentClient, the CLI and WorkflowClient preserve/validate the selected report
+without a second preparation or submission.
+
+The direct write set is `pipeline.py`, `agent_api.py`, `app.py`,
+`project_cli.py`, `tuldok_client.py`, focused preflight/snapshot tests,
+their canonical operation/report/CLI/client contracts and this plan's scoped
+acceptance evidence. No persistence/schema, resource policy, runtime, README,
+publication-retention or scientific-criterion implementation changes are selected.
+Core/Router Implementation, Verification, Commit, Contracts/Schemas and IPC/
+Generated Contract guidance apply; existing JSON Schema machinery is reused.
+The standards-authoring skill is excluded for ordinary application edits.
+
+Initial unit/transport and actual PostgreSQL/HTTP refusal witnesses passed at
+their recorded source. Independent review then required exact owner/phase/check
+layout validation and refusal of an explicitly null report; both are implemented
+with adversarial tests. An earlier broader run retained two failures: an explicit
+default argument changed a v3 private mock expectation, and a concurrent source
+edit correctly tripped the imported-host identity fence. The old call is restored;
+the fence is unchanged. Final acceptance requires a fresh source-frozen run and
+independent review, recorded in the scoped report rather than reinterpreting that
+earlier run as passing.
+
+The frozen local suite subsequently passed 65 tests in 200.178 seconds, zero
+skips/failures/errors. All 126 existing operation hashes and the complete legacy
+projection match 360bbda; only graph v4 is added. Actual HTTP/CLI refusal and inert
+successful preparation keep their exact execution/authority boundaries. Three
+exact owned schemas were removed. Source hashes, prior failures, test log and
+independent final disposition are retained in
+[the scoped acceptance report](reports/preflight-refusal-reports-20261020/acceptance.md).
+
+This completes neither the separate retained-recipe/Study preparation report nor
+all C1/T1/M1. PUB-1's original private failure and SCI-1's actual scientific pair/
+criterion/environment inputs remain missing. Other product gaps remain separate.
+
 ## 2026-10-19 — Exact recovered evidence and comparison
 
 - Continued from reviewed PR97 `0da7a81`; preserved independent synthetic witness

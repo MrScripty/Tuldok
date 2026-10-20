@@ -18,6 +18,14 @@ Definite old-server route absence permits exact frozen legacy fallback. Ordinary
 auth/server/malformed discovery failures never trigger fallback. Contract selection
 is internal to the client; there are no schema, telemetry or retry flags to manage.
 
+When negotiated graph preflight v4 returns a classified preparation refusal,
+`preflight` exits nonzero and stderr JSON includes its validated
+`preflight_report` beside the original code, message and status. Unknown material,
+runtime readiness and execution remain explicit. Ordinary early errors and older
+contracts keep their existing projection. A refusal does not create a submission
+manifest, grant, reservation or retry. See the
+[report contract](run-preflight-publication.md#selected-v4-refusal-reports).
+
 An owner issues an agent credential with `inspect,edit,execute` and optional
 `cancel` scopes. The CLI cannot approve execution. In Pipeline the owner reviews
 the exact graph preflight, expands **Grant this material to an actor**, selects

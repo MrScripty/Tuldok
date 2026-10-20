@@ -42,7 +42,7 @@ def digest(value):
     return hashlib.sha256(encode(value).encode()).hexdigest()
 
 
-def _external_preflight_report(graph, prepared, *, storage=None):
+def _external_preflight_report(graph, prepared, *, storage=None, version=1):
     """Project fresh prepare() proofs; this is neither admission nor a retained proof cache."""
     material = prepared['material']
     runtime = material.get('torch_runtime', material.get('cpu_snapshot', material['runtime']))
@@ -86,6 +86,42 @@ def _external_preflight_report(graph, prepared, *, storage=None):
               'catalog_id': material['catalog_id'], 'graph_id': graph['id'], 'graph_revision': graph['revision'],
               'execution_sha256': prepared['execution_sha256'], 'material_sha256': prepared['material_sha256'],
               'checks': checks}
+    if version == 2:
+        report.update(format='external_preflight_report_v2', refusal=None)
+    return dict(report, sha256=digest(report))
+
+
+def _external_preflight_refusal(catalog_id, graph_id, revision, error, *, storage=False):
+    """Request provenance only: a refused preparation establishes no material proof."""
+    states = {'invalid': 'invalid', 'unsupported': 'unsupported', 'unavailable': 'blocked',
+              'stale': 'blocked', 'conflict': 'blocked', 'too_large': 'blocked', 'storage': 'blocked'}
+    if error.code not in states or not 400 <= error.status <= 599 or error.status in (401, 403):
+        return None
+    state = states[error.code]
+    report = {'format': 'external_preflight_report_v2', 'state': state, 'admission': 'not_reserved',
+              'catalog_id': catalog_id, 'graph_id': graph_id, 'graph_revision': revision,
+              'execution_sha256': None, 'material_sha256': None,
+              'refusal': {'code': error.code, 'status': error.status}}
+    evidence = digest(report)
+    report['checks'] = [{'code': 'storage_capacity' if storage else 'material_preparation',
+        'owner': 'runs' if storage else 'pipeline', 'phase': 'preparation', 'state': state,
+        'evidence_sha256': evidence,
+        'boundary': 'Runs current storage observation' if storage else 'Pipeline fresh material preparation',
+        'detail': 'Preparation refused with the original typed outcome. This reference binds the request and refusal, not verified material.'}]
+    for code, owner, phase, boundary in (
+            ('source_inputs', 'pipeline', 'preparation', 'Successful fresh source and input capture'),
+            ('runtime_inventory', 'pipeline', 'preparation', 'Successful fresh runtime inventory verification'),
+            ('host_closure', 'pipeline', 'preparation', 'Successful fresh host identity verification'),
+            ('output_contract', 'pipeline', 'preparation', 'Successful fresh output and evidence validation'),
+            ('capture_authority', 'pipeline', 'preparation', 'Current source and input disclosure owners'),
+            ('authority_admission', 'runs', 'admission', 'Runs atomic admission'),
+            ('resource_availability', 'runs', 'admission', 'Runs current resource admission'),
+            ('runtime_ready_go', 'runs', 'dispatch', 'Runs runtime READY/GO'),
+            ('custody_completion', 'runs', 'execution', 'Runs custody and terminal drainage'),
+            ('output_publication', 'runs', 'publication', 'Runs durable output publication')):
+        report['checks'].append({'code': code, 'owner': owner, 'phase': phase, 'state': 'deferred',
+            'evidence_sha256': evidence, 'boundary': boundary,
+            'detail': 'Unknown in this refused preparation; no checked material, execution, device or scientific acceptance is claimed.'})
     return dict(report, sha256=digest(report))
 
 
@@ -351,26 +387,41 @@ class Pipelines:
 
     @authorized('inspect', 'pipeline.preflight_external')
     def preflight_external(self, graph_id, revision, *, contract_version=None):
-        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1, 2, 3)):
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1, 2, 3, 4)):
             raise WorkbenchError('Unsupported external preflight version.', 'unsupported', 409)
+        if contract_version == 4:
+            identifier(graph_id, 'Graph ID')
+            if type(revision) is not int or revision < 1:
+                raise WorkbenchError('Invalid graph revision.')
         timing = Pipelines._preparation_clock(self, graph_id, revision, 'graphs.preflight_external')
         with phase_timings.observe(timing, 'prepare', 'preparing_material'):
-            graph = self.get(graph_id)
-            if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
-                raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
-            result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+            storage_boundary = False
+            try:
+                graph = self.get(graph_id)
+                if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+                    raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+                result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
                                                         getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
-            timing.material_sha256 = result['material_sha256']
-            storage = None
-            if contract_version == 3 and result['material']['resources'].get('profile') == recipe_contract.LARGE_OUTPUT_PROFILE:
-                runs = getattr(self.dataset, 'runs', None)
-                if runs is None:
-                    raise WorkbenchError('Execution storage owner is unavailable.', 'unavailable', 409)
-                storage = runs._check_external_storage(result['material'], pending_capture=True)
-            if self.get(graph_id) != graph:
-                raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
+                timing.material_sha256 = result['material_sha256']
+                storage = None
+                if contract_version in (3, 4) and result['material']['resources'].get('profile') == recipe_contract.LARGE_OUTPUT_PROFILE:
+                    storage_boundary = True
+                    runs = getattr(self.dataset, 'runs', None)
+                    if runs is None:
+                        raise WorkbenchError('Execution storage owner is unavailable.', 'unavailable', 409)
+                    storage = runs._check_external_storage(result['material'], pending_capture=True)
+                    storage_boundary = False
+                if self.get(graph_id) != graph:
+                    raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
+            except WorkbenchError as error:
+                if contract_version == 4:
+                    error.preflight_report = _external_preflight_refusal(
+                        self.db.dataset_id, graph_id, revision, error, storage=storage_boundary)
+                raise
             if contract_version == 3:
                 result = dict(result, preflight_report=_external_preflight_report(graph, result, storage=storage))
+            elif contract_version == 4:
+                result = dict(result, preflight_report=_external_preflight_report(graph, result, storage=storage, version=2))
             return result
 
     @authorized('inspect', 'pipeline.capture_external')

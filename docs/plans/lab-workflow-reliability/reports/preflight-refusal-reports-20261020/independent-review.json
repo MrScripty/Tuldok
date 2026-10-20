@@ -1,0 +1,208 @@
+{
+  "authored_acceptance_review": {
+    "disposition": "CLEAR scopedsource/evidenceclaimaccuracy",
+    "durability_and_sideeffect_limit": "Localcommitpreparation only. Detailed126comparisonandpriorfailurelogs are /tmppath/hashboundbyqualification; no remotearchive/publication/durabilityclaim. Rootcopyofthisreceipt as independent-review.json is permitted by delegatedlocalcheckpointtask; receiptneverhashesitself.",
+    "files": [
+      {
+        "bytes": 2700,
+        "path": "/workspace/Tuldok-preflight-refusals-20261020/docs/plans/lab-workflow-reliability/reports/preflight-refusal-reports-20261020/acceptance.md",
+        "sha256": "b1f6ff3ad905705c42b6fd7cf8ecbcae7d51f99ae1392e615fe8feb728bf197b"
+      },
+      {
+        "bytes": 4280,
+        "path": "/workspace/Tuldok-preflight-refusals-20261020/docs/plans/lab-workflow-reliability/reports/preflight-refusal-reports-20261020/qualification.json",
+        "sha256": "c6a0bdc322553ba76fba1d5138cca01957ab35f4c23d36ede6c6e3e0bcabb8c3"
+      },
+      {
+        "bytes": 13797,
+        "path": "/workspace/Tuldok-preflight-refusals-20261020/docs/plans/lab-workflow-reliability/reports/preflight-refusal-reports-20261020/focused.log",
+        "sha256": "6f88fcb9089dadc04048078671aa17a3c5067724256533aa06f34e6dd449dc0c"
+      }
+    ],
+    "history": "Initialmissingpsycopgimporterror and earlier65case2failures retained with exacthashes. Source-driftguardpreserved; no retroactivepassattribution.",
+    "remaining_product": "Graphonlyclassification; Study/materialreport/allC1T1M1/C2retention/T7criterion/PUB1SCI1explicitlyopen.",
+    "scope_and_count": "65/200.178s plainOK zero skip/fail/error at frozen8Python/testhashes. No per-boundary hiddenrealTorch claim; staticpositiveprofile explicitlytiny/usr/bin/true/dummypackages andCLIexecutionneutral. All126rootexecutedpriorcontracts+legacycomparison exact; currentreviewread/bound butdidnotrerun."
+  },
+  "authorization_limit": "Rootowns coherentlocalcommit. This reviewauthorizes no publication/push/PR/merge/retarget/cleanup/credentialchange or additionalexecution.",
+  "baseline": "360bbda950cc48ed3c3d9193539039b68e0ac8cb",
+  "blocking_findings": [],
+  "branch": "feature/preflight-refusal-reports-20261020",
+  "correctness_review": {
+    "consumer_transport": "V4-only reportfield retained bycanonicalHTTPerrornormalizer,thenclosedschema/hash/requestcataloggraphrevision/statuscode/aggregatecheck/evidence/provenancevalidated. Missingreportvalidbare;presentnull/malformedrejected. CLIstderrJSON/nonzeroandWorkflowtypederrorpreservevalidatedreportwithoutnewmanifest/retry; MCPunchangedstructuredtransportnotnewactualMCPqualificationhere.",
+    "error_privacy": "Constantboundedreportdetails omitexceptiontext/path/traceback. OriginaltypedWorkbenchErrorcode/status/message preservedoutside report. Selectedconsumerredactsowncredentialfromtoplevelerror and rejectscredentialinreportwithout echo. Auth/early/unclassified/nonWorkbencherrorsstaybare, with noextra preparation fordecoration.",
+    "failure_proof": "Requestcatalog/graph/requestedrevision only, execution/materialSHA null on allclassifiedfailuresincluding postpreparestorage/drift. No checkedfailurematerial, no emptyhash/zeroSHA, no parsedexceptionfamily. GenericPipelinepreparation or explicitlyenteredRunsstorage only.",
+    "ownership": "Pipelineprepare/report remainsoneowner; Runsstorage invoked through existingcheck. No resourcepolicy/runtime/custody/accounting/SQL/staticUI changes.",
+    "unknown_boundaries": "READYGO/authorityadmission/resourceavailability/custody/outputpublication/science deferredorunobserved; reportdoesnotreserveoradmit.",
+    "versioning": "Reportv2+operationv4 copiedfromoldschemas; preservedv3privatehelpercallshape andsuccessprojection; headerless/v1v2oldsuccess andv1v2v3olderrorsqualified."
+  },
+  "disposition": "CLEAR exact current local graphv4 structured-refusal implementation, all13source/test/canonicaldocfiles plus authoredacceptance/qualification/focusedlog. Root may bind coherentlocalcommit; no publication/hostedCI/merge/fullC1acceptance implied.",
+  "documentation_review": "Canonicalreport/agent/CLI/clientcontracts andupdatedledger matchproducer+consumerbehavior,classifiedallowlist,bareearlyerrors and graph-onlypartialacceptance. Newversion2report andv4selectedoperationavoidalteringoldcontracts. Authoredacceptance describesactualrun/testfixturefidelityandpriorfailuresaccurately.",
+  "evidence": [
+    {
+      "bytes": 628,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/focused-result.json",
+      "sha256": "f1604162b02c08add94724ab817bb1114d3682a131d5eb6eef2fd12dc22ff959"
+    },
+    {
+      "bytes": 13797,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/focused-final.log",
+      "sha256": "6f88fcb9089dadc04048078671aa17a3c5067724256533aa06f34e6dd449dc0c"
+    },
+    {
+      "bytes": 32969,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/all-prior-contracts.json",
+      "sha256": "78e6fa9dfdc344ec48f31534bc9fd5ad8c1909bd9d87c4a75e2717c48d5da539"
+    },
+    {
+      "bytes": 761,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/source-for-final-tests.json",
+      "sha256": "b1194d85bdc03bfd58a8b924eea99f42edad80dcbf7b111fcaff0ba4e1c5b749"
+    },
+    {
+      "bytes": 402,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/actual-owner-refusal-initial.log",
+      "sha256": "a35dcdd184cc6f83a1f23b1870cedfebd025a6b9058a020d3c9bf381f8d284a9"
+    },
+    {
+      "bytes": 21913,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/focused-first.log",
+      "sha256": "c7cf18350d63dffa0e36ec625218d89cea884bcede56bc4844d506d99264917f"
+    },
+    {
+      "bytes": 628,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/focused-first-result.json",
+      "sha256": "01cd5f8171d2ac8b84bf5276792c4dc02518a7d5071759f0a09cf51e6f6f6c2d"
+    },
+    {
+      "bytes": 1225,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/storage-unit.log",
+      "sha256": "c780943574c1898427f54f3505854319689b9fd61a6af8738b9b87f4a09451d8"
+    },
+    {
+      "bytes": 2733,
+      "path": "/tmp/tuldok-preflight-refusals-20261020/run-focused.py",
+      "sha256": "dedff2b76fd7ede4b930d9da853bb60c6e01091460ba3b14998c98369189e046"
+    },
+    {
+      "bytes": 2700,
+      "path": "/workspace/Tuldok-preflight-refusals-20261020/docs/plans/lab-workflow-reliability/reports/preflight-refusal-reports-20261020/acceptance.md",
+      "sha256": "b1f6ff3ad905705c42b6fd7cf8ecbcae7d51f99ae1392e615fe8feb728bf197b"
+    },
+    {
+      "bytes": 4280,
+      "path": "/workspace/Tuldok-preflight-refusals-20261020/docs/plans/lab-workflow-reliability/reports/preflight-refusal-reports-20261020/qualification.json",
+      "sha256": "c6a0bdc322553ba76fba1d5138cca01957ab35f4c23d36ede6c6e3e0bcabb8c3"
+    },
+    {
+      "bytes": 13797,
+      "path": "/workspace/Tuldok-preflight-refusals-20261020/docs/plans/lab-workflow-reliability/reports/preflight-refusal-reports-20261020/focused.log",
+      "sha256": "6f88fcb9089dadc04048078671aa17a3c5067724256533aa06f34e6dd449dc0c"
+    },
+    {
+      "bytes": 10215,
+      "path": "/tmp/tuldok-preflight-refusal-independent-review.json",
+      "sha256": "15e1d3624271efb54f30dd2d78b02974314c7c75eb9dbeffa2d92543c258336b"
+    }
+  ],
+  "fingerprint_encoding": "SHA256 UTF8 json.dumps(path_to_sha256,sort_keys=True,separators=(comma,colon)); paths+digestvaluesASCII.",
+  "history_and_limitations": {
+    "initial_actual_refusal": "1passed12.843s atrecordedearliersource; final65includesexpandedactualCLI/headerless/authcase atfrozennewsource.",
+    "preserved_failed_runs": [
+      "storage-unit.log: initialdefaultpythonimportfailedmissingpsycopg, notproductfailure",
+      "focused-first.log:65tests170.736s/2failures, v3helperMockcallshape and importedhostsourcechangedinflight; restoredcallshapeandfreshfrozenrun, nohostguardweakening"
+    ],
+    "remaining_scope": "Separate retained-recipe/Study preparationreport and fullC1/T1/M1 stillopen; C2retention and M6criterion tasks/PUB1SCI1 unchanged. No fullrepo/hostedCI/browser/science/CUDAclaim."
+  },
+  "qualification": {
+    "actual_scope": "RealdisposablePostgreSQL/productionHTTP/AgentClienttypedrefusal, actualCLIinprocessstderr, oldv1\u2013v3+headerless/auth,noPopenandunchanged10domain/admissiontables. Existingstaticpositivefixture usesrealownerswithtiny/usr/bin/true+dummyTorch/NumPy0.0snapshot; no runnableTorch/inference/numericalclaim.",
+    "cleanup": "Finalrunnerrecords3exactfreshschemasremovedwithSQLabsenceassertions; revieweddriverandcompleteoutput. ReviewerperformednoindependentPGqueries/deletions. Driverrecordsafterunchangedfixtureconstruction, so noclaimconstructorfailurepreregistration/crashdurability.",
+    "compatibility": {
+      "all126_prior_contract_hashes_exact": true,
+      "baseline_module_gitblob_and_saved_file_hashmatch": true,
+      "current_module_hashmatch": true,
+      "fidelity": "Rootperformedbaseline/currentmodulecontractcomputation;reviewerindependentlychecked126uniqueequalpairsandbothmodulehashbindingswithoutimporting/executingmodules.",
+      "legacy_projection_exact": true,
+      "only_added": "graphs.preflight_external/4",
+      "receipt": {
+        "bytes": 32969,
+        "path": "/tmp/tuldok-preflight-refusals-20261020/all-prior-contracts.json",
+        "sha256": "78e6fa9dfdc344ec48f31534bc9fd5ad8c1909bd9d87c4a75e2717c48d5da539"
+      }
+    },
+    "executor": "root; reviewer didnotreruntests",
+    "final_focused": {
+      "errors": 0,
+      "failures": 0,
+      "frozen_source_manifest": {
+        "bytes": 761,
+        "path": "/tmp/tuldok-preflight-refusals-20261020/source-for-final-tests.json",
+        "sha256": "b1194d85bdc03bfd58a8b924eea99f42edad80dcbf7b111fcaff0ba4e1c5b749"
+      },
+      "log": {
+        "bytes": 13797,
+        "path": "/tmp/tuldok-preflight-refusals-20261020/focused-final.log",
+        "sha256": "6f88fcb9089dadc04048078671aa17a3c5067724256533aa06f34e6dd449dc0c"
+      },
+      "ran": 65,
+      "result": {
+        "completed_utc": "2026-10-20T17:52:46.672172+00:00",
+        "errors": 0,
+        "failures": 0,
+        "no_constructor_or_domain_substitution": "Testfixture setUp wrappers only record exact fresh schema after unchanged setup; no production constructor or result patched.",
+        "owned_schemas_removed": [
+          "catalog_2759b4b3693c4a8c8d3667c9c134cc6b",
+          "catalog_538221870654414c9e98e28d3c93fabb",
+          "catalog_766dc0e7726f41968e86349936aeacdb"
+        ],
+        "skipped": 0,
+        "source_tree": "uncommitted isolated branch from360bbda; exactsourcehashmanifest retained separately",
+        "started_utc": "2026-10-20T17:49:26.382654+00:00",
+        "tests": 65
+      },
+      "scope_source_sha256": {
+        "agent_api.py": "f2a4322616fce373b3e04e09cd516676df9cfbd5dd8f4202ba8bb1498cf2f5af",
+        "app.py": "4a5756538408f6124bae6722f8477e3814c4a972d61f22b9bfbd085d4fa0ad4a",
+        "pipeline.py": "5806c31a9be9ab37a0325ad1fe29c64bd9bbd1d546af3b384392b6d5a6a9704b",
+        "project_cli.py": "16f9da9c2d7d180a0bb43e403d4088c9bea73f7d175170f9e816157cb510f88d",
+        "tests/test_agent_project_snapshots.py": "20630275fa467210ffbd37492e32a4243907a04d749dd20193632abb33984779",
+        "tests/test_run_preflight_refusals.py": "78d6e6771e03951c17b7d8c12a8cd365f79f738283e31ab9435a1dc3476e842e",
+        "tests/test_run_preflight_report.py": "3c626b713154472023acf13c6e208e3483f94dfd957a3a777f456d87cac4e767",
+        "tuldok_client.py": "3cdfb0a9823ec7527833a8838911c3a1d62ecc0d8376c438e3100c6c9f30aee6"
+      },
+      "seconds": 200.178,
+      "skipped": 0
+    }
+  },
+  "resolved_review_findings": [
+    {
+      "id": "C1-R1",
+      "initial_finding": "Rehashedschema-validwrongowner/phase/code/boundary ormissingdeferredrowscouldpass v4refusalconsumer.",
+      "resolution": "Exact11-code layout andfixedprovenance mapping, exactlyoneallowedfailedboundaryandallotherrowsdeferred; rehashedadversarialnegatives added. Explanatorydetail remains boundedpresentationtext, neverauthority."
+    },
+    {
+      "id": "C1-R2",
+      "initial_finding": "PresentnullreportwasdroppedasifabsentbyHTTPnormalization.",
+      "resolution": "Presence trackedseparately; presentnullpassesinto selectedclosedvalidator andfails; actualcontrolledHTTPnegativeadded."
+    }
+  ],
+  "reviewed13_file_fingerprint": "97b7c0fa84a9c87751a130791091d81fd1154cd91e96fcf27d34f9ea7d752bd4",
+  "reviewed_files": {
+    "agent_api.py": "f2a4322616fce373b3e04e09cd516676df9cfbd5dd8f4202ba8bb1498cf2f5af",
+    "app.py": "4a5756538408f6124bae6722f8477e3814c4a972d61f22b9bfbd085d4fa0ad4a",
+    "docs/contracts/agent-operations.md": "bbc15d4db47f027db35d8c2580db97139adb781049d7ad58e022bcf94eb9642e",
+    "docs/contracts/project-cli.md": "0e39f1d702f301d44097234fee645851fd19e6906a287f418f8769ed8bbbb92b",
+    "docs/contracts/run-preflight-publication.md": "419d7c50e5cdfbdbfae1d336867f5ae6aec8b3ce0213896c174add0d89c5cc3d",
+    "docs/contracts/workflow-client.md": "491582d709a5e1776c780f75ebada25b8e57b40eedad177473686b2de4f798be",
+    "docs/plans/lab-workflow-reliability/execution-ledger.md": "adf961ebde7620d40fc54b21f61d8b8d2c4f158998d3fa2fa087ac7e0f0409de",
+    "pipeline.py": "5806c31a9be9ab37a0325ad1fe29c64bd9bbd1d546af3b384392b6d5a6a9704b",
+    "project_cli.py": "16f9da9c2d7d180a0bb43e403d4088c9bea73f7d175170f9e816157cb510f88d",
+    "tests/test_agent_project_snapshots.py": "20630275fa467210ffbd37492e32a4243907a04d749dd20193632abb33984779",
+    "tests/test_run_preflight_refusals.py": "78d6e6771e03951c17b7d8c12a8cd365f79f738283e31ab9435a1dc3476e842e",
+    "tests/test_run_preflight_report.py": "3c626b713154472023acf13c6e208e3483f94dfd957a3a777f456d87cac4e767",
+    "tuldok_client.py": "3cdfb0a9823ec7527833a8838911c3a1d62ecc0d8376c438e3100c6c9f30aee6"
+  },
+  "reviewed_utc": "2026-10-20T17:56:59.039406+00:00",
+  "scope": "Independent READONLY review; no sourcewrites/tests/runtime/PGquery/remote/ref/CIoperations. Localreviewreceipt only. Review includes untrackednewtestsfile absentfrom initialgitdiff.",
+  "source_state": "uncommitted reviewedbytes; final rootcommitbinding mayfollowwithoutsourcechange",
+  "worktree": "/workspace/Tuldok-preflight-refusals-20261020"
+}

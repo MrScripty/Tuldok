@@ -69,6 +69,15 @@ and configured catalog. Its `prepared`/`not_reserved` state leaves admission,
 device READY/GO, actual output validation and publication explicitly deferred.
 No execution authority, retry or new client dependency is introduced.
 
+Selected `graphs.preflight_external/4` retains those versions and adds the
+[versioned refusal projection](run-preflight-publication.md#selected-v4-refusal-reports)
+to classified preparation errors. It preserves the original HTTP/code outcome;
+null material/execution hashes and deferred checks explicitly represent unknown
+facts. AgentClient checks report bounds, hash, owner provenance, typed outcome
+and request/catalog correlation on failures as well as successes. Bare early
+authorization/contract errors remain valid. CLI and WorkflowClient retain the
+validated report without retrying or preparing a submission manifest.
+
 The additive selected-v1 publication operations are documented in
 [publication transport](run-preflight-publication.md#selected-publication-transport-and-collection).
 Status/result/segment reads require current inspect authority and exact Ref

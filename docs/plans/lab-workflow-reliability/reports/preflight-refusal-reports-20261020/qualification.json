@@ -1,0 +1,75 @@
+{
+  "format": "preflight_refusal_local_qualification_v1",
+  "plan": "docs/plans/lab-workflow-reliability/plan.md",
+  "scope": "C1/T1 graph structuredrefusal slice only; retained-recipe/Study and overallC1/T1 remainopen",
+  "base_commit": "360bbda950cc48ed3c3d9193539039b68e0ac8cb",
+  "branch": "feature/preflight-refusal-reports-20261020",
+  "source_sha256": {
+    "pipeline.py": "5806c31a9be9ab37a0325ad1fe29c64bd9bbd1d546af3b384392b6d5a6a9704b",
+    "agent_api.py": "f2a4322616fce373b3e04e09cd516676df9cfbd5dd8f4202ba8bb1498cf2f5af",
+    "app.py": "4a5756538408f6124bae6722f8477e3814c4a972d61f22b9bfbd085d4fa0ad4a",
+    "project_cli.py": "16f9da9c2d7d180a0bb43e403d4088c9bea73f7d175170f9e816157cb510f88d",
+    "tuldok_client.py": "3cdfb0a9823ec7527833a8838911c3a1d62ecc0d8376c438e3100c6c9f30aee6",
+    "tests/test_run_preflight_report.py": "3c626b713154472023acf13c6e208e3483f94dfd957a3a777f456d87cac4e767",
+    "tests/test_run_preflight_refusals.py": "78d6e6771e03951c17b7d8c12a8cd365f79f738283e31ab9435a1dc3476e842e",
+    "tests/test_agent_project_snapshots.py": "20630275fa467210ffbd37492e32a4243907a04d749dd20193632abb33984779"
+  },
+  "focused": {
+    "started_utc": "2026-10-20T17:49:26.382654+00:00",
+    "completed_utc": "2026-10-20T17:52:46.672172+00:00",
+    "tests": 65,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "owned_schemas_removed": [
+      "catalog_2759b4b3693c4a8c8d3667c9c134cc6b",
+      "catalog_538221870654414c9e98e28d3c93fabb",
+      "catalog_766dc0e7726f41968e86349936aeacdb"
+    ],
+    "no_constructor_or_domain_substitution": "Testfixture setUp wrappers only record exact fresh schema after unchanged setup; no production constructor or result patched.",
+    "source_tree": "uncommitted isolated branch from360bbda; exactsourcehashmanifest retained separately"
+  },
+  "focused_log_sha256": "6f88fcb9089dadc04048078671aa17a3c5067724256533aa06f34e6dd449dc0c",
+  "prior_contracts": {
+    "count": 126,
+    "all_sha256_exact": true,
+    "legacy_projection_exact": true,
+    "only_added_contract": {
+      "operation": "graphs.preflight_external",
+      "version": 4
+    },
+    "full_comparison_local_path": "/tmp/tuldok-preflight-refusals-20261020/all-prior-contracts.json",
+    "full_comparison_sha256": "78e6fa9dfdc344ec48f31534bc9fd5ad8c1909bd9d87c4a75e2717c48d5da539"
+  },
+  "prior_attempts": [
+    {
+      "path": "/tmp/tuldok-preflight-refusals-20261020/initial-focused.log",
+      "sha256": "1151e8858de3961a180e8db4e5fd6671ec77503069cbe00f81430255d0b19c1d",
+      "state": "8passes/1DBskip; initialsource"
+    },
+    {
+      "path": "/tmp/tuldok-preflight-refusals-20261020/actual-owner-refusal-initial.log",
+      "sha256": "a35dcdd184cc6f83a1f23b1870cedfebd025a6b9058a020d3c9bf381f8d284a9",
+      "state": "1actualPGHTTPpass12.843s; exactownschema removed"
+    },
+    {
+      "path": "/tmp/tuldok-preflight-refusals-20261020/storage-unit.log",
+      "sha256": "c780943574c1898427f54f3505854319689b9fd61a6af8738b9b87f4a09451d8",
+      "state": "DefaultPython lackedpsycopg; moduleimporterror, notapass"
+    },
+    {
+      "path": "/tmp/tuldok-preflight-refusals-20261020/focused-first.log",
+      "sha256": "c7cf18350d63dffa0e36ec625218d89cea884bcede56bc4844d506d99264917f",
+      "state": "65tests170.736s2fail: oldv3privatecall restored; in-flight sourcechange correctly fenced; supersededonlybyfreshsource-frozenrun"
+    }
+  ],
+  "independent_review": "independent-review.json",
+  "environment": "Existing localPython3.12runtime with provisioned base dependencies and PostgreSQL17Unixsocket. No dependency installation or hostcredential changes. Test-only authfixtures and neutralrecipe execution are notlab science/training evidence.",
+  "limits": [
+    "Localfocusedqualification only; no hostedCI/publication/merge",
+    "Static positive runtime uses /usr/bin/true and dummy torch/numpy0.0 as inert capturefixture; no Torch/inference qualification",
+    "PUB-1originalprivatefailure andSCI-1actualscientificpair/criterion/hardware remainmissing",
+    "Publication retention/abandonment andscientificcriterion code remain separate"
+  ],
+  "claim": "Boundedclassifiedgraphrefusal reporting, exactlegacycompatibility, safeconsumerdelivery/correlation, inertrefusal effects, and existingCLI/staticpreparation regressions only."
+}

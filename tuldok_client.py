@@ -55,7 +55,8 @@ def _invoke(client, operation, arguments):
     envelope = client.call(operation, arguments)
     if envelope['status'] >= 400:
         error = envelope['result']
-        raise AgentAPIError(error['error'], error.get('code', 'http_error'), envelope['status'])
+        raise AgentAPIError(error['error'], error.get('code', 'http_error'), envelope['status'],
+                            preflight_report=error.get('preflight_report'))
     return envelope['result']
 
 
