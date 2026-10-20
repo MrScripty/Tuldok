@@ -5,6 +5,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
 const {spawn,execFileSync}=require('node:child_process');
 const {authenticatedFixture}=require('./auth_helpers.cjs'),{waitForDebugger}=require('./browser_startup.cjs');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
+const {stopOwnedChildren}=require('./browser_owned_cleanup.cjs');
 const tracker=pageLoadTracker();
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'workspace-publication'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-publication-browser-'));
@@ -67,4 +68,4 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   const domain=JSON.parse(fs.readFileSync(path.join(report,'domain-receipt.json'),'utf8'));assert.equal(domain.input_sha256,measured);assert.equal(domain.original_run_state,'interrupted');assert.equal(domain.attempt_count,2);
   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_head:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),scope:'Neutral publication UI and custody; no scientific/training claim',checks,browser:(await send('Browser.getVersion')).product,download_sha256:measured,run_id:info.run_id},null,2)+'\n');
   console.log('PASS publication browser:',report);
-})().catch(async error=>{console.error(error);console.error('Fixture stderr:',stderr);if(evaluate)try{console.error(await evaluate('document.body.innerText.slice(-9000)'));}catch{}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())if(child.exitCode===null)child.kill('SIGTERM');fs.rmSync(temp,{recursive:true,force:true});});
+})().catch(async error=>{console.error(error);console.error('Fixture stderr:',stderr);if(evaluate)try{console.error(await evaluate('document.body.innerText.slice(-9000)'));}catch{}process.exitCode=1;}).finally(async()=>{ws?.close();await stopOwnedChildren([...children].reverse());fs.rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});});
