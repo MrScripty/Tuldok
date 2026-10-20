@@ -1,0 +1,114 @@
+[
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-1IPVlk/coordinator-1440.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-1IPVlk/coordinator-1440.jpg",
+    "bytes": 104279,
+    "sha256": "7ce93b352bff4bd1ab2032e63704b8acd36682df78b48257b2da3f11d0b2ed37"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-1IPVlk/coordinator-390.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-1IPVlk/coordinator-390.jpg",
+    "bytes": 58174,
+    "sha256": "4465a44e10da6e41dc54b22965ee77230c5d7948e46f93f50e7f4f0ed3407df4"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-1IPVlk/domain-receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-1IPVlk/domain-receipt.json",
+    "bytes": 1038,
+    "sha256": "edddede88a41a5453d031b4c09ffbf50e59a84ab529fa8da9f1dad66733fd60f"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-1IPVlk/receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-1IPVlk/receipt.json",
+    "bytes": 764,
+    "sha256": "119f0c65b8be7c18ed0bdc5ffe1d609919e859bd31c30dbaecf31dd157ce95c5"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-G5Edmm/coordinator-1440.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-G5Edmm/coordinator-1440.jpg",
+    "bytes": 104288,
+    "sha256": "28baf72a54ae176a67031d20d8a4841266f4c525e233edd1ea75d65f8cfb6657"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-G5Edmm/coordinator-390.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-G5Edmm/coordinator-390.jpg",
+    "bytes": 58258,
+    "sha256": "008a03745598eb3bb65024d0f1a0ded748b488980b3fd141c1325ced64b85fef"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-G5Edmm/domain-receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-G5Edmm/domain-receipt.json",
+    "bytes": 1038,
+    "sha256": "045556df515d3267473594aff86668bf814784e35ba79bf757b59ab0f0abdded"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-G5Edmm/receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-G5Edmm/receipt.json",
+    "bytes": 764,
+    "sha256": "121ff995912d8721a5c642c8ae891a3d3b0bda38de58e650ba32cebf143e684b"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-yzPVTa/coordinator-1440.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-yzPVTa/coordinator-1440.jpg",
+    "bytes": 104350,
+    "sha256": "d914f7e2a9f0e90714bf3208e14d06f7580795b1e1ddd7e60e3f72c641854da8"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-yzPVTa/coordinator-390.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-yzPVTa/coordinator-390.jpg",
+    "bytes": 58222,
+    "sha256": "2f051e0572ad5c9db5369a9862a295dcacb4600cd9fe87b9bc380fccd72c0bf7"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-yzPVTa/domain-receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-yzPVTa/domain-receipt.json",
+    "bytes": 1038,
+    "sha256": "78dcbf31f47b4eec68708ebb8d6a8b47639d982e89849d15b56df0218b9d26e4"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-coordinator/run-yzPVTa/receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-coordinator/run-yzPVTa/receipt.json",
+    "bytes": 764,
+    "sha256": "e5f7ad37b482e385b09b12acd5b20dcc4f1a33cc6cf484186f9eca124e6533f3"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-publication/run-k236jQ/domain-receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-publication/run-k236jQ/domain-receipt.json",
+    "bytes": 1212,
+    "sha256": "afae5dd9a7ac970111bbe4bf738cab8b49997e4bc7bacc69f38a5239a9f0d4f2"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-publication/run-k236jQ/publication-1440.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-publication/run-k236jQ/publication-1440.jpg",
+    "bytes": 124846,
+    "sha256": "bea35103e639d3adb266d784af69c0b158d889730e4c03d1d9ccec8913f16bf0"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-publication/run-k236jQ/publication-390.jpg",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-publication/run-k236jQ/publication-390.jpg",
+    "bytes": 79176,
+    "sha256": "ff3b2be366f4dbef090d277d0f1f3c1f7f4db5f9c0b9bb1b39abd72682c5bdcf"
+  },
+  {
+    "pr": 102,
+    "source": "/workspace/Tuldok-lab-coordinator-ui-m2/build/qa/workspace-publication/run-k236jQ/receipt.json",
+    "archive_path": "pre-retirement-qa/102/build/qa/workspace-publication/run-k236jQ/receipt.json",
+    "bytes": 828,
+    "sha256": "7bb9afcaa0ab391ba7ce111dd61002c08131904d02999a9860158b7d835077b3"
+  }
+]
