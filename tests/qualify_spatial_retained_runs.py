@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 import psycopg
 from psycopg import sql
 from app import Dataset
-from backup_metadata import backup_catalog, read_catalog, read_sequences, restore_catalog, tree_manifest
+from backup_metadata import backup_catalog, restore_catalog, tree_manifest
 from metadata import SCHEMA_VERSION, Metadata, StorageError, connection_info
 from upgrade_metadata import upgrade_catalog
 
@@ -58,28 +58,6 @@ finally:
 print(json.dumps(receipt))
 '''
 
-LEGACY_REFUSAL_PROGRAM = r'''
-import json
-from pathlib import Path
-import sys
-root, destination = map(Path, sys.argv[1:])
-sys.path[:0] = [str(root), str(root / 'tests')]
-import app
-import metadata
-assert Path(app.__file__).resolve() == root / 'app.py'
-assert Path(metadata.__file__).resolve() == root / 'metadata.py'
-assert metadata.SCHEMA_VERSION == 3
-try:
-    unexpected = app.Dataset(destination)
-except metadata.StorageError as error:
-    assert str(error) == 'Unsupported PostgreSQL catalog version or definition.', str(error)
-    print(json.dumps({'legacy_schema_version': metadata.SCHEMA_VERSION,
-                      'outcome': 'unsupported_current_schema', 'error': str(error)}))
-else:
-    unexpected.close()
-    raise AssertionError('Actual legacy application accepted the current schema.')
-'''
-
 
 def fingerprint(raw):
     return hashlib.sha256(raw).hexdigest()
@@ -88,33 +66,6 @@ def fingerprint(raw):
 def drop_fixture_schema(identity):
     with psycopg.connect(connection_info(), autocommit=True) as connection:
         connection.execute(sql.SQL('DROP SCHEMA IF EXISTS {} CASCADE').format(sql.Identifier('catalog_' + identity)))
-
-
-def legacy_startup_refusal(legacy_root, path):
-    """Execute the unchanged old application, then compare stopped raw state."""
-    before_files = tree_manifest(path)
-    metadata = Metadata(path, create=False)
-    try:
-        before_tables, before_sequences = read_catalog(metadata), read_sequences(metadata)
-        current_version = metadata.schema_version
-    finally:
-        metadata.close()
-    refused = subprocess.run([sys.executable, '-c', LEGACY_REFUSAL_PROGRAM,
-        str(legacy_root), str(path)], cwd=legacy_root, capture_output=True, text=True,
-        timeout=30, check=True)
-    result = json.loads(refused.stdout)
-    assert result['outcome'] == 'unsupported_current_schema'
-    assert tree_manifest(path) == before_files
-    metadata = Metadata(path, create=False)
-    try:
-        assert read_catalog(metadata) == before_tables
-        assert read_sequences(metadata) == before_sequences
-    finally:
-        metadata.close()
-    return dict(result, current_schema_version=current_version,
-        legacy_app_sha256=fingerprint((legacy_root/'app.py').read_bytes()),
-        legacy_metadata_sha256=fingerprint((legacy_root/'metadata.py').read_bytes()),
-        raw_tables_sequences_files_unchanged=True)
 
 
 def verify(path, receipt, artifacts):
@@ -168,7 +119,6 @@ def qualify(legacy_root):
             assert upgrade_catalog(source, quiesced=True)['schema_version'] == SCHEMA_VERSION
             assert tree_manifest(source) == before
             upgraded = verify(source, receipt, artifacts)
-            old_startup = legacy_startup_refusal(legacy_root, source)
             backup_current = root / 'backup_current'
             assert backup_catalog(source, backup_current, quiesced=True)['schema_version'] == SCHEMA_VERSION
             backup_current_files = tree_manifest(backup_current)
@@ -187,7 +137,6 @@ def qualify(legacy_root):
             assert tree_manifest(backup_current) == backup_current_files
             return {'legacy_commit': head, 'legacy_schema': 3, 'execution': 'real mesh integrity, no training',
                     'upgrade': upgraded, 'current_schema_restore': restored, 'schema3_restore_then_upgrade': restored_legacy,
-                    'actual_legacy_startup_refusal': old_startup,
                     'original_backups_unchanged': True}
         finally:
             # Recover identity even if the child failed after creating its catalog.

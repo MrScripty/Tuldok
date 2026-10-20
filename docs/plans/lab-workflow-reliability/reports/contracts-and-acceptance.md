@@ -6,6 +6,20 @@ M1–M6 must move the implemented contract into its existing canonical owner and
 contract document. Names of new operation fields below are semantic requirements,
 not a claim that an endpoint already exists.
 
+## Current-version acceptance policy — user revision, 2026-10-20
+
+Backward compatibility is not required. Existing project owners perform their
+own one-time migration/adaptation to current Tuldok formats. Intentional breaking
+changes do not require old-client adapters, old-wire preservation, historical
+schema upgrade chains or an actual old-application startup witness. Completed
+prior compatibility evidence remains historical and non-gating. No automatic
+migration framework is authorized by this policy.
+
+Current closed contracts/schema validation, explicit unsupported-version errors,
+raw data/backup integrity, custody/accounting and no compute replay remain required.
+Scientific compatibility still means matching actual operand meanings; this
+policy cannot fabricate units/metrics, reinterpret evidence or promote a failed Run.
+
 ## C1 — Exact submission preflight
 
 Pipeline's material builder remains the single source of prepared execution
@@ -311,13 +325,13 @@ current selection or disclose revoked evidence.
 
 | Owner / producer | Consumers to change or preserve | Disposition |
 | --- | --- | --- |
-| Pipeline material + preflight | Run/Study admission, browser Pipeline, AgentClient/CLI/MCP | One builder and exact binding; new negotiated output when closed schema changes; old projections and refusal semantics retained. |
+| Pipeline material + preflight | Run/Study admission, browser Pipeline, AgentClient/CLI/MCP | One builder and exact binding; new negotiated output when closed schema changes; current closed schema and typed refusal semantics; older consumers migrate themselves. |
 | Runs execution/custody/publication | Study reconciliation, artifact/evidence/compare readers, SDK/Run UI/lineage result links, candidate selection/package guards | Exact versioned attached result Ref for new readers; legacy failed gates unchanged; candidate/package promotion and new recovered-input bindings explicitly unsupported; one attempt/grant/reservation, no execution retry. |
 | Pumas/runtime verification | Preflight, supervisor/bootstrap, captured material | Installation owner unchanged; reference exact inventories; retain current device and mutation checks. |
-| Evidence profile/writer/verifier | SDK producer, host publication, cold readers and comparison | Coordinated new profile version when needed; old profiles continue exact reading, no inferred migration. |
+| Evidence profile/writer/verifier | SDK producer, host publication, cold readers and comparison | Declare the current profile/version and validate its meaning; unsupported profiles refuse explicitly, without inferred conversion. |
 | Runs health and phase spans | UI, CLI, observer/operator projection | Read-only bounded projections; permission/redaction; observation cannot grant readiness or prove science. |
 | Experiments/lineage + comparison | Existing lineage graph, UI/SDK/CLI | Exact identities/current access; stable baseline relation; evidence owner decides comparability. |
-| Metadata/storage + backup | Explicit migration/restore, historical readers | Supported-version inventory and stopped backup/upgrade/reopen/rollback tests; raw evidence never overwritten. |
+| Metadata/storage + backup | Current-version readers and stopped backup/restore | Current schema validation and stopped backup/restore/reopen/interrupted-restore integrity; owners migrate old projects themselves, preserving original data. |
 
 Keep existing inspect/edit/execute/cancel/owner distinctions at every trusted
 operation. Owner-only recovery is discoverable but unavailable to ordinary agents.
@@ -427,7 +441,8 @@ binds the selected meaning. Test lost submit reply with stable-key reconciliatio
 conflicting body, revoked/expired/insufficient scope, unavailable capabilities,
 mixed batch results, hash mismatch, interrupted/resumed segments and no-clobber
 destination races. No silent new request key or implicit mutation retry. Also run
-frozen old client/selected operation contracts and current CLI negotiation tests.
+current selected-operation, CLI and transport-correlation tests; older-client
+preservation is not a requirement.
 
 ### T7 — Scientific comparison and lineage (A7)
 
@@ -451,18 +466,24 @@ remain visible; the comparison cannot invent an acceptance rule. Include an exac
 recovered publication-result Ref and test legacy promotion refusal separately
 from valid collection/comparison.
 
-### T8 — Compatibility, retained state and release gates (A8)
+### T8 — Current-version validation, retained state and release gates (A8)
 
-Record supported client, evidence and catalog versions on the integrated source.
-Prove old selected operation documents/wire projections unchanged; new clients
-negotiate implemented versions and refuse unsupported servers without a mutation
-fallback. Copy an isolated stopped old catalog, run the explicit supported upgrade,
-inject interruption before/after ledger commit, reopen and restore through real
-PostgreSQL/filesystem adapters. Compare raw artifact/material/receipt hashes and
-business counts; old missing fields remain unknown. Prove an older binary refuses
-new unsupported state and document stopped backup/forward-repair rollback, with
-no data destruction or compute replay. Full exact-head required CI, independent
-cross-owner review and lead approval are required before production activation.
+Record the current client, evidence and catalog versions on the integrated source.
+Validate their declared schemas and exact request/response identities. Unsupported
+versions must fail explicitly without mutation fallback, silent reinterpretation
+or automatic conversion. Existing project owners perform one migration themselves;
+old-client preservation, historical upgrade chains and old-application execution
+are not product acceptance gates.
+
+Copy an isolated stopped current-version catalog and restore through the actual
+PostgreSQL/filesystem adapters. Compare raw artifact/material/receipt hashes,
+rows, sequences, permissions, business counts and custody/accounting. Inject
+interruption around current restore publication/acknowledgement and reconcile
+without overwriting later writes, losing data or replaying compute. Retain the
+original stopped backup and new evidence for rollback/forward-repair decisions.
+Full exact-head current-version CI, independent cross-owner review and lead
+approval remain required before production activation. No automatic migration
+system is required for this acceptance procedure.
 
 No acceptance procedure run is implied by this document. Fresh CUDA/hardware and
 scientific claims require their own actual environment/input receipt; missing

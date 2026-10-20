@@ -1,5 +1,12 @@
 # Consumer workflow client
 
+Current product support targets the declared current version. Older projects,
+clients and catalog layouts have no backward-compatibility guarantee; their
+owners must perform a one-time migration/adaptation before use. Existing explicit
+tooling is an owner choice, not automatic migration or a compatibility promise.
+Current schema validation, honest unsupported-version errors and stopped
+backup/restore integrity remain required. Preserve original data and backups.
+
 `tuldok_client.WorkflowClient` is a small synchronous consumer facade over the
 existing negotiated `AgentClient`. It opens no catalog and imports only the
 standard library; JSON Schema is loaded lazily by operation validation. Use the

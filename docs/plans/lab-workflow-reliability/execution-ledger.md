@@ -1,5 +1,22 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-20 — User removes backward-compatibility requirement
+
+The user explicitly states that existing projects must perform their own one-time
+migration to the new Tuldok version. The current plan/A8/T8/M5/T6 and consumer
+dispositions now target current-version correctness and backup/restore integrity.
+Breaking formats and explicit unsupported-version errors are intentional; no old
+client adapter or automatic migration system is required. Exact scientific meaning,
+custody/accounting, immutable failures, candidate-promotion fences and no data loss
+or replay remain required.
+
+The added actual old-startup qualifier had already completed successfully in
+hosted PR116 before this revision. Its source/checkpoints/raw evidence are retained
+as historical and non-gating. The active qualifier extension is removed rather
+than expanded. No new old-schema/client tests or local execution is requested.
+Current-version tests and hosted qualification continue under the revised scope.
+
+
 ## 2026-10-20 — Facade collection cost witness admission
 
 The integration lead admitted a companion M4/M5 paired witness from stopped-transfer
