@@ -1,0 +1,35 @@
+{
+  "observed_utc": "2026-10-20T06:56:29.403793+00:00",
+  "schema": "catalog_82698c551bbd413a878d83de58438931",
+  "counts_before_disposal": {
+    "workspace_runs": 0
+  },
+  "schema_absent": true,
+  "temporary": "/tmp/tuldok-access-browser-7VR9Z3",
+  "temporary_absent": true,
+  "matching_task_processes": [],
+  "owned_main_handles": [
+    {
+      "pid": 119512,
+      "exit_code": null,
+      "signal": "SIGTERM"
+    },
+    {
+      "pid": 119521,
+      "exit_code": 0,
+      "signal": null
+    }
+  ],
+  "source_hashes": {
+    "tests/browser_access.cjs": "e3c1bcd19d73981a39a3adcc0d32d7e67029907e0cfd689e2739348efbf0e56f",
+    "tests/browser_access_session.cjs": "d61b7cf0c366134050d6bba3542fd209005c5ad22f10a3659afe0ca8f948e1a5",
+    "tests/test_browser_access_navigation.cjs": "56ae9b76f1aaa3803a90f03468129f243d0b37f6a50110bcf7c13840da18f80e"
+  },
+  "checks": [
+    "Anonymous legacy/current APIs denied; real one-time login consumed; cookie is HttpOnly and code cleared",
+    "Sign out and rejected mutation preserve draft; reauthentication does not replay mutation; deliberate retry commits",
+    "Real scoped agent identity cannot use owner human-review controls"
+  ],
+  "report": "/tmp/tuldok-access-browser-ci-repair-20261020/qa/access/run-vVR332",
+  "scope": "Exact preregistered test schema only; supplied main handles terminal and exact profile absent at post-exit observation; no blanket descendant shutdown guarantee."
+}

@@ -1,0 +1,3 @@
+PASS access navigation/reload reproduction: old acknowledgement permits failing DOM read; changed main loader plus its load gates the original assertion
+PASS access phase-specific timeout/target-close failures are bounded; diagnostics omit command parameters
+PASS access browser /tmp/tuldok-access-browser-ci-repair-20261020/qa/access/run-vVR332

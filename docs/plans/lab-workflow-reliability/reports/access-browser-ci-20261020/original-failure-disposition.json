@@ -1,0 +1,113 @@
+{
+  "observed_utc": "2026-10-20T06:41:53.697361+00:00",
+  "scope": "Read-only source/log diagnosis; local evidence files only. No browser/PG reproduction, tests, source edits or external mutations.",
+  "pr": 112,
+  "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "tested_checkout": "fb6c6c6c55b6ece1d6eab0eae20bef630b9fdf46",
+  "tested_source_attribution": "Hosted checkout merge message binds0ded into29011; remote comparison from0ded tofb6 has no changed files.",
+  "run": 39370107550,
+  "job": 118455819881,
+  "conclusion": "failure",
+  "successful_steps": 45,
+  "skipped_steps": 127,
+  "failed_steps": [
+    {
+      "name": "Run node tests/browser_access.cjs",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 41
+    }
+  ],
+  "prior_full_unittest": {
+    "tests": 1771,
+    "skips": 83,
+    "non_skipped": 1688,
+    "seconds": 2989.096,
+    "result": "OK"
+  },
+  "log": {
+    "path": "/tmp/tuldok-pr112-0ded-access-failed-job-118455819881.log",
+    "bytes": 251955,
+    "sha256": "dce0386ccf600104e93c6129a28bbd4844ee5d73921b64567d3a2234a9748f6e"
+  },
+  "source": {
+    "path": "tests/browser_access.cjs",
+    "git_blob": "bae9bae294fd3245d7f099e6185924308c7233bc",
+    "sha256": "b19ba3559cc8321c3a4d932f0c14a08c3763ca41ac8640fd965d346f95213159",
+    "exact_local_committed_bytes_match_remote": true
+  },
+  "primary": {
+    "time": "2026-10-20T06:37:39.7616902Z",
+    "code": -32000,
+    "message": "Inspected target navigated or closed",
+    "command_and_phase": "Unknown: raw CDP error object has no method/phase/call stack.",
+    "source_findings": [
+      "line31:Page.navigate acknowledgement immediately followed by Runtime.evaluate polling",
+      "line49:Page.reload acknowledgement immediately followed by Runtime.evaluate polling",
+      "No pageLoadTracker, no lifecycle subscription, no changed-main-loader barrier",
+      "line22 selects first page target without explicit about:blank identity",
+      "line23 rejects plain protocol object, losing method/phase/stack; requests have no timer or socket-close drainage"
+    ],
+    "causal_status": "The source has an exposed departing-document window compatible with the error. Exact hosted navigation versus target crash/closure and failing command remain unproven."
+  },
+  "secondary": {
+    "time": "2026-10-20T06:37:39.7890264Z",
+    "error": "ENOTEMPTY",
+    "location": "browser_access.cjs53:141",
+    "path": "/tmp/tuldok-access-browser-aOJaTf",
+    "source_findings": [
+      "finally sends SIGTERM to supplied ChildProcess handles and synchronously removes profile immediately",
+      "It does not await exit; a still-writing process can race removal",
+      "Thrown cleanup error obscures final primary diagnostic; no exited-process evidence is retained"
+    ],
+    "causal_status": "Missing shutdown-before-remove ordering is established in source; exact descendant write responsible for hosted ENOTEMPTY was not observed."
+  },
+  "artifact": {
+    "id": 12245483273,
+    "metadata_digest": "sha256:0b60815d2c44a77b1b082d38280acd4d185907c6d11729a3735c0a175481cba6",
+    "metadata_bytes": 110805,
+    "reference_returned": true,
+    "contents_inspected": false,
+    "reason": "One local read failed: Tunnel connection failed:403 Forbidden. No retry or bypass. Screenshot/progress contents are unknown."
+  },
+  "independent_reviewer": "/root/mcp_contract_ci_review",
+  "independent_findings": "Agrees navigation barrier absent and cleanup separate; exact hostcause unproven. No tests or changes.",
+  "proposed_smallest_repair": [
+    "In access harness only: observe accepted pageLoadTracker events, enable Page lifecycle events, capture previous main frame/loader before both initial navigate and scoped-agent reload, and await changed MAIN loader plus matching load before DOM assertions. Keep every existing auth and mutation assertion.",
+    "Select explicitly launched about:blank page; reuse existing bounded cdpSession or equivalent method-tagged request timeouts/close drainage so target loss remains a finite failure. No blanket navigation-error catch/retry, no privileged-action replay.",
+    "Await existing stopOwnedChildren on supplied handles before bounded exact-owned-path removal. Retain directory when shutdown cannot be confirmed. Report primary and secondary failures separately, retaining exit1 and bounded phase/loader/method diagnostics without credentials."
+  ],
+  "verification_required_before_causal_claim": [
+    "Existing pure page-load cases must continue refusing old-document, subframe, wrong-loader and DOMContentLoaded-only readiness.",
+    "Controlled delayed actual navigation/reload reproduction should demonstrate original failure and fixed absence of DOM reads until the exact new loader load; force target close to remain a bounded failure.",
+    "Owned-child delayed-final-write and ignored-TERM tests; ensure cleanup diagnostics cannot replace the recorded primary failure.",
+    "Once separately authorized for implementation/runtime execution: full unchanged access entrypoint on actual app/PostgreSQL/Chromium: real CLI one-time login, HttpOnly cookie, no mutation replay, preserved drafts, explicit commit, scoped-agent review denial,1280/390 captures, exact resource/schema cleanup.",
+    "Fresh exact repaired-head lifecycle and independent review; sibling success never erases this exact-head failure."
+  ],
+  "sibling_untouched": {
+    "run": 39370108074,
+    "job": 118455821471,
+    "status": "in_progress",
+    "active_steps": [
+      {
+        "name": "Run python -m unittest discover -s tests",
+        "status": "in_progress",
+        "conclusion": null,
+        "number": 37
+      }
+    ],
+    "cancelled_or_rerun": false,
+    "observed_utc": "2026-10-20 06:42:19 UTC",
+    "conclusion": null
+  },
+  "PUB_1": "Original failed diagnostic bytes/path/profile/caps/receipt still missing",
+  "SCI_1": "Owned qualified criterion and compatible real lab pair still missing",
+  "external_mutations": [],
+  "system_integration_block": "Remains in force; no denied operation retried",
+  "same_as_predecessor_29011_sources": [
+    "tests/browser_access.cjs",
+    "tests/browser_page_load.cjs",
+    "tests/browser_owned_cleanup.cjs",
+    "static/auth.js"
+  ]
+}

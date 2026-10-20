@@ -1,0 +1,75 @@
+{
+  "base": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "blocking_findings": [],
+  "cleanup_review": {
+    "limit": "Existing helper confirms supplied main child handles only, not an unconditional Chrome-descendant extinction guarantee; actual fixture run and final cleanup observation pending.",
+    "order": "Dispose session/socket; await existing stopOwnedChildren only on supplied children; bounded recursive removal maxRetries10/retryDelay100; write terminal-main-handle receipt.",
+    "primary_preservation": "Original failure printed as Primary access failure and recorded phase/protocol metadata; exitCode1 set before finally. Cleanup failure separately prints Secondary access cleanup failure and retains nonzero exit."
+  },
+  "disposition": "CLEAR within test-harness source/focused-test scope; actual default PostgreSQL/Chromium access qualification remains pending",
+  "historical_failure": {
+    "cause_limit": "Source race is demonstrated in controlled mock protocol scheduling; original hosted execution had no phase/pointer/context trace. Target closure/crash remains unexcluded. Original failed run is not reclassified.",
+    "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+    "job": 118455819881,
+    "primary": "Inspected target navigated or closed",
+    "run": 39370107550,
+    "secondary": "ENOTEMPTY after unawaited TERM/removal"
+  },
+  "independent_tests": {
+    "command": "node --check tests/browser_access.cjs && node --check tests/browser_access_session.cjs && node --check tests/test_browser_access_navigation.cjs && node tests/test_browser_access_navigation.cjs && node tests/test_browser_page_load.cjs",
+    "exit": 0,
+    "not_run_by_reviewer": [
+      "Actual browser/HTTP/PostgreSQL",
+      "Owned-child regression(no need duplicate existingroot pass)",
+      "Heavy suites/CI"
+    ],
+    "results": [
+      "Controlled old navigation/reload ACK\u2192departing-DOM read produces -32000",
+      "New helper issues zero DOM reads until changed main loader matchingload; oldloader/subframe/DOMContentLoaded insufficient",
+      "Navigation load timeout and targetclose fail within configured bounds",
+      "Request timeout and snapshots omit MUST_NOT_APPEAR command token",
+      "Existing fresh-document helper regression passes"
+    ]
+  },
+  "limits": [
+    "No product/API/domain changes; exact source diff limited to three test files.",
+    "Root must execute and retain actual default access journey against these exact source hashes before broader acceptance.",
+    "No remote mutation/CI polling/source edit or server/browser execution by reviewer.",
+    "PUB-1 and SCI-1 unchanged."
+  ],
+  "navigation_review": {
+    "both_transitions": [
+      "Initial Page.navigate to workbench",
+      "Scoped-agent Page.reload after exact cookie replacement"
+    ],
+    "diagnostics": "Bounded last12main-frame/load identities plus phase and last method; command parameters absent. contextual errors preserve underlying code/cause.",
+    "exact_target": "Initial page target must type page and url about:blank; connection deadline10000ms.",
+    "failure_boundaries": "Default CDP requests15000ms; new-load wait20000ms with25ms polling; explicit errorText/target close/error refuse. No blanket navigation-error suppression or mutation retry.",
+    "fresh_dom_checks": "Original session dialog/identity/Collection-ready checks remain after fresh-document gate.",
+    "owner": "accessSession captures Page.getFrameTree previous main id+loader before command; pageLoadTracker observes Page.frameNavigated and lifecycle load. Only changed main loader with matching load releases DOM checks."
+  },
+  "original_assertions": {
+    "all14_original_calls_present_verbatim": true,
+    "base_calls": 14,
+    "current_calls": 15,
+    "extra": "Explicitly launched about:blank target assertion",
+    "preserved_semantics": [
+      "Anonymous legacy/current denied writes",
+      "One-time CLI login consumed/code cleared/HttpOnly cookie",
+      "Signout and rejected mutation preserve unsaved draft",
+      "Reauthentication never replays original mutation",
+      "Only deliberate retry changes revision",
+      "Real scoped agent cannot use owner human-review controls",
+      "No runtime exceptions or application stderr"
+    ]
+  },
+  "reviewed_utc": "2026-10-20T06:54:04.651464+00:00",
+  "source_sha256": {
+    "tests/browser_access.cjs": "e3c1bcd19d73981a39a3adcc0d32d7e67029907e0cfd689e2739348efbf0e56f",
+    "tests/browser_access_session.cjs": "d61b7cf0c366134050d6bba3542fd209005c5ad22f10a3659afe0ca8f948e1a5",
+    "tests/test_browser_access_navigation.cjs": "56ae9b76f1aaa3803a90f03468129f243d0b37f6a50110bcf7c13840da18f80e"
+  },
+  "source_state": "Uncommitted exact three test-file repair; root owns final commit/publication.",
+  "status_porcelain": " M tests/browser_access.cjs\n?? tests/browser_access_session.cjs\n?? tests/test_browser_access_navigation.cjs\n",
+  "worktree": "/workspace/Tuldok-access-browser-ci-repair-20261020"
+}

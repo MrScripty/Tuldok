@@ -1,0 +1,17 @@
+{
+  "temporary": "/tmp/tuldok-access-browser-7VR9Z3",
+  "removed": true,
+  "children": [
+    {
+      "pid": 119512,
+      "exit_code": null,
+      "signal": "SIGTERM"
+    },
+    {
+      "pid": 119521,
+      "exit_code": 0,
+      "signal": null
+    }
+  ],
+  "scope": "Supplied test-owned main handles exited before bounded profile removal"
+}

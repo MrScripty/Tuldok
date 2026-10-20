@@ -1,0 +1,47 @@
+{
+  "checks": [
+    "Anonymous legacy/current APIs denied; real one-time login consumed; cookie is HttpOnly and code cleared",
+    "Sign out and rejected mutation preserve draft; reauthentication does not replay mutation; deliberate retry commits",
+    "Real scoped agent identity cannot use owner human-review controls"
+  ],
+  "anonymous_denied": true,
+  "real_cli_login": true,
+  "no_mutation_replay": true,
+  "source_commit": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "source_sha256": {
+    "tests/browser_access.cjs": "e3c1bcd19d73981a39a3adcc0d32d7e67029907e0cfd689e2739348efbf0e56f",
+    "tests/browser_access_session.cjs": "d61b7cf0c366134050d6bba3542fd209005c5ad22f10a3659afe0ca8f948e1a5",
+    "tests/test_browser_access_navigation.cjs": "56ae9b76f1aaa3803a90f03468129f243d0b37f6a50110bcf7c13840da18f80e"
+  },
+  "navigation": {
+    "phase": "scoped-agent-reload",
+    "last_method": "Runtime.evaluate",
+    "events": [
+      {
+        "event": "load",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "C704421B4745793C1F166C7CC67C83F8"
+      },
+      {
+        "event": "main-frame",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7534733FE54346FBED7374DBFE2EEB98"
+      },
+      {
+        "event": "load",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7534733FE54346FBED7374DBFE2EEB98"
+      },
+      {
+        "event": "main-frame",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7B0CA169AEB6A2150994309812BCD5B7"
+      },
+      {
+        "event": "load",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7B0CA169AEB6A2150994309812BCD5B7"
+      }
+    ]
+  }
+}
