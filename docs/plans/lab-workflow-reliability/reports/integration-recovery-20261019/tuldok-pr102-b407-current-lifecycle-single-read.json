@@ -1,0 +1,47 @@
+{
+  "format": "pr102_current_lifecycle_single_read_v1",
+  "checked_utc": "2026-10-20T00:17:22.428648+00:00",
+  "client": "/usr/bin/gh api (GET only)",
+  "job_endpoint": "repos/MrScripty/Tuldok/actions/jobs/118358463687",
+  "pr_endpoint": "repos/MrScripty/Tuldok/pulls/102",
+  "head_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+  "live_pr_head_matches_job": true,
+  "live_pr_branch": "feature/lab-coordinator-panel-20261019",
+  "live_base": "main",
+  "live_base_sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+  "pr_state": "open",
+  "mergeable": true,
+  "mergeable_state": "unstable",
+  "run_id": 39339868173,
+  "job_id": 118358463687,
+  "job_url": "https://github.com/MrScripty/Tuldok/actions/runs/39339868173/job/118358463687",
+  "job_status": "in_progress",
+  "job_conclusion": null,
+  "started_at": "2026-10-19T23:32:58Z",
+  "active_step": {
+    "number": 34,
+    "name": "Run python -m unittest discover -s tests",
+    "started_at": "2026-10-19T23:55:15Z"
+  },
+  "completed_steps": {
+    "range": "1..33",
+    "conclusions": "all success",
+    "includes": [
+      "early preflight10",
+      "publication11",
+      "coordinator12",
+      "agent25",
+      "MCPstdio26",
+      "MCPobserver27",
+      "interface28",
+      "experiments29",
+      "lineage30",
+      "artifactsegments33"
+    ]
+  },
+  "pending_steps": "35..161 plus post-job/container cleanup",
+  "logs_retrieved": false,
+  "actual_counts_or_skip_claim": null,
+  "acceptance": "Pending; status conclusions do not supply actual counts/skips or final browser acceptance. No merge readiness clearance.",
+  "actions": "One job metadata read and one live PR identity read; no logs requested for in-progress job, no polling, rerun, remote mutation or qualification fixture access."
+}

@@ -1,0 +1,250 @@
+{
+  "kind": "Independent final T5 real runtime byte-mutation result review",
+  "observed_utc": "2026-10-20T00:20:07.804735+00:00",
+  "assessment": "PASS narrow runtime-byte integrity/refusal/restoration observation",
+  "checks": {
+    "exact_driver_plan_result_bindings": true,
+    "root_terminal_success_receipt": true,
+    "exact_preregistered_target_identity": true,
+    "captured_original_identity": true,
+    "managed_baseline_identity": true,
+    "bound_real_original_and_copied_file": true,
+    "same_size_restored_mtime_hash_mutation": true,
+    "managed_negative_exact409": true,
+    "captured_negative_exact409": true,
+    "fresh_profile_specific_identities_differ": true,
+    "stale_expected_capture_refusal": true,
+    "observed_exact_restore_file_and_descriptor": true,
+    "original_full_inventory_and_config_identity": true,
+    "independent_original_torch_file_still_exact": true,
+    "all_six_effect_counts_zero": true,
+    "audit_no_execution_authority_actions": true,
+    "bounded_copy_storage_and_reserve": true,
+    "finite_main_duration": true,
+    "ten_reviewed_success_guards": true,
+    "ten_source_hashes_unchanged": true,
+    "source_head_and_clean": true,
+    "exact_final_execution_log": true,
+    "receipt_cleanup_success": true,
+    "independent_exact_schema_absent": true,
+    "independent_exact_owned_root_absent": true
+  },
+  "failed_checks": [],
+  "receipt": {
+    "path": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+    "sha256": "ecf843a4c9b53c015a83c5c3b8e06423a3be17ae1a9f94ede79ae0e480545e0f",
+    "state": "passed"
+  },
+  "driver": {
+    "path": "/tmp/tuldok-t5-actual-runtime-mutation.py",
+    "sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df"
+  },
+  "plan": {
+    "path": "/tmp/tuldok-t5-actual-runtime-mutation-plan.json",
+    "sha256": "a81f6fe5c879e03cd7ed5f0bd4c3dde84a0bf65af19c09a317151350fd01586a"
+  },
+  "root_execution_receipt": {
+    "path": "/tmp/tuldok-t5-root-execution-receipt.json",
+    "sha256": "b604fc434a62a61268f7d9d7bd925f855d4f06d62e07f45fbf8131661f4e1a01",
+    "reported_process_exit": 0,
+    "session": 7114,
+    "preregistered_checkpoint": "c508e2249f457594159637c96ff4d2f375784249",
+    "exit_attribution": "Root executed session7114 and reported terminal exit0; reviewer did not rerun driver."
+  },
+  "final_execution_log": {
+    "path": "/tmp/tuldok-t5-actual-runtime-mutation-execution.log",
+    "bytes": 200,
+    "sha256": "44dc2e0de68f74459b51f84d407839a723c86a98ee9e693649adc684f70c0dcc",
+    "decoded": {
+      "state": "passed",
+      "receipt": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+      "cleanup": {
+        "schema_absent": true,
+        "owned_directory_absent": true,
+        "errors": []
+      }
+    }
+  },
+  "exact_target": {
+    "schema": "catalog_3bfa6524886642abae3cc1ee3da9a247",
+    "owned_root": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247",
+    "dsn": "dbname=tuldok_task user=tuldok_task host=/workspace/tuldok-local-pg17-socket port=55439",
+    "independent_schema_query": "SELECT to_regnamespace(%s) with exact preregistered name, default_transaction_read_only on",
+    "schema_result": null,
+    "root_lexists": false
+  },
+  "identities": {
+    "captured_baseline": {
+      "catalog_id": "3bfa6524886642abae3cc1ee3da9a247",
+      "file_count": 20804,
+      "launch": {
+        "dynload": "python/lib/python3.12/lib-dynload",
+        "home": "python",
+        "library_dirs": [
+          "packages/PIL",
+          "packages/markupsafe",
+          "packages/numpy.libs",
+          "packages/numpy/_core",
+          "packages/numpy/fft",
+          "packages/numpy/linalg",
+          "packages/numpy/random",
+          "packages/pillow.libs",
+          "packages/torch",
+          "packages/torch/bin",
+          "packages/torch/lib",
+          "python/bin",
+          "python/lib",
+          "python/lib/python3.12/lib-dynload",
+          "system/lib"
+        ],
+        "loader": "system/lib/ld-linux-x86-64.so.2",
+        "packages": "packages",
+        "python": "python/bin/python3.12",
+        "stdlib": "python/lib/python3.12"
+      },
+      "manifest_bytes": 3825828,
+      "manifest_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+      "packages": {
+        "filelock": "4.2.0",
+        "fsspec": "2026.9.0",
+        "jinja2": "3.1.6",
+        "markupsafe": "3.0.4",
+        "mpmath": "1.3.0",
+        "networkx": "3.7",
+        "numpy": "2.5.4",
+        "pillow": "12.3.0",
+        "sympy": "1.14.0",
+        "torch": "2.8.0+cpu",
+        "typing-extensions": "4.16.0"
+      },
+      "profile": "captured_cpu_python_v1",
+      "python_version": "3.12",
+      "root": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247/catalog/runtime-snapshots/50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+      "schema_version": 1,
+      "total_bytes": 896562621
+    },
+    "managed_baseline": {
+      "catalog_id": "3bfa6524886642abae3cc1ee3da9a247",
+      "file_count": 15714,
+      "manifest_bytes": 4822970,
+      "manifest_sha256": "d5c7da24f68cb4700118df9370bb34ce195a7bf2bd8d62b52660d61eb6b353d6",
+      "profile": "managed_torch_python_v1",
+      "schema_version": 1,
+      "total_bytes": 773948539
+    },
+    "changed_captured": "7312bfe27ec3a6cf6b487d5d9f58efc801af6c93ee5e8c1310473fa5724d1db4",
+    "changed_managed": "949e181533532be9e0fc9e5805760aa1c8dc57f61ab426e45afa3e2792ec6d55",
+    "baseline_file": {
+      "copied": {
+        "bytes": 102960,
+        "mode": 256,
+        "mtime_ns": 1792455437692116000,
+        "path": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247/catalog/runtime-snapshots/50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d/packages/torch/__init__.py",
+        "sha256": "2f0deb66d5dff6b9c02a62832c3bf3824c2ee031c462a3afeb9ca170466da5bf"
+      },
+      "original": {
+        "bytes": 102960,
+        "mode": 384,
+        "mtime_ns": 1792097928291247779,
+        "path": "/workspace/tuldok-runtime/lib/python3.12/site-packages/torch/__init__.py",
+        "sha256": "2f0deb66d5dff6b9c02a62832c3bf3824c2ee031c462a3afeb9ca170466da5bf"
+      }
+    },
+    "mutation": {
+      "bytes": 102960,
+      "changed_sha256": "64b3f14b9d93537e5721713ca823d4176bd5290b297588abfc44829f914f0b94",
+      "original_sha256": "2f0deb66d5dff6b9c02a62832c3bf3824c2ee031c462a3afeb9ca170466da5bf",
+      "relative_path": "packages/torch/__init__.py",
+      "restored_mtime_ns": 1792455437692116000,
+      "same_size": true
+    },
+    "restored_file": {
+      "bytes": 102960,
+      "mode": 256,
+      "mtime_ns": 1792455437692116000,
+      "path": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247/catalog/runtime-snapshots/50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d/packages/torch/__init__.py",
+      "sha256": "2f0deb66d5dff6b9c02a62832c3bf3824c2ee031c462a3afeb9ca170466da5bf"
+    },
+    "restored_managed": {
+      "catalog_id": "3bfa6524886642abae3cc1ee3da9a247",
+      "file_count": 15714,
+      "manifest_bytes": 4822970,
+      "manifest_sha256": "d5c7da24f68cb4700118df9370bb34ce195a7bf2bd8d62b52660d61eb6b353d6",
+      "profile": "managed_torch_python_v1",
+      "schema_version": 1,
+      "total_bytes": 773948539
+    },
+    "independent_original_file_after": {
+      "path": "/workspace/tuldok-runtime/lib/python3.12/site-packages/torch/__init__.py",
+      "bytes": 102960,
+      "mode": 384,
+      "mtime_ns": 1792097928291247779,
+      "sha256": "2f0deb66d5dff6b9c02a62832c3bf3824c2ee031c462a3afeb9ca170466da5bf"
+    }
+  },
+  "accounting": {
+    "before": {
+      "access_admissions": 0,
+      "access_execution_consumptions": 0,
+      "access_execution_grants": 0,
+      "model_attempt_reservations": 0,
+      "workspace_graphs": 0,
+      "workspace_runs": 0
+    },
+    "after": {
+      "access_admissions": 0,
+      "access_execution_consumptions": 0,
+      "access_execution_grants": 0,
+      "model_attempt_reservations": 0,
+      "workspace_graphs": 0,
+      "workspace_runs": 0
+    },
+    "audit_actions": [
+      "access.exchange",
+      "access.local_login",
+      "runtime_snapshots.capture_started",
+      "runtime_snapshots.create",
+      "torch_runtimes.create"
+    ]
+  },
+  "capacity": {
+    "file_count": 20804,
+    "free_before_bytes": 9264680960,
+    "manifest_bytes": 3825828,
+    "owned_bound_required_bytes": 950720097,
+    "owned_cap_bytes": 2147483648,
+    "payload_bytes": 896562621,
+    "required_bytes": 1487591009,
+    "reserve_bytes": 587202560,
+    "owned_bytes_after_capture": 900388614,
+    "owned_bytes_after": 905211584
+  },
+  "seconds": {
+    "before_cleanup": 104.50292762599929,
+    "total": 104.75393403099952
+  },
+  "source_sha256": {
+    "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+    "torch_runtime.py": "84a66b6a195c30db01ffc574f94e0139f4df7d7c7872452a3f50ce82e9db3ad0",
+    "torch_runtimes.py": "010ed4ac47e013dbda07f52e3dbbddf95ab3a5367e4e67dfb6f4d7ae7b10bb39",
+    "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "metadata.py": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+    "access.py": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4",
+    "workbench.py": "e2735b9242040b471f67ff3663316397a58fba19338cc79058796106e7ef5562",
+    "tests/test_indexed_diagnostics_publication.py": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11",
+    "tests/test_runtime_snapshots.py": "424c3d65e97466935bb807602de83b535aacb06dc9b27a6b56bd9ba703bdc751",
+    "tests/test_torch_runtime.py": "9889ebf8ad72c9a94b02720e1430305acc5e86043b4c57c3b678ea806f7da069"
+  },
+  "evidence_attribution": [
+    "Independently recomputed result/driver/plan/log/config/source hashes, receipt relational/equality assertions and small originalTorchfile hash/size/mode/mtime.",
+    "Independently queried only exact schema absence and exact root path absence after root terminal notification.",
+    "Original full runtime inventory before/after, private distinct-inode/nlink guards, single captured copy, successful old verifiedgets after restoration and current512MiB floor come from passed exact reviewed driver source assertions; no surviving copy remains for a second live check.",
+    "Captured and managed inventories have distinct profile scopes:20804/896562621B and15714/773948539B respectively; no false equality of their manifests or counts."
+  ],
+  "limits": [
+    "No duplicate execution, runtime inventory rehash/copy/mutation, schema creation/drop, Run/grant/GO/training APIs, source changes or remote writes by reviewer.",
+    "No whole-host subprocess absence, runtime launch/training, CUDA/device/numerical/scientific acceptance.",
+    "No cache/reuse/eviction/invalidation mechanism, performance/speedup or fullT5/M4 acceptance from this finite integrity observation."
+  ],
+  "remaining_blockers": []
+}

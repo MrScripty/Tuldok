@@ -667,6 +667,11 @@
       "sha256": "a9a058e67ff6192dcc26d66fb48e96ffba3dedfbcbc78f1332467b3dd69096cd"
     },
     {
+      "path": "tuldok-pr102-b407-current-lifecycle-single-read.json",
+      "bytes": 1749,
+      "sha256": "dd0b8adb5a9959e759c8866f89a77dba4e2f23d1406e8c38c07554c6df5232ea"
+    },
+    {
       "path": "tuldok-pr102-controller-fixture-independent-review.json",
       "bytes": 6290,
       "sha256": "ca19f57258c5f7bc3d01c62ec20ba80e3ab595ca0481b3e7b75f0bca80203d42"
@@ -675,6 +680,16 @@
       "path": "tuldok-pr102-independent-ci-review.json",
       "bytes": 69961,
       "sha256": "580dc337ee570dee9b5f235be5f67c4b83a4fd17c33f6271ef292110eaf7401a"
+    },
+    {
+      "path": "tuldok-pr103-5cd-lifecycle-independent-metadata.json",
+      "bytes": 30410,
+      "sha256": "177db8c149e5c50ae7e5afef5fe117cbaf6f9f985be023570823d91549e1bb28"
+    },
+    {
+      "path": "tuldok-pr103-5cd-lifecycle-independent-review.json",
+      "bytes": 1176,
+      "sha256": "48ef226d255316a0eeb3aa7e984b54b4f21fca4c5aed8df147f01bc10ca1a9a7"
     },
     {
       "path": "tuldok-pr103-controller-composition-green.log",
@@ -815,6 +830,11 @@
       "path": "tuldok-pr107-reporting-independent.log",
       "bytes": 602,
       "sha256": "57fda1f4fc811139b0c6f40476e85d20bf596e3aef771cb6cc53e140bb40c8bc"
+    },
+    {
+      "path": "tuldok-pr111-shared-hook-ownership-approval.json",
+      "bytes": 5896,
+      "sha256": "3f2e08065835a88ce57ec82f4102d671432b60a91162be9ad727fa1c9eaf12be"
     },
     {
       "path": "tuldok-pr111-shared-hooks-independent-review.json",
@@ -1092,9 +1112,19 @@
       "sha256": "eaab6020e65a74047d66aa4811cb7f418f83e96c6f5c7e8402d1da9c3dd55ccd"
     },
     {
+      "path": "tuldok-t5-actual-runtime-mutation-execution.log",
+      "bytes": 200,
+      "sha256": "44dc2e0de68f74459b51f84d407839a723c86a98ee9e693649adc684f70c0dcc"
+    },
+    {
       "path": "tuldok-t5-actual-runtime-mutation-plan.json",
       "bytes": 4537,
       "sha256": "a81f6fe5c879e03cd7ed5f0bd4c3dde84a0bf65af19c09a317151350fd01586a"
+    },
+    {
+      "path": "tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+      "bytes": 5851,
+      "sha256": "ecf843a4c9b53c015a83c5c3b8e06423a3be17ae1a9f94ede79ae0e480545e0f"
     },
     {
       "path": "tuldok-t5-actual-runtime-mutation.py",
@@ -1107,9 +1137,24 @@
       "sha256": "0ad45fd743c0fd44b38bf6bf7c0ae1b2c4536b00fd2f523cca9586b55982b889"
     },
     {
+      "path": "tuldok-t5-root-execution-receipt.json",
+      "bytes": 1798,
+      "sha256": "b604fc434a62a61268f7d9d7bd925f855d4f06d62e07f45fbf8131661f4e1a01"
+    },
+    {
       "path": "tuldok-t5-runtime-driver-independent-review.json",
       "bytes": 8923,
       "sha256": "016d26e20cf706d8c3f1bcbc3d70f15386672916779c762f7b4cc267485555e2"
+    },
+    {
+      "path": "tuldok-t5-runtime-result-independent-checklist.json",
+      "bytes": 4406,
+      "sha256": "43e5ed23e659025738da3d86280c8550a9c085aaf7f68fd3dbfaaa9eed1b8a2b"
+    },
+    {
+      "path": "tuldok-t5-runtime-result-independent-review.json",
+      "bytes": 10953,
+      "sha256": "cfdd3aff818a1f6184b3a966aad25f5b4cb75168dd607f4a2fd39edc951a29b8"
     },
     {
       "path": "tuldok-task-cleanup-current-remote-ref-snapshots.json",
@@ -1143,8 +1188,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 204645,
-      "sha256": "0b0dd04bc990bf514aa0632ca44595a08c4cfe65f72b90517767b0ccd11b2f6e"
+      "bytes": 207196,
+      "sha256": "572d895894619f62fdf66edace52c6dec28612799befe901781e16311d7643d8"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",

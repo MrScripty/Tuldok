@@ -1,0 +1,31 @@
+{
+  "kind": "Prepared independent T5 result review checklist; no live-result observation",
+  "reviewed_driver_sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df",
+  "reviewed_plan_sha256": "a81f6fe5c879e03cd7ed5f0bd4c3dde84a0bf65af19c09a317151350fd01586a",
+  "preregistered_checkpoint_reported_by_root": "c508e2249f457594159637c96ff4d2f375784249",
+  "receipt": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+  "exact_owned_schema": "catalog_3bfa6524886642abae3cc1ee3da9a247",
+  "exact_owned_root": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247",
+  "checks_after_terminal_notification": [
+    "Verify root terminal process exit and final receipt state passed; exact driver/plan hashes match independently reviewed941/a81 and preregistered identity/DSN/root/cap.",
+    "Require recorded schema absent before constructor. Review terminal schema/root cleanup success/errors and independently inspect only exact root lexists plus SELECT to_regnamespace(exact schema) through fixed task DSN after owner exit.",
+    "Bind baseline captured descriptor to expected original inventory50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d, exact catalog id/root, actual file_count/total_bytes/manifest_bytes; baseline managed identity equals verified managed descriptor digest.",
+    "Require baseline real copied Torch path within exact owned root, original path within nominated read-only site_packages, equal byte count/hash, retained original/copied modes. Distinct-inode/nlink/ownership guards are executed source assertions; raw inode pair was not retained and cannot be rechecked after cleanup.",
+    "Require mutation originalSHA equals baseline copySHA, changedSHA differs, identical bytecount, restored mtime equals baseline; source restores mode before negativeverification. No inference from mtime alone.",
+    "Require managed_old_verified_get exactly409/unavailable, captured_old_verified_get exactly409/stale; fresh changed managed and captured digests differ from their own baseline identities.",
+    "Require old expected capture request from changed copy exactly409/stale and source single-snapshot assertion included before restore; no new capture/Run/GO inferred.",
+    "Require restored_torch_file dict exactly equals baseline copied path/bytes/mode/mtime/hash, restored verified managed descriptor exactly equals baseline, successful captured oldget equality and reinspection oldmanagedidentity source checks.",
+    "Require original fullinventory before/after equal expected50502c and original config hash equals39a492bd06ac2635025925e3a647bdde199ca2e73419f24f5fee2a7371b2d11a. No original runtime mutation.",
+    "Require all six before/after tables workspace_graphs,workspace_runs,access_execution_grants,access_execution_consumptions,model_attempt_reservations,access_admissions exactly zero and equal; audit action list lacks execution/admission prefixes; no Run/grant/GO APIs in reviewed driver.",
+    "Require measured requiredcopy+manifest+reserve fits observed freebefore; ownedbound and actualownedbytes aftercapture/after below2GiB, selected reserve560MiB, source current512MiB floor and finite600s main budget; wall/cleanup duration actualvalues retained.",
+    "Require every named check from reviewed driver present; verify ten production/test source hashes still match plan using source reads only, no rerun of owner verification or actual inventory/copy."
+  ],
+  "allowed_postcompletion_actions": "Read final receipt/static driver/plan/source hashes, exact path existence metadata, harmless exact schema absence query only; write /tmp independent result review.",
+  "prohibited_now": "No receipt polling before root terminal notification; no fixture accesses, duplicate execution, copy, mutation, schema creation/drop, source changes or remote writes.",
+  "interpretation_limits": [
+    "No claim of whole-host subprocess absence; six counters and reviewed no-execution call graph bound task effects only.",
+    "No cache hit/reuse/eviction/invalidation mechanism or performance/speedup/fullT5/M4 acceptance from this narrow integrity witness.",
+    "No real runtime launch, training, GO, CUDA/device or numerical/scientific acceptance claim.",
+    "Checkpoint verification and terminal exit initially root-supplied; identify evidence actually independently read in result review."
+  ]
+}

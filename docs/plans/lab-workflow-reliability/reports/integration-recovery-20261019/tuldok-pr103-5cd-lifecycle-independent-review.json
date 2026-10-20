@@ -1,0 +1,33 @@
+{
+  "checked_at_utc": "2026-10-20T00:17:30.529Z",
+  "repo": "MrScripty/Tuldok",
+  "pr": 103,
+  "expected_subject_head": "5cd2cf6",
+  "run_id": 39339902973,
+  "job_id": 118358576596,
+  "status": "in_progress",
+  "conclusion": null,
+  "active_steps": [
+    {
+      "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+      "status": "in_progress",
+      "conclusion": null,
+      "number": 30
+    }
+  ],
+  "completed_success_steps": 29,
+  "full_unit_discovery_step": {
+    "name": "Run python -m unittest discover -s tests",
+    "status": "pending",
+    "conclusion": null,
+    "number": 35
+  },
+  "result": "PENDING; no lifecycle acceptance. One requested metadata lookup performed; stopped polling.",
+  "metadata": "/tmp/tuldok-pr103-5cd-lifecycle-independent-metadata.json",
+  "decoded_logs_fetched": false,
+  "limits": [
+    "Metadata summary does not expose head SHA; supplied expected subject not independently source-verified in this pending check.",
+    "Completed step summaries have not been promoted to complete decoded-log/full gate review.",
+    "No rerun/cancel/push/merge, no local tests or runtime access."
+  ]
+}
