@@ -48,9 +48,11 @@ records PR108 `9f084270` and retained-analysis PR111 `0ba4db01`: narrowly repair
 test oracles with product code and frozen source authorities preserved. Original
 failures, actual CPU browser/targeted checks, independent reviews and publication
 receipts are retained. Fresh exact-head CI is required before their merge.
-PR102/103/107 cleanup is separately prechecked; consult its terminal record before
-assuming refs/worktrees have been removed. All original protected refs and paths
-remain protected. The real-runtime byte-integrity observation passed with exact
+PR102/103/107 task refs and their three worktrees are now removed after all
+dependents were retargeted. Consult the terminal and independent postcheck records;
+all other immediate pre-state records and original82 refs/96 worktrees/91 original
+commit reachability are preserved. All16 non-cache task QA artifacts were remotely
+archived and recovery-verified before removal. The real-runtime byte-integrity observation passed with exact
 cleanup proof; it is not full T5 performance acceptance.
 The original lab failure bytes and an owned scientific criterion/compatible lab
 pair are still missing inputs; synthetic diagnostics do not satisfy those claims.

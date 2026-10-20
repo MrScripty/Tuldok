@@ -31,8 +31,16 @@ assert pr['state'] == 'open' and pr['head']['sha'] == head and pr['base']['ref']
 checks = api(f'commits/{head}/check-runs?per_page=100')
 assert checks['total_count'] <= 100 and checks['check_runs']
 assert {r['name'] for r in checks['check_runs']} == set(plan['check_names'])
-assert all(r['status'] == 'completed' and r['conclusion'] == 'success' for r in checks['check_runs'])
-record['checks'] = [{'name': r['name'], 'status': r['status'], 'conclusion': r['conclusion'], 'url': r['details_url']} for r in checks['check_runs']]
+latest = {}
+for check in checks['check_runs']:
+    if check['name'] not in latest or check['id'] > latest[check['name']]['id']:
+        latest[check['name']] = check
+# Duplicate older executions do not replace the latest required context.
+# A known same-head failure still requires explicit disposition before merging.
+assert not any(r['conclusion'] in ('failure', 'timed_out', 'action_required', 'startup_failure') for r in checks['check_runs'])
+assert all(r['status'] == 'completed' and r['conclusion'] == 'success' for r in latest.values())
+record['checks'] = [{'id': r['id'], 'name': r['name'], 'status': r['status'], 'conclusion': r['conclusion'], 'url': r['details_url']} for r in checks['check_runs']]
+record['latest_required_check_ids'] = {name: r['id'] for name, r in latest.items()}
 if pr['draft']:
     record['state'] = 'ready_transition_intent'
     save()

@@ -1,0 +1,136 @@
+{
+  "format": "pr102_103_107_cleanup_independent_postcheck_v1",
+  "observed_utc": "2026-10-20T02:57:21.314014+00:00",
+  "assessment": "PASS exact scoped retirement and preservation; no remaining blocker or uncertain removal observed.",
+  "main": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "archive_head": "a5d30bc70cb0dc248d7539e05e82f82aede0990c",
+  "selected": [
+    {
+      "pr": 102,
+      "local_ref": "refs/heads/feature/lab-coordinator-panel-20261019",
+      "local_ref_absent": true,
+      "tracking_ref": "refs/remotes/origin/feature/lab-coordinator-panel-20261019",
+      "tracking_ref_absent": true,
+      "path": "/workspace/Tuldok-lab-coordinator-ui-m2",
+      "path_lexists": false,
+      "worktree_registration_absent": true,
+      "accepted_head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "merge_sha": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+      "accepted_head_and_merge_reachable_from_main": true,
+      "remote_ref_absent": true
+    },
+    {
+      "pr": 103,
+      "local_ref": "refs/heads/feature/lab-phase-timing-20261019",
+      "local_ref_absent": true,
+      "tracking_ref": "refs/remotes/origin/feature/lab-phase-timing-20261019",
+      "tracking_ref_absent": true,
+      "path": "/workspace/Tuldok-lab-phase-timing-m3",
+      "path_lexists": false,
+      "worktree_registration_absent": true,
+      "accepted_head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "merge_sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+      "accepted_head_and_merge_reachable_from_main": true,
+      "remote_ref_absent": true
+    },
+    {
+      "pr": 107,
+      "local_ref": "refs/heads/test/lab-workflow-baseline-20261019",
+      "local_ref_absent": true,
+      "tracking_ref": "refs/remotes/origin/test/lab-workflow-baseline-20261019",
+      "tracking_ref_absent": true,
+      "path": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+      "path_lexists": false,
+      "worktree_registration_absent": true,
+      "accepted_head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "merge_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+      "accepted_head_and_merge_reachable_from_main": true,
+      "remote_ref_absent": true
+    }
+  ],
+  "exact_scope_comparison": {
+    "local_heads_before": 102,
+    "local_heads_after": 99,
+    "removed_local_refs": [
+      "refs/heads/feature/lab-coordinator-panel-20261019",
+      "refs/heads/feature/lab-phase-timing-20261019",
+      "refs/heads/test/lab-workflow-baseline-20261019"
+    ],
+    "unexpected_added_local_refs": [],
+    "all_other_immediate_before_local_heads_exact_unchanged": true,
+    "worktrees_before": 116,
+    "worktrees_after": 113,
+    "removed_paths": [
+      "/workspace/Tuldok-lab-benchmark-baseline-m4",
+      "/workspace/Tuldok-lab-coordinator-ui-m2",
+      "/workspace/Tuldok-lab-phase-timing-m3"
+    ],
+    "unexpected_added_worktrees": [],
+    "all_other_immediate_before_worktree_records_exact_unchanged": true,
+    "source": "Compared complete actual Git snapshots against root terminal immediate-before maps, not merely root booleans. No unrelated aliases or refs/registrations disappeared."
+  },
+  "original_preservation": {
+    "82_protected_local_heads_exact_unchanged": true,
+    "96_original_worktree_records_exact_unchanged": true,
+    "original_unique_OIDs": 91,
+    "original_OIDs_reachable_from_current_protected_roots": 91,
+    "unreachable_original_OIDs": [],
+    "method": "Fresh for-each-ref/worktree snapshots compared with original protected files; exact91originalOIDs checked against gitrev-list from currentprotectedref and originalregisteredworktree roots."
+  },
+  "archive_verification": {
+    "manifest_entries": 407,
+    "independently_size_SHA256_verified": 407,
+    "mismatches": [],
+    "all16ignored_QA_verified": true,
+    "independent_precheck_verified_in_archive": true,
+    "recovery_clone": "/workspace/Tuldok-recovery-verification-20261019",
+    "clone_checkout_head": "96afae56ca41c2a90f87ea3bc6a27ee4ed6291b5",
+    "method": "Read exact archive Gitobjects in existing standalone recovery clone; its originalcheckout96af stays unchanged. One gitcat-file batch verifies all407 blobs against manifest size/SHA256, not working-tree copies.",
+    "scope": "Remotecheckpointref readback isa5; existingstandalone recoveryclone containsexacta5Gitobjects. All407manifestblobs verified without checkout/fetch/extraction; original96afclonecheckout unchanged. Includes all16ownedQAimages/receipts and independentprecheck."
+  },
+  "remote_readback": {
+    "exit_code": 0,
+    "refs_returned": {
+      "refs/heads/checkpoint/lab-integration-20261019": "a5d30bc70cb0dc248d7539e05e82f82aede0990c",
+      "refs/heads/main": "18a53816a279ad56758de620c9a1c4b129ba84ce"
+    },
+    "three_selected_remote_refs_absent": true,
+    "scope": "One exact ls-remote request for main/checkpoint and3selectedrefs only. No complete remote-ref preservation census or CI/status polling claimed."
+  },
+  "operation_attribution": "Root-owned terminalrecord reports acknowledgedatomicexpected-head remote lease deletion, ordinarynonforce worktree removal and exactoldSHA localrefCAS. This reviewer independently verified resultingabsence/preservation and performed no removal or refmutation.",
+  "evidence": {
+    "root_terminal": {
+      "path": "/tmp/tuldok-pr102-103-107-cleanup-terminal.json",
+      "bytes": 45517,
+      "sha256": "97aa578c97e13362994112386fab6e52b9afd8cdda2b752a31d3ef16bd442785"
+    },
+    "root_archive_recovery": {
+      "path": "/tmp/tuldok-pr102-103-107-archive-recovery.json",
+      "bytes": 281,
+      "sha256": "0e1ebe2f49ec0d594fa5d1a2bff9efad1c6bcefb6faae4e52251291125f8bdbc"
+    },
+    "independent_precheck": {
+      "path": "/tmp/tuldok-pr102-103-107-cleanup-independent-precheck.json",
+      "bytes": 41797,
+      "sha256": "e5a629a289bc6b1b72170d3618fd74ace0ca539d8025797f5813577135126fe3"
+    },
+    "independent_local": {
+      "path": "/tmp/tuldok-pr102-103-107-cleanup-independent-local-postcheck.json",
+      "bytes": 2899,
+      "sha256": "24030ab9c2a0614c4b147edfe9f26d010e32cb740e854977bd11927d75b9f83e"
+    },
+    "independent_remote": {
+      "path": "/tmp/tuldok-pr102-103-107-cleanup-independent-remote-postcheck.json",
+      "bytes": 491,
+      "sha256": "0318839245d9f9b7e8aec20201f0c6ae02f809c972586dfff1c3f7ecf2bcf6fc"
+    },
+    "independent_archive": {
+      "path": "/tmp/tuldok-pr102-103-107-cleanup-independent-archive-proof.json",
+      "bytes": 7054,
+      "sha256": "dd108c02e7860f12f989549cc5b92afdc861b0540167bd4841cc600115b68b89"
+    }
+  },
+  "findings": [],
+  "remaining_blockers": [],
+  "actions": "Read-only exact remote-ref query, localgit/ref/worktreerecord/ancestry/reachability reads and407archiveGitblob verification; wrote/tmp receipts only. No deletions, fetch/checkout, source edits, PG/tests, pushes, reruns or CI polling."
+}

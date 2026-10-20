@@ -1,0 +1,61 @@
+{
+  "revision": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "source_sha256": {
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c",
+    "project_cli.py": "450f2c155928361e5db2b4ac5b686f00cb51ce9368ade531c6f97c9b70d7b015",
+    "tests/test_workflow_client.py": "a9f8bfeeabc054e16bfe041ea8b76f41517d8c6b1a93d2085017d11edb018863",
+    "tests/test_workflow_client_http.py": "25c489b8490f457840a2b88d1c9cb5e351e2dd0967eaf7cdd5bed3ee308eae7f",
+    "tests/test_model_evidence.py": "c6cd885a7a9eedb897ada3bf52a603ad6852f310d031dea0cbed3eea634e0d6b",
+    ".github/workflows/tests.yml": "f0afea203c02085cae224b3e512f5cc4e35d964fc88c983dea17a58e25c50f5f",
+    "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29"
+  },
+  "declared_test_methods": {
+    "tests/test_workflow_client.py": {
+      "ConsumerFixture": [],
+      "ComparisonReplyTests": [
+        "test_exact_v2_reply_accepts_requested_mode_and_ordered_operands",
+        "test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes",
+        "test_legacy_v1_reply_keeps_its_existing_wire_contract"
+      ],
+      "WorkflowClientTests": [
+        "test_import_is_stdlib_only_with_startup_tripwires_in_clean_python",
+        "test_unknown_submission_never_retries_and_explicit_reconcile_keeps_identity",
+        "test_read_budget_refuses_mutation_and_cleans_thread_local_context",
+        "test_missing_selected_submission_capability_refuses_without_dispatch",
+        "test_exact_comparison_refuses_v1_without_implicit_operand_fallback",
+        "test_material_digest_uses_domain_utf8_canonical_json_for_unicode",
+        "test_5xx_and_negative_reconciliation_preserve_original_unknown_identity",
+        "test_monitor_deadline_and_stop_never_call_cancel_and_restore_transport_budget",
+        "test_cancel_reports_request_without_claiming_drain",
+        "test_public_inventory_can_include_unselectable_manifest_metadata",
+        "test_pre_stopped_collection_never_bootstraps_and_retains_prior_item_proofs",
+        "test_interrupted_segments_resume_at_zero_with_whole_hash_and_current_authority",
+        "test_failure_preserves_success_and_outstanding_without_alternate_dispatch",
+        "test_hash_mismatch_and_no_clobber_race_keep_partial_typed_and_remove_provisional",
+        "test_resume_rejects_destination_replacement_during_whole_hash_verification",
+        "test_cancelled_resume_never_completes_from_unvisited_prior_proofs",
+        "test_study_acknowledgement_matches_owner_request_parent_catalog_and_grant",
+        "test_changed_inventory_local_success_and_closed_manifests_refuse"
+      ]
+    },
+    "tests/test_workflow_client_http.py": {
+      "WorkflowHTTPTests": [
+        "test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result",
+        "test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again",
+        "test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown",
+        "test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber",
+        "test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback",
+        "test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional",
+        "test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success",
+        "test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation",
+        "test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event",
+        "test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains"
+      ],
+      "RetainedWorkflowHTTPTests": [
+        "test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation",
+        "test_exact_attached_publication_collection_and_revocation_on_resume",
+        "test_actual_classifier_exact_operands_compare_through_http_and_clean_cli"
+      ]
+    }
+  }
+}

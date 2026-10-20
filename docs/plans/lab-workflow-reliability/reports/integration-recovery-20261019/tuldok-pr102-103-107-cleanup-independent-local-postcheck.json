@@ -1,0 +1,71 @@
+{
+  "observed_utc": "2026-10-20T02:56:17.379687+00:00",
+  "main": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "selected": [
+    {
+      "pr": 102,
+      "local_ref": "refs/heads/feature/lab-coordinator-panel-20261019",
+      "local_ref_absent": true,
+      "tracking_ref": "refs/remotes/origin/feature/lab-coordinator-panel-20261019",
+      "tracking_ref_absent": true,
+      "path": "/workspace/Tuldok-lab-coordinator-ui-m2",
+      "path_lexists": false,
+      "worktree_registration_absent": true,
+      "accepted_head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "merge_sha": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+      "accepted_head_and_merge_reachable_from_main": true
+    },
+    {
+      "pr": 103,
+      "local_ref": "refs/heads/feature/lab-phase-timing-20261019",
+      "local_ref_absent": true,
+      "tracking_ref": "refs/remotes/origin/feature/lab-phase-timing-20261019",
+      "tracking_ref_absent": true,
+      "path": "/workspace/Tuldok-lab-phase-timing-m3",
+      "path_lexists": false,
+      "worktree_registration_absent": true,
+      "accepted_head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "merge_sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+      "accepted_head_and_merge_reachable_from_main": true
+    },
+    {
+      "pr": 107,
+      "local_ref": "refs/heads/test/lab-workflow-baseline-20261019",
+      "local_ref_absent": true,
+      "tracking_ref": "refs/remotes/origin/test/lab-workflow-baseline-20261019",
+      "tracking_ref_absent": true,
+      "path": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+      "path_lexists": false,
+      "worktree_registration_absent": true,
+      "accepted_head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "merge_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+      "accepted_head_and_merge_reachable_from_main": true
+    }
+  ],
+  "local_heads_before": 102,
+  "local_heads_after": 99,
+  "exact_removed_local_refs": [
+    "refs/heads/feature/lab-coordinator-panel-20261019",
+    "refs/heads/feature/lab-phase-timing-20261019",
+    "refs/heads/test/lab-workflow-baseline-20261019"
+  ],
+  "unexpected_added_local_refs": [],
+  "all_other_local_heads_exact_unchanged": true,
+  "worktrees_before": 116,
+  "worktrees_after": 113,
+  "exact_removed_paths": [
+    "/workspace/Tuldok-lab-benchmark-baseline-m4",
+    "/workspace/Tuldok-lab-coordinator-ui-m2",
+    "/workspace/Tuldok-lab-phase-timing-m3"
+  ],
+  "unexpected_added_worktrees": [],
+  "all_other_worktree_records_exact_unchanged": true,
+  "original82_heads_exact_unchanged": true,
+  "original96_worktree_records_exact_unchanged": true,
+  "original_unique_OIDs": 91,
+  "current_protected_roots": 91,
+  "original_OIDs_reachable_from_protected_roots": 91,
+  "unreachable_original_OIDs": [],
+  "checkpoint_local": "a5d30bc70cb0dc248d7539e05e82f82aede0990c",
+  "root_terminal_sha256": "97aa578c97e13362994112386fab6e52b9afd8cdda2b752a31d3ef16bd442785"
+}

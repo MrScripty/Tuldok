@@ -1,0 +1,7 @@
+{
+  "command": "git ls-remote --heads origin refs/heads/main refs/heads/checkpoint/lab-integration-20261019 refs/heads/feature/lab-coordinator-panel-20261019 refs/heads/feature/lab-phase-timing-20261019 refs/heads/test/lab-workflow-baseline-20261019",
+  "workdir": "/workspace/Tuldok",
+  "exit_code": 0,
+  "stdout": "a5d30bc70cb0dc248d7539e05e82f82aede0990c\trefs/heads/checkpoint/lab-integration-20261019\n18a53816a279ad56758de620c9a1c4b129ba84ce\trefs/heads/main\n",
+  "read_only": true
+}
