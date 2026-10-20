@@ -1,0 +1,14 @@
+{
+  "source": "8dbf9ae12bde9f88985ce2d11cb0757e38e60bed",
+  "tree": "4b56375c24586f80d9a4631d262dffaf1aa4a519",
+  "exit_code": 0,
+  "schema_names_after": [],
+  "legacy_source_clean": true,
+  "current_source_clean": true,
+  "files": {
+    "qualification.log": "81094e15375053f143810d773eaeefc7d14c92ac3e8555fda1b36c57cf43f1e6",
+    "domain-receipt.json": "81094e15375053f143810d773eaeefc7d14c92ac3e8555fda1b36c57cf43f1e6"
+  },
+  "scope": "actual pinned old application refusal after real3-to10upgrade; both supported restore paths retained; no training/performance claim",
+  "cleanup_limit": "Existing qualifier drops its recorded identity; external final namespace inventory independently empty; exact cleanup identity not emitted by existing report."
+}

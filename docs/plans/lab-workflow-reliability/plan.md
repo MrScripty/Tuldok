@@ -389,6 +389,20 @@ production/schema/contract/workflow/README change or installed-runtime mutation 
 admitted. This measures only the named local facade boundary, not2–19 items,
 arbitrary payloads/history, preparation, whole workflows, lab or scientific gain.
 
+### Actual older-application refusal acceptance — 2026-10-20
+
+The T8 audit found historical upgrade, rollback and stopped-transfer coverage,
+but no execution of the actual older application against a current schema10
+catalog. A separate test-only branch starts at the reviewed combined-transfer
+checkpoint `322482d2ca6fa2af8effb7a6a5080313efe745b4`. It extends the existing
+`tests/qualify_spatial_retained_runs.py` gate, using its unchanged pinned schema3
+application `f1ecf7888a8dfa5b67ac8b087034226d533c682e` after an actual explicit
+upgrade. The old application's normal Dataset startup must refuse the current
+catalog before changing any raw table, sequence or file. Current-code version
+arguments are not substituted for old source execution. No production, schema,
+workflow or README change is admitted. Actual qualification and independent
+review remain gates; this does not complete unrelated T8 or lab acceptance.
+
 ### Integrated stopped-transfer acceptance admission — 2026-10-20
 
 The fresh integration lead admits one narrow T8 witness from the exact reporting

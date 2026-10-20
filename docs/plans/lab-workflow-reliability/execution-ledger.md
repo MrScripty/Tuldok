@@ -34,6 +34,18 @@ original attribution. Independent final evidence review and hosted integration
 remain pending. No production, producer, schema, contract, runtime installation,
 automatic threshold, fullT5 or generic speedup is inferred from this witness.
 
+## 2026-10-20 — Actual older-application startup refusal admission
+
+The cross-owner T8 audit identified one literal missing witness: an actual
+older application refusing the integrated schema10 catalog. Existing
+current-code version mismatch tests remain their original evidence. The narrow
+test-only follow-up starts at combined-transfer checkpoint `322482d`, extends
+the existing pinned schema3 retained-Run qualifier, and will execute normal old
+Dataset startup after a real explicit upgrade. Exact raw tables, sequences and
+files must remain unchanged. No production/schema/workflow/README edit or
+compute replay is admitted. Qualification waits for the facade measurement
+quiet window to finish; no new result or full T8 acceptance is inferred yet.
+
 ## 2026-10-20 — Integrated stopped-transfer acceptance admission
 
 The integration lead selected the existing T8 composition gap after verifying
