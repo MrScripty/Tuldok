@@ -1,0 +1,1 @@
+PASS external field UI: exact declared selectors, shared display range, exact numeric probes, stale selector/navigation exclusion, revoked-value clearing and unsupported legacy/physical time. Controlled transport only.

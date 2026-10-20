@@ -316,3 +316,8 @@ captures/context have already been written, so the same owner checks its origina
 space and do not account for future concurrent consumers. The later admission
 recheck and publication's separate actual-output-bytes plus 512 MiB check remain
 required. A passing observation cannot promise durable publication or recovery.
+
+The read-only [scientific comparison](scientific-comparison.md) accepts exact
+attached publication-result Refs alongside completed Run operands. It reuses
+publication-result identity and authority checks, preserves the original failed
+or interrupted outcome, and grants no legacy promotion or candidate eligibility.

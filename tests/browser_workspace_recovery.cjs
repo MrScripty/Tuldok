@@ -36,6 +36,7 @@ await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-external.js
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-service.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/experiment-lineage.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-phase-timings.js'),'utf8'));
+await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-scientific-comparison.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-real.js'),'utf8'));
 await ev(`window.real=WorkspaceReal({pipelineRoot:document.getElementById('p'),runsRoot:document.getElementById('r'),announce:s=>notes.push(s),openRecord:()=>{},openRun:()=>real.show('runs')});real.show('runs')`);
 if(!await ev(`!!document.getElementById('real-test-predictions')`))throw Error(await ev(`document.getElementById('r').innerText`));

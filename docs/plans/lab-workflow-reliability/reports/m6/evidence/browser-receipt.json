@@ -1,0 +1,296 @@
+{
+  "scope": "Real HTTP/browser with actual metadata/admission/retained context; synthetic terminal receipts and arrays; no producer/runtime/custody/science qualification",
+  "checks": [
+    "Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.",
+    "1440/390px tables retain all values and keyboard scrolling without page overflow.",
+    "Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.",
+    "Exact attached publication Ref uses real publication readers and preserves original interrupted state.",
+    "Removed retained root refuses fresh candidate selection and clears prior values.",
+    "Actual browser credential revocation clears the session and all cached scientific values after the refused read."
+  ],
+  "source_head": "871ad16dc78cf311e43b0feac916a67b7b8ab1c2",
+  "source_hashes": {
+    "agent_api.py": "40a5de266131ae783c26657fef2d9b1b09204188956ff002867c5108c7ae55eb",
+    "runs.py": "c5304cc65868e5ed62b7b4d9744067b432d62b4e318d60ef4f2ed7cf305d0953",
+    "run_publication.py": "99722ab20df6a28928ddf696d840b08cf81f02e82e5d996416d8a43693d23830",
+    "extension_evidence.py": "0375f74bf37ee168b2e037b2a62e8e822c0c9fc415cfb58b1bab4049541239d6",
+    "static/workspace-real.js": "412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2",
+    "static/workspace-scientific-comparison.js": "e2a1068011135bf845c1d962cf1e11147419c8c9ab8da36a80267be427762ade",
+    "tests/scientific_comparison_fixture.py": "c580c700aea4cfe0b9125200f2ad6991c9e80efe26acd405d1d5833faf87082f",
+    "tests/browser_scientific_comparison.cjs": "5d97bf5c573b6966264a9b3f0ee034301b7d57212303ef573503041e20fe9075"
+  },
+  "requests": [
+    {
+      "method": "POST",
+      "body": {
+        "operands": [
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "224d1f017e84479387c77131479b8a13"
+          },
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "5b51e60ecca74b81aaecaa69d6ad46b1"
+          }
+        ],
+        "selection": {
+          "checkpoint_sha256": "41816766e46302590f9d88760142f6cd013253e95b0d65ed7eefe25783a79728",
+          "other_checkpoint_sha256": "f8ac091870ea38e753184a7d1954e626ab05adb898ae355c4782e5cdb592ff81",
+          "evaluation_sha256": "640f202fb2e58aacf8edfddc64d049aed3001380b90606e473e2abe45965f370",
+          "other_evaluation_sha256": "60f27b2c68d58e264c195e02698a379a40a963c010540c7ddd49b2297c389b3f",
+          "metric_id": "synthetic_fixture_constant",
+          "metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "other_metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "mode": "paired"
+        },
+        "point": {
+          "field_id": "raw",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "contract": "runs.compare_scientific_evidence/1/32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+    },
+    {
+      "method": "POST",
+      "body": {
+        "operands": [
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "224d1f017e84479387c77131479b8a13"
+          },
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "5b51e60ecca74b81aaecaa69d6ad46b1"
+          }
+        ],
+        "selection": {
+          "checkpoint_sha256": "41816766e46302590f9d88760142f6cd013253e95b0d65ed7eefe25783a79728",
+          "other_checkpoint_sha256": "f8ac091870ea38e753184a7d1954e626ab05adb898ae355c4782e5cdb592ff81",
+          "evaluation_sha256": "640f202fb2e58aacf8edfddc64d049aed3001380b90606e473e2abe45965f370",
+          "other_evaluation_sha256": "60f27b2c68d58e264c195e02698a379a40a963c010540c7ddd49b2297c389b3f",
+          "metric_id": "synthetic_fixture_constant",
+          "metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "other_metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "mode": "paired"
+        },
+        "point": {
+          "field_id": "raw",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "contract": "runs.compare_scientific_evidence/1/32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+    },
+    {
+      "method": "POST",
+      "body": {
+        "operands": [
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "224d1f017e84479387c77131479b8a13"
+          },
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "5b51e60ecca74b81aaecaa69d6ad46b1"
+          }
+        ],
+        "selection": {
+          "checkpoint_sha256": "41816766e46302590f9d88760142f6cd013253e95b0d65ed7eefe25783a79728",
+          "other_checkpoint_sha256": "f8ac091870ea38e753184a7d1954e626ab05adb898ae355c4782e5cdb592ff81",
+          "evaluation_sha256": "640f202fb2e58aacf8edfddc64d049aed3001380b90606e473e2abe45965f370",
+          "other_evaluation_sha256": "60f27b2c68d58e264c195e02698a379a40a963c010540c7ddd49b2297c389b3f",
+          "metric_id": "synthetic_fixture_constant",
+          "metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "other_metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "mode": "paired"
+        },
+        "point": {
+          "field_id": "raw",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "contract": "runs.compare_scientific_evidence/1/32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+    },
+    {
+      "method": "POST",
+      "body": {
+        "operands": [
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "224d1f017e84479387c77131479b8a13"
+          },
+          {
+            "kind": "publication_result",
+            "ref": {
+              "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+              "custody_receipt_sha256": "ceeb206ce4895944f3cb3e7322e4bb606ade4721d8ae4c5d84b784242ea4a86a",
+              "inventory_sha256": "9eec480c61cbfc9c104f73ce78bc6aa1b40c1500860d09c18b863c127d2caba2",
+              "kind": "recovered_publication_result",
+              "material_sha256": "24828a77bf25c3c155e705dff5336a0bc36809762f9bf95e3cd5ed8fd053de00",
+              "run_id": "428d9c1d119d43c78d4bf65109b3e1b5",
+              "schema_version": 1,
+              "sha256": "8e6cbb338fd496a6f8abc952956b4144369d96b3259a65d5b2010d59bf516658"
+            }
+          }
+        ],
+        "selection": {
+          "checkpoint_sha256": "41816766e46302590f9d88760142f6cd013253e95b0d65ed7eefe25783a79728",
+          "other_checkpoint_sha256": "5793f11c2df20d1eec747cbcdc086ebf8bd7048aae81aa4fe797be6fdae2047d",
+          "evaluation_sha256": "640f202fb2e58aacf8edfddc64d049aed3001380b90606e473e2abe45965f370",
+          "other_evaluation_sha256": "5b057ffb5fecd677267b1b69c64e63b734b6ba855eaca29a56118741e9fccf9a",
+          "metric_id": "synthetic_fixture_constant",
+          "metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "other_metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "mode": "paired"
+        },
+        "point": {
+          "field_id": "raw",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "contract": "runs.compare_scientific_evidence/1/32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+    },
+    {
+      "method": "POST",
+      "body": {
+        "operands": [
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "224d1f017e84479387c77131479b8a13"
+          },
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "5b51e60ecca74b81aaecaa69d6ad46b1"
+          }
+        ],
+        "selection": {
+          "checkpoint_sha256": "41816766e46302590f9d88760142f6cd013253e95b0d65ed7eefe25783a79728",
+          "other_checkpoint_sha256": "f8ac091870ea38e753184a7d1954e626ab05adb898ae355c4782e5cdb592ff81",
+          "evaluation_sha256": "640f202fb2e58aacf8edfddc64d049aed3001380b90606e473e2abe45965f370",
+          "other_evaluation_sha256": "60f27b2c68d58e264c195e02698a379a40a963c010540c7ddd49b2297c389b3f",
+          "metric_id": "synthetic_fixture_constant",
+          "metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "other_metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "mode": "paired"
+        },
+        "point": {
+          "field_id": "raw",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "contract": "runs.compare_scientific_evidence/1/32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+    },
+    {
+      "method": "POST",
+      "body": {
+        "operands": [
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "224d1f017e84479387c77131479b8a13"
+          },
+          {
+            "kind": "completed_run",
+            "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+            "run_id": "5b51e60ecca74b81aaecaa69d6ad46b1"
+          }
+        ],
+        "selection": {
+          "checkpoint_sha256": "41816766e46302590f9d88760142f6cd013253e95b0d65ed7eefe25783a79728",
+          "other_checkpoint_sha256": "f8ac091870ea38e753184a7d1954e626ab05adb898ae355c4782e5cdb592ff81",
+          "evaluation_sha256": "640f202fb2e58aacf8edfddc64d049aed3001380b90606e473e2abe45965f370",
+          "other_evaluation_sha256": "60f27b2c68d58e264c195e02698a379a40a963c010540c7ddd49b2297c389b3f",
+          "metric_id": "synthetic_fixture_constant",
+          "metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "other_metric_definition_sha256": "42880f52ede274a515cafff932136bd2259074e92d7e5d87ab20471daf99f2bb",
+          "mode": "paired"
+        },
+        "point": {
+          "field_id": "raw",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "contract": "runs.compare_scientific_evidence/1/32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+    }
+  ],
+  "domain": {
+    "scope": "Synthetic retained diagnostics; no producer execution, runtime, custody or scientific qualification",
+    "synthetic_terminal_setup": true,
+    "producer_executed": false,
+    "runtime_is_runnable_python": false,
+    "canonical_load_and_context_substituted": false,
+    "catalog_schema": "catalog_17e5b8193ac34434817fbbbbe2a6acee",
+    "checks": [],
+    "browser_credential_revoked": true,
+    "counts_before": {
+      "workspace_runs": 3,
+      "access_execution_grants": 3,
+      "access_execution_consumptions": 3,
+      "model_attempt_reservations": 3
+    },
+    "counts_after": {
+      "workspace_runs": 3,
+      "access_execution_grants": 3,
+      "access_execution_consumptions": 3,
+      "model_attempt_reservations": 3
+    },
+    "original_recovered_state": "interrupted",
+    "result_ref": {
+      "kind": "recovered_publication_result",
+      "schema_version": 1,
+      "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+      "run_id": "428d9c1d119d43c78d4bf65109b3e1b5",
+      "material_sha256": "24828a77bf25c3c155e705dff5336a0bc36809762f9bf95e3cd5ed8fd053de00",
+      "inventory_sha256": "9eec480c61cbfc9c104f73ce78bc6aa1b40c1500860d09c18b863c127d2caba2",
+      "custody_receipt_sha256": "ceeb206ce4895944f3cb3e7322e4bb606ade4721d8ae4c5d84b784242ea4a86a",
+      "sha256": "8e6cbb338fd496a6f8abc952956b4144369d96b3259a65d5b2010d59bf516658"
+    },
+    "model_ref": {
+      "kind": "model",
+      "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+      "id": "de047e1ad9ac4385a3ab99de80cb9a86",
+      "revision": 1,
+      "sha256": "bb846b225677b9fdaae2ad687b0fbd34b9f9f8a48d3283d85dc1d026b46f55ec"
+    },
+    "material_refs": [
+      {
+        "kind": "recipe_material",
+        "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+        "id": "6886f96f3d9dd8b86a92fd54e8b7473d3669ce7e9d5793112d49a5cc4011715a",
+        "sha256": "6886f96f3d9dd8b86a92fd54e8b7473d3669ce7e9d5793112d49a5cc4011715a"
+      },
+      {
+        "kind": "recipe_material",
+        "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+        "id": "6886f96f3d9dd8b86a92fd54e8b7473d3669ce7e9d5793112d49a5cc4011715a",
+        "sha256": "6886f96f3d9dd8b86a92fd54e8b7473d3669ce7e9d5793112d49a5cc4011715a"
+      },
+      {
+        "kind": "recipe_material",
+        "catalog_id": "17e5b8193ac34434817fbbbbe2a6acee",
+        "id": "6886f96f3d9dd8b86a92fd54e8b7473d3669ce7e9d5793112d49a5cc4011715a",
+        "sha256": "6886f96f3d9dd8b86a92fd54e8b7473d3669ce7e9d5793112d49a5cc4011715a"
+      }
+    ]
+  }
+}

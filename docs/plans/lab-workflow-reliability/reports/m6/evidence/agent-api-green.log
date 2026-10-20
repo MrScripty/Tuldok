@@ -1,0 +1,22 @@
+test_absolute_header_deadline_includes_trickle (test_agent_api.ClientTests.test_absolute_header_deadline_includes_trickle) ... ok
+test_authenticated_discovery_proxy_ignored_and_one_mutation (test_agent_api.ClientTests.test_authenticated_discovery_proxy_ignored_and_one_mutation) ... ok
+test_fixed_endpoint_and_private_configuration (test_agent_api.ClientTests.test_fixed_endpoint_and_private_configuration) ... ok
+test_framing_identity_registry_refusals (test_agent_api.ClientTests.test_framing_identity_registry_refusals) ... ok
+test_three_file_sequence_is_unsupported_before_http_dispatch (test_agent_api.ClientTests.test_three_file_sequence_is_unsupported_before_http_dispatch) ... ok
+test_unknown_commit_is_not_retried_or_secret_echoed (test_agent_api.ClientTests.test_unknown_commit_is_not_retried_or_secret_echoed) ... ok
+test_segment_reassembly_and_whole_hash_tamper (test_agent_api.OutputTests.test_segment_reassembly_and_whole_hash_tamper) ... ok
+test_typed_error_and_success_shapes (test_agent_api.OutputTests.test_typed_error_and_success_shapes) ... ok
+test_image_forwards_exact_raw_base64 (test_agent_api.ParityRegressionTests.test_image_forwards_exact_raw_base64) ... ok
+test_revoked_discovery_preserves_http_status_and_code_without_mutation (test_agent_api.ParityRegressionTests.test_revoked_discovery_preserves_http_status_and_code_without_mutation) ... ok
+test_all_operation_schemas_and_route_projections (test_agent_api.RegistryTests.test_all_operation_schemas_and_route_projections) ... ok
+test_bindings_known_graph_drafts_and_no_executable_topology_requirement (test_agent_api.RegistryTests.test_bindings_known_graph_drafts_and_no_executable_topology_requirement) ... ok
+test_discovery_is_stdlib_only_in_cold_process (test_agent_api.RegistryTests.test_discovery_is_stdlib_only_in_cold_process) ... ok
+test_draft_tasks_and_no_human_or_programmatic_review (test_agent_api.RegistryTests.test_draft_tasks_and_no_human_or_programmatic_review) ... ok
+test_exposure_grant_and_projection (test_agent_api.RegistryTests.test_exposure_grant_and_projection) ... ok
+test_import_bytes_bound_is_aggregate (test_agent_api.RegistryTests.test_import_bytes_bound_is_aggregate) ... ok
+test_integer_unicode_nonfinite_and_closed_subobjects (test_agent_api.RegistryTests.test_integer_unicode_nonfinite_and_closed_subobjects) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 64.687s
+
+OK

@@ -537,6 +537,11 @@ class Runs:
         import run_publication
         return run_publication.compare_evidence(self, ref, other_ref, body)
 
+    @authorized('inspect', 'runs.compare_scientific_evidence')
+    def compare_scientific_evidence(self, body):
+        import run_publication
+        return run_publication.compare_scientific(self, body)
+
     def _receipt(self, key, request_hash):
         row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()
         if row:

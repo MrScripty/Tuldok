@@ -593,6 +593,65 @@ def compare(verified, contexts, body):
 
 
 @boundary
+def compare_scientific(verified, contexts, selection, point):
+    """Exact retained point diagnostics, not a scientific error/acceptance operator.
+
+    Case correspondence is frozen-reference identity, never ordinal or shape.
+    The existing profile retains no per-case metric or owned acceptance criterion.
+    """
+    closed(point, ('field_id', 'x', 'y', 'z'), 'Comparison point')
+    text(point['field_id'], 'Field ID', 64)
+    for axis in 'xyz': natural(point[axis], 'Point '+axis, 0, 127)
+    result = compare(verified, contexts, selection)
+    if result['delta'] is not None and result['delta']['state'] == 'observed':
+        require(math.isfinite(result['delta']['value']), 'Scalar delta exceeds the finite numeric range.')
+    left, right = verified
+    for key, reason in (('data_sha256', 'Evaluation data identities differ.'),
+                        ('profile_sha256', 'Evidence profiles differ.')):
+        if left['manifest'][key] != right['manifest'][key]: result['reasons'].append(reason)
+    if left['probe']['split'] != right['probe']['split'] or left['probe']['split'] != 'validation':
+        result['reasons'].append('Evaluation splits differ or are unsupported.')
+    if left['probe']['selection_policy_sha256'] != right['probe']['selection_policy_sha256']:
+        result['reasons'].append('Case selection policies differ.')
+    if result['reasons']: result.update(state='incompatible', delta=None)
+    members = [{canonical(row['frozen_reference']): row for row in value['probe']['members']} for value in verified]
+    require(all(len(index) == len(value['probe']['members']) for index, value in zip(members, verified, strict=True)),
+            'Frozen case identities are ambiguous.')
+    cases = []
+    for identity in sorted(set(members[0]) | set(members[1])):
+        values = []
+        for index, value in enumerate(verified):
+            member = members[index].get(identity)
+            if member is None:
+                values.append({'state':'missing','reason':'case_not_retained'}); continue
+            checkpoint = selection[('other_' if index else '')+'checkpoint_sha256']
+            record = next((row for row in value['fields'] if row['checkpoint_sha256'] == checkpoint
+                           and row['member_ordinal'] == member['ordinal'] and row['field_id'] == point['field_id']), None)
+            if record is None:
+                values.append({'state':'missing','reason':'field_not_retained'}); continue
+            require(all(point[axis] < record['shape_zyx']['zyx'.index(axis)] for axis in 'xyz'),
+                    'Selected comparison point is outside the declared field geometry.')
+            field = query(value, {'checkpoint_sha256':checkpoint, 'member_ordinal':member['ordinal'],
+                'field_id':point['field_id'], 'axis':'z', 'index':point['z'], 'split':'validation'})['field']
+            values.append({'state':'observed', 'member_ordinal':member['ordinal'],
+                'prediction':field['prediction'][point['y']][point['x']],
+                'reference':field['reference'][point['y']][point['x']], 'units':field['units']})
+        delta = None
+        if result['state'] == 'compatible' and selection['mode'] == 'paired' and all(row['state'] == 'observed' for row in values):
+            difference = values[1]['prediction'] - values[0]['prediction']
+            require(math.isfinite(difference), 'Diagnostic point delta exceeds the finite numeric range.')
+            delta = {'value':difference, 'units':values[0]['units']}
+        member = members[0].get(identity) or members[1][identity]
+        cases.append({'case':copy.deepcopy(member['frozen_reference']), 'values':values, 'prediction_delta':delta,
+                      'acceptance':{'state':'unknown','reason':'owned_per_case_criterion_not_retained'}})
+    return {'format':'scientific_comparison_v1', 'scalar':result, 'point':copy.deepcopy(point), 'cases':cases,
+        'coverage':{'baseline':len(members[0]), 'candidate':len(members[1]),
+                    'matched':len(set(members[0]) & set(members[1])), 'union':len(cases)},
+        'interpretation':'retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance',
+        'criterion':{'state':'unknown','reason':'profile_has_no_owned_per_case_metric_or_criterion'}}
+
+
+@boundary
 def verify_target_payload(definition, policy, member, field, raw):
     """Check one finite reference payload against the explicit recipe semantics.
 
