@@ -1,0 +1,177 @@
+{
+  "format": "t5_final_scope_reconciliation_v1",
+  "reviewed_utc": "2026-10-20T00:05:22.775777+00:00",
+  "source": {
+    "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+    "head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "worktree_clean_at_review": true
+  },
+  "conclusion": {
+    "conditional_C4_cache": "Cache may be omitted: C4 explicitly says not to add one without a safe measured benefit. No cache was added or claimed; cache hit/miss/eviction/invalidation machinery need not be invented to close a conditional mechanism.",
+    "unconditional_A5_T5_integrity": "A real-byte runtime-mutation/miss observation remains missing in the reviewed retained actual qualification evidence. A5 explicitly requires byte-mutation integrity/refusal; T5 explicitly names runtime mutation/miss. Changing only the expected inventory is narrower and correctly marked unavailable.",
+    "bounded_collection_gain": "Refined983 supports only the admitted explicit many-small-20-artifact collection condition. All27 twenty-item pairs improved; all one-item regressions are retained. It does not demonstrate generic reuse, facade or whole-workflow improvement.",
+    "full_M4_T5": "Not cleared by this reconciliation, the batch ratios, or the prepared unexecuted driver. Current plan correctly keeps broader C4 work and hosted acceptance separate. Runtime copy qualification would close only the named integrity observation, not establish cross-call reuse or an end-to-end gain."
+  },
+  "acceptance_anchors": [
+    {
+      "path": "docs/plans/lab-workflow-reliability/plan.md",
+      "line": 164,
+      "text": "A5 names paired measurements and byte mutation/stale authority/partial integrity outcomes."
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md",
+      "line": 186,
+      "text": "C4 conditions a disposable cache on measured benefit; current mutable authority/runtime checks remain at owners."
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md",
+      "line": 214,
+      "text": "If no safe measured benefit remains, do not add the cache."
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md",
+      "line": 404,
+      "text": "T5 explicitly lists runtime mutation/miss alongside cold/warm/history dimensions."
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/plan.md",
+      "line": 512,
+      "text": "Broader C4 reuse/invalidation remains separate; no full M4/T5 claim."
+    }
+  ],
+  "actual_evidence_reviewed": [
+    {
+      "source": "83d7e8f52df92d10d3ff85709da6eff3231a0b06",
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/validation.json",
+      "observation": "Retained baseline explicitly says actual installed-runtime mutation unavailable, expected-inventory mismatch narrower."
+    },
+    {
+      "source": "99741e5 original paired candidate",
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-99741e5/summary.json",
+      "observation": "Same unavailable real-runtime mutation; all original negative performance observations retained."
+    },
+    {
+      "source": "98380228a7edb8eefb4715cba27ca76722756cf9",
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-9838022/summary.json",
+      "observation": "Both integrity records explicitly say installed_runtime_mutation unavailable under read-only installation constraint; expected-inventory mismatch instead. 54 pairs,27 twenty-item gains,27 one-item regressions."
+    },
+    {
+      "path": "docs/plans/generic-scientific-projects/reports/p5a/runtime-qualification.json",
+      "observation": "Actual captured CPU forward/backward/cancel/reopen record explicitly installed_runtime_modified=false; no mutation claim."
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m1-publication-synthetic/qualification.json",
+      "observation": "Actual real captured CPU assets and synthetic publication/custody/semantic proof, but no installed-runtime byte mutation. Config hash and historical inventory identify a suitable existing read-only source."
+    }
+  ],
+  "existing_source_contract_tests": [
+    {
+      "path": "tests/test_runtime_snapshots.py:21",
+      "scope": "Authored /usr/bin/true plus dummy torch/numpy0.0 assets. Drift/tamper tests at104/113 prove real filesystem owner guards, not a qualified Torch installation mutation."
+    },
+    {
+      "path": "tests/test_torch_runtime.py:17",
+      "scope": "Authored fake executable/package metadata. Tests28/153 cover actual asset or topology mutation through canonical verification/registry."
+    },
+    {
+      "path": "tests/test_torch_runtime_lifecycle.py:159",
+      "scope": "Real custodian READY/GO with authored nonexecutable managed assets; proves no child/retry on changed inventory, not full real installed package mutation."
+    },
+    {
+      "path": "tests/test_recipe_process.py:213",
+      "scope": "Actual helper hash refusal on authored runtime.dat byte mutation; real filesystem mechanism, not qualified installed asset closure."
+    },
+    {
+      "path": "tests/test_installed_runtime_alias.py",
+      "scope": "Authored installed alias-retarget fixture; no real installed Torch byte change."
+    }
+  ],
+  "canonical_owner_semantics": {
+    "runtime_snapshots": "Fresh inventories hash actual file bytes; create compares expected identity before target reuse/copy; get verifies current captured bytes. Default reserve remains unchanged.",
+    "managed_torch": "TorchRuntimes.inspect/create/get(verify=True) use canonical installed asset topology and full byte verification; historical get(verify=False) is not current-byte proof.",
+    "system_python_copy_constraint": "Generic trusted /usr system profile rejects arbitrary task-owned copies. Do not weaken or monkeypatch that authority. The finite proposal uses existing managed/captured owner APIs on a copied real CPU asset closure."
+  },
+  "smallest_finite_proposal": {
+    "admission": "Root admitted driver preparation only; root plus a second reviewer must review before any execution.",
+    "driver": "/tmp/tuldok-t5-actual-runtime-mutation.py",
+    "driver_sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df",
+    "plan": "/tmp/tuldok-t5-actual-runtime-mutation-plan.json",
+    "exact_command": "cd /workspace/Tuldok-lab-indexed-diagnostics-m1 && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:tests /workspace/tuldok-runtime/bin/python /tmp/tuldok-t5-actual-runtime-mutation.py --plan /tmp/tuldok-t5-actual-runtime-mutation-plan.json --execute",
+    "source_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "configuration": "/workspace/p5-qualification/runtime-config.json",
+    "configuration_sha256": "39a492bd06ac2635025925e3a647bdde199ca2e73419f24f5fee2a7371b2d11a",
+    "expected_runtime_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "preregistered_schema": "catalog_3bfa6524886642abae3cc1ee3da9a247",
+    "owned_root": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247",
+    "receipt_path": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+    "storage": {
+      "payload_bytes": 896562621,
+      "manifest_bytes": 3825828,
+      "file_count": 20804,
+      "required_bytes_with_selected_reserve": 1487591009,
+      "owned_bound_bytes": 950720097,
+      "measured_again_before_copy": true
+    },
+    "owned_cap_bytes": 2147483648,
+    "reserve_bytes": 587202560,
+    "wall_budget_seconds": 600,
+    "procedure": [
+      "Record exact fresh schema/path before Metadata(dataset_id=exact_id); prove schema absent; clean only those recorded owned targets even if constructor fails. Controlled-process cleanup, no crash-durability claim.",
+      "Inspect the nominated original read-only configuration; refuse identity drift, insufficient disk or >2GiB owned cap before one owner-created capture.",
+      "Inspect/register the copied python/packages through the real TorchRuntimes owner; establish original captured and managed identities.",
+      "Mutate one byte of copied real Torch __init__.py, same length and restored mtime; require separate inode/private nlink1 and ownership; never write original installation.",
+      "Require managed old verified get409/unavailable and captured old verified get409/stale; both fresh inspections must yield new identities. Old expected-identity create from changed copied source must refuse409/stale without a second copy.",
+      "Restore exact copied bytes/mode/mtime; both old verified gets and managed digest recover; original config/full source inventory equal before/after; zero graph/Run/grant/consumption/reservation/admission counts.",
+      "Retain finite raw receipt and schema/path cleanup proof; no GO/training/compute/cache or performance claim."
+    ],
+    "execution": "NOT_EXECUTED",
+    "validation": "Driver AST parse only. No PG access, actual inventory hashing, copy, mutation or qualification run by this review.",
+    "receipt_refinement": "Retain baseline captured/managed descriptors and identity, copied/original Torch file size/mode/hash/mtime, observed exact-restored copy and verified managed descriptor. Controlled-process preregistration only; no parent directory fsync or crash-durability claim.",
+    "historical_driver_path": "/tmp/tuldok-t5-actual-runtime-mutation-historical-d793a5.py",
+    "historical_plan_path": "/tmp/tuldok-t5-actual-runtime-mutation-plan-historical-d793a5.json"
+  },
+  "evidence_files": {
+    "docs/plans/lab-workflow-reliability/plan.md": {
+      "sha256": "3abfe256c37071a026cb67ea3aed34537bf93567ca8a473b1980265841709062",
+      "bytes": 43442
+    },
+    "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md": {
+      "sha256": "815dc87cfb438b83563c3671e0c91ab8ae51fc5b035cf030a7544eb8dfe257c5",
+      "bytes": 33308
+    },
+    "tests/benchmark_lab_workflow.py": {
+      "sha256": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+      "bytes": 38879
+    },
+    "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/validation.json": {
+      "sha256": "fe03496bc461f9891d20e604e1f50578f49cf9925d10051b6e7d74e18ca2aa7b",
+      "bytes": 13462
+    },
+    "docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-99741e5/summary.json": {
+      "sha256": "ca7574aef7ccadc85b1bed9112bc3f549899e413381e85f8f4cdd28a1c1710ec",
+      "bytes": 35045
+    },
+    "docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-9838022/summary.json": {
+      "sha256": "d155c0221f147ac406c4d13dfdcfcf36b037349f9008fe38ddc7763902e950b5",
+      "bytes": 35099
+    },
+    "docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-9838022/validation.json": {
+      "sha256": "a26762288696a6e0aac198a7132c41616ab12f979194e3fb438568a7be6c3c76",
+      "bytes": 8600
+    },
+    "docs/plans/generic-scientific-projects/reports/p5a/runtime-qualification.json": {
+      "sha256": "5ba17f335791058cd7f5e137017632a85f5c2b1bdba863b6458ff939f9422db0",
+      "bytes": 16042
+    },
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-synthetic/qualification.json": {
+      "sha256": "384819a4507869a11ad0ef1d931a4fed3e513873d394d4af2a08506199389056",
+      "bytes": 4066
+    }
+  },
+  "remaining_blockers": [
+    "Unexecuted proposed qualification requires root and independent review then explicit execution admission.",
+    "Actual driver may refuse source-identity drift, current storage shortage, unavailable disposable PostgreSQL or finite deadline; refusal is not a passing mutation observation.",
+    "Full T5/M4 and any broader whole-workflow/reuse gain remain outside this narrow integrity closure."
+  ],
+  "actions_performed": "Read-only local source/evidence/metadata review; wrote only /tmp driver, plan and this reconciliation; no remote calls, product/docs/worktree edits or heavy tests."
+}

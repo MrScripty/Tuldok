@@ -1,0 +1,61 @@
+{
+  "format": "t5_actual_runtime_mutation_plan_v1",
+  "prepared_utc": "2026-10-20T00:04:37.360350+00:00",
+  "execution_status": "NOT_EXECUTED; root and independent reviewer must review before execution",
+  "source_root": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+  "source_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+  "source_files_sha256": {
+    "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+    "torch_runtime.py": "84a66b6a195c30db01ffc574f94e0139f4df7d7c7872452a3f50ce82e9db3ad0",
+    "torch_runtimes.py": "010ed4ac47e013dbda07f52e3dbbddf95ab3a5367e4e67dfb6f4d7ae7b10bb39",
+    "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "metadata.py": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+    "access.py": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4",
+    "workbench.py": "e2735b9242040b471f67ff3663316397a58fba19338cc79058796106e7ef5562",
+    "tests/test_indexed_diagnostics_publication.py": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11",
+    "tests/test_runtime_snapshots.py": "424c3d65e97466935bb807602de83b535aacb06dc9b27a6b56bd9ba703bdc751",
+    "tests/test_torch_runtime.py": "9889ebf8ad72c9a94b02720e1430305acc5e86043b4c57c3b678ea806f7da069"
+  },
+  "driver_path": "/tmp/tuldok-t5-actual-runtime-mutation.py",
+  "driver_sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df",
+  "configuration_path": "/workspace/p5-qualification/runtime-config.json",
+  "configuration_sha256": "39a492bd06ac2635025925e3a647bdde199ca2e73419f24f5fee2a7371b2d11a",
+  "expected_runtime_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "dataset_id": "3bfa6524886642abae3cc1ee3da9a247",
+  "schema": "catalog_3bfa6524886642abae3cc1ee3da9a247",
+  "owned_root": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247",
+  "catalog_path": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247/catalog",
+  "receipt_path": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+  "dsn": "dbname=tuldok_task user=tuldok_task host=/workspace/tuldok-local-pg17-socket port=55439",
+  "owned_cap_bytes": 2147483648,
+  "reserve_bytes": 587202560,
+  "wall_budget_seconds": 600,
+  "cleanup": "Exact preregistered schema only after proving absent and entering constructor; exact unique directory only with matching marker; cleanup executes even when Metadata constructor fails. No inferred or unrelated schema.",
+  "historical_size_reference": {
+    "payload_bytes": 896562621,
+    "manifest_bytes": 3825828,
+    "file_count": 20804,
+    "required_bytes_with_selected_reserve": 1487591009,
+    "owned_bound_bytes": 950720097,
+    "measured_again_before_copy": true
+  },
+  "filesystem_free_at_preparation": {
+    "/tmp": 9264877568,
+    "/workspace": 1159122944
+  },
+  "limits": [
+    "No new installation, credentials, feature branch or product/doc edits.",
+    "One owner-created real runtime copy only; stale expected-identity create refuses before copying.",
+    "Zero Run, graph, execution grant, consumption, model reservation and access admission rows before/after.",
+    "No Run/GO/training APIs invoked; no assertion about unrelated host subprocesses.",
+    "Mutation only packages/torch/__init__.py in owned copy, private nlink1 and distinct inode; same size and restored mtime, real hashes differ.",
+    "Original configuration hash and full runtime inventory equal before/after.",
+    "No CUDA/device/launch/numerical/cache/performance/full-T5 acceptance claim."
+  ],
+  "command": "cd /workspace/Tuldok-lab-indexed-diagnostics-m1 && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:tests /workspace/tuldok-runtime/bin/python /tmp/tuldok-t5-actual-runtime-mutation.py --plan /tmp/tuldok-t5-actual-runtime-mutation-plan.json --execute",
+  "validation_performed": "AST parse only; no driver imports, PG access, inventory, capture, mutation or qualification execution.",
+  "updated_utc": "2026-10-20T00:08:13.095077+00:00",
+  "receipt_refinement": "Retain baseline captured/managed descriptors and identity, copied/original Torch file size/mode/hash/mtime, observed exact-restored copy and verified managed descriptor. Controlled-process preregistration only; no parent directory fsync or crash-durability claim.",
+  "historical_driver_path": "/tmp/tuldok-t5-actual-runtime-mutation-historical-d793a5.py",
+  "historical_plan_path": "/tmp/tuldok-t5-actual-runtime-mutation-plan-historical-d793a5.json"
+}

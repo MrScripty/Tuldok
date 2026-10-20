@@ -817,6 +817,11 @@
       "sha256": "57fda1f4fc811139b0c6f40476e85d20bf596e3aef771cb6cc53e140bb40c8bc"
     },
     {
+      "path": "tuldok-pr111-shared-hooks-independent-review.json",
+      "bytes": 14281,
+      "sha256": "24dcc2b94e7d758319b8d59f8d351118509597d1b0bc3f1722c12d0d337c2609"
+    },
+    {
       "path": "tuldok-pr89-combined-contract-registry.log",
       "bytes": 5430,
       "sha256": "6625ad145385afb62a17e86b2ee68d1b341bd216bdc0249f68bf5ee6154326ba"
@@ -1085,6 +1090,26 @@
       "path": "tuldok-superseded-ci-independent-disposition.json",
       "bytes": 47658,
       "sha256": "eaab6020e65a74047d66aa4811cb7f418f83e96c6f5c7e8402d1da9c3dd55ccd"
+    },
+    {
+      "path": "tuldok-t5-actual-runtime-mutation-plan.json",
+      "bytes": 4537,
+      "sha256": "a81f6fe5c879e03cd7ed5f0bd4c3dde84a0bf65af19c09a317151350fd01586a"
+    },
+    {
+      "path": "tuldok-t5-actual-runtime-mutation.py",
+      "bytes": 18458,
+      "sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df"
+    },
+    {
+      "path": "tuldok-t5-final-scope-reconciliation.json",
+      "bytes": 11992,
+      "sha256": "0ad45fd743c0fd44b38bf6bf7c0ae1b2c4536b00fd2f523cca9586b55982b889"
+    },
+    {
+      "path": "tuldok-t5-runtime-driver-independent-review.json",
+      "bytes": 8923,
+      "sha256": "016d26e20cf706d8c3f1bcbc3d70f15386672916779c762f7b4cc267485555e2"
     },
     {
       "path": "tuldok-task-cleanup-current-remote-ref-snapshots.json",

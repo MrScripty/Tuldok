@@ -1,0 +1,116 @@
+{
+  "kind": "Independent read-only proposed T5 runtime mutation qualification driver review",
+  "assessment": "CLEAR for root-admitted finite controlled-process observation at exact revised driver/plan; no remaining driver blocker",
+  "execution_performed": false,
+  "driver": "/tmp/tuldok-t5-actual-runtime-mutation.py",
+  "reviewed_driver_sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df",
+  "plan": "/tmp/tuldok-t5-actual-runtime-mutation-plan.json",
+  "plan_sha256": "a81f6fe5c879e03cd7ed5f0bd4c3dde84a0bf65af19c09a317151350fd01586a",
+  "source_root": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+  "source_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+  "source_clean": true,
+  "all_ten_source_hashes_match": true,
+  "source_hashes": {
+    "runtime_snapshots.py": {
+      "expected": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "actual": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e"
+    },
+    "torch_runtime.py": {
+      "expected": "84a66b6a195c30db01ffc574f94e0139f4df7d7c7872452a3f50ce82e9db3ad0",
+      "actual": "84a66b6a195c30db01ffc574f94e0139f4df7d7c7872452a3f50ce82e9db3ad0"
+    },
+    "torch_runtimes.py": {
+      "expected": "010ed4ac47e013dbda07f52e3dbbddf95ab3a5367e4e67dfb6f4d7ae7b10bb39",
+      "actual": "010ed4ac47e013dbda07f52e3dbbddf95ab3a5367e4e67dfb6f4d7ae7b10bb39"
+    },
+    "recipe_process.py": {
+      "expected": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "actual": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe"
+    },
+    "metadata.py": {
+      "expected": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+      "actual": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4"
+    },
+    "access.py": {
+      "expected": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4",
+      "actual": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4"
+    },
+    "workbench.py": {
+      "expected": "e2735b9242040b471f67ff3663316397a58fba19338cc79058796106e7ef5562",
+      "actual": "e2735b9242040b471f67ff3663316397a58fba19338cc79058796106e7ef5562"
+    },
+    "tests/test_indexed_diagnostics_publication.py": {
+      "expected": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11",
+      "actual": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11"
+    },
+    "tests/test_runtime_snapshots.py": {
+      "expected": "424c3d65e97466935bb807602de83b535aacb06dc9b27a6b56bd9ba703bdc751",
+      "actual": "424c3d65e97466935bb807602de83b535aacb06dc9b27a6b56bd9ba703bdc751"
+    },
+    "tests/test_torch_runtime.py": {
+      "expected": "9889ebf8ad72c9a94b02720e1430305acc5e86043b4c57c3b678ea806f7da069",
+      "actual": "9889ebf8ad72c9a94b02720e1430305acc5e86043b4c57c3b678ea806f7da069"
+    }
+  },
+  "configuration_sha256_matches": true,
+  "preregistration": {
+    "dataset_id": "3bfa6524886642abae3cc1ee3da9a247",
+    "schema": "catalog_3bfa6524886642abae3cc1ee3da9a247",
+    "owned_root": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247",
+    "catalog_path": "/tmp/tuldok-t5-real-runtime-3bfa6524886642abae3cc1ee3da9a247/catalog",
+    "receipt_path": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+    "dsn": "dbname=tuldok_task user=tuldok_task host=/workspace/tuldok-local-pg17-socket port=55439",
+    "owned_cap_bytes": 2147483648,
+    "reserve_bytes": 587202560,
+    "wall_budget_seconds": 600
+  },
+  "checked_properties": [
+    "Exact fresh schema/root/catalog/DSN are in prepared plan and receipt before Metadata construction; absence is proved through the same DSN before constructor_entered. Cleanup drops only that exact proved-absent schema even if constructor raises; Metadata owner itself closes failed constructor connection.",
+    "One RuntimeSnapshots.create performs owner inventory/expectedidentity/capacity/reserve checks, private regular file copy and full captured verification. Expected896562621 payload +manifest +48MiB bound remains under2GiB; actual size/free remeasured before copying and actualownedbytes checked after.",
+    "Managed TorchRuntimes inventory/registration/verify targets copied actual Python/Torch/NumPy assets; no policy override, verification patch, import of copied Torch or child execution.",
+    "Only copied Torch __init__.py is mutated: owned distinct inode, nlink1, no symlink, copied bytes equal original; same-length XOR change, original copied mode restored and mtime reset before both negative verifiers.",
+    "Old managed verifiedget must409/unavailable; captured verifiedget must409/stale. Both fresh ownerinspect digests must differ. Stale expectedcapture request refuses before target reuse/copy; exactly one retained snapshot asserted.",
+    "Exact original copied bytes/mode/mtime restored, both old verifiedgets pass, managed identity matchesbaseline, original full sourceinventory/config hash rechecked; six fresh graph/Run/grant/consumption/reservation/admission counts zero/unchanged and no executionaudit prefix allowed.",
+    "600s signal bounds main observation; cleanup cancelsalarm, closesownerDB then exactschema bounded connect/lock/statementtimeouts and owned-markedroot removal. No unknown catalog/schema or original installation mutation."
+  ],
+  "retained_evidence_gap": {
+    "status": "RESOLVED in941675c4",
+    "verified_changes": [
+      "Baseline captured descriptor and old managed identity plus canonically verified managed descriptor retained.",
+      "Original/copy Torch path,size,mode,mtime/hash retained and receipt saved before mutation.",
+      "Observed restored copy hash,size,mode,mtime retained and required exactly equal baseline; restored verified managed descriptor retained and required equal baseline."
+    ],
+    "narrow_diff": "Only receipt fields/assertions plus clarification of controlled-process preregistration; no mutation target, verification, original paths, schema identity/DSN/root/cap/reserve600s, owner API/source hash changes."
+  },
+  "nonblocking_receipt_wording_limit": "Resolved wording: file fsync+replace receipt is expressly controlled-process preregistration, without parent-directory fsync/crash durability claim. Root plans Git-backed exact driver/plan/review preregistration before execution; that checkpoint not performed or independently observed by this review.",
+  "scope_reconciliation": "C4 conditionalcache canbeomitted withoutsafe measuredbenefit. This unexecuteddriver can only close realbyte runtimeintegrity/miss observation; no crosscallcache, launch/GO, training, CUDA, numericalacceptance, latency/performance or fullT5/M4 closure.",
+  "limits": [
+    "Read-only source/plan/config inspection and ASTparse; no ownerimports, realruntimeinventory hash/copy, PG connections/schema creation, tests, execution, sourceedits, installs, remotes or deletion performed.",
+    "Source clean83a1e128 and exactdriver/plan fingerprints are snapshots; a revised driver requires updated SHA/planreview before execution."
+  ],
+  "historical_initial_review": {
+    "driver_sha256": "d793a5aea3a2e90c24ae5936ab9bb8c4ec780b1afe57f43e660621cfe17f3d20",
+    "plan_sha256": "8e432f7703c1612ef1ee77a197b4bb53678f65c3dc2f17ecf056191dd380c826",
+    "assessment": "Ownership and behavior clear; finite retained-evidence baseline gap reported before execution",
+    "gap": {
+      "status": "Reported to root/author, proposed finite receipt addition",
+      "locations": "driver baseline managedinspect/create/get lines176\u2013179 and mutation metadata199\u2013201; restore221\u2013224",
+      "issue": "Changed managedSHA is saved but original managedidentity is not. Baseline/restored observedfilemodes not saved. Source asserts proper comparison/restoration, but final receipt aftercopycleanup lacks data for independent old/newmanageddigest and mode comparison.",
+      "requested": "Save baseline captured+managed descriptors/SHA and initial original/copy size/modes before mutation, plus observed restoredhash/mode."
+    },
+    "historical_driver_path": "/tmp/tuldok-t5-actual-runtime-mutation-historical-d793a5.py",
+    "historical_plan_path": "/tmp/tuldok-t5-actual-runtime-mutation-plan-historical-d793a5.json"
+  },
+  "review_completed_utc": "2026-10-20T00:08:58.949536+00:00",
+  "final_revision_review": {
+    "driver_sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df",
+    "plan_sha256": "a81f6fe5c879e03cd7ed5f0bd4c3dde84a0bf65af19c09a317151350fd01586a",
+    "driver_matches_final_plan": true,
+    "same_exact_source83a1_identity_schema_dsn_paths_caps": true,
+    "all_ten_source_hashes_rechecked_match": true,
+    "source_still_clean83a1": true,
+    "AST_parse": "PASS; no imports/execution",
+    "remaining_blockers": [],
+    "execution_status": "NOT_EXECUTED by reviewer; actual observation remains root-owned and pending separate execution admission/checkpoint."
+  }
+}

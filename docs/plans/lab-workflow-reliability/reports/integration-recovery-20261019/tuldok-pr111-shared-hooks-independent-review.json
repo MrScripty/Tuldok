@@ -1,0 +1,136 @@
+{
+  "task": "Independent read-only shared-hook ownership review for retained analysis PR111",
+  "reviewed_at_utc": "2026-10-20",
+  "disposition": "Recommend bounded shared-hook ownership approval with the existing wire-binding correction below; implementation and actual integrated qualification remain pending. Root/parent issues ownership approval.",
+  "provenance": {
+    "pr": 111,
+    "url": "https://github.com/MrScripty/Tuldok/pull/111",
+    "head": "0baa38d4e414c1e7daa8c10565d9f140eef3999b",
+    "base": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+    "pending_reliability_source": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "shared_source_worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+    "method": "Exact-head authorized GitHub MCP file/PR reads; local git-object/shared-source reads only. No implementation edits, execution tests, database operations, remote writes or CI polling."
+  },
+  "conclusions": [
+    "Additive query delegates immutable artifact verification and classifier projections to Runs.model_evidence(contract_version=1); no new fit, inference, scheduler, model/scientific acceptance policy, DDL, credential or privilege owner is required.",
+    "The proposed inspect-only named query and fresh page export are suitable bounded integration points. Export is selected by the host route, never a caller field; exact result identities and current authority remain mandatory.",
+    "Use the existing WorkspaceModel native classifier owner for inventory-derived request/mount lifecycle rather than building a second evidence fetch/selection owner in WorkspaceReal. Exclude one-fit and scientific variants explicitly.",
+    "Pending reliability owns overlapping registry/HTTP/transport/lifecycle/asset hunks. Preserve its phase, publication, coordinator, batch, scientific operations, exact guards and repaired direct browser module imports."
+  ],
+  "concrete_wire_correction": {
+    "source": "agent_api.py:1082 validate_selected on pending83a1",
+    "observation": "Existing selected POST contracts reject path/query argument names duplicated in the body, including an equal run_id. retained_analysis.query requires run_id in its logical input.",
+    "correction": "Keep run_id in the registered logical input schema/path. Transmit the wire body without run_id; after exact selection validation, inject the already validated route run_id into a fresh query body. Reject any wire duplicate through existing validation. An absent/mismatched contract or duplicate body Run must fail before query/evidence reads.",
+    "avoid": "Do not weaken global validate_selected, add a duplicate-body exception, or silently override a caller Run to implement this proposal."
+  },
+  "narrow_shared_write_set": [
+    {
+      "file": "agent_api.py",
+      "hunks": "Add only two inspect, nonmutation v1 registry entries plus bounded closed schemas and their normal generated contract/digest export. Keep all old operation versions/pins, AgentClient read-budget and reply guards unchanged. No new transport/facade method is required for generic AgentClient calls."
+    },
+    {
+      "file": "app.py",
+      "hunks": "Import/delegate the existing additive retained_analysis.query; add exact POST len3 retained-analysis and len4 retained-analysis/export branches with require_selection and host export boolean; route Run injection as above. Add explicit static asset mappings for renderer, exact /static/retained-checkpoint-curve.vl.json and four /static/vendor/retained-analysis/*.js URLs. No generic filesystem/static traversal route."
+    },
+    {
+      "file": "static/workspace-real.js",
+      "hunks": "Only new-operation route classification/exact header selection and inclusion in canonical finite timeout, requestSignal AbortController and bounded Content-Length/response read branch. Existing API currently ignores requestSignal unless a recognized bounded-read operation created the controller, so mounting through unmodified api is insufficient. Keep coordinator/phase/publication/scientific controller implementations and lifecycle ordering intact."
+    },
+    {
+      "file": "static/workspace-service.js",
+      "hunks": "WorkspaceModel native verified classifier-only mount/request integration using its existing exact evidence, metric_definition_hashes, checkpoint entries and Run artifact inventory. Retain renderer instance at this owner; dispose before root replacement/rerender, invalidate/load failure and existing credential/nav/Run transitions. Bind late callbacks to current Run/catalog/credential/generation. Separate renderer DOM root; no changes to scientific/field/one-fit behavior."
+    },
+    {
+      "file": "static/workspaces.html",
+      "hunks": "Append the four pinned self-hosted UMD assets in documented order, then retained-analysis.js before the owner initializes/mounts it. Preserve phase/scientific script order and repaired test loader composition."
+    },
+    {
+      "file": "static/workspaces.css",
+      "hunks": "Only if actual integrated layout needs it: scoped retained-analysis root styles; retain existing phase/scientific/coordinator rules."
+    },
+    {
+      "file": "tests and CI",
+      "hunks": "Prefer new focused retained-analysis HTTP/app fixture/test files and the already-owned additive test files. If existing whole-WorkspaceReal direct browser/VM fixtures now instantiate a new global, add the real module and required local dependencies or keep initialization lazy until a verified classifier mount; preserve assertions, never substitute a missing-controller stub. CI workflow is root-coordinated additive command hunks only after exact qualification."
+    },
+    {
+      "file": "docs/contracts/retained-analysis-{query,renderer}.md and own reports",
+      "hunks": "Record chosen wire representation, exact registered hashes, integrated source/evidence and any limits. Agent operations documentation only a narrow new-entry addition if repository convention requires it."
+    }
+  ],
+  "exclusions": [
+    "runs.py is not required for this proposal: query already accepts the existing Runs owner. Any new wrapper there needs a separate concrete reason and hunk approval.",
+    "No access.py/metadata schema/migrations, legacy pin rewrites, run_publication.py, tuldok_client.py, project_cli.py, scientific math/controller changes, captured runtime install or arbitrary user chart/spec support."
+  ],
+  "sequencing": {
+    "isolated_current_head": "The 77 additive files can remain based on main8c9 for isolated review; no existing shared production file is changed at this exact PR head.",
+    "shared_implementation": "Before shared-hook edits, normally compose the root-approved whole83a1 reliability source (or an explicitly supplied successor) into the worker's owned integration branch, or wait until main contains the tree and normally merge main. Root owns serial publication and integration. Do not rebase/cherry-pick old published slices or reconstruct pending controllers from main8c9.",
+    "dependency_kind": "This is shared-owner/composition safety, not a claim that retained_analysis.query inherently needs scientific comparison or batch APIs. Main8c9 has the native classifier owner, but lacks the pending phase/scientific/read-budget changes in overlapping shared hunks.",
+    "revalidation": "Freeze exact composed head and qualify only the actual changed hooks; historical12+browser receipts remain attributed to0baa, not the integrated source."
+  },
+  "evidence_scope": {
+    "author_python_log": "13 tests ran in0.004s;12 passed,1 skipped (ActualPostgresSqlTests requires TULDOK_DATABASE_URL). Projection, request and query-boundary auth/catalog/evidence/SQL orchestration use substitutes.",
+    "author_browser": "Retained actual headless Chromium authored renderer fixture receipt passed. Source asserts CSP/interpreter/local assets, exact authored values, keyboard/focus and SVG selection, pagination/error filtering/390px, stale access-failure-mode reply clearing, malformed/oversized input/spec rejection, fresh export downloaded JSON, reload/dispose and no external asset requests.",
+    "not_proven": "No actual PostgreSQL execution in recorded Python run; no actual native Runs query custody, real HTTP contract binding, browser authenticated Run mount, real credential revocation or full app cold reproduction. Browser revoked mode is a substitute, not real DB access revocation. Even the currently skipped PG test tests the two SQL fragments over a rollback-only TEMP TABLE, not full query/Runs/snapshot/auth behavior.",
+    "this_review": "Source and retained evidence review only. No independent pure/browser/PG execution, vendored-bundle audit, benchmark or performance claim.",
+    "remaining_required": "On the composed exact source: actual selected-contract HTTP positive and absent/wrong/duplicate-route/body rejection, native verified evidence/foreign identity cases, current credential revocation during query/export with final authority fence, fresh exported page exact values/provenance, no-effect accounting, authenticated Runs browser mount and cold reopen, nav/Run/credential/dispose late-response exclusion, local assets under the chosen actual deployment CSP."
+  },
+  "existing_fixture_pattern": {
+    "real_native_classifier": "tests/test_model_evidence.py:ActualEvidenceTests.setUpClass uses image_classification_fixture.populate + ExplicitOwnerFixture.bootstrap/bound, a real retained two-epoch [4,8,12] width/input32 classifier and its verified model_evidence; existing test_workflow_client_http.py:RetainedWorkflowHTTPTests.test_actual_classifier_exact_operands_compare_through_http_and_clean_cli demonstrates reusing it with an inspect credential.",
+    "real_http": "RetainedWorkflowHTTPTests.serve uses ThreadingHTTPServer(make_handler(dataset)), an explicitly issued inspect agent, canonical AgentClient, server shutdown/server_close/join then catalog.close and DROP SCHEMA of the exact fresh owned identity using psycopg.sql.Identifier.",
+    "construction_failure_ownership": "For a new independent fixture, reuse the current tests/test_indexed_diagnostics_publication.py:setUp pre-registration pattern: select UUID/schema, self.dataset=None, register cleanup and flush the exact identity before Metadata(path,dataset_id=identity); assert identity, close metadata, construct Dataset. Thus cleanup owns a known fresh schema even if construction fails. Do not reuse/open old catalogs or drop any schema discovered from unrelated state.",
+    "cleanup_evidence": "After catalog/server/coordinator close, drop only that pre-registered own schema, remove owned temporary files and independently SELECT that exact schema absence. Keep stdout/source/logs/failed attempts. Qualified existing TULDOK_TRAINING_PYTHON and TULDOK_DATABASE_URL are supplied by root; no runtime capture/install or credentials creation is needed."
+  },
+  "retained_evidence": [
+    {
+      "path": "retained_analysis.py",
+      "github_blob_sha": "45297dcd1c511a0cc9c2cd93e5fae8fa674d4c39",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/retained_analysis.py"
+    },
+    {
+      "path": "docs/contracts/retained-analysis-query.md",
+      "github_blob_sha": "85a57053b14ce9f3e1f77fb6d1f2eb1215d01ad1",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/docs__contracts__retained-analysis-query.md"
+    },
+    {
+      "path": "tests/test_retained_analysis.py",
+      "github_blob_sha": "15c4c30b269adbc3380e4ead939448290fd595d6",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/tests__test_retained_analysis.py"
+    },
+    {
+      "path": "static/retained-analysis.js",
+      "github_blob_sha": "4617bba0bbec06a064af2a903138130ed6087107",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/static__retained-analysis.js"
+    },
+    {
+      "path": "docs/plans/retained-analysis/reports/m1/focused-tests.log",
+      "github_blob_sha": "703ee44469b5e86899bdc085b9732c2df58f610a",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/docs__plans__retained-analysis__reports__m1__focused-tests.log"
+    },
+    {
+      "path": "docs/plans/retained-analysis/reports/m2/browser.json",
+      "github_blob_sha": "a4122f3d170dc8eacd2bdeaadcaa4bc97bbb7a80",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/docs__plans__retained-analysis__reports__m2__browser.json"
+    },
+    {
+      "path": "tests/retained_analysis_browser_fixture.py",
+      "github_blob_sha": "9fd08603aa734bb053f17bf7f04797a50af79ab0",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/tests__retained_analysis_browser_fixture.py"
+    },
+    {
+      "path": "tests/browser_retained_analysis.cjs",
+      "github_blob_sha": "c1569378c098d5e16b0ec14fc6117497465a6836",
+      "retained_path": "/tmp/tuldok-pr111-shared-hooks-evidence/tests__browser_retained_analysis.cjs"
+    }
+  ],
+  "retained_evidence_hashes": {
+    "/tmp/tuldok-pr111-shared-hooks-evidence/retained-analysis-renderer.md": "6503951d637d242797afd632ee8eca9caa691ff69cda6c378b009a67a175922e",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/tests__browser_retained_analysis.cjs": "822d6df2d8c29e909f6f0dcee42595f90c9eae70306ff9c8b20eba042bdd05ce",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/tests__retained_analysis_browser_fixture.py": "ececc679267b6e8671ab3fb189ca093f53bf874ad5d9469df0b36ff008f7ad62",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/docs__plans__retained-analysis__reports__m2__browser.json": "dd7c12b4c42e54ab99c12488a3c0129c4878249773ebb369362132d93a3f0389",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/docs__plans__retained-analysis__reports__m1__focused-tests.log": "941d362f28fba1cdc5ad1cca4dfb70ee6a1622d59058fc745660df82d4e181e2",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/static__retained-analysis.js": "b6203812c4dd04586062e903ef981cff074ba80ff5d01eeb218b711c8417a1e9",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/tests__test_retained_analysis.py": "10ab4c7ad35c9df868320add066799a18896538ee59593156d4b52b0b2d1a11a",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/docs__contracts__retained-analysis-query.md": "01f7ee7ea8fec3e470026e49a97fa2ab2ccc1df6a1fc3f97848f166b6d3d7a39",
+    "/tmp/tuldok-pr111-shared-hooks-evidence/retained_analysis.py": "317ba63b0f89367ba26dd62b8157910654943eb8a9d3ab1442f09f09827f218b"
+  }
+}
