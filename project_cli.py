@@ -9,10 +9,12 @@ import os
 from pathlib import Path
 import stat
 import sys
-import tempfile
+import signal
+import threading
 
 from agent_api import (AgentAPIError, AgentClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
                        validate_arguments, verify_artifact, verify_publication_artifact)
+from tuldok_client import WorkflowClient, download
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
 
@@ -33,28 +35,6 @@ def read_arguments(path):
         return decode(raw)
     finally:
         os.close(fd)
-
-
-def download(client, run_id, name, expected_sha256, destination, *, result_ref=None):
-    """Publish verified bytes exclusively; provisional bytes never replace work."""
-    destination = Path(destination)
-    if os.path.lexists(destination):
-        raise AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409)
-    fd, provisional = tempfile.mkstemp(prefix='.tuldok-download-', dir=destination.parent)
-    try:
-        with os.fdopen(fd, 'wb') as handle:
-            receipt = (verify_artifact(client, run_id, name, expected_sha256, consume=handle.write)
-                       if result_ref is None else verify_publication_artifact(client, result_ref, name,
-                           expected_sha256, consume=handle.write))
-            handle.flush()
-            os.fsync(handle.fileno())
-        # Same-directory link is atomic and refuses concurrent destination creation.
-        os.link(provisional, destination, follow_symlinks=False)
-        return dict(receipt, run_id=run_id, name=name, output=str(destination))
-    except FileExistsError:
-        raise AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409) from None
-    finally:
-        os.unlink(provisional)
 
 
 def invoke(client, operation, arguments, *, observer=None, observation=None):
@@ -131,7 +111,92 @@ def parser():
     operation = commands.add_parser('call', help='Call one locally registered compatible operation with bounded JSON arguments')
     operation.add_argument('--operation', required=True)
     operation.add_argument('--arguments', type=Path, required=True)
+    submission = commands.add_parser('submission-manifest', help='Export exact selected material and existing grant without submission')
+    source = submission.add_mutually_exclusive_group(required=True)
+    source.add_argument('--graph-id')
+    source.add_argument('--trial-id')
+    submission.add_argument('--revision', type=int)
+    submission.add_argument('--approval-id', required=True)
+    submission.add_argument('--request-key', required=True)
+    for command in ('submit-workflow', 'reconcile-submission', 'compare'):
+        workflow = commands.add_parser(command, help='Explicit consumer workflow with typed machine-readable outcome')
+        workflow.add_argument('--manifest', type=Path, required=True,
+                              help='Exact exported manifest, or unknown receipt for reconcile-submission')
+    monitoring = commands.add_parser('monitor', help='Read-only finite monitoring; stopping does not cancel compute')
+    monitoring.add_argument('--run-id', required=True)
+    monitoring.add_argument('--timeout', type=float, default=60)
+    cancellation = commands.add_parser('cancel-workflow', help='Explicit cancellation showing requested versus drained')
+    cancellation.add_argument('--run-id', required=True)
+    collection = commands.add_parser('collection-manifest', help='Export bounded selection from current exact artifact inventory')
+    source = collection.add_mutually_exclusive_group(required=True)
+    source.add_argument('--run-id')
+    source.add_argument('--ref', type=Path)
+    collection.add_argument('--name', action='append', required=True)
+    collecting = commands.add_parser('collect', help='Collect exact files; explicit resume rechecks successes and restarts incomplete items')
+    collecting.add_argument('--manifest', type=Path, required=True)
+    collecting.add_argument('--directory', type=Path, required=True)
+    collecting.add_argument('--resume', type=Path)
+    comparison = commands.add_parser('comparison-manifest', help='Export exact checkpoint/evaluation/metric operands from selected evidence')
+    comparison.add_argument('--run-id', required=True)
+    comparison.add_argument('--other-run-id', required=True)
+    comparison.add_argument('--checkpoint-sha256', required=True)
+    comparison.add_argument('--other-checkpoint-sha256', required=True)
+    comparison.add_argument('--metric-id', required=True)
+    comparison.add_argument('--mode', choices=('paired', 'side_by_side'), default='paired')
+    comparison.add_argument('--ref', type=Path)
+    comparison.add_argument('--other-ref', type=Path)
     return result
+
+
+WORKFLOW_COMMANDS = frozenset(('submission-manifest', 'submit-workflow', 'reconcile-submission',
+    'monitor', 'cancel-workflow', 'collection-manifest', 'collect', 'comparison-manifest', 'compare'))
+
+
+def workflow_command(client, args):
+    workflow = WorkflowClient(client)
+    stop = threading.Event()
+    old_handler = None
+    if args.command in ('monitor', 'collect') and threading.current_thread() is threading.main_thread():
+        old_handler = signal.signal(signal.SIGINT, lambda *_: stop.set())
+    try:
+        if args.command == 'submission-manifest':
+            fields = dict(approval_id=args.approval_id, request_key=args.request_key)
+            if args.trial_id is not None:
+                if args.revision is not None:
+                    raise AgentAPIError('Trial selection reads its current Study revision; omit --revision.')
+                value = workflow.trial_submission_manifest(args.trial_id, **fields)
+            else:
+                if args.revision is None:
+                    raise AgentAPIError('Graph selection requires --revision.')
+                value = workflow.submission_manifest(args.graph_id, args.revision, **fields)
+        elif args.command in ('submit-workflow', 'reconcile-submission'):
+            action = workflow.submit if args.command == 'submit-workflow' else workflow.reconcile
+            value = action(read_arguments(args.manifest))
+            return value, value['state'] == 'acknowledged'
+        elif args.command == 'monitor':
+            value = workflow.monitor(args.run_id, timeout=args.timeout, cancelled=stop)
+            return value, value['state'] == 'terminal'
+        elif args.command == 'cancel-workflow':
+            value = workflow.cancel(args.run_id)
+        elif args.command == 'collection-manifest':
+            value = workflow.collection_manifest(names=args.name, run_id=args.run_id,
+                result_ref=read_arguments(args.ref) if args.ref else None)
+        elif args.command == 'collect':
+            value = workflow.collect(read_arguments(args.manifest), args.directory,
+                resume=read_arguments(args.resume) if args.resume else None, cancelled=stop)
+            return value, value['state'] == 'complete'
+        elif args.command == 'comparison-manifest':
+            value = workflow.comparison_manifest(args.run_id, args.other_run_id,
+                checkpoint_sha256=args.checkpoint_sha256, other_checkpoint_sha256=args.other_checkpoint_sha256,
+                metric_id=args.metric_id, mode=args.mode, result_ref=read_arguments(args.ref) if args.ref else None,
+                other_result_ref=read_arguments(args.other_ref) if args.other_ref else None)
+        else:
+            value = workflow.compare(read_arguments(args.manifest))
+            return value, value['status'] < 400
+        return value, True
+    finally:
+        if old_handler is not None:
+            signal.signal(signal.SIGINT, old_handler)
 
 
 def _write_output(stream, value, observer, observation, *, status=200, failed=False,
@@ -182,6 +247,10 @@ def main(argv=None, *, observer=None):
         if args.command == 'recover-coordinator':
             client_type = CoordinatorOwnerClient
         client = client_type.from_config(args.config)
+        if args.command in WORKFLOW_COMMANDS:
+            result, success = workflow_command(client, args)
+            written = _write_output(sys.stdout, result, observer, observation, status=200 if success else 409)
+            return 0 if success and written else 1
         if args.command in ('download', 'download-publication'):
             ref = read_arguments(args.ref) if args.command == 'download-publication' else None
             if ref is not None:

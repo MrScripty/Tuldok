@@ -44,6 +44,8 @@ Existing catalogs need the explicit [schema upgrade](docs/contracts/workspace-st
 
 The earlier dataset editor remains at `/workbench`; the book-corner capture studio remains at `/`. Tuldok runs independently of Book-Be-Gone.
 
+The [Python workflow client and CLI](docs/contracts/workflow-client.md) export exact submission and collection manifests, monitor with finite deadlines, explicitly cancel, collect verified artifacts and delegate exact comparison through the existing local agent API. They use its private configuration and owner-issued grants.
+
 ## Go further
 
 - [Supported formats and workflow guides](docs/README.md)

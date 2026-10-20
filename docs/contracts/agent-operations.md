@@ -312,3 +312,16 @@ vocabulary. Source inspection remains inert; declaration does not prove runtime
 availability, grant permission or numerical acceptance. The current Project v2
 reader also accepts an ordinary managed recipe, preserving exact manifest/source
 capture and the current operation scope gate.
+
+## Python consumer workflows
+
+[`tuldok_client.WorkflowClient`](workflow-client.md) reuses `AgentClient` private
+configuration and exact negotiated contracts for explicit submit/reconcile,
+finite read-only monitor, scoped cancellation, bounded verified collection and
+exact comparison. Import starts no app, database, numerical stack, process or
+network connection. Generated closed manifests bind catalog and selected domain
+identities without tokens. Unknown effects require explicit same-body/key
+reconciliation; a failed request never selects an alternate operation. Existing
+low-level `AgentClient`, operation documents and extension author SDK roles are
+unchanged. The installed registry has no batching operation; the facade uses the
+existing verified single-artifact reader and adds no server contract.
