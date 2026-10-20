@@ -75,8 +75,14 @@ class CanonicalAuthorTests(unittest.TestCase):
             definition=policy[kind]['definition'] if kind=='task' else policy[kind]
             raw=json.dumps(definition,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()
             self.assertEqual(hashlib.sha256(raw).hexdigest(),contract['policy'][kind]['definition_sha256'])
-        for name in ('evidence.py','__init__.py'):
-            self.assertEqual((PACKAGE/'tuldok_extension_sdk'/name).read_bytes(),(Path(__file__).resolve().parents[1]/'tuldok_extension_sdk'/name).read_bytes())
+        # This captured SDK is pinned by the canonical inference authority;
+        # additive APIs in the live SDK must not rewrite historical source.
+        self.assertEqual(set(authority['sdk_sources']),
+                         {'tuldok_extension_sdk/evidence.py','tuldok_extension_sdk/__init__.py'})
+        for name,digest in authority['sdk_sources'].items():
+            raw=(PACKAGE/name).read_bytes()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),digest,name)
+            self.assertEqual((self.root/'authored'/name).read_bytes(),raw,name)
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],0)
 
     def test_new_package_validates_from_copied_kit_without_app_database_or_numerical_startup(self):
