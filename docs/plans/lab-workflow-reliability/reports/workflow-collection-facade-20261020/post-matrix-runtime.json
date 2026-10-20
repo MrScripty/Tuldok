@@ -1,0 +1,10 @@
+{
+  "observed_utc": "2026-10-20T23:23:03.905222+00:00",
+  "observation_scope": "Post-matrix host/package inventory, not another measured arm",
+  "cpu_model": "AMD EPYC 9V45 96-Core Processor",
+  "python": "3.12.14",
+  "psycopg": "3.3.6",
+  "jsonschema": "4.26.0",
+  "postgresql_server_version_from_matrix_start": 170011,
+  "concurrency": "Parent/reviewer held tests/PG/heavy qualification; root did light prose/source/Git and remote-CI metadata polling. No exclusive-host claim."
+}

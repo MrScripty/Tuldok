@@ -1,0 +1,11 @@
+{
+  "source_commit": "322482d2ca6fa2af8effb7a6a5080313efe745b4",
+  "started_utc": "2026-10-20T23:12:17.220087+00:00",
+  "completed_utc": "2026-10-20T23:12:34.679800+00:00",
+  "exit_code": 0,
+  "before_namespaces": [],
+  "after_namespaces": [],
+  "raw_log_sha256": "294e973631a23a035fc1415a2ff61a958af0c6bd100c2e6c05edae17101560e8",
+  "domain_sha256": "367468a89a7495b2291565e1778159b82dbc55fcd9177e1240bbeef0755e37f7",
+  "exact_cleanup_absence_verified_independently": true
+}

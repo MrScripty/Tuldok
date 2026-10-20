@@ -1,0 +1,16 @@
+{
+  "recorded_utc": "2026-10-20T23:15:06.526442+00:00",
+  "head": "00d32f85229954aed93b333d4fbf89494631e7b5",
+  "git_status": "",
+  "schemas": [],
+  "postgresql_server_version": 170011,
+  "source_sha256": {
+    "tests/benchmark_workflow_collection.py": "b0b19c2d7b56cd190d7e69a793caf990c051633bc03a7788aaedced1c8aac1cf",
+    "tests/test_benchmark_workflow_collection.py": "80e3905cb47bc699df487750f0b238dc934ec581659333fc35fd8deea858b97f",
+    "tests/benchmark_lab_workflow.py": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+    "tests/benchmark_artifact_segments.py": "be6fc2e6c32c21baed010553d1e3f653d5d760ce9266d7c7a813dd91f48d465e",
+    "tuldok_client.py": "3cdfb0a9823ec7527833a8838911c3a1d62ecc0d8376c438e3100c6c9f30aee6",
+    "agent_api.py": "b2c11bb56dd7688850cbfce5dc6445210056fbd7c966481e614e9eeb15a397c8",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e"
+  }
+}

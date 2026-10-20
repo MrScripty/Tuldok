@@ -1,0 +1,374 @@
+{
+  "format": "facade_cost_derived_cells_v1",
+  "derivation": "All 36 paired observations retained; medians use paired ratios, never ratio of marginal medians. Raw resource/request/owner rows remain authoritative.",
+  "cells": [
+    {
+      "source_kind": "publication",
+      "items": 20,
+      "history": 56,
+      "n": 9,
+      "batch_faster": 9,
+      "batch_slower": 0,
+      "ratios": {
+        "min": 0.7638812872000791,
+        "median": 0.7952019476147725,
+        "max": 0.8165694435114376
+      },
+      "strata": [
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "individual",
+          "n": 2,
+          "ratios": [
+            0.7962109858906918,
+            0.7851784508317874
+          ],
+          "median": 0.7906947183612396
+        },
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "batch",
+          "n": 1,
+          "ratios": [
+            0.8165694435114376
+          ],
+          "median": 0.8165694435114376
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "individual",
+          "n": 3,
+          "ratios": [
+            0.7638812872000791,
+            0.7992984726539409,
+            0.7952019476147725
+          ],
+          "median": 0.7952019476147725
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "batch",
+          "n": 3,
+          "ratios": [
+            0.7679139862478928,
+            0.816501073110293,
+            0.7818570825440516
+          ],
+          "median": 0.7818570825440516
+        }
+      ],
+      "arms": {
+        "individual": {
+          "wall_ms_median": 1271.302688,
+          "cpu_ms_median": 1200.137,
+          "http_request_median": 21,
+          "request_body_bytes_median": 12757,
+          "response_body_bytes_median": 460504,
+          "rss_after_kib_median": 72348,
+          "logical_read_chars_median": 925135,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "run_publication.artifact_segment.calls": 20,
+            "run_publication.result.calls": 21,
+            "runs._load.calls": 62
+          }
+        },
+        "batch": {
+          "wall_ms_median": 989.484744,
+          "cpu_ms_median": 922.9779999999997,
+          "http_request_median": 2,
+          "request_body_bytes_median": 14138,
+          "response_body_bytes_median": 471917,
+          "rss_after_kib_median": 72096,
+          "logical_read_chars_median": 925135,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "run_publication.artifact_segment.calls": 20,
+            "run_publication.result.calls": 21,
+            "runs._load.calls": 64
+          }
+        }
+      }
+    },
+    {
+      "source_kind": "run",
+      "items": 1,
+      "history": 8,
+      "n": 9,
+      "batch_faster": 0,
+      "batch_slower": 9,
+      "ratios": {
+        "min": 1.719976579774103,
+        "median": 2.0217413140203004,
+        "max": 2.295047031183774
+      },
+      "strata": [
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "individual",
+          "n": 2,
+          "ratios": [
+            2.295047031183774,
+            1.947248269160838
+          ],
+          "median": 2.121147650172306
+        },
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "batch",
+          "n": 1,
+          "ratios": [
+            2.166093318078212
+          ],
+          "median": 2.166093318078212
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "individual",
+          "n": 3,
+          "ratios": [
+            1.719976579774103,
+            1.9293902763443058,
+            1.778527933929746
+          ],
+          "median": 1.778527933929746
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "batch",
+          "n": 3,
+          "ratios": [
+            2.2557621302920405,
+            2.1058031468896066,
+            2.0217413140203004
+          ],
+          "median": 2.1058031468896066
+        }
+      ],
+      "arms": {
+        "individual": {
+          "wall_ms_median": 106.877703,
+          "cpu_ms_median": 103.65000000000002,
+          "http_request_median": 2,
+          "request_body_bytes_median": 117,
+          "response_body_bytes_median": 635345,
+          "rss_after_kib_median": 71268,
+          "logical_read_chars_median": 658974,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "runs._external_inventory.calls": 2,
+            "runs._load.calls": 2,
+            "runs.artifact_segment.calls": 1
+          }
+        },
+        "batch": {
+          "wall_ms_median": 214.259132,
+          "cpu_ms_median": 205.87299999999985,
+          "http_request_median": 2,
+          "request_body_bytes_median": 233,
+          "response_body_bytes_median": 635496,
+          "rss_after_kib_median": 71272,
+          "logical_read_chars_median": 658974,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "runs._external_inventory.calls": 2,
+            "runs._load.calls": 4,
+            "runs.artifact_segment.calls": 1
+          }
+        }
+      }
+    },
+    {
+      "source_kind": "run",
+      "items": 20,
+      "history": 8,
+      "n": 9,
+      "batch_faster": 9,
+      "batch_slower": 0,
+      "ratios": {
+        "min": 0.7710673623832193,
+        "median": 0.7999848117115825,
+        "max": 0.8389376709189524
+      },
+      "strata": [
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "individual",
+          "n": 2,
+          "ratios": [
+            0.7919592206842988,
+            0.7728775208612497
+          ],
+          "median": 0.7824183707727743
+        },
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "batch",
+          "n": 1,
+          "ratios": [
+            0.8389376709189524
+          ],
+          "median": 0.8389376709189524
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "individual",
+          "n": 3,
+          "ratios": [
+            0.7710673623832193,
+            0.7999848117115825,
+            0.8125194773635402
+          ],
+          "median": 0.7999848117115825
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "batch",
+          "n": 3,
+          "ratios": [
+            0.8123940577070846,
+            0.8123682745738581,
+            0.7990546299121762
+          ],
+          "median": 0.8123682745738581
+        }
+      ],
+      "arms": {
+        "individual": {
+          "wall_ms_median": 628.540535,
+          "cpu_ms_median": 584.6820000000004,
+          "http_request_median": 21,
+          "request_body_bytes_median": 2340,
+          "response_body_bytes_median": 649912,
+          "rss_after_kib_median": 71008,
+          "logical_read_chars_median": 749071,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "runs._external_inventory.calls": 21,
+            "runs._load.calls": 21,
+            "runs.artifact_segment.calls": 20
+          }
+        },
+        "batch": {
+          "wall_ms_median": 505.874491,
+          "cpu_ms_median": 476.05800000000016,
+          "http_request_median": 2,
+          "request_body_bytes_median": 4441,
+          "response_body_bytes_median": 652125,
+          "rss_after_kib_median": 70772,
+          "logical_read_chars_median": 749071,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "runs._external_inventory.calls": 21,
+            "runs._load.calls": 23,
+            "runs.artifact_segment.calls": 20
+          }
+        }
+      }
+    },
+    {
+      "source_kind": "run",
+      "items": 20,
+      "history": 55,
+      "n": 9,
+      "batch_faster": 9,
+      "batch_slower": 0,
+      "ratios": {
+        "min": 0.7454222822211255,
+        "median": 0.8046426715581908,
+        "max": 0.8416751599211438
+      },
+      "strata": [
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "individual",
+          "n": 2,
+          "ratios": [
+            0.8001425185918772,
+            0.8163053330303075
+          ],
+          "median": 0.8082239258110924
+        },
+        {
+          "condition": "first_pair_fresh_process",
+          "first_arm": "batch",
+          "n": 1,
+          "ratios": [
+            0.7990127775121163
+          ],
+          "median": 0.7990127775121163
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "individual",
+          "n": 3,
+          "ratios": [
+            0.7867151474110059,
+            0.804680615824648,
+            0.7454222822211255
+          ],
+          "median": 0.7867151474110059
+        },
+        {
+          "condition": "warm_pair_same_process",
+          "first_arm": "batch",
+          "n": 3,
+          "ratios": [
+            0.8046426715581908,
+            0.8062355328527651,
+            0.8416751599211438
+          ],
+          "median": 0.8062355328527651
+        }
+      ],
+      "arms": {
+        "individual": {
+          "wall_ms_median": 622.592455,
+          "cpu_ms_median": 571.4500000000005,
+          "http_request_median": 21,
+          "request_body_bytes_median": 2340,
+          "response_body_bytes_median": 649912,
+          "rss_after_kib_median": 71992,
+          "logical_read_chars_median": 749071,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "runs._external_inventory.calls": 21,
+            "runs._load.calls": 21,
+            "runs.artifact_segment.calls": 20
+          }
+        },
+        "batch": {
+          "wall_ms_median": 493.100334,
+          "cpu_ms_median": 465.86200000000014,
+          "http_request_median": 2,
+          "request_body_bytes_median": 4441,
+          "response_body_bytes_median": 652125,
+          "rss_after_kib_median": 71108,
+          "logical_read_chars_median": 749071,
+          "physical_read_bytes_median": 0,
+          "logical_write_chars_median": 327680,
+          "physical_write_bytes_median": 0,
+          "owner_counts_median": {
+            "runs._external_inventory.calls": 21,
+            "runs._load.calls": 23,
+            "runs.artifact_segment.calls": 20
+          }
+        }
+      }
+    }
+  ]
+}

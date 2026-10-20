@@ -1,0 +1,6 @@
+test_stopped_transfer_retains_recovery_timing_and_exact_publication_consumers (test_integrated_retention_restore.IntegratedRetentionRestoreTests.test_stopped_transfer_retains_recovery_timing_and_exact_publication_consumers) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 16.994s
+
+OK

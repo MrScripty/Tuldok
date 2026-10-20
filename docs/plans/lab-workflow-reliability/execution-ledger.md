@@ -11,9 +11,28 @@ fixed matrix and exclusions are in the plan; every arm/outlier, exact source,
 environment, raw resource/request/owner observations and integrity/cleanup remain
 required. Two focused pure reporting-oracle tests pass: corrupt/provisional local
 bytes, partial receipts and a contradictory attached Ref cannot become a successful
-sample. Actual pilot/matrix and independent source review remain pending. No
-production, producer, schema, contract, runtime installation or generic speedup
-is inferred from this admission.
+sample. Root and independent executable-source reviews cleared frozen00d32f8
+before its pilot. The pilot passed2pairs/4arms with exact cleanup; the separately
+admitted quiet final matrix completed36pairs/72arms/12freshprocesses, retaining all
+samples, orders and outliers. All27 twenty-item pairs were faster; first/warm
+median paired ratios were0.791959/0.806177 at Run history8,0.800143/0.804662 at
+history55 and0.796211/0.788530 for exact attachedRef history56. All9 one-item
+controls regressed (2.166093 first/1.975566 warm). The evidence supports the
+existing explicit twenty-small-item facade; ordinary remains default and2–19
+remain unmeasured.
+
+All whole hashes, original Run/events/accounting and zero-replay tripwires passed;
+the exact two final schemas/temporary directories were removed. External source/
+namespace bookends stayed exact/empty. The window excluded concurrent tests/PG/
+heavy qualification, while light lead Git/prose/remote-CI activity continued.
+Raw resources/request/owner observations, honest first/warm/order strata and the
+scoped decision are retained in the
+[facade report](reports/workflow-collection-facade-20261020/acceptance.md).
+Its report-only follow-up also archives the independent322 stopped-transfer pass
+and the separate exactcd420 root12 neutral HTTP/CLI pass without changing their
+original attribution. Independent final evidence review and hosted integration
+remain pending. No production, producer, schema, contract, runtime installation,
+automatic threshold, fullT5 or generic speedup is inferred from this witness.
 
 ## 2026-10-20 — Integrated stopped-transfer acceptance admission
 

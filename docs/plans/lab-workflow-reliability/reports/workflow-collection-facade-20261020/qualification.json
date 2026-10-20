@@ -1,0 +1,45 @@
+{
+  "format": "facade_collection_cost_qualification_v1",
+  "frozen_source_commit": "00d32f85229954aed93b333d4fbf89494631e7b5",
+  "production_composition_commit": "cd420c44c42ff85487965a858865170cfc0a9358",
+  "base_commit": "322482d2ca6fa2af8effb7a6a5080313efe745b4",
+  "driver_sha256": "b0b19c2d7b56cd190d7e69a793caf990c051633bc03a7788aaedced1c8aac1cf",
+  "status": "actual_matrix_and_independent_recomputation_clear_authored_report_review_hosted_integration_pending",
+  "pilot_command": "PYTHONPATH=.:tests PYTHONDONTWRITEBYTECODE=1 /workspace/tuldok-qa-venv/bin/python tests/benchmark_workflow_collection.py --pilot --out <new-output-directory>",
+  "matrix_command": "PYTHONPATH=.:tests PYTHONDONTWRITEBYTECODE=1 /workspace/tuldok-qa-venv/bin/python tests/benchmark_workflow_collection.py --out <new-output-directory>",
+  "database_requirement": "Explicit parent-provisioned disposable PostgreSQL17.11 through TULDOK_DATABASE_URL; no credentials retained",
+  "pilot": {
+    "pairs": 2,
+    "arms": 4,
+    "fresh_processes": 2,
+    "exit_code": 0
+  },
+  "matrix": {
+    "pairs": 36,
+    "arms": 72,
+    "fresh_processes": 12,
+    "exit_code": 0,
+    "twenty_item_lower_elapsed_pairs": 27,
+    "one_item_higher_elapsed_pairs": 9,
+    "omitted_samples": 0
+  },
+  "pure_oracle_tests": {
+    "tests": 2,
+    "seconds": 0.001,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "log": "reporting-oracle.log"
+  },
+  "source_bookends": "Clean measured worktree at same00d32f8 plus named hashes before/after; environment-start/finish binds broader production/helper hashes. Parent isolated legacy worktree appeared separately.",
+  "cleanup": "Pilot one schema and final two exact schemas/directories removed; external initial/final catalog namespace arrays empty.",
+  "independent_review": "independent-matrix-review.json",
+  "decision": "Supports existing explicit batch facade for measured20x16KiB selection; ordinary remains default; no2\u201319 threshold or policy change.",
+  "scope_limits": [
+    "Same-source local facade boundary only, not generic/end-to-end/lab performance or installed-runtime mutation proof.",
+    "First pairs follow bootstrap/export; second arms are warmed by their peer; no OS/PG cache-cold claim.",
+    "Per cell9pairs with5ordinary-first/4batch-first; raw first/warm/order strata retained.",
+    "Source/test review and independent numeric recomputation are distinct from hosted candidate and postmerge integration.",
+    "PUB-1 and SCI-1 genuine real inputs remain missing."
+  ]
+}

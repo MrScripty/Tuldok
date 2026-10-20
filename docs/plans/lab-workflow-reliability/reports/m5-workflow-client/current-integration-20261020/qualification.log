@@ -1,0 +1,20 @@
+SUBJECT cd420c44c42ff85487965a858865170cfc0a9358
+SCOPE: Existing12 neutral HTTP/CLI cases; classifier comparison excluded because no selected qualified local CPU training runtime.
+test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown (test_workflow_client_http.WorkflowHTTPTests.test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown) ... ok
+test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success (test_workflow_client_http.WorkflowHTTPTests.test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success) ... ok
+test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result (test_workflow_client_http.WorkflowHTTPTests.test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result) ... ok
+test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation (test_workflow_client_http.WorkflowHTTPTests.test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation) ... ok
+test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional (test_workflow_client_http.WorkflowHTTPTests.test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional) ... ok
+test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event (test_workflow_client_http.WorkflowHTTPTests.test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event) ... ok
+test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback (test_workflow_client_http.WorkflowHTTPTests.test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback) ... ok
+test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again (test_workflow_client_http.WorkflowHTTPTests.test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again) ... ok
+test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains (test_workflow_client_http.WorkflowHTTPTests.test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains) ... ok
+test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber (test_workflow_client_http.WorkflowHTTPTests.test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber) ... ok
+test_exact_attached_publication_collection_and_revocation_on_resume (test_workflow_client_http.RetainedWorkflowHTTPTests.test_exact_attached_publication_collection_and_revocation_on_resume) ... ok
+test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation (test_workflow_client_http.RetainedWorkflowHTTPTests.test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 97.352s
+
+OK
+{"head": "cd420c44c42ff85487965a858865170cfc0a9358", "tests": 12, "failures": 0, "errors": 0, "skipped": 0, "seconds": 97.36058763600005, "scope": "current12 neutral HTTP/CLI; explicit classifier exclusion", "schemas_before": [], "owned_schemas_removed": [], "schemas_after": []}
