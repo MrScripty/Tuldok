@@ -1,5 +1,5 @@
 {
-  "observed_utc": "2026-10-20T04:38:57.479366+00:00",
+  "observed_utc": "2026-10-20T04:48:30.245995+00:00",
   "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
   "order": [
     111,
@@ -23,7 +23,45 @@
         "/tmp/tuldok-project-startup-root-actual-receipt-review.json"
       ],
       "merge_clearance": false,
-      "pending": "Freshcurrentheadgatesandindependentcompletedlogs. Old0ba4twoCPU successesisnotnewheadqualification."
+      "pending": "Freshcurrentheadgatesandindependentcompletedlogs. Old0ba4twoCPU successesisnotnewheadqualification.",
+      "latest_ci_snapshot": {
+        "observed_utc": "2026-10-20T04:46:38.641053+00:00",
+        "pr": 111,
+        "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+        "base": "main",
+        "base_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+        "draft": true,
+        "checks": [
+          {
+            "id": 118455820065,
+            "name": "workspace-ui",
+            "status": "queued",
+            "conclusion": null,
+            "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107677/job/118455820065"
+          },
+          {
+            "id": 118455819951,
+            "name": "captured-cpu",
+            "status": "queued",
+            "conclusion": null,
+            "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107631/job/118455819951"
+          },
+          {
+            "id": 118455819855,
+            "name": "catalog",
+            "status": "queued",
+            "conclusion": null,
+            "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107701/job/118455819855"
+          },
+          {
+            "id": 118455819825,
+            "name": "lifecycle",
+            "status": "in_progress",
+            "conclusion": null,
+            "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107636/job/118455819825"
+          }
+        ]
+      }
     },
     {
       "pr": 112,
@@ -41,7 +79,31 @@
         "/tmp/tuldok-pr111-112-project-startup-publication.json"
       ],
       "merge_clearance": false,
-      "pending": "Freshcurrentheadlifecycle. After111merge,retargetwithbase/prospectivetreeproof. Keep111until112retargeted."
+      "pending": "Freshcurrentheadlifecycle. After111merge,retargetwithbase/prospectivetreeproof. Keep111until112retargeted.",
+      "latest_ci_snapshot": {
+        "observed_utc": "2026-10-20T04:46:39.721637+00:00",
+        "pr": 112,
+        "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+        "base": "feature/retained-analysis-query-20261019",
+        "base_sha": "29011daea37f101ee30be9bc10aab702a16c830a",
+        "draft": true,
+        "checks": [
+          {
+            "id": 118455821471,
+            "name": "lifecycle",
+            "status": "queued",
+            "conclusion": null,
+            "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370108074/job/118455821471"
+          },
+          {
+            "id": 118455819881,
+            "name": "lifecycle",
+            "status": "queued",
+            "conclusion": null,
+            "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107550/job/118455819881"
+          }
+        ]
+      }
     }
   ]
 }

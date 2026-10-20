@@ -1,0 +1,82 @@
+{
+  "feature": {
+    "content": [
+      {
+        "type": "text",
+        "text": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/refs#get-a-reference\",\"status\":\"404\"}"
+      }
+    ],
+    "structuredContent": {
+      "error": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/refs#get-a-reference\",\"status\":\"404\"}",
+      "error_code": "NOT_FOUND",
+      "error_data": {
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest/git/refs#get-a-reference",
+        "status": "404"
+      }
+    },
+    "isError": true
+  },
+  "repair": {
+    "content": [
+      {
+        "type": "text",
+        "text": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/refs#get-a-reference\",\"status\":\"404\"}"
+      }
+    ],
+    "structuredContent": {
+      "error": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/refs#get-a-reference\",\"status\":\"404\"}",
+      "error_code": "NOT_FOUND",
+      "error_data": {
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest/git/refs#get-a-reference",
+        "status": "404"
+      }
+    },
+    "isError": true
+  },
+  "main": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main\",\"object\":{\"sha\":\"c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\"}}",
+      "title": "main",
+      "modified_date": null,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main",
+      "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main",
+      "display_title": "main",
+      "structuredContent": {
+        "title": "main",
+        "content": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main\",\"object\":{\"sha\":\"c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\"}}",
+        "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main"
+      }
+    },
+    "isError": false
+  },
+  "checkpoint": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\"ref\":\"refs/heads/checkpoint/lab-integration-20261019\",\"node_id\":\"REF_kwDOUaTr69oALnJlZnMvaGVhZHMvY2hlY2twb2ludC9sYWItaW50ZWdyYXRpb24tMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/checkpoint/lab-integration-20261019\",\"object\":{\"sha\":\"53968977dd6b8795b705e02757df220599d4a58f\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/53968977dd6b8795b705e02757df220599d4a58f\"}}",
+      "title": "lab-integration-20261019",
+      "modified_date": null,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/checkpoint/lab-integration-20261019",
+      "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/checkpoint/lab-integration-20261019",
+      "display_title": "lab-integration-20261019",
+      "structuredContent": {
+        "title": "lab-integration-20261019",
+        "content": "{\"ref\":\"refs/heads/checkpoint/lab-integration-20261019\",\"node_id\":\"REF_kwDOUaTr69oALnJlZnMvaGVhZHMvY2hlY2twb2ludC9sYWItaW50ZWdyYXRpb24tMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/checkpoint/lab-integration-20261019\",\"object\":{\"sha\":\"53968977dd6b8795b705e02757df220599d4a58f\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/53968977dd6b8795b705e02757df220599d4a58f\"}}",
+        "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/checkpoint/lab-integration-20261019"
+      }
+    },
+    "isError": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "observed_utc": "2026-10-20T04:46:38.641053+00:00",
+  "pr": 111,
+  "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "base": "main",
+  "base_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "draft": true,
+  "checks": [
+    {
+      "id": 118455820065,
+      "name": "workspace-ui",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107677/job/118455820065"
+    },
+    {
+      "id": 118455819951,
+      "name": "captured-cpu",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107631/job/118455819951"
+    },
+    {
+      "id": 118455819855,
+      "name": "catalog",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107701/job/118455819855"
+    },
+    {
+      "id": 118455819825,
+      "name": "lifecycle",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107636/job/118455819825"
+    }
+  ]
+}

@@ -44,11 +44,10 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "Finish exact98 onward hosted acceptance and serial merges/retargets",
-    "Required latestmain6f4 postmerge workflows before terminalacceptance/cleanup",
-    "Complete phase timing, measured optimizations, supported client, compatible pair and remaining M1-M6 acceptance",
-    "Specific original diagnostic receipt and lab science acceptance input remains missing; no science/CUDA claim",
-    "Preserve82originalheads/96worktrees, PR91 and unrelated resources; no branch deletion yet"
+    "PR111 head29011: latest lifecycle, captured-cpu, catalog and workspace-ui gates plus independent completed-log review",
+    "After111 merge and112 retarget with exact base/prospective-tree proof: PR112 head0ded fresh lifecycle gate and independent completed-log review",
+    "PUB-1: original failed diagnostic bytes/path/profile/caps/failure receipt",
+    "SCI-1: owned qualified criterion and compatible real lab pair"
   ],
   "external_mutations": [
     {
@@ -232,8 +231,8 @@
       "disposition": "retained-protected pending required CI and merge"
     }
   ],
-  "checkpoint_at": "2026-10-19T21:59:58.775072+00:00",
-  "state": "98/99CI failures independentlydiagnosed/repaired; fresh98-104checks pending; M4matrix/M5client/M6comparison active",
+  "checkpoint_at": "2026-10-20T04:48:30.245995+00:00",
+  "state": "PR108 merged and two task aliases safely retired; reviewed startup repair published in draft111/112; fresh corrected-head hosted gates pending",
   "hosted_runs": [
     {
       "id": 39282700306,
@@ -357,11 +356,17 @@
       "reported_impact": "workflow processing delays"
     }
   },
-  "blocker": null,
+  "blocker": {
+    "status": "pending",
+    "action": "Qualify and merge corrected PR111 then PR112",
+    "reason": "Exact corrected-head hosted gates have not completed; no merge clearance",
+    "denied": false,
+    "uncertain_write": false
+  },
   "resume": [
-    "Continue source from root coordinator UIa7efd and worker M3bdcc; independently review M3 then whole normal-compose UI before qualification/publishing",
-    "Parent owns passive hosted monitoring. Main6f4 PR96/97 merged equal-tested-trees; next98base main exactd07",
-    "Specific PUB-1 original diagnostic and SCI-1 lab acceptance inputs pending; continue independent implementation"
+    "Parent owns passive hosted CI monitoring; reactivate implementation lead for failures or readiness. Serial order111 then112.",
+    "Read tuldok-pending-111-112-activation.json and exact current GitHub heads before any merge. Do not relabel old0ba4 CPU success as new29011 qualification.",
+    "Preserve original82 refs,96 worktree records,91 reachable commits, README67, separate plan91 and unrelated work."
   ],
   "resumed_after_parent_message": "2026-10-19T16:29:00Z",
   "latest_ci_failure": {
@@ -665,7 +670,7 @@
       "seconds": 0.127
     }
   },
-  "updated_at": "2026-10-19T21:19:06.669379+00:00",
+  "updated_at": "2026-10-20T04:48:30.245995+00:00",
   "cleanup_dependency_chain": [
     "89->90;retarget90tomainbefore89branchdelete",
     "90->92;retarget92tomainbefore90branchdelete",
@@ -682,15 +687,18 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": {
-    "root_worktree": "/workspace/Tuldok-lab-coordinator-ui-m2",
-    "root_branch": "feature/lab-coordinator-panel-20261019",
-    "root_source": "38c7844b3c091a9a21ff9d4b73a56b89945478de",
-    "state": "M2UIpublishedPR102, independentreviewpending; M3coreworkeractive; rootreviewsnextM3source thenimplements timing UI/otherplan slices",
-    "worker_worktree": "/workspace/Tuldok-lab-phase-timing-m3",
-    "parent_role": "passivehostedCI; rootserialintegration/source",
-    "pending_ci": "96lifecycle;97 archivequalifiedholdbase;98/99/100/101latest5f/102hosted; main27ba lifecycle",
-    "missing_input": "Original private diagnosticfailure receipt/scientificcriteria questionpending, dependentclaimsblockedonly",
-    "no_science_or_cuda_claim": true
+    "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+    "remaining_order": [
+      111,
+      112
+    ],
+    "source_worktrees": [
+      "/workspace/Tuldok-retained-analysis-integration-20261020",
+      "/workspace/Tuldok-captions-dialog-ci-repair-20261020"
+    ],
+    "activation": "/tmp/tuldok-pending-111-112-activation.json",
+    "state": "PR108 merged and two task aliases safely retired; reviewed startup repair published in draft111/112; fresh corrected-head hosted gates pending",
+    "parent_role": "passive hosted CI monitoring; reactivate this lead for failures/readiness"
   },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
   "pr89_accepted_and_merged": {
@@ -4272,7 +4280,7 @@
     "cleanup_terminal": "/tmp/tuldok-pr102-103-107-cleanup-terminal.json",
     "cleanup_independent": "/tmp/tuldok-pr102-103-107-cleanup-independent-postcheck.json",
     "latest_readiness": "/tmp/tuldok-pr104-latest-readiness.json",
-    "next_gate": "Freshcorrected-head111lifecycle/CPU/catalog/UI pending. Bothold0ba4lifecyclesfailed andretained. Then112freshlifecycle; no pending oldjobusedasacceptance.",
+    "next_gate": "Fresh corrected-head111 lifecycle/CPU/catalog/UI plus independent completed-log review, then112 lifecycle after retarget. Both old111 lifecycles failed and remain preserved.",
     "prepared_independent_reviews": {
       "104": [
         "/tmp/tuldok-pr104-8323-cpu-independent-review.json",
@@ -4298,18 +4306,27 @@
     "merge_gate_independent": "/tmp/tuldok-pr104-merge-gate-independent-review.json",
     "description_publication": "/tmp/tuldok-remaining-final-description-publication.json",
     "recovery_checkpoint_verified": "c37106eac3a80867543a5ce4d34d6db42dd9b600:438/438 entries by independent recovery clone",
-    "observed_utc": "2026-10-20T04:38:57.475107+00:00",
+    "observed_utc": "2026-10-20T04:48:30.245995+00:00",
     "cleanup_new": "Complete: five accepted remote/local/tracking refs and five worktrees removed after dependent retargets and564-entry recovery verification. Independent postcheck retained.",
     "cleanup_new_precheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json",
     "cleanup_new_terminal": "/tmp/tuldok-pr104-105-106-109-110-cleanup-terminal.json",
     "cleanup_new_independent": "/tmp/tuldok-pr104-105-106-109-110-cleanup-independent-postcheck.json",
     "pending_activation": "/tmp/tuldok-pending-111-112-activation.json",
     "latest_ci_snapshots": [
-      "/tmp/tuldok-pr108-0330-ci-readiness.json",
-      "/tmp/tuldok-pr111-0330-ci-readiness.json",
-      "/tmp/tuldok-pr112-initial-ci-readiness.json"
+      "/tmp/tuldok-pr111-startup-latest-ci-readiness.json",
+      "/tmp/tuldok-pr112-startup-latest-ci-readiness.json"
     ],
-    "cleanup_pr108": "Twoaccepted9f084aliases inventoryready;10QAfiles566599Barchived locally, awaitingremoteverification/precheck/retirement."
+    "cleanup_pr108": {
+      "status": "complete; independent postcheck clear",
+      "aliases": 2,
+      "remote_branches_deleted": 1,
+      "never_published_remote_aliases": 1,
+      "qa_files": 10,
+      "qa_bytes": 566599,
+      "terminal": "/tmp/tuldok-pr108-two-alias-cleanup-terminal.json",
+      "independent": "/tmp/tuldok-pr108-two-alias-cleanup-independent-postcheck.json",
+      "pre_retirement_recovery": "/tmp/tuldok-pr108-two-alias-archive-recovery.json"
+    }
   },
   "indexed_retained_ci_repairs": {
     "intent_utc": "2026-10-20T02:41:47.821206+00:00",
@@ -4837,7 +4854,7 @@
     "skipped_steps": 124,
     "failure_location": "browser_scientific_fields.cjs openProject line59column77: firstdialog.open&&!submit.disabled wait",
     "caption_race_equivalence": false,
-    "diagnosis": "Possible open-project control interactive before initializer handler ready; cause remains unproven until deterministic actual browser reproduction. Alternative dialog/roots availability still under independent examination.",
+    "diagnosis": "Both old0ba4 lifecycle jobs failed first scientific Open project59:77/64. Controlled real-browser reproduction established an enabled-control/null-handler lost-click path; exact hosted pointer trace is absent. Reviewed two-line readiness fix and actual local green are source-hash-bound; fresh hosted acceptance remains pending.",
     "decoded_log_sha256": "0c279bc15ca1488a9445b03763192fd6f4ab85c9c8ec1b8acb36d538a18b0e2b",
     "source_author": "/root/pr111_ci_repair",
     "independent_diagnosis_and_review": "/root/mcp_contract_ci_review",

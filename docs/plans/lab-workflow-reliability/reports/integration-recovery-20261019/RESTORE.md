@@ -1,110 +1,101 @@
 # Task recovery checkpoint
 
-Clone the authorized repository checkpoint with normal configured GitHub authentication:
+Clone branch `checkpoint/lab-integration-20261019` from MrScripty/Tuldok with the
+existing configured GitHub authentication. Verify every evidence file's byte count
+and SHA-256 against `manifest.json`. This branch retains task-owned public source
+and review evidence; it contains no credentials, catalogs or runtime data. Its old
+parent is recovery history, not the current product base.
 
-```sh
-git clone --single-branch --branch checkpoint/lab-integration-20261019 https://github.com/MrScripty/Tuldok.git Tuldok-recovery
-cd Tuldok-recovery
-git fetch origin main docs/lab-workflow-reliability-plan
-```
+## Current state
 
-Verify every evidence file's size and SHA-256 against manifest.json before use.
-This branch contains task-owned source and evidence, never credentials or catalogs.
-Its historical parent76d3c6a is recovery history, not the current product base.
-Read tuldok-updates-integration-acceptance-20261019.json and the latest receipts;
-older pending snapshots and failed attempts remain preserved as history.
+Main is `c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad` after PR108. P1–P6 and E1–E4
+were integrated earlier. PR89/90 and PR92–110 are merged. Actual merge trees were
+verified against qualified source trees. Do not replay completed operations or
+restart design work. The historical ledger retains previous pending snapshots;
+this file and `tuldok-pending-111-112-activation.json` identify current work.
 
-## Current integration state
+The remaining serial order is **111 →112**. Both are drafts.
 
-Main is c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad after PR108. P1-P6 and E1-E4
-were integrated earlier; PR89/90 and PR92-101 are also merged. The latest accepted
-serial integrations are PR102,103,107,104,105,106,109,110,108. Each actual merged tree
-was verified equal to its qualified source tree, with exact parents and main
-readback. Do not replay completed merge operations or restart design work.
-
-The remaining order is 111 ->112. Recheck exact GitHub heads, check contexts
-and actual merge state before any operation. Newest required contexts must pass;
-older green duplicates cannot replace newer pending contexts. Known same-head
-failures require disposition. Source/tree equality does not relabel the tested
-history as a literal later-main checkout. Use tuldok-pending-111-112-activation.json.
-
-| PR | Published head | Base | Remaining qualification |
+| PR | Published head | Base | Gate still required |
 | --- | --- | --- | --- |
-|111|29011daea37f101ee30be9bc10aab702a16c830a|main c1fc60db|Fresh lifecycle/CPU/catalog/UI gates pending|
-|112|0dedbc953902ac89389dca0693006aaa02a0a87c|111head29011dae|Fresh lifecycle; both local repairs/reviews clear|
+|111|29011daea37f101ee30be9bc10aab702a16c830a|main c1fc60db|Fresh lifecycle, captured-cpu, catalog, workspace-ui and independent completed-log review|
+|112|0dedbc953902ac89389dca0693006aaa02a0a87c|111 head29011dae|Fresh lifecycle and independent completed-log review; retarget after111 merge|
 
-PR108's repair preserves the frozen canonical source authority and verifies its
-pinned SDK paths instead of comparing them to evolving live SDK files. PR111's
-repair checks the real denial status owner and cleared private DOM before an
-explicit refresh. Original failures, narrow actual checks and independent reviews
-are archived. Those checks do not replace fresh hosted runtime qualification.
+Parent owns passive hosted CI monitoring and reactivates the implementation lead
+when failures or readiness require work. Recheck exact live heads and latest
+required contexts before every merge. A pending newer context is not replaced by
+an older success. Known same-head failures require disposition. Before retarget,
+prove the qualified base tree equals current main and the prospective merge tree
+equals the reviewed source. Keep111 until112 is retargeted. No current-head CI
+jobs were cancelled. There is no uncertain publication or merge write.
 
-PR112 fixes an observed caption-test dialog timing race using event-owned exact
-confirm waits, bounded CDP/diagnostics and owned-child cleanup. The existing CI
-entrypoint includes the deterministic regression. Its complete PostgreSQL/Chromium
-journey passed with matching implementation-file hashes and exact fixture cleanup;
-no product/workflow/assertion relaxation occurred. The receipt's source_commit is
-the pre-commit base HEAD; exact modified-file hashes establish tested source and
-match publishedabbae728. See caption-ci-repair-source/evidence/raw and the root and
-independent reviews. Original hosted late-modal diagnosis remains a hypothesis.
+## Exact failure, repair and validation scope
 
-Obsolete PR105 duplicate39349523584 is terminally cancelled. Its modal error and
-full raw/decoded logs are retained; it is never counted as success. Newer same-head
-primary39349557067 completed all170steps and remains its reviewed acceptance gate.
-All current108/111 runtime jobs were preserved. No uncertain publication is pending.
+PR108 head9f084 passed all172 lifecycle steps, with1744 unit tests and72 skips,
+plus the recorded actual CPU/browser gates. Independent log review is archived.
+Merged treef245dcc821ebec18145a7e5340e19adab165d8f8 equals qualified source.
+Optional artifact12240856492 ZIP download was blocked by proxy403; its contents
+were not inspected or claimed verified. Required log/source evidence is retained.
 
-## Restore and retire safely
+Both PR111 old0ba4 lifecycle jobs39360310903/39360311316 failed at the first
+scientific Open project wait59:77/64. This is distinct from the caption dialog
+error. Both original failures and full logs are preserved. Their full unit suites
+reported1771 tests with83 skips before the browser failure; later gates were
+skipped. Both old
+captured-CPU jobs passed13/13 with independent review, which is historical
+source-specific evidence and does not qualify the corrected head.
 
-Fetch each recorded feature branch, verify its exact recorded commit, then create
-an isolated worktree. If already safely merged/deleted, fetch main and establish
-recorded commit ancestry first. Do not substitute a later tree for an old source
-receipt. After each predecessor merge, prove the old qualified base tree equals
-current main and the prospective merge tree equals the reviewed source tree;
-retarget the dependent before retiring the merged predecessor's task branch.
-Keep111 until112 is retargeted. Preserve unmerged repair aliases and unrelated work.
+The controlled original-entrypoint reproduction held the actual project module
+and recorded a native click on an enabled button while its handler was null. It
+reproduced the same timeout. Exact hosted pointer traces are absent, so that
+host-event cause is not asserted. The two-line product fix disables Open project
+until its owning controller binds all listeners. Existing scientific CI entrypoint
+now executes the startup regression and all five original scientific checks.
+Actual PostgreSQL/Chromium red and green logs, four tested-source hashes matching
+29011, independent review and exact schema cleanup receipts are archived in
+`project-startup-ci-source`, `project-startup-ci-evidence` and
+`project-startup-ci-raw`. This is authored-array reader/custody evidence, not
+physics acceptance. A late browser cache cleanup is documented separately;
+an all-descendant process-cleanup guarantee is not claimed.
 
-Eighteen accepted task branches/worktrees were retired in three verified groups:
-PR92-101,102/103/107,104/105/106/109/110. Terminal and independent postchecks record
-exact removals. All other immediate pre-state records and original82protectedrefs,
-96originalworktree records and91originalcommits remain preserved. All non-cache QA
-bytes were remotely archived and recovery-verified before removal. The latest five
-retirement postcheck's94localheads/108worktrees is a historical snapshot; PR112's
-new task branch/worktree was created afterward. Do not delete original worktrees.
-README67 and independent plan91 remain separate/unmerged. Plan91 remainsb446d9a
-on docs/lab-workflow-reliability-plan. PR71 is historical documentation only.
+PR112 retains the independently reviewed caption test repair: event-owned exact
+confirm waits, bounded CDP/diagnostics and owned-child cleanup, without weakening
+assertions or workflows. Its actual PostgreSQL/Chromium journey passed. Receipt
+source_commit records the pre-commit base; tested-file hashes bind publishedabba.
+Root normally merged29011 into1120ded and verified both repairs' tested-file
+hashes plus focused regressions before atomic publication. Fresh hosted lifecycle
+qualification still remains. Old112abba run39364911305 is terminally cancelled,
+with original logs preserved, never success. Old PR105 duplicate39349523584 is
+also terminally cancelled; its newer exact-head primary passed all170 steps.
 
-## Evidence limits and missing inputs
+## Preservation and recovery
 
-The actual CPU classifier/correction/checkpoint/probe and fresh captured inference
-gates are source-specific. Pending fresh gates remain pending. Scientific reader
-fixtures use explicitly authored terminal arrays, never qualified physics.
-PUB-1 still needs the original failed diagnostic bytes/path/profile/caps/receipt;
-SCI-1 needs an owned qualified criterion and compatible real lab pair. Keep missing
-criteria and measurements unknown. The actual runtime-byte-integrity observation
-passed with cleanup proof; it establishes no full T5/preparation/performance gain.
-No CUDA, live-model quality or scientific acceptance is inferred from these records.
+Twenty accepted task aliases/worktrees have been safely retired across recorded
+groups. The latest two aliases both referenced accepted PR1089f084: the feature
+remote branch was deleted; its repair alias had never been published remotely.
+Both local refs and worktrees were removed ordinarily after dependent retarget,
+live-head guards, no-active-use check, independent precheck and remote recovery
+verification of all706 files. Ten QA files,566599 bytes, were archived intact.
+Terminal and independent postcheck receipts verify exact nonselected head and
+worktree-record equality and original82 refs,96 records and91 reachable commits.
+Do not delete unrelated worktrees or original aliases. README67 and independent
+plan91 remain separate/unmerged. Plan91 remainsb446d9a on
+`docs/lab-workflow-reliability-plan`; PR71 is historical documentation only.
 
-Latest04:18+update: PR1110ba4 lifecycle39360310903/job118424712559 failed
-scientific-fields first Open project dialog wait atstep44. This differs from
-the caption modal race. Fullfailurelogs/metadata and independent diagnosis are
-retained. Both exact0ba4 captured-CPU jobs passed13/13 with independentreview;
-that does not override failed/pending lifecycle. Minimal actualinitializer
-readiness reproduction/repair is assigned separately before111/112republication.
-PR108 late lifecycle remains independently separate.
+The final checkpoint also retains the retirement receipts and latest CI snapshots.
+Use exact recorded commits when recovering retired sources from main; do not
+substitute a later tree for an old test receipt.
 
-Authoritative04:33+update: PR108passed172/172steps,1744tests/72skips andalllate
-actualgates, independentlyreviewed; mergedtreef245dcc8 exactlyequalsqualifiedsource.
-OptionalbrowserartifactZIP wasproxy403blocked anditscontentswerenotclaimedverified.
-PR111twoold0ba4lifecyclesfailedsamefirstscientific Openproject59:77/64 wait.
-AcontrolledrealPG/Chromium held-module reproductionprovesenabledcontrol/nullhandler
-lostpointerclick; hosteventtraceitselfisabsent. Reviewedtwo-lineownerreadinessfix
-29011dae passeddefaultentrypointwithnewstartupandall5originalscientificchecks.
-Fouractualtestedfilehashesmatchthepublishedcommit;3exacttaskedschemasqueriedabsent.
-Latebrowsercachecleanupisexplicitlydocumented,notanall-descendantguarantee.
-Rootfast-forwarded111to29011daeandnormallymergeditinto1120dedbc95,verifiedboth
-priorqualificationsfilehashesandfocusedregressions,andatomicallypublishedboth.
-BothPRsaredrafts. FreshcurrentheadCIisrequired; oldCPU0ba4passesarenotnewheadpasses.
-Old112abba lifecycle39364911305 isterminallycancelled; originaltwofailed111jobs
-werenevercancelledormarkedsuccess. Allcorrectedcurrent-headjobsremainintact.
-TenPR108repairQAfiles566599Barearchivedpendingrecoveryverification/precheck;
-its2acceptedaliasesarestillretaineduntilsafecleanupcompletes.
+## Remaining external inputs and evidence limits
+
+PUB-1 requires original failed diagnostic bytes/path, admitted profile/caps and
+failure receipt. SCI-1 requires an owned qualified criterion and compatible real
+lab pair. Qualified per-case science pass/fail remains input-dependent; thresholds,
+units and operators must not be invented. Generic scientific fixtures explicitly
+use authored terminal arrays and nonrunnable metadata.
+
+Actual CPU classifier training, correction, automatic checkpoints/probes and
+separate fresh captured inference/package gates have their own source-specific
+receipts. Runtime-byte-integrity observation passed with cleanup verification;
+it establishes no full T5/preparation/cache/performance gain. No CUDA, unmeasured
+hardware/runtime, model quality or scientific acceptance is inferred.

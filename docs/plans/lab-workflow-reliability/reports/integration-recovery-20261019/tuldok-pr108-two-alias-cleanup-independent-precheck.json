@@ -1,0 +1,300 @@
+{
+  "format": "pr108_two_alias_cleanup_independent_precheck_v1",
+  "state": "CLEAR",
+  "observed_utc": "2026-10-20T04:43:48.603247+00:00",
+  "result": "The exact selected two merged PR108 aliases are clear for root-owned ordinary retirement under the reviewed guarded helper. No deletion or mutation performed by this reviewer.",
+  "checks": {
+    "exact_only_two_selected_aliases": true,
+    "exact_accepted_selected_heads_clean_and_registered": true,
+    "both_heads_ancestor_of_accepted_main": true,
+    "remote_PR108_merged_exact_accepted_source": true,
+    "live_and_origin_main_exact_c1fc": true,
+    "source_and_accepted_main_tree_equal": true,
+    "feature_remote_exact_repair_remote_absent": true,
+    "both_open_base_dependents_empty": true,
+    "exact_live10_QA_files566599bytes_bound_to_remote_checkpoint": true,
+    "remote_checkpoint_tree_matches_recovery_clone": true,
+    "ignored_noncache_sets_exactly_archived": true,
+    "original82_refs96_worktrees91_commits_protected": true,
+    "selected_aliases_not_original_protected": true,
+    "updated_guarded_helper_exact_reviewed_hash_and_nonselected_record_comparison": true
+  },
+  "selected": [
+    {
+      "pr": 108,
+      "alias_key": "feature108",
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": true,
+      "current_local_ref": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "current_worktree": {
+        "worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/feature/lab-indexed-diagnostics-20261019"
+      },
+      "status": "",
+      "head_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "ancestor_of_main": true,
+      "not_protected": true,
+      "ignored_noncache_exact_archive_set": true,
+      "ignored_noncache_count": 0,
+      "ignored_total": 89
+    },
+    {
+      "pr": 108,
+      "alias_key": "repair108",
+      "branch": "fix/indexed-ci-qualification-20261020",
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": false,
+      "current_local_ref": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "current_worktree": {
+        "worktree": "/workspace/Tuldok-indexed-ci-repair-20261020",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/fix/indexed-ci-qualification-20261020"
+      },
+      "status": "",
+      "head_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "ancestor_of_main": true,
+      "not_protected": true,
+      "ignored_noncache_exact_archive_set": true,
+      "ignored_noncache_count": 10,
+      "ignored_total": 96
+    }
+  ],
+  "accepted_main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "main_retains_accepted_head": true,
+  "remote_state": {
+    "feature_ref": {
+      "ref": "refs/heads/feature/lab-indexed-diagnostics-20261019",
+      "node_id": "REF_kwDOUaTr69oAM3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItaW5kZXhlZC1kaWFnbm9zdGljcy0yMDI2MTAxOQ",
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-indexed-diagnostics-20261019",
+      "object": {
+        "sha": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "type": "commit",
+        "url": "https://api.github.com/repos/MrScripty/Tuldok/git/commits/9f08427029d8b48c8f9b50927a1c835afb573276"
+      }
+    },
+    "repair_ref_absent_404": true,
+    "main_ref": {
+      "ref": "refs/heads/main",
+      "node_id": "REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4",
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main",
+      "object": {
+        "sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+        "type": "commit",
+        "url": "https://api.github.com/repos/MrScripty/Tuldok/git/commits/c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad"
+      }
+    },
+    "open_based_dependents": {
+      "feature108": [],
+      "repair108": []
+    }
+  },
+  "archive": {
+    "checkpoint": "53968977dd6b8795b705e02757df220599d4a58f",
+    "remote_tree": "d1922ba3d3987867ae011f0932a9186ebee6e584",
+    "clone_exact_checkpoint_tree": "d1922ba3d3987867ae011f0932a9186ebee6e584",
+    "manifest_entries": 706,
+    "verified_qa": [
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+        "bytes": 565,
+        "sha256": "e0125307fd4aec7c4b59273f5930f173193379d628d7ed9baa2f5b5b596bab53",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+        "bytes": 244169,
+        "sha256": "7e1266babfd3ba1848eba8d2d6092eb20d51c06c1cf5d3c1ce5b9171c2304226",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+        "bytes": 246001,
+        "sha256": "98934e1340a1e5296677f65c72ba235bba8ede29b4cad62b9c1d73c43d925ffc",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+        "bytes": 2019,
+        "sha256": "8cd0cbab53587b39461471abdd42fd2bea5a45f64b86f9bac403a28f551bcc41",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/repair-summary.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/repair-summary.json",
+        "bytes": 1854,
+        "sha256": "2c9462ccfe36f8a0bbfcea511b15de4c5f18ce528bd09beb03076afd5c529628",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/reproduction.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/reproduction.log",
+        "bytes": 1189,
+        "sha256": "a9e0e999532d4cd92c3e2ebea74bd062caad4faf916eddd50af2124469d784ed",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+        "bytes": 32291,
+        "sha256": "386e05a09b414253dfb94bc035de9a8e5d91e0557138238aab5dec16ec4c1b47",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+        "bytes": 32291,
+        "sha256": "3bd05dc502072f0ca0de6c4b3bbd368e98ef9b5b7f011df03f405e0a4c34013a",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+        "bytes": 2773,
+        "sha256": "8998f810b6e1ee49fe1db70847d73e84d9dc51153545bf70e619707d059ac084",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+        "bytes": 3447,
+        "sha256": "8b0f149bdcf26808b017d4200f048c21a65a1a243042d4d7968af12aac83e40b",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      }
+    ],
+    "total_qa_bytes": 566599
+  },
+  "protected": {
+    "refs_count": 82,
+    "worktrees_count": 96,
+    "unique_original_oids": 91,
+    "ref_conflicts": [],
+    "worktree_conflicts": [],
+    "missing_reachable_oids": [],
+    "reachability_scope": "Only original protected refs and96 original worktree HEADs used as rev-list roots.",
+    "baseline_hashes": {
+      "/tmp/tuldok-20261019-protected-local-heads.txt": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8",
+      "/tmp/tuldok-20261019-protected-worktrees.txt": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+    }
+  },
+  "other_task_publications": {
+    "old_snapshot_differences": {
+      "heads": {
+        "refs/heads/fix/captions-dialog-ci-qualification-20261020": {
+          "old": "abbae728434fa0670478e12216a1d94603a97daf",
+          "now": "0dedbc953902ac89389dca0693006aaa02a0a87c"
+        },
+        "refs/heads/integration/retained-analysis-cleanup-20261020": {
+          "old": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+          "now": "29011daea37f101ee30be9bc10aab702a16c830a"
+        },
+        "refs/heads/checkpoint/lab-integration-20261019": {
+          "old": "5edb9b5d388b3fc36a289cb87b60c0d14164b9df",
+          "now": "53968977dd6b8795b705e02757df220599d4a58f"
+        }
+      },
+      "worktree_paths": [
+        "/workspace/Tuldok-integration-checkpoint",
+        "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
+        "/workspace/Tuldok-retained-analysis-integration-20261020"
+      ]
+    },
+    "interpretation": "These are informational differences since an older inventory, including parent-authorized caption/integration/checkpoint publication. No stale all-head equality condition imposed. The helper takes fresh complete head/worktree snapshots immediately before retirement and compares all nonselected entries afterward."
+  },
+  "helper_review": {
+    "path": "/tmp/tuldok-retire-108-two-alias.py",
+    "sha256": "f9618de84ad5c5fdee3c673cbd364b9de3ea0715d070674590ba1aa4916eb18f",
+    "scope": "Read only, AST parsed. Exact plan rows; live main and merged PR identities; no open base dependents; clean selected worktrees and exact noncache archive sets; remote subset is feature only with expected-head lease deletion; repair was never published; normal nonforce worktree removal and local CAS; no broad prune/reset/clean. Fresh full head and worktree snapshots before mutation. Updated exact nonselected worktree postdiff reviewed. Intent/results saved and uncertain remote outcome checked without automatic retry.",
+    "initial_gap_resolved": "Parent added exact nonselected worktree-record comparison before execution, preserving selected-only diff."
+  },
+  "reviewer_usage": "All Git operations use stable /workspace/Tuldok-retained-analysis-integration-20261020 or exact recovery clone. No live tests or future source read is retained under either selected path after this review; parent owns all deletion/postcheck actions.",
+  "evidence": {
+    "/tmp/tuldok-pr108-two-alias-cleanup-precheck.json": {
+      "bytes": 1249,
+      "sha256": "eb194e678b07c5f5614e82fbf1390e0338349fd9d9d1b29d696a0d6ccfb54576"
+    },
+    "/tmp/tuldok-pr108-two-alias-retirement-inventory.json": {
+      "bytes": 160866,
+      "sha256": "45b123f40c2df81a7f25e62218fd9cd237476bb7227f2f1e7e023d97c697b527"
+    },
+    "/tmp/tuldok-pr108-two-alias-pre-retirement-qa-archive.json": {
+      "bytes": 3873,
+      "sha256": "cda3b20c152fd199cd72e7cbcdd548838b0bb549a2d2695b694468fa9073f6fc"
+    },
+    "/tmp/tuldok-pr108-two-alias-archive-recovery.json": {
+      "bytes": 306,
+      "sha256": "a72626aadba93d688ce395aa3971f629a25d74ced13edab05b8bc59d1e289dc2"
+    },
+    "/tmp/tuldok-pr108-two-alias-cleanup-independent-remote.json": {
+      "bytes": 4207,
+      "sha256": "89ab3b7ef587bdc700040db938e363f0263faf57584aa35ae933de6f13d27213"
+    },
+    "/tmp/tuldok-pr108-two-alias-cleanup-independent-archive-remote.json": {
+      "bytes": 42292,
+      "sha256": "a3c9a253bee0d7c12cc703676d341b7d862a2ac4b059ba60224afb730a9979d0"
+    },
+    "/tmp/tuldok-pr108-two-alias-cleanup-independent-local.json": {
+      "bytes": 9931,
+      "sha256": "3400ecd7d570c412b4f93976af5b7ea57b9bb1dede61f9a74afb92cbb6751f40"
+    },
+    "/tmp/tuldok-retire-108-two-alias.py": {
+      "bytes": 6523,
+      "sha256": "f9618de84ad5c5fdee3c673cbd364b9de3ea0715d070674590ba1aa4916eb18f"
+    }
+  },
+  "limits": [
+    "This precheck is a bounded observation. Root must execute the reviewed helper while its declared selected refs and other publications remain frozen, then obtain an independent postcheck.",
+    "All 10 live QA files were independently hashed and matched exact remote-checkpoint-bound blob bytes and manifest entries. The separate recovery receipt reports full706 verification; this reviewer rechecked the10 selected QA entries rather than rerunning full706 recovery.",
+    "Local main branch alias is absent. Live remote main, origin/main and immutable accepted merge commit are verified; creating a local main alias is unnecessary.",
+    "No tests, database/schema operations, source edits, remote writes, deletions, worktree removal, ref mutation, prune or forbidden PR77 lookup. Seven read-only remote calls; only selected QA file contents and metadata read."
+  ]
+}

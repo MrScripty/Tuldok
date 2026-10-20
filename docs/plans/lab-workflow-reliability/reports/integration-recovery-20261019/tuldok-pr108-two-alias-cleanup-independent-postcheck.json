@@ -1,0 +1,188 @@
+{
+  "format": "pr108_two_alias_cleanup_independent_postcheck_v1",
+  "state": "PASS",
+  "observed_utc": "2026-10-20T04:48:02.716672+00:00",
+  "result": "Both exact PR108 local aliases/worktrees and the single previously published feature remote were retired. Every nonselected head/worktree record is unchanged from the helper immediate-before snapshot. Protected baselines and archived QA remain preserved.",
+  "checks": {
+    "terminal_completed_expected_operations": true,
+    "both_selected_paths_registrations_local_tracking_refs_absent": true,
+    "both_live_remote_aliases_absent": true,
+    "only_one_previously_present_remote_deleted": true,
+    "all_other_local_heads_equal_immediate_before": true,
+    "all_other_worktree_records_equal_immediate_before": true,
+    "current_records_equal_helper_after": true,
+    "live_remote_and_origin_main_exact_c1fc": true,
+    "main_and_accepted_head_reachable_from_retained_main": true,
+    "original82refs96records91commits_preserved": true,
+    "live_remote_checkpoint_retains_exact539": true,
+    "all10_QA_files566599B_recoverable_and_hash_bound": true,
+    "full706_manifest_recovery_proof_retained": true
+  },
+  "selected": [
+    {
+      "pr": 108,
+      "alias_key": "feature108",
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": true,
+      "path_absent_including_dangling_symlink": true,
+      "registration_absent": true,
+      "local_ref": null,
+      "tracking_ref": null,
+      "head_ancestor_of_live_main": true
+    },
+    {
+      "pr": 108,
+      "alias_key": "repair108",
+      "branch": "fix/indexed-ci-qualification-20261020",
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": false,
+      "path_absent_including_dangling_symlink": true,
+      "registration_absent": true,
+      "local_ref": null,
+      "tracking_ref": null,
+      "head_ancestor_of_live_main": true
+    }
+  ],
+  "counts": {
+    "worktrees_removed": 2,
+    "local_heads_removed": 2,
+    "remote_refs_deleted": 1,
+    "remote_repair_alias_deleted": 0,
+    "local_heads_before": 96,
+    "local_heads_after": 94,
+    "worktree_records_before": 110,
+    "worktree_records_after": 108,
+    "protected_refs": 82,
+    "protected_worktrees": 96,
+    "protected_unique_oids": 91,
+    "recoverable_QA_files": 10,
+    "recoverable_QA_bytes": 566599
+  },
+  "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "accepted_head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "protected": {
+    "refs_count": 82,
+    "worktrees_count": 96,
+    "unique_original_oids": 91,
+    "ref_conflicts": [],
+    "worktree_conflicts": [],
+    "unreachable_original_oids": [],
+    "reachability_scope": "Only retained original protected refs and96 original worktree HEADs are rev-list roots; object existence alone is not used.",
+    "baseline_sha256": {
+      "/tmp/tuldok-20261019-protected-local-heads.txt": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8",
+      "/tmp/tuldok-20261019-protected-worktrees.txt": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+    }
+  },
+  "QA_recovery": {
+    "remote_checkpoint_ref": "refs/heads/checkpoint/lab-integration-20261019",
+    "checkpoint": "53968977dd6b8795b705e02757df220599d4a58f",
+    "manifest_entries": 706,
+    "exact_checkpoint_clone": "/workspace/Tuldok-recovery-verification-20261019",
+    "verified10files": [
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+        "bytes": 565,
+        "sha256": "e0125307fd4aec7c4b59273f5930f173193379d628d7ed9baa2f5b5b596bab53",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+        "bytes": 244169,
+        "sha256": "7e1266babfd3ba1848eba8d2d6092eb20d51c06c1cf5d3c1ce5b9171c2304226",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+        "bytes": 246001,
+        "sha256": "98934e1340a1e5296677f65c72ba235bba8ede29b4cad62b9c1d73c43d925ffc",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+        "bytes": 2019,
+        "sha256": "8cd0cbab53587b39461471abdd42fd2bea5a45f64b86f9bac403a28f551bcc41",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/repair-summary.json",
+        "bytes": 1854,
+        "sha256": "2c9462ccfe36f8a0bbfcea511b15de4c5f18ce528bd09beb03076afd5c529628",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/reproduction.log",
+        "bytes": 1189,
+        "sha256": "a9e0e999532d4cd92c3e2ebea74bd062caad4faf916eddd50af2124469d784ed",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+        "bytes": 32291,
+        "sha256": "386e05a09b414253dfb94bc035de9a8e5d91e0557138238aab5dec16ec4c1b47",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+        "bytes": 32291,
+        "sha256": "3bd05dc502072f0ca0de6c4b3bbd368e98ef9b5b7f011df03f405e0a4c34013a",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+        "bytes": 2773,
+        "sha256": "8998f810b6e1ee49fe1db70847d73e84d9dc51153545bf70e619707d059ac084",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      },
+      {
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+        "bytes": 3447,
+        "sha256": "8b0f149bdcf26808b017d4200f048c21a65a1a243042d4d7968af12aac83e40b",
+        "matches_original_live_archive_record": true,
+        "manifest_entry_matches": true
+      }
+    ],
+    "scope": "Independent re-read of10 checkpoint blob contents against original live-archive records and706-entry manifest. The retained recovery receipt establishes prior full706 size/SHA verification; it is not claimed as a fresh full706 rerun here."
+  },
+  "remote_deletion_attribution": "Precheck recorded repair remote absent; helper issued only the feature-ref expected-head deletion, reported only that deletion, and independent postcheck sees both absent. This is one remote deletion, not two.",
+  "evidence": {
+    "/tmp/tuldok-pr108-two-alias-cleanup-terminal.json": {
+      "bytes": 42632,
+      "sha256": "60aa7abd778b523cb27335622028585449153c9da217a38d9bb7cf2d50bcc191"
+    },
+    "/tmp/tuldok-pr108-two-alias-cleanup-independent-precheck.json": {
+      "bytes": 15290,
+      "sha256": "b0e19b90ac83109d76f9bbbd6d0444baab9144ace4045b221f1b56f072e716f4"
+    },
+    "/tmp/tuldok-pr108-two-alias-cleanup-independent-postcheck-remote.json": {
+      "bytes": 4393,
+      "sha256": "b662b580e4c8a92476acff7c8ddc93bbcdd07997effae389b1cf5e564e7e4d51"
+    },
+    "/tmp/tuldok-pr108-two-alias-pre-retirement-qa-archive.json": {
+      "bytes": 3873,
+      "sha256": "cda3b20c152fd199cd72e7cbcdd548838b0bb549a2d2695b694468fa9073f6fc"
+    },
+    "/tmp/tuldok-pr108-two-alias-archive-recovery.json": {
+      "bytes": 306,
+      "sha256": "a72626aadba93d688ce395aa3971f629a25d74ced13edab05b8bc59d1e289dc2"
+    }
+  },
+  "limits": [
+    "Read only. Four remote ref lookups; metadata/Git-object/declared archive reads only. No tests, source edits, deletions, ref mutations, prune or database/schema operations.",
+    "Independent current comparison uses helper immediate-before snapshots, allowing parent-authorized publications that preceded those snapshots.",
+    "No whole-host process-absence claim. The parent supplied its active-use receipt; this reviewer has no live child process or continuing read under removed paths."
+  ]
+}

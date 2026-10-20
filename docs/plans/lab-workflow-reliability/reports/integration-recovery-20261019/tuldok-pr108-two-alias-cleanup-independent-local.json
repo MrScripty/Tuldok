@@ -1,0 +1,219 @@
+{
+  "observed_utc": "2026-10-20T04:42:55.848454+00:00",
+  "stable_cwd": "/workspace/Tuldok-retained-analysis-integration-20261020",
+  "selected": [
+    {
+      "pr": 108,
+      "alias_key": "feature108",
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": true,
+      "current_local_ref": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "current_worktree": {
+        "worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/feature/lab-indexed-diagnostics-20261019"
+      },
+      "status": "",
+      "head_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "ancestor_of_main": true,
+      "not_protected": true,
+      "ignored_noncache_exact_archive_set": true,
+      "ignored_noncache_count": 0,
+      "ignored_total": 89
+    },
+    {
+      "pr": 108,
+      "alias_key": "repair108",
+      "branch": "fix/indexed-ci-qualification-20261020",
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": false,
+      "current_local_ref": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "current_worktree": {
+        "worktree": "/workspace/Tuldok-indexed-ci-repair-20261020",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/fix/indexed-ci-qualification-20261020"
+      },
+      "status": "",
+      "head_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "ancestor_of_main": true,
+      "not_protected": true,
+      "ignored_noncache_exact_archive_set": true,
+      "ignored_noncache_count": 10,
+      "ignored_total": 96
+    }
+  ],
+  "local_main_alias": null,
+  "origin_main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "main_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+  "accepted_remote_PR": {
+    "merged": true,
+    "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+    "merge": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad"
+  },
+  "archive": {
+    "checkpoint": "53968977dd6b8795b705e02757df220599d4a58f",
+    "remote_tree": "d1922ba3d3987867ae011f0932a9186ebee6e584",
+    "clone_exact_checkpoint_tree": "d1922ba3d3987867ae011f0932a9186ebee6e584",
+    "manifest_entries": 706,
+    "verified_qa": [
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+        "bytes": 565,
+        "sha256": "e0125307fd4aec7c4b59273f5930f173193379d628d7ed9baa2f5b5b596bab53",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+        "bytes": 244169,
+        "sha256": "7e1266babfd3ba1848eba8d2d6092eb20d51c06c1cf5d3c1ce5b9171c2304226",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+        "bytes": 246001,
+        "sha256": "98934e1340a1e5296677f65c72ba235bba8ede29b4cad62b9c1d73c43d925ffc",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+        "bytes": 2019,
+        "sha256": "8cd0cbab53587b39461471abdd42fd2bea5a45f64b86f9bac403a28f551bcc41",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/repair-summary.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/repair-summary.json",
+        "bytes": 1854,
+        "sha256": "2c9462ccfe36f8a0bbfcea511b15de4c5f18ce528bd09beb03076afd5c529628",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/reproduction.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/reproduction.log",
+        "bytes": 1189,
+        "sha256": "a9e0e999532d4cd92c3e2ebea74bd062caad4faf916eddd50af2124469d784ed",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+        "bytes": 32291,
+        "sha256": "386e05a09b414253dfb94bc035de9a8e5d91e0557138238aab5dec16ec4c1b47",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+        "bytes": 32291,
+        "sha256": "3bd05dc502072f0ca0de6c4b3bbd368e98ef9b5b7f011df03f405e0a4c34013a",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+        "bytes": 2773,
+        "sha256": "8998f810b6e1ee49fe1db70847d73e84d9dc51153545bf70e619707d059ac084",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      },
+      {
+        "alias_key": "repair108",
+        "source": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+        "archive": "pre-retirement-qa/repair108/build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+        "bytes": 3447,
+        "sha256": "8b0f149bdcf26808b017d4200f048c21a65a1a243042d4d7968af12aac83e40b",
+        "live_matches_size_and_sha": true,
+        "checkpoint_bytes_equal_live": true,
+        "manifest_matches": true,
+        "regular_file_not_symlink": true
+      }
+    ],
+    "total_qa_bytes": 566599
+  },
+  "protected": {
+    "refs_count": 82,
+    "worktrees_count": 96,
+    "unique_original_oids": 91,
+    "ref_conflicts": [],
+    "worktree_conflicts": [],
+    "missing_reachable_oids": [],
+    "reachability_scope": "Only original protected refs and96 original worktree HEADs used as rev-list roots.",
+    "baseline_hashes": {
+      "/tmp/tuldok-20261019-protected-local-heads.txt": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8",
+      "/tmp/tuldok-20261019-protected-worktrees.txt": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+    }
+  },
+  "old_inventory_differences_informational_only": {
+    "heads": {
+      "refs/heads/fix/captions-dialog-ci-qualification-20261020": {
+        "old": "abbae728434fa0670478e12216a1d94603a97daf",
+        "now": "0dedbc953902ac89389dca0693006aaa02a0a87c"
+      },
+      "refs/heads/integration/retained-analysis-cleanup-20261020": {
+        "old": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+        "now": "29011daea37f101ee30be9bc10aab702a16c830a"
+      },
+      "refs/heads/checkpoint/lab-integration-20261019": {
+        "old": "5edb9b5d388b3fc36a289cb87b60c0d14164b9df",
+        "now": "53968977dd6b8795b705e02757df220599d4a58f"
+      }
+    },
+    "worktree_paths": [
+      "/workspace/Tuldok-integration-checkpoint",
+      "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
+      "/workspace/Tuldok-retained-analysis-integration-20261020"
+    ]
+  },
+  "helper": {
+    "path": "/tmp/tuldok-retire-108-two-alias.py",
+    "sha256": "f9618de84ad5c5fdee3c673cbd364b9de3ea0715d070674590ba1aa4916eb18f",
+    "AST_parse": true,
+    "fresh_allheads_and_allworktrees_snapshot": true,
+    "normal_nonforce_removal_localCAS_remote_exact_present_subset": true,
+    "nonselected_worktree_mapping_assertion_present": true
+  }
+}

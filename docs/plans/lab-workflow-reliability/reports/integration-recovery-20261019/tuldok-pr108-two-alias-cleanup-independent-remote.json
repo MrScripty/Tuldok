@@ -1,0 +1,88 @@
+{
+  "feature_ref": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\"ref\":\"refs/heads/feature/lab-indexed-diagnostics-20261019\",\"node_id\":\"REF_kwDOUaTr69oAM3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItaW5kZXhlZC1kaWFnbm9zdGljcy0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-indexed-diagnostics-20261019\",\"object\":{\"sha\":\"9f08427029d8b48c8f9b50927a1c835afb573276\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/9f08427029d8b48c8f9b50927a1c835afb573276\"}}",
+      "title": "lab-indexed-diagnostics-20261019",
+      "modified_date": null,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-indexed-diagnostics-20261019",
+      "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-indexed-diagnostics-20261019",
+      "display_title": "lab-indexed-diagnostics-20261019",
+      "structuredContent": {
+        "title": "lab-indexed-diagnostics-20261019",
+        "content": "{\"ref\":\"refs/heads/feature/lab-indexed-diagnostics-20261019\",\"node_id\":\"REF_kwDOUaTr69oAM3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItaW5kZXhlZC1kaWFnbm9zdGljcy0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-indexed-diagnostics-20261019\",\"object\":{\"sha\":\"9f08427029d8b48c8f9b50927a1c835afb573276\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/9f08427029d8b48c8f9b50927a1c835afb573276\"}}",
+        "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-indexed-diagnostics-20261019"
+      }
+    },
+    "isError": false
+  },
+  "repair_ref": {
+    "content": [
+      {
+        "type": "text",
+        "text": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/refs#get-a-reference\",\"status\":\"404\"}"
+      }
+    ],
+    "structuredContent": {
+      "error": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/refs#get-a-reference\",\"status\":\"404\"}",
+      "error_code": "NOT_FOUND",
+      "error_data": {
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest/git/refs#get-a-reference",
+        "status": "404"
+      }
+    },
+    "isError": true
+  },
+  "main_ref": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main\",\"object\":{\"sha\":\"c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\"}}",
+      "title": "main",
+      "modified_date": null,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main",
+      "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main",
+      "display_title": "main",
+      "structuredContent": {
+        "title": "main",
+        "content": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main\",\"object\":{\"sha\":\"c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\"}}",
+        "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main"
+      }
+    },
+    "isError": false
+  },
+  "dependents_feature": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issues": []
+    },
+    "isError": false
+  },
+  "dependents_repair": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issues": []
+    },
+    "isError": false
+  }
+}
