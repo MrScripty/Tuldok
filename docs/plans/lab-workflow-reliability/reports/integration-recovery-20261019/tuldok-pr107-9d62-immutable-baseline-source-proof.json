@@ -1,0 +1,42 @@
+{
+  "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+  "baseline_measurement_commit": "83d7e8f52df92d10d3ff85709da6eff3231a0b06",
+  "baseline_original_receipt_commit": "07dde98",
+  "retained_directory_files": 64,
+  "manifest_entries_verified": 63,
+  "manifest_mismatches": [],
+  "changes_from_original_baseline_receipt": [],
+  "validation_sha256": "fe03496bc461f9891d20e604e1f50578f49cf9925d10051b6e7d74e18ca2aa7b",
+  "harness_sha256": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+  "harness_byte_identical_to83d": true,
+  "reporting_test_sha256": "7bee05c44e23c00f272b630e7bce0b5bcd0031023997180c83aeb8da4d092b86",
+  "reporting_tests": 3,
+  "measurement_source_recorded": {
+    "docs/contracts/lab-workflow-baseline.md": {
+      "bytes": 5337,
+      "sha256": "2872d18008cd27bd444a6433aaf2f7a61a71d27fda17fa33d9edaae89a962ced"
+    },
+    "docs/plans/lab-workflow-reliability/execution-ledger.md": {
+      "bytes": 32079,
+      "sha256": "acb109ad0a7f5b02ed1b55d68358b6a4065b07e7cd8a467d13865ddd9db9d465"
+    },
+    "docs/plans/lab-workflow-reliability/plan.md": {
+      "bytes": 40962,
+      "sha256": "970a93db67dbd2db744eacbda0c2dae9911d0e8f8f91138811811a24232c8e8d"
+    },
+    "tests/benchmark_lab_workflow.py": {
+      "bytes": 38879,
+      "sha256": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1"
+    },
+    "tests/test_benchmark_lab_workflow.py": {
+      "bytes": 2482,
+      "sha256": "7bee05c44e23c00f272b630e7bce0b5bcd0031023997180c83aeb8da4d092b86"
+    }
+  },
+  "prior_reporting_evidence": {
+    "passed": 3,
+    "ran": 3,
+    "skipped": 0
+  },
+  "limits": "No remeasurement or test execution; current107 inherited source tree is not relabelled as measured83d source."
+}

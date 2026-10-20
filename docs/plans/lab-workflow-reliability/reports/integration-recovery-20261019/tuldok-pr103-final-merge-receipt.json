@@ -1,0 +1,88 @@
+{
+  "pr": 103,
+  "head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+  "base": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+  "tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+  "source_worktree": "/workspace/Tuldok-lab-phase-timing-m3",
+  "reviews": [
+    "/tmp/tuldok-pr103-6f6-lifecycle-independent-review.json",
+    "/tmp/tuldok-pr103-6f6-cpu-independent-review.json",
+    "/tmp/tuldok-pr103-main-composition-tree-proof.json"
+  ],
+  "check_names": [
+    "catalog",
+    "workspace-ui",
+    "lifecycle",
+    "captured-cpu"
+  ],
+  "state": "merged_and_tree_verified",
+  "observed_utc": "2026-10-20T02:38:39.203875+00:00",
+  "review_sha256": {
+    "/tmp/tuldok-pr103-6f6-lifecycle-independent-review.json": "f12e0143b533af26b6ed8ae1b19d680923fc9215c7da0c8e507b8b126f3b7b9a",
+    "/tmp/tuldok-pr103-6f6-cpu-independent-review.json": "8566f51cdad0f282c3ef5c1df1ef844fc27d32b108dc877602dccfe32fb43c00",
+    "/tmp/tuldok-pr103-main-composition-tree-proof.json": "87bd6b5dbee81b4efdbdebf31bdbee02ca33d5f2eb556dace93b3e432b944a65"
+  },
+  "prospective_tree_verified": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+  "checks": [
+    {
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349494076/job/118390059421"
+    },
+    {
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349494046/job/118390058516"
+    },
+    {
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493984/job/118390058452"
+    },
+    {
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493980/job/118390058303"
+    },
+    {
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481436/job/118390020210"
+    },
+    {
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481495/job/118390020006"
+    },
+    {
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481556/job/118390019936"
+    },
+    {
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481475/job/118390019872"
+    }
+  ],
+  "command_exit": 0,
+  "response": "{\"sha\":\"9930ab64801bc20f753a2c443f5391f9a8049e1e\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+  "stderr": "",
+  "merge_response": {
+    "sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "merge_sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+  "merged_tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+  "current_main": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+  "merged_utc": "2026-10-20T02:38:45.697497+00:00"
+}

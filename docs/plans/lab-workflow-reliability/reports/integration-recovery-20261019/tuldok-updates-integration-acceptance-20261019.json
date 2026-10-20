@@ -1204,11 +1204,8 @@
     "receipt": "tuldok-pr98-project-repair-validation.json"
   },
   "latest_published_stack": {
-    "main": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+    "main": "18a53816a279ad56758de620c9a1c4b129ba84ce",
     "order": [
-      102,
-      103,
-      107,
       104,
       105,
       106,
@@ -1218,18 +1215,15 @@
       111
     ],
     "heads": {
-      "102": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
-      "103": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
-      "107": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
       "104": "8323d54856296f46d01892c20f9084164c1f1ded",
       "105": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
       "106": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
       "109": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
       "110": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
-      "108": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
-      "111": "beead92d54e33e70eb9df82e872adf14ff314c91"
+      "108": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "111": "0ba4db01f04a77c262eb4b397f88849e9688b5ab"
     },
-    "acceptance": "Corrected latest-head hosted CI and serial integration pending; all10heads remotely verified."
+    "acceptance": "PR102/103/107 accepted and merged with exact qualified tree equality. Remaining serial integration pending their own exact-head required gates. PR108/111 test-only repairs published; fresh CI pending."
   },
   "m6_active": {
     "agent": "/root/scientific_comparison_m6",
@@ -2193,7 +2187,7 @@
       "production_changes": false
     }
   ],
-  "last_update_utc": "2026-10-20T00:46:58.129682+00:00",
+  "last_update_utc": "2026-10-20T02:47:58.539847+00:00",
   "pr92_to_101_terminal_retirement": {
     "purpose": "Retire exact accepted task-owned PR92\u2013101 branches/worktrees after dependent retarget and completed source-qualified CI acceptance",
     "authority": "User explicitly authorized deleting safely merged task branches; root serial integration owner selects this exact batch",
@@ -4072,5 +4066,263 @@
       "Canonical route-only Run ID, two inspect contracts, exact static mappings and bounded transport/mount ownership."
     ],
     "limits": "Reuse authored actual/independent evidence with exact original source attribution; no fabricated independent rerun or full-repository CI pass."
+  },
+  "pr102_final_acceptance": {
+    "pr": 102,
+    "head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "base": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+    "premerge_synthetic": "344ae9ba727412a7eb89d51ac887c73a4c39cf43",
+    "qualified_tree": "0b760df0d5cadd25effd3e98af16506af8c438e9",
+    "review_files": [
+      "/tmp/tuldok-pr102-aa7115a-lifecycle-independent-review.json",
+      "/tmp/tuldok-pr102-aa7115a-cpu-independent-review.json",
+      "/tmp/tuldok-pr102-browser-cleanup-independent-review.json"
+    ],
+    "review_sha256": {
+      "/tmp/tuldok-pr102-aa7115a-lifecycle-independent-review.json": "6d904aa356f8e51eb06c7278943cc302e427af967dbe0f1da76c0d07b363ae36",
+      "/tmp/tuldok-pr102-aa7115a-cpu-independent-review.json": "a79e0f772654f01608434ddcdd149efe43043d9402f14add885646990251553b",
+      "/tmp/tuldok-pr102-browser-cleanup-independent-review.json": "d0a8c9dcca016db29d30dddf8981fc31522e338e510fba4e6449a202791ff1be"
+    },
+    "intent_utc": "2026-10-20T02:33:09.316847+00:00",
+    "state": "merged_and_tree_verified",
+    "prewrite_utc": "2026-10-20T02:33:51.131606+00:00",
+    "final_checks": [
+      {
+        "name": "captured-cpu",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568674/job/118390297862"
+      },
+      {
+        "name": "workspace-ui",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568660/job/118390297820"
+      },
+      {
+        "name": "lifecycle",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568597/job/118390297639"
+      }
+    ],
+    "merge_command_exit": 0,
+    "merge_response": "{\"sha\":\"25da21cbac105dbe9b5cedfb5861dc5964c98e3b\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+    "merge_stderr": "",
+    "merge_sha": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+    "merged_utc": "2026-10-20T02:33:54.176815+00:00",
+    "main_verified": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+    "merged_tree": "0b760df0d5cadd25effd3e98af16506af8c438e9",
+    "tree_equal": true
+  },
+  "main_after_pr102": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+  "pr103_final_acceptance": {
+    "pr": 103,
+    "head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+    "base": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+    "tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+    "source_worktree": "/workspace/Tuldok-lab-phase-timing-m3",
+    "reviews": [
+      "/tmp/tuldok-pr103-6f6-lifecycle-independent-review.json",
+      "/tmp/tuldok-pr103-6f6-cpu-independent-review.json",
+      "/tmp/tuldok-pr103-main-composition-tree-proof.json"
+    ],
+    "check_names": [
+      "catalog",
+      "workspace-ui",
+      "lifecycle",
+      "captured-cpu"
+    ],
+    "state": "merged_and_tree_verified",
+    "observed_utc": "2026-10-20T02:38:39.203875+00:00",
+    "review_sha256": {
+      "/tmp/tuldok-pr103-6f6-lifecycle-independent-review.json": "f12e0143b533af26b6ed8ae1b19d680923fc9215c7da0c8e507b8b126f3b7b9a",
+      "/tmp/tuldok-pr103-6f6-cpu-independent-review.json": "8566f51cdad0f282c3ef5c1df1ef844fc27d32b108dc877602dccfe32fb43c00",
+      "/tmp/tuldok-pr103-main-composition-tree-proof.json": "87bd6b5dbee81b4efdbdebf31bdbee02ca33d5f2eb556dace93b3e432b944a65"
+    },
+    "prospective_tree_verified": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+    "checks": [
+      {
+        "name": "catalog",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349494076/job/118390059421"
+      },
+      {
+        "name": "workspace-ui",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349494046/job/118390058516"
+      },
+      {
+        "name": "lifecycle",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493984/job/118390058452"
+      },
+      {
+        "name": "captured-cpu",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493980/job/118390058303"
+      },
+      {
+        "name": "lifecycle",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481436/job/118390020210"
+      },
+      {
+        "name": "workspace-ui",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481495/job/118390020006"
+      },
+      {
+        "name": "catalog",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481556/job/118390019936"
+      },
+      {
+        "name": "captured-cpu",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481475/job/118390019872"
+      }
+    ],
+    "command_exit": 0,
+    "response": "{\"sha\":\"9930ab64801bc20f753a2c443f5391f9a8049e1e\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+    "stderr": "",
+    "merge_response": {
+      "sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+      "merged": true,
+      "message": "Pull Request successfully merged"
+    },
+    "merge_sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+    "merged_tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+    "current_main": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+    "merged_utc": "2026-10-20T02:38:45.697497+00:00"
+  },
+  "main_after_pr103": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+  "pr107_final_acceptance": {
+    "pr": 107,
+    "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+    "base": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+    "tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+    "source_worktree": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+    "reviews": [
+      "/tmp/tuldok-pr107-9d62-lifecycle-independent-review.json"
+    ],
+    "check_names": [
+      "lifecycle"
+    ],
+    "state": "merged_and_tree_verified",
+    "observed_utc": "2026-10-20T02:40:14.913621+00:00",
+    "review_sha256": {
+      "/tmp/tuldok-pr107-9d62-lifecycle-independent-review.json": "fb3733330d2ca42b4eea6963e17b2a62cd8e0721f94fc31a923466f6b4a6d943"
+    },
+    "prospective_tree_verified": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+    "checks": [
+      {
+        "name": "lifecycle",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349555219/job/118390254197"
+      },
+      {
+        "name": "lifecycle",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349553374/job/118390248540"
+      }
+    ],
+    "command_exit": 0,
+    "response": "{\"sha\":\"18a53816a279ad56758de620c9a1c4b129ba84ce\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+    "stderr": "",
+    "merge_response": {
+      "sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+      "merged": true,
+      "message": "Pull Request successfully merged"
+    },
+    "merge_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+    "merged_tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+    "current_main": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+    "merged_utc": "2026-10-20T02:40:24.255706+00:00"
+  },
+  "main_after_pr107": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "current_serial_integration": {
+    "merged": [
+      102,
+      103,
+      107
+    ],
+    "next": 104,
+    "main": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+    "remaining": [
+      104,
+      105,
+      106,
+      109,
+      110,
+      108,
+      111
+    ],
+    "latest_ci_snapshot": "/tmp/tuldok-after-102-103-107-remaining-ci.json",
+    "cleanup_precheck": "/tmp/tuldok-pr102-103-107-cleanup-precheck.json",
+    "cleanup_status": "Not executed; qualification/precheck evidence checkpoint required before safely retiring three task refs/worktrees."
+  },
+  "indexed_retained_ci_repairs": {
+    "intent_utc": "2026-10-20T02:41:47.821206+00:00",
+    "state": "acknowledged",
+    "mappings": [
+      {
+        "pr": 108,
+        "ref": "refs/heads/feature/lab-indexed-diagnostics-20261019",
+        "old": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+        "new": "9f08427029d8b48c8f9b50927a1c835afb573276"
+      },
+      {
+        "pr": 111,
+        "ref": "refs/heads/feature/retained-analysis-query-20261019",
+        "old": "beead92d54e33e70eb9df82e872adf14ff314c91",
+        "new": "0ba4db01f04a77c262eb4b397f88849e9688b5ab"
+      }
+    ],
+    "production_unchanged": true,
+    "changed111": [
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/acceptance.md",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-1440.jpg",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-390.jpg",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/model-controller.log",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/model-development.log",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/original-failures.json",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/qualification.json",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/receipt.json",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-cleanup.json",
+      "docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-reservation.json",
+      "tests/browser_model_development.cjs",
+      "tests/test_extension_canonical_author.py"
+    ],
+    "composed_targeted_tests": {
+      "ran": 16,
+      "skipped": 0,
+      "exit": 0,
+      "seconds": 5.061,
+      "log": "/tmp/tuldok-pr111-composed-canonical-author-validation.log",
+      "sha256": "b0ee3155d8f92267cf3cb2301b6346c572ce99207d525e42d0c2b92835151821",
+      "schema_reserved_removed": [
+        "catalog_4b844e3f09aa4127b1e5c4800363514e",
+        "catalog_8dbbdf160e8648e396466ae9ab75d9d1",
+        "catalog_d9aa0a87a4c94b55834ac7376a8d0bf7",
+        "catalog_fd2657c20e764a89b03cb8f8a63bf35f"
+      ]
+    },
+    "independent_reviews": [
+      "/tmp/tuldok-pr108-frozen-author-test-independent-review.json",
+      "/tmp/tuldok-pr111-revocation-gate-independent-review.json"
+    ],
+    "command_exit": 0,
+    "stdout": "",
+    "stderr": "To https://github.com/MrScripty/Tuldok.git\n   de5a3a8..9f08427  9f08427029d8b48c8f9b50927a1c835afb573276 -> feature/lab-indexed-diagnostics-20261019\n   beead92..0ba4db0  0ba4db01f04a77c262eb4b397f88849e9688b5ab -> feature/retained-analysis-query-20261019\n",
+    "remote_new_heads_verified": true,
+    "verified_utc": "2026-10-20T02:44:25.710920+00:00"
   }
 }

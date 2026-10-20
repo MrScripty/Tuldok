@@ -1,0 +1,22 @@
+{
+  "candidate_packages.py": {
+    "log_sha256": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+    "exact_pr_head_sha256": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+    "match": true
+  },
+  "recipe_process.py": {
+    "log_sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "exact_pr_head_sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "match": true
+  },
+  "runtime_snapshots.py": {
+    "log_sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+    "exact_pr_head_sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+    "match": true
+  },
+  "tests/prepare_candidate_runtime.py": {
+    "log_sha256": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+    "exact_pr_head_sha256": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+    "match": true
+  }
+}

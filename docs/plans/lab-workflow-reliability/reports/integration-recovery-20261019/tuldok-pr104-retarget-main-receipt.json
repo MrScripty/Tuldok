@@ -1,0 +1,9 @@
+{
+  "pr": 104,
+  "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "old_base": "test/lab-workflow-baseline-20261019",
+  "new_base": "main",
+  "base_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "source_unchanged": true,
+  "verified_utc": "2026-10-20T02:41:15.525119+00:00"
+}

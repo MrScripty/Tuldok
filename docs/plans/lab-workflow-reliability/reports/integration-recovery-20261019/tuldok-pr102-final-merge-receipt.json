@@ -1,0 +1,45 @@
+{
+  "pr": 102,
+  "head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+  "base": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+  "premerge_synthetic": "344ae9ba727412a7eb89d51ac887c73a4c39cf43",
+  "qualified_tree": "0b760df0d5cadd25effd3e98af16506af8c438e9",
+  "review_files": [
+    "/tmp/tuldok-pr102-aa7115a-lifecycle-independent-review.json",
+    "/tmp/tuldok-pr102-aa7115a-cpu-independent-review.json",
+    "/tmp/tuldok-pr102-browser-cleanup-independent-review.json"
+  ],
+  "review_sha256": {
+    "/tmp/tuldok-pr102-aa7115a-lifecycle-independent-review.json": "6d904aa356f8e51eb06c7278943cc302e427af967dbe0f1da76c0d07b363ae36",
+    "/tmp/tuldok-pr102-aa7115a-cpu-independent-review.json": "a79e0f772654f01608434ddcdd149efe43043d9402f14add885646990251553b",
+    "/tmp/tuldok-pr102-browser-cleanup-independent-review.json": "d0a8c9dcca016db29d30dddf8981fc31522e338e510fba4e6449a202791ff1be"
+  },
+  "intent_utc": "2026-10-20T02:33:09.316847+00:00",
+  "state": "merged_and_tree_verified",
+  "prewrite_utc": "2026-10-20T02:33:51.131606+00:00",
+  "final_checks": [
+    {
+      "name": "captured-cpu",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568674/job/118390297862"
+    },
+    {
+      "name": "workspace-ui",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568660/job/118390297820"
+    },
+    {
+      "name": "lifecycle",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568597/job/118390297639"
+    }
+  ],
+  "merge_command_exit": 0,
+  "merge_response": "{\"sha\":\"25da21cbac105dbe9b5cedfb5861dc5964c98e3b\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+  "merge_stderr": "",
+  "merge_sha": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+  "merged_utc": "2026-10-20T02:33:54.176815+00:00",
+  "main_verified": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+  "merged_tree": "0b760df0d5cadd25effd3e98af16506af8c438e9",
+  "tree_equal": true
+}

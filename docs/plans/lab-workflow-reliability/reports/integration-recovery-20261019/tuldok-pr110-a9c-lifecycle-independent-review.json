@@ -1,0 +1,1335 @@
+{
+  "format": "pr110_lifecycle_independent_review_v1",
+  "reviewer": "/root/pr111_ci_repair",
+  "reviewed_at": "2026-10-20T02:45:34.755605+00:00",
+  "pr": 110,
+  "source_head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+  "base_head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+  "actions_checkout": "9c0481cb529359c7087e23e41bcf20206d95bff3",
+  "scope": "Read-only completed Dataset lifecycle CI review; only lifecycle checks apply to PR110. No tests or source/remote mutation performed.",
+  "outcome": "clear",
+  "blocking_findings": [],
+  "duplicate_run_metadata_reads": 1,
+  "polling_performed": false,
+  "runs": [
+    {
+      "run_id": 39349516958,
+      "job_id": 118390130432,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349516958",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-20T00:45:23Z",
+      "updated_at": "2026-10-20T02:26:02Z",
+      "head_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "workflow": ".github/workflows/tests.yml",
+      "raw_run_metadata": {
+        "path": "/tmp/tuldok-pr110-run-39349516958-raw-metadata.json",
+        "sha256": "c06c9e7ef7dd813e47f7cdd0d5bfc164f2bd273c351a0f3ab186f74a19508b96"
+      },
+      "raw_job_logs_response": {
+        "path": "/tmp/tuldok-pr110-job-118390130432-raw.json",
+        "sha256": "2a2da4ce613e3d0f32988d1b47cc7f3f6413edabfb4c9736022145b78acf2dc3"
+      },
+      "decoded_job_log": {
+        "path": "/tmp/tuldok-pr110-job-118390130432-decoded.log",
+        "sha256": "3d2343d4d2c11462a9f3d28e2ded8051afd76ab08d1ca06d4e66db2ac7e9bee1"
+      },
+      "command_and_result_inventory": {
+        "path": "/tmp/tuldok-pr110-job-118390130432-gate-review.json",
+        "sha256": "568443126163024013787cc3265e2c15b35e5722d1963c2e3078fc60000ebd0f"
+      },
+      "command_groups": 164,
+      "checkout_lines": [
+        "2026-10-20T00:57:03.3594653Z HEAD is now at 9c0481c Merge a9c12a0274c4c9166af67b0a4a2b6b0376606015 into 861bcbcd495477b036f3f1e9307f320f965e8d8e",
+        "2026-10-20T00:57:05.3058703Z HEAD is now at f1ecf78 feat(workspaces): validate frozen Rheon sequences in runs"
+      ],
+      "legacy_checkout_note": "The f1ecf788 legacy schema3 checkout is explicitly in build/legacy-schema3, not the primary application checkout.",
+      "full_unittest": {
+        "total": 1732,
+        "skipped": 72,
+        "passing_non_skipped": 1660,
+        "summary": [
+          "2026-10-20T02:11:32.0365490Z Ran 1732 tests in 2828.474s",
+          "2026-10-20T02:11:32.0365874Z OK (skipped=72)"
+        ],
+        "visibility": "Default unittest discovery aggregate; individual names and individual skip reasons are not enumerated."
+      },
+      "browser_invocations": 58,
+      "distinct_browser_files": 57,
+      "browser_commands": [
+        "node tests/browser_access.cjs",
+        "node tests/browser_scientific_fields.cjs",
+        "node tests/browser_workspace_external.cjs",
+        "node tests/browser_workspace_publication.cjs",
+        "node tests/browser_workspace_publication_lineage.cjs",
+        "node tests/browser_workspace_graph_focus.cjs",
+        "node tests/browser_workspace_project.cjs",
+        "node tests/browser_workspace_project_observation.cjs",
+        "node tests/browser_workbench_layout.cjs",
+        "node tests/browser_workbench.cjs",
+        "node tests/browser_grounded.cjs",
+        "node tests/browser_captions.cjs",
+        "node tests/browser_text_corpus_export.cjs",
+        "node tests/browser_image_classification_export.cjs",
+        "node tests/browser_release_preview.cjs",
+        "node tests/browser_saved_selections.cjs",
+        "node tests/browser_saved_searches.cjs",
+        "node tests/browser_saved_selection_intent.cjs",
+        "node tests/browser_metadata_filters.cjs",
+        "node tests/browser_bulk_import.cjs",
+        "node tests/browser_dataset_integration.cjs",
+        "node tests/browser_curation.cjs",
+        "node tests/browser_caption_import.cjs",
+        "node tests/browser_caption_dataset_integration.cjs",
+        "node tests/browser.cjs",
+        "node tests/browser_images.cjs",
+        "node tests/browser_rights_note.cjs",
+        "node tests/browser_preferences.cjs",
+        "node tests/browser_instruction_responses.cjs",
+        "node tests/browser_native_detection_import.cjs",
+        "node tests/browser_native_text_import.cjs",
+        "node tests/browser_combined_workbench.cjs",
+        "node tests/browser_caption_proposals.cjs",
+        "node tests/browser_text_classification_proposals.cjs",
+        "node tests/browser_classification_preferences_integration.cjs",
+        "node tests/browser_pumas_gateways.cjs",
+        "node tests/browser_meshes.cjs",
+        "node tests/browser_workspace_mesh.cjs",
+        "node tests/browser_sequences.cjs",
+        "node tests/browser_sequence_batch.cjs",
+        "node tests/browser_sequences_actual.cjs",
+        "node tests/browser_pumas_typed.cjs",
+        "node tests/browser_workspace_recovery.cjs",
+        "node tests/browser_workspace_coordinator.cjs",
+        "node tests/browser_run_phase_timings.cjs",
+        "node tests/browser_scientific_comparison.cjs",
+        "node tests/browser_workspace_image_run.cjs",
+        "node tests/browser_workspace_text.cjs",
+        "node tests/browser_workspace_audio.cjs",
+        "node tests/browser_workspace_audio_run.cjs",
+        "node tests/browser_workspace_mesh_run.cjs",
+        "node tests/browser_workspace_sequence_run.cjs",
+        "node tests/browser_workspace_spatial.cjs",
+        "node tests/browser_workspace_export_run.cjs",
+        "node tests/browser_workspace_breadth.cjs",
+        "node tests/browser_model_development.cjs",
+        "node tests/browser_one_fit_model_evidence.cjs",
+        "node tests/browser_one_fit_model_evidence.cjs"
+      ],
+      "one_fit_tasks": [
+        [
+          "2026-10-20T02:24:54.8624023Z   TULDOK_ONE_FIT_TASK: text"
+        ],
+        [
+          "2026-10-20T02:25:24.6499449Z   TULDOK_ONE_FIT_TASK: audio"
+        ]
+      ],
+      "shared_transport_gates": [
+        {
+          "command": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+          "line_start": 1206,
+          "line_end": 1238,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:01:34.7409478Z Ran 14 tests in 28.663s",
+            "2026-10-20T01:01:34.7409833Z OK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "python -m unittest discover -s tests -p 'test_scientific_comparison_client.py' -v",
+          "line_start": 1261,
+          "line_end": 1285,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:01:37.1758454Z Ran 4 tests in 1.960s",
+            "2026-10-20T01:01:37.1758798Z OK",
+            "2026-10-20T01:01:37.2547747Z Scientific comparison controller: diagnostic table, exact identity, stale overlap, invalidation, revocation and session fences passed"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+          "line_start": 1815,
+          "line_end": 1833,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:24:08.1443960Z Ran 13 tests in 35.684s",
+            "2026-10-20T01:24:08.1444411Z OK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_experiment_lineage_controller.cjs",
+          "line_start": 1848,
+          "line_end": 1862,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:24:08.3428097Z PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+          "line_start": 1863,
+          "line_end": 1881,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:24:22.1348754Z Ran 5 tests in 13.222s",
+            "2026-10-20T01:24:22.1349135Z OK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_auth_helpers.cjs",
+          "line_start": 1930,
+          "line_end": 1944,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:11:32.2721281Z PASS auth fixture exact-origin credential boundary, no forwarding to debugger/provider, no redirects, explicit CDP session"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_auth_controller.cjs",
+          "line_start": 1945,
+          "line_end": 1959,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:11:32.3538501Z PASS auth controller: stale identity/401 ownership, review scopes, code clearing, no mutation replay"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_external_controller.cjs",
+          "line_start": 2040,
+          "line_end": 2056,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:11:51.6450641Z PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.",
+            "2026-10-20T02:11:51.6455082Z PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only.",
+            "2026-10-20T02:11:51.6458655Z PASS external controller: actor-bound unresolved key survives ambiguous\u2192403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only."
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_external_package_controller.cjs",
+          "line_start": 2057,
+          "line_end": 2071,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:11:51.7345086Z PASS controlled external package view: owned discovery, pending versus fresh state, source identity, denial/stale clearing and passive-only reads."
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_publication_controller.cjs",
+          "line_start": 2122,
+          "line_end": 2136,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:12.4040124Z PASS publication metadata, pinned status2, owner/actor controls, unknown-ack stable request, source/hash identity, stale reads/writes and polling cleanup"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_publication_lineage.cjs",
+          "line_start": 2153,
+          "line_end": 2167,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:21.8739835Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_coordinator_controller.cjs",
+          "line_start": 4615,
+          "line_end": 4629,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:19:20.7239636Z PASS coordinator owner controls, exact generation/request identity, immutable completion, unknown-ack retention, stale read/write/session fences and storage refusal"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_scientific_comparison.cjs",
+          "line_start": 4663,
+          "line_end": 4679,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:20:19.5267377Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-dDdoVt\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ],
+          "summary_json": [
+            "2026-10-20T02:20:19.5267377Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-dDdoVt\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ]
+        }
+      ],
+      "relevant_browser_direct_outputs": [
+        {
+          "command": "node tests/browser_access.cjs",
+          "line_start": 1960,
+          "line_end": 1975,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:11:43.5465223Z PASS access browser /home/runner/work/Tuldok/Tuldok/build/qa/access/run-VCGj7X"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_external.cjs",
+          "line_start": 2102,
+          "line_end": 2121,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:01.1649924Z PASS Real keyboard-created edited graph, exact review, stale-byte refusal, descendant execution and exact artifact custody",
+            "2026-10-20T02:12:06.7319889Z PASS Owner creates an exact-material one-use grant; separately authenticated agent executes it without owner review controls",
+            "2026-10-20T02:12:10.0015365Z PASS Cloned graph cancellation waits for confirmed custody termination",
+            "2026-10-20T02:12:12.2583749Z PASS Server restart retains exact completed run and downloadable original output",
+            "2026-10-20T02:12:12.2627551Z PASS external recipe browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-external/run-wY5rn5"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_publication.cjs",
+          "line_start": 2137,
+          "line_end": 2152,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:21.6074931Z PASS publication browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication/run-KyHzI5"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_publication_lineage.cjs",
+          "line_start": 2168,
+          "line_end": 2183,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:31.1093131Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-vIavs6"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_graph_focus.cjs",
+          "line_start": 2184,
+          "line_end": 2201,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:35.6592261Z PASS graph focus regression {\"state\":\"passed\",\"scope\":\"Inert private Project graph metadata only; no recipe execution or scientific qualification\",\"source_commit\":\"9c0481cb529359c7087e23e41bcf20206d95bff3\",\"workspace_real_sha256\":\"412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2\",\"harness_sha256\":\"5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684\",\"native_keys\":[\"Home\",\"ArrowDown\",\"ArrowDown\"],\"programmatic_focus_calls_in_journey\":1,\"values\":[\"0ebb7af0d07b4bc5ba041661d1534645\",\"1a9a0fb1c3fe46e09c7c241bded3802d\",\"dc09ac7dcdb742eb96a8713d00103d5e\"],\"observed\":[{\"focus\":true,\"value\":\"0ebb7af0d07b4bc5ba041661d1534645\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"1a9a0fb1c3fe46e09c7c241bded3802d\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"dc09ac7dcdb742eb96a8713d00103d5e\",\"active\":\"SELECT\"}],\"negativeChecks\":[\"held graph read preserves separately moved focus\",\"held graph read does not restore hidden Pipeline focus after navigation\"],\"recipe_runs\":0,\"browser\":\"Chrome/155.0.8059.39\"}"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_project.cjs",
+          "line_start": 2216,
+          "line_end": 2242,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:12:38.2698415Z PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct",
+            "2026-10-20T02:12:38.9863454Z PASS Current snapshot activity refreshes without navigation and retains saved manifest identity",
+            "2026-10-20T02:12:41.0435526Z PASS Malformed publisher status is unavailable, then recovers without fabricating progress",
+            "2026-10-20T02:12:44.0881476Z PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers",
+            "2026-10-20T02:12:47.3871159Z PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers",
+            "2026-10-20T02:12:47.7482439Z PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim",
+            "2026-10-20T02:12:49.8858639Z PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime",
+            "2026-10-20T02:12:50.3418024Z PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence",
+            "2026-10-20T02:12:50.4735153Z PASS Registered current project opens through a shareable project link",
+            "2026-10-20T02:12:51.2578706Z PASS A project link initializes navigation once; explicit later catalog selection survives reload",
+            "2026-10-20T02:12:52.3087660Z PASS Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted",
+            "2026-10-20T02:12:52.3252963Z PASS read-only project browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-project/run-hUtqxh"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_project_observation.cjs",
+          "line_start": 2243,
+          "line_end": 2328,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:13:15.5719820Z       \"passed\": true",
+            "2026-10-20T02:13:15.5721679Z       \"passed\": true",
+            "2026-10-20T02:13:15.5723993Z       \"passed\": true",
+            "2026-10-20T02:13:15.5725797Z       \"passed\": true",
+            "2026-10-20T02:13:15.5727790Z       \"passed\": true",
+            "2026-10-20T02:13:15.5729809Z       \"passed\": true",
+            "2026-10-20T02:13:15.5731635Z       \"passed\": true",
+            "2026-10-20T02:13:15.5733869Z       \"passed\": true",
+            "2026-10-20T02:13:15.5735661Z       \"passed\": true",
+            "2026-10-20T02:13:15.5737403Z       \"passed\": true",
+            "2026-10-20T02:13:15.5739671Z       \"passed\": true",
+            "2026-10-20T02:13:15.5741599Z       \"passed\": true",
+            "2026-10-20T02:13:15.5745666Z       \"passed\": true",
+            "2026-10-20T02:13:15.5747782Z       \"passed\": true",
+            "2026-10-20T02:13:15.5750450Z       \"passed\": true",
+            "2026-10-20T02:13:15.5753327Z       \"passed\": true"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_coordinator.cjs",
+          "line_start": 4630,
+          "line_end": 4645,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:19:28.8211371Z PASS coordinator browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-coordinator/run-H0tuTF"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_run_phase_timings.cjs",
+          "line_start": 4646,
+          "line_end": 4662,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:19:53.9641795Z PASS phase timing browser: /home/runner/work/Tuldok/Tuldok/build/qa/run-phase-timings/run-MVKdZG"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_scientific_comparison.cjs",
+          "line_start": 4663,
+          "line_end": 4679,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:20:19.5267377Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-dDdoVt\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ],
+          "summary_json": [
+            "2026-10-20T02:20:19.5267377Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-dDdoVt\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ]
+        },
+        {
+          "command": "node tests/browser_workspace_image_run.cjs",
+          "line_start": 4680,
+          "line_end": 4709,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:20:22.1619057Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:20:26.4383629Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+            "2026-10-20T02:20:26.7269327Z PASS invalid held-out class coverage blocks release before training",
+            "2026-10-20T02:20:27.4502622Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+            "2026-10-20T02:20:27.9424192Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+            "2026-10-20T02:20:36.4526304Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+            "2026-10-20T02:20:36.6480914Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+            "2026-10-20T02:20:40.5259127Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+            "2026-10-20T02:20:50.2109013Z PASS one admitted real child completed; verified checkpoint, validation metrics and exact predictions; test access remains locked",
+            "2026-10-20T02:20:50.6479953Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+            "2026-10-20T02:20:51.7198681Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+            "2026-10-20T02:20:52.1278909Z PASS explicit test inspection is durable; later releases containing the records/pixels are marked exposed/reused",
+            "2026-10-20T02:20:53.4515713Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+            "2026-10-20T02:20:53.4743545Z PASS real image workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-image-run/run-IDbN0p"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_text.cjs",
+          "line_start": 4710,
+          "line_end": 4739,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:20:55.9804601Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:21:03.4025529Z PASS 18 authored independent texts imported, labelled and explicitly reviewed using Data controls",
+            "2026-10-20T02:21:03.6919164Z PASS invalid held-out class coverage blocks release before training",
+            "2026-10-20T02:21:04.4331235Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+            "2026-10-20T02:21:04.9069134Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+            "2026-10-20T02:21:08.6865737Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+            "2026-10-20T02:21:08.8816943Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+            "2026-10-20T02:21:10.1547703Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+            "2026-10-20T02:21:14.3283877Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+            "2026-10-20T02:21:14.7588120Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+            "2026-10-20T02:21:15.8479970Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+            "2026-10-20T02:21:16.2492350Z PASS explicit test inspection is durable; later releases containing the records/canonical text are marked exposed/reused",
+            "2026-10-20T02:21:17.6760772Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+            "2026-10-20T02:21:17.6988013Z PASS real text workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-text-run/run-EvLOeE"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_audio_run.cjs",
+          "line_start": 4757,
+          "line_end": 4785,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:21:25.5124280Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:21:26.3650526Z PASS 18 authored stereo WAV fixtures admitted and reviewed through ordinary API; current Data shows actual source",
+            "2026-10-20T02:21:27.3643542Z PASS Data UI previews class coverage, freezes and downloads original WAV classification release",
+            "2026-10-20T02:21:27.8584079Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+            "2026-10-20T02:21:31.6434977Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+            "2026-10-20T02:21:31.8309258Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+            "2026-10-20T02:21:33.2041162Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+            "2026-10-20T02:21:37.4098270Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+            "2026-10-20T02:21:37.8436510Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+            "2026-10-20T02:21:38.9748194Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+            "2026-10-20T02:21:39.3892726Z PASS explicit test inspection is durable; later releases containing the records/decoded PCM are marked exposed/reused",
+            "2026-10-20T02:21:40.8170300Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+            "2026-10-20T02:21:40.8409045Z PASS real audio workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-audio-run/run-UW1ZYH"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_model_development.cjs",
+          "line_start": 4914,
+          "line_end": 4942,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:23:29.2265597Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:23:33.6460035Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+            "2026-10-20T02:23:33.9369950Z PASS invalid held-out class coverage blocks release before training",
+            "2026-10-20T02:23:34.4944568Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+            "2026-10-20T02:24:02.8384170Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+            "2026-10-20T02:24:03.0208103Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+            "2026-10-20T02:24:24.8427906Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+            "2026-10-20T02:24:25.6842109Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+            "2026-10-20T02:24:26.9446380Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+            "2026-10-20T02:24:53.3649501Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+            "2026-10-20T02:24:53.4517835Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+            "2026-10-20T02:24:53.9178719Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+            "2026-10-20T02:24:54.3027908Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+            "2026-10-20T02:24:54.7955108Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-ioiRmo"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_one_fit_model_evidence.cjs",
+          "line_start": 4943,
+          "line_end": 4964,
+          "one_fit_environment": [
+            "2026-10-20T02:24:54.8624023Z   TULDOK_ONE_FIT_TASK: text"
+          ],
+          "result_lines": [
+            "2026-10-20T02:25:21.2075473Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+            "2026-10-20T02:25:22.4695981Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+            "2026-10-20T02:25:22.8347062Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+            "2026-10-20T02:25:23.0350683Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context",
+            "2026-10-20T02:25:23.5507812Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured",
+            "2026-10-20T02:25:24.5775569Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-ZNoLb3"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_one_fit_model_evidence.cjs",
+          "line_start": 4965,
+          "line_end": 4986,
+          "one_fit_environment": [
+            "2026-10-20T02:25:24.6499449Z   TULDOK_ONE_FIT_TASK: audio"
+          ],
+          "result_lines": [
+            "2026-10-20T02:25:51.9591215Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+            "2026-10-20T02:25:53.2534887Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+            "2026-10-20T02:25:53.6173125Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+            "2026-10-20T02:25:53.8196152Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context",
+            "2026-10-20T02:25:54.4174257Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured",
+            "2026-10-20T02:25:55.5516377Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-rEEaYc"
+          ],
+          "summary_json": []
+        }
+      ]
+    },
+    {
+      "run_id": 39349550869,
+      "job_id": 118390238386,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349550869",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-20T00:45:43Z",
+      "updated_at": "2026-10-20T02:35:24Z",
+      "head_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "workflow": ".github/workflows/tests.yml",
+      "raw_run_metadata": {
+        "path": "/tmp/tuldok-pr110-run-39349550869-raw-metadata.json",
+        "sha256": "10f10c999e1326cfec63878f02373e439c8c3cc70657c526a9acedd21eddcd91"
+      },
+      "raw_job_logs_response": {
+        "path": "/tmp/tuldok-pr110-job-118390238386-raw.json",
+        "sha256": "fa636f3413c293e7cca76b27c4e3cb97f105339dea7fa1a31709862486b0a60a"
+      },
+      "decoded_job_log": {
+        "path": "/tmp/tuldok-pr110-job-118390238386-decoded.log",
+        "sha256": "ff790e054b8de7706f6690a4cfb94c5eb213a18ca98e409df69e0e684a410c54"
+      },
+      "command_and_result_inventory": {
+        "path": "/tmp/tuldok-pr110-job-118390238386-gate-review.json",
+        "sha256": "9a224ecb979c9f71cf4b104ee8e4b7d2cde296191e56cd38219b20958bc26a5a"
+      },
+      "command_groups": 164,
+      "checkout_lines": [
+        "2026-10-20T01:42:24.4720000Z HEAD is now at 9c0481c Merge a9c12a0274c4c9166af67b0a4a2b6b0376606015 into 861bcbcd495477b036f3f1e9307f320f965e8d8e",
+        "2026-10-20T01:42:25.8822114Z HEAD is now at f1ecf78 feat(workspaces): validate frozen Rheon sequences in runs"
+      ],
+      "legacy_checkout_note": "The f1ecf788 legacy schema3 checkout is explicitly in build/legacy-schema3, not the primary application checkout.",
+      "full_unittest": {
+        "total": 1732,
+        "skipped": 72,
+        "passing_non_skipped": 1660,
+        "summary": [
+          "2026-10-20T02:24:40.8084301Z Ran 1732 tests in 1686.990s",
+          "2026-10-20T02:24:40.8084452Z OK (skipped=72)"
+        ],
+        "visibility": "Default unittest discovery aggregate; individual names and individual skip reasons are not enumerated."
+      },
+      "browser_invocations": 58,
+      "distinct_browser_files": 57,
+      "browser_commands": [
+        "node tests/browser_access.cjs",
+        "node tests/browser_scientific_fields.cjs",
+        "node tests/browser_workspace_external.cjs",
+        "node tests/browser_workspace_publication.cjs",
+        "node tests/browser_workspace_publication_lineage.cjs",
+        "node tests/browser_workspace_graph_focus.cjs",
+        "node tests/browser_workspace_project.cjs",
+        "node tests/browser_workspace_project_observation.cjs",
+        "node tests/browser_workbench_layout.cjs",
+        "node tests/browser_workbench.cjs",
+        "node tests/browser_grounded.cjs",
+        "node tests/browser_captions.cjs",
+        "node tests/browser_text_corpus_export.cjs",
+        "node tests/browser_image_classification_export.cjs",
+        "node tests/browser_release_preview.cjs",
+        "node tests/browser_saved_selections.cjs",
+        "node tests/browser_saved_searches.cjs",
+        "node tests/browser_saved_selection_intent.cjs",
+        "node tests/browser_metadata_filters.cjs",
+        "node tests/browser_bulk_import.cjs",
+        "node tests/browser_dataset_integration.cjs",
+        "node tests/browser_curation.cjs",
+        "node tests/browser_caption_import.cjs",
+        "node tests/browser_caption_dataset_integration.cjs",
+        "node tests/browser.cjs",
+        "node tests/browser_images.cjs",
+        "node tests/browser_rights_note.cjs",
+        "node tests/browser_preferences.cjs",
+        "node tests/browser_instruction_responses.cjs",
+        "node tests/browser_native_detection_import.cjs",
+        "node tests/browser_native_text_import.cjs",
+        "node tests/browser_combined_workbench.cjs",
+        "node tests/browser_caption_proposals.cjs",
+        "node tests/browser_text_classification_proposals.cjs",
+        "node tests/browser_classification_preferences_integration.cjs",
+        "node tests/browser_pumas_gateways.cjs",
+        "node tests/browser_meshes.cjs",
+        "node tests/browser_workspace_mesh.cjs",
+        "node tests/browser_sequences.cjs",
+        "node tests/browser_sequence_batch.cjs",
+        "node tests/browser_sequences_actual.cjs",
+        "node tests/browser_pumas_typed.cjs",
+        "node tests/browser_workspace_recovery.cjs",
+        "node tests/browser_workspace_coordinator.cjs",
+        "node tests/browser_run_phase_timings.cjs",
+        "node tests/browser_scientific_comparison.cjs",
+        "node tests/browser_workspace_image_run.cjs",
+        "node tests/browser_workspace_text.cjs",
+        "node tests/browser_workspace_audio.cjs",
+        "node tests/browser_workspace_audio_run.cjs",
+        "node tests/browser_workspace_mesh_run.cjs",
+        "node tests/browser_workspace_sequence_run.cjs",
+        "node tests/browser_workspace_spatial.cjs",
+        "node tests/browser_workspace_export_run.cjs",
+        "node tests/browser_workspace_breadth.cjs",
+        "node tests/browser_model_development.cjs",
+        "node tests/browser_one_fit_model_evidence.cjs",
+        "node tests/browser_one_fit_model_evidence.cjs"
+      ],
+      "one_fit_tasks": [
+        [
+          "2026-10-20T02:34:44.6820895Z   TULDOK_ONE_FIT_TASK: text"
+        ],
+        [
+          "2026-10-20T02:35:01.3557204Z   TULDOK_ONE_FIT_TASK: audio"
+        ]
+      ],
+      "shared_transport_gates": [
+        {
+          "command": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+          "line_start": 1196,
+          "line_end": 1228,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:45:02.4327832Z Ran 14 tests in 14.908s",
+            "2026-10-20T01:45:02.4328035Z OK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "python -m unittest discover -s tests -p 'test_scientific_comparison_client.py' -v",
+          "line_start": 1251,
+          "line_end": 1275,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:45:03.7168084Z Ran 4 tests in 1.026s",
+            "2026-10-20T01:45:03.7168269Z OK",
+            "2026-10-20T01:45:03.7657379Z Scientific comparison controller: diagnostic table, exact identity, stale overlap, invalidation, revocation and session fences passed"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+          "line_start": 1805,
+          "line_end": 1823,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:56:24.9041474Z Ran 13 tests in 18.741s",
+            "2026-10-20T01:56:24.9041613Z OK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_experiment_lineage_controller.cjs",
+          "line_start": 1838,
+          "line_end": 1852,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:56:25.0315850Z PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+          "line_start": 1853,
+          "line_end": 1871,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T01:56:33.0051474Z Ran 5 tests in 7.666s",
+            "2026-10-20T01:56:33.0051690Z OK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_auth_helpers.cjs",
+          "line_start": 1939,
+          "line_end": 1953,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:24:41.0592733Z PASS auth fixture exact-origin credential boundary, no forwarding to debugger/provider, no redirects, explicit CDP session"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_auth_controller.cjs",
+          "line_start": 1954,
+          "line_end": 1968,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:24:41.1165363Z PASS auth controller: stale identity/401 ownership, review scopes, code clearing, no mutation replay"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_external_controller.cjs",
+          "line_start": 2049,
+          "line_end": 2065,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:24:52.2678711Z PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.",
+            "2026-10-20T02:24:52.2680454Z PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only.",
+            "2026-10-20T02:24:52.2682362Z PASS external controller: actor-bound unresolved key survives ambiguous\u2192403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only."
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_external_package_controller.cjs",
+          "line_start": 2066,
+          "line_end": 2080,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:24:52.3429715Z PASS controlled external package view: owned discovery, pending versus fresh state, source identity, denial/stale clearing and passive-only reads."
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_publication_controller.cjs",
+          "line_start": 2131,
+          "line_end": 2145,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:25:08.7579495Z PASS publication metadata, pinned status2, owner/actor controls, unknown-ack stable request, source/hash identity, stale reads/writes and polling cleanup"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_publication_lineage.cjs",
+          "line_start": 2162,
+          "line_end": 2176,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:25:15.9300404Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/test_workspace_coordinator_controller.cjs",
+          "line_start": 4652,
+          "line_end": 4666,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:30:53.0642823Z PASS coordinator owner controls, exact generation/request identity, immutable completion, unknown-ack retention, stale read/write/session fences and storage refusal"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_scientific_comparison.cjs",
+          "line_start": 4700,
+          "line_end": 4716,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:31:33.1142321Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-CQOdOR\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ],
+          "summary_json": [
+            "2026-10-20T02:31:33.1142321Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-CQOdOR\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ]
+        }
+      ],
+      "relevant_browser_direct_outputs": [
+        {
+          "command": "node tests/browser_access.cjs",
+          "line_start": 1969,
+          "line_end": 1984,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:24:45.3568841Z PASS access browser /home/runner/work/Tuldok/Tuldok/build/qa/access/run-dreZ96"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_external.cjs",
+          "line_start": 2111,
+          "line_end": 2130,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:24:58.9483380Z PASS Real keyboard-created edited graph, exact review, stale-byte refusal, descendant execution and exact artifact custody",
+            "2026-10-20T02:25:03.1329470Z PASS Owner creates an exact-material one-use grant; separately authenticated agent executes it without owner review controls",
+            "2026-10-20T02:25:07.2367092Z PASS Cloned graph cancellation waits for confirmed custody termination",
+            "2026-10-20T02:25:08.6266915Z PASS Server restart retains exact completed run and downloadable original output",
+            "2026-10-20T02:25:08.6323761Z PASS external recipe browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-external/run-Qa1kVV"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_publication.cjs",
+          "line_start": 2146,
+          "line_end": 2161,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:25:15.6612163Z PASS publication browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication/run-47qSV6"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_publication_lineage.cjs",
+          "line_start": 2177,
+          "line_end": 2192,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:25:21.6447021Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-7C1usK"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_graph_focus.cjs",
+          "line_start": 2193,
+          "line_end": 2210,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:25:25.1508988Z PASS graph focus regression {\"state\":\"passed\",\"scope\":\"Inert private Project graph metadata only; no recipe execution or scientific qualification\",\"source_commit\":\"9c0481cb529359c7087e23e41bcf20206d95bff3\",\"workspace_real_sha256\":\"412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2\",\"harness_sha256\":\"5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684\",\"native_keys\":[\"Home\",\"ArrowDown\",\"ArrowDown\"],\"programmatic_focus_calls_in_journey\":1,\"values\":[\"1edbb828368f4923ba4153c17fc4fd30\",\"dab200a5ffb64df6880ff087e5de9fe2\",\"6a7f3781382e48d48859e0be74e832ae\"],\"observed\":[{\"focus\":true,\"value\":\"1edbb828368f4923ba4153c17fc4fd30\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"dab200a5ffb64df6880ff087e5de9fe2\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"6a7f3781382e48d48859e0be74e832ae\",\"active\":\"SELECT\"}],\"negativeChecks\":[\"held graph read preserves separately moved focus\",\"held graph read does not restore hidden Pipeline focus after navigation\"],\"recipe_runs\":0,\"browser\":\"Chrome/155.0.8059.84\"}"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_project.cjs",
+          "line_start": 2225,
+          "line_end": 2251,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:25:27.0859446Z PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct",
+            "2026-10-20T02:25:27.8000040Z PASS Current snapshot activity refreshes without navigation and retains saved manifest identity",
+            "2026-10-20T02:25:29.8364132Z PASS Malformed publisher status is unavailable, then recovers without fabricating progress",
+            "2026-10-20T02:25:32.8754260Z PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers",
+            "2026-10-20T02:25:36.0624322Z PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers",
+            "2026-10-20T02:25:36.4012049Z PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim",
+            "2026-10-20T02:25:38.7134658Z PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime",
+            "2026-10-20T02:25:39.1459531Z PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence",
+            "2026-10-20T02:25:39.2748149Z PASS Registered current project opens through a shareable project link",
+            "2026-10-20T02:25:40.8542217Z PASS A project link initializes navigation once; explicit later catalog selection survives reload",
+            "2026-10-20T02:25:41.6904535Z PASS Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted",
+            "2026-10-20T02:25:41.7043355Z PASS read-only project browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-project/run-QBUGNB"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_project_observation.cjs",
+          "line_start": 2252,
+          "line_end": 2337,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:26:04.9013260Z       \"passed\": true",
+            "2026-10-20T02:26:04.9014292Z       \"passed\": true",
+            "2026-10-20T02:26:04.9015326Z       \"passed\": true",
+            "2026-10-20T02:26:04.9016273Z       \"passed\": true",
+            "2026-10-20T02:26:04.9017266Z       \"passed\": true",
+            "2026-10-20T02:26:04.9018378Z       \"passed\": true",
+            "2026-10-20T02:26:04.9019308Z       \"passed\": true",
+            "2026-10-20T02:26:04.9020255Z       \"passed\": true",
+            "2026-10-20T02:26:04.9021146Z       \"passed\": true",
+            "2026-10-20T02:26:04.9035144Z       \"passed\": true",
+            "2026-10-20T02:26:04.9036290Z       \"passed\": true",
+            "2026-10-20T02:26:04.9037200Z       \"passed\": true",
+            "2026-10-20T02:26:04.9038010Z       \"passed\": true",
+            "2026-10-20T02:26:04.9038793Z       \"passed\": true",
+            "2026-10-20T02:26:04.9039838Z       \"passed\": true",
+            "2026-10-20T02:26:04.9040993Z       \"passed\": true"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_coordinator.cjs",
+          "line_start": 4667,
+          "line_end": 4682,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:30:58.7625552Z PASS coordinator browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-coordinator/run-MSk652"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_run_phase_timings.cjs",
+          "line_start": 4683,
+          "line_end": 4699,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:31:18.3703852Z PASS phase timing browser: /home/runner/work/Tuldok/Tuldok/build/qa/run-phase-timings/run-DLaHoV"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_scientific_comparison.cjs",
+          "line_start": 4700,
+          "line_end": 4716,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:31:33.1142321Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-CQOdOR\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ],
+          "summary_json": [
+            "2026-10-20T02:31:33.1142321Z {\"state\":\"passed\",\"report\":\"/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-CQOdOR\",\"checks\":[\"Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.\",\"1440/390px tables retain all values and keyboard scrolling without page overflow.\",\"Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.\",\"Exact attached publication Ref uses real publication readers and preserves original interrupted state.\",\"Removed retained root refuses fresh candidate selection and clears prior values.\",\"Actual browser credential revocation clears the session and all cached scientific values after the refused read.\"]}"
+          ]
+        },
+        {
+          "command": "node tests/browser_workspace_image_run.cjs",
+          "line_start": 4717,
+          "line_end": 4746,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:31:35.1344784Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:31:39.0502217Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+            "2026-10-20T02:31:39.3353910Z PASS invalid held-out class coverage blocks release before training",
+            "2026-10-20T02:31:39.9069647Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+            "2026-10-20T02:31:40.3847621Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+            "2026-10-20T02:31:46.7274611Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+            "2026-10-20T02:31:46.9053295Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+            "2026-10-20T02:31:49.6696734Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+            "2026-10-20T02:31:55.4183912Z PASS one admitted real child completed; verified checkpoint, validation metrics and exact predictions; test access remains locked",
+            "2026-10-20T02:31:55.8221863Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+            "2026-10-20T02:31:56.7321059Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+            "2026-10-20T02:31:57.0976637Z PASS explicit test inspection is durable; later releases containing the records/pixels are marked exposed/reused",
+            "2026-10-20T02:31:58.0493891Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+            "2026-10-20T02:31:58.0645454Z PASS real image workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-image-run/run-lJ7MBn"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_text.cjs",
+          "line_start": 4747,
+          "line_end": 4776,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:31:59.9822456Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:32:07.1681622Z PASS 18 authored independent texts imported, labelled and explicitly reviewed using Data controls",
+            "2026-10-20T02:32:07.4509363Z PASS invalid held-out class coverage blocks release before training",
+            "2026-10-20T02:32:08.0232780Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+            "2026-10-20T02:32:08.4994488Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+            "2026-10-20T02:32:11.4946676Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+            "2026-10-20T02:32:11.6735091Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+            "2026-10-20T02:32:12.5176019Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+            "2026-10-20T02:32:14.7017873Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+            "2026-10-20T02:32:15.1052497Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+            "2026-10-20T02:32:16.0654823Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+            "2026-10-20T02:32:16.4226798Z PASS explicit test inspection is durable; later releases containing the records/canonical text are marked exposed/reused",
+            "2026-10-20T02:32:17.3762248Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+            "2026-10-20T02:32:17.4155939Z PASS real text workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-text-run/run-FVi32t"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_workspace_audio_run.cjs",
+          "line_start": 4794,
+          "line_end": 4822,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:32:23.6662496Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:32:24.1940374Z PASS 18 authored stereo WAV fixtures admitted and reviewed through ordinary API; current Data shows actual source",
+            "2026-10-20T02:32:25.0203248Z PASS Data UI previews class coverage, freezes and downloads original WAV classification release",
+            "2026-10-20T02:32:25.4992161Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+            "2026-10-20T02:32:28.3905770Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+            "2026-10-20T02:32:28.5883726Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+            "2026-10-20T02:32:29.5382955Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+            "2026-10-20T02:32:31.8178200Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+            "2026-10-20T02:32:32.2202954Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+            "2026-10-20T02:32:33.2103656Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+            "2026-10-20T02:32:33.5775564Z PASS explicit test inspection is durable; later releases containing the records/decoded PCM are marked exposed/reused",
+            "2026-10-20T02:32:34.4306583Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+            "2026-10-20T02:32:34.4502234Z PASS real audio workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-audio-run/run-3Fio4I"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_model_development.cjs",
+          "line_start": 4951,
+          "line_end": 4979,
+          "one_fit_environment": [],
+          "result_lines": [
+            "2026-10-20T02:33:50.9677851Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+            "2026-10-20T02:33:54.9242302Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+            "2026-10-20T02:33:55.2274802Z PASS invalid held-out class coverage blocks release before training",
+            "2026-10-20T02:33:55.7658986Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+            "2026-10-20T02:34:12.0070120Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+            "2026-10-20T02:34:12.1622061Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+            "2026-10-20T02:34:25.6534104Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+            "2026-10-20T02:34:26.2054897Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+            "2026-10-20T02:34:27.1127175Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+            "2026-10-20T02:34:43.5196634Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+            "2026-10-20T02:34:43.5564620Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+            "2026-10-20T02:34:43.8254413Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+            "2026-10-20T02:34:44.1611888Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+            "2026-10-20T02:34:44.6281279Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-OVYtsy"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_one_fit_model_evidence.cjs",
+          "line_start": 4980,
+          "line_end": 5001,
+          "one_fit_environment": [
+            "2026-10-20T02:34:44.6820895Z   TULDOK_ONE_FIT_TASK: text"
+          ],
+          "result_lines": [
+            "2026-10-20T02:34:59.3585157Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+            "2026-10-20T02:35:00.0606678Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+            "2026-10-20T02:35:00.3775860Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+            "2026-10-20T02:35:00.5437903Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context",
+            "2026-10-20T02:35:00.8286107Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured",
+            "2026-10-20T02:35:01.2952298Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-nQwqba"
+          ],
+          "summary_json": []
+        },
+        {
+          "command": "node tests/browser_one_fit_model_evidence.cjs",
+          "line_start": 5002,
+          "line_end": 5023,
+          "one_fit_environment": [
+            "2026-10-20T02:35:01.3557204Z   TULDOK_ONE_FIT_TASK: audio"
+          ],
+          "result_lines": [
+            "2026-10-20T02:35:16.1467332Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+            "2026-10-20T02:35:16.8938185Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+            "2026-10-20T02:35:17.2105359Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+            "2026-10-20T02:35:17.3772507Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context",
+            "2026-10-20T02:35:17.7602947Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured",
+            "2026-10-20T02:35:18.4267247Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-qbV9pA"
+          ],
+          "summary_json": []
+        }
+      ]
+    }
+  ],
+  "source_binding": {
+    "base_is_ancestor_of_source": true,
+    "source_sha256": {
+      "static/workspace-real.js": "412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2",
+      "tests/browser_workspace_graph_focus.cjs": "5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684",
+      ".github/workflows/tests.yml": "33c1ead8d185bf45c36025d93a2ced3f0167f66ede72402f53d8dba041537be2"
+    },
+    "cross_check": "Both graph-focus browser receipts identify Actions checkout9c0481cb and workspace-real/harness hashes exactly equal to sourcea9c12a. Both primary checkout lines explicitly merge sourcea9c into base861b."
+  },
+  "batch_http_cli_and_event_evidence": {
+    "source_modules": [
+      {
+        "path": "tests/test_workflow_batch_client.py",
+        "sha256": "84b18c1c19f9daebb8bf412e0be81519a43196df2ffb6a17613026048cb45b9d",
+        "test_method_count": 14,
+        "test_methods": [
+          "test_twenty_whole_files_and_empty_item_publish_private_exact_outputs_in_one_batch",
+          "test_known_oversize_refuses_before_negotiation_or_any_dispatch_and_exact_cap_is_allowed",
+          "test_missing_or_unknown_batch_contract_never_falls_back_to_individual_collection",
+          "test_service_auth_and_transport_errors_never_retry_or_publish",
+          "test_request_aware_decoder_rejects_order_source_and_segment_identity_before_any_write",
+          "test_item_failure_returns_partial_receipt_and_stops_writes_without_fallback",
+          "test_valid_segment_hash_is_not_mistaken_for_the_selected_whole_hash",
+          "test_whole_length_and_eof_are_required_and_no_segment_followup_is_dispatched",
+          "test_preexisting_and_racing_destinations_are_never_clobbered",
+          "test_fsync_failure_discards_provisional_and_does_not_publish_following_items",
+          "test_pre_cancel_and_cancel_after_reply_leave_every_item_outstanding",
+          "test_cancel_after_fsync_and_after_one_published_file_are_fenced",
+          "test_publication_uses_exact_attached_ref_and_preserves_it_in_each_whole_receipt",
+          "test_cli_selects_batch_explicitly_and_does_not_advertise_batch_resume"
+        ],
+        "skip_guards": []
+      },
+      {
+        "path": "tests/test_batch_client_correlation.py",
+        "sha256": "aa98b9144615f7419abab6f92f710e0a16354aa9790152aca87fc99aa426da02",
+        "test_method_count": 4,
+        "test_methods": [
+          "test_exact_reply_is_accepted_once",
+          "test_schema_valid_unrequested_segments_are_refused",
+          "test_publication_catalog_is_checked_even_when_ref_echo_matches",
+          "test_item_failure_is_returned_without_retry_or_fallback"
+        ],
+        "skip_guards": []
+      },
+      {
+        "path": "tests/test_workflow_batch_client_http.py",
+        "sha256": "6e92e5fef0137c222bda6f70f7243824e3e96e8d91cbb2d372658fdd6c912b22",
+        "test_method_count": 8,
+        "test_methods": [
+          "test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+          "test_clean_cli_twenty_wholes_and_ordinary_explicit_resume",
+          "test_actual_item_refusal_yields_partial_then_only_explicit_ordinary_resume_restarts",
+          "test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+          "test_actual_http_response_whole_corruption_and_identity_mismatch_never_fallback",
+          "test_actual_cancellation_interrupts_held_http_read_without_cancel_or_retry",
+          "test_actual_cli_known_collision_refuses_before_bootstrap_and_race_preserves_sentinel",
+          "test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted"
+        ],
+        "skip_guards": [
+          "@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL and actual HTTP')",
+          "@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL and actual HTTP')"
+        ]
+      },
+      {
+        "path": "tests/test_workflow_client.py",
+        "sha256": "a9f8bfeeabc054e16bfe041ea8b76f41517d8c6b1a93d2085017d11edb018863",
+        "test_method_count": 21,
+        "test_methods": [
+          "test_exact_v2_reply_accepts_requested_mode_and_ordered_operands",
+          "test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes",
+          "test_legacy_v1_reply_keeps_its_existing_wire_contract",
+          "test_import_is_stdlib_only_with_startup_tripwires_in_clean_python",
+          "test_unknown_submission_never_retries_and_explicit_reconcile_keeps_identity",
+          "test_read_budget_refuses_mutation_and_cleans_thread_local_context",
+          "test_missing_selected_submission_capability_refuses_without_dispatch",
+          "test_exact_comparison_refuses_v1_without_implicit_operand_fallback",
+          "test_material_digest_uses_domain_utf8_canonical_json_for_unicode",
+          "test_5xx_and_negative_reconciliation_preserve_original_unknown_identity",
+          "test_monitor_deadline_and_stop_never_call_cancel_and_restore_transport_budget",
+          "test_cancel_reports_request_without_claiming_drain",
+          "test_public_inventory_can_include_unselectable_manifest_metadata",
+          "test_pre_stopped_collection_never_bootstraps_and_retains_prior_item_proofs",
+          "test_interrupted_segments_resume_at_zero_with_whole_hash_and_current_authority",
+          "test_failure_preserves_success_and_outstanding_without_alternate_dispatch",
+          "test_hash_mismatch_and_no_clobber_race_keep_partial_typed_and_remove_provisional",
+          "test_resume_rejects_destination_replacement_during_whole_hash_verification",
+          "test_cancelled_resume_never_completes_from_unvisited_prior_proofs",
+          "test_study_acknowledgement_matches_owner_request_parent_catalog_and_grant",
+          "test_changed_inventory_local_success_and_closed_manifests_refuse"
+        ],
+        "skip_guards": []
+      },
+      {
+        "path": "tests/test_workflow_client_http.py",
+        "sha256": "25c489b8490f457840a2b88d1c9cb5e351e2dd0967eaf7cdd5bed3ee308eae7f",
+        "test_method_count": 13,
+        "test_methods": [
+          "test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result",
+          "test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again",
+          "test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown",
+          "test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber",
+          "test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback",
+          "test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional",
+          "test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success",
+          "test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation",
+          "test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event",
+          "test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains",
+          "test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation",
+          "test_exact_attached_publication_collection_and_revocation_on_resume",
+          "test_actual_classifier_exact_operands_compare_through_http_and_clean_cli"
+        ],
+        "skip_guards": [
+          "@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL and actual HTTP')",
+          "@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL and actual HTTP')",
+          "    @unittest.skipUnless(os.environ.get('TULDOK_TRAINING_PYTHON'), 'Requires explicitly selected existing qualified CPU runtime')"
+        ]
+      }
+    ],
+    "CI_execution_inference": "The full default discovery command includes the named test_ modules; the actual HTTP module has8methods, only TULDOK_DATABASE_URL skipUnless guards, no per-test skip or custom load_tests. Both full-suite environments explicitly set the disposable PostgreSQL DSN. Both1732-test suites completedOK; therefore these actual HTTP/CLI/Event/SIGINT/events/accounting cases are represented in discovery. The dot logs do not provide independently named per-case CI lines.",
+    "observed_environment_lines": {
+      "118390130432": [
+        "2026-10-20T00:57:00.9050267Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_test"
+      ],
+      "118390238386": [
+        "2026-10-20T01:42:22.3770813Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_test"
+      ]
+    },
+    "guards_satisfied": true,
+    "actual_cases_scope": "Actual authorized20x64byte neutral custody, clean CLI explicit batch and ordinary resume, typed item refusal, actual credential revocation, deliberately corrupted post-delivery response, SDK Event and clean CLI SIGINT held-read cancellation, no-clobber collision/race, attached publication Ref; tearDown asserts Run events/admission/consumption counts unchanged.",
+    "not_a_claim": "No universal performance, model quality, physics/science criterion or CUDA claim."
+  },
+  "retained_local_evidence_attribution": {
+    "retained_validation_path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/validation.json",
+    "retained_validation_sha256": "f77a4212ee1ff754e522ff624ef17568104ab9cb5e887b566add3acc62d8ddf6",
+    "controlled_39": {
+      "source": "61a34c9",
+      "kind": "controlled and existing pure CLI/download/workflow regression",
+      "tests": 39,
+      "seconds": 103.853,
+      "outcome": "pass",
+      "log": "pure-initial.log",
+      "measurement_overlap": "Finished 2026-10-19 22:35:03.649626 UTC; overlaps first unavailable zero-history paired control after22:34:48.507661 by approximately15seconds. Parent/M4 owner recording; no positive cells affected.",
+      "log_sha256": "3bc95dc302a1717c8721b3e5db1f9814192c13dd3703869bb267dbdc51adafff"
+    },
+    "composed_focused_22": {
+      "source": "a4ff908fca0ef72ca58554e1473fce2bcfc2d7a8",
+      "kind": "targeted controlled batch and composed M5/private publisher regression",
+      "tests": 22,
+      "seconds": 1.7,
+      "outcome": "pass",
+      "log": "pure-composed.log",
+      "log_sha256": "46fd2a9e1f37d20045d4bca7a2bf6a01f208d0da856b73eb5c1fc77d87015042"
+    },
+    "actual_eight": {
+      "outcome": "pass",
+      "tests": 8,
+      "seconds": 145.991,
+      "source": "fd42361f043c201290c5b6297a384652320044ed",
+      "log": "actual-attempt-01/actual-http-cli.log",
+      "source_capture": "actual-attempt-01/source.json",
+      "first_attempt": true,
+      "no_failures_or_retries": true,
+      "after_m4_quiet_release": true,
+      "concurrency": "Parent scientific reader and M5 single comparison gates allowed concurrently; no performance claim.",
+      "cases": [
+        "actual attached publication Ref with original interrupted Run unchanged",
+        "held HTTP SDK Event and clean CLI real SIGINT cancellation",
+        "clean CLI known destination collision and actual-delivery local race",
+        "actual response valid segment hash with wrong whole bytes; source mismatch",
+        "actual per-item server refusal; typed partial receipt; explicit ordinary CLI resume",
+        "actual credential revocation before final HTTP delivery fence",
+        "SDK20 selected whole artifacts in one batch",
+        "clean CLI20 selected whole artifacts and explicit ordinary resume reauthorization"
+      ],
+      "cleanup": [
+        "actual-attempt-01/cleanup-publication.json",
+        "actual-attempt-01/cleanup-twenty.json",
+        "actual-attempt-01/cleanup-independent.json"
+      ]
+    },
+    "affected_three": {
+      "outcome": "pass",
+      "tests": 3,
+      "seconds": 37.842,
+      "source": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625",
+      "source_capture": "actual-attempt-02/source.json",
+      "log": "actual-attempt-02/actual-affected.log",
+      "selected_cases": [
+        "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+        "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+        "test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted"
+      ],
+      "first_attempt": true,
+      "no_failures_or_retries": true,
+      "after_direct_m4_quiet_release": true,
+      "head_and_recorded_file_hashes_checked_before_execution": true,
+      "head_unchanged_during_gate": true,
+      "cleanup": [
+        "actual-attempt-02/cleanup-twenty.json",
+        "actual-attempt-02/cleanup-publication.json",
+        "actual-attempt-02/cleanup-independent.json"
+      ],
+      "scope": "Affected server refinement only; prior full8 remains attributed to fd42361, not relabeled as current-head execution."
+    },
+    "integrity_checked": [
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-01/actual-http-cli.log",
+        "sha256": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-01/cleanup-independent.json",
+        "sha256": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-01/cleanup-publication.json",
+        "sha256": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-01/cleanup-twenty.json",
+        "sha256": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-01/source.json",
+        "sha256": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/actual-affected.log",
+        "sha256": "963638318440f9d9dbc8ce6248c3d4dfaf69f51f3381ca084ab60b8b1dac56f4",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/cleanup-independent.json",
+        "sha256": "a75daf7106aac666c03070a3cfd9bd0a7d5a59c50f79a659c0cd9f302b27b6b9",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/cleanup-publication.json",
+        "sha256": "681a74e3ed8b693214849ca2a307dcec4bdb9556e63a2e21f6715708ae4a6de2",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/cleanup-twenty.json",
+        "sha256": "b509c5a5ecec4d1282fe8160b01142c6651907db1a83a8c6eb23dcc9cfb0ee3b",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/preparation.json",
+        "sha256": "4f913b405f852e8f153e35e594d2a08b60c8669761bb9bb117e6f2bd7871e469",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/source-before-comment.json",
+        "sha256": "a2bdd8a392636950def849c766bce70db3d229de56077f363276925fc872cb65",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/actual-attempt-02/source.json",
+        "sha256": "6c273d2df2f2242cc6ec9a7579026c79701fd543126d95cfb55f5f1f2ecae572",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/consumer-independent-final-review.json",
+        "sha256": "29c982b6c2423877fe0f512f2842bda2fd5bbb7e892bc4fcb8d30efe13b71a60",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/pure-initial.log",
+        "sha256": "3bc95dc302a1717c8721b3e5db1f9814192c13dd3703869bb267dbdc51adafff",
+        "matches_retained_validation": true
+      },
+      {
+        "path": "docs/plans/lab-workflow-reliability/reports/m4-batch-client/pure-composed.log",
+        "sha256": "46fd2a9e1f37d20045d4bca7a2bf6a01f208d0da856b73eb5c1fc77d87015042",
+        "matches_retained_validation": true
+      }
+    ],
+    "attribution_rule": "These pre-existing local39/8/3 reports remain bound to their original61a34c9/fd42361/4d5e1afa sources; no local tests were run or relabeled as a9c CI during this audit."
+  },
+  "limits": [
+    "72 skipped full-suite tests remain skipped; detailed skip reasons are not printed in these aggregate logs.",
+    "Read-only review of actual completedCI plus exact-source/static guard audit, not independent test execution.",
+    "The two completed workflow successes and executed browsers satisfy the lifecycle review scope; root owns later retarget/serial integration and cleanup.",
+    "Individual batch-case execution is supported by normal discovery and enabled source guards, not individually named CI output.",
+    "No performance comparison or scientific/numerical acceptance follows from execution durations, neutral bytes, diagnostic comparisons or browser success."
+  ]
+}

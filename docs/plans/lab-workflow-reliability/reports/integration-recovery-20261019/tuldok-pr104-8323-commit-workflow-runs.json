@@ -1,0 +1,84 @@
+{
+  "workflow_runs": [
+    {
+      "id": 39349543926,
+      "name": "Inert extension catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 216,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543926/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543926/logs",
+      "workflow_id": 385841450
+    },
+    {
+      "id": 39349543903,
+      "name": "M1 workspace interface",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 241,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543903/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543903/logs",
+      "workflow_id": 381569041
+    },
+    {
+      "id": 39349543860,
+      "name": "Candidate package captured CPU",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 154,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543860/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543860/logs",
+      "workflow_id": 386052068
+    },
+    {
+      "id": 39349543888,
+      "name": "Dataset lifecycle tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_number": 507,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543888/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349543888/logs",
+      "workflow_id": 373501874
+    },
+    {
+      "id": 39349511503,
+      "name": "Inert extension catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 212,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511503/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511503/logs",
+      "workflow_id": 385841450
+    },
+    {
+      "id": 39349511758,
+      "name": "M1 workspace interface",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 237,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511758/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511758/logs",
+      "workflow_id": 381569041
+    },
+    {
+      "id": 39349511761,
+      "name": "Candidate package captured CPU",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 149,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511761/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511761/logs",
+      "workflow_id": 386052068
+    },
+    {
+      "id": 39349511760,
+      "name": "Dataset lifecycle tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_number": 501,
+      "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511760/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349511760/logs",
+      "workflow_id": 373501874
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "pr": 104,
+  "source": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "qualified_old_base": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+  "current_main_base": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "base_trees_equal": true,
+  "prospective_merge_tree": "3f8e9d3a8984d12e71cbcc163e5976eb0eff121b",
+  "source_tree": "3f8e9d3a8984d12e71cbcc163e5976eb0eff121b",
+  "tree_equal": true,
+  "CI_acceptance": "Still pending; this tree proof is not a lifecycle success claim."
+}

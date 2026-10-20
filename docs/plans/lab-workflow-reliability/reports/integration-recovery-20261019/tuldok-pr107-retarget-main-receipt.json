@@ -1,0 +1,9 @@
+{
+  "pr": 107,
+  "old_base": "feature/lab-phase-timing-20261019",
+  "new_base": "main",
+  "base_sha": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+  "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+  "source_unchanged": true,
+  "verified_utc": "2026-10-20T02:39:37.384793+00:00"
+}

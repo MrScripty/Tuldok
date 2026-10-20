@@ -1,0 +1,11 @@
+{
+  "pr": 103,
+  "head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+  "qualified_old_base": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+  "current_main_base": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+  "base_trees_equal": true,
+  "prospective_merge_tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+  "source_tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+  "tree_equal": true,
+  "history_limit": "Earlier CI checked exact head merged into aa source branch. Retargeted main has identical base tree; literal new main checkout not claimed."
+}

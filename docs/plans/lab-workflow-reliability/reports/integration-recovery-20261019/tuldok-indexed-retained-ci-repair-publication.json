@@ -1,0 +1,56 @@
+{
+  "intent_utc": "2026-10-20T02:41:47.821206+00:00",
+  "state": "acknowledged",
+  "mappings": [
+    {
+      "pr": 108,
+      "ref": "refs/heads/feature/lab-indexed-diagnostics-20261019",
+      "old": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "new": "9f08427029d8b48c8f9b50927a1c835afb573276"
+    },
+    {
+      "pr": 111,
+      "ref": "refs/heads/feature/retained-analysis-query-20261019",
+      "old": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "new": "0ba4db01f04a77c262eb4b397f88849e9688b5ab"
+    }
+  ],
+  "production_unchanged": true,
+  "changed111": [
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/acceptance.md",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-1440.jpg",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-390.jpg",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/model-controller.log",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/model-development.log",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/original-failures.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/qualification.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/receipt.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-cleanup.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-reservation.json",
+    "tests/browser_model_development.cjs",
+    "tests/test_extension_canonical_author.py"
+  ],
+  "composed_targeted_tests": {
+    "ran": 16,
+    "skipped": 0,
+    "exit": 0,
+    "seconds": 5.061,
+    "log": "/tmp/tuldok-pr111-composed-canonical-author-validation.log",
+    "sha256": "b0ee3155d8f92267cf3cb2301b6346c572ce99207d525e42d0c2b92835151821",
+    "schema_reserved_removed": [
+      "catalog_4b844e3f09aa4127b1e5c4800363514e",
+      "catalog_8dbbdf160e8648e396466ae9ab75d9d1",
+      "catalog_d9aa0a87a4c94b55834ac7376a8d0bf7",
+      "catalog_fd2657c20e764a89b03cb8f8a63bf35f"
+    ]
+  },
+  "independent_reviews": [
+    "/tmp/tuldok-pr108-frozen-author-test-independent-review.json",
+    "/tmp/tuldok-pr111-revocation-gate-independent-review.json"
+  ],
+  "command_exit": 0,
+  "stdout": "",
+  "stderr": "To https://github.com/MrScripty/Tuldok.git\n   de5a3a8..9f08427  9f08427029d8b48c8f9b50927a1c835afb573276 -> feature/lab-indexed-diagnostics-20261019\n   beead92..0ba4db0  0ba4db01f04a77c262eb4b397f88849e9688b5ab -> feature/retained-analysis-query-20261019\n",
+  "remote_new_heads_verified": true,
+  "verified_utc": "2026-10-20T02:44:25.710920+00:00"
+}

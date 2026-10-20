@@ -1,0 +1,12 @@
+{
+  "git_commit": {
+    "message": "Merge 5a83eadaaf58ab86c49033fc1b249bb1b163a99e into 3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+    "parents": [
+      "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "5a83eadaaf58ab86c49033fc1b249bb1b163a99e"
+    ],
+    "sha": "ee945d727b184b3d1286b6a8b1570c20c95e45ed",
+    "tree": "01f01295c340355323e0cabe9ca41cf07b20ebe2"
+  },
+  "transport": "Read-only /usr/bin/gh api repos/MrScripty/Tuldok/git/commits/ee945d727b184b3d1286b6a8b1570c20c95e45ed; normalized MCP omits tree; no local ref fetch/mutation"
+}

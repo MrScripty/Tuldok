@@ -1,0 +1,149 @@
+{
+  "reviewed_at_utc": "2026-10-20T02:43:35.106191+00:00",
+  "reviewer": "PR108 CI repair agent independently reviewing PR105",
+  "pr": 105,
+  "outcome": "clear within completed captured CPU scope",
+  "exact_pr_head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "run_id": 39349557043,
+  "job_id": 118390260929,
+  "job_conclusion": "success",
+  "step_counts": {
+    "total": 13,
+    "success": 13,
+    "failure": 0,
+    "skipped": 0
+  },
+  "checkout": {
+    "tested_merge_commit": "367f3fe0f034b258cd474ed38e5eb06169b674cf",
+    "pr_head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+    "base_at_job_checkout": "8323d54856296f46d01892c20f9084164c1f1ded",
+    "actual_log_evidence": [
+      "2026-10-20T00:55:31.7162186Z HEAD is now at 367f3fe Merge 3305f7de114eab6ca1f7e988a6f7b6bd018252c7 into 8323d54856296f46d01892c20f9084164c1f1ded",
+      "2026-10-20T00:55:31.7257726Z 367f3fe0f034b258cd474ed38e5eb06169b674cf"
+    ],
+    "later_main_composition": "Not asserted by this job or review; separately owned by root."
+  },
+  "source_binding": {
+    "scope": "Four actual runtime preparation owner hashes independently compared with exact3305 Git blobs. No literal main claim.",
+    "owners": {
+      "candidate_packages.py": {
+        "log_sha256": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+        "exact_pr_head_sha256": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+        "match": true
+      },
+      "recipe_process.py": {
+        "log_sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+        "exact_pr_head_sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+        "match": true
+      },
+      "runtime_snapshots.py": {
+        "log_sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+        "exact_pr_head_sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+        "match": true
+      },
+      "tests/prepare_candidate_runtime.py": {
+        "log_sha256": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+        "exact_pr_head_sha256": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+        "match": true
+      }
+    }
+  },
+  "environment": {
+    "runner": "ubuntu-24.04",
+    "postgres_service": "postgres:17",
+    "training_interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+    "versions": {
+      "filelock": "4.2.4",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    },
+    "profile": "captured_cpu_python_v1",
+    "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+    "inventory_sha256": "103a3b10e72b2a0cfc525f28423b423b9fe2465ca89afedefdf79a67f2f2b636",
+    "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+    "file_count": 21042,
+    "total_bytes": 823402896
+  },
+  "claims": {
+    "actual_classifier_training": "PASS H1 three checkpoint/probe sets and fixed heldout; preparation receipt identifies three real Run IDs.",
+    "correction_and_comparison": "PASS H4 new reviewed source revision/release/trained trial, original immutable evidence and refusal of paired deltas after membership changes; exact compare selectors.",
+    "delayed_and_denied_evidence": "PASS H5 delayed delivery cannot override navigation; substituted403 clears evidence; explicit refresh recovers. Backend revoke enforcement is separately scoped.",
+    "captured_package_and_fresh_inference": "Separate package and fresh verifier operations complete using captured CPU consumer; exactly three charged attempt slots; source candidate remains diagnostic.",
+    "presentation": "PASS keyboard focus and measured dark contrast with bounded1440/390 layout."
+  },
+  "actual_pass_log_lines": [
+    "2026-10-20T00:56:21.8053884Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T00:56:26.1431364Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-20T00:56:26.4521120Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-20T00:56:27.0439255Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-20T00:56:49.0954908Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "2026-10-20T00:56:49.2547600Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "2026-10-20T00:57:07.7719242Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "2026-10-20T00:57:08.5797620Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+    "2026-10-20T00:57:09.6733921Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "2026-10-20T00:57:32.3256739Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "2026-10-20T00:57:32.4053249Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "2026-10-20T00:57:32.7666941Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "2026-10-20T00:57:33.1353298Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+    "2026-10-20T00:57:33.7511795Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-t0vcC5",
+    "2026-10-20T00:59:17.3794086Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots",
+    "2026-10-20T00:59:17.3796020Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic",
+    "2026-10-20T00:59:17.3947156Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-iYhb16"
+  ],
+  "model_browser_receipt": {
+    "catalog_path": "/tmp/tuldok-model-development-OuEcgi/data",
+    "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-t0vcC5/receipt.json",
+    "run_ids": [
+      "316d237e910f4b579b46cedce47367c8",
+      "976dcb0fbba84effa6507defcce58dca",
+      "c1ad4df188ff4caba15f284be2ba9ca8"
+    ],
+    "sha256": "a615ee5fd956489eb97f9ebab80838196d68923b7f151d92b0539eabac9a63b5"
+  },
+  "artifact_upload_log_lines": [
+    "2026-10-20T00:59:19.1414008Z SHA256 digest of uploaded artifact zip is ae358d1f2b5e10915eb749b3db9b909561af299823e6d470946729e856808aa4",
+    "2026-10-20T00:59:19.5844978Z Artifact candidate-package-captured-cpu.zip successfully finalized. Artifact ID 12232443891",
+    "2026-10-20T00:59:19.5847362Z Artifact candidate-package-captured-cpu has been successfully uploaded! Final size is 3775940 bytes. Artifact ID is 12232443891"
+  ],
+  "lifecycle_source_inspection": {
+    "configured_http_cli_methods": [
+      "test_clean_cli_exports_submits_monitors_and_collects_selected_neutral_result",
+      "test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again",
+      "test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown",
+      "test_real_segment_interruption_resume_whole_hash_and_atomic_no_clobber",
+      "test_denied_expired_revoked_grants_and_credential_have_no_effect_or_fallback",
+      "test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional",
+      "test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success",
+      "test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation",
+      "test_delayed_actual_bootstrap_shares_deadline_and_blocked_read_observes_event",
+      "test_monitor_stop_and_deadline_leave_compute_then_explicit_cancel_drains",
+      "test_retained_trial_manifest_delegates_actual_admission_and_reconciles_one_reservation",
+      "test_exact_attached_publication_collection_and_revocation_on_resume",
+      "test_actual_classifier_exact_operands_compare_through_http_and_clean_cli"
+    ],
+    "evidence_scope": "Source inspection only; both lifecycle metadata snapshots report whole unittest success but neither lifecycle has completed. Individual execution/skip counts not inferred."
+  },
+  "raw_evidence": {
+    "decoded_log": "/tmp/tuldok-pr105-3305-cpu-job-118390260929.log",
+    "decoded_log_bytes": 60265,
+    "decoded_log_sha256": "50d4d8cc478397fe0ecd6c08f37fe35b80255d91573d61b5926625f8d71c774c",
+    "representation": "UTF8 encoding of decoded MCP job log, not original HTTP bytes",
+    "job_metadata": "/tmp/tuldok-pr105-3305-cpu-run-39349557043-jobs.json",
+    "runtime_preparation": "/tmp/tuldok-pr105-3305-runtime-preparation.json",
+    "source_comparison": "/tmp/tuldok-pr105-3305-source-hashes.json"
+  },
+  "limits": [
+    "Uploaded artifact contents were not downloaded.",
+    "Authored classifier and neutral workflow client fixtures establish no scientific validity, end-to-end speed or quality claim.",
+    "Prior local source563 qualification remains separate and was not promoted.",
+    "No source edits, test execution, reruns, cancellations, pushes or merges performed."
+  ]
+}

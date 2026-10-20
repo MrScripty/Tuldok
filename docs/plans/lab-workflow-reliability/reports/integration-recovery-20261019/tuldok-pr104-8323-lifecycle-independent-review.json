@@ -1,0 +1,87 @@
+{
+  "pr": 104,
+  "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "outcome": "pending",
+  "mode": "one bounded job-metadata lookup per specified lifecycle run; no polling",
+  "runs": [
+    {
+      "run_id": 39349543888,
+      "job_id": 118390213683,
+      "status": "in_progress",
+      "conclusion": null,
+      "active_steps": [
+        {
+          "name": "Run python -m unittest discover -s tests",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 36
+        }
+      ],
+      "success_count": 35,
+      "total_reported_steps": 169,
+      "phase_gates": [
+        {
+          "name": "Verify bounded owner phase timings with PostgreSQL",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Verify exact phase UI contracts and bounded delivery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify real live owner phase timing workflow",
+          "status": "pending",
+          "conclusion": null,
+          "number": 150
+        }
+      ]
+    },
+    {
+      "run_id": 39349511760,
+      "job_id": 118390114562,
+      "status": "in_progress",
+      "conclusion": null,
+      "active_steps": [
+        {
+          "name": "Run node tests/browser_meshes.cjs",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 140
+        }
+      ],
+      "success_count": 139,
+      "total_reported_steps": 169,
+      "phase_gates": [
+        {
+          "name": "Verify bounded owner phase timings with PostgreSQL",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Verify exact phase UI contracts and bounded delivery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify real live owner phase timing workflow",
+          "status": "pending",
+          "conclusion": null,
+          "number": 150
+        }
+      ]
+    }
+  ],
+  "full_decoded_lifecycle_log_reviewed": false,
+  "limitation": "Both jobs were in progress at the requested lookup. Success in early owner timing/UI contract steps does not establish completion of late real live owner phase browser step or whole lifecycle.",
+  "raw_metadata": [
+    "/tmp/tuldok-pr104-8323-lifecycle-run-39349543888-jobs.json",
+    "/tmp/tuldok-pr104-8323-lifecycle-run-39349511760-jobs.json"
+  ],
+  "mutations": "none"
+}

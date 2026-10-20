@@ -1,0 +1,688 @@
+{
+  "cpu_run": {
+    "id": 39349568674,
+    "name": "Candidate package captured CPU",
+    "node_id": "WFR_kwLOUaTr688AAAAJKWrEog",
+    "head_branch": "feature/lab-coordinator-panel-20261019",
+    "head_sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "path": ".github/workflows/candidate-packages.yml",
+    "display_title": "Expose coordinator health and exact owner recovery in Runs",
+    "run_number": 157,
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 386052068,
+    "check_suite_id": 106631814136,
+    "check_suite_node_id": "CS_kwDOUaTr688AAAAY08Bb-A",
+    "url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568674",
+    "html_url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568674",
+    "pull_requests": [
+      {
+        "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/102",
+        "id": 4927558089,
+        "number": 102,
+        "head": {
+          "ref": "feature/lab-coordinator-panel-20261019",
+          "sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+          "repo": {
+            "id": 1369762795,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok",
+            "name": "Tuldok"
+          }
+        },
+        "base": {
+          "ref": "main",
+          "sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+          "repo": {
+            "id": 1369762795,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok",
+            "name": "Tuldok"
+          }
+        }
+      }
+    ],
+    "created_at": "2026-10-20T00:45:54Z",
+    "updated_at": "2026-10-20T00:55:20Z",
+    "actor": {
+      "login": "MrScripty",
+      "id": 10446793,
+      "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/MrScripty",
+      "html_url": "https://github.com/MrScripty",
+      "followers_url": "https://api.github.com/users/MrScripty/followers",
+      "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+      "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+      "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+      "repos_url": "https://api.github.com/users/MrScripty/repos",
+      "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "run_attempt": 1,
+    "referenced_workflows": [],
+    "run_started_at": "2026-10-20T00:45:54Z",
+    "triggering_actor": {
+      "login": "MrScripty",
+      "id": 10446793,
+      "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/MrScripty",
+      "html_url": "https://github.com/MrScripty",
+      "followers_url": "https://api.github.com/users/MrScripty/followers",
+      "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+      "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+      "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+      "repos_url": "https://api.github.com/users/MrScripty/repos",
+      "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568674/jobs",
+    "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568674/logs",
+    "check_suite_url": "https://api.github.com/repos/MrScripty/Tuldok/check-suites/106631814136",
+    "artifacts_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568674/artifacts",
+    "cancel_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568674/cancel",
+    "rerun_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568674/rerun",
+    "previous_attempt_url": null,
+    "workflow_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/workflows/386052068",
+    "head_commit": {
+      "id": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "tree_id": "0b760df0d5cadd25effd3e98af16506af8c438e9",
+      "message": "test: await owned browser shutdown before removing profiles",
+      "timestamp": "2026-10-20T00:41:35Z",
+      "author": {
+        "name": "Jeremy",
+        "email": "jeremy@vidbacon.com"
+      },
+      "committer": {
+        "name": "Jeremy",
+        "email": "jeremy@vidbacon.com"
+      }
+    },
+    "repository": {
+      "id": 1369762795,
+      "node_id": "R_kgDOUaTr6w",
+      "name": "Tuldok",
+      "full_name": "MrScripty/Tuldok",
+      "private": false,
+      "owner": {
+        "login": "MrScripty",
+        "id": 10446793,
+        "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/MrScripty",
+        "html_url": "https://github.com/MrScripty",
+        "followers_url": "https://api.github.com/users/MrScripty/followers",
+        "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+        "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+        "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+        "repos_url": "https://api.github.com/users/MrScripty/repos",
+        "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/MrScripty/Tuldok",
+      "description": "Dataset capture, synthetic image generation, and book-corner labeling studio with Pumas integration",
+      "fork": false,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok",
+      "forks_url": "https://api.github.com/repos/MrScripty/Tuldok/forks",
+      "keys_url": "https://api.github.com/repos/MrScripty/Tuldok/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/MrScripty/Tuldok/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/MrScripty/Tuldok/teams",
+      "hooks_url": "https://api.github.com/repos/MrScripty/Tuldok/hooks",
+      "issue_events_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/MrScripty/Tuldok/events",
+      "assignees_url": "https://api.github.com/repos/MrScripty/Tuldok/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/MrScripty/Tuldok/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/MrScripty/Tuldok/tags",
+      "blobs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/MrScripty/Tuldok/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/MrScripty/Tuldok/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/MrScripty/Tuldok/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/MrScripty/Tuldok/languages",
+      "stargazers_url": "https://api.github.com/repos/MrScripty/Tuldok/stargazers",
+      "contributors_url": "https://api.github.com/repos/MrScripty/Tuldok/contributors",
+      "subscribers_url": "https://api.github.com/repos/MrScripty/Tuldok/subscribers",
+      "subscription_url": "https://api.github.com/repos/MrScripty/Tuldok/subscription",
+      "commits_url": "https://api.github.com/repos/MrScripty/Tuldok/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/MrScripty/Tuldok/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/MrScripty/Tuldok/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/MrScripty/Tuldok/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/MrScripty/Tuldok/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/MrScripty/Tuldok/merges",
+      "archive_url": "https://api.github.com/repos/MrScripty/Tuldok/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/MrScripty/Tuldok/downloads",
+      "issues_url": "https://api.github.com/repos/MrScripty/Tuldok/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/MrScripty/Tuldok/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/MrScripty/Tuldok/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/MrScripty/Tuldok/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/MrScripty/Tuldok/labels{/name}",
+      "releases_url": "https://api.github.com/repos/MrScripty/Tuldok/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/MrScripty/Tuldok/deployments"
+    },
+    "head_repository": {
+      "id": 1369762795,
+      "node_id": "R_kgDOUaTr6w",
+      "name": "Tuldok",
+      "full_name": "MrScripty/Tuldok",
+      "private": false,
+      "owner": {
+        "login": "MrScripty",
+        "id": 10446793,
+        "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/MrScripty",
+        "html_url": "https://github.com/MrScripty",
+        "followers_url": "https://api.github.com/users/MrScripty/followers",
+        "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+        "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+        "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+        "repos_url": "https://api.github.com/users/MrScripty/repos",
+        "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/MrScripty/Tuldok",
+      "description": "Dataset capture, synthetic image generation, and book-corner labeling studio with Pumas integration",
+      "fork": false,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok",
+      "forks_url": "https://api.github.com/repos/MrScripty/Tuldok/forks",
+      "keys_url": "https://api.github.com/repos/MrScripty/Tuldok/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/MrScripty/Tuldok/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/MrScripty/Tuldok/teams",
+      "hooks_url": "https://api.github.com/repos/MrScripty/Tuldok/hooks",
+      "issue_events_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/MrScripty/Tuldok/events",
+      "assignees_url": "https://api.github.com/repos/MrScripty/Tuldok/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/MrScripty/Tuldok/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/MrScripty/Tuldok/tags",
+      "blobs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/MrScripty/Tuldok/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/MrScripty/Tuldok/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/MrScripty/Tuldok/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/MrScripty/Tuldok/languages",
+      "stargazers_url": "https://api.github.com/repos/MrScripty/Tuldok/stargazers",
+      "contributors_url": "https://api.github.com/repos/MrScripty/Tuldok/contributors",
+      "subscribers_url": "https://api.github.com/repos/MrScripty/Tuldok/subscribers",
+      "subscription_url": "https://api.github.com/repos/MrScripty/Tuldok/subscription",
+      "commits_url": "https://api.github.com/repos/MrScripty/Tuldok/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/MrScripty/Tuldok/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/MrScripty/Tuldok/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/MrScripty/Tuldok/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/MrScripty/Tuldok/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/MrScripty/Tuldok/merges",
+      "archive_url": "https://api.github.com/repos/MrScripty/Tuldok/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/MrScripty/Tuldok/downloads",
+      "issues_url": "https://api.github.com/repos/MrScripty/Tuldok/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/MrScripty/Tuldok/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/MrScripty/Tuldok/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/MrScripty/Tuldok/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/MrScripty/Tuldok/labels{/name}",
+      "releases_url": "https://api.github.com/repos/MrScripty/Tuldok/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/MrScripty/Tuldok/deployments"
+    }
+  },
+  "cpu_jobs": {
+    "jobs": [
+      {
+        "id": 118390297862,
+        "name": "captured-cpu",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39349568674,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Explicitly provision the supported CPU runtime before qualification",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Exercise actual classifier preparation and training through the browser",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      }
+    ]
+  },
+  "workspace_ui_run": {
+    "id": 39349568660,
+    "name": "M1 workspace interface",
+    "node_id": "WFR_kwLOUaTr688AAAAJKWrElA",
+    "head_branch": "feature/lab-coordinator-panel-20261019",
+    "head_sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "path": ".github/workflows/workspaces-m1.yml",
+    "display_title": "Expose coordinator health and exact owner recovery in Runs",
+    "run_number": 243,
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 381569041,
+    "check_suite_id": 106631814105,
+    "check_suite_node_id": "CS_kwDOUaTr688AAAAY08Bb2Q",
+    "url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568660",
+    "html_url": "https://github.com/MrScripty/Tuldok/actions/runs/39349568660",
+    "pull_requests": [
+      {
+        "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/102",
+        "id": 4927558089,
+        "number": 102,
+        "head": {
+          "ref": "feature/lab-coordinator-panel-20261019",
+          "sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+          "repo": {
+            "id": 1369762795,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok",
+            "name": "Tuldok"
+          }
+        },
+        "base": {
+          "ref": "main",
+          "sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+          "repo": {
+            "id": 1369762795,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok",
+            "name": "Tuldok"
+          }
+        }
+      }
+    ],
+    "created_at": "2026-10-20T00:45:54Z",
+    "updated_at": "2026-10-20T01:07:09Z",
+    "actor": {
+      "login": "MrScripty",
+      "id": 10446793,
+      "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/MrScripty",
+      "html_url": "https://github.com/MrScripty",
+      "followers_url": "https://api.github.com/users/MrScripty/followers",
+      "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+      "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+      "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+      "repos_url": "https://api.github.com/users/MrScripty/repos",
+      "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "run_attempt": 1,
+    "referenced_workflows": [],
+    "run_started_at": "2026-10-20T00:45:54Z",
+    "triggering_actor": {
+      "login": "MrScripty",
+      "id": 10446793,
+      "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/MrScripty",
+      "html_url": "https://github.com/MrScripty",
+      "followers_url": "https://api.github.com/users/MrScripty/followers",
+      "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+      "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+      "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+      "repos_url": "https://api.github.com/users/MrScripty/repos",
+      "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "jobs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568660/jobs",
+    "logs_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568660/logs",
+    "check_suite_url": "https://api.github.com/repos/MrScripty/Tuldok/check-suites/106631814105",
+    "artifacts_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568660/artifacts",
+    "cancel_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568660/cancel",
+    "rerun_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/runs/39349568660/rerun",
+    "previous_attempt_url": null,
+    "workflow_url": "https://api.github.com/repos/MrScripty/Tuldok/actions/workflows/381569041",
+    "head_commit": {
+      "id": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "tree_id": "0b760df0d5cadd25effd3e98af16506af8c438e9",
+      "message": "test: await owned browser shutdown before removing profiles",
+      "timestamp": "2026-10-20T00:41:35Z",
+      "author": {
+        "name": "Jeremy",
+        "email": "jeremy@vidbacon.com"
+      },
+      "committer": {
+        "name": "Jeremy",
+        "email": "jeremy@vidbacon.com"
+      }
+    },
+    "repository": {
+      "id": 1369762795,
+      "node_id": "R_kgDOUaTr6w",
+      "name": "Tuldok",
+      "full_name": "MrScripty/Tuldok",
+      "private": false,
+      "owner": {
+        "login": "MrScripty",
+        "id": 10446793,
+        "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/MrScripty",
+        "html_url": "https://github.com/MrScripty",
+        "followers_url": "https://api.github.com/users/MrScripty/followers",
+        "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+        "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+        "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+        "repos_url": "https://api.github.com/users/MrScripty/repos",
+        "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/MrScripty/Tuldok",
+      "description": "Dataset capture, synthetic image generation, and book-corner labeling studio with Pumas integration",
+      "fork": false,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok",
+      "forks_url": "https://api.github.com/repos/MrScripty/Tuldok/forks",
+      "keys_url": "https://api.github.com/repos/MrScripty/Tuldok/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/MrScripty/Tuldok/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/MrScripty/Tuldok/teams",
+      "hooks_url": "https://api.github.com/repos/MrScripty/Tuldok/hooks",
+      "issue_events_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/MrScripty/Tuldok/events",
+      "assignees_url": "https://api.github.com/repos/MrScripty/Tuldok/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/MrScripty/Tuldok/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/MrScripty/Tuldok/tags",
+      "blobs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/MrScripty/Tuldok/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/MrScripty/Tuldok/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/MrScripty/Tuldok/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/MrScripty/Tuldok/languages",
+      "stargazers_url": "https://api.github.com/repos/MrScripty/Tuldok/stargazers",
+      "contributors_url": "https://api.github.com/repos/MrScripty/Tuldok/contributors",
+      "subscribers_url": "https://api.github.com/repos/MrScripty/Tuldok/subscribers",
+      "subscription_url": "https://api.github.com/repos/MrScripty/Tuldok/subscription",
+      "commits_url": "https://api.github.com/repos/MrScripty/Tuldok/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/MrScripty/Tuldok/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/MrScripty/Tuldok/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/MrScripty/Tuldok/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/MrScripty/Tuldok/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/MrScripty/Tuldok/merges",
+      "archive_url": "https://api.github.com/repos/MrScripty/Tuldok/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/MrScripty/Tuldok/downloads",
+      "issues_url": "https://api.github.com/repos/MrScripty/Tuldok/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/MrScripty/Tuldok/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/MrScripty/Tuldok/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/MrScripty/Tuldok/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/MrScripty/Tuldok/labels{/name}",
+      "releases_url": "https://api.github.com/repos/MrScripty/Tuldok/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/MrScripty/Tuldok/deployments"
+    },
+    "head_repository": {
+      "id": 1369762795,
+      "node_id": "R_kgDOUaTr6w",
+      "name": "Tuldok",
+      "full_name": "MrScripty/Tuldok",
+      "private": false,
+      "owner": {
+        "login": "MrScripty",
+        "id": 10446793,
+        "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/MrScripty",
+        "html_url": "https://github.com/MrScripty",
+        "followers_url": "https://api.github.com/users/MrScripty/followers",
+        "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+        "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+        "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+        "repos_url": "https://api.github.com/users/MrScripty/repos",
+        "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/MrScripty/Tuldok",
+      "description": "Dataset capture, synthetic image generation, and book-corner labeling studio with Pumas integration",
+      "fork": false,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok",
+      "forks_url": "https://api.github.com/repos/MrScripty/Tuldok/forks",
+      "keys_url": "https://api.github.com/repos/MrScripty/Tuldok/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/MrScripty/Tuldok/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/MrScripty/Tuldok/teams",
+      "hooks_url": "https://api.github.com/repos/MrScripty/Tuldok/hooks",
+      "issue_events_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/MrScripty/Tuldok/events",
+      "assignees_url": "https://api.github.com/repos/MrScripty/Tuldok/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/MrScripty/Tuldok/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/MrScripty/Tuldok/tags",
+      "blobs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/MrScripty/Tuldok/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/MrScripty/Tuldok/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/MrScripty/Tuldok/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/MrScripty/Tuldok/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/MrScripty/Tuldok/languages",
+      "stargazers_url": "https://api.github.com/repos/MrScripty/Tuldok/stargazers",
+      "contributors_url": "https://api.github.com/repos/MrScripty/Tuldok/contributors",
+      "subscribers_url": "https://api.github.com/repos/MrScripty/Tuldok/subscribers",
+      "subscription_url": "https://api.github.com/repos/MrScripty/Tuldok/subscription",
+      "commits_url": "https://api.github.com/repos/MrScripty/Tuldok/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/MrScripty/Tuldok/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/MrScripty/Tuldok/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/MrScripty/Tuldok/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/MrScripty/Tuldok/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/MrScripty/Tuldok/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/MrScripty/Tuldok/merges",
+      "archive_url": "https://api.github.com/repos/MrScripty/Tuldok/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/MrScripty/Tuldok/downloads",
+      "issues_url": "https://api.github.com/repos/MrScripty/Tuldok/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/MrScripty/Tuldok/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/MrScripty/Tuldok/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/MrScripty/Tuldok/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/MrScripty/Tuldok/labels{/name}",
+      "releases_url": "https://api.github.com/repos/MrScripty/Tuldok/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/MrScripty/Tuldok/deployments"
+    }
+  },
+  "workspace_ui_jobs": {
+    "jobs": [
+      {
+        "id": 118390297820,
+        "name": "workspace-ui",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39349568660,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run python -m pip install -r requirements.txt",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run python -m unittest discover -s tests -p 'test_workspace_contracts.py'",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run node tests/browser_workspaces.cjs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      }
+    ]
+  }
+}

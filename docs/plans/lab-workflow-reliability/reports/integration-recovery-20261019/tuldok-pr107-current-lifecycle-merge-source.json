@@ -1,0 +1,18 @@
+{
+  "git_commit": {
+    "message": "Merge 9d62ef6ad07f4970afdb8ecb9f8bab79584224b2 into 6f6b7e8a76e0c14423154768f3742b43aafbb042",
+    "parents": [
+      "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2"
+    ],
+    "sha": "b1362ae8fe503a82957068ea264504a42bace1d7",
+    "tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a"
+  },
+  "git_commit_transport": "/usr/bin/gh api GET repos/MrScripty/Tuldok/git/commits/b1362ae8fe503a82957068ea264504a42bace1d7 --jq sha/tree/parents/message; GitHub MCP normalized commit has no tree field",
+  "mcp_commit": {
+    "sha": "b1362ae8fe503a82957068ea264504a42bace1d7",
+    "message": "Merge 9d62ef6ad07f4970afdb8ecb9f8bab79584224b2 into 6f6b7e8a76e0c14423154768f3742b43aafbb042",
+    "url": "https://api.github.com/repos/MrScripty/Tuldok/commits/b1362ae8fe503a82957068ea264504a42bace1d7",
+    "html_url": "https://github.com/MrScripty/Tuldok/commit/b1362ae8fe503a82957068ea264504a42bace1d7"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "pr": 105,
+  "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "outcome": "pending",
+  "mode": "One bounded job-metadata lookup per specified lifecycle run; no polling.",
+  "runs": [
+    {
+      "run_id": 39349557067,
+      "job_id": 118390262320,
+      "status": "in_progress",
+      "conclusion": null,
+      "active_steps": [
+        {
+          "name": "Verify real live owner phase timing workflow",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 150
+        }
+      ],
+      "success_count": 149,
+      "total_reported_steps": 169,
+      "full_unittest": [
+        {
+          "name": "Run python -m unittest discover -s tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        }
+      ],
+      "late_phase_browser": [
+        {
+          "name": "Verify real live owner phase timing workflow",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 150
+        }
+      ]
+    },
+    {
+      "run_id": 39349523584,
+      "job_id": 118390149863,
+      "status": "in_progress",
+      "conclusion": null,
+      "active_steps": [
+        {
+          "name": "Run node tests/browser_captions.cjs",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 109
+        }
+      ],
+      "success_count": 108,
+      "total_reported_steps": 169,
+      "full_unittest": [
+        {
+          "name": "Run python -m unittest discover -s tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        }
+      ],
+      "late_phase_browser": [
+        {
+          "name": "Verify real live owner phase timing workflow",
+          "status": "pending",
+          "conclusion": null,
+          "number": 150
+        }
+      ]
+    }
+  ],
+  "full_decoded_lifecycle_log_reviewed": false,
+  "workflow_client_evidence": {
+    "aggregate_full_unittest": "Both jobs report success for step36 python -m unittest discover -s tests.",
+    "exact_head_source": "test_workflow_client_http.WorkflowHTTPTests uses real authenticated HTTP and separate CLI processes; skipUnless checks TULDOK_DATABASE_URL, set by this lifecycle workflow.",
+    "individual_methods": "Aggregate metadata does not enumerate individual executed/skipped counts. No per-method runtime assertion is made here.",
+    "prior_local_source563": "Prior local qualification remains separate evidence; not re-reviewed or promoted by this pending hosted status lookup.",
+    "limits": "Neutral byte-custody and consumer-integrity fixtures do not establish end-to-end speed or scientific acceptance."
+  },
+  "raw_metadata": [
+    "/tmp/tuldok-pr105-3305-lifecycle-run-39349557067-jobs.json",
+    "/tmp/tuldok-pr105-3305-lifecycle-run-39349523584-jobs.json"
+  ],
+  "mutations": "none"
+}

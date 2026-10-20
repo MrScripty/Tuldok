@@ -1,0 +1,121 @@
+{
+  "reviewed_at_utc": "2026-10-20T02:39:17.142425+00:00",
+  "reviewer": "PR108 CI repair agent independently reviewing PR104",
+  "pr": 104,
+  "outcome": "clear within completed captured CPU scope",
+  "exact_pr_head": "8323d54856296f46d01892c20f9084164c1f1ded",
+  "run_id": 39349543860,
+  "job_id": 118390213620,
+  "job_conclusion": "success",
+  "step_counts": {
+    "total": 13,
+    "success": 13,
+    "failure": 0,
+    "skipped": 0
+  },
+  "checkout": {
+    "tested_merge_commit": "ba9e3543b987a62d2f524c954f5362b016a6b78f",
+    "pr_head": "8323d54856296f46d01892c20f9084164c1f1ded",
+    "base_at_job_checkout": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+    "actual_log_evidence": [
+      "2026-10-20T00:55:42.4669596Z HEAD is now at ba9e354 Merge 8323d54856296f46d01892c20f9084164c1f1ded into 9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "2026-10-20T00:55:42.4742999Z ba9e3543b987a62d2f524c954f5362b016a6b78f"
+    ],
+    "later_main_composition": "Not asserted by this job or this review; separately owned by root."
+  },
+  "source_binding": {
+    "scope": "All four runtime preparation owner hashes in actual job log independently compared with exact PR104 head, not literal main.",
+    "owners": {
+      "candidate_packages.py": {
+        "log_sha256": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+        "exact_pr_head_sha256": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+        "match": true
+      },
+      "recipe_process.py": {
+        "log_sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+        "exact_pr_head_sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+        "match": true
+      },
+      "runtime_snapshots.py": {
+        "log_sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+        "exact_pr_head_sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+        "match": true
+      },
+      "tests/prepare_candidate_runtime.py": {
+        "log_sha256": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+        "exact_pr_head_sha256": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643",
+        "match": true
+      }
+    }
+  },
+  "environment": {
+    "runner": "ubuntu-24.04",
+    "postgres_service": "postgres:17",
+    "training_interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+    "torch": "2.8.0+cpu",
+    "numpy": "2.5.4",
+    "pillow": "12.3.0",
+    "profile": "captured_cpu_python_v1",
+    "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+    "inventory_sha256": "3c74afc0cfc43ecbbd307bf56ca77c94e7484cbef2f151be785d59926ac8c25c",
+    "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+    "file_count": 21042,
+    "total_bytes": 823402896
+  },
+  "claims": {
+    "actual_classifier_training": "PASS H1 with three checkpoint/probe sets, fixed heldout; actual source receipt lists three Run IDs.",
+    "correction_and_comparison": "PASS H4 correction produces new reviewed revision/release/trained trial; old evidence immutable; changed membership refuses paired deltas. Exact comparison binds evaluations/checkpoints/metric definitions.",
+    "delayed_and_denied_evidence": "PASS H5 stale delivery does not override navigation; substituted403 clears evidence; explicit refresh recovers. Actual backend revoke enforcement is a separate test boundary.",
+    "captured_package_and_fresh_inference": "Separate package and verifier operations, explicit approvals and captured CPU consumer; job PASS confirms exactly three charged attempt slots. Source candidate remains diagnostic.",
+    "presentation": "PASS keyboard focus and measured dark contrast with bounded1440/390 evidence layout."
+  },
+  "actual_pass_log_lines": [
+    "2026-10-20T00:56:33.5474798Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T00:56:38.3829486Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-20T00:56:38.7107323Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-20T00:56:39.4503100Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-20T00:56:59.9014622Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "2026-10-20T00:57:00.0956644Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "2026-10-20T00:57:17.4518667Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "2026-10-20T00:57:18.1493563Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+    "2026-10-20T00:57:19.1973375Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "2026-10-20T00:57:40.7170668Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "2026-10-20T00:57:40.7917614Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "2026-10-20T00:57:41.1612509Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "2026-10-20T00:57:41.5111467Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+    "2026-10-20T00:57:42.1155588Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-g8jXO7",
+    "2026-10-20T00:59:10.1363449Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots",
+    "2026-10-20T00:59:10.1364767Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic",
+    "2026-10-20T00:59:10.1483985Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-GFINA3"
+  ],
+  "model_browser_receipt": {
+    "catalog_path": "/tmp/tuldok-model-development-cRo1Ls/data",
+    "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-g8jXO7/receipt.json",
+    "run_ids": [
+      "7c3ba4577d624e4bb1bfd64ed6dff75a",
+      "d1e1d4eb4da14f57a8e007f5e2daa6dc",
+      "cf14d4c3aab74890a6c4adee0943d14a"
+    ],
+    "sha256": "6a529e820ce61b39c61ff6489464de8b65cc65c185309740daa11692ca6802e6"
+  },
+  "artifact_upload_log_lines": [
+    "2026-10-20T00:59:11.7043309Z SHA256 digest of uploaded artifact zip is 78ad1c120d4510c166370cc67b6d20e99562351f4155e2a98ed207a155ed813f",
+    "2026-10-20T00:59:11.9814646Z Artifact candidate-package-captured-cpu.zip successfully finalized. Artifact ID 12232987264",
+    "2026-10-20T00:59:11.9816244Z Artifact candidate-package-captured-cpu has been successfully uploaded! Final size is 3779566 bytes. Artifact ID is 12232987264"
+  ],
+  "raw_evidence": {
+    "decoded_log": "/tmp/tuldok-pr104-8323-cpu-job-118390213620.log",
+    "decoded_log_bytes": 60017,
+    "decoded_log_sha256": "bf461d145cf2138fcc77e488455c9cfd35a835948164bcf9f4efac835e62fd0c",
+    "job_metadata": "/tmp/tuldok-pr104-8323-cpu-run-39349543860-jobs.json",
+    "runtime_preparation": "/tmp/tuldok-pr104-8323-runtime-preparation.json",
+    "source_comparison": "/tmp/tuldok-pr104-8323-source-hashes.json",
+    "commit_metadata": "/tmp/tuldok-pr104-8323-checkout-commit-metadata.json"
+  },
+  "limits": [
+    "Review used actual decoded job log and metadata plus exact committed browser source assertions; uploaded artifact contents were not downloaded.",
+    "No physical/scientific validity, optimizer performance or quality claim follows from the authored classifier fixture.",
+    "Both lifecycle jobs were pending at the bounded metadata lookup; no whole lifecycle success claim.",
+    "No source edits, test executions, reruns, cancellations, pushes or merges performed."
+  ]
+}

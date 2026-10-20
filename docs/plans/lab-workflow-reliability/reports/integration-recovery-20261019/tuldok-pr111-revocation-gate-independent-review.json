@@ -1,0 +1,243 @@
+{
+  "format": "pr111_revocation_gate_independent_review_v1",
+  "state": "clear",
+  "reviewed_at_utc": "2026-10-20T02:39:01.608113+00:00",
+  "commit": "d161d244270f10128c171ca6d4ecca52faac9274",
+  "base": "beead92d54e33e70eb9df82e872adf14ff314c91",
+  "worktree": "/workspace/Tuldok-retained-ci-repair-20261020",
+  "write_set": [
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/acceptance.md",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-1440.jpg",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-390.jpg",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/model-controller.log",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/model-development.log",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/original-failures.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/qualification.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/receipt.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-cleanup.json",
+    "docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-reservation.json",
+    "tests/browser_model_development.cjs"
+  ],
+  "result": "Clear: repaired browser gate follows current Runs-owned denial behavior without product changes or weakening private-data clearing. Strengthened explicit refresh assertions and actual CPU browser evidence match committed source.",
+  "source_review_checkpoint": {
+    "format": "pr111_revocation_gate_independent_review_v1",
+    "state": "source_clear_pending_terminal_and_commit",
+    "reviewed_at_utc": "2026-10-20T02:37:06.134291+00:00",
+    "worktree": "/workspace/Tuldok-retained-ci-repair-20261020",
+    "base": "beead92d54e33e70eb9df82e872adf14ff314c91",
+    "source_hashes": {
+      "tests/browser_model_development.cjs": "b52c9355398a8862225b665fc379fde4916a2c6d265e371e2386832144b48d6e",
+      "static/workspace-real.js": "de4036bab21c3ca2702488658a9fa8733cf0adb822f4ec3322d5e101a96b60a2",
+      "static/workspace-service.js": "568b8258c35e6b3ca2cfe08b64d914111e16ae98d45f5d40f7aa40a20c20098b",
+      "static/retained-analysis.js": "d9dab53d15e6e50ecf8f1b9e182c43eb330c4731e574758a0e3026f44acb44df"
+    },
+    "production_files_equal_base": {
+      "static/workspace-real.js": true,
+      "static/workspace-service.js": true,
+      "static/retained-analysis.js": true
+    },
+    "unchanged_injected403_block": true,
+    "preceding_test_body_equal_base": true,
+    "subsequent_screenshots_dark_focus_error_assertions_equal_base": true,
+    "reason": "Current owner onAccessFailure removes complete private Runs projection, then writes real-status. Waiting for an error inside removed model panel is a stale test oracle. New gate asserts denial status and zero private model/probe/checkpoint/metrics/retained/run-list nodes, then explicit refresh restores exact third Run,two checkpoints,metrics and retained SVG.",
+    "limits": [
+      "Source review only so far. Actual run is still author-owned; not polled or duplicated.",
+      "Injected 403 response tests browser projection; actual backend revocation is a different qualification."
+    ],
+    "blocking_findings": []
+  },
+  "checks": {
+    "direct_expected_parent": true,
+    "exact_clean_commit": true,
+    "write_set_only_test_and_evidence": true,
+    "reviewed_test_bytes_match_committed_and_executed": true,
+    "preceding_body_and_injected403_unchanged": true,
+    "production_source_unchanged": true,
+    "all15_receipt_source_hashes_match_commit": true,
+    "all_original_job_log_integrity_and_CPU_failure_locations": true,
+    "all13_browser_checks_plus_final_success": true,
+    "denial_zero_private_nodes": true,
+    "refresh_exact_third_run_two_checkpoints_retained_chart": true,
+    "reported_three_actual_training_runs_completed": true,
+    "reported_exact_schema_prereg_cleanup": true,
+    "committed_recovered_screenshots_equal_actual_captures": true,
+    "controlled_transport_distinction_explicit": true
+  },
+  "source_sha256_match_committed": {
+    "static/workspace-service.js": true,
+    "static/workspace-real.js": true,
+    "static/experiment-lineage.js": true,
+    "static/experiment-lineage.css": true,
+    "static/workspaces.css": true,
+    "static/workspaces.html": true,
+    "experiment_lineage.py": true,
+    "agent_api.py": true,
+    "app.py": true,
+    "experiments.py": true,
+    "pipeline.py": true,
+    "runs.py": true,
+    "metadata.py": true,
+    "upgrade_metadata.py": true,
+    "tests/browser_model_development.cjs": true
+  },
+  "additional_production_source_sha256": {
+    "static/workspace-real.js": "de4036bab21c3ca2702488658a9fa8733cf0adb822f4ec3322d5e101a96b60a2",
+    "static/workspace-service.js": "568b8258c35e6b3ca2cfe08b64d914111e16ae98d45f5d40f7aa40a20c20098b",
+    "static/retained-analysis.js": "d9dab53d15e6e50ecf8f1b9e182c43eb330c4731e574758a0e3026f44acb44df"
+  },
+  "original_failures": [
+    {
+      "run_id": 39349565476,
+      "job_id": 118390287531,
+      "kind": "captured-cpu",
+      "log": "/tmp/pr111-ci-repair/original-job-118390287531.log",
+      "sha256": "7ef508d44895af471dee68d56c247fbaf97b27881e79ab3f25496bc8216eb77e",
+      "matches_record": true,
+      "cpu_timeout_at_old_line556": true
+    },
+    {
+      "run_id": 39349515814,
+      "job_id": 118390126254,
+      "kind": "captured-cpu",
+      "log": "/tmp/pr111-ci-repair/original-job-118390126254.log",
+      "sha256": "97dfa1619349a4d4be89a9d8b2c17180175b9cf0ad6703f5fa18e9d1cdb28a53",
+      "matches_record": true,
+      "cpu_timeout_at_old_line556": true
+    },
+    {
+      "run_id": 39349565452,
+      "job_id": 118390287291,
+      "kind": "dataset-lifecycle",
+      "log": "/tmp/pr111-ci-repair/original-job-118390287291.log",
+      "sha256": "616ee5c44b0b9f06a1cee7376c5fd895cbbf76e29d6490bf9c1d7ec6c128959d",
+      "matches_record": true,
+      "cpu_timeout_at_old_line556": true
+    },
+    {
+      "run_id": 39349515815,
+      "job_id": 118390126097,
+      "kind": "dataset-lifecycle",
+      "log": "/tmp/pr111-ci-repair/original-job-118390126097.log",
+      "sha256": "b077b531c5d646a915642b39fcb1c1939369e836b7fe7f518b6065f80ec41763",
+      "matches_record": true,
+      "cpu_timeout_at_old_line556": true
+    }
+  ],
+  "actual_qualification": {
+    "execution_attribution": "Author notified terminal session64037 exit0; independent reviewer inspected retained logs/receipts and exact committed hashes, did not rerun.",
+    "executed_source_commit": "beead92d54e33e70eb9df82e872adf14ff314c91",
+    "executed_worktree_dirty": true,
+    "source_attribution": "Actual execution occurred on patched beead92 worktree before commit; all15 logged source hashes equal final committed d161d244, including exact previously reviewed test bytes. Literal clean-commit execution not claimed.",
+    "command": "node tests/browser_model_development.cjs",
+    "browser": "Chrome/151.0.7922.173",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "browser_checks": 13,
+    "browser_PASS_marker_count": 14,
+    "run_ids": [
+      "f0f1b8a599044db19c8734c81fc78c59",
+      "29e102331db74dbc8c3e39cdba2149d5",
+      "b14204732d8740babe198a5cb1fe2779"
+    ],
+    "release_ids": [
+      "4024b110e8fc453bc2376cef4c416d89af29a7e4fa887569d43764989ec04b27",
+      "5c417159660a0a0ea20d23857f2ce5d01fe7ebb794d8627c525c1c6106f68601"
+    ],
+    "denied_projection": {
+      "status": "Evidence access revoked",
+      "privateNodes": 0
+    },
+    "recovered_projection": {
+      "run_id": "b14204732d8740babe198a5cb1fe2779",
+      "checkpoint_count": 2,
+      "retained_chart": true
+    },
+    "schema_cleanup": {
+      "schema": "catalog_8faa508de2e54448925420da15fa406c",
+      "dataset_id": "8faa508de2e54448925420da15fa406c",
+      "reserved_before_creation": true,
+      "expected_owner": "tuldok_task",
+      "app_stopped_before_drop": true,
+      "observed_runs": [
+        {
+          "id": "29e102331db74dbc8c3e39cdba2149d5",
+          "state": "completed"
+        },
+        {
+          "id": "b14204732d8740babe198a5cb1fe2779",
+          "state": "completed"
+        },
+        {
+          "id": "f0f1b8a599044db19c8734c81fc78c59",
+          "state": "completed"
+        }
+      ],
+      "scope": "only exact preregistered task-owned fresh schema",
+      "removed": true,
+      "observed_at": "2026-10-20T02:37:29.683141+00:00",
+      "local_catalog_directory": "retained inert under /tmp; PostgreSQL schema removed"
+    },
+    "screenshots": {
+      "corrected-evidence-390.jpg": {
+        "bytes": 55828,
+        "sha256": "2d4f2822db4a7b8e1fa59e4a39206e702edb0b9579d30167f07666bbecff5a25",
+        "equals_actual_run_capture": true
+      },
+      "corrected-evidence-1440.jpg": {
+        "bytes": 97692,
+        "sha256": "a752b1a95306512b31b4db33b187df6bbcdda1b33ea17d6c90d347eef20f5b33",
+        "equals_actual_run_capture": true
+      }
+    },
+    "supporting_controlled_model_suite": "PASS model UI: exact frozen probe correction, honest legacy history, observed zero, query ordering, navigation/session exclusion and denied evidence clearing. Controlled transport only."
+  },
+  "evidence": {
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/acceptance.md": {
+      "bytes": 3755,
+      "sha256": "0ea40617eb6186bd99c57401c3bb22874d48faa9e5d69ace82af2ec39a985335"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-1440.jpg": {
+      "bytes": 97692,
+      "sha256": "a752b1a95306512b31b4db33b187df6bbcdda1b33ea17d6c90d347eef20f5b33"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/corrected-evidence-390.jpg": {
+      "bytes": 55828,
+      "sha256": "2d4f2822db4a7b8e1fa59e4a39206e702edb0b9579d30167f07666bbecff5a25"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/model-controller.log": {
+      "bytes": 186,
+      "sha256": "32673100efb97f3cb7f35e79229362721cf3867d649e9ca3a606b10b3bc82b33"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/model-development.log": {
+      "bytes": 1711,
+      "sha256": "692c2c9c014d35605736860ea3c326c5f2cb47b8fcb7ab4be8f3f8d77e2ff1f7"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/original-failures.json": {
+      "bytes": 18600,
+      "sha256": "a7bd011d0deeaca85732db513fd9df9e107cbb02177104b0f310b4cea44db590"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/qualification.json": {
+      "bytes": 4128,
+      "sha256": "30d63d18b07ab1a9b28d30d79eeae036967997e08ed6d11aff32a2ea40328e48"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/receipt.json": {
+      "bytes": 21285,
+      "sha256": "e12f71119e0b42f261abfeaf30caececebf780997364fbfecafbbe2ba5e1b466"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-cleanup.json": {
+      "bytes": 726,
+      "sha256": "76dc841c418a853533b31e6cd6bee08fdad9409d8fc10bd20ec141d4350e3d7f"
+    },
+    "/workspace/Tuldok-retained-ci-repair-20261020/docs/plans/retained-analysis/reports/ci-qualification-20261020/schema-reservation.json": {
+      "bytes": 367,
+      "sha256": "869871dfb405578d2bba773e4cd3e050bfda42222bc46e51438835f7088fc552"
+    }
+  },
+  "limits": [
+    "403 is injected at CDP response transport for exact third Run evidence request; this qualifies UI projection removal/recovery, not actual credential/database revocation.",
+    "Actual local app/HTTP/PostgreSQL authored classifier training is qualified by retained author execution. This is not hosted runtime provisioning,captured training,downstream package/fresh-consumer execution,scientific/model-quality acceptance or CUDA qualification.",
+    "Schema cleanup and terminal exit attributed to author retained evidence/notification; no duplicate training,tests,PGqueries,source writes,remote operations or polling by reviewer.",
+    "Screenshots hashed and matched actual run artifacts; independent visual screenshot assessment not performed.",
+    "Remote complete capturedCPU/lifecycle reruns and serial integration acceptance remain root-owned. Separate canonical author test repair9f084 is independently reviewed and to be composed by root."
+  ],
+  "blocking_findings": []
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "file": "job-118390269600.log",
+    "chars": 244819,
+    "bytes": 246001,
+    "sha256": "98934e1340a1e5296677f65c72ba235bba8ede29b4cad62b9c1d73c43d925ffc",
+    "representation": "exact UTF-8 encoding of decoded GitHub job log returned by MCP; not original HTTP bytes"
+  },
+  {
+    "file": "job-118390263480.log",
+    "chars": 242989,
+    "bytes": 244169,
+    "sha256": "7e1266babfd3ba1848eba8d2d6092eb20d51c06c1cf5d3c1ce5b9171c2304226",
+    "representation": "exact UTF-8 encoding of decoded GitHub job log returned by MCP; not original HTTP bytes"
+  }
+]

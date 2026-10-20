@@ -1,0 +1,133 @@
+{
+  "source": "Independent read-only GitHub MCP job metadata/decodedlogs",
+  "jobs": {
+    "jobs": [
+      {
+        "id": 118390133508,
+        "name": "captured-cpu",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39349518119,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Explicitly provision the supported CPU runtime before qualification",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Exercise actual classifier preparation and training through the browser",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      }
+    ]
+  },
+  "pr": {
+    "url": "https://github.com/MrScripty/Tuldok/pull/106",
+    "number": 106,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "Expose exact completed Run and attached publication-Ref field comparisons through the existing Runs and lineage interface. The read-only owner checks authoritative profile, membership, field, geometry/gauge and metric compatibility, reports missing cases explicitly, and returns retained reference/prediction/diagnostic delta values with exact checkpoint, evaluation, material and timing context. Missing scientific criteria and memory observations stay unknown.\n\nProduction composition aee8908 normally merges complete M5 source5634968 and the independently reviewed canonical response-correlation/CI changes. Ordinary v2 and new scientific replies bind the exact ordered operands and selectors. All123 public contracts, discovery and registry equal the original M6 source4a9e15; backend and UI blobs are unchanged. The duplicate ordinary-only test is covered by the stronger M5 positive and12-fault tests selected by full discovery.\n\nOriginal M6 qualification at4a9e15 passed five actual reader/HTTP cases (32.480s),17 AgentAPI cases (64.687s), the retained pure/controller cases and actual Chromium inspection at1440/390. Browser evidence covers exact mixed Refs, independently expected field delta2, keyboard use, stale delivery, root removal and revocation, with no compute mutations. Fixtures use real material/Study admission and explicitly authored terminal arrays; they do not qualify numerical producers, runtime execution or scientific acceptance.\n\nIndependent review ofaee8908 is clear: seven client tests passed3.151s, pure controller passed, original backend/UI and exact M5 consumer blob identities are proven, and normal ancestry is retained. At composed source aee8908, all five existing actual reader/HTTP cases passed. An additional cold canonical AgentClient check passed in 26.050s using a real inspect agent and two exact selected HTTP requests for normal and recovered operands, with unchanged accounting and verified schema cleanup. Its first attempt supplied an owner token and failed the intended credential-kind boundary; the failed driver/log/receipt and corrected independently reviewed driver are retained in the durable checkpoint. Hosted browser/lifecycle gates remain pending. CI now runs the scientific client/controller early and the actual scientific browser late. Receipt-only descendant 0e7b3cb normally merges the final M5 report tail; product, test and CI files remain identical to aee8908. Source-specific receipts and failed harness attempts remain under reports/m6 and the durable integration checkpoint.\n\n\nRecovery-browser composition repair: The isolated mocked-transport recovery browser now loads the actual phase and scientific factories before WorkspaceReal (phase repair104381bfcc; scientific repair106fc034a0). Controlled red runs exposed each missing factory before the first assertion; the complete Chromium script passed after each appropriate repair. Independent final106 review/run passed with direct exit0 and all four original witnesses. Product source and assertions are unchanged. Original hosted4a9 step147 failure and complete logs are retained; its later gates were skipped. The corrected published head requires fresh hosted lifecycle acceptance. This is real Chromium/DOM with mocked transport and makes no backend, training or science claim.\n\n\n<!-- browser-cleanup-qualification-20261020 -->\nLatest qualification head: `5a83eadaaf58ab86c49033fc1b249bb1b163a99e`. This normal composition carries the reviewed fix for a publication-browser teardown race: await the existing bounded test-owned child shutdown helper before removing private Chromium profiles. Product code and functional assertions are unchanged relative to `fc034a0f096a73798ec22fa3088406cd68b4c5a4`. Root actual PostgreSQL/Chromium publication, coordinator, lineage, phase and scientific-reader browser checks passed at their affected owners; the scientific fixture remains synthetic terminal evidence. Required exact-head hosted CI is pending. PR102's earlier lifecycle failure is retained as a cleanup failure after publication assertions passed.\n",
+    "title": "Show exact retained scientific baseline and candidate diagnostics",
+    "base": "feature/lab-workflow-client-20261019",
+    "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+    "head": "feature/lab-field-comparison-20261019",
+    "head_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+    "head_repo_id": 1369762795,
+    "head_repo_full_name": "MrScripty/Tuldok",
+    "merge_commit_sha": "ee945d727b184b3d1286b6a8b1570c20c95e45ed",
+    "user": {
+      "login": "MrScripty",
+      "name": "MrScripty",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+      "id": 10446793
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-10-19T22:11:25Z",
+    "updated_at": "2026-10-20T00:46:15Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 19,
+    "changed_files": 41,
+    "additions": 1877,
+    "deletions": 13,
+    "display_url": "https://github.com/MrScripty/Tuldok/pull/106",
+    "display_title": "Show exact retained scientific baseline and candidate diagnostics"
+  }
+}

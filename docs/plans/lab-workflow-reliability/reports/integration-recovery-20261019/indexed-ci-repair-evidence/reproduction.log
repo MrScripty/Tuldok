@@ -1,0 +1,14 @@
+test_new_project_exact_sources_full_catalog_and_model_controls_are_inert (__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert) ... FAIL
+
+======================================================================
+FAIL: test_new_project_exact_sources_full_catalog_and_model_controls_are_inert (__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-indexed-ci-repair-20261020/tests/test_extension_canonical_author.py", line 79, in test_new_project_exact_sources_full_catalog_and_model_controls_are_inert
+    self.assertEqual((PACKAGE/'tuldok_extension_sdk'/name).read_bytes(),(Path(__file__).resolve().parents[1]/'tuldok_extension_sdk'/name).read_bytes())
+AssertionError: b'"""[18141 chars]]\n\n\n@boundary\ndef validate_projection(valu[6164 chars]')\n' != b'"""[18141 chars]]\n\n    @boundary\n    def diagnostics(self, [6665 chars]')\n'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.801s
+
+FAILED (failures=1)

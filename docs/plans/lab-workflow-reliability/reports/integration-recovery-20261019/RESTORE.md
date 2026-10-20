@@ -13,8 +13,9 @@ Verify every evidence file against `manifest.json` using SHA-256 before use.
 The checkpoint originally branched from the historical PR89/90 dependency tree
 `76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114`. That is historical recovery context,
 not the current implementation base. PR89/90 and PR92–101 are now merged.
-Main after PR101 is `8c9c0b07d90fd78657539cdcbcd23fbf289c4f95`; its tree exactly
-matches the qualified PR101 source. Fetch current main and inspect the latest
+Main after PR107 is `18a53816a279ad56758de620c9a1c4b129ba84ce`. PR102,
+PR103 and PR107 are accepted and merged; each resulting tree exactly matches
+its independently reviewed source/CI tree. Fetch current main and inspect the latest
 `tuldok-updates-integration-acceptance-20261019.json` and source-specific receipts
 before resuming. Continue the published pending implementation stack; do not
 restart completed design or implementation from the historical source parent.
@@ -41,12 +42,15 @@ PR92–101 feature refs and their ten clean task worktrees were safely retired
 after dependent PRs were retargeted. Their exact accepted commits remain on main;
 `tuldok-task-merged-cleanup-terminal.json` records the heads, retained ref and
 terminal disposition. Original refs/worktrees and unrelated aliases are protected.
-PR102–111 remain active pending source-qualified CI and serial integration.
-The latest ledger records the published browser-teardown correction at PR102
-`aa7115a4`, whole-stack PR108 `de5a3a8c`, and retained-analysis PR111 `beead92d`.
-Only five task browser cleanup fixtures changed; existing product behavior is
-unchanged relative to each prior head. Local actual browser witnesses passed;
-fresh hosted CI remains required. The real-runtime byte-integrity observation
-passed with independent exact cleanup proof; it is not full T5 performance acceptance.
+PR104,105,106,109,110,108,111 remain in that serial order. PR104 is retargeted
+to current main; its lifecycle acceptance remains pending. The latest ledger
+records PR108 `9f084270` and retained-analysis PR111 `0ba4db01`: narrowly repaired
+test oracles with product code and frozen source authorities preserved. Original
+failures, actual CPU browser/targeted checks, independent reviews and publication
+receipts are retained. Fresh exact-head CI is required before their merge.
+PR102/103/107 cleanup is separately prechecked; consult its terminal record before
+assuming refs/worktrees have been removed. All original protected refs and paths
+remain protected. The real-runtime byte-integrity observation passed with exact
+cleanup proof; it is not full T5 performance acceptance.
 The original lab failure bytes and an owned scientific criterion/compatible lab
 pair are still missing inputs; synthetic diagnostics do not satisfy those claims.

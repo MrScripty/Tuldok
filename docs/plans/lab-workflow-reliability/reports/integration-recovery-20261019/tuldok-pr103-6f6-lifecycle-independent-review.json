@@ -1,0 +1,653 @@
+{
+  "format": "pr103_lifecycle_independent_review_v1",
+  "checked_utc": "2026-10-20T02:35:14.539033+00:00",
+  "assessment": "CLEAR exact reviewed source/lifecycle evidence. No blocker in this review; root retains other required-check acceptance, retarget/tree proof and final serial merge.",
+  "pr_url": "https://github.com/MrScripty/Tuldok/pull/103",
+  "head_sha": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+  "tested_synthetic_merge": {
+    "message": "Merge 6f6b7e8a76e0c14423154768f3742b43aafbb042 into aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "parents": [
+      "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "6f6b7e8a76e0c14423154768f3742b43aafbb042"
+    ],
+    "sha": "4792e03a27f324fe25a1bd214e77a0d09658b7d1",
+    "tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2"
+  },
+  "tested_tree_equals_head_tree": true,
+  "head_tree": "47426eaf8fc112c5e9040ddddec37e5cf93943e2",
+  "checkout_evidence": [
+    {
+      "raw_line": 205,
+      "text": "2026-10-20T01:15:18.6853852Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4792e03a27f324fe25a1bd214e77a0d09658b7d1:refs/remotes/pull/103/merge"
+    },
+    {
+      "raw_line": 207,
+      "text": "2026-10-20T01:15:20.2726784Z  * [new ref]         4792e03a27f324fe25a1bd214e77a0d09658b7d1 -> pull/103/merge"
+    },
+    {
+      "raw_line": 232,
+      "text": "2026-10-20T01:15:20.4375552Z HEAD is now at 4792e03 Merge 6f6b7e8a76e0c14423154768f3742b43aafbb042 into aa7115a4e148151d37f6895d053ae51b4b04ac2b"
+    },
+    {
+      "raw_line": 235,
+      "text": "2026-10-20T01:15:20.4422752Z 4792e03a27f324fe25a1bd214e77a0d09658b7d1"
+    },
+    {
+      "raw_line": 2172,
+      "text": "2026-10-20T01:56:13.6520610Z PASS graph focus regression {\"state\":\"passed\",\"scope\":\"Inert private Project graph metadata only; no recipe execution or scientific qualification\",\"source_commit\":\"4792e03a27f324fe25a1bd214e77a0d09658b7d1\",\"workspace_real_sha256\":\"46e942721f2790a15344cdf5271bf07d88ee6cd3bc17654dc7dfab12df6ffcba\",\"harness_sha256\":\"5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684\",\"native_keys\":[\"Home\",\"ArrowDown\",\"ArrowDown\"],\"programmatic_focus_calls_in_journey\":1,\"values\":[\"e341968ad8ae452c883e8a138f09572b\",\"2067585f7de44b46b0e2c9aa558c5cc1\",\"83c5457d076a441885d6b6f866cf3821\"],\"observed\":[{\"focus\":true,\"value\":\"e341968ad8ae452c883e8a138f09572b\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"2067585f7de44b46b0e2c9aa558c5cc1\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"83c5457d076a441885d6b6f866cf3821\",\"active\":\"SELECT\"}],\"negativeChecks\":[\"held graph read preserves separately moved focus\",\"held graph read does not restore hidden Pipeline focus after navigation\"],\"recipe_runs\":0,\"browser\":\"Chrome/155.0.8059.39\"}"
+    }
+  ],
+  "live_pr_snapshot": {
+    "state": "open",
+    "merged": false,
+    "draft": true,
+    "mergeable": true,
+    "head": "feature/lab-phase-timing-20261019",
+    "head_sha": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+    "base": "feature/lab-coordinator-panel-20261019",
+    "base_sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "merge_commit_sha": "4792e03a27f324fe25a1bd214e77a0d09658b7d1"
+  },
+  "lifecycle": {
+    "run_id": 39349493984,
+    "job_id": 118390058452,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493984/job/118390058452",
+    "status": "completed",
+    "conclusion": "success",
+    "steps": 168,
+    "all168_steps_success": true,
+    "failed_cancelled_skipped_pending_steps": [],
+    "relevant_steps": [
+      {
+        "name": "Verify field output preflight and unchanged admission state",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Verify same-attempt publication retention and recovery boundaries",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Verify coordinator fault fences and explicit recovery with PostgreSQL",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Verify bounded owner phase timings with PostgreSQL",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "Verify one-fit evidence in the provisioned CPU training interpreter",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18
+      },
+      {
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19
+      },
+      {
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 20
+      },
+      {
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 21
+      },
+      {
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 22
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 26
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 27
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 28
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 29
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 30
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 31
+      },
+      {
+        "name": "Run node tests/test_experiment_lineage_controller.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 33
+      },
+      {
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 34
+      },
+      {
+        "name": "Run python -m unittest discover -s tests",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 35
+      },
+      {
+        "name": "Run node tests/browser_workspace_external.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 48
+      },
+      {
+        "name": "Run node tests/test_workspace_publication_controller.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 49
+      },
+      {
+        "name": "Run node tests/browser_workspace_publication.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 50
+      },
+      {
+        "name": "Run node tests/test_workspace_publication_lineage.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 51
+      },
+      {
+        "name": "Run node tests/browser_workspace_publication_lineage.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 52
+      },
+      {
+        "name": "Run node tests/browser_workspace_project.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 55
+      },
+      {
+        "name": "Run node tests/browser_workspace_project_observation.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 56
+      },
+      {
+        "name": "Run node tests/test_browser_owned_cleanup.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 132
+      },
+      {
+        "name": "Run node tests/browser_workspace_mesh.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 140
+      },
+      {
+        "name": "Run node tests/browser_workspace_recovery.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 146
+      },
+      {
+        "name": "Verify coordinator request identity and stale delivery fences",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 147
+      },
+      {
+        "name": "Verify real coordinator fault recovery and lost reply in Runs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 148
+      },
+      {
+        "name": "Run node tests/browser_workspace_image_run.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 149
+      },
+      {
+        "name": "Run node tests/browser_workspace_text.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 150
+      },
+      {
+        "name": "Run node tests/browser_workspace_audio.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 151
+      },
+      {
+        "name": "Run node tests/browser_workspace_audio_run.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 152
+      },
+      {
+        "name": "Run node tests/browser_workspace_mesh_run.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 153
+      },
+      {
+        "name": "Run node tests/browser_workspace_sequence_run.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 154
+      },
+      {
+        "name": "Run node tests/browser_workspace_spatial.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 155
+      },
+      {
+        "name": "Run node tests/browser_workspace_export_run.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 156
+      },
+      {
+        "name": "Run node tests/browser_workspace_breadth.cjs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 157
+      },
+      {
+        "name": "Qualify automatic classifier evidence and independent CPU reconstruction",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 158
+      },
+      {
+        "name": "Exercise finite model development through the real browser",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 159
+      },
+      {
+        "name": "Exercise actual one-fit text model evidence in the browser",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 160
+      },
+      {
+        "name": "Exercise actual one-fit audio model evidence in the browser",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 161
+      }
+    ]
+  },
+  "actual_tests": {
+    "full_python": {
+      "command": "python -m unittest discover -s tests",
+      "tests": 1636,
+      "seconds": 1446.552,
+      "outcome": "OK (skipped=72)",
+      "skips": 72,
+      "raw_line": 1885
+    },
+    "phase_pg_gate": {
+      "command": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+      "tests": 14,
+      "seconds": 16.646,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1236
+    },
+    "phase_14_explicit_case_markers": [
+      {
+        "raw_line": 1220,
+        "text": "2026-10-20T01:18:01.8204513Z test_actual_catalog_mutex_wait_is_measured_by_owner_without_reconstructing_events (test_run_phase_timings.ActualPhaseTimingTests.test_actual_catalog_mutex_wait_is_measured_by_owner_without_reconstructing_events) ... ok"
+      },
+      {
+        "raw_line": 1221,
+        "text": "2026-10-20T01:18:03.6435220Z test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority (test_run_phase_timings.ActualPhaseTimingTests.test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority) ... ok"
+      },
+      {
+        "raw_line": 1222,
+        "text": "2026-10-20T01:18:05.4367661Z test_missing_or_foreign_custodian_diagnostics_cannot_change_completed_result (test_run_phase_timings.ActualPhaseTimingTests.test_missing_or_foreign_custodian_diagnostics_cannot_change_completed_result) ... ok"
+      },
+      {
+        "raw_line": 1223,
+        "text": "2026-10-20T01:18:06.2544579Z test_overlapping_same_actor_preparations_expose_latest_clock_without_rebinding_old_reply (test_run_phase_timings.ActualPhaseTimingTests.test_overlapping_same_actor_preparations_expose_latest_clock_without_rebinding_old_reply) ... ok"
+      },
+      {
+        "raw_line": 1224,
+        "text": "2026-10-20T01:18:06.8368170Z test_pre_run_preparation_is_live_actor_revision_scoped_and_has_no_run_effect (test_run_phase_timings.ActualPhaseTimingTests.test_pre_run_preparation_is_live_actor_revision_scoped_and_has_no_run_effect) ... ok"
+      },
+      {
+        "raw_line": 1225,
+        "text": "2026-10-20T01:18:08.8770353Z test_real_capacity_wait_single_go_and_active_cancel_keep_observations_separate (test_run_phase_timings.ActualPhaseTimingTests.test_real_capacity_wait_single_go_and_active_cancel_keep_observations_separate) ... ok"
+      },
+      {
+        "raw_line": 1226,
+        "text": "2026-10-20T01:18:17.0567735Z test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait (test_run_phase_timings.ActualPhaseTimingTests.test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait) ... ok"
+      },
+      {
+        "raw_line": 1227,
+        "text": "2026-10-20T01:18:17.0681030Z test_all_open_span_cap_reports_each_missing_observation_without_closing_owners (test_run_phase_timings.OwnerPhaseTimingTests.test_all_open_span_cap_reports_each_missing_observation_without_closing_owners) ... ok"
+      },
+      {
+        "raw_line": 1228,
+        "text": "2026-10-20T01:18:17.1146451Z test_client_correlates_exact_run_catalog_graph_revision_and_never_retries (test_run_phase_timings.OwnerPhaseTimingTests.test_client_correlates_exact_run_catalog_graph_revision_and_never_retries) ... ok"
+      },
+      {
+        "raw_line": 1229,
+        "text": "2026-10-20T01:18:17.1655521Z test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits (test_run_phase_timings.OwnerPhaseTimingTests.test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits) ... ok"
+      },
+      {
+        "raw_line": 1230,
+        "text": "2026-10-20T01:18:17.2073650Z test_full_baseline_contracts_and_legacy_discovery_are_identical (test_run_phase_timings.OwnerPhaseTimingTests.test_full_baseline_contracts_and_legacy_discovery_are_identical) ... ok"
+      },
+      {
+        "raw_line": 1231,
+        "text": "2026-10-20T01:18:17.2078833Z test_history_and_long_lived_open_span_are_bounded_without_false_duration (test_run_phase_timings.OwnerPhaseTimingTests.test_history_and_long_lived_open_span_are_bounded_without_false_duration) ... ok"
+      },
+      {
+        "raw_line": 1232,
+        "text": "2026-10-20T01:18:17.2081026Z test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end (test_run_phase_timings.OwnerPhaseTimingTests.test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end) ... ok"
+      },
+      {
+        "raw_line": 1233,
+        "text": "2026-10-20T01:18:17.2169726Z test_overlapping_owner_spans_use_monotonic_time_and_are_not_added (test_run_phase_timings.OwnerPhaseTimingTests.test_overlapping_owner_spans_use_monotonic_time_and_are_not_added) ... ok"
+      }
+    ],
+    "phase_case_scope": "Seven actual disposablePG/neutral-custody cases plus seven owner/contract cases all explicitlyok: catalogmutex timing, queue/copyfault/recovery/cold, missing/foreigncustodian, overlappingpreparation/latestclock, preRunactor/revision/noeffects, capacity/singleGO/cancel, selectedHTTP/CLI oldRun/unknown/boundedwait; no skips.",
+    "agents": {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+      "tests": 74,
+      "seconds": 386.581,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1689
+    },
+    "MCP_stdio": {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+      "tests": 19,
+      "seconds": 28.819,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1708
+    },
+    "all17_unittest_summaries": [
+      {
+        "command": "python -m unittest discover -s tests -p 'test_run_preflight*.py' -v",
+        "tests": 30,
+        "seconds": 8.549,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1113
+      },
+      {
+        "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v",
+        "tests": 32,
+        "seconds": 99.828,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1164
+      },
+      {
+        "command": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+        "tests": 20,
+        "seconds": 24.934,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1203
+      },
+      {
+        "command": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+        "tests": 14,
+        "seconds": 16.646,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1236
+      },
+      {
+        "command": "build/workspace-training/bin/python -c \"import numpy, sklearn, psycopg\"",
+        "tests": 15,
+        "seconds": 14.795,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1461
+      },
+      {
+        "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+        "tests": 11,
+        "seconds": 0.374,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1480
+      },
+      {
+        "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+        "tests": 9,
+        "seconds": 0.074,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1499
+      },
+      {
+        "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+        "tests": 12,
+        "seconds": 2.278,
+        "outcome": "OK (skipped=1)",
+        "skips": 1,
+        "raw_line": 1518
+      },
+      {
+        "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+        "tests": 9,
+        "seconds": 0.187,
+        "outcome": "OK (skipped=1)",
+        "skips": 1,
+        "raw_line": 1537
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+        "tests": 74,
+        "seconds": 386.581,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1689
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+        "tests": 19,
+        "seconds": 28.819,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1708
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+        "tests": 22,
+        "seconds": 68.782,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1727
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+        "tests": 24,
+        "seconds": 139.21,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1746
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+        "tests": 34,
+        "seconds": 72.341,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1765
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+        "tests": 13,
+        "seconds": 22.636,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1784
+      },
+      {
+        "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+        "tests": 5,
+        "seconds": 8.413,
+        "outcome": "OK",
+        "skips": 0,
+        "raw_line": 1832
+      },
+      {
+        "command": "python -m unittest discover -s tests",
+        "tests": 1636,
+        "seconds": 1446.552,
+        "outcome": "OK (skipped=72)",
+        "skips": 72,
+        "raw_line": 1885
+      }
+    ],
+    "skip_scope": "Full72skips; separatetargetedRheonCPU12/evaluation9 eachskip1; all other targeted summaries plainOK. Do not sum overlapping targeted/full suites or infer skipped hardwarepassed."
+  },
+  "browser_evidence": {
+    "markers": [
+      {
+        "raw_line": 2093,
+        "text": "2026-10-20T01:55:56.2450083Z PASS external recipe browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-external/run-HsiN5w"
+      },
+      {
+        "raw_line": 2124,
+        "text": "2026-10-20T01:56:03.0949536Z PASS publication browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication/run-RG1I2I"
+      },
+      {
+        "raw_line": 2155,
+        "text": "2026-10-20T01:56:09.0844975Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-dQ5LvB"
+      },
+      {
+        "raw_line": 2172,
+        "text": "2026-10-20T01:56:13.6520610Z PASS graph focus regression {\"state\":\"passed\",\"scope\":\"Inert private Project graph metadata only; no recipe execution or scientific qualification\",\"source_commit\":\"4792e03a27f324fe25a1bd214e77a0d09658b7d1\",\"workspace_real_sha256\":\"46e942721f2790a15344cdf5271bf07d88ee6cd3bc17654dc7dfab12df6ffcba\",\"harness_sha256\":\"5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684\",\"native_keys\":[\"Home\",\"ArrowDown\",\"ArrowDown\"],\"programmatic_focus_calls_in_journey\":1,\"values\":[\"e341968ad8ae452c883e8a138f09572b\",\"2067585f7de44b46b0e2c9aa558c5cc1\",\"83c5457d076a441885d6b6f866cf3821\"],\"observed\":[{\"focus\":true,\"value\":\"e341968ad8ae452c883e8a138f09572b\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"2067585f7de44b46b0e2c9aa558c5cc1\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"83c5457d076a441885d6b6f866cf3821\",\"active\":\"SELECT\"}],\"negativeChecks\":[\"held graph read preserves separately moved focus\",\"held graph read does not restore hidden Pipeline focus after navigation\"],\"recipe_runs\":0,\"browser\":\"Chrome/155.0.8059.39\"}"
+      },
+      {
+        "raw_line": 4210,
+        "text": "2026-10-20T02:00:25.7715877Z PASS owned delayed final write completes before removal; ignored TERM is bounded and already-exited handles are harmless"
+      },
+      {
+        "raw_line": 4618,
+        "text": "2026-10-20T02:01:44.5496392Z PASS: prediction-fetch failure preserves completed run details and controls with inline error."
+      },
+      {
+        "raw_line": 4620,
+        "text": "2026-10-20T02:01:44.7091846Z PASS: damaged selected run retains list/warning, no metrics, and healthy run remains selectable."
+      },
+      {
+        "raw_line": 4635,
+        "text": "2026-10-20T02:01:44.9405691Z PASS coordinator owner controls, exact generation/request identity, immutable completion, unknown-ack retention, stale read/write/session fences and storage refusal"
+      },
+      {
+        "raw_line": 4651,
+        "text": "2026-10-20T02:01:50.7124576Z PASS coordinator browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-coordinator/run-Q5Oul4"
+      },
+      {
+        "raw_line": 4711,
+        "text": "2026-10-20T02:02:34.7020165Z PASS real text workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-text-run/run-KktV8I"
+      },
+      {
+        "raw_line": 4757,
+        "text": "2026-10-20T02:02:52.4844565Z PASS real audio workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-audio-run/run-SJOhp0"
+      },
+      {
+        "raw_line": 4846,
+        "text": "2026-10-20T02:03:29.6937798Z PASS real classification export-only workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-export-run/run-ypGra6"
+      },
+      {
+        "raw_line": 4914,
+        "text": "2026-10-20T02:05:08.4982777Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-12Pn4Y"
+      },
+      {
+        "raw_line": 4936,
+        "text": "2026-10-20T02:05:26.5811082Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-5obFNL"
+      },
+      {
+        "raw_line": 4958,
+        "text": "2026-10-20T02:05:44.7138890Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-opLqOc"
+      }
+    ],
+    "all_existing_browsers": "All hosted step conclusions through final model development and onefit text/audio are success; publication/lineage/coordinator/ownedcleanup have actualpositive markers. Cleanup completion follows from whole step success, not PASS alone.",
+    "controlled_boundary": "browser_workspace_recovery and coordinator controller use mock transport for their stated UI regressions. Actual coordinator browser is separate; phase14 includes real neutral custodian/PG.",
+    "phase_UI_boundary": "PR103 source core and inherited107 do not include the later PR104 phase UI. Existing browsers are regression qualification, not a claim that the separately owned live phase-panel/T4 browser milestone ran here.",
+    "model_scope": "Later existing CPU actual-training/model and onefit fixtures qualify their declared data/evidence behavior; neutral phase/custody witnesses are not a new scientific producer/model-quality/CUDA qualification."
+  },
+  "source_files_sha256": {
+    "phase_timings.py": "03406d957da7da1305a07793a3be0830f2169c02971fdd9fb2e855f54ac627bc",
+    "runs.py": "6aece3b50722f23b97457fd398cd94a45bca598e7affc0db6ea5f3dd98ba6b08",
+    "pipeline.py": "07f5b491767941bf68668da8e82282b78858fe310e9ec74c6d91a8e38534faeb",
+    "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "run_publication.py": "41e7eeb7f9efe3743cf19465c36ffadf9713117829273e6e0091707e78e66dee",
+    "agent_api.py": "8ee3136aabca634a0f41471116fa1141b4cbc15aea493a063484528403c984f4",
+    "app.py": "75c54e547d139f921b34678a8448aa65125bf274a3460cd8b8131b1185f0077d",
+    "tests/test_run_phase_timings.py": "1449522265e9ef22a25b9ca4d4d06825cf031e5849b0915b9ee0dd17cd146c26",
+    ".github/workflows/tests.yml": "6e2afd68cb6c7582a0f6ca56ef22c9b78be41559a410601206cd2e2f960aab48"
+  },
+  "retarget_and_merge_boundary": "This archive tested the recorded dependent-branch base/merge. After predecessor merge/retarget, root must independently prove new base and synthetic/actual merge tree equality; no claim that the literal new Git history was checked out by this old run. PR remains draft in this snapshot; ready transition/freshpolicies root-owned.",
+  "other_checks": "Root separately reports required exactheadCPU/otherworkflow checks green; this reviewer fetched only requested lifecycle metadata/PRidentity/sourcegitobjects. No independent CPU-log review is claimed here.",
+  "archive": {
+    "root_saved_raw": {
+      "path": "/tmp/tuldok-pr103-current-lifecycle.log",
+      "sha256": "80a240c56918be7fb7dbbc8a8b036246060a9956132a81f934d7647a5f57310c",
+      "bytes": 618928,
+      "attribution": "Rawdecodedjobarchive fetched and saved by root, independently parsed here."
+    },
+    "own_metadata": {
+      "path": "/tmp/tuldok-pr103-current-lifecycle-independent-metadata.json",
+      "sha256": "69e246953f833b3f853d721c66dbda4a3fc502bea5189957bd55c97135f8a541"
+    },
+    "merge_source": {
+      "path": "/tmp/tuldok-pr103-current-lifecycle-merge-source.json",
+      "sha256": "2c90dda75f7506c2040ec8106d979014841cad410265fa81cae846bb5d59b35a",
+      "attribution": "MCPnormalizedcommit plus minimal read-only gh git-commit JSON for exact tree/parents omitted by MCP wrapper; synthetic merge objects absent locally, no gitfetch/refmutation."
+    }
+  },
+  "findings": [],
+  "actions": "Read local exactheadGitobjects/rootrawlogs and boundedread-only GitHubmetadata. No source edits/tests/PGqueries/remeasurements/polls/reruns/cancels/pushes/merges."
+}

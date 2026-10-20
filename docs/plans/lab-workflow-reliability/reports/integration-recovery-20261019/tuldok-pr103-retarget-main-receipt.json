@@ -1,0 +1,9 @@
+{
+  "pr": 103,
+  "head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+  "old_base": "feature/lab-coordinator-panel-20261019",
+  "new_base": "main",
+  "base_sha": "25da21cbac105dbe9b5cedfb5861dc5964c98e3b",
+  "verified_utc": "2026-10-20T02:34:34.476868+00:00",
+  "source_unchanged": true
+}

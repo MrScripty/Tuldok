@@ -1,0 +1,13 @@
+{
+  "pr": 107,
+  "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+  "base": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+  "tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+  "source_worktree": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+  "reviews": [
+    "/tmp/tuldok-pr107-9d62-lifecycle-independent-review.json"
+  ],
+  "check_names": [
+    "lifecycle"
+  ]
+}

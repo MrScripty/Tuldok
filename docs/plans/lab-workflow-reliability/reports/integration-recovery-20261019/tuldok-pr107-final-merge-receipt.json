@@ -1,0 +1,45 @@
+{
+  "pr": 107,
+  "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+  "base": "9930ab64801bc20f753a2c443f5391f9a8049e1e",
+  "tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+  "source_worktree": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+  "reviews": [
+    "/tmp/tuldok-pr107-9d62-lifecycle-independent-review.json"
+  ],
+  "check_names": [
+    "lifecycle"
+  ],
+  "state": "merged_and_tree_verified",
+  "observed_utc": "2026-10-20T02:40:14.913621+00:00",
+  "review_sha256": {
+    "/tmp/tuldok-pr107-9d62-lifecycle-independent-review.json": "fb3733330d2ca42b4eea6963e17b2a62cd8e0721f94fc31a923466f6b4a6d943"
+  },
+  "prospective_tree_verified": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+  "checks": [
+    {
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349555219/job/118390254197"
+    },
+    {
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349553374/job/118390248540"
+    }
+  ],
+  "command_exit": 0,
+  "response": "{\"sha\":\"18a53816a279ad56758de620c9a1c4b129ba84ce\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+  "stderr": "",
+  "merge_response": {
+    "sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "merge_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "merged_tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+  "current_main": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+  "merged_utc": "2026-10-20T02:40:24.255706+00:00"
+}

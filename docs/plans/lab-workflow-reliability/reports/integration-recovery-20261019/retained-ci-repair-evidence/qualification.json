@@ -1,0 +1,62 @@
+{
+  "base_commit": "beead92d54e33e70eb9df82e872adf14ff314c91",
+  "observed_at": "2026-10-20T02:36:44Z",
+  "browser": "Chrome/151.0.7922.173",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "node": "v24.19.0",
+  "kernel": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "headless": true,
+  "browser_flags": [
+    "--no-sandbox",
+    "--disable-gpu"
+  ],
+  "display": "headless; isolated temporary profile",
+  "sandbox": "selected managed workspace sandbox",
+  "shared_memory_bytes": 9441337344,
+  "full_qa": "/tmp/pr111-ci-repair/qa/model-development/run-XscB4e",
+  "source_sha256": {
+    "static/workspace-service.js": "568b8258c35e6b3ca2cfe08b64d914111e16ae98d45f5d40f7aa40a20c20098b",
+    "static/workspace-real.js": "de4036bab21c3ca2702488658a9fa8733cf0adb822f4ec3322d5e101a96b60a2",
+    "static/experiment-lineage.js": "085ee3cc990f1986db357e1e8f7bace0c16a2257bca9443ff412c464d91a53db",
+    "static/experiment-lineage.css": "232fec3043b92ae7aa91db499a14e8cdb9ebe5598c8d7f01d805e3e3d8d4859d",
+    "static/workspaces.css": "3d0eacbd50425b4cd2ce9cfacdf5bcdb8fe533d7a57248f16325242f625cd278",
+    "static/workspaces.html": "a85e465d317e8aaa14c5349ef1ae6b2dc75ac440e0cea2c5c5a313dbd4fb828e",
+    "experiment_lineage.py": "5cdac7aec893bff832406b44ae04af587118990b1b803ec11cea1458d8ed3234",
+    "agent_api.py": "bb14a25c63840f1701b13657fa1bce4659a2c6a180068e95f461e5fa7f9327b4",
+    "app.py": "c71b8b903fa8905ff5fd3ccaef1b86d3df3ddda5393f33bf3ec9661a98d02417",
+    "experiments.py": "05c88fa658408c7750aecda37461abfec54537c8b9dbe6143ea90313b72420df",
+    "pipeline.py": "07f5b491767941bf68668da8e82282b78858fe310e9ec74c6d91a8e38534faeb",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "metadata.py": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+    "upgrade_metadata.py": "f78f6113b3687d808536f873153c83893ed91bf1e247986b29ac00d4c226af8f",
+    "tests/browser_model_development.cjs": "b52c9355398a8862225b665fc379fde4916a2c6d265e371e2386832144b48d6e"
+  },
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "invalid held-out class coverage blocks release before training",
+    "fixed split preview, exact reviewed source release and immutable ZIP download",
+    "Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "Compatible frozen validation membership supports measured comparison across actual trained models",
+    "Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "H5 delayed query cannot override navigation; denied evidence clears all private Runs content and explicit refresh recovers the exact Run, checkpoints, metrics and retained chart",
+    "Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout"
+  ],
+  "training": true,
+  "private_projection": {
+    "status": "Evidence access revoked",
+    "privateNodes": 0
+  },
+  "restored_projection": {
+    "run_id": "b14204732d8740babe198a5cb1fe2779",
+    "checkpoint_count": 2,
+    "retained_chart": true
+  },
+  "app_stopped": true,
+  "scope": "Actual app/HTTP/PostgreSQL native classifier browser; no model-quality or downstream package-capture claim",
+  "injected_denial_status": 403
+}

@@ -1,0 +1,416 @@
+{
+  "observed_utc": "2026-10-20T02:29:46.618903+00:00",
+  "prs": [
+    {
+      "pr": 103,
+      "head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "base_ref": "feature/lab-coordinator-panel-20261019",
+      "base_sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "checks": [
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349494076/job/118390059421"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349494046/job/118390058516"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493984/job/118390058452"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349493980/job/118390058303"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481436/job/118390020210"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481495/job/118390020006"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481556/job/118390019936"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349481475/job/118390019872"
+        }
+      ]
+    },
+    {
+      "pr": 107,
+      "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "base_ref": "feature/lab-phase-timing-20261019",
+      "base_sha": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "checks": [
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349555219/job/118390254197"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349553374/job/118390248540"
+        }
+      ]
+    },
+    {
+      "pr": 104,
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "base_ref": "test/lab-workflow-baseline-20261019",
+      "base_sha": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "checks": [
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543926/job/118390213922"
+        },
+        {
+          "name": "lifecycle",
+          "status": "in_progress",
+          "conclusion": null,
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543888/job/118390213683"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543860/job/118390213620"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543903/job/118390213588"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511503/job/118390120232"
+        },
+        {
+          "name": "lifecycle",
+          "status": "in_progress",
+          "conclusion": null,
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511760/job/118390114562"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511761/job/118390114013"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349511758/job/118390113804"
+        }
+      ]
+    },
+    {
+      "pr": 105,
+      "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "base_ref": "feature/lab-phase-panel-20261019",
+      "base_sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "checks": [
+        {
+          "name": "lifecycle",
+          "status": "in_progress",
+          "conclusion": null,
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557067/job/118390262320"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557043/job/118390260929"
+        },
+        {
+          "name": "lifecycle",
+          "status": "in_progress",
+          "conclusion": null,
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349523584/job/118390149863"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349523542/job/118390149456"
+        }
+      ]
+    },
+    {
+      "pr": 106,
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "base_ref": "feature/lab-workflow-client-20261019",
+      "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "checks": [
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518183/job/118390133928"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518119/job/118390133508"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518156/job/118390133470"
+        },
+        {
+          "name": "lifecycle",
+          "status": "in_progress",
+          "conclusion": null,
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518133/job/118390133409"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475251/job/118390001060"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475266/job/118390001037"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475295/job/118390001029"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475306/job/118390001014"
+        }
+      ]
+    },
+    {
+      "pr": 109,
+      "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "base_ref": "feature/lab-field-comparison-20261019",
+      "base_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "checks": [
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517358/job/118390131496"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517382/job/118390131418"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517350/job/118390131257"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517308/job/118390131190"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349497088/job/118390068579"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349496980/job/118390068467"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349496918/job/118390067885"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349496909/job/118390067477"
+        }
+      ]
+    },
+    {
+      "pr": 110,
+      "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "base_ref": "feature/lab-bounded-collection-20261019",
+      "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "checks": [
+        {
+          "name": "lifecycle",
+          "status": "in_progress",
+          "conclusion": null,
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349550869/job/118390238386"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349516958/job/118390130432"
+        }
+      ]
+    },
+    {
+      "pr": 108,
+      "head": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "base_ref": "feature/lab-batch-client-20261019",
+      "base_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "checks": [
+        {
+          "name": "static-kit",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349559843/job/118390278585"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349559827/job/118390269600"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557883/job/118390263480"
+        },
+        {
+          "name": "static-kit",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349557822/job/118390263065"
+        }
+      ]
+    },
+    {
+      "pr": 111,
+      "head": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "base_ref": "feature/lab-indexed-diagnostics-20261019",
+      "base_sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "state": "open",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "checks": [
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349565578/job/118390288062"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349565476/job/118390287531"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349565452/job/118390287291"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349565433/job/118390287246"
+        },
+        {
+          "name": "catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349515791/job/118390126534"
+        },
+        {
+          "name": "workspace-ui",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349515794/job/118390126490"
+        },
+        {
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349515814/job/118390126254"
+        },
+        {
+          "name": "lifecycle",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349515815/job/118390126097"
+        }
+      ]
+    }
+  ]
+}

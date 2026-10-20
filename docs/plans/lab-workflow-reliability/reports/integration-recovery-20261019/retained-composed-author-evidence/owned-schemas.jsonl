@@ -1,0 +1,8 @@
+{"schema": "catalog_fd2657c20e764a89b03cb8f8a63bf35f", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_actual_new_project_binding_and_declared_model_controls_are_compatible_without_runtime"}
+{"schema": "catalog_fd2657c20e764a89b03cb8f8a63bf35f", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_actual_new_project_binding_and_declared_model_controls_are_compatible_without_runtime"}
+{"schema": "catalog_d9aa0a87a4c94b55834ac7376a8d0bf7", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_independent_stdlib_consumer_binds_actual_source_and_refuses_changed_native"}
+{"schema": "catalog_d9aa0a87a4c94b55834ac7376a8d0bf7", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_independent_stdlib_consumer_binds_actual_source_and_refuses_changed_native"}
+{"schema": "catalog_4b844e3f09aa4127b1e5c4800363514e", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_new_package_validates_from_copied_kit_without_app_database_or_numerical_startup"}
+{"schema": "catalog_4b844e3f09aa4127b1e5c4800363514e", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_new_package_validates_from_copied_kit_without_app_database_or_numerical_startup"}
+{"schema": "catalog_8dbbdf160e8648e396466ae9ab75d9d1", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert"}
+{"schema": "catalog_8dbbdf160e8648e396466ae9ab75d9d1", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert"}

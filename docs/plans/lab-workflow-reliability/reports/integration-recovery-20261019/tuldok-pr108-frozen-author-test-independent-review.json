@@ -1,0 +1,195 @@
+{
+  "format": "pr108_frozen_author_test_independent_review_v1",
+  "reviewed_at_utc": "2026-10-20T02:35:31.765417+00:00",
+  "result": "clear: test-oracle repair preserves frozen SDK source authority; no production defect found in reviewed failure scope",
+  "commit": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "parent": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+  "worktree": "/workspace/Tuldok-indexed-ci-repair-20261020",
+  "changed_files": [
+    "tests/test_extension_canonical_author.py"
+  ],
+  "checks": {
+    "exact_parent_and_single_test_delta": true,
+    "worktree_clean_and_exact_head": true,
+    "frozen_tree_unchanged": true,
+    "existing_exact_two_file_sdk_closure": true,
+    "frozen_sdk_matches_pins": true,
+    "literal_contract_pin_matches_frozen_contract": true,
+    "only_expected_test_method_changed": true,
+    "all_surrounding_assertions_byte_identical": true,
+    "both_failed_job_logs_integrity_verified": true,
+    "both_jobs_single_matching_unittest_failure": true,
+    "original_failure_reproduction_retained": true,
+    "focused_validation16_pass_no_skip": true,
+    "five_explicit_owned_schemas_ledger_removed": true
+  },
+  "sdk_pins": [
+    {
+      "path": "tuldok_extension_sdk/__init__.py",
+      "pinned_sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+      "actual_frozen_sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+      "live_sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+      "matches_pin": true,
+      "frozen_equals_live": true
+    },
+    {
+      "path": "tuldok_extension_sdk/evidence.py",
+      "pinned_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+      "actual_frozen_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+      "live_sha256": "53027c44b78fde2db62e736d9b8ed66915b17bfca3fefe36eee30cae59af0a70",
+      "matches_pin": true,
+      "frozen_equals_live": false
+    }
+  ],
+  "frozen_v3_canonical_tree": {
+    "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70": "9c372d7101291cfd479afe5e7d236283a5eab845",
+    "9f08427029d8b48c8f9b50927a1c835afb573276": "9c372d7101291cfd479afe5e7d236283a5eab845"
+  },
+  "test_source_sha256": {
+    "base": "09a4724042902dfda1512048a849d0d51737b5458706d52c87ecabe3366e6936",
+    "repair": "70d21b915e563dd04661e1f6cce0dd2fb91fcc819482a46cdbe7d2a49f0adf0b"
+  },
+  "source_authority": {
+    "contract_sha256": "d60b93699f978c125a567734ef4d610cb4027b3b2f047c31e6d579677121da1d",
+    "documentation": "docs/contracts/canonical-a-inference-package.md:11-25,50-55",
+    "authoring": "tests/prepare_extension_canonical_project.py:37 copies the fixed package;112-141 binds captured SDK bytes into provider/recipe source hashes",
+    "production": "candidate_packages.py:41 pins inference contract digest;403-422 checks exact full source closure and numerical/SDK source hashes;571-579 selects literal qualified adapter/contract",
+    "reason": "Existing frozen evidence.py intentionally differs from evolving live SDK containing the new optional diagnostics method. Frozen __init__.py currently remains identical. Requiring equality to live SDK would rewrite historical source and violate the explicit inference authority. The new test asserts exactly the original two SDK paths, each package file SHA against its existing authority pin, and authored copy byte identity. Prior authored source,contract,policy,provider,role and inert zero-run assertions remain."
+  },
+  "retained_hosted_failures": [
+    {
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+      "unittest_failures": [
+        {
+          "line": 1915,
+          "text": "2026-10-20T02:09:10.4008927Z FAIL: test_new_project_exact_sources_full_catalog_and_model_controls_are_inert (test_extension_canonical_author.CanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert)"
+        }
+      ],
+      "outcomes": [
+        {
+          "line": 1923,
+          "text": "2026-10-20T02:09:10.4013967Z Ran 1744 tests in 2216.671s"
+        },
+        {
+          "line": 1925,
+          "text": "2026-10-20T02:09:10.4014266Z FAILED (failures=1, skipped=72)"
+        }
+      ],
+      "actual_checkout": [
+        "2026-10-20T01:12:35.0842792Z HEAD is now at 72e3522 Merge de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70 into a9c12a0274c4c9166af67b0a4a2b6b0376606015"
+      ]
+    },
+    {
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+      "unittest_failures": [
+        {
+          "line": 1935,
+          "text": "2026-10-20T02:01:40.9387221Z FAIL: test_new_project_exact_sources_full_catalog_and_model_controls_are_inert (test_extension_canonical_author.CanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert)"
+        }
+      ],
+      "outcomes": [
+        {
+          "line": 1943,
+          "text": "2026-10-20T02:01:40.9391018Z Ran 1744 tests in 1855.304s"
+        },
+        {
+          "line": 1945,
+          "text": "2026-10-20T02:01:40.9391229Z FAILED (failures=1, skipped=72)"
+        }
+      ],
+      "actual_checkout": [
+        "2026-10-20T01:14:30.0798930Z HEAD is now at 72e3522 Merge de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70 into a9c12a0274c4c9166af67b0a4a2b6b0376606015"
+      ]
+    }
+  ],
+  "local_validation": {
+    "attribution": "Author-run retained execution logs inspected, not reexecuted by independent reviewer",
+    "reproduction": {
+      "tests": 1,
+      "failure": 1,
+      "seconds": 0.801
+    },
+    "validation": {
+      "tests": 16,
+      "passed": 16,
+      "skipped": 0,
+      "seconds": 4.53,
+      "classes": {
+        "CanonicalAuthorTests": 4,
+        "CanonicalOracleBoundsTests": 2,
+        "CanonicalCandidatePackageTests": 10
+      }
+    },
+    "harness": "run_owned_canonical.py overrides only setup to create explicitly preregistered dataset_id/schema. Inherited tested methods are unchanged; cleanup registered before Metadata constructor and exact namespace absence asserted after removal. Candidate package cases use actual existing tests.",
+    "schemas": {
+      "catalog_6db9f3cdc55d412aa99589a50ba7dfc9": [
+        "reserved",
+        "removed"
+      ],
+      "catalog_a3209f37d20c48fea7a0f1aacf416097": [
+        "reserved",
+        "removed"
+      ],
+      "catalog_eadd1fea697e490ba492ca123a7cb0ed": [
+        "reserved",
+        "removed"
+      ],
+      "catalog_323f591f1290426aaad1d717ce0e7684": [
+        "reserved",
+        "removed"
+      ],
+      "catalog_72dad8fe76094bf5b0ffe40544fe2496": [
+        "reserved",
+        "removed"
+      ]
+    },
+    "cleanup_verification": "Reviewed reserved/removed ledger, cleanup code and author summary; independent reviewer did not reconnect to PG or independently query schema absence."
+  },
+  "evidence": {
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json": {
+      "bytes": 565,
+      "sha256": "e0125307fd4aec7c4b59273f5930f173193379d628d7ed9baa2f5b5b596bab53"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390263480.log": {
+      "bytes": 244169,
+      "sha256": "7e1266babfd3ba1848eba8d2d6092eb20d51c06c1cf5d3c1ce5b9171c2304226"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390269600.log": {
+      "bytes": 246001,
+      "sha256": "98934e1340a1e5296677f65c72ba235bba8ede29b4cad62b9c1d73c43d925ffc"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl": {
+      "bytes": 2019,
+      "sha256": "8cd0cbab53587b39461471abdd42fd2bea5a45f64b86f9bac403a28f551bcc41"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/repair-summary.json": {
+      "bytes": 1854,
+      "sha256": "2c9462ccfe36f8a0bbfcea511b15de4c5f18ce528bd09beb03076afd5c529628"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/reproduction.log": {
+      "bytes": 1189,
+      "sha256": "a9e0e999532d4cd92c3e2ebea74bd062caad4faf916eddd50af2124469d784ed"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json": {
+      "bytes": 32291,
+      "sha256": "386e05a09b414253dfb94bc035de9a8e5d91e0557138238aab5dec16ec4c1b47"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json": {
+      "bytes": 32291,
+      "sha256": "3bd05dc502072f0ca0de6c4b3bbd368e98ef9b5b7f011df03f405e0a4c34013a"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py": {
+      "bytes": 2773,
+      "sha256": "8998f810b6e1ee49fe1db70847d73e84d9dc51153545bf70e619707d059ac084"
+    },
+    "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/targeted-validation.log": {
+      "bytes": 3447,
+      "sha256": "8b0f149bdcf26808b017d4200f048c21a65a1a243042d4d7968af12aac83e40b"
+    }
+  },
+  "limits": [
+    "No new local tests, database operations, full suite, browser execution, remote requests or mutations by reviewer.",
+    "Remote lifecycle rerun remains pending; old jobs failed at discovery and all later steps were skipped, so repair alone does not qualify remaining lifecycle steps.",
+    "No frozen artifact/hash,SDK,production source,runtime,science/CUDA,training or PUB1/SCI1 acceptance change. Missing original lab failure bytes and owned scientific criterion/pair remain outside this test repair."
+  ]
+}
