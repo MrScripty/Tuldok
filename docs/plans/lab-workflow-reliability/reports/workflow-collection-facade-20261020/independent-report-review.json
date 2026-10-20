@@ -1,0 +1,48 @@
+{
+  "format": "independent_workflow_facade_authored_report_review_v1",
+  "disposition": "clear_scoped_source_matrix_archive_and_authored_report",
+  "blocking_findings": [],
+  "report_commit": "374ef0a02daee2f43ee51e7edf701170f5016731",
+  "report_tree": "963e709cdc81fb5bddf8bd1f63703f8aaeed9afe",
+  "frozen_matrix_source": "00d32f85229954aed93b333d4fbf89494631e7b5",
+  "numeric_review": "independent-workflow-facade-matrix-review.json",
+  "numeric_review_sha256": "dfd5f5cc6347dceeacf4a96791f88bb3f36753c60ce3a91bc203a71e25bcda57",
+  "verified": [
+    "All36 archive manifest entries independently hashed; all original pilot/matrix bytes/bookends/logs identical to external raw directory.",
+    "All132 raw-observation summary distributions and36pair identity/order/condition/statistics independently recomputed earlier.",
+    "All derived cell/first-warm/order strata ratios and marginal wall/CPU/HTTP/body/RSS/I/O/owner medians independently recomputed from raw.",
+    "Authored exact numeric results, request counts, authority-work counts and20item-vs1item contrast match raw.",
+    "Independent stopped-transfer raw/domain/result/review archives byte-identical to reviewer originals.",
+    "Root current12 HTTP/CLI source/log/result/runner hashes match;97.352s unittest distinctly attributed from97.360587636s wrapper; classifier excluded.",
+    "Report-only changes after frozen matrix; no production/schema/default/README/workflow changes."
+  ],
+  "authored_scope": "Existing explicit batch facade supported only for observed twenty16KiB local selection; ordinary default stays. No2-19 threshold, whole-workflow, OS/PG cold-cache, genericperformance, native training or science claim.",
+  "limits": [
+    "Source/test and numeric/report review are distinct from hosted exact-head/current-main gates.",
+    "Small n and five-vs-four order imbalance retained; no broad causal/confidence inference.",
+    "Quiet-window exclusivity not independently provable; light source/Git work disclosed.",
+    "Exact cleanup evidence is recorded assertions plus external namespaces[]; reviewer performed no further PG queries."
+  ],
+  "reviewed_files": {
+    "acceptance.md": {
+      "bytes": 6994,
+      "sha256": "974f0cd3e6367634fa983d63f034e324af8d9f0dd29cc47cf2baaf2546e59aaa"
+    },
+    "qualification.json": {
+      "bytes": 2515,
+      "sha256": "f647a12c9c692f98d7915e2102bd68fc83ba141990b740955f42961708eee9f3"
+    },
+    "derived-cells.json": {
+      "bytes": 11042,
+      "sha256": "0dc5ad665c8fad359fda3864496ce5a91bab36a2c1088e5a227935ca4e49bea5"
+    },
+    "evidence-manifest.json": {
+      "bytes": 5962,
+      "sha256": "dec1d4bfd1643e1a654d2c8cf21f0cf46e13de0030645aca7911ec9278310d7e"
+    },
+    "independent-matrix-review.json": {
+      "bytes": 14107,
+      "sha256": "dfd5f5cc6347dceeacf4a96791f88bb3f36753c60ce3a91bc203a71e25bcda57"
+    }
+  }
+}

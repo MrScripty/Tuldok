@@ -1,0 +1,18 @@
+RefusalReportTests (unittest.loader._FailedTest.RefusalReportTests) ... ERROR
+test_builtin_refuses_before_probe_and_early_foreign_ref_stays_bare (test_material_preflight_reports.MaterialPreflightReportTests.test_builtin_refuses_before_probe_and_early_foreign_ref_stays_bare) ... ok
+test_client_correlates_ref_catalog_and_real_error_transport_with_no_retry (test_material_preflight_reports.MaterialPreflightReportTests.test_client_correlates_ref_catalog_and_real_error_transport_with_no_retry) ... ok
+test_consumer_refuses_rehashed_foreign_or_builtin_compositions_and_runtime_provenance (test_material_preflight_reports.MaterialPreflightReportTests.test_consumer_refuses_rehashed_foreign_or_builtin_compositions_and_runtime_provenance) ... ok
+test_consumer_rejects_forged_links_proofs_owners_states_and_bounds (test_material_preflight_reports.MaterialPreflightReportTests.test_consumer_rejects_forged_links_proofs_owners_states_and_bounds) ... ok
+test_default_internal_path_and_private_verified_ref_fence_are_preserved (test_material_preflight_reports.MaterialPreflightReportTests.test_default_internal_path_and_private_verified_ref_fence_are_preserved) ... ok
+test_distinct_outer_inner_and_graph_identities_and_deferred_execution (test_material_preflight_reports.MaterialPreflightReportTests.test_distinct_outer_inner_and_graph_identities_and_deferred_execution) ... ok
+test_refusal_is_bounded_request_provenance_with_unknown_identities (test_material_preflight_reports.MaterialPreflightReportTests.test_refusal_is_bounded_request_provenance_with_unknown_identities) ... ok
+
+======================================================================
+ERROR: RefusalReportTests (unittest.loader._FailedTest.RefusalReportTests)
+----------------------------------------------------------------------
+AttributeError: module 'test_run_preflight_refusals' has no attribute 'RefusalReportTests'
+
+----------------------------------------------------------------------
+Ran 8 tests in 1.556s
+
+FAILED (errors=1)

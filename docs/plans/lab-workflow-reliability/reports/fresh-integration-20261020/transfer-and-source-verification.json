@@ -1,0 +1,75 @@
+{
+  "prerequisite": "360bbda950cc48ed3c3d9193539039b68e0ac8cb",
+  "original_commits": [
+    "1442f1849c5894500d69823e60bfcd3d644dc683",
+    "cd420c44c42ff85487965a858865170cfc0a9358"
+  ],
+  "candidate_tree": "cdcfd9e2f348af530149314936c5efafbc6d8162",
+  "readable_transfer": {
+    "bytes": 868368,
+    "lines": 5957,
+    "framed_files": 23,
+    "sha256": "7f81867c610a629f5fe208fd30c56c7f7cbd186cbfe6467bbe96289ff7cf3ef5"
+  },
+  "bundle": {
+    "bytes": 55663,
+    "sha256": "bd34a5b128281f872c2c36dee36b024a7b7987e74d028324dd85c7222468b844"
+  },
+  "manifest": {
+    "bytes": 23210,
+    "sha256": "9f45d04dc213be31f714e0c7c762547420edbbc5236cab2290dda4b5c34fe7b3"
+  },
+  "full_recursive_tree": {
+    "bytes": 324072,
+    "entries": 2596,
+    "sha256": "a2c890c03735a66892e9344c75c18d15c0b4beb68cf6138ab782800d7fd90140"
+  },
+  "verified": [
+    "Every sequential readable frame and decoded file size/hash",
+    "Exact raw commit objects, parent order and trees",
+    "All per-commit manifest blob IDs, bytes and SHA256s",
+    "Full recursive ls-tree -r -t -l byte equality",
+    "Combined31files/+2708/-31; README/workflows unchanged",
+    "Original acceptance log hashes and independent review source bindings"
+  ],
+  "fresh_source_review": "independent-preflight-integration-review.json",
+  "pr115": {
+    "url": "https://github.com/MrScripty/Tuldok/pull/115",
+    "published_head": "cd420c44c42ff85487965a858865170cfc0a9358",
+    "tested_merge_checkout": "f24ed37c1a062b8f3f25e961810f7ef8467f1500",
+    "merge_checkout_tree_equals_candidate": true,
+    "hosted_at_this_record": {
+      "lifecycle": "running",
+      "captured_cpu": "success",
+      "workspace_ui": "success",
+      "catalog": "success"
+    },
+    "raw_log_limit": "Completed capturedCPU raw-log download returned Forbidden; no retry or inferred hosted counts/skips. Run/check/step metadata remain accessible."
+  },
+  "followup_subjects": {
+    "stopped_restore": "322482d2ca6fa2af8effb7a6a5080313efe745b4",
+    "facade_measurement": "00d32f85229954aed93b333d4fbf89494631e7b5",
+    "facade_archive": "374ef0a02daee2f43ee51e7edf701170f5016731",
+    "actual_legacy_qualifier": "8dbf9ae12bde9f88985ce2d11cb0757e38e60bed",
+    "legacy_archive": "6a3cbf12db3118b31b414f20d5791277361c148a",
+    "normal_composition": "d1ffe813e75d71b8c5b99845651c1db59f5b8d14"
+  },
+  "preservation": {
+    "original_local_work_branch_unchanged": true,
+    "unrelated_prs_not_mutated": [
+      43,
+      53,
+      91,
+      112,
+      113
+    ],
+    "deleted_branches": [],
+    "credential_or_network_settings_changes": false
+  },
+  "limits": [
+    "Exact-head hosted and serial merge gates remain pending at this record.",
+    "No fullC1/T1/M1/T5/T8 or science/hardware acceptance inferred.",
+    "PUB1 needs original real failed Run/custody/profile/output inventory.",
+    "SCI1 needs real comparison pair/criterion authority/environment procedure."
+  ]
+}
