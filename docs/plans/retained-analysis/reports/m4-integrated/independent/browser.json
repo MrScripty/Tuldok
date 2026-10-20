@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "evidence": "actual-PostgreSQL-native-Run-authenticated-Runs-browser",
+  "run_id": "3b55365925ed45b391072918503f7c5f",
+  "evaluation_sha256": "6cb8e64a1834bd1479735acd67a1a3426a49addf945cc03774e40ee30b69fd01",
+  "exact_curve": [
+    {
+      "checkpoint_sha256": "73d96dc058a33810f87e67cf6097883b59266dee287c35df855b33666bb027c7",
+      "epoch": 1,
+      "support": 2,
+      "value": 0.5
+    },
+    {
+      "checkpoint_sha256": "daeb53dc1671f9b35ddece10f92364068e526dd61274deb8a134d3ac45e168a8",
+      "epoch": 2,
+      "support": 2,
+      "value": 0.5
+    }
+  ],
+  "checks": [
+    "actual named query",
+    "retained numeric oracle",
+    "linked keyboard example table",
+    "390px layout",
+    "held real response cancellation after navigation",
+    "authorized exact JSON export",
+    "real credential revocation clears private Run content",
+    "fresh application process and cache-bypassed page reopen",
+    "local chart assets",
+    "deployed script CSP blocks runtime code generation",
+    "actual denial during detail/predictions/model-evidence clears private Run content",
+    "held existing checkpoint action denial clears already-authorized retained view"
+  ]
+}

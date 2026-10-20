@@ -1,0 +1,32 @@
+2026-10-20T06:37:15.2772080Z ##[group]Run node tests/browser_access.cjs
+2026-10-20T06:37:15.2772426Z [36;1mnode tests/browser_access.cjs[0m
+2026-10-20T06:37:15.2825753Z shell: /usr/bin/bash -e {0}
+2026-10-20T06:37:15.2826003Z env:
+2026-10-20T06:37:15.2826392Z   TULDOK_TRAINING_PYTHON: /home/runner/work/Tuldok/Tuldok/build/workspace-training/bin/python
+2026-10-20T06:37:15.2827074Z   TULDOK_NATIVE_READER_PYTHON: /home/runner/work/Tuldok/Tuldok/build/workspace-training/bin/python
+2026-10-20T06:37:15.2827855Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_test
+2026-10-20T06:37:15.2828258Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-20T06:37:15.2828711Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-20T06:37:15.2829143Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-20T06:37:15.2829525Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-20T06:37:15.2829903Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-20T06:37:15.2830328Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-20T06:37:15.2830686Z   BROWSER: /usr/bin/google-chrome
+2026-10-20T06:37:15.2830939Z ##[endgroup]
+2026-10-20T06:37:39.7616902Z { code: -32000, message: 'Inspected target navigated or closed' }
+2026-10-20T06:37:39.7886304Z node:fs:1282
+2026-10-20T06:37:39.7887476Z   return binding.rmSync(getValidatedPath(path), opts.maxRetries, opts.recursive, opts.retryDelay);
+2026-10-20T06:37:39.7889224Z                  ^
+2026-10-20T06:37:39.7889560Z 
+2026-10-20T06:37:39.7890264Z Error: ENOTEMPTY, Directory not empty: '/tmp/tuldok-access-browser-aOJaTf'
+2026-10-20T06:37:39.7891130Z     at Object.rmSync (node:fs:1282:18)
+2026-10-20T06:37:39.7892007Z     at /home/runner/work/Tuldok/Tuldok/tests/browser_access.cjs:53:141
+2026-10-20T06:37:39.7894084Z     at <anonymous> {
+2026-10-20T06:37:39.7894665Z   errno: 39,
+2026-10-20T06:37:39.7895114Z   code: 'ENOTEMPTY',
+2026-10-20T06:37:39.7895754Z   path: '/tmp/tuldok-access-browser-aOJaTf',
+2026-10-20T06:37:39.7896347Z   syscall: 'rm'
+2026-10-20T06:37:39.7896775Z }
+2026-10-20T06:37:39.7897797Z 
+2026-10-20T06:37:39.7898074Z Node.js v24.22.0
+2026-10-20T06:37:39.8035099Z ##[error]Process completed with exit code 1.

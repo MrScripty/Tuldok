@@ -1,0 +1,114 @@
+{
+  "base": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "branch": "fix/access-browser-ci-qualification-20261020",
+  "worktree": "/workspace/Tuldok-access-browser-ci-repair-20261020",
+  "retention": "retained-protected; unpublished local repair pending serial integration authority; no cleanup authorized",
+  "source_sha256": {
+    "tests/browser_access.cjs": "e3c1bcd19d73981a39a3adcc0d32d7e67029907e0cfd689e2739348efbf0e56f",
+    "tests/browser_access_session.cjs": "d61b7cf0c366134050d6bba3542fd209005c5ad22f10a3659afe0ca8f948e1a5",
+    "tests/test_browser_access_navigation.cjs": "56ae9b76f1aaa3803a90f03468129f243d0b37f6a50110bcf7c13840da18f80e"
+  },
+  "companion_source_sha256": {
+    "tests/browser_cdp_session.cjs": "ecfac048e343e0be85a02d22d284ea2c731617ec80807762a0691276f2bec40f",
+    "tests/browser_page_load.cjs": "bb74bd6ad97e0ff7c4545c747df698d0466d143764b0ccb52ed26b2051a13318",
+    "tests/browser_owned_cleanup.cjs": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988"
+  },
+  "actual_command": "node tests/browser_access.cjs",
+  "actual_exit": 0,
+  "actual_seconds": 8.60535,
+  "actual_attribution": "Precommit HEAD0ded plus three modified/new file hashes; actual receipt is not a literal repaired-commit execution.",
+  "original_failure": {
+    "run": 39370107550,
+    "job": 118455819881,
+    "decoded_log": "/tmp/tuldok-pr112-0ded-access-failed-job-118455819881.log",
+    "decoded_log_sha256": "dce0386ccf600104e93c6129a28bbd4844ee5d73921b64567d3a2234a9748f6e",
+    "primary": "Inspected target navigated or closed",
+    "secondary": "ENOTEMPTY",
+    "original_cause_proven": false,
+    "artifact_contents_inspected": false
+  },
+  "focused_checks": {
+    "syntax": 3,
+    "new_controlled_navigation_reload_regression": "passed; mock CDP ordering only",
+    "existing_page_load_regression": "passed",
+    "owned_child_delayed_write_ignored_TERM_regression": "passed",
+    "diff_check": "passed"
+  },
+  "preservation": {
+    "original_refs": 82,
+    "original_worktree_records": 96,
+    "unchanged": true,
+    "running_sibling_untouched": true
+  },
+  "external_mutations": [],
+  "hosted_repaired_head_gate": "not run; publication outside current scope",
+  "PUB_1": "missing original evidence",
+  "SCI_1": "missing owned criterion and real lab pair",
+  "evidence": [
+    {
+      "path": "acceptance.md",
+      "bytes": 4413,
+      "sha256": "ee8529aecfc71963e768cfc98c72a847680fe10de8b8930d21b4d9b394f85c74"
+    },
+    {
+      "path": "actual-access.log",
+      "bytes": 346,
+      "sha256": "ae63a93687389ad38ed33d1ecbe7fe8916db65afff8222c4a9acfe8b07f4b2f4"
+    },
+    {
+      "path": "cleanup.json",
+      "bytes": 341,
+      "sha256": "06b2c257bca7797d663ad809335504a2a2d56a7b41eae4edf77b2049b110538e"
+    },
+    {
+      "path": "independent-review.json",
+      "bytes": 10086,
+      "sha256": "ce616c44d452ef18a96df683fd9ce6b524ac6eb97a40c497c91164ec480182c5"
+    },
+    {
+      "path": "independent-source-review.json",
+      "bytes": 4965,
+      "sha256": "3b8d598bd31f575c0d8b20780a275abd9b0df10d7ee8a589b21a4968eccf56e3"
+    },
+    {
+      "path": "original-failure-disposition.json",
+      "bytes": 6212,
+      "sha256": "3abe25f69e93b32459308ec15dae8e32e35c504447414faa0e657c1a0d9f5696"
+    },
+    {
+      "path": "original-failure-excerpt.log",
+      "bytes": 2275,
+      "sha256": "7a92c80edc4a25e16424b63efcbad9b04cb2b53e45a9559733aa8d1724b72c87"
+    },
+    {
+      "path": "post-run-cleanup.json",
+      "bytes": 1433,
+      "sha256": "3fefda92278099fc5e93f1c05f363277b72469535a8dbd9cd83f5832023a6fc1"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 1693,
+      "sha256": "57b652807e1ac0e89d9f422c0c551051e33782ec779a016f0046c3ed48c6268d"
+    },
+    {
+      "path": "runner-receipt.json",
+      "bytes": 763,
+      "sha256": "b247a3d1147a47f0304649ae2a110969c2da7c1d6e4cd5a0abe8d82430753ef9"
+    },
+    {
+      "path": "schema-reservation.json",
+      "bytes": 234,
+      "sha256": "20bc035c94c464cfd13179a32bfdf069e49302f7d6f1369e8f7c2081ba15e5a5"
+    },
+    {
+      "path": "session-1280.jpg",
+      "bytes": 92512,
+      "sha256": "ae5ecddb60cd751033a62eb24ee383daa4d56da85439115b080178b18b5c5580"
+    },
+    {
+      "path": "session-390.jpg",
+      "bytes": 46763,
+      "sha256": "71f975c51592a0a92669c3d5213b21561acbc83cd4450a532b9e1a2cb7907519"
+    }
+  ]
+}

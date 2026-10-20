@@ -1,0 +1,8 @@
+PASS project startup markup disabled; owning constructor binds action, form and teardown before enable; first action opens synchronously and reads only
+PASS Delayed actual project module keeps the pointer-hit control disabled; its owner enables the original first open and full project inspection
+PASS Opening remains read-only; explicit import refuses stale observed hash before catalog writes, then imports exact bytes
+PASS All authored fields and X/Y/Z planes retain exact time/stage/dtype; rotated noncubic origin and signed zero inspected
+PASS Wholeasset human inspection freezes canonical release; separate NumPy reader verifies exact recovered original payload and opaque sources
+PASS Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record
+PASS Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted
+PASS scientific field browser: /tmp/tuldok-project-startup-repair/qa/scientific-fields-neutral/run-7EkEzc

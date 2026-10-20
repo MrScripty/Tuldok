@@ -1,0 +1,10 @@
+test_actual_revocation_blocks_fresh_http_and_export (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_actual_revocation_blocks_fresh_http_and_export) ... ok
+test_authenticated_http_and_export_equal_real_query (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_authenticated_http_and_export_equal_real_query) ... ok
+test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) ... ok
+test_explicit_contract_and_route_bound_run_are_required (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_explicit_contract_and_route_bound_run_are_required) ... ok
+test_stale_and_foreign_selection_never_returns_dataset (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_stale_and_foreign_selection_never_returns_dataset) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.896s
+
+OK

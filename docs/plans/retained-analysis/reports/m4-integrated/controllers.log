@@ -1,0 +1,13 @@
+PASS model UI: exact frozen probe correction, honest legacy history, observed zero, query ordering, navigation/session exclusion and denied evidence clearing. Controlled transport only.
+PASS coordinator owner controls, exact generation/request identity, immutable completion, unknown-ack retention, stale read/write/session fences and storage refusal
+PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.
+PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only.
+PASS external controller: actor-bound unresolved key survives ambiguous→403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only.
+PASS phase identity/clock/duration/wait validation, latest-preparation labeling, bounded sequential refresh, abort and stale delivery/session cleanup
+Scientific comparison controller: diagnostic table, exact identity, stale overlap, invalidation, revocation and session fences passed
+PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences
+PASS candidate UI: known admission rejection refreshes intent; response loss and later denial or package-state failure preserve actor-bound original preparation. Controlled transport only.
+PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination
+PASS external field UI: exact declared selectors, shared display range, exact numeric probes, stale selector/navigation exclusion, revoked-value clearing and unsupported legacy/physical time. Controlled transport only.
+PASS publication metadata, pinned status2, owner/actor controls, unknown-ack stable request, source/hash identity, stale reads/writes and polling cleanup
+PASS controlled external package view: owned discovery, pending versus fresh state, source identity, denial/stale clearing and passive-only reads.

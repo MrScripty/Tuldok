@@ -1,0 +1,8 @@
+test_closed_bounded_arguments (test_retained_analysis_contracts.RetainedAnalysisContractTests.test_closed_bounded_arguments) ... ok
+test_new_inspect_contracts_match_browser_pins (test_retained_analysis_contracts.RetainedAnalysisContractTests.test_new_inspect_contracts_match_browser_pins) ... ok
+test_registry_and_existing_contract_bytes_are_unchanged (test_retained_analysis_contracts.RetainedAnalysisContractTests.test_registry_and_existing_contract_bytes_are_unchanged) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.891s
+
+OK

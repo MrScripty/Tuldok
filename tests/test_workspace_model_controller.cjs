@@ -6,19 +6,33 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{reso
 const entry=(epoch,sha)=>({checkpoint:{sha256:sha,name:'checkpoint-'+epoch+'.json'},clocks:{epoch},selected:epoch===2,state:'retained'});
 const value=(sha='b')=>({state:'verified',manifest:{producer:{run_id:'run'}},checkpoint_index:{entries:[entry(1,'a'),entry(2,'b')]},probe:{members:[{ordinal:0,frozen_reference:{id:'example',revision:3,source_revision:1}}]},observations:[{checkpoint_sha256:sha,metric_id:'accuracy',value:0,state:'observed'}],checkpoint:{clocks:{epoch:sha==='a'?1:2,optimizer_update:2,wall_elapsed_ms:50},weights:{name:'weights-'+sha+'.pt'}},predictions:{rows:[{ordinal:0,truth_index:0,predicted_index:1,probabilities:[0.2,0.8]}]}});
 function fixture(){
-  const calls=[],notes=[],opened=[];let handler,view='runs',intent=0,actor={kind:'owner',actor_id:'owner',credential_id:'one'};
+  const calls=[],notes=[],opened=[],failures=[];let handler,view='runs',intent=0,actor={kind:'owner',actor_id:'owner',credential_id:'one'};
   const nodes={},buttons=[{dataset:{modelCheckpoint:'a'}},{dataset:{modelCheckpoint:'b'}}];
   const node=id=>nodes[id]||(nodes[id]={value:'example',addEventListener(type,fn){this[type]=fn;}});
   const root={querySelector:node,querySelectorAll:selector=>selector==='[data-model-checkpoint]'?buttons:[]};
   const window={workspaceEscape:value=>String(value??'').replaceAll('<','&lt;'),TuldokAuth:{identity:()=>actor}};
   const context={window,history:{state:{},replaceState(value){this.state=value;}},structuredClone,crypto:globalThis.crypto,CSS:{escape:String},document:{activeElement:null}};
   vm.runInNewContext(source,context);
-  const ui=window.WorkspaceModel({api:async(route,body)=>{calls.push({route,body});return handler(route,body);},announce:text=>notes.push(text),openRun:()=>{},openRecord:value=>opened.push(value),getView:()=>view,getIntent:()=>intent});
+  const ui=window.WorkspaceModel({api:async(route,body)=>{calls.push({route,body});return handler(route,body);},announce:text=>notes.push(text),openRun:()=>{},openRecord:value=>opened.push(value),getView:()=>view,getIntent:()=>intent,onAccessFailure:(...args)=>failures.push(args)});
   const run={id:'run',state:'completed',graph:{recipe:'image_classification_model_v2'},metrics:{class_vocabulary:[{label:'circle'},{label:'square'}]}};
   let rendered='';const render=()=>{rendered=ui.html(run);ui.bind(root,run,[],render,()=>view==='runs');};
-  return {ui,run,calls,notes,opened,nodes,buttons,history:context.history,render,html:()=>rendered,handler:fn=>handler=fn,navigate(){view='pipeline';intent++;ui.invalidate();},session(){actor=null;ui.invalidate();ui.sessionChanged();}};
+  return {ui,run,calls,notes,opened,failures,nodes,buttons,expired(){actor=null;},history:context.history,render,html:()=>rendered,handler:fn=>handler=fn,navigate(){view='pipeline';intent++;ui.invalidate();},session(){actor=null;ui.invalidate();ui.sessionChanged();}};
 }
 (async()=>{
+  for(const status of [401,403]){
+    const denied=fixture(),failure=Object.assign(Error('Current access denied'),{status});
+    denied.handler(async()=>{throw failure;});
+    await assert.rejects(denied.ui.load(denied.run,()=>true),error=>error===failure,
+      'Model evidence denial must reach the Runs owner before detail/predictions can commit');
+    assert.doesNotMatch(denied.ui.html(denied.run),/Linked epoch evidence/);
+  }
+  for(const change of ['expired','navigate','session']){
+    const late=fixture();late.handler(async(route,body)=>value(body.checkpoint_sha256||'b'));await late.ui.load(late.run,()=>true);late.render();
+    const held=deferred();late.handler(()=>held.promise);const loading=late.buttons[0].onclick();late[change]();
+    held.reject(Object.assign(Error('Denied checkpoint'),{status:401}));await loading;
+    assert.equal(late.failures.length,change==='expired'?1:0,'Only a current model generation reports denial after '+change);
+    if(change==='expired'){assert.equal(late.failures[0][1],'run');assert.equal(late.failures[0][2],'one');}
+  }
   const f=fixture();f.handler(async(route,body)=>value(body.checkpoint_sha256||'b'));await f.ui.load(f.run,()=>true);f.render();
   assert.match(f.html(),/Linked epoch evidence/);assert.match(f.html(),/circle/);assert.match(f.html(),/square/);assert.match(f.html(),/>0\.0000<\/td>/,'Observed zero remains zero');
   assert.match(f.ui.html({graph:{recipe:'image_classification'}}),/was not captured/);

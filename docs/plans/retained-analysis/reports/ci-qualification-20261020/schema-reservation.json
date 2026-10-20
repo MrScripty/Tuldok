@@ -1,0 +1,8 @@
+{
+  "schema": "catalog_8faa508de2e54448925420da15fa406c",
+  "dataset_id": "8faa508de2e54448925420da15fa406c",
+  "owner": "PR111 CI qualification",
+  "state": "created-by-normal-Metadata",
+  "server": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+  "catalog_path": "/tmp/tuldok-model-development-ESKMk7/data"
+}

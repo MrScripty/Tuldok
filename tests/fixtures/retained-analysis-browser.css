@@ -1,0 +1,7 @@
+body { font: 16px system-ui; margin: 16px; color: #17223b; }
+main, #analysis { max-width: 900px; min-width: 0; width: 100%; }
+button { margin: 4px; padding: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; table-layout: fixed; }
+td, th { padding: 6px; border: 1px solid #aab; overflow-wrap: anywhere; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+button:focus-visible, input:focus-visible { outline: 3px solid #d97706; }

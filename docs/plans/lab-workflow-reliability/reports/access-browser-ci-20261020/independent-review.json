@@ -1,0 +1,171 @@
+{
+  "actual_qualification_review": {
+    "auth_scope": "Actual default entrypoint uses ordinary CLI one-time owner login, verifies replay denial, HttpOnly/code clearance, preserved unsaved drafts, no mutation replay and explicit successful retry. Existing final scoped-agent branch deliberately installs a real issued agent credential cookie and verifies human-review controls disabled; no fixture owner-cookie bootstrap is substituted.",
+    "checks": {
+      "actual_exit_zero": true,
+      "all3_original_auth_checks_complete": true,
+      "both_new_main_loads_recorded": true,
+      "exact_schema_absence_recorded": true,
+      "exact_schema_and_path_bound": true,
+      "exact_temporary_absence_and_no_matching_processes_recorded": true,
+      "three_source_hashes_exact_review_actual_and_current": true,
+      "two_supplied_main_handles_terminal_and_match": true,
+      "zero_workspace_runs": true
+    },
+    "cleanup_limit": "Receipts support exact preregistered schema absent,0workspaceRuns, two supplied main handles terminal before rm, exact profile absent/no taskprocess matches at recorded observation. No blanket all-Chrome-descendant guarantee.",
+    "command": "node tests/browser_access.cjs",
+    "environment": "Root reports existing Python3.12.14, PostgreSQL17.6 and Chromium151; no installation/service/config change. Version commands not independently rerun by reviewer.",
+    "evidence": [
+      {
+        "bytes": 763,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/runner-receipt.json",
+        "sha256": "b247a3d1147a47f0304649ae2a110969c2da7c1d6e4cd5a0abe8d82430753ef9"
+      },
+      {
+        "bytes": 346,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/actual-access.log",
+        "sha256": "ae63a93687389ad38ed33d1ecbe7fe8916db65afff8222c4a9acfe8b07f4b2f4"
+      },
+      {
+        "bytes": 1433,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/post-run-cleanup.json",
+        "sha256": "3fefda92278099fc5e93f1c05f363277b72469535a8dbd9cd83f5832023a6fc1"
+      },
+      {
+        "bytes": 1693,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/qa/access/run-vVR332/receipt.json",
+        "sha256": "57b652807e1ac0e89d9f422c0c551051e33782ec779a016f0046c3ed48c6268d"
+      },
+      {
+        "bytes": 341,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/qa/access/run-vVR332/cleanup.json",
+        "sha256": "06b2c257bca7797d663ad809335504a2a2d56a7b41eae4edf77b2049b110538e"
+      },
+      {
+        "bytes": 92512,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/qa/access/run-vVR332/session-1280.jpg",
+        "sha256": "ae5ecddb60cd751033a62eb24ee383daa4d56da85439115b080178b18b5c5580"
+      },
+      {
+        "bytes": 46763,
+        "path": "/tmp/tuldok-access-browser-ci-repair-20261020/qa/access/run-vVR332/session-390.jpg",
+        "sha256": "71f975c51592a0a92669c3d5213b21561acbc83cd4450a532b9e1a2cb7907519"
+      }
+    ],
+    "execution_owner": "Root executed actual PostgreSQL/HTTP/Chromium journey; this reviewer inspected retained bytes/receipts, did not repeat browser/server/PG.",
+    "exit": 0,
+    "finished_utc": "2026-10-20T06:56:00.320089+00:00",
+    "historical_failure_limit": "No new host event trace: controlled old-red/new-green and actual successful repair do not retroactively prove original failed-host cause.",
+    "loader_events": [
+      {
+        "event": "load",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "C704421B4745793C1F166C7CC67C83F8"
+      },
+      {
+        "event": "main-frame",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7534733FE54346FBED7374DBFE2EEB98"
+      },
+      {
+        "event": "load",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7534733FE54346FBED7374DBFE2EEB98"
+      },
+      {
+        "event": "main-frame",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7B0CA169AEB6A2150994309812BCD5B7"
+      },
+      {
+        "event": "load",
+        "frame": "429B7ADFD788931A1DAC0F8F1B79610A",
+        "loader": "7B0CA169AEB6A2150994309812BCD5B7"
+      }
+    ],
+    "reviewed_utc": "2026-10-20T06:57:54.185655+00:00",
+    "seconds": 8.60535,
+    "source_attribution": "Actual run used base0ded checkout with reviewed modified file bytes. Three file hashes agree in source-review/currentfiles/browserreceipt/postcleanup; do not claim base0ded includes repair or a later commit was literally executed.",
+    "source_dirty_at_execution": true,
+    "source_head_at_execution": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+    "started_utc": "2026-10-20T06:55:51.714739+00:00"
+  },
+  "base": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "blocking_findings": [],
+  "cleanup_review": {
+    "limit": "Existing helper confirms supplied main child handles only, not an unconditional Chrome-descendant extinction guarantee; actual fixture run and final cleanup observation pending.",
+    "order": "Dispose session/socket; await existing stopOwnedChildren only on supplied children; bounded recursive removal maxRetries10/retryDelay100; write terminal-main-handle receipt.",
+    "primary_preservation": "Original failure printed as Primary access failure and recorded phase/protocol metadata; exitCode1 set before finally. Cleanup failure separately prints Secondary access cleanup failure and retains nonzero exit."
+  },
+  "disposition": "CLEAR within reviewed three-file test-harness source plus actual default access qualification scope; external publication/CI acceptance remain parent-owned",
+  "historical_failure": {
+    "cause_limit": "Source race is demonstrated in controlled mock protocol scheduling; original hosted execution had no phase/pointer/context trace. Target closure/crash remains unexcluded. Original failed run is not reclassified.",
+    "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+    "job": 118455819881,
+    "primary": "Inspected target navigated or closed",
+    "run": 39370107550,
+    "secondary": "ENOTEMPTY after unawaited TERM/removal"
+  },
+  "independent_tests": {
+    "command": "node --check tests/browser_access.cjs && node --check tests/browser_access_session.cjs && node --check tests/test_browser_access_navigation.cjs && node tests/test_browser_access_navigation.cjs && node tests/test_browser_page_load.cjs",
+    "exit": 0,
+    "not_run_by_reviewer": [
+      "Actual browser/HTTP/PostgreSQL",
+      "Owned-child regression(no need duplicate existingroot pass)",
+      "Heavy suites/CI"
+    ],
+    "results": [
+      "Controlled old navigation/reload ACK\u2192departing-DOM read produces -32000",
+      "New helper issues zero DOM reads until changed main loader matchingload; oldloader/subframe/DOMContentLoaded insufficient",
+      "Navigation load timeout and targetclose fail within configured bounds",
+      "Request timeout and snapshots omit MUST_NOT_APPEAR command token",
+      "Existing fresh-document helper regression passes"
+    ]
+  },
+  "limits": [
+    "No product/API/domain changes; exact source diff limited to three test files.",
+    "No remote mutation/CI polling/source edit or server/browser execution by reviewer.",
+    "PUB-1 and SCI-1 unchanged.",
+    "Actual evidence inspected, not independently rerun; no performance claim from8.605350s descriptive single-run wall time. Parent prohibits external publication, merging, branch cleanup or environment changes."
+  ],
+  "navigation_review": {
+    "both_transitions": [
+      "Initial Page.navigate to workbench",
+      "Scoped-agent Page.reload after exact cookie replacement"
+    ],
+    "diagnostics": "Bounded last12main-frame/load identities plus phase and last method; command parameters absent. contextual errors preserve underlying code/cause.",
+    "exact_target": "Initial page target must type page and url about:blank; connection deadline10000ms.",
+    "failure_boundaries": "Default CDP requests15000ms; new-load wait20000ms with25ms polling; explicit errorText/target close/error refuse. No blanket navigation-error suppression or mutation retry.",
+    "fresh_dom_checks": "Original session dialog/identity/Collection-ready checks remain after fresh-document gate.",
+    "owner": "accessSession captures Page.getFrameTree previous main id+loader before command; pageLoadTracker observes Page.frameNavigated and lifecycle load. Only changed main loader with matching load releases DOM checks."
+  },
+  "original_assertions": {
+    "all14_original_calls_present_verbatim": true,
+    "base_calls": 14,
+    "current_calls": 15,
+    "extra": "Explicitly launched about:blank target assertion",
+    "preserved_semantics": [
+      "Anonymous legacy/current denied writes",
+      "One-time CLI login consumed/code cleared/HttpOnly cookie",
+      "Signout and rejected mutation preserve unsaved draft",
+      "Reauthentication never replays original mutation",
+      "Only deliberate retry changes revision",
+      "Real scoped agent cannot use owner human-review controls",
+      "No runtime exceptions or application stderr"
+    ]
+  },
+  "reviewed_utc": "2026-10-20T06:54:04.651464+00:00",
+  "source_only_review_history": {
+    "old_disposition": "CLEAR within test-harness source/focused-test scope; actual default PostgreSQL/Chromium access qualification remains pending",
+    "path": "/tmp/tuldok-access-browser-ci-independent-review-source-only.json",
+    "sha256": "3b8d598bd31f575c0d8b20780a275abd9b0df10d7ee8a589b21a4968eccf56e3"
+  },
+  "source_sha256": {
+    "tests/browser_access.cjs": "e3c1bcd19d73981a39a3adcc0d32d7e67029907e0cfd689e2739348efbf0e56f",
+    "tests/browser_access_session.cjs": "d61b7cf0c366134050d6bba3542fd209005c5ad22f10a3659afe0ca8f948e1a5",
+    "tests/test_browser_access_navigation.cjs": "56ae9b76f1aaa3803a90f03468129f243d0b37f6a50110bcf7c13840da18f80e"
+  },
+  "source_state": "Uncommitted exact three test-file repair; root owns final commit/publication.",
+  "status_porcelain": " M tests/browser_access.cjs\n?? tests/browser_access_session.cjs\n?? tests/test_browser_access_navigation.cjs\n",
+  "worktree": "/workspace/Tuldok-access-browser-ci-repair-20261020"
+}

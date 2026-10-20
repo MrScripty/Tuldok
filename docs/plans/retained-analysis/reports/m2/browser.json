@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "evidence": "actual-headless-Chromium-authored-renderer-fixture",
+  "checks": [
+    "strict CSP/interpreter",
+    "self-hosted/offline external assets",
+    "exact numbers",
+    "keyboard linked selection/focus",
+    "visible error filter",
+    "390px layout",
+    "stale reply after revocation",
+    "malformed/oversized response and spec rejection",
+    "support/ordinal/provenance/type validation",
+    "fresh export authorization path",
+    "cold page reopen",
+    "dispose"
+  ]
+}

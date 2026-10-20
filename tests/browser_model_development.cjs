@@ -553,11 +553,16 @@ function launch(command, args, options) {
   pausedRequest=null;await click('[data-model-checkpoint]');await until(()=>pausedRequest);
   await send('Fetch.fulfillRequest',{requestId:pausedRequest,responseCode:403,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({error:'Evidence access revoked',code:'forbidden'})).toString('base64')});
   await send('Fetch.disable');pausedRequest=null;
-  await until(()=>text('.model-evidence').then(value=>value?.includes('Evidence access revoked')));
-  assert.equal(await evaluate('document.querySelectorAll("[data-model-checkpoint]").length'),0);
-  assert.equal(await evaluate('!!document.getElementById("model-probe")'),false);
-  await click('#real-runs-refresh');await until(()=>evaluate('document.querySelectorAll("[data-model-checkpoint]").length===2'));
-  check('H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers');
+  // Runs owns current denials and removes every private projection, including
+  // the model panel that used to contain this error. Refresh is an explicit read.
+  await until(()=>text('#real-runs-root .real-status').then(value=>value?.includes('Evidence access revoked')));
+  const deniedProjection=await evaluate(`({status:document.querySelector('#real-runs-root .real-status')?.textContent,
+    privateNodes:document.querySelectorAll('#real-runs-root .model-evidence,#real-runs-root .metric-grid,#real-runs-root [data-retained-analysis],#real-runs-root [data-real-run],#real-runs-root [data-model-checkpoint],#real-runs-root #model-probe').length})`);
+  assert.equal(deniedProjection.privateNodes,0,'A current evidence denial clears all private Runs content');
+  await click('#real-runs-refresh');
+  await until(()=>evaluate(`!!document.querySelector('[data-real-run="${third.id}"][aria-current="true"]')&&document.querySelectorAll('[data-model-checkpoint]').length===2&&!!document.querySelector('#real-runs-root .metric-grid')&&!!document.querySelector('#real-runs-root [data-retained-analysis] svg')`));
+  const recoveredProjection={run_id:third.id,checkpoint_count:await evaluate('document.querySelectorAll("[data-model-checkpoint]").length'),retained_chart:true};
+  check('H5 delayed query cannot override navigation; denied evidence clears all private Runs content and explicit refresh recovers the exact Run, checkpoints, metrics and retained chart');
   await screenshot('corrected-evidence-390',390,844);await screenshot('corrected-evidence-1440',1440,900);
   // Native system preference, keyboard focus and real retained evidence at both requested widths.
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'dark'}]});
@@ -587,7 +592,7 @@ function launch(command, args, options) {
     (lineageProof.dark_checks??=[]).push(colors);
   }
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_model_development.cjs',source_sha256:sourceHashes,dark_checks:darkChecks,catalog_path:path.join(temporary,'data'),browser:(await send('Browser.getVersion')).product,checks,captures,lineage:lineageProof,compare_selectors:compareRequests,run_ids:[run.id,second.id,third.id],release_ids:[releaseId,correctedId],training:true,quality_claim:false,fixture_provenance:'12 CC0 authored independent images imported and reviewed through ordinary Data UI',access_projection_test:'403 transport substitution; backend tests own actual revoke enforcement'},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_model_development.cjs',source_sha256:sourceHashes,dark_checks:darkChecks,catalog_path:path.join(temporary,'data'),browser:(await send('Browser.getVersion')).product,checks,captures,lineage:lineageProof,compare_selectors:compareRequests,run_ids:[run.id,second.id,third.id],release_ids:[releaseId,correctedId],training:true,quality_claim:false,fixture_provenance:'12 CC0 authored independent images imported and reviewed through ordinary Data UI',access_projection_test:'403 transport substitution; backend tests own actual revoke enforcement',denied_projection:deniedProjection,recovered_projection:recoveredProjection},null,2));
   console.log('PASS real model development gate:',report);
 })().catch(async error=>{
   console.error(error);console.error('Application stderr:',serverErrors);

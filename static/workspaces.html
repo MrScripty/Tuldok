@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
     <title>Tuldok · Dataset workspaces</title>
     <link rel="stylesheet" href="/workspaces.css" />
     <link rel="stylesheet" href="/experiment-lineage.css" />
@@ -24,12 +25,12 @@
       <div>
         <span class="eyebrow">CONTEXT</span
         ><label class="sr-only" for="dataset">Dataset</label
-        ><select id="dataset">
+        ><select id="dataset" disabled>
           <option value="fixtures">Interface fixtures</option>
           <option value="catalog">Current local catalog</option>
         </select>
       </div>
-      <button id="open-project" type="button">Open project</button>
+      <button id="open-project" type="button" disabled>Open project</button>
       <div id="context" class="context-copy">Loading workspace…</div>
       <span class="badge amber">Local preview</span>
     </div>
@@ -133,6 +134,11 @@
         </button>
       </div>
     </dialog>
+    <script src="/static/vendor/retained-analysis/vega.min.js"></script>
+    <script src="/static/vendor/retained-analysis/vega-lite.min.js"></script>
+    <script src="/static/vendor/retained-analysis/vega-embed.min.js"></script>
+    <script src="/static/vendor/retained-analysis/vega-interpreter.min.js"></script>
+    <script src="/static/retained-analysis.js"></script>
     <script src="/workspace-service.js"></script>
     <script src="/pipeline-editor.js"></script>
     <script src="/runs-view.js"></script>

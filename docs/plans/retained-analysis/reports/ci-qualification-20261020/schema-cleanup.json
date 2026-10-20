@@ -1,0 +1,25 @@
+{
+  "schema": "catalog_8faa508de2e54448925420da15fa406c",
+  "dataset_id": "8faa508de2e54448925420da15fa406c",
+  "reserved_before_creation": true,
+  "expected_owner": "tuldok_task",
+  "app_stopped_before_drop": true,
+  "observed_runs": [
+    {
+      "id": "29e102331db74dbc8c3e39cdba2149d5",
+      "state": "completed"
+    },
+    {
+      "id": "b14204732d8740babe198a5cb1fe2779",
+      "state": "completed"
+    },
+    {
+      "id": "f0f1b8a599044db19c8734c81fc78c59",
+      "state": "completed"
+    }
+  ],
+  "scope": "only exact preregistered task-owned fresh schema",
+  "removed": true,
+  "observed_at": "2026-10-20T02:37:29.683141+00:00",
+  "local_catalog_directory": "retained inert under /tmp; PostgreSQL schema removed"
+}

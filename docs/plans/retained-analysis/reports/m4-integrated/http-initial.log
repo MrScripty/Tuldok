@@ -1,0 +1,58 @@
+test_actual_revocation_blocks_fresh_http_and_export (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_actual_revocation_blocks_fresh_http_and_export) ... ok
+test_authenticated_http_and_export_equal_real_query (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_authenticated_http_and_export_equal_real_query) ... ok
+test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) ... 
+  test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) (body={'sql': 'SELECT arbitrary_data'}) ... FAIL
+  test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) (body={'split': 'test'}) ... FAIL
+  test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) (body={'limit': 101}) ... FAIL
+test_explicit_contract_and_route_bound_run_are_required (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_explicit_contract_and_route_bound_run_are_required) ... ok
+test_stale_and_foreign_selection_never_returns_dataset (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_stale_and_foreign_selection_never_returns_dataset) ... ok
+
+======================================================================
+FAIL: test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) (body={'sql': 'SELECT arbitrary_data'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok/tests/test_retained_analysis_http.py", line 100, in test_closed_request_rejects_sql_and_holdout_without_exposure
+    self.assertEqual((status, value['code']), (409, 'contract_mismatch'))
+AssertionError: Tuples differ: (400, 'invalid') != (409, 'contract_mismatch')
+
+First differing element 0:
+400
+409
+
+- (400, 'invalid')
++ (409, 'contract_mismatch')
+
+======================================================================
+FAIL: test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) (body={'split': 'test'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok/tests/test_retained_analysis_http.py", line 100, in test_closed_request_rejects_sql_and_holdout_without_exposure
+    self.assertEqual((status, value['code']), (409, 'contract_mismatch'))
+AssertionError: Tuples differ: (400, 'invalid') != (409, 'contract_mismatch')
+
+First differing element 0:
+400
+409
+
+- (400, 'invalid')
++ (409, 'contract_mismatch')
+
+======================================================================
+FAIL: test_closed_request_rejects_sql_and_holdout_without_exposure (test_retained_analysis_http.ActualRetainedAnalysisHttpTests.test_closed_request_rejects_sql_and_holdout_without_exposure) (body={'limit': 101})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok/tests/test_retained_analysis_http.py", line 100, in test_closed_request_rejects_sql_and_holdout_without_exposure
+    self.assertEqual((status, value['code']), (409, 'contract_mismatch'))
+AssertionError: Tuples differ: (400, 'invalid') != (409, 'contract_mismatch')
+
+First differing element 0:
+400
+409
+
+- (400, 'invalid')
++ (409, 'contract_mismatch')
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.970s
+
+FAILED (failures=3)

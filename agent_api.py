@@ -477,6 +477,12 @@ _EVIDENCE_RESULT={'oneOf':[
          'predictions':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]}})]}
 model_operation('runs.model_evidence','POST','/api/workspace/runs/{run_id}/model-evidence',
                 {'run_id':ID,'checkpoint_sha256':SHA},['run_id'],output=_EVIDENCE_RESULT)
+from retained_analysis_schema import schemas as _retained_analysis_schemas
+_retained_request, _retained_result = _retained_analysis_schemas(obj, text, integer, array, const, ID, SHA)
+for _name, _suffix in (('runs.retained_analysis', ''), ('runs.export_retained_analysis', '/export')):
+    model_operation(_name, 'POST', '/api/workspace/runs/{run_id}/retained-analysis' + _suffix,
+                    _retained_request['properties'], _retained_request['required'], output=_retained_result,
+                    description='Read one exact retained classifier curve and bounded example page; current inspect access required.')
 model_operation('runs.compare_model_evidence','POST','/api/workspace/runs/{run_id}/compare-model-evidence',
                 {'run_id':ID,'other_run_id':ID},output=obj({
                     'state':{'enum':['compatible','incompatible']},'run_ids':array(ID,2,2),
