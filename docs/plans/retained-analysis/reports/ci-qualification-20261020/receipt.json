@@ -1,0 +1,528 @@
+{
+  "source_commit": "beead92d54e33e70eb9df82e872adf14ff314c91",
+  "dirty": true,
+  "command": "node tests/browser_model_development.cjs",
+  "source_sha256": {
+    "static/workspace-service.js": "568b8258c35e6b3ca2cfe08b64d914111e16ae98d45f5d40f7aa40a20c20098b",
+    "static/workspace-real.js": "de4036bab21c3ca2702488658a9fa8733cf0adb822f4ec3322d5e101a96b60a2",
+    "static/experiment-lineage.js": "085ee3cc990f1986db357e1e8f7bace0c16a2257bca9443ff412c464d91a53db",
+    "static/experiment-lineage.css": "232fec3043b92ae7aa91db499a14e8cdb9ebe5598c8d7f01d805e3e3d8d4859d",
+    "static/workspaces.css": "3d0eacbd50425b4cd2ce9cfacdf5bcdb8fe533d7a57248f16325242f625cd278",
+    "static/workspaces.html": "a85e465d317e8aaa14c5349ef1ae6b2dc75ac440e0cea2c5c5a313dbd4fb828e",
+    "experiment_lineage.py": "5cdac7aec893bff832406b44ae04af587118990b1b803ec11cea1458d8ed3234",
+    "agent_api.py": "bb14a25c63840f1701b13657fa1bce4659a2c6a180068e95f461e5fa7f9327b4",
+    "app.py": "c71b8b903fa8905ff5fd3ccaef1b86d3df3ddda5393f33bf3ec9661a98d02417",
+    "experiments.py": "05c88fa658408c7750aecda37461abfec54537c8b9dbe6143ea90313b72420df",
+    "pipeline.py": "07f5b491767941bf68668da8e82282b78858fe310e9ec74c6d91a8e38534faeb",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "metadata.py": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+    "upgrade_metadata.py": "f78f6113b3687d808536f873153c83893ed91bf1e247986b29ac00d4c226af8f",
+    "tests/browser_model_development.cjs": "b52c9355398a8862225b665fc379fde4916a2c6d265e371e2386832144b48d6e"
+  },
+  "dark_checks": [
+    {
+      "width": 1440,
+      "dark": true,
+      "focus": "model-checkpoint-646b11aa9ef1cf77f2444e5f32cf6ffae7321c3e223c2110bc5d85b7c482937f",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(158, 198, 255)",
+      "text": "rgb(229, 237, 248)",
+      "background": "rgb(12, 20, 32)",
+      "textContrast": 15.662057908741831,
+      "focusContrast": 10.536654698975951
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "focus": "model-checkpoint-646b11aa9ef1cf77f2444e5f32cf6ffae7321c3e223c2110bc5d85b7c482937f",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(158, 198, 255)",
+      "text": "rgb(229, 237, 248)",
+      "background": "rgb(12, 20, 32)",
+      "textContrast": 15.662057908741831,
+      "focusContrast": 10.536654698975951
+    }
+  ],
+  "catalog_path": "/tmp/tuldok-model-development-ESKMk7/data",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "invalid held-out class coverage blocks release before training",
+    "fixed split preview, exact reviewed source release and immutable ZIP download",
+    "Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "Compatible frozen validation membership supports measured comparison across actual trained models",
+    "Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "H5 delayed query cannot override navigation; denied evidence clears all private Runs content and explicit refresh recovers the exact Run, checkpoints, metrics and retained chart",
+    "Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout"
+  ],
+  "captures": [
+    {
+      "file": "catalog-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "catalog-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-First TinyCNN-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-First TinyCNN-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-root-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-root-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-prepared-branch-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-prepared-branch-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-two-studies-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-two-studies-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-detail-completed-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-detail-completed-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "current-correction-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-Corrected TinyCNN-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-Corrected TinyCNN-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "corrected-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "corrected-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-dark-two-studies-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-detail-dark-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-dark-two-studies-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "lineage-detail-dark-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    }
+  ],
+  "lineage": {
+    "parent_before_admission": {
+      "attempt_count": 0,
+      "lineage": {
+        "actor_id": "cb39e89a7e904dbb9d0138ac5a43f088",
+        "format": "trial_lineage_v1",
+        "intent": {
+          "ancestry": "root",
+          "baseline": null,
+          "change_summary": "Root: three actual CPU epochs with frozen authored validation membership.",
+          "cohort": "Authored same-release CPU lineage",
+          "hypothesis": "Changing the finite trainer schedule preserves exact validation membership.",
+          "parent": null,
+          "target": {
+            "acceptance": "Diagnostic workflow fixture: inspect exact validation evidence; no model-quality claim.",
+            "direction": "minimize",
+            "metric_definition_sha256": null,
+            "metric_id": "loss",
+            "threshold": 0.5
+          }
+        },
+        "recorded_at": "2026-10-20T02:34:28.680041+00:00",
+        "timing": "before_admission",
+        "trial": {
+          "catalog_id": "8faa508de2e54448925420da15fa406c",
+          "material_sha256": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae",
+          "trial_id": "c3a2131c37dc4c16ab458914a48597ee"
+        }
+      },
+      "model": {
+        "catalog_id": "8faa508de2e54448925420da15fa406c",
+        "id": "44cfa2b5c6754ddca6b2894432697b6a",
+        "kind": "model",
+        "revision": 1,
+        "sha256": "47f2923c3cdc124cd8338533fb280367601d51fd4ea8f2904172e7c8f5cd1ade"
+      },
+      "recipe": {
+        "id": "3d1ce71e8fa04031b402fb14fded4584",
+        "revision": 2
+      },
+      "runs": [],
+      "runs_truncated": false,
+      "study": {
+        "id": "11bdcd83c37c4446b8ce6a7c7a486f25",
+        "name": "First TinyCNN"
+      },
+      "trial": {
+        "format": "trial_v1",
+        "id": "c3a2131c37dc4c16ab458914a48597ee",
+        "material": {
+          "catalog_id": "8faa508de2e54448925420da15fa406c",
+          "id": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae",
+          "kind": "recipe_material",
+          "sha256": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae"
+        },
+        "replicate": 0,
+        "study_id": "11bdcd83c37c4446b8ce6a7c7a486f25"
+      }
+    },
+    "child_before_admission": {
+      "attempt_count": 0,
+      "lineage": {
+        "actor_id": "cb39e89a7e904dbb9d0138ac5a43f088",
+        "format": "trial_lineage_v1",
+        "intent": {
+          "ancestry": "derived",
+          "baseline": {
+            "catalog_id": "8faa508de2e54448925420da15fa406c",
+            "material_sha256": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae",
+            "trial_id": "c3a2131c37dc4c16ab458914a48597ee"
+          },
+          "change_summary": "Derived branch: two epochs and seed 23; unchanged frozen Model and validation population.",
+          "cohort": "Authored same-release CPU lineage",
+          "hypothesis": "Changing the finite trainer schedule preserves exact validation membership.",
+          "parent": {
+            "catalog_id": "8faa508de2e54448925420da15fa406c",
+            "material_sha256": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae",
+            "trial_id": "c3a2131c37dc4c16ab458914a48597ee"
+          },
+          "target": {
+            "acceptance": "Diagnostic workflow fixture: inspect exact validation evidence; no model-quality claim.",
+            "direction": "minimize",
+            "metric_definition_sha256": null,
+            "metric_id": "loss",
+            "threshold": 0.5
+          }
+        },
+        "recorded_at": "2026-10-20T02:35:02.793059+00:00",
+        "timing": "before_admission",
+        "trial": {
+          "catalog_id": "8faa508de2e54448925420da15fa406c",
+          "material_sha256": "ed07a8901949d2246b46daf8585bb65a5006e676fe3c13e47a9cc0ea9c2d9f31",
+          "trial_id": "246f2d57f3b844dabb5959c75a928b36"
+        }
+      },
+      "model": {
+        "catalog_id": "8faa508de2e54448925420da15fa406c",
+        "id": "44cfa2b5c6754ddca6b2894432697b6a",
+        "kind": "model",
+        "revision": 1,
+        "sha256": "47f2923c3cdc124cd8338533fb280367601d51fd4ea8f2904172e7c8f5cd1ade"
+      },
+      "recipe": {
+        "id": "bf74a20bbad24f1693c5ee1ce22e5b99",
+        "revision": 2
+      },
+      "runs": [],
+      "runs_truncated": false,
+      "study": {
+        "id": "54dc40b1dd5e4a5d9e1464adc157e52b",
+        "name": "Separate CPU branch Study"
+      },
+      "trial": {
+        "format": "trial_v1",
+        "id": "246f2d57f3b844dabb5959c75a928b36",
+        "material": {
+          "catalog_id": "8faa508de2e54448925420da15fa406c",
+          "id": "ed07a8901949d2246b46daf8585bb65a5006e676fe3c13e47a9cc0ea9c2d9f31",
+          "kind": "recipe_material",
+          "sha256": "ed07a8901949d2246b46daf8585bb65a5006e676fe3c13e47a9cc0ea9c2d9f31"
+        },
+        "replicate": 0,
+        "study_id": "54dc40b1dd5e4a5d9e1464adc157e52b"
+      }
+    },
+    "parent_run_id": "f0f1b8a599044db19c8734c81fc78c59",
+    "child_run_id": "29e102331db74dbc8c3e39cdba2149d5",
+    "child_completed": {
+      "attempt_count": 1,
+      "lineage": {
+        "actor_id": "cb39e89a7e904dbb9d0138ac5a43f088",
+        "format": "trial_lineage_v1",
+        "intent": {
+          "ancestry": "derived",
+          "baseline": {
+            "catalog_id": "8faa508de2e54448925420da15fa406c",
+            "material_sha256": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae",
+            "trial_id": "c3a2131c37dc4c16ab458914a48597ee"
+          },
+          "change_summary": "Derived branch: two epochs and seed 23; unchanged frozen Model and validation population.",
+          "cohort": "Authored same-release CPU lineage",
+          "hypothesis": "Changing the finite trainer schedule preserves exact validation membership.",
+          "parent": {
+            "catalog_id": "8faa508de2e54448925420da15fa406c",
+            "material_sha256": "ce261f61190d0083c6a819f83c9adffc836c73ef8d3dd1aed1a60397cd92d1ae",
+            "trial_id": "c3a2131c37dc4c16ab458914a48597ee"
+          },
+          "target": {
+            "acceptance": "Diagnostic workflow fixture: inspect exact validation evidence; no model-quality claim.",
+            "direction": "minimize",
+            "metric_definition_sha256": null,
+            "metric_id": "loss",
+            "threshold": 0.5
+          }
+        },
+        "recorded_at": "2026-10-20T02:35:02.793059+00:00",
+        "timing": "before_admission",
+        "trial": {
+          "catalog_id": "8faa508de2e54448925420da15fa406c",
+          "material_sha256": "ed07a8901949d2246b46daf8585bb65a5006e676fe3c13e47a9cc0ea9c2d9f31",
+          "trial_id": "246f2d57f3b844dabb5959c75a928b36"
+        }
+      },
+      "model": {
+        "catalog_id": "8faa508de2e54448925420da15fa406c",
+        "id": "44cfa2b5c6754ddca6b2894432697b6a",
+        "kind": "model",
+        "revision": 1,
+        "sha256": "47f2923c3cdc124cd8338533fb280367601d51fd4ea8f2904172e7c8f5cd1ade"
+      },
+      "recipe": {
+        "id": "bf74a20bbad24f1693c5ee1ce22e5b99",
+        "revision": 2
+      },
+      "runs": [
+        {
+          "created_at": "2026-10-20T02:35:07.967528+00:00",
+          "finished_at": "2026-10-20T02:35:23.440120+00:00",
+          "id": "29e102331db74dbc8c3e39cdba2149d5",
+          "parent_run_id": null,
+          "state": "completed",
+          "validation": {
+            "accuracy": 0.3333333333333333,
+            "loss": 0.7301838397979736,
+            "macro_f1": 0.25
+          }
+        }
+      ],
+      "runs_truncated": false,
+      "study": {
+        "id": "54dc40b1dd5e4a5d9e1464adc157e52b",
+        "name": "Separate CPU branch Study"
+      },
+      "trial": {
+        "format": "trial_v1",
+        "id": "246f2d57f3b844dabb5959c75a928b36",
+        "material": {
+          "catalog_id": "8faa508de2e54448925420da15fa406c",
+          "id": "ed07a8901949d2246b46daf8585bb65a5006e676fe3c13e47a9cc0ea9c2d9f31",
+          "kind": "recipe_material",
+          "sha256": "ed07a8901949d2246b46daf8585bb65a5006e676fe3c13e47a9cc0ea9c2d9f31"
+        },
+        "replicate": 0,
+        "study_id": "54dc40b1dd5e4a5d9e1464adc157e52b"
+      }
+    },
+    "dark_checks": [
+      {
+        "width": 1440,
+        "text": "rgb(229, 237, 248)",
+        "background": "rgb(21, 30, 45)",
+        "outline": "solid",
+        "outlineWidth": "3px",
+        "outlineColor": "rgb(56, 107, 206)",
+        "textContrast": 14.178348680001829,
+        "focusContrast": 3.315425185528663
+      },
+      {
+        "width": 390,
+        "text": "rgb(229, 237, 248)",
+        "background": "rgb(21, 30, 45)",
+        "outline": "solid",
+        "outlineWidth": "3px",
+        "outlineColor": "rgb(56, 107, 206)",
+        "textContrast": 14.178348680001829,
+        "focusContrast": 3.315425185528663
+      }
+    ]
+  },
+  "compare_selectors": [
+    {
+      "other_run_id": "f0f1b8a599044db19c8734c81fc78c59",
+      "checkpoint_sha256": "c700a7e3866266b644f2ddbf2e69fa0d5230b32a76b0697ac37b225189d86db0",
+      "other_checkpoint_sha256": "50236279861b2280d34e0875e6e671f5cb6cb8c4c56e54c9dd2d367a2f40b9bb",
+      "evaluation_sha256": "a68bcab9ce163d6dd4f02ba691fe3bf08a882641fb9f497b359d9333cb72802f",
+      "other_evaluation_sha256": "016692bef7dd714c1ba7f2b3d7db8a0e38db59745176011ee6b3151e8fca8860",
+      "metric_id": "loss",
+      "metric_definition_sha256": "ffb7e85d94549dee93f799571ef73b2db74d61b37cf20019994f663b1d69392e",
+      "other_metric_definition_sha256": "ffb7e85d94549dee93f799571ef73b2db74d61b37cf20019994f663b1d69392e",
+      "mode": "paired"
+    },
+    {
+      "other_run_id": "f0f1b8a599044db19c8734c81fc78c59",
+      "checkpoint_sha256": "4e7207afbfd9ae78f0c0c419a1273aa6ab2644d434369f75ce3570cc74a5d059",
+      "other_checkpoint_sha256": "50236279861b2280d34e0875e6e671f5cb6cb8c4c56e54c9dd2d367a2f40b9bb",
+      "evaluation_sha256": "0f30c63f5e6c00a8eb7cf90171c803bc1c5d1fe99ab6539817c087a8096d7b3f",
+      "other_evaluation_sha256": "016692bef7dd714c1ba7f2b3d7db8a0e38db59745176011ee6b3151e8fca8860",
+      "metric_id": "loss",
+      "metric_definition_sha256": "4bb2d60d944786b533939c5d7d53e0ab30f03ee049e902734b6345cc500fd73f",
+      "other_metric_definition_sha256": "ffb7e85d94549dee93f799571ef73b2db74d61b37cf20019994f663b1d69392e",
+      "mode": "paired"
+    },
+    {
+      "other_run_id": "f0f1b8a599044db19c8734c81fc78c59",
+      "checkpoint_sha256": "4e7207afbfd9ae78f0c0c419a1273aa6ab2644d434369f75ce3570cc74a5d059",
+      "other_checkpoint_sha256": "50236279861b2280d34e0875e6e671f5cb6cb8c4c56e54c9dd2d367a2f40b9bb",
+      "evaluation_sha256": "0f30c63f5e6c00a8eb7cf90171c803bc1c5d1fe99ab6539817c087a8096d7b3f",
+      "other_evaluation_sha256": "016692bef7dd714c1ba7f2b3d7db8a0e38db59745176011ee6b3151e8fca8860",
+      "metric_id": "loss",
+      "metric_definition_sha256": "4bb2d60d944786b533939c5d7d53e0ab30f03ee049e902734b6345cc500fd73f",
+      "other_metric_definition_sha256": "ffb7e85d94549dee93f799571ef73b2db74d61b37cf20019994f663b1d69392e",
+      "mode": "side_by_side"
+    }
+  ],
+  "run_ids": [
+    "f0f1b8a599044db19c8734c81fc78c59",
+    "29e102331db74dbc8c3e39cdba2149d5",
+    "b14204732d8740babe198a5cb1fe2779"
+  ],
+  "release_ids": [
+    "4024b110e8fc453bc2376cef4c416d89af29a7e4fa887569d43764989ec04b27",
+    "5c417159660a0a0ea20d23857f2ce5d01fe7ebb794d8627c525c1c6106f68601"
+  ],
+  "training": true,
+  "quality_claim": false,
+  "fixture_provenance": "12 CC0 authored independent images imported and reviewed through ordinary Data UI",
+  "access_projection_test": "403 transport substitution; backend tests own actual revoke enforcement",
+  "denied_projection": {
+    "status": "Evidence access revoked",
+    "privateNodes": 0
+  },
+  "recovered_projection": {
+    "run_id": "b14204732d8740babe198a5cb1fe2779",
+    "checkpoint_count": 2,
+    "retained_chart": true
+  }
+}
