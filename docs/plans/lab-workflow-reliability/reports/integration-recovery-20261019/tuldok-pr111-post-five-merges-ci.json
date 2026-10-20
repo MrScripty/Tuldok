@@ -1,0 +1,66 @@
+{
+  "observed_utc": "2026-10-20T03:19:48.864358+00:00",
+  "pr": 111,
+  "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "base": "feature/lab-indexed-diagnostics-20261019",
+  "base_sha": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "mergeable_state": "unstable",
+  "checks": [
+    {
+      "id": 118424714068,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311679/job/118424714068"
+    },
+    {
+      "id": 118424713335,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311305/job/118424713335"
+    },
+    {
+      "id": 118424713317,
+      "name": "lifecycle",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311316/job/118424713317"
+    },
+    {
+      "id": 118424713117,
+      "name": "captured-cpu",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311309/job/118424713117"
+    },
+    {
+      "id": 118424712559,
+      "name": "lifecycle",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360310903/job/118424712559"
+    },
+    {
+      "id": 118424712353,
+      "name": "captured-cpu",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360310885/job/118424712353"
+    },
+    {
+      "id": 118424712008,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360310828/job/118424712008"
+    },
+    {
+      "id": 118424711664,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360310802/job/118424711664"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "observed_utc": "2026-10-20T03:20:14.300753+00:00",
+  "main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "order": [
+    108,
+    111
+  ],
+  "prs": [
+    {
+      "pr": 108,
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "source_worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "required_check_names": [
+        "lifecycle",
+        "static-kit",
+        "catalog"
+      ],
+      "existing_narrow_repair_reviews": [
+        "/tmp/tuldok-pr108-frozen-author-test-independent-review.json"
+      ],
+      "base": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+      "merge_clearance": false,
+      "pending": "Fresh exact-head completed lifecycle review",
+      "activation": "Recheck actual GitHub state. Before111retarget,108mustmerge normally; prove oldbase tree=currentmain tree and prospective merge tree=source tree. No unexamined retries; preserve intents/acknowledgements/readbacks.",
+      "evidence_scope": "Existing local narrow repair checks do not replace fresh hosted lifecycle/CPU acceptance."
+    },
+    {
+      "pr": 111,
+      "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+      "source_worktree": "/workspace/Tuldok-retained-analysis-integration-20261020",
+      "tree": "610898ee259f0dd9c4e4397afa73309119a1401e",
+      "required_check_names": [
+        "lifecycle",
+        "captured-cpu",
+        "workspace-ui",
+        "catalog"
+      ],
+      "existing_narrow_repair_reviews": [
+        "/tmp/tuldok-pr111-revocation-gate-independent-review.json"
+      ],
+      "base": null,
+      "merge_clearance": false,
+      "pending": "Fresh exact-head completed lifecycle review and captured-CPU review including separate package/fresh-consumer qualification",
+      "activation": "Recheck actual GitHub state. Before111retarget,108mustmerge normally; prove oldbase tree=currentmain tree and prospective merge tree=source tree. No unexamined retries; preserve intents/acknowledgements/readbacks.",
+      "evidence_scope": "Existing local narrow repair checks do not replace fresh hosted lifecycle/CPU acceptance."
+    }
+  ]
+}

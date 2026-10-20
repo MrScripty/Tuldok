@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "RESTORE.md",
-      "bytes": 4789,
-      "sha256": "e12efd5384f5192cefda0027d4b40017eb8c033a187a8ae83cd59db0c8a9691b"
+      "bytes": 5253,
+      "sha256": "3e79a5aec1a9d1b77d49c8ee61bc8f360eb53620cb1d849dad6d28d430acfd93"
     },
     {
       "path": "browser-cleanup-actual/coordinator/domain-receipt.json",
@@ -1312,6 +1312,11 @@
       "sha256": "d291033acdbba7335ab376cd5d56fa75fbdf64696504b598d220b509ec374b70"
     },
     {
+      "path": "tuldok-pending-108-111-activation.json",
+      "bytes": 2138,
+      "sha256": "fe999079da19ae27013e55c3c6de2b1d3aac18a71b7bac7c2a20452264ea7665"
+    },
+    {
       "path": "tuldok-performance-review-body.md",
       "bytes": 2163,
       "sha256": "a54ca6edf0f872b1f5264fa6f1aafcab4620aaf3577ecbd8e6539dd7966d89d5"
@@ -1692,9 +1697,34 @@
       "sha256": "7bd85ef65566bef08911db247bbbfb0fba3aceee50dbcf922fb2a1cb72e2af3c"
     },
     {
+      "path": "tuldok-pr104-105-106-109-110-archive-recovery.json",
+      "bytes": 351,
+      "sha256": "a06e751d247f3178ecad92c27c8f34fa8f4fe4e083d0a409fbd74d80d59830a3"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-cleanup-active-use-check.json",
+      "bytes": 210,
+      "sha256": "62e2cd4b96fb264373310c37c72c031b69e804effdc66adc378d61b9eeeb2167"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-cleanup-independent-postcheck.json",
+      "bytes": 5876,
+      "sha256": "8e12f2f80bedb56c6e9efdd360ba7564a77057710f5dc83ec312d63a96b8c6ff"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-cleanup-independent-precheck.json",
+      "bytes": 48972,
+      "sha256": "8414191b306b1566a33da4dfa1b073b0a23587f1aa3038bb9d93325446844fc1"
+    },
+    {
       "path": "tuldok-pr104-105-106-109-110-cleanup-precheck.json",
       "bytes": 27262,
       "sha256": "f25cc61e7060da35a99375ff3004e2ea9752325609b1a4b7fcba70a269604bcf"
+    },
+    {
+      "path": "tuldok-pr104-105-106-109-110-cleanup-terminal.json",
+      "bytes": 45102,
+      "sha256": "85dc30341d2667f267e486f285b33e3e1e5ddc566ea391effe315285f0c13e26"
     },
     {
       "path": "tuldok-pr104-105-106-109-110-future-retirement-inventory.json",
@@ -2227,6 +2257,11 @@
       "sha256": "59436f486d01cc0d4baa57e40b4397dc0a2dca03a0a06a993c00f120a3ec584c"
     },
     {
+      "path": "tuldok-pr108-post-five-merges-ci.json",
+      "bytes": 904,
+      "sha256": "7a3f15143a2dbf0e0e9913e89c03742f7a658705482b0cde9fe147694dcdf129"
+    },
+    {
       "path": "tuldok-pr108-retarget-main-receipt.json",
       "bytes": 595,
       "sha256": "8fa8a27097c249043abd8f60cbe051b8bb6d00d0d0656165c565efdbfe96f60c"
@@ -2405,6 +2440,11 @@
       "path": "tuldok-pr111-original-failure-paths.json",
       "bytes": 579,
       "sha256": "225dcf1430ee3dd69c33b30ead2b147cdf9f05a9ec193e2fbe4598520d165039"
+    },
+    {
+      "path": "tuldok-pr111-post-five-merges-ci.json",
+      "bytes": 2025,
+      "sha256": "83f80c0d0fd47fd225d1bc4cbeae909e5e91a40d8b3ee51d773bb71818b39dc9"
     },
     {
       "path": "tuldok-pr111-revocation-gate-independent-review.json",
@@ -2672,6 +2712,11 @@
       "sha256": "6dd340a4b9b8c24183803eb04812b5ae09c265854bf0a80aa5419e8b5fbb1cbd"
     },
     {
+      "path": "tuldok-retire-104-105-106-109-110.py",
+      "bytes": 5927,
+      "sha256": "2d75fabbcc6ab0e69d23e2c840557054b59ab5d8f56a4a25a2dfde638a5d5abe"
+    },
+    {
       "path": "tuldok-retire-accepted-task-resources.py",
       "bytes": 5009,
       "sha256": "3b30dea6fd47b173f4cdde2abe2ea2ec45514c024e403dcf76fb94ed60b72316"
@@ -2683,13 +2728,18 @@
     },
     {
       "path": "tuldok-run-39360310903-latest-progress.json",
-      "bytes": 43562,
-      "sha256": "efa20164a48d278636734e450f8d410c3320351871edb7b516f3728c06ecb6b3"
+      "bytes": 44035,
+      "sha256": "2a501a8e808ab99f149de7cfb949bfdd08b148b366694f27acf8c66a59bfce5a"
+    },
+    {
+      "path": "tuldok-run-39360311316-latest-progress.json",
+      "bytes": 43992,
+      "sha256": "81adbf922a07626ad01216ff627828402c793d5f84fee712621affa98c05bd2b"
     },
     {
       "path": "tuldok-run-39360311688-latest-progress.json",
-      "bytes": 43722,
-      "sha256": "67ba86a1b87effae9a68bca8e7aeeb17b1ad03c590ec192872c1166efa982464"
+      "bytes": 43851,
+      "sha256": "0932c10b90a2806acde80654321590a132c82dc8b6314bb3d04ea1b4e4cd0674"
     },
     {
       "path": "tuldok-stack-0229-premerge-status.json",
@@ -2818,8 +2868,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 243321,
-      "sha256": "161711cb4348fb11f2f5090bdd8d6057a96b83caaa0345858c9736f84ea7c748"
+      "bytes": 243676,
+      "sha256": "297df4fcc539dbd4edd22a27cf2b66de85f4d255c03f7c641a9ee3b493d77460"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",

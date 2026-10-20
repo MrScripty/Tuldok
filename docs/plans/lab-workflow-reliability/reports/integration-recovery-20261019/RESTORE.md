@@ -72,3 +72,10 @@ PR111 remains0ba4db01 based on108. Fresh repaired-head qualification is still
 pending. Do not replay completed merge operations. Five accepted worktrees
 remain pending safe retirement;72 non-cache QA files are archived with exact
 size/SHA inventory, requiring recovery verification and independent precheck.
+
+Five accepted PR104/105/106/109/110 task refs and worktrees are now safely
+retired after PR108 retarget, remote archive verification and independent
+precheck. Terminal/postcheck records supersede older pending cleanup snapshots.
+Every other local ref/worktree and original protected inventory is preserved.
+Only PR108 then PR111 remain in this implementation stack, pending exact-head
+hosted qualification. Their source worktrees and repair aliases are retained.

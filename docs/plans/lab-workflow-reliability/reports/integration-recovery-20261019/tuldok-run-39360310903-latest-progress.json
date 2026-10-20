@@ -1,5 +1,5 @@
 {
-  "observed_utc": "2026-10-20T03:05:16.422401+00:00",
+  "observed_utc": "2026-10-20T03:18:03.539029+00:00",
   "run": 39360310903,
   "jobs": [
     {
@@ -158,98 +158,98 @@
         },
         {
           "name": "Run build/workspace-training/bin/python -m pip install -r requirements.txt -r requirements-training.txt",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 18,
           "started_at": "2026-10-20T03:05:05Z",
-          "completed_at": null
+          "completed_at": "2026-10-20T03:05:39Z"
         },
         {
           "name": "Run build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 19,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:05:39Z",
+          "completed_at": "2026-10-20T03:05:40Z"
         },
         {
           "name": "Verify one-fit evidence in the provisioned CPU training interpreter",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 20,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:05:40Z",
+          "completed_at": "2026-10-20T03:06:04Z"
         },
         {
           "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 21,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:04Z",
+          "completed_at": "2026-10-20T03:06:05Z"
         },
         {
           "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 22,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:05Z",
+          "completed_at": "2026-10-20T03:06:05Z"
         },
         {
           "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 23,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:05Z",
+          "completed_at": "2026-10-20T03:06:09Z"
         },
         {
           "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 24,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:09Z",
+          "completed_at": "2026-10-20T03:06:09Z"
         },
         {
           "name": "Create isolated optional agent verification environment",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 25,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:09Z",
+          "completed_at": "2026-10-20T03:06:12Z"
         },
         {
           "name": "Run build/workspace-agent/bin/python -m pip install -r requirements.txt",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 26,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:12Z",
+          "completed_at": "2026-10-20T03:06:14Z"
         },
         {
           "name": "Run build/workspace-agent/bin/python -m pip install --require-hashes -r requirements-agent.lock",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 27,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:14Z",
+          "completed_at": "2026-10-20T03:06:19Z"
         },
         {
           "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 28,
-          "started_at": null,
-          "completed_at": null
+          "started_at": "2026-10-20T03:06:19Z",
+          "completed_at": "2026-10-20T03:17:36Z"
         },
         {
           "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "number": 29,
-          "started_at": null,
+          "started_at": "2026-10-20T03:17:36Z",
           "completed_at": null
         },
         {

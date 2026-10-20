@@ -1,0 +1,161 @@
+{
+  "archive": {
+    "bad": [],
+    "checkpoint": "143899ce7634832f421882fbc31c27751aa609a4",
+    "manifest_entries": 564,
+    "qa_bytes": 2149237,
+    "qa_files": 72,
+    "recovery_clone": "/workspace/Tuldok-recovery-verification-20261019",
+    "verified_files": 564
+  },
+  "checks": {
+    "all_91_original_oids_reachable": true,
+    "all_five_removed_and_reachable": true,
+    "all_other_local_heads_exact": true,
+    "all_other_worktree_records_exact": true,
+    "archive_72_qa_exact": true,
+    "archive_all_564_files_verified": true,
+    "five_remote_refs_absent": true,
+    "main_exact_63f689": true,
+    "original_82_refs_exact": true,
+    "original_96_worktree_records_exact": true,
+    "root_active_use_check_clear": true,
+    "terminal_matches_reviewed_precheck": true
+  },
+  "completed_utc": "2026-10-20T03:20:12.705464+00:00",
+  "disposition": "PASS: exactly five accepted task branches/worktrees retired; unrelated/protected state and archive preserved",
+  "immediate_before_comparison": {
+    "changed_surviving_local_refs": [],
+    "changed_surviving_worktrees": [],
+    "local_heads_after": 94,
+    "local_heads_before": 99,
+    "removed_local_refs": [
+      "refs/heads/feature/lab-batch-client-20261019",
+      "refs/heads/feature/lab-bounded-collection-20261019",
+      "refs/heads/feature/lab-field-comparison-20261019",
+      "refs/heads/feature/lab-phase-panel-20261019",
+      "refs/heads/feature/lab-workflow-client-20261019"
+    ],
+    "removed_worktrees": [
+      "/workspace/Tuldok-lab-batch-client-m4",
+      "/workspace/Tuldok-lab-bounded-collection-m4",
+      "/workspace/Tuldok-lab-field-comparison-m6",
+      "/workspace/Tuldok-lab-phase-ui-m3",
+      "/workspace/Tuldok-lab-workflow-client-m5"
+    ],
+    "unexpected_added_local_refs": [],
+    "unexpected_added_worktrees": [],
+    "worktrees_after": 108,
+    "worktrees_before": 113
+  },
+  "input_receipts": [
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-cleanup-terminal.json",
+      "sha256": "85dc30341d2667f267e486f285b33e3e1e5ddc566ea391effe315285f0c13e26"
+    },
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-cleanup-active-use-check.json",
+      "sha256": "62e2cd4b96fb264373310c37c72c031b69e804effdc66adc378d61b9eeeb2167"
+    },
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-cleanup-independent-precheck.json",
+      "sha256": "8414191b306b1566a33da4dfa1b073b0a23587f1aa3038bb9d93325446844fc1"
+    },
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-pre-retirement-qa-archive.json",
+      "sha256": "88523316c37c9893b212053a5b59c31063081461dc0d0ae678c1055f3d0b32d8"
+    }
+  ],
+  "main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "observed_utc": "2026-10-20T03:20:11.631560+00:00",
+  "protection": {
+    "missing_original_oids": [],
+    "original_refs": 82,
+    "original_unique_oids": 91,
+    "original_worktrees": 96,
+    "protected_root_count": 91
+  },
+  "remote_readback": {
+    "command": "git ls-remote --refs origin refs/heads/main <exact-five-selected-refs>",
+    "observed_utc": "2026-10-20T03:20:12.140422+00:00",
+    "stdout": "63f689ecace7bac2f20114efde53a9c6bc05a9ed\trefs/heads/main\n"
+  },
+  "scope": "Read-only independent exact-five retirement postcheck; no deletion, source edit, fetch, checkout, tests, CI polling or remote mutation.",
+  "selected": [
+    {
+      "branch": "feature/lab-phase-panel-20261019",
+      "clear": true,
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "head_ancestor_main": true,
+      "local_ref_absent": true,
+      "merge_ancestor_main": true,
+      "merge_sha": "81c366d182d5ae2fbae61f411251dee7d014a851",
+      "path": "/workspace/Tuldok-lab-phase-ui-m3",
+      "path_absent": true,
+      "pr": 104,
+      "registration_absent": true,
+      "remote_ref_absent": true,
+      "tracking_ref_absent": true
+    },
+    {
+      "branch": "feature/lab-workflow-client-20261019",
+      "clear": true,
+      "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "head_ancestor_main": true,
+      "local_ref_absent": true,
+      "merge_ancestor_main": true,
+      "merge_sha": "c14e223c03fbbe9808d8a793d78d878a8dccea45",
+      "path": "/workspace/Tuldok-lab-workflow-client-m5",
+      "path_absent": true,
+      "pr": 105,
+      "registration_absent": true,
+      "remote_ref_absent": true,
+      "tracking_ref_absent": true
+    },
+    {
+      "branch": "feature/lab-field-comparison-20261019",
+      "clear": true,
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "head_ancestor_main": true,
+      "local_ref_absent": true,
+      "merge_ancestor_main": true,
+      "merge_sha": "36ce375115cd5ce2d24b37681495ec81cd9bf6a1",
+      "path": "/workspace/Tuldok-lab-field-comparison-m6",
+      "path_absent": true,
+      "pr": 106,
+      "registration_absent": true,
+      "remote_ref_absent": true,
+      "tracking_ref_absent": true
+    },
+    {
+      "branch": "feature/lab-bounded-collection-20261019",
+      "clear": true,
+      "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "head_ancestor_main": true,
+      "local_ref_absent": true,
+      "merge_ancestor_main": true,
+      "merge_sha": "13aa869725dc41661fb2aa7593a682432ef46716",
+      "path": "/workspace/Tuldok-lab-bounded-collection-m4",
+      "path_absent": true,
+      "pr": 109,
+      "registration_absent": true,
+      "remote_ref_absent": true,
+      "tracking_ref_absent": true
+    },
+    {
+      "branch": "feature/lab-batch-client-20261019",
+      "clear": true,
+      "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "head_ancestor_main": true,
+      "local_ref_absent": true,
+      "merge_ancestor_main": true,
+      "merge_sha": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+      "path": "/workspace/Tuldok-lab-batch-client-m4",
+      "path_absent": true,
+      "pr": 110,
+      "registration_absent": true,
+      "remote_ref_absent": true,
+      "tracking_ref_absent": true
+    }
+  ]
+}

@@ -4297,9 +4297,16 @@
     "merge_gate_independent": "/tmp/tuldok-pr104-merge-gate-independent-review.json",
     "description_publication": "/tmp/tuldok-remaining-final-description-publication.json",
     "recovery_checkpoint_verified": "c37106eac3a80867543a5ce4d34d6db42dd9b600:438/438 entries by independent recovery clone",
-    "observed_utc": "2026-10-20T03:16:37.753051+00:00",
-    "cleanup_new": "PR104/105/106/109/110 accepted. PR108 retargeted main; all five have no open base dependents.72QA files copied and hash checked; remote archive/recovery verification and independent precheck required before retirement.",
-    "cleanup_new_precheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json"
+    "observed_utc": "2026-10-20T03:20:34.745638+00:00",
+    "cleanup_new": "Complete: five accepted remote/local/tracking refs and five worktrees removed after dependent retargets and564-entry recovery verification. Independent postcheck retained.",
+    "cleanup_new_precheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json",
+    "cleanup_new_terminal": "/tmp/tuldok-pr104-105-106-109-110-cleanup-terminal.json",
+    "cleanup_new_independent": "/tmp/tuldok-pr104-105-106-109-110-cleanup-independent-postcheck.json",
+    "pending_activation": "/tmp/tuldok-pending-108-111-activation.json",
+    "latest_ci_snapshots": [
+      "/tmp/tuldok-pr108-post-five-merges-ci.json",
+      "/tmp/tuldok-pr111-post-five-merges-ci.json"
+    ]
   },
   "indexed_retained_ci_repairs": {
     "intent_utc": "2026-10-20T02:41:47.821206+00:00",

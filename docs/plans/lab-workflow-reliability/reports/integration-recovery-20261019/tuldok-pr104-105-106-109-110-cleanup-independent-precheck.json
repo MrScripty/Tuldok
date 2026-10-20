@@ -1,0 +1,535 @@
+{
+  "archive": {
+    "bad": [],
+    "checkpoint": "143899ce7634832f421882fbc31c27751aa609a4",
+    "manifest_entries": 564,
+    "qa_bytes": 2149237,
+    "qa_files": 72,
+    "recovery_clone": "/workspace/Tuldok-recovery-verification-20261019",
+    "verified": 564
+  },
+  "checks": {
+    "all_72_qa_match_recovered_manifest": true,
+    "all_91_original_oids_reachable": true,
+    "archive_all_564_blobs_match": true,
+    "five_exact_merged_clean_reachable_no_dependents": true,
+    "main_matches_precheck": true,
+    "noncache_ignored_exact_archive_inventory": true,
+    "open_list_complete": true,
+    "original_82_refs_exact": true,
+    "original_96_worktrees_exact": true,
+    "selected_not_protected": true
+  },
+  "completed_utc": "2026-10-20T03:18:32.941025+00:00",
+  "disposition": "CLEAR for root ordinary, exact-five retirement only",
+  "input_receipts": [
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json",
+      "sha256": "f25cc61e7060da35a99375ff3004e2ea9752325609b1a4b7fcba70a269604bcf"
+    },
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-future-retirement-inventory.json",
+      "sha256": "dd3160aedf7eb40a4ef6ce11c2da6aabe27105893e36d5013840cd66c0e9ad41"
+    },
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-pre-retirement-qa-archive.json",
+      "sha256": "88523316c37c9893b212053a5b59c31063081461dc0d0ae678c1055f3d0b32d8"
+    },
+    {
+      "path": "/tmp/tuldok-pr104-105-106-109-110-archive-recovery.json",
+      "sha256": "a06e751d247f3178ecad92c27c8f34fa8f4fe4e083d0a409fbd74d80d59830a3"
+    }
+  ],
+  "main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "observed_utc": "2026-10-20T03:18:29.391219+00:00",
+  "open_pr_count": 5,
+  "protection": {
+    "current_local_heads": 99,
+    "current_worktrees": 113,
+    "immediate_before_all_heads": "refs/heads/checkpoint/lab-integration-20261019 143899ce7634832f421882fbc31c27751aa609a4\nrefs/heads/docs/canonical-a-505-package-qualification 4972941e0e37ad9cfcc548bd6831d70c0799ef42\nrefs/heads/docs/canonical-a-50502-qualification 9e6f2ffc45ec5e00554759ff356fe44f6e82fab0\nrefs/heads/docs/e4-ab-final-qualification 0f213dc43e3fe970c21fe34407e0fcbf6358bc14\nrefs/heads/docs/e4-core-cross-grant-qualification a479be12130845abca6387f1dacb7c464139215a\nrefs/heads/docs/extension-current-status-cleanup 8c94afe46bc4ace177b669a723099bb039b7a157\nrefs/heads/docs/extension-final-acceptance 4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764\nrefs/heads/docs/extension-final-functional-status 50e69f512e81899b9703e6a8d03c7d9f5c05115c\nrefs/heads/docs/extension-x3-acceptance f7c7d39451e8e973a6ef20453c6e54041fe6bc97\nrefs/heads/docs/independent-b-decisive-qualification 70845e383879e06a9337478b5d661b1516ac3c94\nrefs/heads/docs/product-api-source-provenance 1cbf4187e970e4cc9fa132346c8c488facf1ebc0\nrefs/heads/feat/e1-e2-contribution-bindings 12c98cb9495e0f7202ff10420d18506e6de8c780\nrefs/heads/feat/e2-canonical-owner-glue a546a6e9caf8295bd6e329aab73042645188a528\nrefs/heads/feature/canonical-a-package 503d177089bfc12fa4e49e3a7389b7838b8640c0\nrefs/heads/feature/experiment-lineage ee07e415cb3291c7a4b75939414345cba54abef7\nrefs/heads/feature/extension-a-retention 850f1d2e2285e7e95193d3e8615e1a8e1fc03f44\nrefs/heads/feature/extension-bound-recipe-api a8dad44661d64bb88c6cdedb5386c34583c5b130\nrefs/heads/feature/extension-canonical-fixture 6534cd4c882aa5075b6a5dc545df142bf20c35db\nrefs/heads/feature/extension-field-api 5a2b079f0a017957276fec3404c52c9d586f0667\nrefs/heads/feature/extension-inference-product c8f5def68c1f8109cb8af11bb8452cf0c1b84792\nrefs/heads/feature/extension-model-author-workspace 0ca0687a6220592b6158932a0e9f54f4e8c80687\nrefs/heads/feature/extension-retention-product 8e9eef5680c8ace144b8ba5defbc1e67a941ffd2\nrefs/heads/feature/extension-runtime-nomination c24cd26e205011814e928ea58790ef777f9b0b40\nrefs/heads/feature/extension-sdk-evidence 251b52ebbf888c7b725cce3e519b78b449077195\nrefs/heads/feature/external-candidate-evidence-view 6905fc8a124ba856dd70d4e8a9e4d0f0265e8863\nrefs/heads/feature/field-surrogate-b-independent db5ce541feb78ca371dc3b6607f27c5725c16518\nrefs/heads/feature/lab-batch-client-20261019 a9c12a0274c4c9166af67b0a4a2b6b0376606015\nrefs/heads/feature/lab-bounded-collection-20261019 861bcbcd495477b036f3f1e9307f320f965e8d8e\nrefs/heads/feature/lab-field-comparison-20261019 5a83eadaaf58ab86c49033fc1b249bb1b163a99e\nrefs/heads/feature/lab-indexed-diagnostics-20261019 9f08427029d8b48c8f9b50927a1c835afb573276\nrefs/heads/feature/lab-phase-panel-20261019 8323d54856296f46d01892c20f9084164c1f1ded\nrefs/heads/feature/lab-workflow-client-20261019 3305f7de114eab6ca1f7e988a6f7b6bd018252c7\nrefs/heads/feature/model-development-fields-native 1bd85834d0b9e220430c44848017b1d75146b576\nrefs/heads/feature/model-development-p3 767f66f8c9435561e68aee216b0dc54808997908\nrefs/heads/feature/model-development-p4 1d621e826aab89a24afed9e8927e7e5cd15564c9\nrefs/heads/feature/model-development-p4-browser 3b49e605af5ca7bb3d552b00117c73cfc0642dc9\nrefs/heads/feature/model-development-p5 407068d7c8f5aa0d1b4d81ced692ad01ab3db799\nrefs/heads/feature/model-development-p5-field f2fb38d4c704fc0156b08d5bbbd488719e7a22f9\nrefs/heads/feature/model-development-p6 8743bdff702c313a76ebaf3296064ad30ca417eb\nrefs/heads/feature/model-development-workspace 198879274c61dbfa1d27b9bcb851fce4364c7c1f\nrefs/heads/fix/author-oracle-resume 3affe90bc258c1327fde49faf57bceb852cc2759\nrefs/heads/fix/candidate-packages-distro-python aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7\nrefs/heads/fix/extension-sdk-utf8-canonical 8e70f1ee954d56b4f4fc414998146d59901dfaa2\nrefs/heads/fix/external-graph-keyboard-focus ecb4e8e21d8103822d6b53bfafb60f94c283cb20\nrefs/heads/fix/indexed-ci-qualification-20261020 9f08427029d8b48c8f9b50927a1c835afb573276\nrefs/heads/fix/live-project-observation-fences-20261019 4030e32c435b51ab8b3188ca960c5750467fa654\nrefs/heads/fix/managed-project-contract-compatibility-20261019 a339759b487e67851966899a506f14f7d2dc3d74\nrefs/heads/fix/managed-torch-registry-durability-20261019 abd68106ea5acfbac96e64adb21dadb05eaffc61\nrefs/heads/fix/operator-runtime-identity e831573a2b5c84be1fcb047c6b6703984aaeea3b\nrefs/heads/fix/p2-cold-composition-marker ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02\nrefs/heads/fix/p3-strict-evidence-decoding 144d8a70a2ef3849584cce822e00588f45c4106b\nrefs/heads/fix/p4-export-browser-recipe-set 6998e7165eeaf496fe84b55d5d58082331883fff\nrefs/heads/fix/retained-analysis-ci-qualification-20261020 d161d244270f10128c171ca6d4ecca52faac9274\nrefs/heads/fix/sdk-conformance-public-graph d368acdf236a6f3cac8176a634bd9d79c7223d70\nrefs/heads/integration/extension-pressure-current-main 78a1b9c1ca328a63d7b285789dc8924fbc234ce6\nrefs/heads/integration/extension-scalar-current-main c4599171d940e85d3a97a96c29ef9da8b79c0c48\nrefs/heads/integration/lab-consumer-feedback-20261019 92546d7fb053d5624dd6434031f0d0fb8d4dbf10\nrefs/heads/integration/model-development-final-publication ed31eadc3c2c29f03e59cb72b965b87af494bf1b\nrefs/heads/integration/model-development-p2-final 351f55b76a2545592618a98eb68276eb9d38b713\nrefs/heads/integration/model-development-product d18396a9b9d0e794cd23664af169dc9d437c5a0e\nrefs/heads/integration/p5-after-p4-prep ed515101e2ef92cb03c0e9e67e6886250af6db8f\nrefs/heads/integration/request-latency-review-20261019 76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114\nrefs/heads/integration/retained-analysis-cleanup-20261020 0ba4db01f04a77c262eb4b397f88849e9688b5ab\nrefs/heads/integration/rheon-lab-review-20261019 cd5c029a6d4bde8a570064bac6687cb17394a1ac\nrefs/heads/qa/field-interface-observation f6530ad7dcd814df264d43b7699b41e1fb870277\nrefs/heads/qa/independent-b-cold-actual 1411debf1b87e82330eed4ebf09840da52e52253\nrefs/heads/qa/independent-b-sdk-frozen e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c\nrefs/heads/qa/restored-ab-official-interfaces b772f44a8ea4b95755dfa2da27084f74b733e4ab\nrefs/heads/review/independent-b-host-compatibility 97e2bdf6284e290b319b8f7bce8702914a898107\nrefs/heads/review/independent-b-host-corrected 6ad3480be032be4565ad6b4add41ba9476e96cc3\nrefs/heads/test/author-review-freeze b410d85ea9d9c299263fc564fc170e43905c5e58\nrefs/heads/test/canonical-a-package-actual ab7d9359681c3953b17fb738a73a6bf5cbb4f43f\nrefs/heads/test/canonical-author-50502-review e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c\nrefs/heads/test/canonical-owner-review 48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a\nrefs/heads/test/e4-ab-retention 31283de32913f3c3e716e7fdb2c4c57fa3d4d59f\nrefs/heads/test/e4-ab-retention-execution c8e63278379d884dee6b9aec8b813bf8a20e1215\nrefs/heads/test/extension-author-native-browser e4bfaa8c7c942121671365998b1fa3a3ba277e26\nrefs/heads/test/extension-author-qualification 3ee438e23d98281b65a04425ff2f72a3ddbed0de\nrefs/heads/test/extension-bound-http 75b0262d8aed3c788c76e0497968b426fe999864\nrefs/heads/test/extension-canonical-final-review 8f6ca00cb87e7ef862be810e9297b8b8a180642a\nrefs/heads/test/extension-canonical-independent-review 53a2ffd6df4474746d359ed296e1bd7bb788b7f0\nrefs/heads/test/extension-local-50502-qualification 346b9f90c4339cdb8c3b942dadafb4c591bc385d\nrefs/heads/test/extension-modality-descriptors 4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a\nrefs/heads/test/external-browser-handler-readiness 2b786501dbbcb6db734d9df074ecac0976d87dae\nrefs/heads/test/external-graph-focus-regression 6702be2e08420d781e60665b15f27bc974160552\nrefs/heads/test/frozen-release-authority 983256dd8c6899d85fd2b59baee6da70cbbef76b\nrefs/heads/test/lab-publication-semantic-recovery-20261019 b6a2ccb89dd0a57ba51c625940a52e0f71b05990\nrefs/heads/test/main505-agent-authoring e1bc02a68355876ec64e5e1e272019c2018b5c63\nrefs/heads/test/main505-agent-authoring-recovery 3a821f4580769cc52c9ccb2d23596af07c11d511\nrefs/heads/test/model-activation-ci 9228b09cc14177cbe6e35592c16517c4da7f1bb7\nrefs/heads/test/model-browser-candidate-readiness 9b978533bba9fb3b12163302ca1679238b08220d\nrefs/heads/test/native-ab-retention-ui c005d9f3884eeecfe53fd428f139b10139bd3e07\nrefs/heads/test/native-author-ab-actual e958db578da805f4352d282c02430edc78985a3c\nrefs/heads/test/native-author-ab-evidence 01a3d0786596d14ffab882de58a05a7bb009b571\nrefs/heads/test/one-fit-host-dependencies 487722a01994f3c881f584a45fbb02c59dff6cd8\nrefs/heads/test/p5-captured-runtime-ci 1aa4822865338b92e0a1813db1666a13b8920bda\nrefs/heads/test/p5-transitive-authority f1438b38e42aaece9c263244a64929ec26f85bfc\nrefs/heads/test/x3-b-semantic-refusals 2266a79b6925faef6edf6c87c49168858b68bf36\nrefs/heads/work 8673509d5430e6aa1162986f4d7b1c071aa1c82e\n",
+    "immediate_before_all_worktrees": "worktree /workspace/Tuldok\nHEAD 8673509d5430e6aa1162986f4d7b1c071aa1c82e\nbranch refs/heads/work\n\nworktree /workspace/Tuldok-ab-retention\nHEAD 31283de32913f3c3e716e7fdb2c4c57fa3d4d59f\nbranch refs/heads/test/e4-ab-retention\n\nworktree /workspace/Tuldok-activation-ci-fix\nHEAD 9228b09cc14177cbe6e35592c16517c4da7f1bb7\nbranch refs/heads/test/model-activation-ci\n\nworktree /workspace/Tuldok-agent-snapshots-review\nHEAD f68678c7f9ad893dac8bcdfe6c2dd7529ba88975\ndetached\n\nworktree /workspace/Tuldok-api-source-provenance\nHEAD 1cbf4187e970e4cc9fa132346c8c488facf1ebc0\nbranch refs/heads/docs/product-api-source-provenance\n\nworktree /workspace/Tuldok-author-browser\nHEAD e4bfaa8c7c942121671365998b1fa3a3ba277e26\nbranch refs/heads/test/extension-author-native-browser\n\nworktree /workspace/Tuldok-author-freeze-test\nHEAD b410d85ea9d9c299263fc564fc170e43905c5e58\nbranch refs/heads/test/author-review-freeze\n\nworktree /workspace/Tuldok-author-qualification\nHEAD 3ee438e23d98281b65a04425ff2f72a3ddbed0de\nbranch refs/heads/test/extension-author-qualification\n\nworktree /workspace/Tuldok-author-resume\nHEAD 3affe90bc258c1327fde49faf57bceb852cc2759\nbranch refs/heads/fix/author-oracle-resume\n\nworktree /workspace/Tuldok-author-ui\nHEAD 0ca0687a6220592b6158932a0e9f54f4e8c80687\nbranch refs/heads/feature/extension-model-author-workspace\n\nworktree /workspace/Tuldok-b-cold-independent-review\nHEAD 1411debf1b87e82330eed4ebf09840da52e52253\nbranch refs/heads/qa/independent-b-cold-actual\n\nworktree /workspace/Tuldok-b-host-corrected\nHEAD 6ad3480be032be4565ad6b4add41ba9476e96cc3\nbranch refs/heads/review/independent-b-host-corrected\n\nworktree /workspace/Tuldok-b-host-review\nHEAD 97e2bdf6284e290b319b8f7bce8702914a898107\nbranch refs/heads/review/independent-b-host-compatibility\n\nworktree /workspace/Tuldok-b-independent\nHEAD db5ce541feb78ca371dc3b6607f27c5725c16518\nbranch refs/heads/feature/field-surrogate-b-independent\n\nworktree /workspace/Tuldok-b-public-sdk-host\nHEAD e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c\nbranch refs/heads/qa/independent-b-sdk-frozen\n\nworktree /workspace/Tuldok-b-qualification-docs\nHEAD 70845e383879e06a9337478b5d661b1516ac3c94\nbranch refs/heads/docs/independent-b-decisive-qualification\n\nworktree /workspace/Tuldok-b-refusals\nHEAD 2266a79b6925faef6edf6c87c49168858b68bf36\nbranch refs/heads/test/x3-b-semantic-refusals\n\nworktree /workspace/Tuldok-bound-http\nHEAD 75b0262d8aed3c788c76e0497968b426fe999864\nbranch refs/heads/test/extension-bound-http\n\nworktree /workspace/Tuldok-candidate-permissions\nHEAD f1438b38e42aaece9c263244a64929ec26f85bfc\nbranch refs/heads/test/p5-transitive-authority\n\nworktree /workspace/Tuldok-canonical-a-report\nHEAD 9e6f2ffc45ec5e00554759ff356fe44f6e82fab0\nbranch refs/heads/docs/canonical-a-50502-qualification\n\nworktree /workspace/Tuldok-canonical-author-qa\nHEAD e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c\nbranch refs/heads/test/canonical-author-50502-review\n\nworktree /workspace/Tuldok-canonical-final-review\nHEAD 8f6ca00cb87e7ef862be810e9297b8b8a180642a\nbranch refs/heads/test/extension-canonical-final-review\n\nworktree /workspace/Tuldok-canonical-glue\nHEAD a546a6e9caf8295bd6e329aab73042645188a528\nbranch refs/heads/feat/e2-canonical-owner-glue\n\nworktree /workspace/Tuldok-canonical-independent-review\nHEAD 53a2ffd6df4474746d359ed296e1bd7bb788b7f0\nbranch refs/heads/test/extension-canonical-independent-review\n\nworktree /workspace/Tuldok-canonical-inference-review\nHEAD f83ab83bb316f691efbd3b74cf99cb12a7737b07\ndetached\n\nworktree /workspace/Tuldok-canonical-masked-actual\nHEAD ab7d9359681c3953b17fb738a73a6bf5cbb4f43f\ndetached\n\nworktree /workspace/Tuldok-canonical-owner-review\nHEAD 48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a\nbranch refs/heads/test/canonical-owner-review\n\nworktree /workspace/Tuldok-canonical-package-actual\nHEAD ab7d9359681c3953b17fb738a73a6bf5cbb4f43f\nbranch refs/heads/test/canonical-a-package-actual\n\nworktree /workspace/Tuldok-canonical-package-report\nHEAD 4972941e0e37ad9cfcc548bd6831d70c0799ef42\nbranch refs/heads/docs/canonical-a-505-package-qualification\n\nworktree /workspace/Tuldok-e2-api\nHEAD 5a2b079f0a017957276fec3404c52c9d586f0667\nbranch refs/heads/feature/extension-field-api\n\nworktree /workspace/Tuldok-e2-author-review\nHEAD 057c8abf571d62331486dc56ef43064e72f9d03a\ndetached\n\nworktree /workspace/Tuldok-e2-binding-api\nHEAD a8dad44661d64bb88c6cdedb5386c34583c5b130\nbranch refs/heads/feature/extension-bound-recipe-api\n\nworktree /workspace/Tuldok-e2-glue-review\nHEAD a43f3124239c2baff2c1ae3b0a20f987cfb1607a\ndetached\n\nworktree /workspace/Tuldok-e2-review\nHEAD 057c8abf571d62331486dc56ef43064e72f9d03a\ndetached\n\nworktree /workspace/Tuldok-e2-ui\nHEAD 1bd85834d0b9e220430c44848017b1d75146b576\nbranch refs/heads/feature/model-development-fields-native\n\nworktree /workspace/Tuldok-e4-core-report\nHEAD a479be12130845abca6387f1dacb7c464139215a\nbranch refs/heads/docs/e4-core-cross-grant-qualification\n\nworktree /workspace/Tuldok-e4-execution\nHEAD c8e63278379d884dee6b9aec8b813bf8a20e1215\nbranch refs/heads/test/e4-ab-retention-execution\n\nworktree /workspace/Tuldok-e4-final-report\nHEAD 0f213dc43e3fe970c21fe34407e0fcbf6358bc14\nbranch refs/heads/docs/e4-ab-final-qualification\n\nworktree /workspace/Tuldok-e4-retention\nHEAD 850f1d2e2285e7e95193d3e8615e1a8e1fc03f44\nbranch refs/heads/feature/extension-a-retention\n\nworktree /workspace/Tuldok-experiment-lineage\nHEAD ee07e415cb3291c7a4b75939414345cba54abef7\nbranch refs/heads/feature/experiment-lineage\n\nworktree /workspace/Tuldok-extension-bindings\nHEAD 12c98cb9495e0f7202ff10420d18506e6de8c780\nbranch refs/heads/feat/e1-e2-contribution-bindings\n\nworktree /workspace/Tuldok-extension-canonical\nHEAD 6534cd4c882aa5075b6a5dc545df142bf20c35db\nbranch refs/heads/feature/extension-canonical-fixture\n\nworktree /workspace/Tuldok-extension-final-acceptance\nHEAD 4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764\nbranch refs/heads/docs/extension-final-acceptance\n\nworktree /workspace/Tuldok-extension-final-functional-status\nHEAD 50e69f512e81899b9703e6a8d03c7d9f5c05115c\nbranch refs/heads/docs/extension-final-functional-status\n\nworktree /workspace/Tuldok-extension-inference\nHEAD c8f5def68c1f8109cb8af11bb8452cf0c1b84792\nbranch refs/heads/feature/extension-inference-product\n\nworktree /workspace/Tuldok-extension-local-qa\nHEAD 346b9f90c4339cdb8c3b942dadafb4c591bc385d\nbranch refs/heads/test/extension-local-50502-qualification\n\nworktree /workspace/Tuldok-extension-modalities\nHEAD 4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a\nbranch refs/heads/test/extension-modality-descriptors\n\nworktree /workspace/Tuldok-extension-retention\nHEAD 8e9eef5680c8ace144b8ba5defbc1e67a941ffd2\nbranch refs/heads/feature/extension-retention-product\n\nworktree /workspace/Tuldok-extension-runtime\nHEAD c24cd26e205011814e928ea58790ef777f9b0b40\nbranch refs/heads/feature/extension-runtime-nomination\n\nworktree /workspace/Tuldok-extension-status-cleanup\nHEAD 8c94afe46bc4ace177b669a723099bb039b7a157\nbranch refs/heads/docs/extension-current-status-cleanup\n\nworktree /workspace/Tuldok-extension-x3-acceptance\nHEAD f7c7d39451e8e973a6ef20453c6e54041fe6bc97\nbranch refs/heads/docs/extension-x3-acceptance\n\nworktree /workspace/Tuldok-external-browser-readiness\nHEAD 2b786501dbbcb6db734d9df074ecac0976d87dae\nbranch refs/heads/test/external-browser-handler-readiness\n\nworktree /workspace/Tuldok-external-package-ui\nHEAD 6905fc8a124ba856dd70d4e8a9e4d0f0265e8863\nbranch refs/heads/feature/external-candidate-evidence-view\n\nworktree /workspace/Tuldok-final-publication\nHEAD ed31eadc3c2c29f03e59cb72b965b87af494bf1b\nbranch refs/heads/integration/model-development-final-publication\n\nworktree /workspace/Tuldok-graph-focus\nHEAD ecb4e8e21d8103822d6b53bfafb60f94c283cb20\nbranch refs/heads/fix/external-graph-keyboard-focus\n\nworktree /workspace/Tuldok-graph-focus-old\nHEAD f994228cdc7495d0ee29d1527fbe975acc62be5d\ndetached\n\nworktree /workspace/Tuldok-graph-focus-regression\nHEAD 6702be2e08420d781e60665b15f27bc974160552\nbranch refs/heads/test/external-graph-focus-regression\n\nworktree /workspace/Tuldok-indexed-ci-repair-20261020\nHEAD 9f08427029d8b48c8f9b50927a1c835afb573276\nbranch refs/heads/fix/indexed-ci-qualification-20261020\n\nworktree /workspace/Tuldok-inference-review\nHEAD c8f5def68c1f8109cb8af11bb8452cf0c1b84792\ndetached\n\nworktree /workspace/Tuldok-integration-checkpoint\nHEAD 143899ce7634832f421882fbc31c27751aa609a4\nbranch refs/heads/checkpoint/lab-integration-20261019\n\nworktree /workspace/Tuldok-lab-batch-client-m4\nHEAD a9c12a0274c4c9166af67b0a4a2b6b0376606015\nbranch refs/heads/feature/lab-batch-client-20261019\n\nworktree /workspace/Tuldok-lab-bounded-collection-m4\nHEAD 861bcbcd495477b036f3f1e9307f320f965e8d8e\nbranch refs/heads/feature/lab-bounded-collection-20261019\n\nworktree /workspace/Tuldok-lab-consumer-integration-m5m6\nHEAD 92546d7fb053d5624dd6434031f0d0fb8d4dbf10\nbranch refs/heads/integration/lab-consumer-feedback-20261019\n\nworktree /workspace/Tuldok-lab-field-comparison-m6\nHEAD 5a83eadaaf58ab86c49033fc1b249bb1b163a99e\nbranch refs/heads/feature/lab-field-comparison-20261019\n\nworktree /workspace/Tuldok-lab-indexed-diagnostics-m1\nHEAD 9f08427029d8b48c8f9b50927a1c835afb573276\nbranch refs/heads/feature/lab-indexed-diagnostics-20261019\n\nworktree /workspace/Tuldok-lab-integration-review\nHEAD cd5c029a6d4bde8a570064bac6687cb17394a1ac\nbranch refs/heads/integration/rheon-lab-review-20261019\n\nworktree /workspace/Tuldok-lab-phase-ui-m3\nHEAD 8323d54856296f46d01892c20f9084164c1f1ded\nbranch refs/heads/feature/lab-phase-panel-20261019\n\nworktree /workspace/Tuldok-lab-publication-semantic-witness-m1\nHEAD b6a2ccb89dd0a57ba51c625940a52e0f71b05990\nbranch refs/heads/test/lab-publication-semantic-recovery-20261019\n\nworktree /workspace/Tuldok-lab-workflow-client-m5\nHEAD 3305f7de114eab6ca1f7e988a6f7b6bd018252c7\nbranch refs/heads/feature/lab-workflow-client-20261019\n\nworktree /workspace/Tuldok-legacy-p3-qa\nHEAD f1ecf7888a8dfa5b67ac8b087034226d533c682e\ndetached\n\nworktree /workspace/Tuldok-live-project-fix\nHEAD 4030e32c435b51ab8b3188ca960c5750467fa654\nbranch refs/heads/fix/live-project-observation-fences-20261019\n\nworktree /workspace/Tuldok-main505-agent-authoring\nHEAD e1bc02a68355876ec64e5e1e272019c2018b5c63\nbranch refs/heads/test/main505-agent-authoring\n\nworktree /workspace/Tuldok-main505-agent-authoring-recovery\nHEAD 3a821f4580769cc52c9ccb2d23596af07c11d511\nbranch refs/heads/test/main505-agent-authoring-recovery\n\nworktree /workspace/Tuldok-model-browser-fix\nHEAD 9b978533bba9fb3b12163302ca1679238b08220d\nbranch refs/heads/test/model-browser-candidate-readiness\n\nworktree /workspace/Tuldok-native-ab-actual\nHEAD e958db578da805f4352d282c02430edc78985a3c\nbranch refs/heads/test/native-author-ab-actual\n\nworktree /workspace/Tuldok-native-ab-browser\nHEAD 01a3d0786596d14ffab882de58a05a7bb009b571\nbranch refs/heads/test/native-author-ab-evidence\n\nworktree /workspace/Tuldok-native-ab-retention\nHEAD c005d9f3884eeecfe53fd428f139b10139bd3e07\nbranch refs/heads/test/native-ab-retention-ui\n\nworktree /workspace/Tuldok-one-fit-host-ci\nHEAD 487722a01994f3c881f584a45fbb02c59dff6cd8\nbranch refs/heads/test/one-fit-host-dependencies\n\nworktree /workspace/Tuldok-operator-runtime-fix\nHEAD e831573a2b5c84be1fcb047c6b6703984aaeea3b\nbranch refs/heads/fix/operator-runtime-identity\n\nworktree /workspace/Tuldok-p2-final\nHEAD 351f55b76a2545592618a98eb68276eb9d38b713\nbranch refs/heads/integration/model-development-p2-final\n\nworktree /workspace/Tuldok-p2-review-fix\nHEAD ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02\nbranch refs/heads/fix/p2-cold-composition-marker\n\nworktree /workspace/Tuldok-p3\nHEAD 767f66f8c9435561e68aee216b0dc54808997908\nbranch refs/heads/feature/model-development-p3\n\nworktree /workspace/Tuldok-p3-activation-verify\nHEAD 13f0126a3d4014b8cf96df96b48243e17557bf30\ndetached\n\nworktree /workspace/Tuldok-p3-decoder-fix\nHEAD 144d8a70a2ef3849584cce822e00588f45c4106b\nbranch refs/heads/fix/p3-strict-evidence-decoding\n\nworktree /workspace/Tuldok-p4\nHEAD 1d621e826aab89a24afed9e8927e7e5cd15564c9\nbranch refs/heads/feature/model-development-p4\n\nworktree /workspace/Tuldok-p4-browser\nHEAD 3b49e605af5ca7bb3d552b00117c73cfc0642dc9\nbranch refs/heads/feature/model-development-p4-browser\n\nworktree /workspace/Tuldok-p4-export-browser-fix\nHEAD 6998e7165eeaf496fe84b55d5d58082331883fff\nbranch refs/heads/fix/p4-export-browser-recipe-set\n\nworktree /workspace/Tuldok-p5\nHEAD 407068d7c8f5aa0d1b4d81ced692ad01ab3db799\nbranch refs/heads/feature/model-development-p5\n\nworktree /workspace/Tuldok-p5-canonical-a\nHEAD 503d177089bfc12fa4e49e3a7389b7838b8640c0\nbranch refs/heads/feature/canonical-a-package\n\nworktree /workspace/Tuldok-p5-canonical-final-review\nHEAD 4bd003c786949368bb6b9e45e9502c22897ddabd\ndetached\n\nworktree /workspace/Tuldok-p5-canonical-review\nHEAD 4af7157d4ee73532cd0fca27b03b86a1a9d3b344\ndetached\n\nworktree /workspace/Tuldok-p5-ci\nHEAD 1aa4822865338b92e0a1813db1666a13b8920bda\nbranch refs/heads/test/p5-captured-runtime-ci\n\nworktree /workspace/Tuldok-p5-ci-runtime\nHEAD aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7\nbranch refs/heads/fix/candidate-packages-distro-python\n\nworktree /workspace/Tuldok-p5-field\nHEAD f2fb38d4c704fc0156b08d5bbbd488719e7a22f9\nbranch refs/heads/feature/model-development-p5-field\n\nworktree /workspace/Tuldok-p5-p4-composition\nHEAD ed515101e2ef92cb03c0e9e67e6886250af6db8f\nbranch refs/heads/integration/p5-after-p4-prep\n\nworktree /workspace/Tuldok-p6\nHEAD 8743bdff702c313a76ebaf3296064ad30ca417eb\nbranch refs/heads/feature/model-development-p6\n\nworktree /workspace/Tuldok-p6-agent-api-review\nHEAD f68678c7f9ad893dac8bcdfe6c2dd7529ba88975\ndetached\n\nworktree /workspace/Tuldok-p6-field-qa\nHEAD f6530ad7dcd814df264d43b7699b41e1fb870277\nbranch refs/heads/qa/field-interface-observation\n\nworktree /workspace/Tuldok-prep-review\nHEAD 387b6eeec1eceef2629c746e5e940a51bbb48dbd\ndetached\n\nworktree /workspace/Tuldok-prep68\nHEAD 78a1b9c1ca328a63d7b285789dc8924fbc234ce6\nbranch refs/heads/integration/extension-pressure-current-main\n\nworktree /workspace/Tuldok-prep69\nHEAD c4599171d940e85d3a97a96c29ef9da8b79c0c48\nbranch refs/heads/integration/extension-scalar-current-main\n\nworktree /workspace/Tuldok-product\nHEAD d18396a9b9d0e794cd23664af169dc9d437c5a0e\nbranch refs/heads/integration/model-development-product\n\nworktree /workspace/Tuldok-project-contract-fix\nHEAD a339759b487e67851966899a506f14f7d2dc3d74\nbranch refs/heads/fix/managed-project-contract-compatibility-20261019\n\nworktree /workspace/Tuldok-release-authority\nHEAD 983256dd8c6899d85fd2b59baee6da70cbbef76b\nbranch refs/heads/test/frozen-release-authority\n\nworktree /workspace/Tuldok-request-latency-review\nHEAD 76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114\nbranch refs/heads/integration/request-latency-review-20261019\n\nworktree /workspace/Tuldok-restored-interface-qa\nHEAD b772f44a8ea4b95755dfa2da27084f74b733e4ab\nbranch refs/heads/qa/restored-ab-official-interfaces\n\nworktree /workspace/Tuldok-retained-analysis-integration-20261020\nHEAD 0ba4db01f04a77c262eb4b397f88849e9688b5ab\nbranch refs/heads/integration/retained-analysis-cleanup-20261020\n\nworktree /workspace/Tuldok-retained-ci-repair-20261020\nHEAD d161d244270f10128c171ca6d4ecca52faac9274\nbranch refs/heads/fix/retained-analysis-ci-qualification-20261020\n\nworktree /workspace/Tuldok-sdk-canonical\nHEAD 8e70f1ee954d56b4f4fc414998146d59901dfaa2\nbranch refs/heads/fix/extension-sdk-utf8-canonical\n\nworktree /workspace/Tuldok-sdk-evidence\nHEAD 251b52ebbf888c7b725cce3e519b78b449077195\nbranch refs/heads/feature/extension-sdk-evidence\n\nworktree /workspace/Tuldok-sdk-graph-fix\nHEAD d368acdf236a6f3cac8176a634bd9d79c7223d70\nbranch refs/heads/fix/sdk-conformance-public-graph\n\nworktree /workspace/Tuldok-torch-registry-fix\nHEAD abd68106ea5acfbac96e64adb21dadb05eaffc61\nbranch refs/heads/fix/managed-torch-registry-durability-20261019\n\nworktree /workspace/Tuldok-ui\nHEAD 198879274c61dbfa1d27b9bcb851fce4364c7c1f\nbranch refs/heads/feature/model-development-workspace\n",
+    "missing_original_oids": [],
+    "no_agent_tests_or_processes_running_in_selected_paths": true,
+    "note": "This reviewer has no running tests/processes or pending source work in the five paths. Root must retain its ordinary final active-use check.",
+    "original_refs": 82,
+    "original_unique_oids": 91,
+    "original_worktrees": 96
+  },
+  "remote_reads": [],
+  "scope": "Independent read-only precheck for exactly PR104/105/106/109/110 retirement; no deletions or remote mutations performed.",
+  "selected": [
+    {
+      "branch": "feature/lab-phase-panel-20261019",
+      "clear": true,
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "head_is_ancestor_main": true,
+      "ignored_cache_files": 74,
+      "merge_is_ancestor_main": true,
+      "non_cache_ignored": [
+        {
+          "bytes": 120776,
+          "sha256": "784d644b0c6f448445cafa6281a663c20fe71a111918b067c05a36309eff5156",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/native-text-classification-import/run-GbfNNY/native-text-desktop.jpg"
+        },
+        {
+          "bytes": 58083,
+          "sha256": "03199cf8345195dab0469c11376d9b0a7b01c2655bcecd0c15723d566ac06d7d",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/native-text-classification-import/run-GbfNNY/native-text-narrow.jpg"
+        },
+        {
+          "bytes": 9499,
+          "sha256": "d2c452545edec8a63569f564b490125edd178231c6e840599c694df8e962c299",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-1geyV5/domain-receipt.json"
+        },
+        {
+          "bytes": 114982,
+          "sha256": "6e0c24e249aaaa9814d2ec7e412987fc886157392069b9b67ee3c65d2b60bbdf",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-1geyV5/phases-1440.jpg"
+        },
+        {
+          "bytes": 56175,
+          "sha256": "9d987a2f7af4a52bc505092f0ad19c4edba56883a3e7a6c01072c9060c1c0d4f",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-1geyV5/phases-390.jpg"
+        },
+        {
+          "bytes": 848,
+          "sha256": "0411bd3947764bd27d6da23a3dcbed5251344d48847c4cb51f808e351dfa9c09",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-1geyV5/receipt.json"
+        },
+        {
+          "bytes": 9493,
+          "sha256": "456f4d3321a78ebdb7db6733e0d1b8768eb60bdb24c4202adc2cb3b4f75568bf",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XkK5np/domain-receipt.json"
+        },
+        {
+          "bytes": 114519,
+          "sha256": "3b38f3e67830ec9c9617b8566a1dd359ba87f670cb89faf6ecb11ba17b2dc8d4",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XkK5np/phases-1440.jpg"
+        },
+        {
+          "bytes": 56214,
+          "sha256": "36e2c6354760ece13e9ebcee5e718f299d0b669fce81fd9897134e68a3e00e5f",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XkK5np/phases-390.jpg"
+        },
+        {
+          "bytes": 848,
+          "sha256": "f5867ec3862bec1d9c28cf2523a201efc87f5d9ebb5bdcf9993ef01851a1247c",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XkK5np/receipt.json"
+        },
+        {
+          "bytes": 9489,
+          "sha256": "b03ac57070a862904bc9058ee0755d8832a816e96a41f2bb738c19e9dba300f9",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XmFtxW/domain-receipt.json"
+        },
+        {
+          "bytes": 114630,
+          "sha256": "6bec1171ee4383d00ac90753117312c320128e65046ff0bfdd3de657748838c6",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XmFtxW/phases-1440.jpg"
+        },
+        {
+          "bytes": 56164,
+          "sha256": "e3b9b6d8ced8719d3af63354f86eb0b9e412d3b9d14ad234fab73703585a34af",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XmFtxW/phases-390.jpg"
+        },
+        {
+          "bytes": 848,
+          "sha256": "43061ee950a121ce03b326dfd602cc53fd0d0dd20e83ecb8377d4af2c1cab25c",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-XmFtxW/receipt.json"
+        },
+        {
+          "bytes": 9495,
+          "sha256": "210547cfb44f749c015bd4128c8bb5478ace98578f34aea73aaf9e9a672ab56e",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-jOQUlW/domain-receipt.json"
+        },
+        {
+          "bytes": 114756,
+          "sha256": "e56a1ff513b590ae927234da5bdfd218edfb2c4767d9cd1a68d58a08ecfe7ec4",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-jOQUlW/phases-1440.jpg"
+        },
+        {
+          "bytes": 56349,
+          "sha256": "4c20d4ce6d79d82fdb1a4b3688d28f07b7bce7f90716932ac31cc3910b5b04b3",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-jOQUlW/phases-390.jpg"
+        },
+        {
+          "bytes": 848,
+          "sha256": "615fa14c9f382f039ebf6b5c1cc515ddde63b3a9156b4946d2986a2070337285",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/run-phase-timings/run-jOQUlW/receipt.json"
+        },
+        {
+          "bytes": 106024,
+          "sha256": "95afdb08c32cbde42df5eeeb225e0761d21e476fc53696dbb600e3ff7e5f98c5",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-coordinator/run-KqWlzN/coordinator-1440.jpg"
+        },
+        {
+          "bytes": 58019,
+          "sha256": "d9fc11d55206bf9a7b6ad735acdfafab9907304e995f57d559ad75e151cbdefd",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-coordinator/run-KqWlzN/coordinator-390.jpg"
+        },
+        {
+          "bytes": 1038,
+          "sha256": "f2919a6b152685ae8bd335d2d778296c475cf69c5fb8abdd72474c874cb79ee2",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-coordinator/run-KqWlzN/domain-receipt.json"
+        },
+        {
+          "bytes": 764,
+          "sha256": "22d4628794faa46a06b88ae45d30c7c34cd44d0a145f76b581941132c8d567e3",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-coordinator/run-KqWlzN/receipt.json"
+        },
+        {
+          "bytes": 1212,
+          "sha256": "a716e552a8fe85cb17a0b2f82d9633075ab8134ce0ccd841053640e99fa639cd",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-publication/run-splD8f/domain-receipt.json"
+        },
+        {
+          "bytes": 124471,
+          "sha256": "14adb25838ad227519c46e5d8a3aaff5229b575426a0e458525635535fe6539b",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-publication/run-splD8f/publication-1440.jpg"
+        },
+        {
+          "bytes": 77340,
+          "sha256": "0aeed0e469ab7f3a78f4e93eb78a5a637535a9666af40c9412194fd5a35b336d",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-publication/run-splD8f/publication-390.jpg"
+        },
+        {
+          "bytes": 828,
+          "sha256": "fa576aa45fa22b85f308d04811509f4f00e9ad4ab40ae486d81bd8fcd4429c90",
+          "source": "/workspace/Tuldok-lab-phase-ui-m3/build/qa/workspace-publication/run-splD8f/receipt.json"
+        }
+      ],
+      "open_dependents": [],
+      "path": "/workspace/Tuldok-lab-phase-ui-m3",
+      "pr": 104,
+      "remote": {
+        "base": "main",
+        "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+        "merge_sha": "81c366d182d5ae2fbae61f411251dee7d014a851",
+        "merged": true,
+        "merged_at": "2026-10-20T03:14:25Z",
+        "state": "closed",
+        "url": "https://github.com/MrScripty/Tuldok/pull/104"
+      },
+      "status_porcelain": ""
+    },
+    {
+      "branch": "feature/lab-workflow-client-20261019",
+      "clear": true,
+      "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "head_is_ancestor_main": true,
+      "ignored_cache_files": 88,
+      "merge_is_ancestor_main": true,
+      "non_cache_ignored": [],
+      "open_dependents": [],
+      "path": "/workspace/Tuldok-lab-workflow-client-m5",
+      "pr": 105,
+      "remote": {
+        "base": "main",
+        "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+        "merge_sha": "c14e223c03fbbe9808d8a793d78d878a8dccea45",
+        "merged": true,
+        "merged_at": "2026-10-20T03:14:40Z",
+        "state": "closed",
+        "url": "https://github.com/MrScripty/Tuldok/pull/105"
+      },
+      "status_porcelain": ""
+    },
+    {
+      "branch": "feature/lab-field-comparison-20261019",
+      "clear": true,
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "head_is_ancestor_main": true,
+      "ignored_cache_files": 87,
+      "merge_is_ancestor_main": true,
+      "non_cache_ignored": [
+        {
+          "bytes": 2428,
+          "sha256": "9e4a9a4609fa8fb84fff5925b2cd1bcabe859604232e482895fc5d8449ae98a9",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/agent-api.log"
+        },
+        {
+          "bytes": 805,
+          "sha256": "a53c9ba3e3c6b5eb3d0d28257981398bef31a0f00af04dd87e652632d781d05f",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/browser-final.log"
+        },
+        {
+          "bytes": 1073,
+          "sha256": "a198c4b86a31f5c7530d768a7cfd0529454ec75fdf25a65d39a7fd1afb84e111",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/browser-first.log"
+        },
+        {
+          "bytes": 690,
+          "sha256": "7772d61ace5e6f49c518fa70f96ccbe3fa06a2240726b2ddec156823358e0f9d",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/browser-second.log"
+        },
+        {
+          "bytes": 805,
+          "sha256": "972e23f3b398cbaf0db551aa694255294b1c70fd5128a208887535407a13d4b7",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/browser-selected-identities.log"
+        },
+        {
+          "bytes": 134,
+          "sha256": "64a3d88dbc854f7fdd7159454eff58d4b928fc728b95f3d399a005ef2d2fae25",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/final-controller.log"
+        },
+        {
+          "bytes": 165,
+          "sha256": "1f942ab438e5f0aef42f910cfd7aca4a9b5b07713e75a56b4d6be35c80a66155",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/final-coordinator.log"
+        },
+        {
+          "bytes": 829,
+          "sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/final-external.log"
+        },
+        {
+          "bytes": 219,
+          "sha256": "2b5bdf6b101a80ef7b7627f769520cdce0e3b0cee954ba3e7d1c3b031db9a0cc",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/final-field.log"
+        },
+        {
+          "bytes": 6718,
+          "sha256": "bbb7ecea2fb65e69cf40b9de89fec416f9e2bb78804e05a418348e61f98cecc1",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/final-pure.log"
+        },
+        {
+          "bytes": 134,
+          "sha256": "64a3d88dbc854f7fdd7159454eff58d4b928fc728b95f3d399a005ef2d2fae25",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/node-controller.log"
+        },
+        {
+          "bytes": 219,
+          "sha256": "2b5bdf6b101a80ef7b7627f769520cdce0e3b0cee954ba3e7d1c3b031db9a0cc",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/node-field-regression.log"
+        },
+        {
+          "bytes": 1547,
+          "sha256": "4fcdec3c91848d4e1af45c897e69a16f62c1e410255acf2155bfa1dcb9d6e656",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/python-pure.log"
+        },
+        {
+          "bytes": 1279,
+          "sha256": "b4f8add0e5919dbccbabd5e3895a7ce377361ee70820f1dbfe60222df055e767",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/reader-first.log"
+        },
+        {
+          "bytes": 1081,
+          "sha256": "3a4caca22f392dbce241a183e44bdf8bec7e23fa45fa91678a60f2d6c3b74d19",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/reader-second.log"
+        },
+        {
+          "bytes": 514,
+          "sha256": "a1bf237be7e02234c735c7281ac797cf3215c822c614c82f1e05dd539d5d3371",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/retained-extension.log"
+        },
+        {
+          "bytes": 540,
+          "sha256": "16929591cb45c15e9c210b5c6161ba4d27c4143068d7c51898d94074136294d3",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/schema-cleanup.json"
+        },
+        {
+          "bytes": 16199,
+          "sha256": "9acb7b288016349983cea17aa9e02e13321af7b3bad0d44975525d8372ba829a",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/server.diff"
+        },
+        {
+          "bytes": 19036,
+          "sha256": "22d71e30aee87de659b08ab3ea627ac25fe283af0f5a4622f810c0bf62649b6e",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/m6-source-review/ui-integration.diff"
+        },
+        {
+          "bytes": 119088,
+          "sha256": "ab9007f64af8107bd9e2420e702b96e9887a9b69837db86d00ac1c533411d594",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-8o5cKC/comparison-1440.jpg"
+        },
+        {
+          "bytes": 69411,
+          "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-8o5cKC/comparison-390.jpg"
+        },
+        {
+          "bytes": 2340,
+          "sha256": "c71c9b8d4930d28fd101298ccf29a578875d7e3f0c77392ba62c50b7d70f2323",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-8o5cKC/domain-receipt.json"
+        },
+        {
+          "bytes": 10409,
+          "sha256": "427b3ff6bf4faff687181ecd74a993a86b7370ef88458109e700d067963639f3",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-8o5cKC/receipt.json"
+        },
+        {
+          "bytes": 119038,
+          "sha256": "d7b77fcc6b72a6d7dc790a49762af0bfead805ce314b2a9a73ebe39399892ede",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-Mw8MZb/comparison-1440.jpg"
+        },
+        {
+          "bytes": 69411,
+          "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-Mw8MZb/comparison-390.jpg"
+        },
+        {
+          "bytes": 2340,
+          "sha256": "de8b3cee7add8feaa74a1479432e35bfb18dfe23b1ff482ddd44da9a164f1981",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-Mw8MZb/domain-receipt.json"
+        },
+        {
+          "bytes": 119010,
+          "sha256": "272557a37f5920dd8a333b18453530c7445199eb4f413f4c7cfc203410c0e960",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-SPY0QK/comparison-1440.jpg"
+        },
+        {
+          "bytes": 69411,
+          "sha256": "ce3e85e3be818be42a02ca97a011eec4b3b2d52bbef28bade9a9393f1226e4ff",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-SPY0QK/comparison-390.jpg"
+        },
+        {
+          "bytes": 2378,
+          "sha256": "579c192065be3150f3e38a806bddaa6662dfae9f7221f5f304ebe5b5ef9c2923",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-SPY0QK/domain-receipt.json"
+        },
+        {
+          "bytes": 13423,
+          "sha256": "d04b383fa3f5bef962a7c7cb17a2b50b3bc37e3e225beca1449a8ea70584dcfe",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-SPY0QK/receipt.json"
+        },
+        {
+          "bytes": 123632,
+          "sha256": "7665d79329ca043c2bdd2110055d1baf4ab58572db076741bdbb9e078ca516fa",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-kcaI5l/comparison-1440.jpg"
+        },
+        {
+          "bytes": 73047,
+          "sha256": "8eca64118605834989ca8bd181a1dcac222630d9445004be0ee35be5027eb1d5",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-kcaI5l/comparison-390.jpg"
+        },
+        {
+          "bytes": 2378,
+          "sha256": "64e6e6ff4e61c4acd970bb868e2ed1213a4494e4e09bbea683aa0e3bd8903ff1",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-kcaI5l/domain-receipt.json"
+        },
+        {
+          "bytes": 13423,
+          "sha256": "2d08ba28583fcf287b997c56e5224ef40ba463722d2f170b18593658652defa0",
+          "source": "/workspace/Tuldok-lab-field-comparison-m6/build/qa/scientific-comparison/run-kcaI5l/receipt.json"
+        }
+      ],
+      "open_dependents": [],
+      "path": "/workspace/Tuldok-lab-field-comparison-m6",
+      "pr": 106,
+      "remote": {
+        "base": "main",
+        "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+        "merge_sha": "36ce375115cd5ce2d24b37681495ec81cd9bf6a1",
+        "merged": true,
+        "merged_at": "2026-10-20T03:14:52Z",
+        "state": "closed",
+        "url": "https://github.com/MrScripty/Tuldok/pull/106"
+      },
+      "status_porcelain": ""
+    },
+    {
+      "branch": "feature/lab-bounded-collection-20261019",
+      "clear": true,
+      "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "head_is_ancestor_main": true,
+      "ignored_cache_files": 0,
+      "merge_is_ancestor_main": true,
+      "non_cache_ignored": [],
+      "open_dependents": [],
+      "path": "/workspace/Tuldok-lab-bounded-collection-m4",
+      "pr": 109,
+      "remote": {
+        "base": "main",
+        "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+        "merge_sha": "13aa869725dc41661fb2aa7593a682432ef46716",
+        "merged": true,
+        "merged_at": "2026-10-20T03:15:07Z",
+        "state": "closed",
+        "url": "https://github.com/MrScripty/Tuldok/pull/109"
+      },
+      "status_porcelain": ""
+    },
+    {
+      "branch": "feature/lab-batch-client-20261019",
+      "clear": true,
+      "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "head_is_ancestor_main": true,
+      "ignored_cache_files": 80,
+      "merge_is_ancestor_main": true,
+      "non_cache_ignored": [
+        {
+          "bytes": 1811,
+          "sha256": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-01/actual-http-cli.log"
+        },
+        {
+          "bytes": 294,
+          "sha256": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-01/cleanup-independent.json"
+        },
+        {
+          "bytes": 71,
+          "sha256": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-01/cleanup-publication.json"
+        },
+        {
+          "bytes": 114,
+          "sha256": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-01/cleanup-twenty.json"
+        },
+        {
+          "bytes": 1232,
+          "sha256": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-01/source.json"
+        },
+        {
+          "bytes": 726,
+          "sha256": "963638318440f9d9dbc8ce6248c3d4dfaf69f51f3381ca084ab60b8b1dac56f4",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/actual-affected.log"
+        },
+        {
+          "bytes": 294,
+          "sha256": "a75daf7106aac666c03070a3cfd9bd0a7d5a59c50f79a659c0cd9f302b27b6b9",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/cleanup-independent.json"
+        },
+        {
+          "bytes": 71,
+          "sha256": "681a74e3ed8b693214849ca2a307dcec4bdb9556e63a2e21f6715708ae4a6de2",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/cleanup-publication.json"
+        },
+        {
+          "bytes": 114,
+          "sha256": "b509c5a5ecec4d1282fe8160b01142c6651907db1a83a8c6eb23dcc9cfb0ee3b",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/cleanup-twenty.json"
+        },
+        {
+          "bytes": 2572,
+          "sha256": "4f913b405f852e8f153e35e594d2a08b60c8669761bb9bb117e6f2bd7871e469",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/preparation.json"
+        },
+        {
+          "bytes": 2422,
+          "sha256": "a2bdd8a392636950def849c766bce70db3d229de56077f363276925fc872cb65",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/source-before-comment.json"
+        },
+        {
+          "bytes": 2650,
+          "sha256": "6c273d2df2f2242cc6ec9a7579026c79701fd543126d95cfb55f5f1f2ecae572",
+          "source": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/source.json"
+        }
+      ],
+      "open_dependents": [],
+      "path": "/workspace/Tuldok-lab-batch-client-m4",
+      "pr": 110,
+      "remote": {
+        "base": "main",
+        "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+        "merge_sha": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+        "merged": true,
+        "merged_at": "2026-10-20T03:15:22Z",
+        "state": "closed",
+        "url": "https://github.com/MrScripty/Tuldok/pull/110"
+      },
+      "status_porcelain": ""
+    }
+  ]
+}
