@@ -9,7 +9,7 @@ import signal
 import tempfile
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import uuid
 
 import recipe_process as custody
@@ -46,13 +46,37 @@ class CustodyTests(unittest.TestCase):
         self.until(handle,lambda:handle.ready is not None)
         return handle
 
-    def until(self,handle,predicate,timeout=15):
+    def until(self,handle,predicate,timeout=15,*,event_type=None):
         deadline=time.monotonic()+timeout;events=[]
         while time.monotonic()<deadline:
             events.extend(handle.poll())
-            if predicate():return events
+            if predicate() and (event_type is None or any(event['type']==event_type for event in events)):return events
             time.sleep(.02)
-        self.fail('Custody observation deadline: '+repr(events))
+        required='' if event_type is None else f' waiting for predicate and {event_type} event'
+        self.fail('Custody observation deadline'+required+': '+repr(events))
+
+    def test_required_started_observation_waits_for_marker_and_event(self):
+        started={'type':'started','leader':{'pid':123}}
+        for batches,markers in (([[],[started]],[True,True]),([[started],[]],[False,True])):
+            with self.subTest(batches=batches,markers=markers):
+                handle=Mock();handle.poll.side_effect=batches
+                marker=Mock(side_effect=markers)
+                with patch.object(time,'monotonic',side_effect=[0,0,1]),patch.object(time,'sleep'):
+                    events=self.until(handle,marker,event_type='started')
+                self.assertEqual(events,[started])
+                self.assertEqual(handle.poll.call_count,2)
+                self.assertEqual(marker.call_count,2)
+
+    def test_required_started_observation_deadline_is_a_setup_failure(self):
+        for events,marker_exists in (([],True),([{'type':'started','leader':{'pid':123}}],False)):
+            with self.subTest(events=events,marker_exists=marker_exists):
+                handle=Mock();handle.poll.return_value=events
+                marker=Mock(return_value=marker_exists)
+                with patch.object(time,'monotonic',side_effect=[0,0,15]),patch.object(time,'sleep'):
+                    with self.assertRaisesRegex(AssertionError,'Custody observation deadline waiting for predicate and started event') as error:
+                        self.until(handle,marker,event_type='started')
+                self.assertIn(repr(events),str(error.exception))
+                self.assertEqual(handle.poll.call_count,1)
 
     def finish(self,handle):
         self.until(handle,lambda:handle.terminal or handle.lost)
@@ -190,7 +214,8 @@ class CustodyTests(unittest.TestCase):
         marker=self.root/'orphan.pid';owned=[]
         try:
             handle=self.start(self.spec('escape',marker));handle.go(handle.ready)
-            events=self.until(handle,marker.exists)
+            # The escaped child can create its marker before STARTED is observed.
+            events=self.until(handle,marker.exists,event_type='started')
             leader=next(event['leader']['pid'] for event in events if event['type']=='started')
             child=int(marker.read_text())
             owned=[(pid,os.pidfd_open(pid)) for pid in (leader,child)]
