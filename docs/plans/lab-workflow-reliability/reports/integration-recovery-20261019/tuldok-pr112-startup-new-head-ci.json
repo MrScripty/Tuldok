@@ -1,0 +1,24 @@
+{
+  "observed_utc": "2026-10-20T04:33:21.231921+00:00",
+  "pr": 112,
+  "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "base": "feature/retained-analysis-query-20261019",
+  "base_sha": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "draft": true,
+  "checks": [
+    {
+      "id": 118455821471,
+      "name": "lifecycle",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370108074/job/118455821471"
+    },
+    {
+      "id": 118455819881,
+      "name": "lifecycle",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39370107550/job/118455819881"
+    }
+  ]
+}

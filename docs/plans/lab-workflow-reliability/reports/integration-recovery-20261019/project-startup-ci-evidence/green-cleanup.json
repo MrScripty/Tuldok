@@ -1,0 +1,17 @@
+{
+  "schema": "catalog_b15679e0a444459a83f1acce6dd3909d",
+  "reserved_before_creation": true,
+  "owned_children_exited": true,
+  "final_temporary_removed": true,
+  "counts": {
+    "workbench_records": 2,
+    "workspace_runs": 0,
+    "workspace_projects": 1
+  },
+  "removed_and_queried_absent": true,
+  "prior_red_schemas_rechecked_absent": [
+    "catalog_a91651e7b01d45148d63ee0e3d87c82d",
+    "catalog_978e63d9ab6a49bc9b673eb0569f8f11"
+  ],
+  "observed_at": "2026-10-20T04:27:51.019863+00:00"
+}

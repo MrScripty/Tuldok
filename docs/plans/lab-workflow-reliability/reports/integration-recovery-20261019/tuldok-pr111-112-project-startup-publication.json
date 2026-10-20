@@ -1,0 +1,21 @@
+{
+  "state": "atomic_publication_and_PR_heads_verified",
+  "observed_utc": "2026-10-20T04:32:14.210612+00:00",
+  "old111": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "new111": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "old112": "abbae728434fa0670478e12216a1d94603a97daf",
+  "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "independent_review_sha256": "826c14c72c139e6cb1f19527fccbcdee58f8e14697ce0afcc80a49fb1a53ccf9",
+  "root_actual_review_sha256": "c62219a4534227c47be2244961358dbc217878eba805b328f59c62dbcfd7cae0",
+  "prospective112_tree": "53d2d9fc4c24162a819276168b13af844cd93118",
+  "new112": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "composition_log": "/tmp/tuldok-pr111-112-startup-composed-local-checks.log",
+  "composition_log_sha256": "206dc8d4f5bc5a8ba260452853d881466bdfc3932d05aadaa378b26aa02ff181",
+  "push_exit": 0,
+  "push_stdout": "",
+  "push_stderr": "To https://github.com/MrScripty/Tuldok.git\n   0ba4db0..29011da  29011daea37f101ee30be9bc10aab702a16c830a -> feature/retained-analysis-query-20261019\n   abbae72..0dedbc9  0dedbc953902ac89389dca0693006aaa02a0a87c -> fix/captions-dialog-ci-qualification-20261020\n",
+  "remote111": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "remote112": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+  "pr111_head_verified": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "pr112_head_verified": "0dedbc953902ac89389dca0693006aaa02a0a87c"
+}

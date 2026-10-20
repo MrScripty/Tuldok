@@ -1,0 +1,89 @@
+{
+  "accounting_and_events_unchanged": true,
+  "artifacts": [
+    {
+      "bytes": 948,
+      "media_type": "application/octet-stream",
+      "name": "diagnostic-index.json",
+      "role": "diagnostic_index_v1",
+      "sha256": "2671fca60b341e7ef177f095cc2f81a423a89f4399ea09073565e6c471895790"
+    },
+    {
+      "bytes": 983,
+      "media_type": "application/octet-stream",
+      "name": "diagnostic-0.json",
+      "role": "diagnostic_shard_v1",
+      "sha256": "d05691bdef577711eea7175339f6c07aac207887c7d310d78fe22b77aef5c54b"
+    },
+    {
+      "bytes": 443,
+      "media_type": "application/octet-stream",
+      "name": "diagnostic-1.json",
+      "role": "diagnostic_shard_v1",
+      "sha256": "9cecad53ecef11e9bdc42b58403626a14e52d3325042843c22892b818c913b79"
+    }
+  ],
+  "captured_python_producer_executed": false,
+  "composed_readers": {
+    "batch_calls": 1,
+    "batch_collected_exact_artifacts": [
+      "diagnostic-index.json",
+      "diagnostic-0.json",
+      "diagnostic-1.json"
+    ],
+    "comparison": "same exact Ref diagnostic delta zero; no scientific acceptance",
+    "individual_segment_calls": 0
+  },
+  "counts_after": {
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1,
+    "workspace_graphs": 1,
+    "workspace_runs": 1
+  },
+  "counts_before": {
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1,
+    "workspace_graphs": 1,
+    "workspace_runs": 1
+  },
+  "coverage": {
+    "omitted": [
+      {
+        "count": 1,
+        "reason": "capture_budget",
+        "start": 2
+      }
+    ],
+    "omitted_count": 1,
+    "optional_count": 3,
+    "required_count": 2,
+    "retained_optional_count": 2,
+    "retained_required_count": 2,
+    "total_count": 5
+  },
+  "custody_outcome": "completed",
+  "numerical_acceptance": "not_evaluated",
+  "original_state": "interrupted",
+  "result_ref": {
+    "catalog_id": "e6c376b1412b4422bc68f94e8b7f4263",
+    "custody_receipt_sha256": "b7b378b6c0c9717914dcee8922565a9adb8e6cc8dbb2b302dc5049b37fb27a83",
+    "inventory_sha256": "6fb67a3dbf158cc360f7b22d5c6c772c0ab28ce7d743b1aeb547ca2d3fef31c5",
+    "kind": "recovered_publication_result",
+    "material_sha256": "f50ad82fff0a23d5f14dc0669fa9e693f6429169cf8324045bdeff6d1dcad5c7",
+    "run_id": "b0370f0262a2467bac7a3f585736b5b0",
+    "schema_version": 1,
+    "sha256": "c5aaf66cb1b8b4d523e2d2ea945cd1c7d8de4786f394d9775317799b7ee0dfa7"
+  },
+  "run_id": "b0370f0262a2467bac7a3f585736b5b0",
+  "runtime_packages": {
+    "numpy": "0.0",
+    "torch": "0.0"
+  },
+  "runtime_snapshot_sha256": "284d6e5bf4da87a42b80175720e7e3c6213c906b684dfed4a16f212b61b81d22",
+  "schema": "catalog_e6c376b1412b4422bc68f94e8b7f4263",
+  "scope": "harness SDK serialization; actual no-op metadata runtime custody and semantic recovery",
+  "training_executed": false,
+  "verification_scope": "source_destination_and_cold_exact_ref_reader"
+}

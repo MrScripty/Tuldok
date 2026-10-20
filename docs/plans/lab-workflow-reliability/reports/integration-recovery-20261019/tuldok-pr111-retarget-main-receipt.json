@@ -1,0 +1,17 @@
+{
+  "pr": 111,
+  "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "qualified_old_base": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "base_trees_equal": true,
+  "prospective_tree": "610898ee259f0dd9c4e4397afa73309119a1401e",
+  "merge_clearance": false,
+  "lifecycle_disposition": "Known0ba4failedscientificstartupgate; otherpendinglife notacceptance. Localownerfix qualification in progress.",
+  "observed_utc": "2026-10-20T04:27:40.002981+00:00",
+  "state": "retarget_confirmed",
+  "command_exit": 0,
+  "stderr": "",
+  "observed_base": "main",
+  "observed_base_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "observed_head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab"
+}

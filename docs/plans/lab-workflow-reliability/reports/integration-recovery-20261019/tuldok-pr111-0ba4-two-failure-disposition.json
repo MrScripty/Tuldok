@@ -1,0 +1,25 @@
+{
+  "observed_utc": "2026-10-20T04:35:48.998459+00:00",
+  "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "failed_runs": [
+    39360310903,
+    39360311316
+  ],
+  "same_failure_signature": true,
+  "logs": [
+    {
+      "path": "/tmp/tuldok-pr111-0ba4-failed-lifecycle-job-118424712559.log",
+      "sha256": "0c279bc15ca1488a9445b03763192fd6f4ab85c9c8ec1b8acb36d538a18b0e2b",
+      "error": "Timed out at first scientificopenProject59:77/64",
+      "caption_failure": false
+    },
+    {
+      "path": "/tmp/tuldok-pr111-0ba4-second-failed-lifecycle-job-118424713317.log",
+      "sha256": "bf9f4c7dc12ee6473dc99c44291f01b981b3b07b617d569df49289f4dbdd0094",
+      "error": "Timed out at first scientificopenProject59:77/64",
+      "caption_failure": false
+    }
+  ],
+  "new_head": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "disposition": "Botholdheadlifecyclesfailed; neitherisacceptance. Reviewedreadinessrepairandactualcontrolledred/green apply; freshnewheadCI required. Hosteventcauseremainsuntraced."
+}

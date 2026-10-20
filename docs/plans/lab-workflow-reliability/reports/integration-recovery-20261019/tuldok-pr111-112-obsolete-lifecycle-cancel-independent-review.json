@@ -1,0 +1,130 @@
+{
+  "acceptance_scope": "Neither obsolete cancellation nor terminal outcome is current-head test success. Both current PRs remain drafts awaiting required gates. Preserve historical failed39360310903. Any new distinct terminal failure is disclosed, not erased.",
+  "allowed_cancel_run_ids": [
+    39364911305
+  ],
+  "checks": {
+    "both_pr_open_draft": true,
+    "exact_current_pr_heads": true,
+    "run_39360311316_exact_superseded_task_scope": true,
+    "run_39364911305_exact_superseded_task_scope": true
+  },
+  "current_prs": [
+    {
+      "base": "main",
+      "branch": "feature/retained-analysis-query-20261019",
+      "draft": true,
+      "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "pr": 111,
+      "state": "open",
+      "url": "https://github.com/MrScripty/Tuldok/pull/111"
+    },
+    {
+      "base": "feature/retained-analysis-query-20261019",
+      "branch": "fix/captions-dialog-ci-qualification-20261020",
+      "draft": true,
+      "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+      "pr": 112,
+      "state": "open",
+      "url": "https://github.com/MrScripty/Tuldok/pull/112"
+    }
+  ],
+  "disposition": "CLEAR for root cancellation of only listed still-pending superseded exact runs; leave terminal races untouched",
+  "new_failures": [
+    {
+      "action_disposition": "Already terminal: retain outcome and take no action",
+      "branch": "feature/retained-analysis-query-20261019",
+      "conclusion": "failure",
+      "current_head": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "event": "pull_request",
+      "id": 39360311316,
+      "new_failure": true,
+      "old_head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+      "pending": false,
+      "pr": 111,
+      "state": "completed",
+      "updated_at": "2026-10-20T04:18:46Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311316",
+      "workflow_id": 373501874,
+      "workflow_name": "Dataset lifecycle tests"
+    }
+  ],
+  "observed_utc": "2026-10-20T04:35:00.087823+00:00",
+  "obsolete_runs": [
+    {
+      "action_disposition": "Already terminal: retain outcome and take no action",
+      "branch": "feature/retained-analysis-query-20261019",
+      "conclusion": "failure",
+      "current_head": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "event": "pull_request",
+      "id": 39360311316,
+      "new_failure": true,
+      "old_head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+      "pending": false,
+      "pr": 111,
+      "state": "completed",
+      "updated_at": "2026-10-20T04:18:46Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311316",
+      "workflow_id": 373501874,
+      "workflow_name": "Dataset lifecycle tests"
+    },
+    {
+      "action_disposition": "Cancellation of only this superseded pending run is reasonable",
+      "branch": "fix/captions-dialog-ci-qualification-20261020",
+      "conclusion": null,
+      "current_head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+      "event": "pull_request",
+      "id": 39364911305,
+      "new_failure": false,
+      "old_head": "abbae728434fa0670478e12216a1d94603a97daf",
+      "pending": true,
+      "pr": 112,
+      "state": "in_progress",
+      "updated_at": "2026-10-20T03:55:43Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39364911305",
+      "workflow_id": 373501874,
+      "workflow_name": "Dataset lifecycle tests"
+    }
+  ],
+  "protected": {
+    "current_runs_preserved": [
+      39370107636,
+      39370107631,
+      39370108074,
+      39370107550
+    ],
+    "known_terminal_failed_run": 39360310903,
+    "old_0ba_successful_cpu": "preserve; not queried or acted on",
+    "other": "All current-head/main/unrelated jobs; no remote write allowed by this review"
+  },
+  "reads": [
+    {
+      "endpoint": "repos/MrScripty/Tuldok/pulls/111",
+      "observed_utc": "2026-10-20T04:35:00.636987+00:00",
+      "path": "/tmp/tuldok-pr111-112-obsolete-pr111-metadata.json",
+      "sha256": "b8f4c7166ad2a93896c8695b30c24a689b74c0ec272a63d23fc82cf4efb02bd4"
+    },
+    {
+      "endpoint": "repos/MrScripty/Tuldok/pulls/112",
+      "observed_utc": "2026-10-20T04:35:01.199614+00:00",
+      "path": "/tmp/tuldok-pr111-112-obsolete-pr112-metadata.json",
+      "sha256": "04dd2142878eb5ff9396dbe2adbf909521c2420fb97ada26e5a1a50d7c9c2e85"
+    },
+    {
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39360311316",
+      "observed_utc": "2026-10-20T04:35:01.643272+00:00",
+      "path": "/tmp/tuldok-pr111-112-obsolete-run39360311316-metadata.json",
+      "sha256": "aa2c831a134453ebcf7f0222016b7677c4c0d0defe6c5dd16aed70b83755eac3"
+    },
+    {
+      "endpoint": "repos/MrScripty/Tuldok/actions/runs/39364911305",
+      "observed_utc": "2026-10-20T04:35:02.059297+00:00",
+      "path": "/tmp/tuldok-pr111-112-obsolete-run39364911305-metadata.json",
+      "sha256": "99965000e505343739e203382a97bb12f8ff0105857aaa1bb6eaeeda7ff5c765"
+    }
+  ],
+  "scope": "Independent read-only exact-two obsolete lifecycle cancellation assessment. One metadata GET per old run and current PR only; no cancellation, retry, rerun or CI polling.",
+  "terminal_untouched": [
+    39360311316
+  ]
+}

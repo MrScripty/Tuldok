@@ -1,0 +1,31 @@
+{
+  "observed_utc": "2026-10-20T04:37:01.411573+00:00",
+  "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "selected": [
+    {
+      "pr": 108,
+      "alias_key": "feature108",
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": true
+    },
+    {
+      "pr": 108,
+      "alias_key": "repair108",
+      "branch": "fix/indexed-ci-qualification-20261020",
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "remote_present": false
+    }
+  ],
+  "remote_observed": {
+    "refs/heads/feature/lab-indexed-diagnostics-20261019": "9f08427029d8b48c8f9b50927a1c835afb573276"
+  },
+  "qa_archive": "/tmp/tuldok-pr108-two-alias-pre-retirement-qa-archive.json",
+  "protected_refs": "/tmp/tuldok-20261019-protected-local-heads.txt",
+  "protected_worktrees": "/tmp/tuldok-20261019-protected-worktrees.txt",
+  "readiness": "Pending remotearchive/recovery verification and independentprecheck; no deletions"
+}

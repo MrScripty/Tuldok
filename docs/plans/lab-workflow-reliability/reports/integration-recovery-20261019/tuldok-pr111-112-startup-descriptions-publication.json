@@ -1,0 +1,17 @@
+{
+  "observed_utc": "2026-10-20T04:34:15.653331+00:00",
+  "records": [
+    {
+      "pr": 111,
+      "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "draft": true,
+      "body_verified": true
+    },
+    {
+      "pr": 112,
+      "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+      "draft": true,
+      "body_verified": true
+    }
+  ]
+}

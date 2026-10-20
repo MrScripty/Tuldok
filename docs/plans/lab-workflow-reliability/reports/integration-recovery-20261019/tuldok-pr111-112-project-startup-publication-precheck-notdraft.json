@@ -1,0 +1,11 @@
+{
+  "state": "precheck_failed_PR111_was_not_draft_no_source_mutation",
+  "observed_utc": "2026-10-20T04:31:31.371270+00:00",
+  "old111": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "new111": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "old112": "abbae728434fa0670478e12216a1d94603a97daf",
+  "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "independent_review_sha256": "826c14c72c139e6cb1f19527fccbcdee58f8e14697ce0afcc80a49fb1a53ccf9",
+  "root_actual_review_sha256": "c62219a4534227c47be2244961358dbc217878eba805b328f59c62dbcfd7cae0",
+  "observed_heads_verified_unchanged": true
+}

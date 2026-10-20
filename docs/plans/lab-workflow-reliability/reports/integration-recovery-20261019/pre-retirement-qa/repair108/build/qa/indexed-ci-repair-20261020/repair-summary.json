@@ -1,0 +1,43 @@
+{
+  "commit": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "branch": "fix/indexed-ci-qualification-20261020",
+  "base": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+  "files": [
+    "tests/test_extension_canonical_author.py"
+  ],
+  "cause": "An evolving live SDK was incorrectly used as oracle for a frozen source-captured canonical SDK. Both lifecycle jobs failed only that assertion.",
+  "repair": "Verify the exact existing inference source_authority SDK closure, each frozen SDK source hash, and byte identity of the authored copy; retain every other source and inert-control assertion.",
+  "original_failure_reproduced": true,
+  "tests": {
+    "passed": 16,
+    "skipped": 0,
+    "seconds": 4.53,
+    "canonical_author": 4,
+    "canonical_oracle_bounds": 2,
+    "canonical_candidate_packages": 10
+  },
+  "database": {
+    "version": "17.6",
+    "schemas_reserved": [
+      "catalog_323f591f1290426aaad1d717ce0e7684",
+      "catalog_6db9f3cdc55d412aa99589a50ba7dfc9",
+      "catalog_72dad8fe76094bf5b0ffe40544fe2496",
+      "catalog_a3209f37d20c48fea7a0f1aacf416097",
+      "catalog_eadd1fea697e490ba492ca123a7cb0ed"
+    ],
+    "schemas_remaining": []
+  },
+  "scope": "Test-oracle correction only. No SDK, frozen example, package hash, production source, runtime, or scientific acceptance changes.",
+  "limits": [
+    "Remote lifecycle CI has not been rerun.",
+    "PUB1 original failure bytes remain missing.",
+    "SCI1 owned criterion and compatible lab pair remain missing.",
+    "Synthetic fixtures do not constitute scientific acceptance."
+  ],
+  "worktree_retention": {
+    "owner": "root integration owner",
+    "purpose": "Review and propagate committed fix and retain local CI evidence",
+    "retirement": "After root confirms accepted source-to-integration commit lineage and saves evidence",
+    "remote_mutations_performed": false
+  }
+}

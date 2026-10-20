@@ -1,0 +1,17 @@
+{
+  "pr": 108,
+  "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "base": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+  "source_worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+  "reviews": [
+    "/tmp/tuldok-pr108-frozen-author-test-independent-review.json",
+    "/tmp/tuldok-pr108-9f08-lifecycle-independent-review.json",
+    "/tmp/tuldok-pr108-retarget-main-receipt.json"
+  ],
+  "check_names": [
+    "lifecycle",
+    "static-kit",
+    "catalog"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "pr": 108,
+  "exact_head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "run_id": 39360311688,
+  "job_id": 118424714572,
+  "outcome": "pending",
+  "status": "in_progress",
+  "conclusion": null,
+  "successful_step_count": 158,
+  "total_reported_steps": 171,
+  "active_steps": [
+    {
+      "name": "Run node tests/browser_workspace_spatial.cjs",
+      "status": "in_progress",
+      "conclusion": null,
+      "number": 159
+    }
+  ],
+  "failed_steps": [],
+  "full_unittest_step": [
+    {
+      "name": "Run python -m unittest discover -s tests",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 37
+    }
+  ],
+  "late_browser_steps": [
+    {
+      "name": "Verify real live owner phase timing workflow",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 151
+    },
+    {
+      "name": "Exercise finite model development through the real browser",
+      "status": "pending",
+      "conclusion": null,
+      "number": 163
+    },
+    {
+      "name": "Exercise actual one-fit text model evidence in the browser",
+      "status": "pending",
+      "conclusion": null,
+      "number": 164
+    },
+    {
+      "name": "Exercise actual one-fit audio model evidence in the browser",
+      "status": "pending",
+      "conclusion": null,
+      "number": 165
+    }
+  ],
+  "metadata": "/tmp/tuldok-pr108-9f08-lifecycle-run-39360311688-jobs.json",
+  "procedure": "One bounded metadata lookup; job remains running, so no decoded log fetch or polling.",
+  "limits": [
+    "No completed lifecycle acceptance claim.",
+    "No attribution to PR111's separate failed scientific-startup gate.",
+    "No source edits, tests, reruns, cancellations or remote mutations performed.",
+    "Current-main retarget/composition tree equivalence is separately owned by root."
+  ]
+}

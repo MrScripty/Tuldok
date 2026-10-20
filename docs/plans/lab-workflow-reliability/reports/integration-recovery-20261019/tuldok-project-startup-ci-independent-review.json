@@ -1,0 +1,109 @@
+{
+  "actual_evidence_attribution": "Author executed full actual PostgreSQL/HTTP/Chromium/NumPy journey before commit. receipt source_commit0ba and dirty=true are truthful: four modified-file hashes match reviewed29011da. Reviewer inspected evidence, did not repeat actual journey or schema absence SELECTs.",
+  "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "branch": "fix/workspace-project-startup-ci-20261020",
+  "changed_paths": [
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/acceptance.md",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/controller.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/delay-project-module.cjs",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/green-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/hosted-failure-disposition.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/hosted-failure-excerpt.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/original-entrypoint-delayed-red.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/page-load.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/post-exit-temporary-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/qualification.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/receipt.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red-schema-reservation.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red-temporary-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red1-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/schema-reservation.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-fields-green.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-inspector-1440.jpg",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-inspector-390.jpg",
+    "static/workspace-projects.js",
+    "static/workspaces.html",
+    "tests/browser_scientific_fields.cjs",
+    "tests/test_workspace_project_startup.cjs"
+  ],
+  "checks": {
+    "all4_tested_file_hashes_match": true,
+    "controlled_red_raw_hash_matches": true,
+    "frozen_exact_head": true,
+    "hosted_raw_log_hash_matches": true,
+    "html_change_only_initial_disabled": true,
+    "independent_node_syntax_and_owner_order_regression_pass": true,
+    "js_change_only_constructor_enable_after_bind": true,
+    "late_descendant_cleanup_honestly_disclosed": true,
+    "native_startup_states_correct": true,
+    "only_approved_4_implementation_and_scoped_reports": true,
+    "own3_main_handles_terminal": true,
+    "schema_receipts_3_owned_absent_and_zero_runs": true,
+    "six_green_checks_all5_original_plus_startup": true,
+    "worktree_clean": true
+  },
+  "disposition": "CLEAR within approved readiness repair scope",
+  "evidence": [
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/qualification.json",
+      "sha256": "c1b8fc203bebdd6c31b9d719d3679f07221a7ba3ff6ca8c93861e8706ae9cd43"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/receipt.json",
+      "sha256": "03eab3cacf8b9cf436ffcca5bbeb0e307f79dbb0454e6a23410b8d28b494c74a"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/acceptance.md",
+      "sha256": "d72476166332289a8c34027ead449ef6271350f23be12917b7c9433044f05f6a"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/original-entrypoint-delayed-red.log",
+      "sha256": "efe27cc900677503e107a312df99026271708899a2f28646b8f02e3de1387ff8"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-fields-green.log",
+      "sha256": "15a2a986355f20c4923e05d9fe296bb406a7639ed0f794ebd117f145a56b69ea"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/cleanup.json",
+      "sha256": "08c366db58cf5ab25df96734c429c56cd91782cba4290e1f3ad6c03f5bf324c6"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/post-exit-temporary-cleanup.json",
+      "sha256": "0a1412572e2d88cd0f9dece6d6efbcdc283d0809cc63dd4eeea5d19b8c891576"
+    },
+    {
+      "path": "/workspace/Tuldok-project-startup-ci-repair-20261020/docs/plans/retained-analysis/reports/project-startup-ci-20261020/green-cleanup.json",
+      "sha256": "e01761be7b5b275fc5c4266f81a48fe0496abd0b2031b787d2bdbe1465f585fa"
+    }
+  ],
+  "findings": [],
+  "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "independent_tests": {
+    "command": "node --check static/workspace-projects.js && node --check tests/browser_scientific_fields.cjs && node --check tests/test_workspace_project_startup.cjs && node tests/test_workspace_project_startup.cjs",
+    "exit": 0,
+    "stdout": "PASS project startup markup disabled; owning constructor binds action, form and teardown before enable; first action opens synchronously and reads only"
+  },
+  "limits": [
+    "Hosted failure exactcause remains untraced; controlled cause proven only for recorded reproduction.",
+    "Synthetic producer-neutral rotated arrays qualify transport/UI/custody, not physics/model/training/CUDA.",
+    "Known failed PR111 lifecycle remains a failure; corrected composed head requires root qualification/required CI.",
+    "Schema absence and final descendant cleanup supported by author-retained receipts, not new independent runtime observations."
+  ],
+  "review": {
+    "cleanup": "Author receipts show three supplied main handles terminal before initial rm. Chrome descendant cache recreation occurred afterward; separate final exact-owned-path cleanup after no matching task processes is explicitly retained. This review makes no all-descendant shutdown guarantee.",
+    "product": "Two approved production lines only. Initially unavailable native button is enabled after owning constructor binds action/form/disposal; roots fetching remains independent, and original showModal-first behavior is preserved. No API/scientific/data contract changes.",
+    "red": "Qualification-only CDP wrapper holds actual module delivery while running original0ba entrypoint. Exact native hit with enabled/nullhandler, eventual handler+fixture-ready+closed dialog and same59:77/64 timeout prove controlled race. It does not establish an original-host click trace.",
+    "test": "VM witness tests exposure ordering; existing SCI entrypoint awaits it. Real browser holds actual project-module response, observes disabled/null-handler exact pointer hit, proves early click inert, then releases unchanged bytes and uses original native open/submit/import workflow. All five original scientific assertions remain; no retry or relaxed dialog assertion substitutes for the first open."
+  },
+  "reviewed_utc": "2026-10-20T04:29:46.454656+00:00",
+  "scope": "Independent read-only source/retained receipt review plus permitted focused Node checks. No product/source edits, actual PG/browser rerun, remote change or CI polling.",
+  "source_sha256": {
+    "static/workspace-projects.js": "3f465ad13a9f6bea9c7e812507510b4b5469e7569d7a1c22884115b6628a4747",
+    "static/workspaces.html": "c16bf3ad0872b8f40f9d00ad6f2ae6366d2c3193aafa80bb496bbf3a41c183cd",
+    "tests/browser_scientific_fields.cjs": "9803d43c119bff759a771171b115f5878a22a1941ebf8de8c0e2a4361f3e0636",
+    "tests/test_workspace_project_startup.cjs": "0e4d00fbd3f67a8c5839864f2ad406597d91b253f116f526e551221d9f1ebd0a"
+  }
+}

@@ -1,0 +1,577 @@
+{
+  "actual_training": true,
+  "checkpoints": 2,
+  "cold_reopen": true,
+  "compatible_correction": true,
+  "corrected_run_id": "c7291bac0654431d8a9bbda35f89af45",
+  "hardware": {
+    "cpu_count": 4,
+    "machine": "x86_64"
+  },
+  "http_operations": [
+    {
+      "operation": "recipes.list",
+      "status": 200
+    },
+    {
+      "operation": "models.create",
+      "status": 201
+    },
+    {
+      "operation": "models.publish",
+      "status": 200
+    },
+    {
+      "operation": "graphs.create",
+      "status": 201
+    },
+    {
+      "operation": "graphs.save",
+      "status": 200
+    },
+    {
+      "operation": "graphs.validate",
+      "status": 200
+    },
+    {
+      "operation": "studies.create",
+      "status": 201
+    },
+    {
+      "operation": "studies.prepare_trial",
+      "status": 201
+    },
+    {
+      "operation": "studies.get",
+      "status": 200
+    },
+    {
+      "operation": "studies.continue",
+      "status": 200
+    },
+    {
+      "operation": "studies.get",
+      "status": 200
+    },
+    {
+      "operation": "studies.admit",
+      "status": 201
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.model_evidence",
+      "status": 200
+    },
+    {
+      "operation": "runs.model_evidence",
+      "status": 200
+    },
+    {
+      "operation": "runs.model_evidence",
+      "status": 200
+    },
+    {
+      "operation": "graphs.create",
+      "status": 201
+    },
+    {
+      "operation": "graphs.save",
+      "status": 200
+    },
+    {
+      "operation": "studies.reconcile",
+      "status": 200
+    },
+    {
+      "operation": "studies.get",
+      "status": 200
+    },
+    {
+      "operation": "studies.prepare_trial",
+      "status": 201
+    },
+    {
+      "operation": "studies.get",
+      "status": 200
+    },
+    {
+      "operation": "studies.admit",
+      "status": 201
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.model_evidence",
+      "status": 200
+    },
+    {
+      "operation": "runs.compare_model_evidence",
+      "status": 200
+    }
+  ],
+  "independent_fixed_inference": true,
+  "independent_oracle_sha256": "80cb30bfc9d1c64705630d4924e3b126b3a57b18bba5b12c3f349f1b05ca8b8e",
+  "limitations": [
+    "Authored patterns qualify evidence plumbing, not generalization or useful classifier quality.",
+    "CPU only; no GPU, resume or adaptive budget."
+  ],
+  "peak_rss_bytes": 480571392,
+  "probe_members": 4,
+  "qualification_driver_sha256": "7c4a07924480494749504518697c42f4631fd2389ddd386d1c7994830b5b901d",
+  "retained_bytes": 74997,
+  "run_id": "52a39058c82c4285af8b15848969922e",
+  "runtime": {
+    "device": "cpu",
+    "python": "3.12.15",
+    "scikit_learn": "1.7.2",
+    "threads": 1,
+    "torch": "2.8.0+cpu",
+    "torchvision": "0.23.0+cpu"
+  },
+  "source_fixture_sha256": "81fb7875b79549f6635b044f4fa2a8a49ab713cae705f7b040a300ae4af972e6",
+  "study_id": "969ca579a7b1497a8cb0b1cbe06b1090",
+  "task": "image",
+  "ui_qualification": "requires separate1440/390 keyboard browser run",
+  "wall_elapsed_seconds": 44.63666281800033
+}

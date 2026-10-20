@@ -16,23 +16,22 @@ older pending snapshots and failed attempts remain preserved as history.
 
 ## Current integration state
 
-Main is63f689ecace7bac2f20114efde53a9c6bc05a9ed after PR110. P1-P6 and E1-E4
+Main is c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad after PR108. P1-P6 and E1-E4
 were integrated earlier; PR89/90 and PR92-101 are also merged. The latest accepted
-serial integrations are PR102,103,107,104,105,106,109,110. Each actual merged tree
+serial integrations are PR102,103,107,104,105,106,109,110,108. Each actual merged tree
 was verified equal to its qualified source tree, with exact parents and main
 readback. Do not replay completed merge operations or restart design work.
 
-The remaining order is108 ->111 ->112. Recheck exact GitHub heads, check contexts
+The remaining order is 111 ->112. Recheck exact GitHub heads, check contexts
 and actual merge state before any operation. Newest required contexts must pass;
 older green duplicates cannot replace newer pending contexts. Known same-head
 failures require disposition. Source/tree equality does not relabel the tested
-history as a literal later-main checkout. Use tuldok-pending-108-111-112-activation.json.
+history as a literal later-main checkout. Use tuldok-pending-111-112-activation.json.
 
 | PR | Published head | Base | Remaining qualification |
 | --- | --- | --- | --- |
-|108|9f08427029d8b48c8f9b50927a1c835afb573276|main63f689ec|Fresh lifecycle; catalog/static-kit passed in snapshot|
-|111|0ba4db01f04a77c262eb4b397f88849e9688b5ab|108head9f084270|CPU gates passed/reviewed; lifecycle FAILED startup44, repair underway|
-|112|abbae728434fa0670478e12216a1d94603a97daf|111head0ba4db01|Fresh lifecycle; local caption qualification/review clear|
+|111|29011daea37f101ee30be9bc10aab702a16c830a|main c1fc60db|Fresh lifecycle/CPU/catalog/UI gates pending|
+|112|0dedbc953902ac89389dca0693006aaa02a0a87c|111head29011dae|Fresh lifecycle; both local repairs/reviews clear|
 
 PR108's repair preserves the frozen canonical source authority and verifies its
 pinned SDK paths instead of comparing them to evolving live SDK files. PR111's
@@ -92,3 +91,20 @@ retained. Both exact0ba4 captured-CPU jobs passed13/13 with independentreview;
 that does not override failed/pending lifecycle. Minimal actualinitializer
 readiness reproduction/repair is assigned separately before111/112republication.
 PR108 late lifecycle remains independently separate.
+
+Authoritative04:33+update: PR108passed172/172steps,1744tests/72skips andalllate
+actualgates, independentlyreviewed; mergedtreef245dcc8 exactlyequalsqualifiedsource.
+OptionalbrowserartifactZIP wasproxy403blocked anditscontentswerenotclaimedverified.
+PR111twoold0ba4lifecyclesfailedsamefirstscientific Openproject59:77/64 wait.
+AcontrolledrealPG/Chromium held-module reproductionprovesenabledcontrol/nullhandler
+lostpointerclick; hosteventtraceitselfisabsent. Reviewedtwo-lineownerreadinessfix
+29011dae passeddefaultentrypointwithnewstartupandall5originalscientificchecks.
+Fouractualtestedfilehashesmatchthepublishedcommit;3exacttaskedschemasqueriedabsent.
+Latebrowsercachecleanupisexplicitlydocumented,notanall-descendantguarantee.
+Rootfast-forwarded111to29011daeandnormallymergeditinto1120dedbc95,verifiedboth
+priorqualificationsfilehashesandfocusedregressions,andatomicallypublishedboth.
+BothPRsaredrafts. FreshcurrentheadCIisrequired; oldCPU0ba4passesarenotnewheadpasses.
+Old112abba lifecycle39364911305 isterminallycancelled; originaltwofailed111jobs
+werenevercancelledormarkedsuccess. Allcorrectedcurrent-headjobsremainintact.
+TenPR108repairQAfiles566599Barearchivedpendingrecoveryverification/precheck;
+its2acceptedaliasesarestillretaineduntilsafecleanupcompletes.

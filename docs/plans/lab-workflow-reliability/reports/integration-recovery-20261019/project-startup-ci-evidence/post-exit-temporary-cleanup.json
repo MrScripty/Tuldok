@@ -1,0 +1,12 @@
+{
+  "temporary": "/tmp/tuldok-fields-browser-XT8B2u",
+  "immediate_harness_removed": true,
+  "late_browser_cache_reappearance_observed": true,
+  "late_files": [
+    "browser/Default/Cache/Cache_Data/index-dir/the-real-index",
+    "browser/Default/Network Persistent State"
+  ],
+  "matching_catalog_browser_or_crashpad_processes": [],
+  "exact_owned_path_removed_after_post_exit_recheck": true,
+  "limit": "Main owned handles exited before initial removal; brief browser descendants recreated cache after initial cleanup. No process was killed or unrelated path removed."
+}

@@ -1,0 +1,53 @@
+{
+  "observed_utc": "2026-10-20T04:30:45.306705+00:00",
+  "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+  "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "state": "actual_receipts_and_source_bounds_verified",
+  "changed_paths": [
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/acceptance.md",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/controller.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/delay-project-module.cjs",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/green-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/hosted-failure-disposition.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/hosted-failure-excerpt.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/original-entrypoint-delayed-red.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/page-load.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/post-exit-temporary-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/qualification.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/receipt.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red-schema-reservation.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red-temporary-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/red1-cleanup.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/schema-reservation.json",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-fields-green.log",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-inspector-1440.jpg",
+    "docs/plans/retained-analysis/reports/project-startup-ci-20261020/scientific-inspector-390.jpg",
+    "static/workspace-projects.js",
+    "static/workspaces.html",
+    "tests/browser_scientific_fields.cjs",
+    "tests/test_workspace_project_startup.cjs"
+  ],
+  "source_sha256": {
+    "static/workspaces.html": "c16bf3ad0872b8f40f9d00ad6f2ae6366d2c3193aafa80bb496bbf3a41c183cd",
+    "static/workspace-projects.js": "3f465ad13a9f6bea9c7e812507510b4b5469e7569d7a1c22884115b6628a4747",
+    "tests/browser_scientific_fields.cjs": "9803d43c119bff759a771171b115f5878a22a1941ebf8de8c0e2a4361f3e0636",
+    "tests/test_workspace_project_startup.cjs": "0e4d00fbd3f67a8c5839864f2ad406597d91b253f116f526e551221d9f1ebd0a"
+  },
+  "actual_green_checks": [
+    "Delayed actual project module keeps the pointer-hit control disabled; its owner enables the original first open and full project inspection",
+    "Opening remains read-only; explicit import refuses stale observed hash before catalog writes, then imports exact bytes",
+    "All authored fields and X/Y/Z planes retain exact time/stage/dtype; rotated noncubic origin and signed zero inspected",
+    "Wholeasset human inspection freezes canonical release; separate NumPy reader verifies exact recovered original payload and opaque sources",
+    "Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record",
+    "Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted"
+  ],
+  "controlled_red_exact_native_hit_proven": true,
+  "host_cause": "untraced; controlled diagnosis only",
+  "physical_acceptance": false,
+  "model_acceptance": false,
+  "three_task_schemas_recorded_absent": true,
+  "late_browser_descendant_cache_reappearance": "Observed and exacttaskpath subsequentlyremoved after no matchingprocess; no all-descendant guarantee",
+  "new_head_hosted_CI": "Pending after publication; old CPU successes do not clear newhead lifecycle"
+}

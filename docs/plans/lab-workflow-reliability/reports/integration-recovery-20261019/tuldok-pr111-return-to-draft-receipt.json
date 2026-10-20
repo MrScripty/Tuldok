@@ -1,0 +1,13 @@
+{
+  "observed_utc": "2026-10-20T04:32:12.316503+00:00",
+  "pr": 111,
+  "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "draft_before": false,
+  "reason": "Known lifecycle failure and corrected-source requalification pending; preserve userrequested draft integration workflow",
+  "state": "draft_transition_verified",
+  "exit": 0,
+  "stdout": "",
+  "stderr": "\u2713 Pull request MrScripty/Tuldok#111 is converted to \"draft\"\n",
+  "draft_after": true,
+  "observed_head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab"
+}

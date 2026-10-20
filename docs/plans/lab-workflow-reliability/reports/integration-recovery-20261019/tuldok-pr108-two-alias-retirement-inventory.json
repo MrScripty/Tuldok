@@ -1,0 +1,3090 @@
+{
+  "kind": "READONLY future retirement inventory; no deletion performed or authorized by this artifact",
+  "observed_utc": "2026-10-20T04:29:16.364027+00:00",
+  "scope": "Only exact two task-owned PR108 aliases at accepted9f084 head",
+  "accepted_merge": {
+    "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+    "main_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+    "parents": [
+      "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+      "9f08427029d8b48c8f9b50927a1c835afb573276"
+    ],
+    "origin_main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad"
+  },
+  "selected": [
+    {
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "local_ref": "refs/heads/feature/lab-indexed-diagnostics-20261019",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "worktree_record": {
+        "worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/feature/lab-indexed-diagnostics-20261019"
+      },
+      "clean_tracked_and_nonignored": true,
+      "status_porcelain": "",
+      "ancestor_of_accepted_main": true,
+      "head_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "unaccepted_unique_commit_count": 0,
+      "not_original_protected_ref_or_worktree": true,
+      "commit_disposition": "retained: accepted commit is reachable from refs/remotes/origin/main and merged main commit c1fc60db",
+      "ignored_entries": [
+        {
+          "path": "__pycache__/access.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/access.cpython-312.pyc",
+          "bytes": 39992,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c86c5e6f5857a2f5c3c49b6dc58da15ce2aaee697c3e41dee6c34e2fd301f2c0"
+        },
+        {
+          "path": "__pycache__/agent_api.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/agent_api.cpython-312.pyc",
+          "bytes": 135619,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7660834be00217d50c516047975795f819fc21539c6cd6ef8543032217bd0791"
+        },
+        {
+          "path": "__pycache__/ai.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/ai.cpython-312.pyc",
+          "bytes": 10615,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5f69c6c9b0030c2491018d9db45774510589bce52618fcc9352fe8c993fc38ea"
+        },
+        {
+          "path": "__pycache__/ai_codex.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/ai_codex.cpython-312.pyc",
+          "bytes": 12342,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "2eecdaf407f1116a7a02d420ba7f735f4db00f30d73c44386dbb2408b8da8ee4"
+        },
+        {
+          "path": "__pycache__/ai_http.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/ai_http.cpython-312.pyc",
+          "bytes": 28139,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "79de3d3d57948033cff75af05e78fde603d73c5b5c949735005e7156c1a9ec49"
+        },
+        {
+          "path": "__pycache__/ai_openrouter.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/ai_openrouter.cpython-312.pyc",
+          "bytes": 3851,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c9badb98d882a567ad3044a80c77c58152e309df7e36ad8b762d6a7d8bf90f95"
+        },
+        {
+          "path": "__pycache__/app.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/app.cpython-312.pyc",
+          "bytes": 122487,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "57bb19bd214ca40b69b39ddbf322f410bdeeb8065b15bf71d024de169772b592"
+        },
+        {
+          "path": "__pycache__/audio_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/audio_assets.cpython-312.pyc",
+          "bytes": 15654,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5dd529c6b818cdf2956ced7ed7544a31aad5242d167029b29b32c41e721200ce"
+        },
+        {
+          "path": "__pycache__/audio_classification_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/audio_classification_export.cpython-312.pyc",
+          "bytes": 8697,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "07c5af448253e4cb0fb76c059ce5f6c2adafc58bbef65217b5783a0f9e28b113"
+        },
+        {
+          "path": "__pycache__/audio_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/audio_export.cpython-312.pyc",
+          "bytes": 1371,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c452486cfb5a27cbd89c11258ae3df332e8cd17190d402a0811c84f9d4f30df1"
+        },
+        {
+          "path": "__pycache__/audio_training.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/audio_training.cpython-312.pyc",
+          "bytes": 45345,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "39364de9c47ff2b31eb4aef994cd0fa47a61e81719ef1797b8928ece9e0ed587"
+        },
+        {
+          "path": "__pycache__/bulk_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/bulk_import.cpython-312.pyc",
+          "bytes": 9081,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e40342c502094aaf18b55d2936955d2f1d6302e421c8e73795c9a4c117ed84b1"
+        },
+        {
+          "path": "__pycache__/candidate_packages.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/candidate_packages.cpython-312.pyc",
+          "bytes": 154580,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c95e05a63515e7ae9d496c4b6eb36bdcb6719cde708e320badb2e9d9eab0a6dd"
+        },
+        {
+          "path": "__pycache__/canonical_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/canonical_release.cpython-312.pyc",
+          "bytes": 14028,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "2a0e896db393bf1dc384261afc4c130a917f3803dfb364f91c67dc0a84d1f92b"
+        },
+        {
+          "path": "__pycache__/caption_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/caption_import.cpython-312.pyc",
+          "bytes": 27713,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "508540be7e22649743181117bbde084e6cb15e7eeb96b0ee65319c7803fbb32d"
+        },
+        {
+          "path": "__pycache__/caption_proposals.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/caption_proposals.cpython-312.pyc",
+          "bytes": 33298,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "83b4cd67c5eed7ade51ca8216f4cd8c8e28379f7d7a3a49b380daeff055e6c46"
+        },
+        {
+          "path": "__pycache__/curation.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/curation.cpython-312.pyc",
+          "bytes": 8161,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3e69d658291a20ae7f90a929aeda0d77d5a06d8f2569b080e21e6d3892253f8f"
+        },
+        {
+          "path": "__pycache__/dataset_recipes.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/dataset_recipes.cpython-312.pyc",
+          "bytes": 6648,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7ed11d22540dd92a2ca7526f37c04e4d6d2ae3fcdeeb7f60513261576132143d"
+        },
+        {
+          "path": "__pycache__/dataset_releases.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/dataset_releases.cpython-312.pyc",
+          "bytes": 91722,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "40a679152fe8c8b644c9643418182e8a64e3061d743475d1bc172d31c446a9b3"
+        },
+        {
+          "path": "__pycache__/experiment_lineage.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/experiment_lineage.cpython-312.pyc",
+          "bytes": 19982,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8ecc1068dc8f7ec529f108d8df199bb35c1cc5d09c9ef73f295dcf74d4ab9e4b"
+        },
+        {
+          "path": "__pycache__/experiments.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/experiments.cpython-312.pyc",
+          "bytes": 57815,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "76e0fcd7bcab4fc443cd3d4c3eb4f5833649d121c657e2d0ca5a21c313d01fcc"
+        },
+        {
+          "path": "__pycache__/extension_bindings.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/extension_bindings.cpython-312.pyc",
+          "bytes": 32607,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "05121a15d338cb5270a6a296b4c6781ea1dccd1957998fb1e36268479b633c5c"
+        },
+        {
+          "path": "__pycache__/extension_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/extension_contract.cpython-312.pyc",
+          "bytes": 21517,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c80b0379d8efb1bb928acb01f869f0811ae63f03bddfbc934bb7ba832dbdbb4c"
+        },
+        {
+          "path": "__pycache__/extension_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/extension_evidence.cpython-312.pyc",
+          "bytes": 68816,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "ba6af220a1c07a58e55901339c2fc26385109693362935247e50d1833b994a7d"
+        },
+        {
+          "path": "__pycache__/field_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/field_evidence.cpython-312.pyc",
+          "bytes": 19250,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "4e79e096d5a165eeb6ef566a94240d5aaa67ef0f771718e3ad02c96843a568d8"
+        },
+        {
+          "path": "__pycache__/frozen_classification.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/frozen_classification.cpython-312.pyc",
+          "bytes": 6446,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "6045a2c207d7b27b66d7df06a890af44a46b51c82e4f3c9368d67a0b8636b4a0"
+        },
+        {
+          "path": "__pycache__/gateway_discovery.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/gateway_discovery.cpython-312.pyc",
+          "bytes": 16379,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e60fad3ca6b1b683db6837a0cb08b3f3a2196fb8957a750a0f7dd5e84a97d47d"
+        },
+        {
+          "path": "__pycache__/grounded_candidates.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/grounded_candidates.cpython-312.pyc",
+          "bytes": 31913,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e195c0f5cf61203cc398bd9ea5309cfc4a6647cc78e1e301ba33f1366e5fc33f"
+        },
+        {
+          "path": "__pycache__/image_classification_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/image_classification_export.cpython-312.pyc",
+          "bytes": 4340,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "941b158201119fae5897882b6116c385566f2f252063e5384a312df2c994ad74"
+        },
+        {
+          "path": "__pycache__/image_generation.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/image_generation.cpython-312.pyc",
+          "bytes": 22382,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "9cfb978e07089b47b08b402a0e893ab64a5fa734d229636aa0803cba9359fe8a"
+        },
+        {
+          "path": "__pycache__/image_training.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/image_training.cpython-312.pyc",
+          "bytes": 42735,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "da327f2b813b74e6e31904ec0e01b21568468282eb67f27b3f5961421bea5c09"
+        },
+        {
+          "path": "__pycache__/immutable_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/immutable_assets.cpython-312.pyc",
+          "bytes": 11035,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "35760a6930af7b0f1a387f3508cb5ca6be497b7a67984ac4e5ab0ec20783d6db"
+        },
+        {
+          "path": "__pycache__/mcp_observer.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/mcp_observer.cpython-312.pyc",
+          "bytes": 43119,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "824ecc8f351eba18c7fb5b0109b108e698bc5f77440fe5e05c2018a5bcac6f70"
+        },
+        {
+          "path": "__pycache__/mesh_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/mesh_release.cpython-312.pyc",
+          "bytes": 9462,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "da41295cb5548cbb7154e495a89bc96ce79cde91af4f4a4741c8925ac62ecfcd"
+        },
+        {
+          "path": "__pycache__/meshes.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/meshes.cpython-312.pyc",
+          "bytes": 24008,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b811efc64754f8242e886d4efd5550b8eeeaf96facd948c85737ab5d6331942c"
+        },
+        {
+          "path": "__pycache__/metadata.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/metadata.cpython-312.pyc",
+          "bytes": 53538,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "10f6f2fc85720bcc841a2b32e2f91ec113259f3d661b8c32293573fc1d8be474"
+        },
+        {
+          "path": "__pycache__/model_definitions.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/model_definitions.cpython-312.pyc",
+          "bytes": 34943,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "633bfa302e6e832ed1d62d1a1726292020775e5b0738047df2b36f98a988e0f3"
+        },
+        {
+          "path": "__pycache__/model_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/model_evidence.cpython-312.pyc",
+          "bytes": 42712,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b5770008b1fbd5ee63767216ab65f80acbe6d298945d7f082646f21cbfc05b0f"
+        },
+        {
+          "path": "__pycache__/native_detection_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/native_detection_import.cpython-312.pyc",
+          "bytes": 25394,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c381960ee7c348040e7e4b1f233e8c178cf5f98633ac00b642bca5f292bb25e4"
+        },
+        {
+          "path": "__pycache__/native_text_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/native_text_import.cpython-312.pyc",
+          "bytes": 19655,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e28ae4d55eedac78d211e50280a44c743b74d288abdc92ba7646bbea8b618b02"
+        },
+        {
+          "path": "__pycache__/phase_timings.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/phase_timings.cpython-312.pyc",
+          "bytes": 7324,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "893db22f37cfe677683f9c52bde6d37635e7c943976bf1298c9a9b81705b8a3a"
+        },
+        {
+          "path": "__pycache__/pipeline.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/pipeline.cpython-312.pyc",
+          "bytes": 111819,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "d3fe7b97c6d6cf54fa15ba45c85b6dfd8ac4dc0695bd1b374feeef8f9e6c7310"
+        },
+        {
+          "path": "__pycache__/pointclouds.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/pointclouds.cpython-312.pyc",
+          "bytes": 14352,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "bc5861278f90acea18443b0ee1aebff46cc0448fdd1b8c1005e8c41b3da5897d"
+        },
+        {
+          "path": "__pycache__/preferences.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/preferences.cpython-312.pyc",
+          "bytes": 18242,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "cd37e2a63f16056fb89c190c7fd5124bca7e9e3dfd1da5ba2f835d650b7cb67b"
+        },
+        {
+          "path": "__pycache__/project_activity.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/project_activity.cpython-312.pyc",
+          "bytes": 3500,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8f629397948f6b5635748d93f78356eb50e78997e6f93f3e86722560f3c33ed1"
+        },
+        {
+          "path": "__pycache__/projects.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/projects.cpython-312.pyc",
+          "bytes": 41794,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5b134c01d58d0b64f6ce1d3e73ed6722d07f1791ff4c8ee0b618c24787a8adea"
+        },
+        {
+          "path": "__pycache__/pumas_gateway_descriptor.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/pumas_gateway_descriptor.cpython-312.pyc",
+          "bytes": 8777,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "48bb7e90c16b865afd2f1eb79920f8f6a3ee73f130b8ce34c5e1e92cdd6a9b44"
+        },
+        {
+          "path": "__pycache__/pumas_operations.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/pumas_operations.cpython-312.pyc",
+          "bytes": 25521,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5136b085fce177abb645c97294e01f4059e419766cddf5a3d1954c297146daad"
+        },
+        {
+          "path": "__pycache__/pumas_vision.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/pumas_vision.cpython-312.pyc",
+          "bytes": 13694,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8cd1a739f671ddd79e4ba06431906e21237cbe49db281c870006ba96cd89dff0"
+        },
+        {
+          "path": "__pycache__/recipe_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/recipe_contract.cpython-312.pyc",
+          "bytes": 95503,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "cee2cf9edbafb4faf2177ecb60267ebd308c6d6bac26b1b05348b25455ca6e28"
+        },
+        {
+          "path": "__pycache__/recipe_process.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/recipe_process.cpython-312.pyc",
+          "bytes": 105714,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b307d29f48e3767f57fb9b9118f07e8ecde044390ecb186a4f8684d706f1152b"
+        },
+        {
+          "path": "__pycache__/release_validation.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/release_validation.cpython-312.pyc",
+          "bytes": 9440,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "f75bd9b6ef91a4843276197d0869c765aaf8573347a2c231dc1dd2e1c499cbc3"
+        },
+        {
+          "path": "__pycache__/rheon_sequence_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/rheon_sequence_contract.cpython-312.pyc",
+          "bytes": 26414,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7121ecbad397006925618f6ea67ae4960d9cfae50cc027dd7d62c9b97b5178b5"
+        },
+        {
+          "path": "__pycache__/rheon_sequences.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/rheon_sequences.cpython-312.pyc",
+          "bytes": 6954,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3a2975b1e0742a88c2427a8038e96f96799309534b3fb329e2a2b5c88b636a0d"
+        },
+        {
+          "path": "__pycache__/run_capacity.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/run_capacity.cpython-312.pyc",
+          "bytes": 6784,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b305d9ac37f8da3fa7cce270f0f6c876c7ed0e29bb3fc520d3d65d4edcf94fb6"
+        },
+        {
+          "path": "__pycache__/run_coordinator.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/run_coordinator.cpython-312.pyc",
+          "bytes": 23646,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "815b5c82c771f8f5674710cfed38a05b0d03d16bd17bf54d1ea314cfd0231848"
+        },
+        {
+          "path": "__pycache__/run_publication.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/run_publication.cpython-312.pyc",
+          "bytes": 53946,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "226a3d658a8cd4eb815a91f54c74e9e2037d9df0cdbf2274986004d6209263ba"
+        },
+        {
+          "path": "__pycache__/runs.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/runs.cpython-312.pyc",
+          "bytes": 217023,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "a614c8e1caf7d633da660e44e5b05f6426d68bbd372668ed3747ce84a2c4c11d"
+        },
+        {
+          "path": "__pycache__/runtime_snapshots.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/runtime_snapshots.cpython-312.pyc",
+          "bytes": 40259,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b5ea7448c6e09be98649bcf09278787c18896d3472e3b22edbd187d7357237c8"
+        },
+        {
+          "path": "__pycache__/saved_searches.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/saved_searches.cpython-312.pyc",
+          "bytes": 10693,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7eadc3b8525b4bc39a19f79c665cc35e480a54c8a2110e64ae28a840b0421e41"
+        },
+        {
+          "path": "__pycache__/saved_selections.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/saved_selections.cpython-312.pyc",
+          "bytes": 11834,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8b3cf66e9a1f6d0c5c8f31627aca00dfd4813a6cce8c49da8d69f1a228086452"
+        },
+        {
+          "path": "__pycache__/scientific_fields.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/scientific_fields.cpython-312.pyc",
+          "bytes": 39750,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "1bf919643cccff6bda602ef575e4d431c85a35524d3be7b0687d2369d2da4c7c"
+        },
+        {
+          "path": "__pycache__/scientific_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/scientific_release.cpython-312.pyc",
+          "bytes": 8835,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "54db3e261fa16c6393e0e9799ee327ea808611f72b209ed32a7eb5d3fadf158c"
+        },
+        {
+          "path": "__pycache__/sequence_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/sequence_assets.cpython-312.pyc",
+          "bytes": 1615,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "338c4565a32036f7a6e8bc364c8076207b7fd7c727facf49fa7049b51c6d9dee"
+        },
+        {
+          "path": "__pycache__/sequence_batch_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/sequence_batch_import.cpython-312.pyc",
+          "bytes": 8365,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "ee5a1297946b2f97f45fe9481af0d7b5e67f1d21ff78cb8170a458058686afa1"
+        },
+        {
+          "path": "__pycache__/sequence_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/sequence_release.cpython-312.pyc",
+          "bytes": 9157,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c28f38cde2be60541860727d6ca2b4f958f69a1e546a78f3e9d02e26149762b3"
+        },
+        {
+          "path": "__pycache__/spatial_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/spatial_assets.cpython-312.pyc",
+          "bytes": 9208,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "1ec14360367632deda1941c19949e8a59d127880385afe5e8b2f9e7cb47cfb15"
+        },
+        {
+          "path": "__pycache__/spatial_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/spatial_release.cpython-312.pyc",
+          "bytes": 9523,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "d652ef467c54ea670e2f98a946151e06b7bbfbacf5384dc08a189c5e9951c50a"
+        },
+        {
+          "path": "__pycache__/synthetic.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/synthetic.cpython-312.pyc",
+          "bytes": 33624,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c9a79610c453ce16071124c9259d3329ca406e60d30d62bcf82ef43320e483d4"
+        },
+        {
+          "path": "__pycache__/text_classification_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/text_classification_export.cpython-312.pyc",
+          "bytes": 6485,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "9af38235f548ac66a45e4ca234510b2c0b24c7643dc2ac2d0c907bfa23b34631"
+        },
+        {
+          "path": "__pycache__/text_classification_proposals.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/text_classification_proposals.cpython-312.pyc",
+          "bytes": 33184,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "1575396c767dc1e320b7f65df25ba7a341b076c3c4cdbc62419ea4b8ad8bbfaf"
+        },
+        {
+          "path": "__pycache__/text_corpus_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/text_corpus_export.cpython-312.pyc",
+          "bytes": 8862,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "df8c0686f43d7dea13114cd02a866eede3b227aea920212095eea40c86b6c884"
+        },
+        {
+          "path": "__pycache__/text_training.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/text_training.cpython-312.pyc",
+          "bytes": 41683,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3342dd95e44305b2dfa0a8ad5c871fda22ee8e856b717ef9c445f81badd14a75"
+        },
+        {
+          "path": "__pycache__/volume_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/volume_assets.cpython-312.pyc",
+          "bytes": 15405,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e70fd8f76cb4ed2bf82a9d17a10a0f1cadd63151c6e3cc77db28830f8339119d"
+        },
+        {
+          "path": "__pycache__/workbench.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/__pycache__/workbench.cpython-312.pyc",
+          "bytes": 59512,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5b10380eb20db49de1a745f58c934a0a4715e1ceeb6f5d48520888d30e0e572b"
+        },
+        {
+          "path": "examples/extensions/field-surrogate/v2/__pycache__/cold_oracle.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/examples/extensions/field-surrogate/v2/__pycache__/cold_oracle.cpython-312.pyc",
+          "bytes": 27527,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "91111c35be0ec8c4094ebb05311e8e423097fe20febb309f53141a94f8dec0b1"
+        },
+        {
+          "path": "examples/extensions/field-surrogate/v2/__pycache__/evidence_writer.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/examples/extensions/field-surrogate/v2/__pycache__/evidence_writer.cpython-312.pyc",
+          "bytes": 8600,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e3fd1ab1504591211897b526a96ebd8bce69d27a34d092c2c58226d64a085fb3"
+        },
+        {
+          "path": "tests/__pycache__/auth_helpers.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/auth_helpers.cpython-312.pyc",
+          "bytes": 3914,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "85152c0d81313d9c6a798070d5f0ee0d9a8322753a4ad96badc3e83421ad4c2f"
+        },
+        {
+          "path": "tests/__pycache__/qualify_publication_synthetic.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/qualify_publication_synthetic.cpython-312.pyc",
+          "bytes": 36451,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "790a7c8fefef36ecb7e78f9a0c9125808abb091837932b2b871068dc46b41106"
+        },
+        {
+          "path": "tests/__pycache__/test_extension_field_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_extension_field_evidence.cpython-312.pyc",
+          "bytes": 64545,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "92de7d6ddf06b92f29c70f555c5bb715f3c83ebc72226ee4e5e474f9cf43f3ac"
+        },
+        {
+          "path": "tests/__pycache__/test_extension_sdk_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_extension_sdk_evidence.cpython-312.pyc",
+          "bytes": 20531,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "fec962b685867e1f7ddd5816ea6884c6882eb2818dada622604e12dfbe35ecc5"
+        },
+        {
+          "path": "tests/__pycache__/test_indexed_diagnostics.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_indexed_diagnostics.cpython-312.pyc",
+          "bytes": 31230,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c2f43de1b9fa92e6830dedee37fcdefb707dce47cfcf66973dee434036961cad"
+        },
+        {
+          "path": "tests/__pycache__/test_indexed_diagnostics_publication.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_indexed_diagnostics_publication.cpython-312.pyc",
+          "bytes": 33457,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "10a134e9d84096fc84afc9fdf3ebd4d38d8954267f9d22cc65cb1f86f6d58206"
+        },
+        {
+          "path": "tests/__pycache__/test_recipe_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_recipe_contract.cpython-312.pyc",
+          "bytes": 31043,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "69ae3d1f65c1de429c2468c1acd3384f50702734ed03e6f4ef22e6446098c23d"
+        },
+        {
+          "path": "tests/__pycache__/test_run_preflight_publication.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_run_preflight_publication.cpython-312.pyc",
+          "bytes": 12696,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b4d7addc94fdb06fc3411dec5768609530f2d123a8f2165a8284eacdbf84acc1"
+        },
+        {
+          "path": "tests/__pycache__/test_run_publication_http.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/__pycache__/test_run_publication_http.cpython-312.pyc",
+          "bytes": 33691,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "30e7b62627380cbd8c199717d4d49c268f8fd4fa77a853fffd6613c08d103de4"
+        },
+        {
+          "path": "tuldok_extension_sdk/__pycache__/__init__.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tuldok_extension_sdk/__pycache__/__init__.cpython-312.pyc",
+          "bytes": 268,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "30c9f35d78a1be742dbc9dfcbdd7c3a7942cf1177c0857c91779b8864cb797ce"
+        },
+        {
+          "path": "tuldok_extension_sdk/__pycache__/diagnostics.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tuldok_extension_sdk/__pycache__/diagnostics.cpython-312.pyc",
+          "bytes": 23759,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3d6d747cb6db09de913e2597bab1f5f0e4f58c4b5533d44ae91eeb9446448316"
+        },
+        {
+          "path": "tuldok_extension_sdk/__pycache__/evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/tuldok_extension_sdk/__pycache__/evidence.cpython-312.pyc",
+          "bytes": 39059,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "32967c8ffe1dea23db39a5606952c3ddc9c99fc0858c0c75e1ac395b6a4a5c43"
+        }
+      ],
+      "ignored_count": 89,
+      "ignored_noncache_qa_count": 0,
+      "ignored_noncache_qa_bytes": 0,
+      "regenerable_cache_count": 89,
+      "regenerable_cache_bytes": 2882603,
+      "open_based_dependents": {
+        "query": "repo:MrScripty/Tuldok is:open base:feature/lab-indexed-diagnostics-20261019",
+        "returned": 0,
+        "raw_metadata": "/tmp/tuldok-pr108-alias-0-open-base-dependents.json",
+        "fresh_single_lookup": true
+      },
+      "future_disposition": "Candidate only; archive all ignored noncache QA, independently recover and verify exact sizes/hashes, then fresh independent precheck and root-owned deletion."
+    },
+    {
+      "branch": "fix/indexed-ci-qualification-20261020",
+      "local_ref": "refs/heads/fix/indexed-ci-qualification-20261020",
+      "path": "/workspace/Tuldok-indexed-ci-repair-20261020",
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "worktree_record": {
+        "worktree": "/workspace/Tuldok-indexed-ci-repair-20261020",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/fix/indexed-ci-qualification-20261020"
+      },
+      "clean_tracked_and_nonignored": true,
+      "status_porcelain": "",
+      "ancestor_of_accepted_main": true,
+      "head_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "unaccepted_unique_commit_count": 0,
+      "not_original_protected_ref_or_worktree": true,
+      "commit_disposition": "retained: accepted commit is reachable from refs/remotes/origin/main and merged main commit c1fc60db",
+      "ignored_entries": [
+        {
+          "path": "__pycache__/access.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/access.cpython-312.pyc",
+          "bytes": 39992,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "49f4ae262102b01a5ffb834fa41fc6fc9667fd9de75b90fa2dfd2ce101bb4d17"
+        },
+        {
+          "path": "__pycache__/agent_api.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/agent_api.cpython-312.pyc",
+          "bytes": 149276,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b61485a65d4c866163d3348337006a0a80c500c7167795efd23ed359d6d302e9"
+        },
+        {
+          "path": "__pycache__/ai.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/ai.cpython-312.pyc",
+          "bytes": 10615,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "fdee86ec058bfa55cf356d41570a0bb306783adb04c5e62395632e0e5c38ad7d"
+        },
+        {
+          "path": "__pycache__/ai_codex.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/ai_codex.cpython-312.pyc",
+          "bytes": 12342,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "9c0b8b46bc2b77c1ed5925a6cace26bd52d5167cfff6f662ff8ff7d9d9acdd8b"
+        },
+        {
+          "path": "__pycache__/ai_http.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/ai_http.cpython-312.pyc",
+          "bytes": 28139,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "53ec5c12e2813ce6d7ff52bdaed9c944f7e61bb3af565a59301b5501277375a5"
+        },
+        {
+          "path": "__pycache__/ai_openrouter.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/ai_openrouter.cpython-312.pyc",
+          "bytes": 3851,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "a36293bf4aacd1701caff5c09256006471ca5efd4040304ead5f4504e3ab19c5"
+        },
+        {
+          "path": "__pycache__/app.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/app.cpython-312.pyc",
+          "bytes": 123520,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "50fc4e75b3b88bb48f3908a5930ba97e93c44f71988a04a4375eaa07579ada2d"
+        },
+        {
+          "path": "__pycache__/audio_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/audio_assets.cpython-312.pyc",
+          "bytes": 15654,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "299f75f2c80dbc24d51fab082fff19dcf50d22983d1edc18d39f4b562264ea89"
+        },
+        {
+          "path": "__pycache__/audio_classification_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/audio_classification_export.cpython-312.pyc",
+          "bytes": 8697,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "58f78b90d23670d5a03c841825e404460ed76e51e99bd502cad3f42711d587fa"
+        },
+        {
+          "path": "__pycache__/audio_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/audio_export.cpython-312.pyc",
+          "bytes": 1371,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b549272cfc4395566712cbe58927ff8704fcae54d72a128a3cdc840126703b8a"
+        },
+        {
+          "path": "__pycache__/audio_training.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/audio_training.cpython-312.pyc",
+          "bytes": 45345,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "fef9df0297b0274a9fac72029cf7c023a5d65312ff44a25f26b5bfb1c566c8c2"
+        },
+        {
+          "path": "__pycache__/bulk_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/bulk_import.cpython-312.pyc",
+          "bytes": 9081,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7699cbdab0c179901a579553393153abd5097be324b6b6fc0a597ea2dbbbe449"
+        },
+        {
+          "path": "__pycache__/candidate_packages.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/candidate_packages.cpython-312.pyc",
+          "bytes": 154580,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7e93e60b774636e105ee2673800d834be4cb51171e3c38c0438a82e1b7f49ee3"
+        },
+        {
+          "path": "__pycache__/canonical_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/canonical_release.cpython-312.pyc",
+          "bytes": 14028,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b4a9a0546f042d970db7646347117d0454b7e9f876bce8cd03a2242cd7a6ae56"
+        },
+        {
+          "path": "__pycache__/caption_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/caption_import.cpython-312.pyc",
+          "bytes": 27713,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "78cfe172c66af592dea64d1f0045156cbe647c0ff6c3420e167767474942f48d"
+        },
+        {
+          "path": "__pycache__/caption_proposals.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/caption_proposals.cpython-312.pyc",
+          "bytes": 33298,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5e40ded26113c9ea458b69991ffc5e9a4dd2b7f148da6028bacfc64154cf4526"
+        },
+        {
+          "path": "__pycache__/curation.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/curation.cpython-312.pyc",
+          "bytes": 8161,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "cc000d99b098eec099a7c8d2ecacf8e37e4eae026186d8aeb0646a4ffc571ca8"
+        },
+        {
+          "path": "__pycache__/dataset_recipes.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/dataset_recipes.cpython-312.pyc",
+          "bytes": 6648,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c3213e9378d0ee334a8a5cba43d938737ba209ba960cee10961f1db4fd9363d2"
+        },
+        {
+          "path": "__pycache__/dataset_releases.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/dataset_releases.cpython-312.pyc",
+          "bytes": 91722,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "1f74b7d6426432491a17391ae81559770e352f80279fdb1c0c306cf35033ef09"
+        },
+        {
+          "path": "__pycache__/experiment_lineage.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/experiment_lineage.cpython-312.pyc",
+          "bytes": 19982,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "9197875ba1923ac9814c5dc72ebf367f222ce4aeb79f00cf7deb8b2e267031bc"
+        },
+        {
+          "path": "__pycache__/experiments.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/experiments.cpython-312.pyc",
+          "bytes": 57815,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "af7a6ce3e262587dd82ae0830c4b167fcb7ce43c18af0a1170ac1b32083d706c"
+        },
+        {
+          "path": "__pycache__/extension_bindings.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/extension_bindings.cpython-312.pyc",
+          "bytes": 32607,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "69569d8d294b1f8c8f31477c26f8362099aff75342808d0e40fdebdd867557f8"
+        },
+        {
+          "path": "__pycache__/extension_canonical.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/extension_canonical.cpython-312.pyc",
+          "bytes": 30743,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "1836d3241819dc31dfe6bd4726f1b7f6adec11851fd1f64c2ff27a415568fd09"
+        },
+        {
+          "path": "__pycache__/extension_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/extension_contract.cpython-312.pyc",
+          "bytes": 21517,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "4fbc576314ee420dde62f7860bed37522580f759d94725c8a51d12ab33ab4fad"
+        },
+        {
+          "path": "__pycache__/extension_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/extension_evidence.cpython-312.pyc",
+          "bytes": 74720,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "a43f5cfff4eb18b6162be032a49a7107fdbc0ee57efd741a569845e734091bf1"
+        },
+        {
+          "path": "__pycache__/field_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/field_evidence.cpython-312.pyc",
+          "bytes": 19250,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "65c52cf8d93b1e4083d11cb753fd8bfe58357f55792fdc0baee6a3ce60fa4157"
+        },
+        {
+          "path": "__pycache__/frozen_classification.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/frozen_classification.cpython-312.pyc",
+          "bytes": 6446,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "18cef6689444b000e08c943bd9d08eb81b64f0829651745e2c591dd081307f5a"
+        },
+        {
+          "path": "__pycache__/gateway_discovery.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/gateway_discovery.cpython-312.pyc",
+          "bytes": 16379,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "65c7e337b379a1afed0ae86e7f3f216b85f632fb68331f9d98e15093f3ec198f"
+        },
+        {
+          "path": "__pycache__/grounded_candidates.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/grounded_candidates.cpython-312.pyc",
+          "bytes": 31913,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5a916a299ab5a8ff0fec1a0564a77473e52666a82be1328183cd66526d794f87"
+        },
+        {
+          "path": "__pycache__/image_classification_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/image_classification_export.cpython-312.pyc",
+          "bytes": 4340,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8e7642ad9f09f5e9e16dee3bde4bec6934edb8a2c31592d0e8e4ac73b4bc9979"
+        },
+        {
+          "path": "__pycache__/image_generation.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/image_generation.cpython-312.pyc",
+          "bytes": 22382,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "f993c0a8a3c1e1b5f5344ffec513ae1006ad3d0b1d365f4c0c654d78db03a409"
+        },
+        {
+          "path": "__pycache__/image_training.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/image_training.cpython-312.pyc",
+          "bytes": 42735,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e3d89686c83ed1f2dfb0771691a017de1a9c8519259666e7662e6c08fca76ffb"
+        },
+        {
+          "path": "__pycache__/immutable_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/immutable_assets.cpython-312.pyc",
+          "bytes": 11035,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3f20f4bbbeb205f60a50db8dae32de57595b56bd080c410b1ce2f9a8d68deb90"
+        },
+        {
+          "path": "__pycache__/mcp_observer.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/mcp_observer.cpython-312.pyc",
+          "bytes": 43119,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "71fa46e0ab4f9f4dec34b64331aa34f49adc9145ae68a2aa0f665668c7a0ae68"
+        },
+        {
+          "path": "__pycache__/mesh_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/mesh_release.cpython-312.pyc",
+          "bytes": 9462,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "865f646f94e58fedeed70fbcb145513a37b391e67ab5737f419e508435c59690"
+        },
+        {
+          "path": "__pycache__/meshes.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/meshes.cpython-312.pyc",
+          "bytes": 24008,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b731e2e0c8275e3658443fd808cbe2ab23faf194d9758adb7fe4d3e82efe53a7"
+        },
+        {
+          "path": "__pycache__/metadata.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/metadata.cpython-312.pyc",
+          "bytes": 53538,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "85b17be091b03abdaba70dad39f2e09fa0944de95ba9361aa462773077888ebf"
+        },
+        {
+          "path": "__pycache__/model_definitions.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/model_definitions.cpython-312.pyc",
+          "bytes": 34943,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "0ce060a6dd7377834c56ae4fa164661d5785b70f5d8cdd45217c38bd41f14ba7"
+        },
+        {
+          "path": "__pycache__/native_detection_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/native_detection_import.cpython-312.pyc",
+          "bytes": 25394,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8cdfd16bc30ff4bd0bb31602ba67b8824a3396909965514fb65d32c3dc1b2698"
+        },
+        {
+          "path": "__pycache__/native_text_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/native_text_import.cpython-312.pyc",
+          "bytes": 19655,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "16b22ac938dc94b618e87f49c0e9fabeb480d62998150b5ffd0e3c74f1042838"
+        },
+        {
+          "path": "__pycache__/phase_timings.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/phase_timings.cpython-312.pyc",
+          "bytes": 7324,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "1fd0ed207d6dcdb9f5917fc50309f43f12f35cd4757012260c8c490a716215ef"
+        },
+        {
+          "path": "__pycache__/pipeline.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/pipeline.cpython-312.pyc",
+          "bytes": 111819,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "6038fdb6ba01b131c0ea3523ccbbf1140e232bf2dfda5748d95b38eecadd2a33"
+        },
+        {
+          "path": "__pycache__/pointclouds.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/pointclouds.cpython-312.pyc",
+          "bytes": 14352,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "50db014f0fccbc8807cda2a288bf70fc20c87d10dbe2c6f622be528f824b1355"
+        },
+        {
+          "path": "__pycache__/preferences.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/preferences.cpython-312.pyc",
+          "bytes": 18242,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e68244242379c082c05f384dada5a6abe1cad3bb6a4b6c135defbcbd36f6af7d"
+        },
+        {
+          "path": "__pycache__/project_activity.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/project_activity.cpython-312.pyc",
+          "bytes": 3500,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e6e7e577ed9ed1f3371b8291c0b53b74ca3db7d7f4023705d7c8df99ba27d483"
+        },
+        {
+          "path": "__pycache__/projects.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/projects.cpython-312.pyc",
+          "bytes": 41794,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "a3984112064e9cd443c4c46c5d7d6449dc24de0d3426dd4d3520ca21d352d548"
+        },
+        {
+          "path": "__pycache__/pumas_gateway_descriptor.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/pumas_gateway_descriptor.cpython-312.pyc",
+          "bytes": 8777,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "328d69adaec5d655a8705e22249d008d37f464d6d55deb68d4d5483b3d3e2ebb"
+        },
+        {
+          "path": "__pycache__/pumas_operations.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/pumas_operations.cpython-312.pyc",
+          "bytes": 25521,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "c1d9b46ab20565ace368524ed680cc20bb493abd59c3e0a00f12aff107f82528"
+        },
+        {
+          "path": "__pycache__/pumas_vision.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/pumas_vision.cpython-312.pyc",
+          "bytes": 13694,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b9cc4d5d41b15c1ad7c05316ec7dd9f4f15d02bb47991f2c97cff1f971fcef98"
+        },
+        {
+          "path": "__pycache__/recipe_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/recipe_contract.cpython-312.pyc",
+          "bytes": 95503,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "4a0f19883b3034b1fbc5bdc5f1388019e8aa953d8caedce0b184a7a2436e98b0"
+        },
+        {
+          "path": "__pycache__/recipe_process.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/recipe_process.cpython-312.pyc",
+          "bytes": 105714,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "6710c08c48f89f823d5257e217369509b20f0e624d93e1a280739b30a8f741cb"
+        },
+        {
+          "path": "__pycache__/release_validation.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/release_validation.cpython-312.pyc",
+          "bytes": 9440,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "b7ce259b80a9d5bbf22412c3bf361dee73c4886a0b61e5580390dcf2ee06420b"
+        },
+        {
+          "path": "__pycache__/rheon_sequence_contract.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/rheon_sequence_contract.cpython-312.pyc",
+          "bytes": 26414,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "41980653fda26dc8776f252fefb2633cf2d38051eeb6ddb22e810a6634c0e230"
+        },
+        {
+          "path": "__pycache__/rheon_sequences.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/rheon_sequences.cpython-312.pyc",
+          "bytes": 6954,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "dfedd79070576ebe3f8308d17f8eec988e70bede7af0c93e5c75f7304af5f14a"
+        },
+        {
+          "path": "__pycache__/run_capacity.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/run_capacity.cpython-312.pyc",
+          "bytes": 6784,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3c63d6751dab85a75deb73cef63fa15308e5db2d1a0ac489c1190baf92533358"
+        },
+        {
+          "path": "__pycache__/run_coordinator.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/run_coordinator.cpython-312.pyc",
+          "bytes": 23646,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8da4956e918306c59388f04849e0c3d8334c90cf5edd6285cca0774ebf38a824"
+        },
+        {
+          "path": "__pycache__/runs.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/runs.cpython-312.pyc",
+          "bytes": 225424,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "f3e0ddca887f69d6f48e4d9ce6635554e0f497e647fde1b73b172cf73049d5aa"
+        },
+        {
+          "path": "__pycache__/saved_searches.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/saved_searches.cpython-312.pyc",
+          "bytes": 10693,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "2448b36f828a787abab2bbce53d6768dd04f68cbdc3448d6b53bf0e9cabe58aa"
+        },
+        {
+          "path": "__pycache__/saved_selections.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/saved_selections.cpython-312.pyc",
+          "bytes": 11834,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "147b2241e78999363ec0990202f85046fd72388e8d6700829938b001b97a7dc5"
+        },
+        {
+          "path": "__pycache__/scientific_fields.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/scientific_fields.cpython-312.pyc",
+          "bytes": 39750,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "f8aaaa41ac7ed2bc7ac8cf092d0325395ef7f6a08d723eb4302cbd43ec35d375"
+        },
+        {
+          "path": "__pycache__/scientific_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/scientific_release.cpython-312.pyc",
+          "bytes": 8835,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8f2b346f1c3ae1a93bdde81f0aca0002c390f23992862d783654f7fa34d7340c"
+        },
+        {
+          "path": "__pycache__/sequence_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/sequence_assets.cpython-312.pyc",
+          "bytes": 1615,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "980098a54edd571d881d75c4485f48cd619d1a3cf285f96a58bc81f8a45de42c"
+        },
+        {
+          "path": "__pycache__/sequence_batch_import.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/sequence_batch_import.cpython-312.pyc",
+          "bytes": 8365,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "0cb3b75ba2b555ddfd0ddda6091f9efb9e82ae5612513bd9df06299abbead88d"
+        },
+        {
+          "path": "__pycache__/sequence_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/sequence_release.cpython-312.pyc",
+          "bytes": 9157,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7ff7cafd600cd9b15044646085aab1dea5ddc0f25a1f6a6f21264ec114d2f2c9"
+        },
+        {
+          "path": "__pycache__/spatial_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/spatial_assets.cpython-312.pyc",
+          "bytes": 9208,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "77e172cb09dff98e5b7c19d816225de94b5ad42fcb8c8ceb785d6bd09cbfcacf"
+        },
+        {
+          "path": "__pycache__/spatial_release.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/spatial_release.cpython-312.pyc",
+          "bytes": 9523,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "224aa47a7203c6cc185faf672f28f14f00d7517c48101460656dfccd93265a56"
+        },
+        {
+          "path": "__pycache__/synthetic.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/synthetic.cpython-312.pyc",
+          "bytes": 33624,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "f4ad2c132c9c8e9e7b6ea3155f8777ee25f1319c0dd9aa0cb21ba2cd0e9ada6a"
+        },
+        {
+          "path": "__pycache__/text_classification_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/text_classification_export.cpython-312.pyc",
+          "bytes": 6485,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "394dd3d1a17f77da1fcec2dd16cf8f5eb51a0460e3f7d952c4da182df6195cd9"
+        },
+        {
+          "path": "__pycache__/text_classification_proposals.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/text_classification_proposals.cpython-312.pyc",
+          "bytes": 33184,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "44bee38d82bd81cd5da09189ba355575ded81188625918bc296d50b5c2492f6f"
+        },
+        {
+          "path": "__pycache__/text_corpus_export.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/text_corpus_export.cpython-312.pyc",
+          "bytes": 8862,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3c71b3eaf7c681b69a56eca52c1e640f9963b4fbf6049c72e6ff46968d9c5b1b"
+        },
+        {
+          "path": "__pycache__/text_training.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/text_training.cpython-312.pyc",
+          "bytes": 41683,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "ef0e9d048f826988f3176399a7c6f57db17f83bd97ba82064005f07527972212"
+        },
+        {
+          "path": "__pycache__/volume_assets.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/volume_assets.cpython-312.pyc",
+          "bytes": 15405,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "845d0cc286789ae1a0a5c249db770694f4bca91b5f6bfabfd4228493d5be3378"
+        },
+        {
+          "path": "__pycache__/workbench.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/__pycache__/workbench.cpython-312.pyc",
+          "bytes": 59512,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "450570f5dc25ed802825e2ab4e17413bf6da122aa7f7a5fe86533a1b6139f7b6"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/decoded-log-integrity.json",
+          "bytes": 565,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "e0125307fd4aec7c4b59273f5930f173193379d628d7ed9baa2f5b5b596bab53"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390263480.log",
+          "bytes": 244169,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "7e1266babfd3ba1848eba8d2d6092eb20d51c06c1cf5d3c1ce5b9171c2304226"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/job-118390269600.log",
+          "bytes": 246001,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "98934e1340a1e5296677f65c72ba235bba8ede29b4cad62b9c1d73c43d925ffc"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/owned-schemas.jsonl",
+          "bytes": 2019,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8cd0cbab53587b39461471abdd42fd2bea5a45f64b86f9bac403a28f551bcc41"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/repair-summary.json",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/repair-summary.json",
+          "bytes": 1854,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "2c9462ccfe36f8a0bbfcea511b15de4c5f18ce528bd09beb03076afd5c529628"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/reproduction.log",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/reproduction.log",
+          "bytes": 1189,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "a9e0e999532d4cd92c3e2ebea74bd062caad4faf916eddd50af2124469d784ed"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349557883-jobs.json",
+          "bytes": 32291,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "386e05a09b414253dfb94bc035de9a8e5d91e0557138238aab5dec16ec4c1b47"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run-39349559827-jobs.json",
+          "bytes": 32291,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3bd05dc502072f0ca0de6c4b3bbd368e98ef9b5b7f011df03f405e0a4c34013a"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/run_owned_canonical.py",
+          "bytes": 2773,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8998f810b6e1ee49fe1db70847d73e84d9dc51153545bf70e619707d059ac084"
+        },
+        {
+          "path": "build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/build/qa/indexed-ci-repair-20261020/targeted-validation.log",
+          "bytes": 3447,
+          "classification": "ignored_noncache_qa_requires_archive",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "8b0f149bdcf26808b017d4200f048c21a65a1a243042d4d7968af12aac83e40b"
+        },
+        {
+          "path": "examples/extensions/field-surrogate/v2/__pycache__/evidence_writer.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/examples/extensions/field-surrogate/v2/__pycache__/evidence_writer.cpython-312.pyc",
+          "bytes": 8600,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5f4579a7797d3d07326a4a2b2121c5b48c24b677e99d0dc505462a7e2dadf3c5"
+        },
+        {
+          "path": "examples/extensions/field-surrogate/v3-canonical/__pycache__/cold_oracle.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/examples/extensions/field-surrogate/v3-canonical/__pycache__/cold_oracle.cpython-312.pyc",
+          "bytes": 39782,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "266536944a4a96a7846b0741b9dcd3f6affb87e3c5b721a1b19de401ebc72b7e"
+        },
+        {
+          "path": "tests/__pycache__/auth_helpers.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/auth_helpers.cpython-312.pyc",
+          "bytes": 3914,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "875fdbe003fe05d7750fbce8d8d0c6259c3cc7400f95dec69e991efd17b233c2"
+        },
+        {
+          "path": "tests/__pycache__/extension_canonical_fixture.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/extension_canonical_fixture.cpython-312.pyc",
+          "bytes": 23753,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "5b7487a794fa01b0971501bf3941e27ec23865a1000ffa89578392df709249e2"
+        },
+        {
+          "path": "tests/__pycache__/prepare_extension_canonical_project.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/prepare_extension_canonical_project.cpython-312.pyc",
+          "bytes": 16362,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "ec82288a7cec0def9943086f82222a55d208fa4de7bf2768d48cf75d1311657f"
+        },
+        {
+          "path": "tests/__pycache__/test_candidate_packages.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/test_candidate_packages.cpython-312.pyc",
+          "bytes": 47144,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "97fc35a71c008d672bf751efeab149bfb19faa0ab1b2e78150c339227d01fdbd"
+        },
+        {
+          "path": "tests/__pycache__/test_canonical_candidate_packages.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/test_canonical_candidate_packages.cpython-312.pyc",
+          "bytes": 38498,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "00bd9a77203e3ee912cbe1033610f62c074e62bab3a9c6f7a8178fd445fa8a6a"
+        },
+        {
+          "path": "tests/__pycache__/test_extension_canonical_author.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/test_extension_canonical_author.cpython-312.pyc",
+          "bytes": 21028,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "3f56d1881f0b6c5de57f416e62a4fc1a4bb8f65d990b47acd529ed6d9ada9f1f"
+        },
+        {
+          "path": "tests/__pycache__/test_extension_field_evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/test_extension_field_evidence.cpython-312.pyc",
+          "bytes": 64545,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "271bd21077eb9451abefecf32df72a3b658cf879eab1e100ab367e21ec30b5df"
+        },
+        {
+          "path": "tests/__pycache__/test_scalar_candidate_packages.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tests/__pycache__/test_scalar_candidate_packages.cpython-312.pyc",
+          "bytes": 22578,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "6f72732931d07d1f695247caae1612ef9844fa7018e7b076f7921fca23603b86"
+        },
+        {
+          "path": "tuldok_extension_sdk/__pycache__/__init__.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tuldok_extension_sdk/__pycache__/__init__.cpython-312.pyc",
+          "bytes": 268,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "6df386bdcc5393d120bf643fbabb756451cf9771041374af50d98c5e47ce823f"
+        },
+        {
+          "path": "tuldok_extension_sdk/__pycache__/evidence.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tuldok_extension_sdk/__pycache__/evidence.cpython-312.pyc",
+          "bytes": 39059,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "64a668fdf77f82b9620aedfb710ce44c0d5c11a60596a0dfc7ab4353f3d9bedb"
+        },
+        {
+          "path": "tuldok_extension_sdk/__pycache__/manifest.cpython-312.pyc",
+          "absolute_path": "/workspace/Tuldok-indexed-ci-repair-20261020/tuldok_extension_sdk/__pycache__/manifest.cpython-312.pyc",
+          "bytes": 6622,
+          "classification": "regenerable_cache",
+          "mode": "0o600",
+          "kind": "regular_file",
+          "sha256": "04c3b5d7370222213da7ff22307a487695ca6f2fc292f43fda8be5a49c262f67"
+        }
+      ],
+      "ignored_count": 96,
+      "ignored_noncache_qa_count": 10,
+      "ignored_noncache_qa_bytes": 566599,
+      "regenerable_cache_count": 86,
+      "regenerable_cache_bytes": 2770806,
+      "open_based_dependents": {
+        "query": "repo:MrScripty/Tuldok is:open base:fix/indexed-ci-qualification-20261020",
+        "returned": 0,
+        "raw_metadata": "/tmp/tuldok-pr108-alias-1-open-base-dependents.json",
+        "fresh_single_lookup": true
+      },
+      "future_disposition": "Candidate only; archive all ignored noncache QA, independently recover and verify exact sizes/hashes, then fresh independent precheck and root-owned deletion."
+    }
+  ],
+  "qa_archive_required": {
+    "noncache_files": 10,
+    "noncache_bytes": 566599,
+    "archive_created": false,
+    "recovery_verified": false,
+    "root_required_action": "Archive exact ignored noncache QA files with names/sizes/hashes and verify an independent recovery before independent destructive precheck. Cache classification alone does not delete anything."
+  },
+  "protected_baseline": {
+    "inputs": [
+      {
+        "path": "/tmp/tuldok-20261019-protected-local-heads.txt",
+        "sha256": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8"
+      },
+      {
+        "path": "/tmp/tuldok-20261019-protected-worktrees.txt",
+        "sha256": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+      }
+    ],
+    "original_refs": 82,
+    "original_worktrees": 96,
+    "original_unique_oids": 91,
+    "reference_conflicts": [],
+    "worktree_conflicts": [],
+    "missing_original_oids": [],
+    "original_oids": [
+      {
+        "oid": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "direct_retained_locations": [
+          "refs/heads/test/native-author-ab-evidence",
+          "worktree_HEAD:/workspace/Tuldok-native-ab-browser"
+        ]
+      },
+      {
+        "oid": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-e2-author-review",
+          "worktree_HEAD:/workspace/Tuldok-e2-review"
+        ]
+      },
+      {
+        "oid": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-model-author-workspace",
+          "worktree_HEAD:/workspace/Tuldok-author-ui"
+        ]
+      },
+      {
+        "oid": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "direct_retained_locations": [
+          "refs/heads/docs/e4-ab-final-qualification",
+          "refs/remotes/origin/docs/e4-ab-final-qualification",
+          "worktree_HEAD:/workspace/Tuldok-e4-final-report"
+        ]
+      },
+      {
+        "oid": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "direct_retained_locations": [
+          "refs/heads/feat/e1-e2-contribution-bindings",
+          "worktree_HEAD:/workspace/Tuldok-extension-bindings"
+        ]
+      },
+      {
+        "oid": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-p3-activation-verify"
+        ]
+      },
+      {
+        "oid": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "direct_retained_locations": [
+          "refs/heads/qa/independent-b-cold-actual",
+          "worktree_HEAD:/workspace/Tuldok-b-cold-independent-review"
+        ]
+      },
+      {
+        "oid": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "direct_retained_locations": [
+          "refs/heads/fix/p3-strict-evidence-decoding",
+          "worktree_HEAD:/workspace/Tuldok-p3-decoder-fix"
+        ]
+      },
+      {
+        "oid": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-workspace",
+          "worktree_HEAD:/workspace/Tuldok-ui"
+        ]
+      },
+      {
+        "oid": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "direct_retained_locations": [
+          "refs/heads/test/p5-captured-runtime-ci",
+          "refs/remotes/origin/test/p5-captured-runtime-ci",
+          "worktree_HEAD:/workspace/Tuldok-p5-ci"
+        ]
+      },
+      {
+        "oid": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-fields-native",
+          "worktree_HEAD:/workspace/Tuldok-e2-ui"
+        ]
+      },
+      {
+        "oid": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "direct_retained_locations": [
+          "refs/heads/docs/product-api-source-provenance",
+          "worktree_HEAD:/workspace/Tuldok-api-source-provenance"
+        ]
+      },
+      {
+        "oid": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p4",
+          "worktree_HEAD:/workspace/Tuldok-p4"
+        ]
+      },
+      {
+        "oid": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "direct_retained_locations": [
+          "refs/heads/test/x3-b-semantic-refusals",
+          "worktree_HEAD:/workspace/Tuldok-b-refusals"
+        ]
+      },
+      {
+        "oid": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-sdk-evidence",
+          "refs/remotes/origin/feature/extension-sdk-evidence",
+          "worktree_HEAD:/workspace/Tuldok-sdk-evidence"
+        ]
+      },
+      {
+        "oid": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "direct_retained_locations": [
+          "refs/heads/test/external-browser-handler-readiness",
+          "worktree_HEAD:/workspace/Tuldok-external-browser-readiness"
+        ]
+      },
+      {
+        "oid": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "direct_retained_locations": [
+          "refs/heads/test/e4-ab-retention",
+          "worktree_HEAD:/workspace/Tuldok-ab-retention"
+        ]
+      },
+      {
+        "oid": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-local-50502-qualification",
+          "worktree_HEAD:/workspace/Tuldok-extension-local-qa"
+        ]
+      },
+      {
+        "oid": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "direct_retained_locations": [
+          "refs/heads/integration/model-development-p2-final",
+          "worktree_HEAD:/workspace/Tuldok-p2-final"
+        ]
+      },
+      {
+        "oid": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-prep-review"
+        ]
+      },
+      {
+        "oid": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "direct_retained_locations": [
+          "refs/heads/test/main505-agent-authoring-recovery",
+          "worktree_HEAD:/workspace/Tuldok-main505-agent-authoring-recovery"
+        ]
+      },
+      {
+        "oid": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "direct_retained_locations": [
+          "refs/heads/fix/author-oracle-resume",
+          "refs/remotes/origin/fix/author-oracle-resume",
+          "worktree_HEAD:/workspace/Tuldok-author-resume"
+        ]
+      },
+      {
+        "oid": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p4-browser",
+          "refs/remotes/origin/feature/model-development-p4-browser",
+          "worktree_HEAD:/workspace/Tuldok-p4-browser"
+        ]
+      },
+      {
+        "oid": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-author-qualification",
+          "refs/remotes/origin/test/extension-author-qualification",
+          "worktree_HEAD:/workspace/Tuldok-author-qualification"
+        ]
+      },
+      {
+        "oid": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p5",
+          "worktree_HEAD:/workspace/Tuldok-p5"
+        ]
+      },
+      {
+        "oid": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "direct_retained_locations": [
+          "refs/heads/test/one-fit-host-dependencies",
+          "worktree_HEAD:/workspace/Tuldok-one-fit-host-ci"
+        ]
+      },
+      {
+        "oid": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "direct_retained_locations": [
+          "refs/heads/test/canonical-owner-review",
+          "worktree_HEAD:/workspace/Tuldok-canonical-owner-review"
+        ]
+      },
+      {
+        "oid": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "direct_retained_locations": [
+          "refs/heads/docs/canonical-a-505-package-qualification",
+          "refs/remotes/origin/docs/canonical-a-505-package-qualification",
+          "worktree_HEAD:/workspace/Tuldok-canonical-package-report"
+        ]
+      },
+      {
+        "oid": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-p5-canonical-review"
+        ]
+      },
+      {
+        "oid": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-final-acceptance",
+          "worktree_HEAD:/workspace/Tuldok-extension-final-acceptance"
+        ]
+      },
+      {
+        "oid": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-p5-canonical-final-review"
+        ]
+      },
+      {
+        "oid": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-modality-descriptors",
+          "refs/remotes/origin/test/extension-modality-descriptors",
+          "worktree_HEAD:/workspace/Tuldok-extension-modalities"
+        ]
+      },
+      {
+        "oid": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "direct_retained_locations": [
+          "refs/heads/feature/canonical-a-package",
+          "refs/remotes/origin/feature/canonical-a-package",
+          "worktree_HEAD:/workspace/Tuldok-p5-canonical-a"
+        ]
+      },
+      {
+        "oid": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-final-functional-status",
+          "worktree_HEAD:/workspace/Tuldok-extension-final-functional-status"
+        ]
+      },
+      {
+        "oid": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-canonical-independent-review",
+          "worktree_HEAD:/workspace/Tuldok-canonical-independent-review"
+        ]
+      },
+      {
+        "oid": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-field-api",
+          "worktree_HEAD:/workspace/Tuldok-e2-api"
+        ]
+      },
+      {
+        "oid": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-canonical-fixture",
+          "refs/remotes/origin/feature/extension-canonical-fixture",
+          "worktree_HEAD:/workspace/Tuldok-extension-canonical"
+        ]
+      },
+      {
+        "oid": "6702be2e08420d781e60665b15f27bc974160552",
+        "direct_retained_locations": [
+          "refs/heads/test/external-graph-focus-regression",
+          "worktree_HEAD:/workspace/Tuldok-graph-focus-regression"
+        ]
+      },
+      {
+        "oid": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "direct_retained_locations": [
+          "refs/heads/feature/external-candidate-evidence-view",
+          "refs/remotes/origin/feature/external-candidate-evidence-view",
+          "worktree_HEAD:/workspace/Tuldok-external-package-ui"
+        ]
+      },
+      {
+        "oid": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "direct_retained_locations": [
+          "refs/heads/fix/p4-export-browser-recipe-set",
+          "worktree_HEAD:/workspace/Tuldok-p4-export-browser-fix"
+        ]
+      },
+      {
+        "oid": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "direct_retained_locations": [
+          "refs/heads/review/independent-b-host-corrected",
+          "worktree_HEAD:/workspace/Tuldok-b-host-corrected"
+        ]
+      },
+      {
+        "oid": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "direct_retained_locations": [
+          "refs/heads/docs/independent-b-decisive-qualification",
+          "refs/remotes/origin/docs/independent-b-decisive-qualification",
+          "worktree_HEAD:/workspace/Tuldok-b-qualification-docs"
+        ]
+      },
+      {
+        "oid": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-bound-http",
+          "refs/remotes/origin/test/extension-bound-http",
+          "worktree_HEAD:/workspace/Tuldok-bound-http"
+        ]
+      },
+      {
+        "oid": "767f66f8c9435561e68aee216b0dc54808997908",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p3",
+          "worktree_HEAD:/workspace/Tuldok-p3"
+        ]
+      },
+      {
+        "oid": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "direct_retained_locations": [
+          "refs/heads/integration/extension-pressure-current-main",
+          "worktree_HEAD:/workspace/Tuldok-prep68"
+        ]
+      },
+      {
+        "oid": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-a-retention",
+          "refs/remotes/origin/feature/extension-a-retention",
+          "worktree_HEAD:/workspace/Tuldok-e4-retention"
+        ]
+      },
+      {
+        "oid": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "direct_retained_locations": [
+          "refs/heads/work",
+          "worktree_HEAD:/workspace/Tuldok"
+        ]
+      },
+      {
+        "oid": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p6",
+          "worktree_HEAD:/workspace/Tuldok-p6"
+        ]
+      },
+      {
+        "oid": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-current-status-cleanup",
+          "worktree_HEAD:/workspace/Tuldok-extension-status-cleanup"
+        ]
+      },
+      {
+        "oid": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "direct_retained_locations": [
+          "refs/heads/fix/extension-sdk-utf8-canonical",
+          "worktree_HEAD:/workspace/Tuldok-sdk-canonical"
+        ]
+      },
+      {
+        "oid": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-retention-product",
+          "worktree_HEAD:/workspace/Tuldok-extension-retention"
+        ]
+      },
+      {
+        "oid": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-canonical-final-review",
+          "refs/remotes/origin/pr76",
+          "worktree_HEAD:/workspace/Tuldok-canonical-final-review"
+        ]
+      },
+      {
+        "oid": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "direct_retained_locations": [
+          "refs/heads/test/model-activation-ci",
+          "worktree_HEAD:/workspace/Tuldok-activation-ci-fix"
+        ]
+      },
+      {
+        "oid": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "direct_retained_locations": [
+          "refs/heads/review/independent-b-host-compatibility",
+          "worktree_HEAD:/workspace/Tuldok-b-host-review"
+        ]
+      },
+      {
+        "oid": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "direct_retained_locations": [
+          "refs/heads/test/frozen-release-authority",
+          "worktree_HEAD:/workspace/Tuldok-release-authority"
+        ]
+      },
+      {
+        "oid": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "direct_retained_locations": [
+          "refs/heads/test/model-browser-candidate-readiness",
+          "worktree_HEAD:/workspace/Tuldok-model-browser-fix"
+        ]
+      },
+      {
+        "oid": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "direct_retained_locations": [
+          "refs/heads/docs/canonical-a-50502-qualification",
+          "worktree_HEAD:/workspace/Tuldok-canonical-a-report"
+        ]
+      },
+      {
+        "oid": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-e2-glue-review"
+        ]
+      },
+      {
+        "oid": "a479be12130845abca6387f1dacb7c464139215a",
+        "direct_retained_locations": [
+          "refs/heads/docs/e4-core-cross-grant-qualification",
+          "refs/remotes/origin/docs/e4-core-cross-grant-qualification",
+          "worktree_HEAD:/workspace/Tuldok-e4-core-report"
+        ]
+      },
+      {
+        "oid": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "direct_retained_locations": [
+          "refs/heads/feat/e2-canonical-owner-glue",
+          "worktree_HEAD:/workspace/Tuldok-canonical-glue"
+        ]
+      },
+      {
+        "oid": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-bound-recipe-api",
+          "worktree_HEAD:/workspace/Tuldok-e2-binding-api"
+        ]
+      },
+      {
+        "oid": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "direct_retained_locations": [
+          "refs/heads/fix/candidate-packages-distro-python",
+          "refs/remotes/origin/fix/candidate-packages-distro-python",
+          "worktree_HEAD:/workspace/Tuldok-p5-ci-runtime"
+        ]
+      },
+      {
+        "oid": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "direct_retained_locations": [
+          "refs/heads/test/canonical-a-package-actual",
+          "worktree_HEAD:/workspace/Tuldok-canonical-masked-actual",
+          "worktree_HEAD:/workspace/Tuldok-canonical-package-actual"
+        ]
+      },
+      {
+        "oid": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "direct_retained_locations": [
+          "refs/heads/test/author-review-freeze",
+          "worktree_HEAD:/workspace/Tuldok-author-freeze-test"
+        ]
+      },
+      {
+        "oid": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "direct_retained_locations": [
+          "refs/heads/qa/restored-ab-official-interfaces",
+          "worktree_HEAD:/workspace/Tuldok-restored-interface-qa"
+        ]
+      },
+      {
+        "oid": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "direct_retained_locations": [
+          "refs/heads/test/native-ab-retention-ui",
+          "worktree_HEAD:/workspace/Tuldok-native-ab-retention"
+        ]
+      },
+      {
+        "oid": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-runtime-nomination",
+          "worktree_HEAD:/workspace/Tuldok-extension-runtime"
+        ]
+      },
+      {
+        "oid": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "direct_retained_locations": [
+          "refs/heads/integration/extension-scalar-current-main",
+          "worktree_HEAD:/workspace/Tuldok-prep69"
+        ]
+      },
+      {
+        "oid": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "direct_retained_locations": [
+          "refs/heads/test/e4-ab-retention-execution",
+          "worktree_HEAD:/workspace/Tuldok-e4-execution"
+        ]
+      },
+      {
+        "oid": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "direct_retained_locations": [
+          "refs/heads/feature/extension-inference-product",
+          "worktree_HEAD:/workspace/Tuldok-extension-inference",
+          "worktree_HEAD:/workspace/Tuldok-inference-review"
+        ]
+      },
+      {
+        "oid": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "direct_retained_locations": [
+          "refs/heads/integration/model-development-product",
+          "worktree_HEAD:/workspace/Tuldok-product"
+        ]
+      },
+      {
+        "oid": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "direct_retained_locations": [
+          "refs/heads/fix/sdk-conformance-public-graph",
+          "refs/remotes/origin/fix/sdk-conformance-public-graph",
+          "worktree_HEAD:/workspace/Tuldok-sdk-graph-fix"
+        ]
+      },
+      {
+        "oid": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "direct_retained_locations": [
+          "refs/heads/feature/field-surrogate-b-independent",
+          "refs/remotes/origin/feature/field-surrogate-b-independent",
+          "worktree_HEAD:/workspace/Tuldok-b-independent"
+        ]
+      },
+      {
+        "oid": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "direct_retained_locations": [
+          "refs/heads/test/main505-agent-authoring",
+          "worktree_HEAD:/workspace/Tuldok-main505-agent-authoring"
+        ]
+      },
+      {
+        "oid": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "direct_retained_locations": [
+          "refs/heads/test/extension-author-native-browser",
+          "worktree_HEAD:/workspace/Tuldok-author-browser"
+        ]
+      },
+      {
+        "oid": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "direct_retained_locations": [
+          "refs/heads/qa/independent-b-sdk-frozen",
+          "refs/heads/test/canonical-author-50502-review",
+          "worktree_HEAD:/workspace/Tuldok-b-public-sdk-host",
+          "worktree_HEAD:/workspace/Tuldok-canonical-author-qa"
+        ]
+      },
+      {
+        "oid": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "direct_retained_locations": [
+          "refs/heads/fix/operator-runtime-identity",
+          "worktree_HEAD:/workspace/Tuldok-operator-runtime-fix"
+        ]
+      },
+      {
+        "oid": "e958db578da805f4352d282c02430edc78985a3c",
+        "direct_retained_locations": [
+          "refs/heads/test/native-author-ab-actual",
+          "worktree_HEAD:/workspace/Tuldok-native-ab-actual"
+        ]
+      },
+      {
+        "oid": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "direct_retained_locations": [
+          "refs/heads/fix/external-graph-keyboard-focus",
+          "worktree_HEAD:/workspace/Tuldok-graph-focus"
+        ]
+      },
+      {
+        "oid": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "direct_retained_locations": [
+          "refs/heads/fix/p2-cold-composition-marker",
+          "worktree_HEAD:/workspace/Tuldok-p2-review-fix"
+        ]
+      },
+      {
+        "oid": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "direct_retained_locations": [
+          "refs/heads/integration/model-development-final-publication",
+          "worktree_HEAD:/workspace/Tuldok-final-publication"
+        ]
+      },
+      {
+        "oid": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "direct_retained_locations": [
+          "refs/heads/integration/p5-after-p4-prep",
+          "worktree_HEAD:/workspace/Tuldok-p5-p4-composition"
+        ]
+      },
+      {
+        "oid": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "direct_retained_locations": [
+          "refs/heads/feature/experiment-lineage",
+          "worktree_HEAD:/workspace/Tuldok-experiment-lineage"
+        ]
+      },
+      {
+        "oid": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "direct_retained_locations": [
+          "refs/heads/test/p5-transitive-authority",
+          "worktree_HEAD:/workspace/Tuldok-candidate-permissions"
+        ]
+      },
+      {
+        "oid": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-legacy-p3-qa"
+        ]
+      },
+      {
+        "oid": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "direct_retained_locations": [
+          "refs/heads/feature/model-development-p5-field",
+          "refs/remotes/origin/feature/model-development-p5-field",
+          "worktree_HEAD:/workspace/Tuldok-p5-field"
+        ]
+      },
+      {
+        "oid": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "direct_retained_locations": [
+          "refs/heads/qa/field-interface-observation",
+          "worktree_HEAD:/workspace/Tuldok-p6-field-qa"
+        ]
+      },
+      {
+        "oid": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-agent-snapshots-review",
+          "worktree_HEAD:/workspace/Tuldok-p6-agent-api-review"
+        ]
+      },
+      {
+        "oid": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "direct_retained_locations": [
+          "refs/heads/docs/extension-x3-acceptance",
+          "worktree_HEAD:/workspace/Tuldok-extension-x3-acceptance"
+        ]
+      },
+      {
+        "oid": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-canonical-inference-review"
+        ]
+      },
+      {
+        "oid": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+        "direct_retained_locations": [
+          "worktree_HEAD:/workspace/Tuldok-graph-focus-old"
+        ]
+      }
+    ],
+    "prior_postcheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-independent-postcheck.json",
+    "all_original_refs_and_worktree_records_exact": true
+  },
+  "snapshot_for_independent_precheck": {
+    "all_local_heads": {
+      "refs/heads/checkpoint/lab-integration-20261019": "5edb9b5d388b3fc36a289cb87b60c0d14164b9df",
+      "refs/heads/docs/canonical-a-505-package-qualification": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+      "refs/heads/docs/canonical-a-50502-qualification": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+      "refs/heads/docs/e4-ab-final-qualification": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+      "refs/heads/docs/e4-core-cross-grant-qualification": "a479be12130845abca6387f1dacb7c464139215a",
+      "refs/heads/docs/extension-current-status-cleanup": "8c94afe46bc4ace177b669a723099bb039b7a157",
+      "refs/heads/docs/extension-final-acceptance": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+      "refs/heads/docs/extension-final-functional-status": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+      "refs/heads/docs/extension-x3-acceptance": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+      "refs/heads/docs/independent-b-decisive-qualification": "70845e383879e06a9337478b5d661b1516ac3c94",
+      "refs/heads/docs/product-api-source-provenance": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+      "refs/heads/feat/e1-e2-contribution-bindings": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+      "refs/heads/feat/e2-canonical-owner-glue": "a546a6e9caf8295bd6e329aab73042645188a528",
+      "refs/heads/feature/canonical-a-package": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+      "refs/heads/feature/experiment-lineage": "ee07e415cb3291c7a4b75939414345cba54abef7",
+      "refs/heads/feature/extension-a-retention": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+      "refs/heads/feature/extension-bound-recipe-api": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+      "refs/heads/feature/extension-canonical-fixture": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+      "refs/heads/feature/extension-field-api": "5a2b079f0a017957276fec3404c52c9d586f0667",
+      "refs/heads/feature/extension-inference-product": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "refs/heads/feature/extension-model-author-workspace": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+      "refs/heads/feature/extension-retention-product": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+      "refs/heads/feature/extension-runtime-nomination": "c24cd26e205011814e928ea58790ef777f9b0b40",
+      "refs/heads/feature/extension-sdk-evidence": "251b52ebbf888c7b725cce3e519b78b449077195",
+      "refs/heads/feature/external-candidate-evidence-view": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+      "refs/heads/feature/field-surrogate-b-independent": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+      "refs/heads/feature/lab-indexed-diagnostics-20261019": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "refs/heads/feature/model-development-fields-native": "1bd85834d0b9e220430c44848017b1d75146b576",
+      "refs/heads/feature/model-development-p3": "767f66f8c9435561e68aee216b0dc54808997908",
+      "refs/heads/feature/model-development-p4": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+      "refs/heads/feature/model-development-p4-browser": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+      "refs/heads/feature/model-development-p5": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+      "refs/heads/feature/model-development-p5-field": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+      "refs/heads/feature/model-development-p6": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+      "refs/heads/feature/model-development-workspace": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+      "refs/heads/fix/author-oracle-resume": "3affe90bc258c1327fde49faf57bceb852cc2759",
+      "refs/heads/fix/candidate-packages-distro-python": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+      "refs/heads/fix/captions-dialog-ci-qualification-20261020": "abbae728434fa0670478e12216a1d94603a97daf",
+      "refs/heads/fix/extension-sdk-utf8-canonical": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+      "refs/heads/fix/external-graph-keyboard-focus": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+      "refs/heads/fix/indexed-ci-qualification-20261020": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "refs/heads/fix/live-project-observation-fences-20261019": "4030e32c435b51ab8b3188ca960c5750467fa654",
+      "refs/heads/fix/managed-project-contract-compatibility-20261019": "a339759b487e67851966899a506f14f7d2dc3d74",
+      "refs/heads/fix/managed-torch-registry-durability-20261019": "abd68106ea5acfbac96e64adb21dadb05eaffc61",
+      "refs/heads/fix/operator-runtime-identity": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+      "refs/heads/fix/p2-cold-composition-marker": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+      "refs/heads/fix/p3-strict-evidence-decoding": "144d8a70a2ef3849584cce822e00588f45c4106b",
+      "refs/heads/fix/p4-export-browser-recipe-set": "6998e7165eeaf496fe84b55d5d58082331883fff",
+      "refs/heads/fix/retained-analysis-ci-qualification-20261020": "d161d244270f10128c171ca6d4ecca52faac9274",
+      "refs/heads/fix/sdk-conformance-public-graph": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+      "refs/heads/fix/workspace-project-startup-ci-20261020": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "refs/heads/integration/extension-pressure-current-main": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+      "refs/heads/integration/extension-scalar-current-main": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+      "refs/heads/integration/lab-consumer-feedback-20261019": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+      "refs/heads/integration/model-development-final-publication": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+      "refs/heads/integration/model-development-p2-final": "351f55b76a2545592618a98eb68276eb9d38b713",
+      "refs/heads/integration/model-development-product": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+      "refs/heads/integration/p5-after-p4-prep": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+      "refs/heads/integration/request-latency-review-20261019": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+      "refs/heads/integration/retained-analysis-cleanup-20261020": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+      "refs/heads/integration/rheon-lab-review-20261019": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+      "refs/heads/qa/field-interface-observation": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+      "refs/heads/qa/independent-b-cold-actual": "1411debf1b87e82330eed4ebf09840da52e52253",
+      "refs/heads/qa/independent-b-sdk-frozen": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "refs/heads/qa/restored-ab-official-interfaces": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+      "refs/heads/review/independent-b-host-compatibility": "97e2bdf6284e290b319b8f7bce8702914a898107",
+      "refs/heads/review/independent-b-host-corrected": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+      "refs/heads/test/author-review-freeze": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+      "refs/heads/test/canonical-a-package-actual": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "refs/heads/test/canonical-author-50502-review": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "refs/heads/test/canonical-owner-review": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+      "refs/heads/test/e4-ab-retention": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+      "refs/heads/test/e4-ab-retention-execution": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+      "refs/heads/test/extension-author-native-browser": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+      "refs/heads/test/extension-author-qualification": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+      "refs/heads/test/extension-bound-http": "75b0262d8aed3c788c76e0497968b426fe999864",
+      "refs/heads/test/extension-canonical-final-review": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+      "refs/heads/test/extension-canonical-independent-review": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+      "refs/heads/test/extension-local-50502-qualification": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+      "refs/heads/test/extension-modality-descriptors": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+      "refs/heads/test/external-browser-handler-readiness": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "refs/heads/test/external-graph-focus-regression": "6702be2e08420d781e60665b15f27bc974160552",
+      "refs/heads/test/frozen-release-authority": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+      "refs/heads/test/lab-publication-semantic-recovery-20261019": "b6a2ccb89dd0a57ba51c625940a52e0f71b05990",
+      "refs/heads/test/main505-agent-authoring": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "refs/heads/test/main505-agent-authoring-recovery": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+      "refs/heads/test/model-activation-ci": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+      "refs/heads/test/model-browser-candidate-readiness": "9b978533bba9fb3b12163302ca1679238b08220d",
+      "refs/heads/test/native-ab-retention-ui": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+      "refs/heads/test/native-author-ab-actual": "e958db578da805f4352d282c02430edc78985a3c",
+      "refs/heads/test/native-author-ab-evidence": "01a3d0786596d14ffab882de58a05a7bb009b571",
+      "refs/heads/test/one-fit-host-dependencies": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+      "refs/heads/test/p5-captured-runtime-ci": "1aa4822865338b92e0a1813db1666a13b8920bda",
+      "refs/heads/test/p5-transitive-authority": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+      "refs/heads/test/x3-b-semantic-refusals": "2266a79b6925faef6edf6c87c49168858b68bf36",
+      "refs/heads/work": "8673509d5430e6aa1162986f4d7b1c071aa1c82e"
+    },
+    "all_worktree_records": {
+      "/workspace/Tuldok": {
+        "worktree": "/workspace/Tuldok",
+        "HEAD": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+        "branch": "refs/heads/work"
+      },
+      "/workspace/Tuldok-ab-retention": {
+        "worktree": "/workspace/Tuldok-ab-retention",
+        "HEAD": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+        "branch": "refs/heads/test/e4-ab-retention"
+      },
+      "/workspace/Tuldok-activation-ci-fix": {
+        "worktree": "/workspace/Tuldok-activation-ci-fix",
+        "HEAD": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+        "branch": "refs/heads/test/model-activation-ci"
+      },
+      "/workspace/Tuldok-agent-snapshots-review": {
+        "worktree": "/workspace/Tuldok-agent-snapshots-review",
+        "HEAD": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "detached": true
+      },
+      "/workspace/Tuldok-api-source-provenance": {
+        "worktree": "/workspace/Tuldok-api-source-provenance",
+        "HEAD": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+        "branch": "refs/heads/docs/product-api-source-provenance"
+      },
+      "/workspace/Tuldok-author-browser": {
+        "worktree": "/workspace/Tuldok-author-browser",
+        "HEAD": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+        "branch": "refs/heads/test/extension-author-native-browser"
+      },
+      "/workspace/Tuldok-author-freeze-test": {
+        "worktree": "/workspace/Tuldok-author-freeze-test",
+        "HEAD": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+        "branch": "refs/heads/test/author-review-freeze"
+      },
+      "/workspace/Tuldok-author-qualification": {
+        "worktree": "/workspace/Tuldok-author-qualification",
+        "HEAD": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+        "branch": "refs/heads/test/extension-author-qualification"
+      },
+      "/workspace/Tuldok-author-resume": {
+        "worktree": "/workspace/Tuldok-author-resume",
+        "HEAD": "3affe90bc258c1327fde49faf57bceb852cc2759",
+        "branch": "refs/heads/fix/author-oracle-resume"
+      },
+      "/workspace/Tuldok-author-ui": {
+        "worktree": "/workspace/Tuldok-author-ui",
+        "HEAD": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+        "branch": "refs/heads/feature/extension-model-author-workspace"
+      },
+      "/workspace/Tuldok-b-cold-independent-review": {
+        "worktree": "/workspace/Tuldok-b-cold-independent-review",
+        "HEAD": "1411debf1b87e82330eed4ebf09840da52e52253",
+        "branch": "refs/heads/qa/independent-b-cold-actual"
+      },
+      "/workspace/Tuldok-b-host-corrected": {
+        "worktree": "/workspace/Tuldok-b-host-corrected",
+        "HEAD": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+        "branch": "refs/heads/review/independent-b-host-corrected"
+      },
+      "/workspace/Tuldok-b-host-review": {
+        "worktree": "/workspace/Tuldok-b-host-review",
+        "HEAD": "97e2bdf6284e290b319b8f7bce8702914a898107",
+        "branch": "refs/heads/review/independent-b-host-compatibility"
+      },
+      "/workspace/Tuldok-b-independent": {
+        "worktree": "/workspace/Tuldok-b-independent",
+        "HEAD": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+        "branch": "refs/heads/feature/field-surrogate-b-independent"
+      },
+      "/workspace/Tuldok-b-public-sdk-host": {
+        "worktree": "/workspace/Tuldok-b-public-sdk-host",
+        "HEAD": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "branch": "refs/heads/qa/independent-b-sdk-frozen"
+      },
+      "/workspace/Tuldok-b-qualification-docs": {
+        "worktree": "/workspace/Tuldok-b-qualification-docs",
+        "HEAD": "70845e383879e06a9337478b5d661b1516ac3c94",
+        "branch": "refs/heads/docs/independent-b-decisive-qualification"
+      },
+      "/workspace/Tuldok-b-refusals": {
+        "worktree": "/workspace/Tuldok-b-refusals",
+        "HEAD": "2266a79b6925faef6edf6c87c49168858b68bf36",
+        "branch": "refs/heads/test/x3-b-semantic-refusals"
+      },
+      "/workspace/Tuldok-bound-http": {
+        "worktree": "/workspace/Tuldok-bound-http",
+        "HEAD": "75b0262d8aed3c788c76e0497968b426fe999864",
+        "branch": "refs/heads/test/extension-bound-http"
+      },
+      "/workspace/Tuldok-candidate-permissions": {
+        "worktree": "/workspace/Tuldok-candidate-permissions",
+        "HEAD": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+        "branch": "refs/heads/test/p5-transitive-authority"
+      },
+      "/workspace/Tuldok-canonical-a-report": {
+        "worktree": "/workspace/Tuldok-canonical-a-report",
+        "HEAD": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+        "branch": "refs/heads/docs/canonical-a-50502-qualification"
+      },
+      "/workspace/Tuldok-canonical-author-qa": {
+        "worktree": "/workspace/Tuldok-canonical-author-qa",
+        "HEAD": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+        "branch": "refs/heads/test/canonical-author-50502-review"
+      },
+      "/workspace/Tuldok-canonical-final-review": {
+        "worktree": "/workspace/Tuldok-canonical-final-review",
+        "HEAD": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+        "branch": "refs/heads/test/extension-canonical-final-review"
+      },
+      "/workspace/Tuldok-canonical-glue": {
+        "worktree": "/workspace/Tuldok-canonical-glue",
+        "HEAD": "a546a6e9caf8295bd6e329aab73042645188a528",
+        "branch": "refs/heads/feat/e2-canonical-owner-glue"
+      },
+      "/workspace/Tuldok-canonical-independent-review": {
+        "worktree": "/workspace/Tuldok-canonical-independent-review",
+        "HEAD": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+        "branch": "refs/heads/test/extension-canonical-independent-review"
+      },
+      "/workspace/Tuldok-canonical-inference-review": {
+        "worktree": "/workspace/Tuldok-canonical-inference-review",
+        "HEAD": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+        "detached": true
+      },
+      "/workspace/Tuldok-canonical-masked-actual": {
+        "worktree": "/workspace/Tuldok-canonical-masked-actual",
+        "HEAD": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "detached": true
+      },
+      "/workspace/Tuldok-canonical-owner-review": {
+        "worktree": "/workspace/Tuldok-canonical-owner-review",
+        "HEAD": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+        "branch": "refs/heads/test/canonical-owner-review"
+      },
+      "/workspace/Tuldok-canonical-package-actual": {
+        "worktree": "/workspace/Tuldok-canonical-package-actual",
+        "HEAD": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+        "branch": "refs/heads/test/canonical-a-package-actual"
+      },
+      "/workspace/Tuldok-canonical-package-report": {
+        "worktree": "/workspace/Tuldok-canonical-package-report",
+        "HEAD": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+        "branch": "refs/heads/docs/canonical-a-505-package-qualification"
+      },
+      "/workspace/Tuldok-captions-dialog-ci-repair-20261020": {
+        "worktree": "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
+        "HEAD": "abbae728434fa0670478e12216a1d94603a97daf",
+        "branch": "refs/heads/fix/captions-dialog-ci-qualification-20261020"
+      },
+      "/workspace/Tuldok-e2-api": {
+        "worktree": "/workspace/Tuldok-e2-api",
+        "HEAD": "5a2b079f0a017957276fec3404c52c9d586f0667",
+        "branch": "refs/heads/feature/extension-field-api"
+      },
+      "/workspace/Tuldok-e2-author-review": {
+        "worktree": "/workspace/Tuldok-e2-author-review",
+        "HEAD": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "detached": true
+      },
+      "/workspace/Tuldok-e2-binding-api": {
+        "worktree": "/workspace/Tuldok-e2-binding-api",
+        "HEAD": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+        "branch": "refs/heads/feature/extension-bound-recipe-api"
+      },
+      "/workspace/Tuldok-e2-glue-review": {
+        "worktree": "/workspace/Tuldok-e2-glue-review",
+        "HEAD": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+        "detached": true
+      },
+      "/workspace/Tuldok-e2-review": {
+        "worktree": "/workspace/Tuldok-e2-review",
+        "HEAD": "057c8abf571d62331486dc56ef43064e72f9d03a",
+        "detached": true
+      },
+      "/workspace/Tuldok-e2-ui": {
+        "worktree": "/workspace/Tuldok-e2-ui",
+        "HEAD": "1bd85834d0b9e220430c44848017b1d75146b576",
+        "branch": "refs/heads/feature/model-development-fields-native"
+      },
+      "/workspace/Tuldok-e4-core-report": {
+        "worktree": "/workspace/Tuldok-e4-core-report",
+        "HEAD": "a479be12130845abca6387f1dacb7c464139215a",
+        "branch": "refs/heads/docs/e4-core-cross-grant-qualification"
+      },
+      "/workspace/Tuldok-e4-execution": {
+        "worktree": "/workspace/Tuldok-e4-execution",
+        "HEAD": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+        "branch": "refs/heads/test/e4-ab-retention-execution"
+      },
+      "/workspace/Tuldok-e4-final-report": {
+        "worktree": "/workspace/Tuldok-e4-final-report",
+        "HEAD": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+        "branch": "refs/heads/docs/e4-ab-final-qualification"
+      },
+      "/workspace/Tuldok-e4-retention": {
+        "worktree": "/workspace/Tuldok-e4-retention",
+        "HEAD": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+        "branch": "refs/heads/feature/extension-a-retention"
+      },
+      "/workspace/Tuldok-experiment-lineage": {
+        "worktree": "/workspace/Tuldok-experiment-lineage",
+        "HEAD": "ee07e415cb3291c7a4b75939414345cba54abef7",
+        "branch": "refs/heads/feature/experiment-lineage"
+      },
+      "/workspace/Tuldok-extension-bindings": {
+        "worktree": "/workspace/Tuldok-extension-bindings",
+        "HEAD": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+        "branch": "refs/heads/feat/e1-e2-contribution-bindings"
+      },
+      "/workspace/Tuldok-extension-canonical": {
+        "worktree": "/workspace/Tuldok-extension-canonical",
+        "HEAD": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+        "branch": "refs/heads/feature/extension-canonical-fixture"
+      },
+      "/workspace/Tuldok-extension-final-acceptance": {
+        "worktree": "/workspace/Tuldok-extension-final-acceptance",
+        "HEAD": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+        "branch": "refs/heads/docs/extension-final-acceptance"
+      },
+      "/workspace/Tuldok-extension-final-functional-status": {
+        "worktree": "/workspace/Tuldok-extension-final-functional-status",
+        "HEAD": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+        "branch": "refs/heads/docs/extension-final-functional-status"
+      },
+      "/workspace/Tuldok-extension-inference": {
+        "worktree": "/workspace/Tuldok-extension-inference",
+        "HEAD": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "branch": "refs/heads/feature/extension-inference-product"
+      },
+      "/workspace/Tuldok-extension-local-qa": {
+        "worktree": "/workspace/Tuldok-extension-local-qa",
+        "HEAD": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+        "branch": "refs/heads/test/extension-local-50502-qualification"
+      },
+      "/workspace/Tuldok-extension-modalities": {
+        "worktree": "/workspace/Tuldok-extension-modalities",
+        "HEAD": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+        "branch": "refs/heads/test/extension-modality-descriptors"
+      },
+      "/workspace/Tuldok-extension-retention": {
+        "worktree": "/workspace/Tuldok-extension-retention",
+        "HEAD": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+        "branch": "refs/heads/feature/extension-retention-product"
+      },
+      "/workspace/Tuldok-extension-runtime": {
+        "worktree": "/workspace/Tuldok-extension-runtime",
+        "HEAD": "c24cd26e205011814e928ea58790ef777f9b0b40",
+        "branch": "refs/heads/feature/extension-runtime-nomination"
+      },
+      "/workspace/Tuldok-extension-status-cleanup": {
+        "worktree": "/workspace/Tuldok-extension-status-cleanup",
+        "HEAD": "8c94afe46bc4ace177b669a723099bb039b7a157",
+        "branch": "refs/heads/docs/extension-current-status-cleanup"
+      },
+      "/workspace/Tuldok-extension-x3-acceptance": {
+        "worktree": "/workspace/Tuldok-extension-x3-acceptance",
+        "HEAD": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+        "branch": "refs/heads/docs/extension-x3-acceptance"
+      },
+      "/workspace/Tuldok-external-browser-readiness": {
+        "worktree": "/workspace/Tuldok-external-browser-readiness",
+        "HEAD": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+        "branch": "refs/heads/test/external-browser-handler-readiness"
+      },
+      "/workspace/Tuldok-external-package-ui": {
+        "worktree": "/workspace/Tuldok-external-package-ui",
+        "HEAD": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+        "branch": "refs/heads/feature/external-candidate-evidence-view"
+      },
+      "/workspace/Tuldok-final-publication": {
+        "worktree": "/workspace/Tuldok-final-publication",
+        "HEAD": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+        "branch": "refs/heads/integration/model-development-final-publication"
+      },
+      "/workspace/Tuldok-graph-focus": {
+        "worktree": "/workspace/Tuldok-graph-focus",
+        "HEAD": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+        "branch": "refs/heads/fix/external-graph-keyboard-focus"
+      },
+      "/workspace/Tuldok-graph-focus-old": {
+        "worktree": "/workspace/Tuldok-graph-focus-old",
+        "HEAD": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+        "detached": true
+      },
+      "/workspace/Tuldok-graph-focus-regression": {
+        "worktree": "/workspace/Tuldok-graph-focus-regression",
+        "HEAD": "6702be2e08420d781e60665b15f27bc974160552",
+        "branch": "refs/heads/test/external-graph-focus-regression"
+      },
+      "/workspace/Tuldok-indexed-ci-repair-20261020": {
+        "worktree": "/workspace/Tuldok-indexed-ci-repair-20261020",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/fix/indexed-ci-qualification-20261020"
+      },
+      "/workspace/Tuldok-inference-review": {
+        "worktree": "/workspace/Tuldok-inference-review",
+        "HEAD": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+        "detached": true
+      },
+      "/workspace/Tuldok-integration-checkpoint": {
+        "worktree": "/workspace/Tuldok-integration-checkpoint",
+        "HEAD": "5edb9b5d388b3fc36a289cb87b60c0d14164b9df",
+        "branch": "refs/heads/checkpoint/lab-integration-20261019"
+      },
+      "/workspace/Tuldok-lab-consumer-integration-m5m6": {
+        "worktree": "/workspace/Tuldok-lab-consumer-integration-m5m6",
+        "HEAD": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+        "branch": "refs/heads/integration/lab-consumer-feedback-20261019"
+      },
+      "/workspace/Tuldok-lab-indexed-diagnostics-m1": {
+        "worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+        "HEAD": "9f08427029d8b48c8f9b50927a1c835afb573276",
+        "branch": "refs/heads/feature/lab-indexed-diagnostics-20261019"
+      },
+      "/workspace/Tuldok-lab-integration-review": {
+        "worktree": "/workspace/Tuldok-lab-integration-review",
+        "HEAD": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+        "branch": "refs/heads/integration/rheon-lab-review-20261019"
+      },
+      "/workspace/Tuldok-lab-publication-semantic-witness-m1": {
+        "worktree": "/workspace/Tuldok-lab-publication-semantic-witness-m1",
+        "HEAD": "b6a2ccb89dd0a57ba51c625940a52e0f71b05990",
+        "branch": "refs/heads/test/lab-publication-semantic-recovery-20261019"
+      },
+      "/workspace/Tuldok-legacy-p3-qa": {
+        "worktree": "/workspace/Tuldok-legacy-p3-qa",
+        "HEAD": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+        "detached": true
+      },
+      "/workspace/Tuldok-live-project-fix": {
+        "worktree": "/workspace/Tuldok-live-project-fix",
+        "HEAD": "4030e32c435b51ab8b3188ca960c5750467fa654",
+        "branch": "refs/heads/fix/live-project-observation-fences-20261019"
+      },
+      "/workspace/Tuldok-main505-agent-authoring": {
+        "worktree": "/workspace/Tuldok-main505-agent-authoring",
+        "HEAD": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "branch": "refs/heads/test/main505-agent-authoring"
+      },
+      "/workspace/Tuldok-main505-agent-authoring-recovery": {
+        "worktree": "/workspace/Tuldok-main505-agent-authoring-recovery",
+        "HEAD": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+        "branch": "refs/heads/test/main505-agent-authoring-recovery"
+      },
+      "/workspace/Tuldok-model-browser-fix": {
+        "worktree": "/workspace/Tuldok-model-browser-fix",
+        "HEAD": "9b978533bba9fb3b12163302ca1679238b08220d",
+        "branch": "refs/heads/test/model-browser-candidate-readiness"
+      },
+      "/workspace/Tuldok-native-ab-actual": {
+        "worktree": "/workspace/Tuldok-native-ab-actual",
+        "HEAD": "e958db578da805f4352d282c02430edc78985a3c",
+        "branch": "refs/heads/test/native-author-ab-actual"
+      },
+      "/workspace/Tuldok-native-ab-browser": {
+        "worktree": "/workspace/Tuldok-native-ab-browser",
+        "HEAD": "01a3d0786596d14ffab882de58a05a7bb009b571",
+        "branch": "refs/heads/test/native-author-ab-evidence"
+      },
+      "/workspace/Tuldok-native-ab-retention": {
+        "worktree": "/workspace/Tuldok-native-ab-retention",
+        "HEAD": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+        "branch": "refs/heads/test/native-ab-retention-ui"
+      },
+      "/workspace/Tuldok-one-fit-host-ci": {
+        "worktree": "/workspace/Tuldok-one-fit-host-ci",
+        "HEAD": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+        "branch": "refs/heads/test/one-fit-host-dependencies"
+      },
+      "/workspace/Tuldok-operator-runtime-fix": {
+        "worktree": "/workspace/Tuldok-operator-runtime-fix",
+        "HEAD": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+        "branch": "refs/heads/fix/operator-runtime-identity"
+      },
+      "/workspace/Tuldok-p2-final": {
+        "worktree": "/workspace/Tuldok-p2-final",
+        "HEAD": "351f55b76a2545592618a98eb68276eb9d38b713",
+        "branch": "refs/heads/integration/model-development-p2-final"
+      },
+      "/workspace/Tuldok-p2-review-fix": {
+        "worktree": "/workspace/Tuldok-p2-review-fix",
+        "HEAD": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+        "branch": "refs/heads/fix/p2-cold-composition-marker"
+      },
+      "/workspace/Tuldok-p3": {
+        "worktree": "/workspace/Tuldok-p3",
+        "HEAD": "767f66f8c9435561e68aee216b0dc54808997908",
+        "branch": "refs/heads/feature/model-development-p3"
+      },
+      "/workspace/Tuldok-p3-activation-verify": {
+        "worktree": "/workspace/Tuldok-p3-activation-verify",
+        "HEAD": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+        "detached": true
+      },
+      "/workspace/Tuldok-p3-decoder-fix": {
+        "worktree": "/workspace/Tuldok-p3-decoder-fix",
+        "HEAD": "144d8a70a2ef3849584cce822e00588f45c4106b",
+        "branch": "refs/heads/fix/p3-strict-evidence-decoding"
+      },
+      "/workspace/Tuldok-p4": {
+        "worktree": "/workspace/Tuldok-p4",
+        "HEAD": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+        "branch": "refs/heads/feature/model-development-p4"
+      },
+      "/workspace/Tuldok-p4-browser": {
+        "worktree": "/workspace/Tuldok-p4-browser",
+        "HEAD": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+        "branch": "refs/heads/feature/model-development-p4-browser"
+      },
+      "/workspace/Tuldok-p4-export-browser-fix": {
+        "worktree": "/workspace/Tuldok-p4-export-browser-fix",
+        "HEAD": "6998e7165eeaf496fe84b55d5d58082331883fff",
+        "branch": "refs/heads/fix/p4-export-browser-recipe-set"
+      },
+      "/workspace/Tuldok-p5": {
+        "worktree": "/workspace/Tuldok-p5",
+        "HEAD": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+        "branch": "refs/heads/feature/model-development-p5"
+      },
+      "/workspace/Tuldok-p5-canonical-a": {
+        "worktree": "/workspace/Tuldok-p5-canonical-a",
+        "HEAD": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+        "branch": "refs/heads/feature/canonical-a-package"
+      },
+      "/workspace/Tuldok-p5-canonical-final-review": {
+        "worktree": "/workspace/Tuldok-p5-canonical-final-review",
+        "HEAD": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+        "detached": true
+      },
+      "/workspace/Tuldok-p5-canonical-review": {
+        "worktree": "/workspace/Tuldok-p5-canonical-review",
+        "HEAD": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+        "detached": true
+      },
+      "/workspace/Tuldok-p5-ci": {
+        "worktree": "/workspace/Tuldok-p5-ci",
+        "HEAD": "1aa4822865338b92e0a1813db1666a13b8920bda",
+        "branch": "refs/heads/test/p5-captured-runtime-ci"
+      },
+      "/workspace/Tuldok-p5-ci-runtime": {
+        "worktree": "/workspace/Tuldok-p5-ci-runtime",
+        "HEAD": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+        "branch": "refs/heads/fix/candidate-packages-distro-python"
+      },
+      "/workspace/Tuldok-p5-field": {
+        "worktree": "/workspace/Tuldok-p5-field",
+        "HEAD": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+        "branch": "refs/heads/feature/model-development-p5-field"
+      },
+      "/workspace/Tuldok-p5-p4-composition": {
+        "worktree": "/workspace/Tuldok-p5-p4-composition",
+        "HEAD": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+        "branch": "refs/heads/integration/p5-after-p4-prep"
+      },
+      "/workspace/Tuldok-p6": {
+        "worktree": "/workspace/Tuldok-p6",
+        "HEAD": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+        "branch": "refs/heads/feature/model-development-p6"
+      },
+      "/workspace/Tuldok-p6-agent-api-review": {
+        "worktree": "/workspace/Tuldok-p6-agent-api-review",
+        "HEAD": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+        "detached": true
+      },
+      "/workspace/Tuldok-p6-field-qa": {
+        "worktree": "/workspace/Tuldok-p6-field-qa",
+        "HEAD": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+        "branch": "refs/heads/qa/field-interface-observation"
+      },
+      "/workspace/Tuldok-prep-review": {
+        "worktree": "/workspace/Tuldok-prep-review",
+        "HEAD": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+        "detached": true
+      },
+      "/workspace/Tuldok-prep68": {
+        "worktree": "/workspace/Tuldok-prep68",
+        "HEAD": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+        "branch": "refs/heads/integration/extension-pressure-current-main"
+      },
+      "/workspace/Tuldok-prep69": {
+        "worktree": "/workspace/Tuldok-prep69",
+        "HEAD": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+        "branch": "refs/heads/integration/extension-scalar-current-main"
+      },
+      "/workspace/Tuldok-product": {
+        "worktree": "/workspace/Tuldok-product",
+        "HEAD": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+        "branch": "refs/heads/integration/model-development-product"
+      },
+      "/workspace/Tuldok-project-contract-fix": {
+        "worktree": "/workspace/Tuldok-project-contract-fix",
+        "HEAD": "a339759b487e67851966899a506f14f7d2dc3d74",
+        "branch": "refs/heads/fix/managed-project-contract-compatibility-20261019"
+      },
+      "/workspace/Tuldok-project-startup-ci-repair-20261020": {
+        "worktree": "/workspace/Tuldok-project-startup-ci-repair-20261020",
+        "HEAD": "29011daea37f101ee30be9bc10aab702a16c830a",
+        "branch": "refs/heads/fix/workspace-project-startup-ci-20261020"
+      },
+      "/workspace/Tuldok-release-authority": {
+        "worktree": "/workspace/Tuldok-release-authority",
+        "HEAD": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+        "branch": "refs/heads/test/frozen-release-authority"
+      },
+      "/workspace/Tuldok-request-latency-review": {
+        "worktree": "/workspace/Tuldok-request-latency-review",
+        "HEAD": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+        "branch": "refs/heads/integration/request-latency-review-20261019"
+      },
+      "/workspace/Tuldok-restored-interface-qa": {
+        "worktree": "/workspace/Tuldok-restored-interface-qa",
+        "HEAD": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+        "branch": "refs/heads/qa/restored-ab-official-interfaces"
+      },
+      "/workspace/Tuldok-retained-analysis-integration-20261020": {
+        "worktree": "/workspace/Tuldok-retained-analysis-integration-20261020",
+        "HEAD": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+        "branch": "refs/heads/integration/retained-analysis-cleanup-20261020"
+      },
+      "/workspace/Tuldok-retained-ci-repair-20261020": {
+        "worktree": "/workspace/Tuldok-retained-ci-repair-20261020",
+        "HEAD": "d161d244270f10128c171ca6d4ecca52faac9274",
+        "branch": "refs/heads/fix/retained-analysis-ci-qualification-20261020"
+      },
+      "/workspace/Tuldok-sdk-canonical": {
+        "worktree": "/workspace/Tuldok-sdk-canonical",
+        "HEAD": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+        "branch": "refs/heads/fix/extension-sdk-utf8-canonical"
+      },
+      "/workspace/Tuldok-sdk-evidence": {
+        "worktree": "/workspace/Tuldok-sdk-evidence",
+        "HEAD": "251b52ebbf888c7b725cce3e519b78b449077195",
+        "branch": "refs/heads/feature/extension-sdk-evidence"
+      },
+      "/workspace/Tuldok-sdk-graph-fix": {
+        "worktree": "/workspace/Tuldok-sdk-graph-fix",
+        "HEAD": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+        "branch": "refs/heads/fix/sdk-conformance-public-graph"
+      },
+      "/workspace/Tuldok-torch-registry-fix": {
+        "worktree": "/workspace/Tuldok-torch-registry-fix",
+        "HEAD": "abd68106ea5acfbac96e64adb21dadb05eaffc61",
+        "branch": "refs/heads/fix/managed-torch-registry-durability-20261019"
+      },
+      "/workspace/Tuldok-ui": {
+        "worktree": "/workspace/Tuldok-ui",
+        "HEAD": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+        "branch": "refs/heads/feature/model-development-workspace"
+      }
+    },
+    "raw_worktree_porcelain": "worktree /workspace/Tuldok\nHEAD 8673509d5430e6aa1162986f4d7b1c071aa1c82e\nbranch refs/heads/work\n\nworktree /workspace/Tuldok-ab-retention\nHEAD 31283de32913f3c3e716e7fdb2c4c57fa3d4d59f\nbranch refs/heads/test/e4-ab-retention\n\nworktree /workspace/Tuldok-activation-ci-fix\nHEAD 9228b09cc14177cbe6e35592c16517c4da7f1bb7\nbranch refs/heads/test/model-activation-ci\n\nworktree /workspace/Tuldok-agent-snapshots-review\nHEAD f68678c7f9ad893dac8bcdfe6c2dd7529ba88975\ndetached\n\nworktree /workspace/Tuldok-api-source-provenance\nHEAD 1cbf4187e970e4cc9fa132346c8c488facf1ebc0\nbranch refs/heads/docs/product-api-source-provenance\n\nworktree /workspace/Tuldok-author-browser\nHEAD e4bfaa8c7c942121671365998b1fa3a3ba277e26\nbranch refs/heads/test/extension-author-native-browser\n\nworktree /workspace/Tuldok-author-freeze-test\nHEAD b410d85ea9d9c299263fc564fc170e43905c5e58\nbranch refs/heads/test/author-review-freeze\n\nworktree /workspace/Tuldok-author-qualification\nHEAD 3ee438e23d98281b65a04425ff2f72a3ddbed0de\nbranch refs/heads/test/extension-author-qualification\n\nworktree /workspace/Tuldok-author-resume\nHEAD 3affe90bc258c1327fde49faf57bceb852cc2759\nbranch refs/heads/fix/author-oracle-resume\n\nworktree /workspace/Tuldok-author-ui\nHEAD 0ca0687a6220592b6158932a0e9f54f4e8c80687\nbranch refs/heads/feature/extension-model-author-workspace\n\nworktree /workspace/Tuldok-b-cold-independent-review\nHEAD 1411debf1b87e82330eed4ebf09840da52e52253\nbranch refs/heads/qa/independent-b-cold-actual\n\nworktree /workspace/Tuldok-b-host-corrected\nHEAD 6ad3480be032be4565ad6b4add41ba9476e96cc3\nbranch refs/heads/review/independent-b-host-corrected\n\nworktree /workspace/Tuldok-b-host-review\nHEAD 97e2bdf6284e290b319b8f7bce8702914a898107\nbranch refs/heads/review/independent-b-host-compatibility\n\nworktree /workspace/Tuldok-b-independent\nHEAD db5ce541feb78ca371dc3b6607f27c5725c16518\nbranch refs/heads/feature/field-surrogate-b-independent\n\nworktree /workspace/Tuldok-b-public-sdk-host\nHEAD e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c\nbranch refs/heads/qa/independent-b-sdk-frozen\n\nworktree /workspace/Tuldok-b-qualification-docs\nHEAD 70845e383879e06a9337478b5d661b1516ac3c94\nbranch refs/heads/docs/independent-b-decisive-qualification\n\nworktree /workspace/Tuldok-b-refusals\nHEAD 2266a79b6925faef6edf6c87c49168858b68bf36\nbranch refs/heads/test/x3-b-semantic-refusals\n\nworktree /workspace/Tuldok-bound-http\nHEAD 75b0262d8aed3c788c76e0497968b426fe999864\nbranch refs/heads/test/extension-bound-http\n\nworktree /workspace/Tuldok-candidate-permissions\nHEAD f1438b38e42aaece9c263244a64929ec26f85bfc\nbranch refs/heads/test/p5-transitive-authority\n\nworktree /workspace/Tuldok-canonical-a-report\nHEAD 9e6f2ffc45ec5e00554759ff356fe44f6e82fab0\nbranch refs/heads/docs/canonical-a-50502-qualification\n\nworktree /workspace/Tuldok-canonical-author-qa\nHEAD e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c\nbranch refs/heads/test/canonical-author-50502-review\n\nworktree /workspace/Tuldok-canonical-final-review\nHEAD 8f6ca00cb87e7ef862be810e9297b8b8a180642a\nbranch refs/heads/test/extension-canonical-final-review\n\nworktree /workspace/Tuldok-canonical-glue\nHEAD a546a6e9caf8295bd6e329aab73042645188a528\nbranch refs/heads/feat/e2-canonical-owner-glue\n\nworktree /workspace/Tuldok-canonical-independent-review\nHEAD 53a2ffd6df4474746d359ed296e1bd7bb788b7f0\nbranch refs/heads/test/extension-canonical-independent-review\n\nworktree /workspace/Tuldok-canonical-inference-review\nHEAD f83ab83bb316f691efbd3b74cf99cb12a7737b07\ndetached\n\nworktree /workspace/Tuldok-canonical-masked-actual\nHEAD ab7d9359681c3953b17fb738a73a6bf5cbb4f43f\ndetached\n\nworktree /workspace/Tuldok-canonical-owner-review\nHEAD 48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a\nbranch refs/heads/test/canonical-owner-review\n\nworktree /workspace/Tuldok-canonical-package-actual\nHEAD ab7d9359681c3953b17fb738a73a6bf5cbb4f43f\nbranch refs/heads/test/canonical-a-package-actual\n\nworktree /workspace/Tuldok-canonical-package-report\nHEAD 4972941e0e37ad9cfcc548bd6831d70c0799ef42\nbranch refs/heads/docs/canonical-a-505-package-qualification\n\nworktree /workspace/Tuldok-captions-dialog-ci-repair-20261020\nHEAD abbae728434fa0670478e12216a1d94603a97daf\nbranch refs/heads/fix/captions-dialog-ci-qualification-20261020\n\nworktree /workspace/Tuldok-e2-api\nHEAD 5a2b079f0a017957276fec3404c52c9d586f0667\nbranch refs/heads/feature/extension-field-api\n\nworktree /workspace/Tuldok-e2-author-review\nHEAD 057c8abf571d62331486dc56ef43064e72f9d03a\ndetached\n\nworktree /workspace/Tuldok-e2-binding-api\nHEAD a8dad44661d64bb88c6cdedb5386c34583c5b130\nbranch refs/heads/feature/extension-bound-recipe-api\n\nworktree /workspace/Tuldok-e2-glue-review\nHEAD a43f3124239c2baff2c1ae3b0a20f987cfb1607a\ndetached\n\nworktree /workspace/Tuldok-e2-review\nHEAD 057c8abf571d62331486dc56ef43064e72f9d03a\ndetached\n\nworktree /workspace/Tuldok-e2-ui\nHEAD 1bd85834d0b9e220430c44848017b1d75146b576\nbranch refs/heads/feature/model-development-fields-native\n\nworktree /workspace/Tuldok-e4-core-report\nHEAD a479be12130845abca6387f1dacb7c464139215a\nbranch refs/heads/docs/e4-core-cross-grant-qualification\n\nworktree /workspace/Tuldok-e4-execution\nHEAD c8e63278379d884dee6b9aec8b813bf8a20e1215\nbranch refs/heads/test/e4-ab-retention-execution\n\nworktree /workspace/Tuldok-e4-final-report\nHEAD 0f213dc43e3fe970c21fe34407e0fcbf6358bc14\nbranch refs/heads/docs/e4-ab-final-qualification\n\nworktree /workspace/Tuldok-e4-retention\nHEAD 850f1d2e2285e7e95193d3e8615e1a8e1fc03f44\nbranch refs/heads/feature/extension-a-retention\n\nworktree /workspace/Tuldok-experiment-lineage\nHEAD ee07e415cb3291c7a4b75939414345cba54abef7\nbranch refs/heads/feature/experiment-lineage\n\nworktree /workspace/Tuldok-extension-bindings\nHEAD 12c98cb9495e0f7202ff10420d18506e6de8c780\nbranch refs/heads/feat/e1-e2-contribution-bindings\n\nworktree /workspace/Tuldok-extension-canonical\nHEAD 6534cd4c882aa5075b6a5dc545df142bf20c35db\nbranch refs/heads/feature/extension-canonical-fixture\n\nworktree /workspace/Tuldok-extension-final-acceptance\nHEAD 4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764\nbranch refs/heads/docs/extension-final-acceptance\n\nworktree /workspace/Tuldok-extension-final-functional-status\nHEAD 50e69f512e81899b9703e6a8d03c7d9f5c05115c\nbranch refs/heads/docs/extension-final-functional-status\n\nworktree /workspace/Tuldok-extension-inference\nHEAD c8f5def68c1f8109cb8af11bb8452cf0c1b84792\nbranch refs/heads/feature/extension-inference-product\n\nworktree /workspace/Tuldok-extension-local-qa\nHEAD 346b9f90c4339cdb8c3b942dadafb4c591bc385d\nbranch refs/heads/test/extension-local-50502-qualification\n\nworktree /workspace/Tuldok-extension-modalities\nHEAD 4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a\nbranch refs/heads/test/extension-modality-descriptors\n\nworktree /workspace/Tuldok-extension-retention\nHEAD 8e9eef5680c8ace144b8ba5defbc1e67a941ffd2\nbranch refs/heads/feature/extension-retention-product\n\nworktree /workspace/Tuldok-extension-runtime\nHEAD c24cd26e205011814e928ea58790ef777f9b0b40\nbranch refs/heads/feature/extension-runtime-nomination\n\nworktree /workspace/Tuldok-extension-status-cleanup\nHEAD 8c94afe46bc4ace177b669a723099bb039b7a157\nbranch refs/heads/docs/extension-current-status-cleanup\n\nworktree /workspace/Tuldok-extension-x3-acceptance\nHEAD f7c7d39451e8e973a6ef20453c6e54041fe6bc97\nbranch refs/heads/docs/extension-x3-acceptance\n\nworktree /workspace/Tuldok-external-browser-readiness\nHEAD 2b786501dbbcb6db734d9df074ecac0976d87dae\nbranch refs/heads/test/external-browser-handler-readiness\n\nworktree /workspace/Tuldok-external-package-ui\nHEAD 6905fc8a124ba856dd70d4e8a9e4d0f0265e8863\nbranch refs/heads/feature/external-candidate-evidence-view\n\nworktree /workspace/Tuldok-final-publication\nHEAD ed31eadc3c2c29f03e59cb72b965b87af494bf1b\nbranch refs/heads/integration/model-development-final-publication\n\nworktree /workspace/Tuldok-graph-focus\nHEAD ecb4e8e21d8103822d6b53bfafb60f94c283cb20\nbranch refs/heads/fix/external-graph-keyboard-focus\n\nworktree /workspace/Tuldok-graph-focus-old\nHEAD f994228cdc7495d0ee29d1527fbe975acc62be5d\ndetached\n\nworktree /workspace/Tuldok-graph-focus-regression\nHEAD 6702be2e08420d781e60665b15f27bc974160552\nbranch refs/heads/test/external-graph-focus-regression\n\nworktree /workspace/Tuldok-indexed-ci-repair-20261020\nHEAD 9f08427029d8b48c8f9b50927a1c835afb573276\nbranch refs/heads/fix/indexed-ci-qualification-20261020\n\nworktree /workspace/Tuldok-inference-review\nHEAD c8f5def68c1f8109cb8af11bb8452cf0c1b84792\ndetached\n\nworktree /workspace/Tuldok-integration-checkpoint\nHEAD 5edb9b5d388b3fc36a289cb87b60c0d14164b9df\nbranch refs/heads/checkpoint/lab-integration-20261019\n\nworktree /workspace/Tuldok-lab-consumer-integration-m5m6\nHEAD 92546d7fb053d5624dd6434031f0d0fb8d4dbf10\nbranch refs/heads/integration/lab-consumer-feedback-20261019\n\nworktree /workspace/Tuldok-lab-indexed-diagnostics-m1\nHEAD 9f08427029d8b48c8f9b50927a1c835afb573276\nbranch refs/heads/feature/lab-indexed-diagnostics-20261019\n\nworktree /workspace/Tuldok-lab-integration-review\nHEAD cd5c029a6d4bde8a570064bac6687cb17394a1ac\nbranch refs/heads/integration/rheon-lab-review-20261019\n\nworktree /workspace/Tuldok-lab-publication-semantic-witness-m1\nHEAD b6a2ccb89dd0a57ba51c625940a52e0f71b05990\nbranch refs/heads/test/lab-publication-semantic-recovery-20261019\n\nworktree /workspace/Tuldok-legacy-p3-qa\nHEAD f1ecf7888a8dfa5b67ac8b087034226d533c682e\ndetached\n\nworktree /workspace/Tuldok-live-project-fix\nHEAD 4030e32c435b51ab8b3188ca960c5750467fa654\nbranch refs/heads/fix/live-project-observation-fences-20261019\n\nworktree /workspace/Tuldok-main505-agent-authoring\nHEAD e1bc02a68355876ec64e5e1e272019c2018b5c63\nbranch refs/heads/test/main505-agent-authoring\n\nworktree /workspace/Tuldok-main505-agent-authoring-recovery\nHEAD 3a821f4580769cc52c9ccb2d23596af07c11d511\nbranch refs/heads/test/main505-agent-authoring-recovery\n\nworktree /workspace/Tuldok-model-browser-fix\nHEAD 9b978533bba9fb3b12163302ca1679238b08220d\nbranch refs/heads/test/model-browser-candidate-readiness\n\nworktree /workspace/Tuldok-native-ab-actual\nHEAD e958db578da805f4352d282c02430edc78985a3c\nbranch refs/heads/test/native-author-ab-actual\n\nworktree /workspace/Tuldok-native-ab-browser\nHEAD 01a3d0786596d14ffab882de58a05a7bb009b571\nbranch refs/heads/test/native-author-ab-evidence\n\nworktree /workspace/Tuldok-native-ab-retention\nHEAD c005d9f3884eeecfe53fd428f139b10139bd3e07\nbranch refs/heads/test/native-ab-retention-ui\n\nworktree /workspace/Tuldok-one-fit-host-ci\nHEAD 487722a01994f3c881f584a45fbb02c59dff6cd8\nbranch refs/heads/test/one-fit-host-dependencies\n\nworktree /workspace/Tuldok-operator-runtime-fix\nHEAD e831573a2b5c84be1fcb047c6b6703984aaeea3b\nbranch refs/heads/fix/operator-runtime-identity\n\nworktree /workspace/Tuldok-p2-final\nHEAD 351f55b76a2545592618a98eb68276eb9d38b713\nbranch refs/heads/integration/model-development-p2-final\n\nworktree /workspace/Tuldok-p2-review-fix\nHEAD ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02\nbranch refs/heads/fix/p2-cold-composition-marker\n\nworktree /workspace/Tuldok-p3\nHEAD 767f66f8c9435561e68aee216b0dc54808997908\nbranch refs/heads/feature/model-development-p3\n\nworktree /workspace/Tuldok-p3-activation-verify\nHEAD 13f0126a3d4014b8cf96df96b48243e17557bf30\ndetached\n\nworktree /workspace/Tuldok-p3-decoder-fix\nHEAD 144d8a70a2ef3849584cce822e00588f45c4106b\nbranch refs/heads/fix/p3-strict-evidence-decoding\n\nworktree /workspace/Tuldok-p4\nHEAD 1d621e826aab89a24afed9e8927e7e5cd15564c9\nbranch refs/heads/feature/model-development-p4\n\nworktree /workspace/Tuldok-p4-browser\nHEAD 3b49e605af5ca7bb3d552b00117c73cfc0642dc9\nbranch refs/heads/feature/model-development-p4-browser\n\nworktree /workspace/Tuldok-p4-export-browser-fix\nHEAD 6998e7165eeaf496fe84b55d5d58082331883fff\nbranch refs/heads/fix/p4-export-browser-recipe-set\n\nworktree /workspace/Tuldok-p5\nHEAD 407068d7c8f5aa0d1b4d81ced692ad01ab3db799\nbranch refs/heads/feature/model-development-p5\n\nworktree /workspace/Tuldok-p5-canonical-a\nHEAD 503d177089bfc12fa4e49e3a7389b7838b8640c0\nbranch refs/heads/feature/canonical-a-package\n\nworktree /workspace/Tuldok-p5-canonical-final-review\nHEAD 4bd003c786949368bb6b9e45e9502c22897ddabd\ndetached\n\nworktree /workspace/Tuldok-p5-canonical-review\nHEAD 4af7157d4ee73532cd0fca27b03b86a1a9d3b344\ndetached\n\nworktree /workspace/Tuldok-p5-ci\nHEAD 1aa4822865338b92e0a1813db1666a13b8920bda\nbranch refs/heads/test/p5-captured-runtime-ci\n\nworktree /workspace/Tuldok-p5-ci-runtime\nHEAD aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7\nbranch refs/heads/fix/candidate-packages-distro-python\n\nworktree /workspace/Tuldok-p5-field\nHEAD f2fb38d4c704fc0156b08d5bbbd488719e7a22f9\nbranch refs/heads/feature/model-development-p5-field\n\nworktree /workspace/Tuldok-p5-p4-composition\nHEAD ed515101e2ef92cb03c0e9e67e6886250af6db8f\nbranch refs/heads/integration/p5-after-p4-prep\n\nworktree /workspace/Tuldok-p6\nHEAD 8743bdff702c313a76ebaf3296064ad30ca417eb\nbranch refs/heads/feature/model-development-p6\n\nworktree /workspace/Tuldok-p6-agent-api-review\nHEAD f68678c7f9ad893dac8bcdfe6c2dd7529ba88975\ndetached\n\nworktree /workspace/Tuldok-p6-field-qa\nHEAD f6530ad7dcd814df264d43b7699b41e1fb870277\nbranch refs/heads/qa/field-interface-observation\n\nworktree /workspace/Tuldok-prep-review\nHEAD 387b6eeec1eceef2629c746e5e940a51bbb48dbd\ndetached\n\nworktree /workspace/Tuldok-prep68\nHEAD 78a1b9c1ca328a63d7b285789dc8924fbc234ce6\nbranch refs/heads/integration/extension-pressure-current-main\n\nworktree /workspace/Tuldok-prep69\nHEAD c4599171d940e85d3a97a96c29ef9da8b79c0c48\nbranch refs/heads/integration/extension-scalar-current-main\n\nworktree /workspace/Tuldok-product\nHEAD d18396a9b9d0e794cd23664af169dc9d437c5a0e\nbranch refs/heads/integration/model-development-product\n\nworktree /workspace/Tuldok-project-contract-fix\nHEAD a339759b487e67851966899a506f14f7d2dc3d74\nbranch refs/heads/fix/managed-project-contract-compatibility-20261019\n\nworktree /workspace/Tuldok-project-startup-ci-repair-20261020\nHEAD 29011daea37f101ee30be9bc10aab702a16c830a\nbranch refs/heads/fix/workspace-project-startup-ci-20261020\n\nworktree /workspace/Tuldok-release-authority\nHEAD 983256dd8c6899d85fd2b59baee6da70cbbef76b\nbranch refs/heads/test/frozen-release-authority\n\nworktree /workspace/Tuldok-request-latency-review\nHEAD 76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114\nbranch refs/heads/integration/request-latency-review-20261019\n\nworktree /workspace/Tuldok-restored-interface-qa\nHEAD b772f44a8ea4b95755dfa2da27084f74b733e4ab\nbranch refs/heads/qa/restored-ab-official-interfaces\n\nworktree /workspace/Tuldok-retained-analysis-integration-20261020\nHEAD 0ba4db01f04a77c262eb4b397f88849e9688b5ab\nbranch refs/heads/integration/retained-analysis-cleanup-20261020\n\nworktree /workspace/Tuldok-retained-ci-repair-20261020\nHEAD d161d244270f10128c171ca6d4ecca52faac9274\nbranch refs/heads/fix/retained-analysis-ci-qualification-20261020\n\nworktree /workspace/Tuldok-sdk-canonical\nHEAD 8e70f1ee954d56b4f4fc414998146d59901dfaa2\nbranch refs/heads/fix/extension-sdk-utf8-canonical\n\nworktree /workspace/Tuldok-sdk-evidence\nHEAD 251b52ebbf888c7b725cce3e519b78b449077195\nbranch refs/heads/feature/extension-sdk-evidence\n\nworktree /workspace/Tuldok-sdk-graph-fix\nHEAD d368acdf236a6f3cac8176a634bd9d79c7223d70\nbranch refs/heads/fix/sdk-conformance-public-graph\n\nworktree /workspace/Tuldok-torch-registry-fix\nHEAD abd68106ea5acfbac96e64adb21dadb05eaffc61\nbranch refs/heads/fix/managed-torch-registry-durability-20261019\n\nworktree /workspace/Tuldok-ui\nHEAD 198879274c61dbfa1d27b9bcb851fce4364c7c1f\nbranch refs/heads/feature/model-development-workspace\n\n"
+  },
+  "exclusions": {
+    "all_other_refs_and_worktrees": "Preserved; inventory examines their Git metadata only. No unrelated status/source/ignored files read.",
+    "remaining_prs": "PR111,PR112 and the new scientific-startup worktree excluded from cleanup scope, regardless of branch aliases or matching commit IDs."
+  },
+  "limits": [
+    "This read-only inventory is not the independent destructive precheck.",
+    "Ignored QA is not archived or independently recovered yet.",
+    "Root must recheck exact heads, status, main reachability, active usage, open dependents and protected baseline immediately before retirement.",
+    "No runtime qualification retesting, schema operations, source edits, ref changes, checkout, deletion, prune, push, rerun or merge performed."
+  ]
+}

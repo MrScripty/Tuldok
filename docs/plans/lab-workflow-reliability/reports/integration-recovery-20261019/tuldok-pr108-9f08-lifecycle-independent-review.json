@@ -1,31 +1,300 @@
 {
+  "reviewed_at_utc": "2026-10-20T04:26:55.827408+00:00",
+  "reviewer": "PR108 repair agent independent hosted evidence review",
   "pr": 108,
+  "outcome": "clear within completed exact-head lifecycle qualification scope",
   "exact_head": "9f08427029d8b48c8f9b50927a1c835afb573276",
   "run_id": 39360311688,
   "job_id": 118424714572,
-  "outcome": "pending",
-  "status": "in_progress",
-  "conclusion": null,
-  "successful_step_count": 158,
-  "total_reported_steps": 171,
-  "active_steps": [
+  "job_metadata": {
+    "status": "completed",
+    "conclusion": "success",
+    "total_steps": 172,
+    "success_steps": 172,
+    "failure_steps": 0,
+    "skipped_steps": 0
+  },
+  "source_attribution": {
+    "actual_checkout": "d72baa0a61119c19bdcb8b4efa7500ee011017e7",
+    "pr_head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+    "base_at_checkout": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+    "actual_log_lines": [
+      "2026-10-20T02:55:21.2294997Z HEAD is now at d72baa0 Merge 9f08427029d8b48c8f9b50927a1c835afb573276 into a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "2026-10-20T02:55:21.2404992Z d72baa0a61119c19bdcb8b4efa7500ee011017e7"
+    ],
+    "legacy_source": "Separate build/legacy-schema3 checkout f1ecf7888a8dfa5b67ac8b087034226d533c682e is historical retained-run evidence, not the current product head.",
+    "current_main": "Root separately owns qualified old-base a9c12a tree equivalence to current63f689ec and retargeting. This job does not claim it directly checked literal current main."
+  },
+  "full_unittest": {
+    "command": "python -m unittest discover -s tests",
+    "tests": 1744,
+    "seconds": 2825.882,
+    "skipped": 72,
+    "result": "2026-10-20T04:09:51.4430112Z OK (skipped=72)",
+    "raw_summary": "2026-10-20T04:09:51.4429851Z Ran 1744 tests in 2825.882s"
+  },
+  "all_python_test_summaries": [
     {
-      "name": "Run node tests/browser_workspace_spatial.cjs",
-      "status": "in_progress",
-      "conclusion": null,
-      "number": 159
+      "command": "python -m unittest discover -s tests -p 'test_run_preflight*.py' -v",
+      "tests": 30,
+      "seconds": 8.782,
+      "skipped": 0,
+      "result": "2026-10-20T02:55:54.6788878Z OK",
+      "raw_summary": "2026-10-20T02:55:54.6788608Z Ran 30 tests in 8.782s"
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v",
+      "tests": 32,
+      "seconds": 165.586,
+      "skipped": 0,
+      "result": "2026-10-20T02:58:40.9065575Z OK",
+      "raw_summary": "2026-10-20T02:58:40.9065193Z Ran 32 tests in 165.586s"
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+      "tests": 20,
+      "seconds": 42.348,
+      "skipped": 0,
+      "result": "2026-10-20T02:59:23.8877063Z OK",
+      "raw_summary": "2026-10-20T02:59:23.8876555Z Ran 20 tests in 42.348s"
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+      "tests": 14,
+      "seconds": 28.84,
+      "skipped": 0,
+      "result": "2026-10-20T02:59:52.9470972Z OK",
+      "raw_summary": "2026-10-20T02:59:52.9469938Z Ran 14 tests in 28.840s"
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_workspace_phase_timings.py' -v",
+      "tests": 1,
+      "seconds": 0.001,
+      "skipped": 0,
+      "result": "2026-10-20T02:59:53.1868816Z OK",
+      "raw_summary": "2026-10-20T02:59:53.1868322Z Ran 1 test in 0.001s"
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_scientific_comparison_client.py' -v",
+      "tests": 4,
+      "seconds": 1.927,
+      "skipped": 0,
+      "result": "2026-10-20T02:59:55.3644438Z OK",
+      "raw_summary": "2026-10-20T02:59:55.3644065Z Ran 4 tests in 1.927s"
+    },
+    {
+      "command": "build/workspace-training/bin/python -c \"import numpy, sklearn, psycopg\"",
+      "tests": 15,
+      "seconds": 22.488,
+      "skipped": 0,
+      "result": "2026-10-20T03:01:03.4533729Z OK",
+      "raw_summary": "2026-10-20T03:01:03.4532999Z Ran 15 tests in 22.488s"
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+      "tests": 11,
+      "seconds": 0.599,
+      "skipped": 0,
+      "result": "2026-10-20T03:01:04.2988828Z OK",
+      "raw_summary": "2026-10-20T03:01:04.2988474Z Ran 11 tests in 0.599s"
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+      "tests": 9,
+      "seconds": 0.107,
+      "skipped": 0,
+      "result": "2026-10-20T03:01:04.5212946Z OK",
+      "raw_summary": "2026-10-20T03:01:04.5203146Z Ran 9 tests in 0.107s"
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+      "tests": 12,
+      "seconds": 3.693,
+      "skipped": 1,
+      "result": "2026-10-20T03:01:08.3724291Z OK (skipped=1)",
+      "raw_summary": "2026-10-20T03:01:08.3723924Z Ran 12 tests in 3.693s"
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+      "tests": 9,
+      "seconds": 0.286,
+      "skipped": 1,
+      "result": "2026-10-20T03:01:08.8107144Z OK (skipped=1)",
+      "raw_summary": "2026-10-20T03:01:08.8106712Z Ran 9 tests in 0.286s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+      "tests": 74,
+      "seconds": 691.327,
+      "skipped": 0,
+      "result": "2026-10-20T03:12:50.3361265Z OK",
+      "raw_summary": "2026-10-20T03:12:50.3361001Z Ran 74 tests in 691.327s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+      "tests": 19,
+      "seconds": 53.177,
+      "skipped": 0,
+      "result": "2026-10-20T03:13:43.7693352Z OK",
+      "raw_summary": "2026-10-20T03:13:43.7692939Z Ran 19 tests in 53.177s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+      "tests": 22,
+      "seconds": 118.768,
+      "skipped": 0,
+      "result": "2026-10-20T03:15:42.8062791Z OK",
+      "raw_summary": "2026-10-20T03:15:42.8062418Z Ran 22 tests in 118.768s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+      "tests": 24,
+      "seconds": 246.598,
+      "skipped": 0,
+      "result": "2026-10-20T03:19:50.0152634Z OK",
+      "raw_summary": "2026-10-20T03:19:50.0151852Z Ran 24 tests in 246.598s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+      "tests": 34,
+      "seconds": 123.09,
+      "skipped": 0,
+      "result": "2026-10-20T03:21:53.7556686Z OK",
+      "raw_summary": "2026-10-20T03:21:53.7553955Z Ran 34 tests in 123.090s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+      "tests": 13,
+      "seconds": 35.253,
+      "skipped": 0,
+      "result": "2026-10-20T03:22:29.6988709Z OK",
+      "raw_summary": "2026-10-20T03:22:29.6988238Z Ran 13 tests in 35.253s"
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+      "tests": 5,
+      "seconds": 13.692,
+      "skipped": 0,
+      "result": "2026-10-20T03:22:44.1513650Z OK",
+      "raw_summary": "2026-10-20T03:22:44.1513373Z Ran 5 tests in 13.692s"
+    },
+    {
+      "command": "python -m unittest discover -s tests",
+      "tests": 1744,
+      "seconds": 2825.882,
+      "skipped": 72,
+      "result": "2026-10-20T04:09:51.4430112Z OK (skipped=72)",
+      "raw_summary": "2026-10-20T04:09:51.4429851Z Ran 1744 tests in 2825.882s"
     }
   ],
-  "failed_steps": [],
-  "full_unittest_step": [
+  "canonical_correction": {
+    "source_file": "tests/test_extension_canonical_author.py",
+    "exact_source_sha256": "70d21b915e563dd04661e1f6cce0dd2fb91fcc819482a46cdbe7d2a49f0adf0b",
+    "change_scope": [
+      "tests/test_extension_canonical_author.py"
+    ],
+    "behavior": "Assert exactly the two captured SDK source paths, their existing inference-authority hashes, and byte identity of the authored copies; retain model inertness, no-Run, source/declaration and hash assertions.",
+    "frozen_sdk_sources": {
+      "tuldok_extension_sdk/__init__.py": {
+        "contract_sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+        "actual_exact_head_sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18"
+      },
+      "tuldok_extension_sdk/evidence.py": {
+        "contract_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+        "actual_exact_head_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23"
+      }
+    },
+    "frozen_artifacts_and_live_sdk_unchanged_by_repair": true,
+    "evidence": "CanonicalAuthorTests has no skip guards; successful full discovery includes the corrected method. The nonverbose log provides suite-level evidence, not a separate printed per-method result. Original failure is absent. Prior independent local reproduction and16targeted tests remain separate supporting evidence."
+  },
+  "exact_head_source_hashes": {
+    "tests/test_extension_canonical_author.py": "70d21b915e563dd04661e1f6cce0dd2fb91fcc819482a46cdbe7d2a49f0adf0b",
+    "tests/qualify_model_development.py": "7c4a07924480494749504518697c42f4631fd2389ddd386d1c7994830b5b901d",
+    "tests/browser_model_development.cjs": "701b61cff00b2a6d1d23d35e6fb558c02c13df253a90fb8a1eb93a56088555ea",
+    "tests/browser_one_fit_model_evidence.cjs": "83220e5db396bb39b3b72064604b9b01259657cd6697983b7a19fd35cd667e96",
+    "tests/qualify_one_fit.py": "a340983e0ac529af06b034d8cc1d116c16398830e7c4e3e658e3fc02eaa738f1",
+    "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+    "tests/scientific_comparison_fixture.py": "c580c700aea4cfe0b9125200f2ad6991c9e80efe26acd405d1d5833faf87082f",
+    "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+    ".github/workflows/tests.yml": "33c1ead8d185bf45c36025d93a2ced3f0167f66ede72402f53d8dba041537be2",
+    "tuldok_extension_sdk/evidence.py": "53027c44b78fde2db62e736d9b8ed66915b17bfca3fefe36eee30cae59af0a70",
+    "examples/extensions/field-surrogate/v3-canonical/tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "examples/extensions/field-surrogate/v3-canonical/inference-contract.json": "d60b93699f978c125a567734ef4d610cb4027b3b2f047c31e6d579677121da1d",
+    "independent_inference_literal": "80cb30bfc9d1c64705630d4924e3b126b3a57b18bba5b12c3f349f1b05ca8b8e",
+    "tests/fixtures/model_development/fixture.json": "81fb7875b79549f6635b044f4fa2a8a49ab713cae705f7b040a300ae4af972e6"
+  },
+  "actual_cpu": {
+    "log_receipt": "/tmp/tuldok-pr108-9f08-actual-cpu-log-receipt.json",
+    "actual_training": true,
+    "independent_fixed_inference": true,
+    "cold_reopen": true,
+    "compatible_correction": true,
+    "checkpoints": 2,
+    "probe_members": 4,
+    "runtime": {
+      "device": "cpu",
+      "python": "3.12.15",
+      "scikit_learn": "1.7.2",
+      "threads": 1,
+      "torch": "2.8.0+cpu",
+      "torchvision": "0.23.0+cpu"
+    },
+    "driver_sha256": "7c4a07924480494749504518697c42f4631fd2389ddd386d1c7994830b5b901d",
+    "oracle_sha256": "80cb30bfc9d1c64705630d4924e3b126b3a57b18bba5b12c3f349f1b05ca8b8e",
+    "fixture_sha256": "81fb7875b79549f6635b044f4fa2a8a49ab713cae705f7b040a300ae4af972e6",
+    "hash_checks_against_exact_head": {
+      "qualification_driver": true,
+      "independent_oracle": true,
+      "fixture_source": true
+    },
+    "scope": [
+      "Authored patterns qualify evidence plumbing, not generalization or useful classifier quality.",
+      "CPU only; no GPU, resume or adaptive budget."
+    ]
+  },
+  "selected_successful_steps": [
+    {
+      "name": "Verify bounded owner phase timings with PostgreSQL",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 13
+    },
+    {
+      "name": "Verify exact phase UI contracts and bounded delivery",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 14
+    },
+    {
+      "name": "Verify exact scientific comparison transport and stale delivery",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 15
+    },
+    {
+      "name": "Verify one-fit evidence in the provisioned CPU training interpreter",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 20
+    },
+    {
+      "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 36
+    },
     {
       "name": "Run python -m unittest discover -s tests",
       "status": "completed",
       "conclusion": "success",
       "number": 37
-    }
-  ],
-  "late_browser_steps": [
+    },
+    {
+      "name": "Verify real coordinator fault recovery and lost reply in Runs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 150
+    },
     {
       "name": "Verify real live owner phase timing workflow",
       "status": "completed",
@@ -33,30 +302,325 @@
       "number": 151
     },
     {
+      "name": "Verify exact retained scientific comparison in the existing workspace",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 152
+    },
+    {
+      "name": "Run node tests/browser_workspace_image_run.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 153
+    },
+    {
+      "name": "Run node tests/browser_workspace_text.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 154
+    },
+    {
+      "name": "Run node tests/browser_workspace_audio.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 155
+    },
+    {
+      "name": "Run node tests/browser_workspace_audio_run.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 156
+    },
+    {
+      "name": "Run node tests/browser_workspace_mesh_run.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 157
+    },
+    {
+      "name": "Run node tests/browser_workspace_sequence_run.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 158
+    },
+    {
+      "name": "Run node tests/browser_workspace_spatial.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 159
+    },
+    {
+      "name": "Run node tests/browser_workspace_export_run.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 160
+    },
+    {
+      "name": "Run node tests/browser_workspace_breadth.cjs",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 161
+    },
+    {
+      "name": "Qualify automatic classifier evidence and independent CPU reconstruction",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 162
+    },
+    {
       "name": "Exercise finite model development through the real browser",
-      "status": "pending",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "number": 163
     },
     {
       "name": "Exercise actual one-fit text model evidence in the browser",
-      "status": "pending",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "number": 164
     },
     {
       "name": "Exercise actual one-fit audio model evidence in the browser",
-      "status": "pending",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "number": 165
+    },
+    {
+      "name": "Run actions/upload-artifact@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 166
     }
   ],
-  "metadata": "/tmp/tuldok-pr108-9f08-lifecycle-run-39360311688-jobs.json",
-  "procedure": "One bounded metadata lookup; job remains running, so no decoded log fetch or polling.",
+  "late_actual_browser_passes": [
+    "2026-10-20T04:17:48.0906805Z PASS coordinator browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-coordinator/run-AFKYVg",
+    "2026-10-20T04:18:11.3494010Z PASS phase timing browser: /home/runner/work/Tuldok/Tuldok/build/qa/run-phase-timings/run-bUXsPa",
+    "2026-10-20T04:19:09.1330158Z PASS real image workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-image-run/run-3kc2hs",
+    "2026-10-20T04:19:33.3505083Z PASS real text workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-text-run/run-1yDYf3",
+    "2026-10-20T04:19:56.8431238Z PASS real audio workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-audio-run/run-fuJ6XY",
+    "2026-10-20T04:20:06.3701978Z PASS real mesh workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-mesh-run/run-pIKEe5",
+    "2026-10-20T04:20:17.6964879Z PASS real sequence workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-sequence-run/run-DJ7FgO",
+    "2026-10-20T04:20:32.2322576Z PASS real spatial workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-spatial/run-L3mLM0",
+    "2026-10-20T04:22:13.9702474Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "2026-10-20T04:23:03.2435240Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "2026-10-20T04:23:03.6169834Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "2026-10-20T04:23:04.4765493Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-4eKfQL",
+    "2026-10-20T04:23:29.5178305Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+    "2026-10-20T04:23:30.7010608Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+    "2026-10-20T04:23:31.0504997Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+    "2026-10-20T04:23:32.6536447Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-WEnf14",
+    "2026-10-20T04:23:57.5736945Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+    "2026-10-20T04:23:58.7486499Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+    "2026-10-20T04:23:59.0995569Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+    "2026-10-20T04:24:00.7486979Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-cf1z7E"
+  ],
+  "scientific_comparison_browser": {
+    "step_success": true,
+    "actual_log_result": {
+      "state": "passed",
+      "report": "/home/runner/work/Tuldok/Tuldok/build/qa/scientific-comparison/run-s57jfk",
+      "checks": [
+        "Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.",
+        "1440/390px tables retain all values and keyboard scrolling without page overflow.",
+        "Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.",
+        "Exact attached publication Ref uses real publication readers and preserves original interrupted state.",
+        "Removed retained root refuses fresh candidate selection and clears prior values.",
+        "Actual browser credential revocation clears the session and all cached scientific values after the refused read."
+      ]
+    },
+    "scope": "Real HTTP/browser metadata/admission/retained-context path with synthetic terminal receipts and arrays. No producer/runtime/custody/scientific acceptance qualification."
+  },
+  "indexed_diagnostics": {
+    "actual_log_receipt": "/tmp/tuldok-pr108-9f08-indexed-diagnostics-log-receipt.json",
+    "scope": "No-op metadata runtime custody, harness SDK serialization and exact Ref collection; captured Python producer not executed, training false, numerical acceptance not_evaluated. Scientific acceptance remains separate."
+  },
+  "all_actual_pass_log_lines": [
+    "2026-10-20T02:59:53.2593077Z PASS phase identity/clock/duration/wait validation, latest-preparation labeling, bounded sequential refresh, abort and stale delivery/session cleanup",
+    "2026-10-20T03:22:29.8963089Z PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination",
+    "2026-10-20T04:09:51.6887016Z PASS auth fixture exact-origin credential boundary, no forwarding to debugger/provider, no redirects, explicit CDP session",
+    "2026-10-20T04:09:51.7693903Z PASS auth controller: stale identity/401 ownership, review scopes, code clearing, no mutation replay",
+    "2026-10-20T04:10:03.0123508Z PASS access browser /home/runner/work/Tuldok/Tuldok/build/qa/access/run-7Moz0A",
+    "2026-10-20T04:10:06.3029089Z PASS Opening remains read-only; explicit import refuses stale observed hash before catalog writes, then imports exact bytes",
+    "2026-10-20T04:10:08.2004583Z PASS All authored fields and X/Y/Z planes retain exact time/stage/dtype; rotated noncubic origin and signed zero inspected",
+    "2026-10-20T04:10:09.0594477Z PASS Wholeasset human inspection freezes canonical release; separate NumPy reader verifies exact recovered original payload and opaque sources",
+    "2026-10-20T04:10:10.9084420Z PASS Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record",
+    "2026-10-20T04:10:10.9139998Z PASS Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted",
+    "2026-10-20T04:10:11.0693240Z PASS scientific field browser: /home/runner/work/Tuldok/Tuldok/build/qa/scientific-fields-neutral/run-o5kTiK",
+    "2026-10-20T04:10:11.2757420Z PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.",
+    "2026-10-20T04:10:11.2761675Z PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only.",
+    "2026-10-20T04:10:11.2766216Z PASS external controller: actor-bound unresolved key survives ambiguous\u2192403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only.",
+    "2026-10-20T04:10:11.3688962Z PASS controlled external package view: owned discovery, pending versus fresh state, source identity, denial/stale clearing and passive-only reads.",
+    "2026-10-20T04:10:11.4669931Z PASS bound extension author controlled UI: separate typed Model/trainer values, exact composition review, separate owner approval/Study admission, invalid preflight, failed review recovery, uncertain create/admission journals, stale revision refresh, actor/navigation/changed-observation fences. No actual producer claim.",
+    "2026-10-20T04:10:11.5263768Z PASS native typed parameters: edited arrays preserve values, optional controls, numeric enums, finite/range/integer constraints, closed objects and bounded arrays/depth. No runtime or model execution.",
+    "2026-10-20T04:10:20.2499816Z PASS Real keyboard-created edited graph, exact review, stale-byte refusal, descendant execution and exact artifact custody",
+    "2026-10-20T04:10:25.8793719Z PASS Owner creates an exact-material one-use grant; separately authenticated agent executes it without owner review controls",
+    "2026-10-20T04:10:31.1037217Z PASS Cloned graph cancellation waits for confirmed custody termination",
+    "2026-10-20T04:10:33.3520796Z PASS Server restart retains exact completed run and downloadable original output",
+    "2026-10-20T04:10:33.3585115Z PASS external recipe browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-external/run-7Pu5fs",
+    "2026-10-20T04:10:33.4974325Z PASS publication metadata, pinned status2, owner/actor controls, unknown-ack stable request, source/hash identity, stale reads/writes and polling cleanup",
+    "2026-10-20T04:10:42.5900397Z PASS publication browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication/run-ya2VjU",
+    "2026-10-20T04:10:42.8557433Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences",
+    "2026-10-20T04:10:51.7793997Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-7aycid",
+    "2026-10-20T04:10:56.2180732Z PASS graph focus regression {\"state\":\"passed\",\"scope\":\"Inert private Project graph metadata only; no recipe execution or scientific qualification\",\"source_commit\":\"d72baa0a61119c19bdcb8b4efa7500ee011017e7\",\"workspace_real_sha256\":\"412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2\",\"harness_sha256\":\"5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684\",\"native_keys\":[\"Home\",\"ArrowDown\",\"ArrowDown\"],\"programmatic_focus_calls_in_journey\":1,\"values\":[\"77a0181bfb6a467e912d64b1cad76398\",\"036372fd160b432d83abeac45773614f\",\"a897969149bb45b7b91fe0b12de2a7fc\"],\"observed\":[{\"focus\":true,\"value\":\"77a0181bfb6a467e912d64b1cad76398\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"036372fd160b432d83abeac45773614f\",\"active\":\"SELECT\"},{\"focus\":true,\"value\":\"a897969149bb45b7b91fe0b12de2a7fc\",\"active\":\"SELECT\"}],\"negativeChecks\":[\"held graph read preserves separately moved focus\",\"held graph read does not restore hidden Pipeline focus after navigation\"],\"recipe_runs\":0,\"browser\":\"Chrome/155.0.8059.84\"}",
+    "2026-10-20T04:10:58.9031751Z PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct",
+    "2026-10-20T04:10:59.6197036Z PASS Current snapshot activity refreshes without navigation and retains saved manifest identity",
+    "2026-10-20T04:11:01.6522438Z PASS Malformed publisher status is unavailable, then recovers without fabricating progress",
+    "2026-10-20T04:11:04.6883470Z PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers",
+    "2026-10-20T04:11:07.9729155Z PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers",
+    "2026-10-20T04:11:08.3136171Z PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim",
+    "2026-10-20T04:11:10.5484953Z PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime",
+    "2026-10-20T04:11:10.9270530Z PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence",
+    "2026-10-20T04:11:11.0585647Z PASS Registered current project opens through a shareable project link",
+    "2026-10-20T04:11:11.8499920Z PASS A project link initializes navigation once; explicit later catalog selection survives reload",
+    "2026-10-20T04:11:12.9058584Z PASS Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted",
+    "2026-10-20T04:11:12.9225161Z PASS read-only project browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-project/run-dsX7mS",
+    "2026-10-20T04:11:37.5707143Z PASS spatial controller boundaries: persisted property key order, source identity, bounded point samples and native uint8 slice shape/coordinate fields",
+    "2026-10-20T04:11:41.5912594Z PASS delayedInitialListing",
+    "2026-10-20T04:11:41.5936478Z PASS delayedInitialListingAfterClear",
+    "2026-10-20T04:11:41.5969049Z PASS pendingEditorSaveAfterFixedOpen",
+    "2026-10-20T04:11:41.5992783Z PASS ordinaryEditorSaveKeepsCurrentIntent",
+    "2026-10-20T04:11:41.6008868Z PASS laterSaveCannotAdoptAlreadyStalePair",
+    "2026-10-20T04:11:41.6024659Z PASS explicitClearCancelsPendingEmptyOpen",
+    "2026-10-20T04:11:41.6043237Z PASS samePairReselectionInvalidatesKnownStalePreview",
+    "2026-10-20T04:11:41.6064144Z PASS olderSaveCannotInvalidateNewerSelectedProof",
+    "2026-10-20T04:11:42.1280651Z PASS judgment controller stored binding, review reset, repeated saves, later intent, list/preview races and every parent-adopter ownership interleaving, relevant local saves/no-op and dirty-draft preservation.",
+    "2026-10-20T04:12:49.4191806Z PASS initial list cannot override newer manual selection",
+    "2026-10-20T04:12:50.3071928Z PASS pending editor response cannot make stale fixed pairs release-eligible",
+    "2026-10-20T04:12:51.0230596Z PASS same-pair reselection drops preview after earlier editor proves staleness",
+    "2026-10-20T04:13:33.8486828Z PASS raw import + caption stop/current-filter/editor/exact-proof retention; expanded native folder drafts; saved draft blocked; explicit fixture review; exact rights/group/review filters; stale original set; fixed reopen/navigation/filter isolation; actual ZIP download with exact pairs, caption/pixel/split equality and pinned consumer.",
+    "2026-10-20T04:15:42.4630694Z PASS real Chromium explicit comparison, stale/rejudge, unselected conflict/delete/history, ties/abstentions, independent review and intent, weighted splits, immutable actual download and pinned DPO preparation/collator; desktop/narrow.",
+    "2026-10-20T04:15:55.3367975Z PASS actual Chromium two independent answers + retained entity annotation, held create and parent navigation/reload/repeated controls/later edits, exact Unicode/review, response/parent/bridge freshness, fixed file reopen/filter separation, weighted families, actual ZIP download and unchanged pinned consumer; desktop/narrow.",
+    "2026-10-20T04:16:04.8849859Z PASS owned delayed final write completes before removal; ignored TERM is bounded and already-exited handles are harmless",
+    "2026-10-20T04:17:39.9443391Z PASS coordinator owner controls, exact generation/request identity, immutable completion, unknown-ack retention, stale read/write/session fences and storage refusal",
+    "2026-10-20T04:17:48.0906805Z PASS coordinator browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-coordinator/run-AFKYVg",
+    "2026-10-20T04:18:11.3494010Z PASS phase timing browser: /home/runner/work/Tuldok/Tuldok/build/qa/run-phase-timings/run-bUXsPa",
+    "2026-10-20T04:18:40.0623464Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:18:44.2345636Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-20T04:18:44.5257559Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-20T04:18:45.3990466Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-20T04:18:45.8924880Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+    "2026-10-20T04:18:54.4501915Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+    "2026-10-20T04:18:54.6477154Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+    "2026-10-20T04:18:58.3088561Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+    "2026-10-20T04:19:06.0437268Z PASS one admitted real child completed; verified checkpoint, validation metrics and exact predictions; test access remains locked",
+    "2026-10-20T04:19:06.4757791Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+    "2026-10-20T04:19:07.3849033Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+    "2026-10-20T04:19:07.7946663Z PASS explicit test inspection is durable; later releases containing the records/pixels are marked exposed/reused",
+    "2026-10-20T04:19:09.1089388Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+    "2026-10-20T04:19:09.1330158Z PASS real image workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-image-run/run-3kc2hs",
+    "2026-10-20T04:19:11.7961891Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:19:19.1520011Z PASS 18 authored independent texts imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-20T04:19:19.4406609Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-20T04:19:20.0497411Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-20T04:19:20.5386069Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+    "2026-10-20T04:19:24.3606362Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+    "2026-10-20T04:19:24.5484891Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+    "2026-10-20T04:19:25.8146296Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+    "2026-10-20T04:19:29.9776529Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+    "2026-10-20T04:19:30.4051069Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+    "2026-10-20T04:19:31.5132554Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+    "2026-10-20T04:19:31.9191782Z PASS explicit test inspection is durable; later releases containing the records/canonical text are marked exposed/reused",
+    "2026-10-20T04:19:33.3213195Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+    "2026-10-20T04:19:33.3505083Z PASS real text workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-text-run/run-1yDYf3",
+    "2026-10-20T04:19:41.2977541Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:19:42.2061837Z PASS 18 authored stereo WAV fixtures admitted and reviewed through ordinary API; current Data shows actual source",
+    "2026-10-20T04:19:43.2129204Z PASS Data UI previews class coverage, freezes and downloads original WAV classification release",
+    "2026-10-20T04:19:43.7085655Z PASS real Pipeline loading, late-response navigation fence and explicit error retry",
+    "2026-10-20T04:19:47.6354566Z PASS real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+    "2026-10-20T04:19:47.8478094Z PASS actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+    "2026-10-20T04:19:49.2082809Z PASS lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+    "2026-10-20T04:19:53.4096133Z PASS one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+    "2026-10-20T04:19:53.8447067Z PASS late correction response cannot override newer Pipeline navigation or the active Data record",
+    "2026-10-20T04:19:55.0000558Z PASS result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+    "2026-10-20T04:19:55.4077967Z PASS explicit test inspection is durable; later releases containing the records/decoded PCM are marked exposed/reused",
+    "2026-10-20T04:19:56.8202487Z PASS application restart retains exact run, immutable inputs/predictions and durable test exposure without replay",
+    "2026-10-20T04:19:56.8431238Z PASS real audio workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-audio-run/run-fuJ6XY",
+    "2026-10-20T04:19:59.5603278Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:20:00.3842950Z PASS reviewed authored native PLY frozen through real Data release controls",
+    "2026-10-20T04:20:04.9291181Z PASS edited and cloned three-stage graph survives reload; invalid connection blocked; keyboard submits actual native validation",
+    "2026-10-20T04:20:05.1425112Z PASS Runs exposes verified integrity report and unchanged release, counts, units/scope/limitations without training or predictions",
+    "2026-10-20T04:20:06.3529401Z PASS application restart retains exact completed report/release and does not replay submission",
+    "2026-10-20T04:20:06.3701978Z PASS real mesh workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-mesh-run/run-pIKEe5",
+    "2026-10-20T04:20:09.2270935Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:20:10.7985731Z PASS actual recorded native sequence imported/reviewed/frozen through Data; raw files and all native field bits preserved",
+    "2026-10-20T04:20:15.8879503Z PASS edited and cloned three-stage graph survives reload; invalid connection blocked; keyboard submits actual native validation",
+    "2026-10-20T04:20:16.2182643Z PASS Runs exposes verified integrity report and unchanged release, frame/time/grid/units/scope/limitations without training or predictions",
+    "2026-10-20T04:20:17.6778135Z PASS application restart retains exact completed report/release and does not replay submission",
+    "2026-10-20T04:20:17.6964879Z PASS real sequence workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-sequence-run/run-DJ7FgO",
+    "2026-10-20T04:20:20.4078008Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:20:21.5993842Z PASS pointcloud real file import, keyboard inspection/review and whole-source freeze",
+    "2026-10-20T04:20:22.9987678Z PASS volume real file import, keyboard inspection/review and whole-source freeze",
+    "2026-10-20T04:20:23.3584482Z PASS late point projection cannot overwrite a newer dirty volume editor",
+    "2026-10-20T04:20:23.4872839Z PASS independent plyfile/NumPy readers preserve native order/types/signed zero, all voxels and affine mapping",
+    "2026-10-20T04:20:27.3249449Z PASS pointcloud edited/cloned graph, keyboard actual run and exact frozen downloads",
+    "2026-10-20T04:20:30.9751951Z PASS volume edited/cloned graph, keyboard actual run and exact frozen downloads",
+    "2026-10-20T04:20:32.2145450Z PASS both durable spatial runs and unchanged releases survive application restart",
+    "2026-10-20T04:20:32.2322576Z PASS real spatial workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-spatial/run-L3mLM0",
+    "2026-10-20T04:20:34.9274400Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:20:40.7457505Z PASS Real export-only run without training interpreter; recipe choice, named clone, invalid-edge refusal, Unicode release and exact download",
+    "2026-10-20T04:20:42.4014863Z PASS Reopened PostgreSQL-backed app preserves report, exact release and immutable old graph after later edits",
+    "2026-10-20T04:20:42.4219960Z PASS real classification export-only workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-export-run/run-wLTOVD",
+    "2026-10-20T04:20:45.1968306Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:20:46.8666189Z PASS Embedded Unicode entity spans, keyboard review/history and retained draft through three workspaces",
+    "2026-10-20T04:20:49.6091577Z PASS Embedded corpus import/review and existing byte-corpus export preserve Unicode",
+    "2026-10-20T04:20:51.3716856Z PASS Embedded image caption editor/review and existing imagefolder export retain captions",
+    "2026-10-20T04:20:53.2397061Z PASS Shell dirty badge stays pending through actual held save acknowledgement and clears from the editor outcome without further input",
+    "2026-10-20T04:20:53.7900539Z PASS Embedded answer/preference forms preserve exact strings, human judgments and draft navigation; existing adapters export both",
+    "2026-10-20T04:20:54.4560547Z PASS All embedded owners remain usable after reload; desktop and narrow shell have no horizontal overflow",
+    "2026-10-20T04:20:54.4732025Z PASS embedded existing-task breadth: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-breadth/run-QnejzO",
+    "2026-10-20T04:21:43.0868176Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-20T04:21:47.4239423Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-20T04:21:47.7196217Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-20T04:21:48.4590819Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-20T04:22:13.7856671Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "2026-10-20T04:22:13.9702474Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "2026-10-20T04:22:35.0825715Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "2026-10-20T04:22:35.8780426Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+    "2026-10-20T04:22:37.1534563Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "2026-10-20T04:23:03.1669270Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "2026-10-20T04:23:03.2435240Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "2026-10-20T04:23:03.6169834Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "2026-10-20T04:23:03.9845685Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+    "2026-10-20T04:23:04.4765493Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-4eKfQL",
+    "2026-10-20T04:23:29.5178305Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+    "2026-10-20T04:23:30.7010608Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+    "2026-10-20T04:23:31.0504997Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+    "2026-10-20T04:23:31.2341119Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context",
+    "2026-10-20T04:23:31.7335906Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured",
+    "2026-10-20T04:23:32.6536447Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-WEnf14",
+    "2026-10-20T04:23:57.5736945Z PASS Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+    "2026-10-20T04:23:58.7486499Z PASS Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+    "2026-10-20T04:23:59.0995569Z PASS Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+    "2026-10-20T04:23:59.3003714Z PASS Frozen validation correction link opens the exact current Data record with its frozen target context",
+    "2026-10-20T04:23:59.8161271Z PASS Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured",
+    "2026-10-20T04:24:00.7486979Z PASS one-fit browser qualification: /home/runner/work/Tuldok/Tuldok/build/qa/one-fit-model-evidence/run-cf1z7E"
+  ],
+  "uploaded_artifact": {
+    "artifact_id": 12240856492,
+    "name": "workbench-qa-artifacts",
+    "logged_zip_sha256": "deb975185ff7e302d40e2f024d66d846d43df2c1d9784cfa9301743bf65b6d55",
+    "logged_zip_bytes": 17224898,
+    "contents_inspected": false,
+    "attempt": "Read-only GitHub artifact connector returned a file reference; attempting to read that ZIP through the local network was denied by proxy with Tunnel connection failed:403Forbidden. No contents were obtained; no retry.",
+    "hash_limits": "Driver/oracle/fixture are actual logged hashes checked against exact Git source. Browser harness hashes here are independently calculated exact-head blobs; archived per-browser receipt source maps were not read."
+  },
+  "previous_pending_receipt": {
+    "path": "/tmp/tuldok-pr108-9f08-lifecycle-pending-0420-independent-review.json",
+    "sha256": "905616f3c42f00a9f6e9ca662f7577e1c80af951a541c8fd268a84b39eda0b5c",
+    "preserved": true
+  },
+  "raw_evidence": {
+    "decoded_log": "/tmp/tuldok-pr108-9f08-completed-lifecycle-job-118424714572.log",
+    "decoded_log_bytes": 626099,
+    "decoded_log_sha256": "4621db7d49497d750f86a18a83afc3d800b454141fac361c5655ef50fa7b94d1",
+    "representation": "Exact UTF8 encoding of decoded MCP job log, not original HTTP bytes.",
+    "completed_job_metadata": "/tmp/tuldok-pr108-9f08-completed-lifecycle-run-39360311688-jobs.json",
+    "pending_metadata": "/tmp/tuldok-pr108-9f08-lifecycle-run-39360311688-jobs.json"
+  },
   "limits": [
-    "No completed lifecycle acceptance claim.",
-    "No attribution to PR111's separate failed scientific-startup gate.",
-    "No source edits, tests, reruns, cancellations or remote mutations performed.",
-    "Current-main retarget/composition tree equivalence is separately owned by root."
+    "All72full-discovery skips remain excluded from passing executed-test claims; dedicated Rheon CPU/evaluation invocations each skip1case.",
+    "No end-to-end speed, GPU, numerical/scientific quality, physical validity, or PUB1/SCI1 acceptance claim.",
+    "The separate PR111 scientific-startup failure is not attributed to PR108.",
+    "No source edits, tests, reruns, cancellations, pushes or merges performed."
   ]
 }

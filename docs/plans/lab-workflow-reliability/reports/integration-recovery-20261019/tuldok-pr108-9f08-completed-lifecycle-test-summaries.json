@@ -1,0 +1,154 @@
+[
+  {
+    "command": "python -m unittest discover -s tests -p 'test_run_preflight*.py' -v",
+    "tests": 30,
+    "seconds": 8.782,
+    "skipped": 0,
+    "result": "2026-10-20T02:55:54.6788878Z OK",
+    "raw_summary": "2026-10-20T02:55:54.6788608Z Ran 30 tests in 8.782s"
+  },
+  {
+    "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v",
+    "tests": 32,
+    "seconds": 165.586,
+    "skipped": 0,
+    "result": "2026-10-20T02:58:40.9065575Z OK",
+    "raw_summary": "2026-10-20T02:58:40.9065193Z Ran 32 tests in 165.586s"
+  },
+  {
+    "command": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+    "tests": 20,
+    "seconds": 42.348,
+    "skipped": 0,
+    "result": "2026-10-20T02:59:23.8877063Z OK",
+    "raw_summary": "2026-10-20T02:59:23.8876555Z Ran 20 tests in 42.348s"
+  },
+  {
+    "command": "python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v",
+    "tests": 14,
+    "seconds": 28.84,
+    "skipped": 0,
+    "result": "2026-10-20T02:59:52.9470972Z OK",
+    "raw_summary": "2026-10-20T02:59:52.9469938Z Ran 14 tests in 28.840s"
+  },
+  {
+    "command": "python -m unittest discover -s tests -p 'test_workspace_phase_timings.py' -v",
+    "tests": 1,
+    "seconds": 0.001,
+    "skipped": 0,
+    "result": "2026-10-20T02:59:53.1868816Z OK",
+    "raw_summary": "2026-10-20T02:59:53.1868322Z Ran 1 test in 0.001s"
+  },
+  {
+    "command": "python -m unittest discover -s tests -p 'test_scientific_comparison_client.py' -v",
+    "tests": 4,
+    "seconds": 1.927,
+    "skipped": 0,
+    "result": "2026-10-20T02:59:55.3644438Z OK",
+    "raw_summary": "2026-10-20T02:59:55.3644065Z Ran 4 tests in 1.927s"
+  },
+  {
+    "command": "build/workspace-training/bin/python -c \"import numpy, sklearn, psycopg\"",
+    "tests": 15,
+    "seconds": 22.488,
+    "skipped": 0,
+    "result": "2026-10-20T03:01:03.4533729Z OK",
+    "raw_summary": "2026-10-20T03:01:03.4532999Z Ran 15 tests in 22.488s"
+  },
+  {
+    "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+    "tests": 11,
+    "seconds": 0.599,
+    "skipped": 0,
+    "result": "2026-10-20T03:01:04.2988828Z OK",
+    "raw_summary": "2026-10-20T03:01:04.2988474Z Ran 11 tests in 0.599s"
+  },
+  {
+    "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+    "tests": 9,
+    "seconds": 0.107,
+    "skipped": 0,
+    "result": "2026-10-20T03:01:04.5212946Z OK",
+    "raw_summary": "2026-10-20T03:01:04.5203146Z Ran 9 tests in 0.107s"
+  },
+  {
+    "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+    "tests": 12,
+    "seconds": 3.693,
+    "skipped": 1,
+    "result": "2026-10-20T03:01:08.3724291Z OK (skipped=1)",
+    "raw_summary": "2026-10-20T03:01:08.3723924Z Ran 12 tests in 3.693s"
+  },
+  {
+    "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+    "tests": 9,
+    "seconds": 0.286,
+    "skipped": 1,
+    "result": "2026-10-20T03:01:08.8107144Z OK (skipped=1)",
+    "raw_summary": "2026-10-20T03:01:08.8106712Z Ran 9 tests in 0.286s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+    "tests": 74,
+    "seconds": 691.327,
+    "skipped": 0,
+    "result": "2026-10-20T03:12:50.3361265Z OK",
+    "raw_summary": "2026-10-20T03:12:50.3361001Z Ran 74 tests in 691.327s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+    "tests": 19,
+    "seconds": 53.177,
+    "skipped": 0,
+    "result": "2026-10-20T03:13:43.7693352Z OK",
+    "raw_summary": "2026-10-20T03:13:43.7692939Z Ran 19 tests in 53.177s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+    "tests": 22,
+    "seconds": 118.768,
+    "skipped": 0,
+    "result": "2026-10-20T03:15:42.8062791Z OK",
+    "raw_summary": "2026-10-20T03:15:42.8062418Z Ran 22 tests in 118.768s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+    "tests": 24,
+    "seconds": 246.598,
+    "skipped": 0,
+    "result": "2026-10-20T03:19:50.0152634Z OK",
+    "raw_summary": "2026-10-20T03:19:50.0151852Z Ran 24 tests in 246.598s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+    "tests": 34,
+    "seconds": 123.09,
+    "skipped": 0,
+    "result": "2026-10-20T03:21:53.7556686Z OK",
+    "raw_summary": "2026-10-20T03:21:53.7553955Z Ran 34 tests in 123.090s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+    "tests": 13,
+    "seconds": 35.253,
+    "skipped": 0,
+    "result": "2026-10-20T03:22:29.6988709Z OK",
+    "raw_summary": "2026-10-20T03:22:29.6988238Z Ran 13 tests in 35.253s"
+  },
+  {
+    "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+    "tests": 5,
+    "seconds": 13.692,
+    "skipped": 0,
+    "result": "2026-10-20T03:22:44.1513650Z OK",
+    "raw_summary": "2026-10-20T03:22:44.1513373Z Ran 5 tests in 13.692s"
+  },
+  {
+    "command": "python -m unittest discover -s tests",
+    "tests": 1744,
+    "seconds": 2825.882,
+    "skipped": 72,
+    "result": "2026-10-20T04:09:51.4430112Z OK (skipped=72)",
+    "raw_summary": "2026-10-20T04:09:51.4429851Z Ran 1744 tests in 2825.882s"
+  }
+]

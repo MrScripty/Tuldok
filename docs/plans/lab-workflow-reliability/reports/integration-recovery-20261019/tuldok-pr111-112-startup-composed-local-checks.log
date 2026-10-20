@@ -1,0 +1,8 @@
+COMMAND ["node", "--check", "tests/browser_scientific_fields.cjs"]
+COMMAND ["node", "--check", "tests/browser_captions.cjs"]
+COMMAND ["node", "tests/test_workspace_project_startup.cjs"]
+PASS project startup markup disabled; owning constructor binds action, form and teardown before enable; first action opens synchronously and reads only
+COMMAND ["node", "tests/test_browser_cdp_session.cjs"]
+PASS reproduced fixed100ms race: delayed180ms confirm rejects premature handling; blocked diagnostics time out
+PASS fresh delayed cancel/accept/discard, absent dialog, trigger failure, bounded request, late reply and socket-close drainage
+PASS unexpected dialog fails closed and socket error drains owned requests

@@ -1,0 +1,71 @@
+{
+  "base_head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "source_sha256": {
+    "static/workspaces.html": "c16bf3ad0872b8f40f9d00ad6f2ae6366d2c3193aafa80bb496bbf3a41c183cd",
+    "static/workspace-projects.js": "3f465ad13a9f6bea9c7e812507510b4b5469e7569d7a1c22884115b6628a4747",
+    "tests/browser_scientific_fields.cjs": "9803d43c119bff759a771171b115f5878a22a1941ebf8de8c0e2a4361f3e0636",
+    "tests/test_workspace_project_startup.cjs": "0e4d00fbd3f67a8c5839864f2ad406597d91b253f116f526e551221d9f1ebd0a"
+  },
+  "hosted_failure": {
+    "run": 39360310903,
+    "job": 118424712559,
+    "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+    "decoded_log": "/tmp/tuldok-pr111-0ba4-failed-lifecycle-job-118424712559.log",
+    "decoded_log_sha256": "0c279bc15ca1488a9445b03763192fd6f4ab85c9c8ec1b8acb36d538a18b0e2b",
+    "raw_response": "/tmp/tuldok-pr111-0ba4-failed-lifecycle-job-118424712559-raw.json",
+    "raw_response_sha256": "cf1345c3cda4b58bd5053e29b4a5dd643e662b502eaf15c2558b67722401fec7",
+    "causal_limit": "Original host supplied no pointer/listener trace; startup cause is proven for controlled real reproduction, not asserted as traced host cause.",
+    "excerpt_projection": "Same excerpt lines with trailing whitespace removed; full exact raw/decoded logs preserved at their recorded paths."
+  },
+  "controlled_original_entrypoint_red": {
+    "command": "node --require /tmp/tuldok-project-startup-repair/delay-project-module.cjs tests/browser_scientific_fields.cjs",
+    "entrypoint_source": "Unmodified exact0ba4",
+    "exit_code": 1,
+    "pointer_hit": "open-project",
+    "pre_click_disabled": false,
+    "pre_click_handler": "object/null",
+    "after_actual_module_release": {
+      "handler": "function",
+      "dialog_open": false,
+      "workspace_status": "Fixture workspace ready."
+    },
+    "failed_assertion": "same first openProject wait at59:77 and entrypoint64",
+    "mechanism": "Hold/release actual module bytes through Fetch; no fulfilled responses or application callback substitution",
+    "raw_log": {
+      "path": "/tmp/tuldok-project-startup-repair/original-entrypoint-delayed-red.log",
+      "sha256": "b799d3a232afa255cd79de8c5f3210c879dc1097ebb059f54e183c3b75f3b413",
+      "committed_projection": "Same lines with trailing whitespace removed; exact raw preserved at this path."
+    }
+  },
+  "green": {
+    "command": "node tests/browser_scientific_fields.cjs",
+    "exit_code": 0,
+    "startup_native_pointer": {
+      "before": {
+        "disabled": true,
+        "handler": "object",
+        "dialog": false,
+        "hit": "open-project",
+        "x": 348.2734375,
+        "y": 98
+      },
+      "after": {
+        "disabled": false,
+        "handler": "function",
+        "project": "project:cccccccccccccccccccccccccccccccc"
+      }
+    },
+    "original_scientific_checks_retained": true,
+    "controller_regression_in_existing_CI_entrypoint": true,
+    "physics_acceptance": false,
+    "model_or_training_acceptance": false
+  },
+  "environment": {
+    "postgres": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+    "python": "Python 3.12.14",
+    "browser": "Chrome/151.0.7922.173",
+    "node": "v24.19.0",
+    "mode": "Headless existing no-sandbox/disable-gpu flags; isolated profile; actual app/HTTP/PostgreSQL/NumPy independent cold reader"
+  },
+  "resource_disposition": "All3 preregistered owned schemas queried absent. Main owned children stopped before initial removal. Brief browser descendant cache recreation was observed; final exact-path removal after no matching processes is recorded separately. No unrelated paths/processes touched."
+}

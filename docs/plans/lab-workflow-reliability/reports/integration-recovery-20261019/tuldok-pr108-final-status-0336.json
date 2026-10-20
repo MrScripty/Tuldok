@@ -1,0 +1,31 @@
+{
+  "observed_utc": "2026-10-20T03:35:38.760385+00:00",
+  "pr": 108,
+  "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "base": "main",
+  "base_sha": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "mergeable_state": "unstable",
+  "checks": [
+    {
+      "id": 118424714572,
+      "name": "lifecycle",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311688/job/118424714572"
+    },
+    {
+      "id": 118424714387,
+      "name": "static-kit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311720/job/118424714387"
+    },
+    {
+      "id": 118424714264,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311683/job/118424714264"
+    }
+  ]
+}

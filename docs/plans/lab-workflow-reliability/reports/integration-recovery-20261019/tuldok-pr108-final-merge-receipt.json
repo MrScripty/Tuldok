@@ -1,0 +1,65 @@
+{
+  "pr": 108,
+  "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "base": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+  "source_worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+  "reviews": [
+    "/tmp/tuldok-pr108-frozen-author-test-independent-review.json",
+    "/tmp/tuldok-pr108-9f08-lifecycle-independent-review.json",
+    "/tmp/tuldok-pr108-retarget-main-receipt.json"
+  ],
+  "check_names": [
+    "lifecycle",
+    "static-kit",
+    "catalog"
+  ],
+  "state": "merged_and_tree_verified",
+  "observed_utc": "2026-10-20T04:27:17.225501+00:00",
+  "review_sha256": {
+    "/tmp/tuldok-pr108-frozen-author-test-independent-review.json": "1b4bc66e00b6a8bd0048d1b63f11f3128c2812241905c35b8567792555940c9d",
+    "/tmp/tuldok-pr108-9f08-lifecycle-independent-review.json": "c78c8856b83b2c3864c0dd22afc780692dd5c9717ea29f67e1f6128d79fda0b2",
+    "/tmp/tuldok-pr108-retarget-main-receipt.json": "8fa8a27097c249043abd8f60cbe051b8bb6d00d0d0656165c565efdbfe96f60c"
+  },
+  "prospective_tree_verified": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+  "checks": [
+    {
+      "id": 118424714572,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311688/job/118424714572"
+    },
+    {
+      "id": 118424714387,
+      "name": "static-kit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311720/job/118424714387"
+    },
+    {
+      "id": 118424714264,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311683/job/118424714264"
+    }
+  ],
+  "latest_required_check_ids": {
+    "lifecycle": 118424714572,
+    "static-kit": 118424714387,
+    "catalog": 118424714264
+  },
+  "command_exit": 0,
+  "response": "{\"sha\":\"c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad\",\"merged\":true,\"message\":\"Pull Request successfully merged\"}",
+  "stderr": "",
+  "merge_response": {
+    "sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "merge_sha": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "merged_tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+  "current_main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "merged_utc": "2026-10-20T04:27:24.891136+00:00"
+}

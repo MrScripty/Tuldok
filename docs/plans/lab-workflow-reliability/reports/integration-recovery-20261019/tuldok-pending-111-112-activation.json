@@ -1,0 +1,47 @@
+{
+  "observed_utc": "2026-10-20T04:38:57.479366+00:00",
+  "main": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+  "order": [
+    111,
+    112
+  ],
+  "prs": [
+    {
+      "pr": 111,
+      "head": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "base": "c1fc60dbf2d96d3cb0ac0739a6822c6b3301f0ad",
+      "source_worktree": "/workspace/Tuldok-retained-analysis-integration-20261020",
+      "tree": "08cd47a85ddb6edb6bba610c74dff183f94e13ba",
+      "required_check_names": [
+        "lifecycle",
+        "captured-cpu",
+        "catalog",
+        "workspace-ui"
+      ],
+      "local_reviews": [
+        "/tmp/tuldok-project-startup-ci-independent-review.json",
+        "/tmp/tuldok-project-startup-root-actual-receipt-review.json"
+      ],
+      "merge_clearance": false,
+      "pending": "Freshcurrentheadgatesandindependentcompletedlogs. Old0ba4twoCPU successesisnotnewheadqualification."
+    },
+    {
+      "pr": 112,
+      "head": "0dedbc953902ac89389dca0693006aaa02a0a87c",
+      "base": null,
+      "qualified_base": "29011daea37f101ee30be9bc10aab702a16c830a",
+      "source_worktree": "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
+      "tree": "53d2d9fc4c24162a819276168b13af844cd93118",
+      "required_check_names": [
+        "lifecycle"
+      ],
+      "local_reviews": [
+        "/tmp/tuldok-caption-dialog-ci-independent-review.json",
+        "/tmp/tuldok-project-startup-ci-independent-review.json",
+        "/tmp/tuldok-pr111-112-project-startup-publication.json"
+      ],
+      "merge_clearance": false,
+      "pending": "Freshcurrentheadlifecycle. After111merge,retargetwithbase/prospectivetreeproof. Keep111until112retargeted."
+    }
+  ]
+}

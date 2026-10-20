@@ -1,0 +1,15 @@
+{
+  "tests/test_extension_canonical_author.py": "70d21b915e563dd04661e1f6cce0dd2fb91fcc819482a46cdbe7d2a49f0adf0b",
+  "tests/qualify_model_development.py": "7c4a07924480494749504518697c42f4631fd2389ddd386d1c7994830b5b901d",
+  "tests/browser_model_development.cjs": "701b61cff00b2a6d1d23d35e6fb558c02c13df253a90fb8a1eb93a56088555ea",
+  "tests/browser_one_fit_model_evidence.cjs": "83220e5db396bb39b3b72064604b9b01259657cd6697983b7a19fd35cd667e96",
+  "tests/qualify_one_fit.py": "a340983e0ac529af06b034d8cc1d116c16398830e7c4e3e658e3fc02eaa738f1",
+  "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+  "tests/scientific_comparison_fixture.py": "c580c700aea4cfe0b9125200f2ad6991c9e80efe26acd405d1d5833faf87082f",
+  "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+  ".github/workflows/tests.yml": "33c1ead8d185bf45c36025d93a2ced3f0167f66ede72402f53d8dba041537be2",
+  "tuldok_extension_sdk/evidence.py": "53027c44b78fde2db62e736d9b8ed66915b17bfca3fefe36eee30cae59af0a70",
+  "examples/extensions/field-surrogate/v3-canonical/tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+  "examples/extensions/field-surrogate/v3-canonical/inference-contract.json": "d60b93699f978c125a567734ef4d610cb4027b3b2f047c31e6d579677121da1d",
+  "independent_inference_literal": "80cb30bfc9d1c64705630d4924e3b126b3a57b18bba5b12c3f349f1b05ca8b8e"
+}

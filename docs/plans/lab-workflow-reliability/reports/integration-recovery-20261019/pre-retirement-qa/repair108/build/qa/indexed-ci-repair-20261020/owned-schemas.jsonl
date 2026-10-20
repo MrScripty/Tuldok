@@ -1,0 +1,10 @@
+{"schema": "catalog_72dad8fe76094bf5b0ffe40544fe2496", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert"}
+{"schema": "catalog_72dad8fe76094bf5b0ffe40544fe2496", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert"}
+{"schema": "catalog_eadd1fea697e490ba492ca123a7cb0ed", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_actual_new_project_binding_and_declared_model_controls_are_compatible_without_runtime"}
+{"schema": "catalog_eadd1fea697e490ba492ca123a7cb0ed", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_actual_new_project_binding_and_declared_model_controls_are_compatible_without_runtime"}
+{"schema": "catalog_323f591f1290426aaad1d717ce0e7684", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_independent_stdlib_consumer_binds_actual_source_and_refuses_changed_native"}
+{"schema": "catalog_323f591f1290426aaad1d717ce0e7684", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_independent_stdlib_consumer_binds_actual_source_and_refuses_changed_native"}
+{"schema": "catalog_6db9f3cdc55d412aa99589a50ba7dfc9", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_new_package_validates_from_copied_kit_without_app_database_or_numerical_startup"}
+{"schema": "catalog_6db9f3cdc55d412aa99589a50ba7dfc9", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_new_package_validates_from_copied_kit_without_app_database_or_numerical_startup"}
+{"schema": "catalog_a3209f37d20c48fea7a0f1aacf416097", "state": "reserved", "test": "__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert"}
+{"schema": "catalog_a3209f37d20c48fea7a0f1aacf416097", "state": "removed", "test": "__main__.OwnedCanonicalAuthorTests.test_new_project_exact_sources_full_catalog_and_model_controls_are_inert"}
