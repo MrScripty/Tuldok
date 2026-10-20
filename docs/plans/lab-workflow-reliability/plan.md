@@ -454,3 +454,20 @@ fixture, the existing CI workflow, this plan/ledger, canonical publication doc
 and bounded evidence. No Python domain/API, persisted schema, lineage wire
 contract or original outcome is changed. Root retains independent review and
 serial integration ownership. Hosted acceptance and full M1 remain pending.
+
+## M4 C4/T5 baseline-only admission — 2026-10-19
+
+The lead authorized an isolated measurement slice from composed M3 source
+`96c2adebc3a46b9fe92b179097474e08474689c3`, branch
+`test/lab-workflow-baseline-20261019`. Its write set is
+`tests/benchmark_lab_workflow.py`, a focused pure reporting test,
+`docs/contracts/lab-workflow-baseline.md`, this plan/ledger and retained report
+receipts. No domain/API/static/dependency/workflow or optimization change is
+admitted. The lead separately owns phase UI and serial remote integration.
+
+Measure actual neutral cold-process/repeated preparation, capture, proof,
+publication, individual collection and empty/8/55 completed-history boundaries
+with same-size one/many artifacts; retain descriptive distributions, owner CPU/
+RSS/I/O/hash/request/body counts and exact integrity. Caches, batching, runtime
+installation/mutation and representative scientific/CUDA workloads are outside
+this baseline. Candidate reuse/invalidation work requires a later bounded scope.
