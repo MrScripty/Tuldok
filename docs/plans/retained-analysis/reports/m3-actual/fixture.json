@@ -1,0 +1,137 @@
+{
+  "format": "retained_analysis_actual_fixture_v1",
+  "scope": "Authored transport fixture; no model-quality claim",
+  "catalog_path": "/tmp/tuldok-analysis-real-run/catalog",
+  "catalog_id": "8622700dae5345e68c77ac26a7c54d71",
+  "run_id": "3b55365925ed45b391072918503f7c5f",
+  "release_sha256": "57e7d1e2abb2e46e50b1f22e3a210f77058b6d7e8e1835df2f6cdb7941a4a25a",
+  "request": {
+    "query_id": "retained_checkpoint_examples",
+    "query_version": 1,
+    "run_id": "3b55365925ed45b391072918503f7c5f",
+    "evaluation_sha256": "6cb8e64a1834bd1479735acd67a1a3426a49addf945cc03774e40ee30b69fd01",
+    "checkpoint_sha256": "73d96dc058a33810f87e67cf6097883b59266dee287c35df855b33666bb027c7",
+    "metric_id": "accuracy",
+    "metric_definition_sha256": "77c3f8b930e3fdf39f4db928432abe3fc56dcca47ebb257e3755c13a7c81a81f",
+    "limit": 1,
+    "offset": 0
+  },
+  "artifacts": [
+    {
+      "name": "metrics.json",
+      "sha256": "3d503a3717a8ee8c9cc6079676297b986216dd5d7b9ea83838d0aa70ff80a646",
+      "bytes": 1635
+    },
+    {
+      "name": "test-metrics.json",
+      "sha256": "1650ec79b25db20031bf085b69c80513c14145afcfb9052f348dd34bdcbb2df1",
+      "bytes": 583
+    },
+    {
+      "name": "predictions-validation.json",
+      "sha256": "a43883680f82d078febaf20984cc7c211bf66a0eac4acd0e0b6b919b11cd0bdb",
+      "bytes": 1698
+    },
+    {
+      "name": "predictions-test.json",
+      "sha256": "4d1f23e0a606280fdf0a0851380c167ec07f618addcef0797f1ef6cb04462d38",
+      "bytes": 1680
+    },
+    {
+      "name": "checkpoint.pt",
+      "sha256": "b53a5aac7978fc02d6a3b5409b14bb2cdf98502a4c9bccde2ca30b050c102254",
+      "bytes": 9895
+    },
+    {
+      "name": "checkpoint-epoch-0001.json",
+      "sha256": "73d96dc058a33810f87e67cf6097883b59266dee287c35df855b33666bb027c7",
+      "bytes": 526
+    },
+    {
+      "name": "checkpoint-epoch-0002.json",
+      "sha256": "daeb53dc1671f9b35ddece10f92364068e526dd61274deb8a134d3ac45e168a8",
+      "bytes": 526
+    },
+    {
+      "name": "checkpoints.json",
+      "sha256": "7547aeb68ff0171de775a2c3b309ed2f9e9c32c76f8356ea75bc2eb0a0ccb82a",
+      "bytes": 1060
+    },
+    {
+      "name": "fitted-transform.json",
+      "sha256": "6ef6f1167d13ea15822909c8e88a04deeebad848012d4c0c3ca4e7edf17f63bc",
+      "bytes": 68
+    },
+    {
+      "name": "metric-definitions.json",
+      "sha256": "f07af3fc0b9813be8372cf2a0a90eeb49b44a1220ec8e4a744c25ca37da89545",
+      "bytes": 1724
+    },
+    {
+      "name": "model-definition.json",
+      "sha256": "30100b577a37dad313ec1ed3c5f9a515ee2dece0ce6929f4cd9455ccea678b4d",
+      "bytes": 450
+    },
+    {
+      "name": "model-evidence.json",
+      "sha256": "6cb8e64a1834bd1479735acd67a1a3426a49addf945cc03774e40ee30b69fd01",
+      "bytes": 2316
+    },
+    {
+      "name": "observations.json",
+      "sha256": "dc3166b7143c4ee022a61bcdf7f3a2751e3adb8360af694a8f7353c38d3a80a6",
+      "bytes": 2508
+    },
+    {
+      "name": "output-policy.json",
+      "sha256": "ee8f417a377b4c02aeafda8d604525de180fe0712ca0a97359806ab7b904b5ab",
+      "bytes": 65
+    },
+    {
+      "name": "probe.json",
+      "sha256": "63b0a150c9a43a8bbdb15a339ad89bad1cce9a0c23ef4ea39d0b2f56b9c01a9c",
+      "bytes": 1368
+    },
+    {
+      "name": "probes-epoch-0001.json",
+      "sha256": "fd2ce83def4c4f7e13caf06f5d5739d5423e9328d4d98a99407ab95dadf96c52",
+      "bytes": 436
+    },
+    {
+      "name": "probes-epoch-0002.json",
+      "sha256": "076e3bbe95d3eb4c7634f3e452c0984bfb1ff3e32d542bfac0de95e425448dfe",
+      "bytes": 434
+    },
+    {
+      "name": "profile.json",
+      "sha256": "17d3b8c1d75dc1fbd211b6cdfc41cc81e93bd555d7fff8801b825de37eff7e5a",
+      "bytes": 898
+    },
+    {
+      "name": "validation-logits.json",
+      "sha256": "997156a0e81ecf3ce277bf1f8b78b19bf18036535f287988af2119dff414a6b7",
+      "bytes": 853
+    },
+    {
+      "name": "weights-epoch-0001.pt",
+      "sha256": "d94283cf333d8b83095da3f300f88c3b4c388466b697b3e9cdb86bd48a289b6f",
+      "bytes": 9895
+    },
+    {
+      "name": "weights-epoch-0002.pt",
+      "sha256": "b53a5aac7978fc02d6a3b5409b14bb2cdf98502a4c9bccde2ca30b050c102254",
+      "bytes": 9895
+    },
+    {
+      "name": "artifact-manifest.json",
+      "sha256": "332df4a2baae09fab5d8b64d9fc8a3363cac15f2d1c3cbca6b37f23d845d5701",
+      "bytes": 3959
+    }
+  ],
+  "source_sha256": {
+    "retained_analysis.py": "317ba63b0f89367ba26dd62b8157910654943eb8a9d3ab1442f09f09827f218b",
+    "tests/retained_analysis_actual_fixture.py": "5e8759c7715de85b8df886727d11335cc913d78d178b3d787e09778aab29ff55",
+    "runs.py": "ae126e0d6493d925b171d2c9da874f16d7b76e881160e98f6f6b2e2f144ad0c2",
+    "model_evidence.py": "04012022740f45fc03ad11351a7efe4946e574890bb814fcdf5871b873a5701b"
+  }
+}

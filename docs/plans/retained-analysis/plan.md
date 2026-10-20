@@ -23,9 +23,9 @@ access, numeric, lifecycle and provenance guarantees. View opening is inert.
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | A1 | Closed named query rejects malformed identities, unknown fields and unbounded requests before reads; exact substitutions fail before result return | contract | not-applicable | automated | passed | [focused tests](reports/m1/focused-tests.log) |
-| A2 | Exact metric values, stable examples, pagination/support and frozen identity agree with retained bytes and actual PostgreSQL | integration | required-real | automated | blocked | existing DB configuration absent |
+| A2 | Exact metric values, stable examples, pagination/support and frozen identity agree with retained bytes and actual PostgreSQL | integration | required-real | automated | passed | [actual retained query tests](reports/m3-actual/retained-query-tests.log) |
 | A3 | Actual Runs browser supports keyboard, linked selections, narrow layout, stale replies, revocation, malformed/large specs, offline assets and cold reopen | user-workflow | required-real | automated | partial | [isolated actual Chromium renderer](reports/m2/browser.json); shared Runs hooks pending |
-| A4 | Query/export reauthorize every retrieval, no cache authority, no computation or mutation on opening | integration | required-real | automated | pending | query tests and actual-store qualification |
+| A4 | Query/export reauthorize every retrieval, no cache authority, no computation or mutation on opening | integration | required-real | automated | partial | [real direct-query/credential tests](reports/m3-actual/retained-query-tests.log); authenticated HTTP/UI still pending |
 
 ## Scope
 
@@ -63,10 +63,13 @@ accessibility/frontend guidance from Coding-Standards dcc56f26. No callable
 Standards Engine is exposed; this is source-guided routing, not certification.
 Brief `libfile_e94877d6735c8191a6e5d78c82d1151b` read in full (five pages).
 
-Current source lacks PostgreSQL binaries, TULDOK_DATABASE_URL and a qualified
-training runtime. Do not manufacture credentials or claim actual-store evidence.
-The first query is useful independently of UI hook coordination; tests separate
-controlled owner fixtures from required-real PostgreSQL and retained Runs.
+Initial source environment lacked PostgreSQL/configuration and a qualified CPU
+runtime. The parent clarified that a disposable local test database and ordinary
+official dependency setup are within scope. Task-owned PostgreSQL 17.11 now runs
+under `/tmp`, using the existing local_postgres helper; pinned CPU packages are
+provisioned in a separate test runtime. Six actual retained-query tests and all
+13 original query tests pass. Initial skipped evidence remains unchanged.
+No production catalog, credential, role or system-service change is involved.
 
 ## Simplicity And Ownership Review
 
@@ -97,6 +100,8 @@ controlled owner fixtures from required-real PostgreSQL and retained Runs.
 ### M1: Authorized bounded retained query
 
 **Allowed write set:** `retained_analysis.py`, `tests/test_retained_analysis.py`,
+`tests/retained_analysis_actual_fixture.py`, `tests/test_retained_analysis_actual.py`,
+`tests/test_retained_analysis_http.py`, `tests/browser_retained_analysis_actual.cjs`,
 `docs/contracts/retained-analysis-query.md`, `docs/plans/retained-analysis/**`.
 
 Implement closed validation, exact retained identity, owned bounded SQL,
@@ -124,7 +129,8 @@ use interpreter under strict CSP. Gate A3 plus actual A2/A4.
 - Parent relay/lead coordination is pending. Cross-thread collaboration send to
   source_thread_id returns `agent ... not found`; no shared-file edits authorized
   by coordination yet. No GitHub comment to another person is substituted.
-- Actual PostgreSQL/training environment unavailable. No credentials created.
+- Authenticated API-to-Runs acceptance awaits shared hooks. The disposable
+  PostgreSQL/native retained Run and direct-query acceptance are now available.
 
 ## Re-Plan Triggers
 

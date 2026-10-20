@@ -1,0 +1,52 @@
+{
+  "postgres": "17.11 (Debian 17.11-0+deb13u1)",
+  "listen_addresses": "",
+  "application_role": {
+    "superuser": false,
+    "createdb": false,
+    "createrole": false
+  },
+  "postgres_scope": "Task-owned disposable local instance; no production configuration selected",
+  "training_probe": {
+    "schema_version": 1,
+    "available": true,
+    "adapter": {
+      "name": "tinycnn_cpu",
+      "version": 2
+    },
+    "runtime": {
+      "python": "3.12.14",
+      "device": "cpu",
+      "threads": 1,
+      "torch": "2.8.0+cpu",
+      "torchvision": "0.23.0+cpu",
+      "scikit_learn": "1.7.2"
+    },
+    "problems": []
+  },
+  "deb_sha256": {
+    "postgresql-17_17.11-0+deb13u1_amd64.deb": "d2ce1ddffafa783f9acda4c92c86fc21e8288bff3782d739294f14fa797d7886",
+    "postgresql-client-17_17.11-0+deb13u1_amd64.deb": "9d8558f8dd57c8e92e218a20698383575d53742ca3f9e7c2b7fe5f246d5216ae"
+  },
+  "fixture": {
+    "catalog_id": "8622700dae5345e68c77ac26a7c54d71",
+    "run_id": "3b55365925ed45b391072918503f7c5f",
+    "artifact_count": 22
+  },
+  "source_sha256": {
+    "retained_analysis.py": "317ba63b0f89367ba26dd62b8157910654943eb8a9d3ab1442f09f09827f218b",
+    "tests/retained_analysis_actual_fixture.py": "5e8759c7715de85b8df886727d11335cc913d78d178b3d787e09778aab29ff55",
+    "tests/test_retained_analysis_actual.py": "255abedd2980dd36deee27ae0a12c1f1e3870c3c92c3203bea334ae7bfd8e651"
+  },
+  "claims": [
+    "Actual PostgreSQL SQL",
+    "Normal retained native classifier Run",
+    "Original artifact numeric oracle",
+    "Real Access revocation; final-check timing fault injected",
+    "Fresh Python process reopen"
+  ],
+  "unqualified": [
+    "Authenticated production API-to-Runs UI hooks pending lead coordination"
+  ],
+  "original_skipped_log_preserved": true
+}

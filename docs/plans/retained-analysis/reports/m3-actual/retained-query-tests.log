@@ -1,0 +1,11 @@
+test_actual_sql_curve_and_examples_equal_original_retained_artifacts (test_retained_analysis_actual.ActualRetainedAnalysisTests.test_actual_sql_curve_and_examples_equal_original_retained_artifacts) ... ok
+test_new_process_cold_reopen_preserves_exact_result (test_retained_analysis_actual.ActualRetainedAnalysisTests.test_new_process_cold_reopen_preserves_exact_result) ... ok
+test_query_and_export_are_inert_and_restore_session_settings (test_retained_analysis_actual.ActualRetainedAnalysisTests.test_query_and_export_are_inert_and_restore_session_settings) ... ok
+test_real_credential_revocation_blocks_repeated_query_and_export (test_retained_analysis_actual.ActualRetainedAnalysisTests.test_real_credential_revocation_blocks_repeated_query_and_export) ... ok
+test_repeated_query_reverifies_hash_bound_artifact (test_retained_analysis_actual.ActualRetainedAnalysisTests.test_repeated_query_reverifies_hash_bound_artifact) ... ok
+test_revocation_at_final_authorization_uses_current_real_credential (test_retained_analysis_actual.ActualRetainedAnalysisTests.test_revocation_at_final_authorization_uses_current_real_credential) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.693s
+
+OK

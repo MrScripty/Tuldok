@@ -78,8 +78,11 @@ does not establish an application execution sandbox.
 This test uses authored responses and access-failure substitutes. It establishes
 renderer behavior only. It does not establish actual Runs custody, PostgreSQL
 execution, real credential revocation, full application accessibility, or
-cold-process retained result reproducibility. These remain blocked gates until
-the shared hooks and an authorized existing DB/training environment are supplied.
+cold-process retained result reproducibility. The follow-up actual PostgreSQL/
+retained native Run tests now qualify the direct query boundary, including real
+Access revocation and fresh-process reopening. They are distinct from these
+authored renderer tests. The full authenticated API-to-Runs browser gate remains
+pending shared-hook integration.
 
 ## Pending API dependency and shared hook proposal
 
@@ -90,9 +93,11 @@ lead agreement before implementation:
    `runs.export_retained_analysis/1`, each with explicit closed request/response
    schema hashes. Keep existing operations/versions unchanged.
 2. Add POST `/api/workspace/runs/<run_id>/retained-analysis` and an explicit
-   `/retained-analysis/export` sibling. Require the chosen new contract; reject
-   route/body run mismatch. Delegate to `retained_analysis.query(dataset.runs,
-   body, export=host_route_choice)`. No user-controlled export flag.
+   `/retained-analysis/export` sibling. Require the chosen new contract. Existing
+   selected-contract rules place run_id in the path only: reject any duplicate
+   body run_id, then inject the path ID when delegating to
+   `retained_analysis.query(dataset.runs, body_with_route_id,
+   export=host_route_choice)`. No user-controlled export flag.
 3. In the existing verified native classifier Runs section, build the request
    from its exact artifact/metric/checkpoint inventory. Mount a separate root;
    load through authenticated transport. Dispose on navigation, credential or

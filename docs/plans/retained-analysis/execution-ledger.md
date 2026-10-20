@@ -20,3 +20,19 @@ actual-store or authenticated application acceptance. Review identified and
 closed preflight typed-error and frontend count/provenance/type-decoding gaps.
 Full objective remains Verifying pending shared hook agreement and a provisioned
 authorized PostgreSQL/training environment. Nothing merged.
+
+2026-10-20 00:12 UTC: Parent clarified disposable local PostgreSQL/dependency setup
+is within implementation scope; no new user permission is required. Downloaded
+official Debian PG17.11 packages into task-owned storage, extracted without a
+system package/service change, and initialized the existing repository helper
+under `/tmp/tuldok-analysis-pg`. Provisioned the repository-pinned CPU training
+packages in `/tmp/tuldok-training-runtime/venv`; the normal runtime probe reports
+available. One normal six-image classifier Run completed with two retained
+checkpoints. The original query suite now passes 13/13 against actual PostgreSQL;
+six new actual retained-query tests pass, covering exact bytes/numbers, stable
+pages/support, real credential revocation including final-check fault timing,
+artifact re-verification, inert reads/exports and a fresh-process cold reopen.
+The earlier 12-pass/one-skip log remains retained as historical evidence.
+No shared handler has been edited; authenticated API/Run UI acceptance still
+awaits lead ownership agreement. After a reported disconnect, shell/service state
+was verified available; existing workers/fixtures were reused, not duplicated.
