@@ -1,0 +1,44 @@
+{
+  "format": "batch_composed_gate_preparation_v1",
+  "prepared_at": "2026-10-19T22:54:52.419176+00:00",
+  "preparation_source": "48a73629c02cf5f3a3b3e176e7824dab563393a1",
+  "preparation_tree": "9aeb993a1cccada2d21689fa60ec3ba31f7a94f9",
+  "worktree_status": "",
+  "selected_cases": [
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+    "test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted"
+  ],
+  "invocation": [
+    "python3",
+    "-m",
+    "unittest",
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+    "test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted",
+    "-v"
+  ],
+  "environment_keys": [
+    "PATH",
+    "PYTHONPATH",
+    "TULDOK_DATABASE_URL",
+    "TULDOK_BATCH_CLEANUP_REPORT"
+  ],
+  "cleanup_report_base": "/workspace/Tuldok-lab-batch-client-m4/build/qa/batch-client/attempt-02/cleanup.json",
+  "preparation_file_sha256": {
+    "tuldok_client.py": "33bec87a6fe85f6386e5982ff561c6ae4ff20d5027a18e8745cf94b23de3fab4",
+    "project_cli.py": "3f25368e2035279c39bcc032b110d4fe554cde251ca16ab43f4b24259cb56719",
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "runs.py": "73c1b1518379f69c1bc8ce639853a8ce9d62708f1b414636b20b49ebf7dc12b3",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "tests/test_workflow_batch_client_http.py": "6e92e5fef0137c222bda6f70f7243824e3e96e8d91cbb2d372658fdd6c912b22",
+    "tests/benchmark_lab_workflow.py": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1"
+  },
+  "not_started": true,
+  "pending": [
+    "Root supplies frozen final M4 producer109 commit.",
+    "Normal whole merge109, final source/tree/file capture, then explicit quiet-window release before actual execution."
+  ],
+  "scope": "Affected actual20-SDK whole collection, delivery revocation, and exactpublicationRef; previous8-case receipts retain originalfd423 attribution."
+}

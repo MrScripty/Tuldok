@@ -1,0 +1,36 @@
+{
+  "format": "batch_composed_actual_source_v1",
+  "prepared_at": "2026-10-19T22:57:51.405302+00:00",
+  "source_head": "70503f460fd8a73596ece84d1adb41cf52df32b9",
+  "source_tree": "0decb5b5a3e4cd18c8e5f4daee723e48f60e8a8b",
+  "worktree_status": "",
+  "producer_parent": "98380228a7edb8eefb4715cba27ca76722756cf9",
+  "prior_full_consumer_qualification": "fd42361f043c201290c5b6297a384652320044ed",
+  "selected_cases": [
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+    "test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted"
+  ],
+  "invocation": [
+    "python3",
+    "-m",
+    "unittest",
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_sdk_twenty_wholes_use_one_batch_without_compute",
+    "test_workflow_batch_client_http.BatchWorkflowHTTPTests.test_actual_revocation_at_delivery_discards_batch_and_publishes_nothing",
+    "test_workflow_batch_client_http.BatchPublicationHTTPTests.test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted",
+    "-v"
+  ],
+  "file_sha256": {
+    "tuldok_client.py": "33bec87a6fe85f6386e5982ff561c6ae4ff20d5027a18e8745cf94b23de3fab4",
+    "project_cli.py": "3f25368e2035279c39bcc032b110d4fe554cde251ca16ab43f4b24259cb56719",
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "tests/test_workflow_batch_client_http.py": "6e92e5fef0137c222bda6f70f7243824e3e96e8d91cbb2d372658fdd6c912b22",
+    "tests/benchmark_lab_workflow.py": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+    "tests/test_run_artifact_segments.py": "e6cf7ec4fb1571bed04b6d3e091fd91f0a9cff2411f536d816c7cde7103bd895"
+  },
+  "test_state": "NOT STARTED; waits direct M4 quiet release",
+  "scope": "Affected actual20-SDK whole collection, delivery revocation and exact publicationRef on refined producer; no unmeasured performance or scientific claim."
+}

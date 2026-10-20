@@ -89,12 +89,10 @@ There is no wildcard, archive, recursive export, filename inference or path in a
 manifest. Names use the canonical flat artifact grammar. Private destination
 files use the selected artifact names in an existing destination directory.
 
-The installed registry has no batched read operation. Collection therefore uses
-its existing selected single-artifact segmented reader, sequentially, with at
-most 8 MiB per segment. This is capability absence, not recovery from a failed
-batch call. No batching operation or route is invented, and no authentication,
-transport, decoding or server error causes an alternate request. A future batch
-contract requires an explicit coordinated client implementation.
+Ordinary `collect` uses its selected single-artifact segmented reader,
+sequentially, with at most 8 MiB per segment. Its dispatch does not change when
+the server advertises a batch operation. No authentication, transport, decoding
+or server error causes an alternate request.
 
 Collection checks the current inventory and transitive disclosure again before
 reading, including on resume. Each artifact read rechecks its owner's current
@@ -133,6 +131,40 @@ the request watchdog is joined. No separate overall collection timeout is added.
 Connection setup may take up to the configured connect bound (at most5seconds),
 and local validation/hash steps remain cooperative. Without an event, ordinary
 finite configured per-request timeouts remain unchanged.
+
+## Explicit whole-artifact batch collection
+
+`collect_batch(manifest, directory, cancelled=event)` accepts the same exact
+single-Run or attached-publication collection manifest. It requires the selected
+`runs.artifact_segments/1` contract before reading the current inventory. It sends
+one batch request containing all selected whole artifacts, with offset0 and
+`max_bytes=max(1, selected_bytes)` per item. At most20 items and at most8MiB of
+these requested bounds are supported. Known oversize selections refuse before
+bootstrap or dispatch; select ordinary `collect` for larger artifacts.
+
+The canonical request-aware decoder binds ordered item keys, exact sources,
+selectors and segment hashes. The facade also requires each item to contain the
+entire selected byte count, EOF and independently computed whole SHA256 before
+private file publication. A segment hash alone never proves a whole artifact.
+The facade retains defensive canonical decoder checks for compatible low-level
+client implementations. This adds consumer validation work beyond a direct
+low-level batch call; low-level benchmark timings do not measure this facade.
+
+Publication uses the same mode0600, fsync and atomic no-clobber helper as ordinary
+download. Known destination collisions refuse before network reads. A per-item
+server refusal, local file failure or whole-byte mismatch stops further local
+writes; preceding verified files remain, and later buffered items are outstanding.
+Global service/authentication/transport/decoding errors raise without publication.
+There is no fallback, automatic retry or automatic second request. Cancellation
+uses the canonical AgentClient read context and is checked again after fsync,
+before linking each output; it never requests compute cancellation.
+
+The result remains `workflow_collection_receipt_v1`, with the same ordered typed
+items and complete/partial/stopped states. Batch collection has no resume argument.
+Explicitly pass a partial/stopped batch receipt to ordinary `collect(...,
+resume=receipt)` to reauthorize and rehash successes and restart incomplete items
+through the ordinary selected segmented reader. Neither the receipt nor the
+manifest grants future disclosure.
 
 ## Exact comparison
 
