@@ -185,6 +185,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     finally{opening=false;$('project-open-submit').disabled=!aliases.length;}
   };
   window.addEventListener('pagehide',()=>{activityView.stop();generation++;listGeneration++;openGeneration++;importGeneration++;controller?.abort();evidenceController?.abort();});
+  $('open-project').disabled=false;
   return {
     initialize:refreshList,
     label:()=>detail?.name||entries.find(entry=>'project:'+entry.id===currentSource())?.name||'Project',

@@ -1,0 +1,390 @@
+{
+  "source_commit": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "dirty": true,
+  "command": "node tests/browser_scientific_fields.cjs",
+  "capture_receipt_sha256": null,
+  "qualification": "Producer-neutral authored rotated noncubic fields; transport/UI/custody only",
+  "physics_acceptance": false,
+  "model_or_training_acceptance": false,
+  "source_files_sha256": {
+    "static/workspaces.html": "c16bf3ad0872b8f40f9d00ad6f2ae6366d2c3193aafa80bb496bbf3a41c183cd",
+    "static/workspace-projects.js": "3f465ad13a9f6bea9c7e812507510b4b5469e7569d7a1c22884115b6628a4747",
+    "tests/browser_scientific_fields.cjs": "9803d43c119bff759a771171b115f5878a22a1941ebf8de8c0e2a4361f3e0636",
+    "tests/test_workspace_project_startup.cjs": "0e4d00fbd3f67a8c5839864f2ad406597d91b253f116f526e551221d9f1ebd0a"
+  },
+  "startup": {
+    "before": {
+      "disabled": true,
+      "handler": "object",
+      "dialog": false,
+      "hit": "open-project",
+      "x": 348.2734375,
+      "y": 98
+    },
+    "after": {
+      "disabled": false,
+      "handler": "function",
+      "project": "project:cccccccccccccccccccccccccccccccc"
+    }
+  },
+  "checks": [
+    "Delayed actual project module keeps the pointer-hit control disabled; its owner enables the original first open and full project inspection",
+    "Opening remains read-only; explicit import refuses stale observed hash before catalog writes, then imports exact bytes",
+    "All authored fields and X/Y/Z planes retain exact time/stage/dtype; rotated noncubic origin and signed zero inspected",
+    "Wholeasset human inspection freezes canonical release; separate NumPy reader verifies exact recovered original payload and opaque sources",
+    "Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record",
+    "Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted"
+  ],
+  "captures": [
+    {
+      "file": "scientific-inspector-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Transport, inspection and custody only; no physics or model qualification"
+    },
+    {
+      "file": "scientific-inspector-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Transport, inspection and custody only; no physics or model qualification"
+    }
+  ],
+  "source_sha256": "32d79d5e4c8881fcfd6c858b70e485c61a636ac1e8ea7d4dbd6c52c7bdc47ed7",
+  "cold": {
+    "scope": "Cold NumPy dtype/shape/element bytes, declared coordinates/time/stages and opaque source custody only",
+    "numpy": "2.5.4",
+    "bundle_sha256": "32d79d5e4c8881fcfd6c858b70e485c61a636ac1e8ea7d4dbd6c52c7bdc47ed7",
+    "native_capture": false,
+    "model_or_training_acceptance": false,
+    "physics_acceptance": false,
+    "arrays": [
+      {
+        "frame": 0,
+        "field": "scalar",
+        "dtype": "<f8",
+        "shape_zyx": [
+          4,
+          2,
+          3
+        ],
+        "payload_sha256": "fc57ecfd62b2dd1c6210f646160babf311c4dd996a3c6a85959cbf4d50b8c46a",
+        "stage": "observed scalar stage",
+        "time": "0.12500"
+      },
+      {
+        "frame": 0,
+        "field": "face_x",
+        "dtype": "<f4",
+        "shape_zyx": [
+          4,
+          2,
+          4
+        ],
+        "payload_sha256": "52705df0ec0c83af830d4e2a4c62c5d3ebfce42f63fc763229e7fbb9d9ce5544",
+        "stage": "declared X face stage",
+        "time": "0.12500"
+      },
+      {
+        "frame": 0,
+        "field": "face_y",
+        "dtype": "<f4",
+        "shape_zyx": [
+          4,
+          3,
+          3
+        ],
+        "payload_sha256": "21114be0926f901e7319e2907caeb4d9c1ab9189cdf556d179172296a2737bfe",
+        "stage": "declared Y face stage",
+        "time": "0.12500"
+      },
+      {
+        "frame": 0,
+        "field": "face_z",
+        "dtype": "<f8",
+        "shape_zyx": [
+          5,
+          2,
+          3
+        ],
+        "payload_sha256": "9b386505071c31da1db3d5b45883be92a8b89d0021c47e81ee7484edbadf18c4",
+        "stage": "declared Z face stage",
+        "time": "0.12500"
+      },
+      {
+        "frame": 1,
+        "field": "scalar",
+        "dtype": "<f8",
+        "shape_zyx": [
+          4,
+          2,
+          3
+        ],
+        "payload_sha256": "7dd3708d9ea546531fb1d4f404266f2bd83c92081c71572302654893b7c4decc",
+        "stage": "observed scalar stage",
+        "time": "0.250000"
+      },
+      {
+        "frame": 1,
+        "field": "face_x",
+        "dtype": "<f4",
+        "shape_zyx": [
+          4,
+          2,
+          4
+        ],
+        "payload_sha256": "fb168bd1aae20654e2b63635a39ec00fb687326d321bf0c78592152ca528a8ea",
+        "stage": "declared X face stage",
+        "time": "0.250000"
+      },
+      {
+        "frame": 1,
+        "field": "face_y",
+        "dtype": "<f4",
+        "shape_zyx": [
+          4,
+          3,
+          3
+        ],
+        "payload_sha256": "cc680fee74860c6c0ad774d480282614d5eb63edd9ada54d8e874433f37851a1",
+        "stage": "declared Y face stage",
+        "time": "0.250000"
+      },
+      {
+        "frame": 1,
+        "field": "face_z",
+        "dtype": "<f8",
+        "shape_zyx": [
+          5,
+          2,
+          3
+        ],
+        "payload_sha256": "76c6856cbb33a11444e4ae43c385091c82c60b7c66bf88ac812e6c5d20ecef52",
+        "stage": "declared Z face stage",
+        "time": "0.250000"
+      }
+    ],
+    "original_sources_exact": true,
+    "grid": {
+      "shape_xyz": [
+        3,
+        2,
+        4
+      ],
+      "origin_xyz": [
+        10,
+        -4,
+        7
+      ],
+      "spacing_xyz": [
+        0.5,
+        2,
+        3
+      ],
+      "orientation": [
+        [
+          0,
+          -1,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "units": "m"
+    },
+    "independent_inspection_slices": 12
+  },
+  "frozenSummary": {
+    "schema_version": 1,
+    "validation": "field_sequence_release_integrity",
+    "release_sha256": "a27de9b921469d818295f7398f49421888f7b4d1fe6b153d240130faa4421586",
+    "field_sequence_count": 1,
+    "frame_count": 2,
+    "split_counts": {
+      "train": 1,
+      "validation": 0,
+      "test": 0
+    },
+    "family_scope": "selected_records_only",
+    "limitations": [
+      "Family checks cover selected records only. Canonical v1 does not retain every omitted ancestor or bridge.",
+      "Review, rights, units, geometry, temporal meaning and provenance are frozen declarations, not independently certified claims.",
+      "Field integrity does not establish physical validity, independent trajectories, model quality or training suitability."
+    ],
+    "field_sequences": [
+      {
+        "id": "eac120285a0646fea7be0f2bea6485bc",
+        "name": "Whole generic field sequence",
+        "revision": 2,
+        "source_revision": 1,
+        "split": "train",
+        "review": "human_reviewed",
+        "asset_sha256": "32d79d5e4c8881fcfd6c858b70e485c61a636ac1e8ea7d4dbd6c52c7bdc47ed7",
+        "rights": "Test qualification custody only; no science acceptance",
+        "manifest": {
+          "format": "scientific_field_sequence_v1",
+          "schema_version": 1,
+          "grid": {
+            "shape_xyz": [
+              3,
+              2,
+              4
+            ],
+            "origin_xyz": [
+              10,
+              -4,
+              7
+            ],
+            "spacing_xyz": [
+              0.5,
+              2,
+              3
+            ],
+            "orientation": [
+              [
+                0,
+                -1,
+                0
+              ],
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "units": "m"
+          },
+          "time_units": "s",
+          "fields": [
+            {
+              "id": "scalar",
+              "label": "Authored scalar",
+              "dtype": "<f8",
+              "centering": "cell",
+              "units": "K",
+              "stage": "observed scalar stage"
+            },
+            {
+              "id": "face_x",
+              "label": "Authored X face values",
+              "dtype": "<f4",
+              "centering": "face_x",
+              "units": "m/s",
+              "stage": "declared X face stage"
+            },
+            {
+              "id": "face_y",
+              "label": "Authored Y face values",
+              "dtype": "<f4",
+              "centering": "face_y",
+              "units": "m/s",
+              "stage": "declared Y face stage"
+            },
+            {
+              "id": "face_z",
+              "label": "Authored Z face values",
+              "dtype": "<f8",
+              "centering": "face_z",
+              "units": "m/s",
+              "stage": "declared Z face stage"
+            }
+          ],
+          "frames": [
+            {
+              "time": "0.12500",
+              "arrays": [
+                {
+                  "field": "scalar",
+                  "path": "arrays/000-scalar.npy",
+                  "bytes": 320,
+                  "sha256": "c22c850fddb6c61c34ed34bf5fbd471dac98dd340c4c87d10efa848563c7c9bf"
+                },
+                {
+                  "field": "face_x",
+                  "path": "arrays/000-face_x.npy",
+                  "bytes": 256,
+                  "sha256": "668361e0cf8434c7bdfa6b62f5320edb4d278898a7a3f20238b78b45057b2cb5"
+                },
+                {
+                  "field": "face_y",
+                  "path": "arrays/000-face_y.npy",
+                  "bytes": 272,
+                  "sha256": "a25ddf8527b62afadf4613500f9960028583384781acceb43d124dca75614f46"
+                },
+                {
+                  "field": "face_z",
+                  "path": "arrays/000-face_z.npy",
+                  "bytes": 368,
+                  "sha256": "7136abcfc3eb8247f3638f7c67676b697feb6d1eb55f17485573ffe14dec4bd7"
+                }
+              ]
+            },
+            {
+              "time": "0.250000",
+              "arrays": [
+                {
+                  "field": "scalar",
+                  "path": "arrays/001-scalar.npy",
+                  "bytes": 320,
+                  "sha256": "483e50556825acad759fb2feb12279c37af7ccedb976678bb7ee76bf28197e4a"
+                },
+                {
+                  "field": "face_x",
+                  "path": "arrays/001-face_x.npy",
+                  "bytes": 256,
+                  "sha256": "3ff041f2db25a73928eef9818eedff668aee0bc209478e7b467587fac8cb5f8d"
+                },
+                {
+                  "field": "face_y",
+                  "path": "arrays/001-face_y.npy",
+                  "bytes": 272,
+                  "sha256": "1c3ed9112997cf7320d36a3017e74495ad8d63df77e753a392fffc11c046a22a"
+                },
+                {
+                  "field": "face_z",
+                  "path": "arrays/001-face_z.npy",
+                  "bytes": 368,
+                  "sha256": "c95625e7d066bd89ea06943f40d97a1643a60f37dcac32268cca13395c4261e3"
+                }
+              ]
+            }
+          ],
+          "family": {
+            "namespace": "authored-ui-fixture",
+            "id": "rotated-noncubic"
+          },
+          "sources": [
+            {
+              "path": "sources/authored.txt",
+              "bytes": 76,
+              "sha256": "d33b40065d5add8f8431a3005c40fd2049c56519efd4dd346fe729042cad1a36",
+              "description": "Fixture declaration"
+            }
+          ],
+          "provenance": {
+            "producer": "Producer-neutral authored numerical fixture",
+            "source_id": "synthetic; no model or physics acceptance"
+          }
+        },
+        "frame_count": 2,
+        "field_count": 4,
+        "source_bytes": 5958,
+        "first_observed_state_sha256": "8a64edbb7d366f508501268fa793e3a35c502ef4b8c0156dbb26bfa09ed604c0"
+      }
+    ]
+  },
+  "offline_canary": null,
+  "browser": "Chrome/151.0.7922.173"
+}

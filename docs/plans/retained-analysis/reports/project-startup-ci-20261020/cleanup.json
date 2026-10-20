@@ -1,0 +1,21 @@
+{
+  "temporary": "/tmp/tuldok-fields-browser-XT8B2u",
+  "removed": true,
+  "children": [
+    {
+      "pid": 114816,
+      "exit_code": 0,
+      "signal": null
+    },
+    {
+      "pid": 114823,
+      "exit_code": 0,
+      "signal": null
+    },
+    {
+      "pid": 115078,
+      "exit_code": null,
+      "signal": "SIGTERM"
+    }
+  ]
+}

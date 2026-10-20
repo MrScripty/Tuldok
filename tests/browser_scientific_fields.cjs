@@ -7,6 +7,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
 const {spawn,execFileSync}=require('node:child_process');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
 const {waitForDebugger}=require('./browser_startup.cjs');
+const {stopOwnedChildren}=require('./browser_owned_cleanup.cjs');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const root=path.resolve(__dirname,'..'),captureIndex=process.argv.indexOf('--capture-root');
 assert.ok(captureIndex<0||process.argv[captureIndex+1],'--capture-root needs a directory');
@@ -19,11 +20,13 @@ const fixtureArgs=['tests/qualify_scientific_fields.py','--output',bundlePath,'-
 execFileSync('python3',fixtureArgs,{cwd:root});const source=fs.readFileSync(bundlePath),sourceHash=sha(source);
 const first={schema_version:2,extensions:[],id:'c'.repeat(32),name:captureRoot?'Native capture transport only':'Rotated noncubic authored fields',data:[{id:'fields',label:'Generic scientific bundle',path:'fields.zip'}],recipes:[],evidence:[],requirements:[]};
 const manifestRaw=JSON.stringify(first);fs.writeFileSync(path.join(projectRoot,'tuldok.project.json'),manifestRaw);
+const sourceFiles=Object.fromEntries(['static/workspaces.html','static/workspace-projects.js','tests/browser_scientific_fields.cjs','tests/test_workspace_project_startup.cjs'].map(file=>[file,sha(fs.readFileSync(path.join(root,file)))]));
 const inspections=[],captures=[],checks=[],requests=[],errors=[],children=[],tracker=pageLoadTracker();const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws,send,evaluate,serverErrors='';
 async function until(fn,message='Timed out'){for(let i=0;i<600;i++){const value=await fn();if(value)return value;await pause(100);}throw Error(message);}
 function launch(command,args,options){const child=spawn(command,args,options);children.push(child);return child;}
 const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(temporary,'data'),'--project-root','sample='+projectRoot];
 (async()=>{
+  require('./test_workspace_project_startup.cjs').verifyProjectStartup();
   let server=launch('python3',serverArgs(0),{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
   const port=await until(()=>{if(server.exitCode!==null)throw Error('Project server exited: '+serverErrors);return output.match(/127\.0\.0\.1:(\d+)/)?.[1];});
@@ -33,9 +36,9 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');assert.ok(target);
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
-  let next=0;const pending=new Map();
+  let next=0,startupResponse=null;const pending=new Map();
   send=(method,params={})=>new Promise((resolve,reject)=>{const id=++next,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},20000);pending.set(id,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});ws.send(JSON.stringify({id,method,params}));});
-  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Network.requestWillBeSent')requests.push({url:message.params.request.url,method:message.params.request.method});};
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Fetch.requestPaused')startupResponse=message.params;if(message.method==='Network.requestWillBeSent')requests.push({url:message.params.request.url,method:message.params.request.method});};
   evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   const doc=frame=>frame?'document.getElementById("catalog-frame").contentDocument':'document';
   const element=(selector,frame=false)=>`${doc(frame)}.querySelector(${JSON.stringify(selector)})`,text=(selector,frame=false)=>evaluate(`${element(selector,frame)}?.textContent`);
@@ -60,8 +63,20 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');await send('Network.enable');
   const offlineCanary=process.env.LD_PRELOAD?JSON.parse(execFileSync('python3',['-c',"import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"],{cwd:root,encoding:'utf8'})):null;
   await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
+  // Delay the actual owning module; keep the initial HTML and real pointer path.
+  await send('Fetch.enable',{patterns:[{urlPattern:base+'/workspace-projects.js',requestStage:'Response'}]});
   await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("open-project")'));
+  await until(()=>startupResponse,'Owning project module response was not held');
+  const startupBefore=await evaluate(`(()=>{const e=document.getElementById('open-project'),b=e.getBoundingClientRect();return {disabled:e.disabled,handler:typeof e.onclick,dialog:document.getElementById('project-open-dialog').open,hit:document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)?.id,x:b.x+b.width/2,y:b.y+b.height/2};})()`);
+  assert.equal(startupBefore.disabled,true,'Open project stays unavailable until its owner binds the action');
+  assert.equal(startupBefore.handler,'object');assert.equal(startupBefore.hit,'open-project');
+  for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,x:startupBefore.x,y:startupBefore.y});
+  assert.equal(await evaluate('document.getElementById("project-open-dialog").open'),false,'The disabled startup control cannot open a partial project flow');
+  await send('Fetch.continueRequest',{requestId:startupResponse.requestId});startupResponse=null;await send('Fetch.disable');
   await openProject('tuldok.project.json',first.name,first.id);
+  const startupAfter=await evaluate('({disabled:document.getElementById("open-project").disabled,handler:typeof document.getElementById("open-project").onclick,project:document.getElementById("dataset").value})');
+  assert.equal(startupAfter.disabled,false);assert.equal(startupAfter.handler,'function');
+  check('Delayed actual project module keeps the pointer-hit control disabled; its owner enables the original first open and full project inspection');
   assert.equal((await(await fetch(base+'/api/workbench/records')).json()).items.length,0,'Opening does not import');
   await click('[data-project-import="fields"]');
   await until(()=>evaluate('document.getElementById("project-import-dialog").open'));
@@ -144,6 +159,6 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   check('Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record');
   assert.deepEqual(await(await fetch(base+'/api/workspace/runs')).json(),[]);assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
   check('Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted');
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_scientific_fields.cjs'+(captureRoot?' --capture-root <saved-native-capture>':''),capture_receipt_sha256:captureRoot?sha(fs.readFileSync(path.join(captureRoot,'receipt.json'))):null,qualification:captureRoot?'Actual saved native capture converted without element conversion; transport/UI/custody only':'Producer-neutral authored rotated noncubic fields; transport/UI/custody only',physics_acceptance:false,model_or_training_acceptance:false,checks,captures,source_sha256:sourceHash,cold,frozenSummary,offline_canary:offlineCanary,browser:(await send('Browser.getVersion')).product},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_scientific_fields.cjs'+(captureRoot?' --capture-root <saved-native-capture>':''),capture_receipt_sha256:captureRoot?sha(fs.readFileSync(path.join(captureRoot,'receipt.json'))):null,qualification:captureRoot?'Actual saved native capture converted without element conversion; transport/UI/custody only':'Producer-neutral authored rotated noncubic fields; transport/UI/custody only',physics_acceptance:false,model_or_training_acceptance:false,source_files_sha256:sourceFiles,startup:{before:startupBefore,after:startupAfter},checks,captures,source_sha256:sourceHash,cold,frozenSummary,offline_canary:offlineCanary,browser:(await send('Browser.getVersion')).product},null,2));
   console.log('PASS scientific field browser:',report);
-})().catch(async error=>{console.error(error);console.error('Application stderr:',serverErrors);if(evaluate)try{console.error(await evaluate('JSON.stringify({url:location.href,body:document.body.innerText.slice(-9000),frame:document.getElementById("catalog-frame")?.contentDocument?.body.innerText.slice(-5000)})'));}catch{}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())child.kill('SIGTERM');});
+})().catch(async error=>{console.error(error);console.error('Application stderr:',serverErrors);if(evaluate)try{console.error(await evaluate('JSON.stringify({url:location.href,body:document.body.innerText.slice(-9000),frame:document.getElementById("catalog-frame")?.contentDocument?.body.innerText.slice(-5000)})'));}catch{}process.exitCode=1;}).finally(async()=>{ws?.close();await stopOwnedChildren(children);fs.rmSync(temporary,{recursive:true,force:true,maxRetries:10,retryDelay:100});fs.writeFileSync(path.join(report,'cleanup.json'),JSON.stringify({temporary,removed:!fs.existsSync(temporary),children:children.map(child=>({pid:child.pid,exit_code:child.exitCode,signal:child.signalCode}))},null,2)+'\n');}).catch(error=>{console.error('Owned scientific fixture cleanup failed:',error);process.exitCode=1;});
