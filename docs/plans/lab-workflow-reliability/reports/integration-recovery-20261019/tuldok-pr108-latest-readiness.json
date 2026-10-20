@@ -1,0 +1,30 @@
+{
+  "pr": 108,
+  "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+  "base": "feature/lab-batch-client-20261019",
+  "base_sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+  "mergeable_state": "unstable",
+  "checks": [
+    {
+      "id": 118424714572,
+      "name": "lifecycle",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311688/job/118424714572"
+    },
+    {
+      "id": 118424714387,
+      "name": "static-kit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311720/job/118424714387"
+    },
+    {
+      "id": 118424714264,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39360311683/job/118424714264"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "format": "qualified_merge_gate_pr104_independent_review_v1",
+  "observed_utc": "2026-10-20T03:05:18.877002+00:00",
+  "assessment": "Current gate policy is reasonable for the known duplicate same-head check contexts and fails closed for the providedPR104snapshot. NO PR104 MERGE CLEARANCE: newest lifecycle is pending. No code change recommended by this bounded review.",
+  "reviewed_script": {
+    "path": "/tmp/tuldok-merge-qualified-pr.py",
+    "sha256": "68b109aadb276d7758c8803b5bbe6eea0709256792284ce808cdc85a8ea04c7c",
+    "executed": false,
+    "scope": "Read currentgatecode only. Did not invoke imports/script/merge-treewrite-tree, fetch, ready transition, merge or any remote API."
+  },
+  "check_policy": {
+    "context_key": "Exact checkrun name in the lead-curated requiredcheck_names set; maxnumericID selects newest createdcheckrun for that name on queriedexacthead. This is appropriate for the observed catalog/lifecycle/capturedCPU/workspaceUI duplicates; no crossworkflow same-name collision is evidenced.",
+    "positive_conditions": "Response nonempty andtotal_count<=100, names exactlyequalexpectedset, everylatestcontext completed/success; newerpending or non-success cannot fall back to oldergreen.",
+    "known_failure_veto": "All returned same-head checks, includingolderduplicates, are checked for failure/timed_out/action_required/startup_failure. Any suchknownfailure blocks despite latestsuccess. This is conservative and appropriate for a failure requiring review.",
+    "disposition_limit": "The script has no explicit automatic failure-exemption/disposition input: the comment does not itself override the veto. A retainedoldfailure therefore remainsblocked until root separatelyresolvespolicy/source asauthorized; none exists in thissnapshot.",
+    "older_pending_semantics": "Olderpending duplicates are not marked success. Whenalllatestcontexts aregreen andno knownfailureexists, policy permits proceeding while preserving everyreturnedcheckstatus/ID/URL in recordchecks plus latest_required_check_ids. This is explicitlatest-contextacceptance, not proof olderexecutions completed or cannotlaterfail.",
+    "bounded_history": "Morethan100checks or unexpected/missingcontextnames blocks rather than truncatingunknown failures.",
+    "freshness_and_repository_policy": "LaterPRread requires notdraft, exacthead/base andcleanmergeablestate; mainrefcheckedagain. HeadSHAmergeinput guards sourcehead; resulttree/parents verified afterack. Those are independent controls, not a rewrite of the originallytestedhistory."
+  },
+  "PR104_current_snapshot": {
+    "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+    "base": "main",
+    "base_sha": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+    "mergeable_state": "unstable",
+    "latest_per_context": {
+      "catalog": {
+        "id": 118390213922,
+        "name": "catalog",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543926/job/118390213922"
+      },
+      "lifecycle": {
+        "id": 118390213683,
+        "name": "lifecycle",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543888/job/118390213683"
+      },
+      "captured-cpu": {
+        "id": 118390213620,
+        "name": "captured-cpu",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543860/job/118390213620"
+      },
+      "workspace-ui": {
+        "id": 118390213588,
+        "name": "workspace-ui",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543903/job/118390213588"
+      }
+    },
+    "known_samehead_failure_vetoes": [],
+    "latest_blockers": [
+      {
+        "id": 118390213683,
+        "name": "lifecycle",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349543888/job/118390213683"
+      }
+    ],
+    "latest_contexts_all_success": false,
+    "merge_clearance": false,
+    "older_success_cannot_supplant_pending_latest": {
+      "older_lifecycle_id": 118390114562,
+      "older_outcome": "completed/success",
+      "blocking_latest_lifecycle_id": 118390213683,
+      "blocking_latest_outcome": "in_progress/null"
+    },
+    "source": "Existing readinessJSON only, not refreshed or polled by this reviewer."
+  },
+  "base_tree_proof": {
+    "input_path": "/tmp/tuldok-pr104-main-composition-tree-proof.json",
+    "input_sha256": "d7d2d26a72df16e121d6527ee8aee68f21181f97b08347984d7ab11a5d533815",
+    "proof": {
+      "pr": 104,
+      "source": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "qualified_old_base": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "current_main_base": "18a53816a279ad56758de620c9a1c4b129ba84ce",
+      "base_trees_equal": true,
+      "prospective_merge_tree": "3f8e9d3a8984d12e71cbcc163e5976eb0eff121b",
+      "source_tree": "3f8e9d3a8984d12e71cbcc163e5976eb0eff121b",
+      "tree_equal": true,
+      "CI_acceptance": "Still pending; this tree proof is not a lifecycle success claim."
+    },
+    "independent_readonly_git_checks": {
+      "qualified_old_base_tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+      "current_main_base_tree": "32f00932717ba0d7fd7db41c934949c24d03ca1a",
+      "old_and_current_base_trees_equal": true,
+      "source_head_tree": "3f8e9d3a8984d12e71cbcc163e5976eb0eff121b",
+      "recorded_prospective_tree_equals_source": true,
+      "qualified_old_base_ancestor_source": true
+    },
+    "interpretation": "Preparedbase/treeproof is consistent. Old9d62base andnewmain18abase have equalfiletrees andoldbaseisancestor source8323, supporting sameprospectivefiletree. This is a composition proof, not lifecycle success or a claim literalnewmainhistorywasCIcheckout."
+  },
+  "other_script_controls": "Reviewfiles contenthashes retained; existingmerge-receipt blocksunexaminedretry; mergeintentsavedbeforewrite; failedrequestobservesmergedstateanddoesnotretry; successfulresponsetree/parentchecksretain exactbase/headattribution. The root remains soleexecution/serialmergeowner.",
+  "conditions_and_limits": [
+    "PR104currentlyblockedbyactualpendinglatest lifecycle andunstablemergeablestate; waitforitsowncompletion/archivedacceptance throughroot.",
+    "No claim ofallhistoricalsameheadjobs success, no hiddenpromotionofolderpending/checks to success.",
+    "Snapshotreads cannot guarantee futurejoboutcomes or atomiccheck/mainstate; rootandGitHub mergepolicy remain finalguards. This review found no actual race outcome or correctnessdefect requiring new code.",
+    "No newtestexecution, sourceedit, remoteoperation, polling, cancellation, push or merge by reviewer."
+  ],
+  "findings": [],
+  "remaining_blockers": [
+    {
+      "target": "PR104 lifecyclecheck118390213683",
+      "state": "pending in providedsnapshot",
+      "reason": "Newestrequiredlifecyclecheck inprogresswithnullconclusion; gate correctlyrejectsmerge despiteolderlifecyclegreen."
+    }
+  ],
+  "evidence": {
+    "readiness": {
+      "path": "/tmp/tuldok-pr104-latest-readiness.json",
+      "sha256": "6238a1b573250632597ee7d26349972499132610f48cbbb9a9bd5fefc099d8ab"
+    },
+    "tree_proof": {
+      "path": "/tmp/tuldok-pr104-main-composition-tree-proof.json",
+      "sha256": "d7d2d26a72df16e121d6527ee8aee68f21181f97b08347984d7ab11a5d533815"
+    }
+  }
+}

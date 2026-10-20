@@ -1,0 +1,103 @@
+{
+  "observed_utc": "2026-10-20T03:04:43.547618+00:00",
+  "order": [
+    104,
+    105,
+    106,
+    109,
+    110,
+    108,
+    111
+  ],
+  "prepared": [
+    {
+      "pr": 104,
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "tree": "3f8e9d3a8984d12e71cbcc163e5976eb0eff121b",
+      "source_worktree": "/workspace/Tuldok-lab-phase-ui-m3",
+      "reviews": [
+        "/tmp/tuldok-pr104-8323-completed-lifecycle-independent-review.json",
+        "/tmp/tuldok-pr104-8323-cpu-independent-review.json"
+      ],
+      "check_names": [
+        "lifecycle",
+        "captured-cpu",
+        "catalog",
+        "workspace-ui"
+      ],
+      "base": null,
+      "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+    },
+    {
+      "pr": 105,
+      "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "tree": "fe7d983c3971d53c62dc56671b31cf30a8c91293",
+      "source_worktree": "/workspace/Tuldok-lab-workflow-client-m5",
+      "reviews": [
+        "/tmp/tuldok-pr105-3305-completed-lifecycle-independent-review.json",
+        "/tmp/tuldok-pr105-3305-cpu-independent-review.json"
+      ],
+      "check_names": [
+        "lifecycle",
+        "captured-cpu"
+      ],
+      "base": null,
+      "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+    },
+    {
+      "pr": 106,
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "tree": "01f01295c340355323e0cabe9ca41cf07b20ebe2",
+      "source_worktree": "/workspace/Tuldok-lab-field-comparison-m6",
+      "reviews": [
+        "/tmp/tuldok-pr106-5a83-cpu-independent-review.json",
+        "/tmp/tuldok-pr106-5a83-lifecycle-independent-review.json"
+      ],
+      "check_names": [
+        "lifecycle",
+        "captured-cpu",
+        "catalog",
+        "workspace-ui"
+      ],
+      "base": null,
+      "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+    },
+    {
+      "pr": 109,
+      "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "tree": "29266e6670d88b41207af07f84b13f12eb9a430a",
+      "source_worktree": "/workspace/Tuldok-lab-bounded-collection-m4",
+      "reviews": [
+        "/tmp/tuldok-pr109-861b-cpu-independent-review.json",
+        "/tmp/tuldok-pr109-861b-lifecycle-independent-review.json"
+      ],
+      "check_names": [
+        "lifecycle",
+        "captured-cpu",
+        "catalog",
+        "workspace-ui"
+      ],
+      "base": null,
+      "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+    },
+    {
+      "pr": 110,
+      "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "tree": "7705912b168b0eab5ebc1d429087ec61e71061d1",
+      "source_worktree": "/workspace/Tuldok-lab-batch-client-m4",
+      "reviews": [
+        "/tmp/tuldok-pr110-a9c-lifecycle-independent-review.json"
+      ],
+      "check_names": [
+        "lifecycle"
+      ],
+      "base": null,
+      "activation_requirement": "After predecessor is merged, read current main, prove qualified old base tree equals current main tree, retarget PR to main, then require current latest successful check context and no known same-head failures before using merge helper."
+    }
+  ],
+  "later_heads": {
+    "108": "9f08427029d8b48c8f9b50927a1c835afb573276",
+    "111": "0ba4db01f04a77c262eb4b397f88849e9688b5ab"
+  },
+  "later_gate": "Fresh repaired-head hosted qualification and independent review still pending"
+}

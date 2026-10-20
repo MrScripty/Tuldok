@@ -56,3 +56,10 @@ archived and recovery-verified before removal. The real-runtime byte-integrity o
 cleanup proof; it is not full T5 performance acceptance.
 The original lab failure bytes and an owned scientific criterion/compatible lab
 pair are still missing inputs; synthetic diagnostics do not satisfy those claims.
+
+Final serial merge preparation and exact-source reviews for104/105/106/109/110
+are recorded in `tuldok-remaining-serial-merge-preparation.json`. Activate each
+only after the predecessor merge, with a fresh current-main/base/tree proof.
+PR104 latest lifecycle is still pending at the recorded03:05 snapshot;
+the independent merge-gate review explicitly grants no clearance while pending.
+Current PR descriptions have been rewritten around final behavior and evidence.

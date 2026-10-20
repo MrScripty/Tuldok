@@ -4270,8 +4270,8 @@
     "cleanup_status": "Complete: accepted102/103/107 remote/local/trackingrefs and3cleanworktrees removed afterretarget, QAarchive407recoveryverified, independentpostcheck confirms allothers unchanged andprotected82/96/91 preserved.",
     "cleanup_terminal": "/tmp/tuldok-pr102-103-107-cleanup-terminal.json",
     "cleanup_independent": "/tmp/tuldok-pr102-103-107-cleanup-independent-postcheck.json",
-    "latest_readiness": "/tmp/tuldok-pr104-105-postretirement-readiness.json",
-    "next_gate": "PR104 latest lifecycle39349543888/job118390213683 stillinprogress at02:56 snapshot; completedduplicate independentlyclear. Required latestcontexts/GitHubcleanstate remain necessary.",
+    "latest_readiness": "/tmp/tuldok-pr104-latest-readiness.json",
+    "next_gate": "PR104 latest lifecycle39349543888/job118390213683 in_progress at03:05, step138. Earlier duplicate independently clear; no merge attempted while latest gate pending.",
     "prepared_independent_reviews": {
       "104": [
         "/tmp/tuldok-pr104-8323-cpu-independent-review.json",
@@ -4292,7 +4292,12 @@
       "110": [
         "/tmp/tuldok-pr110-a9c-lifecycle-independent-review.json"
       ]
-    }
+    },
+    "merge_preparation": "/tmp/tuldok-remaining-serial-merge-preparation.json",
+    "merge_gate_independent": "/tmp/tuldok-pr104-merge-gate-independent-review.json",
+    "description_publication": "/tmp/tuldok-remaining-final-description-publication.json",
+    "recovery_checkpoint_verified": "c37106eac3a80867543a5ce4d34d6db42dd9b600:438/438 entries by independent recovery clone",
+    "observed_utc": "2026-10-20T03:05:44.851099+00:00"
   },
   "indexed_retained_ci_repairs": {
     "intent_utc": "2026-10-20T02:41:47.821206+00:00",

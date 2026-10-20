@@ -1,0 +1,65 @@
+{
+  "pr": 106,
+  "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+  "base": "feature/lab-workflow-client-20261019",
+  "base_sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+  "mergeable_state": "clean",
+  "checks": [
+    {
+      "id": 118390133928,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518183/job/118390133928"
+    },
+    {
+      "id": 118390133508,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518119/job/118390133508"
+    },
+    {
+      "id": 118390133470,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518156/job/118390133470"
+    },
+    {
+      "id": 118390133409,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349518133/job/118390133409"
+    },
+    {
+      "id": 118390001060,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475251/job/118390001060"
+    },
+    {
+      "id": 118390001037,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475266/job/118390001037"
+    },
+    {
+      "id": 118390001029,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475295/job/118390001029"
+    },
+    {
+      "id": 118390001014,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349475306/job/118390001014"
+    }
+  ]
+}

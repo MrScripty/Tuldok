@@ -1,0 +1,23 @@
+{
+  "pr": 110,
+  "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+  "base": "feature/lab-bounded-collection-20261019",
+  "base_sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+  "mergeable_state": "clean",
+  "checks": [
+    {
+      "id": 118390238386,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349550869/job/118390238386"
+    },
+    {
+      "id": 118390130432,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349516958/job/118390130432"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "pr": 109,
+  "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+  "base": "feature/lab-field-comparison-20261019",
+  "base_sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+  "mergeable_state": "clean",
+  "checks": [
+    {
+      "id": 118390131496,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517358/job/118390131496"
+    },
+    {
+      "id": 118390131418,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517382/job/118390131418"
+    },
+    {
+      "id": 118390131257,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517350/job/118390131257"
+    },
+    {
+      "id": 118390131190,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349517308/job/118390131190"
+    },
+    {
+      "id": 118390068579,
+      "name": "workspace-ui",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349497088/job/118390068579"
+    },
+    {
+      "id": 118390068467,
+      "name": "catalog",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349496980/job/118390068467"
+    },
+    {
+      "id": 118390067885,
+      "name": "lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349496918/job/118390067885"
+    },
+    {
+      "id": 118390067477,
+      "name": "captured-cpu",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39349496909/job/118390067477"
+    }
+  ]
+}
