@@ -1,0 +1,18 @@
+{
+  "format": "tuldok_pr111_integrated_shared_scope_owner_disposition_v1",
+  "approved_utc": "2026-10-20T00:46:58.122978+00:00",
+  "current_published_head": "beead92d54e33e70eb9df82e872adf14ff314c91",
+  "worker_integrated_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+  "corrected_reliability_head": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+  "independent_review": "/tmp/tuldok-pr111-integrated-shared-scope-review.json",
+  "review_sha256": "ce6d21a50fa562db5be377447a30c1b220526606712042a5b68ed6c3bc509068",
+  "decision": "Bounded shared integration scope approved; no corrective source hunk required; merge pending exact-head CI.",
+  "page_policy": "Accept new page-specific /workspaces meta CSP as a bounded integration hunk: self-only scripts/connectivity, existing inline CSS still allowed, data/blob images. No global HTTP headers or server-wide policy changed. Full workspace compatibility remains gated on exact-head full lifecycle/CPU CI.",
+  "source_scope": "Normal corrected-dependency merge changes only five reviewed task browser teardown fixtures relative to worker08620; all retained-analysis production hooks remain byte-identical.",
+  "other_reviewed_hunks": [
+    "Initial dataset selector disabled until existing initializer installs listeners/enables it.",
+    "Current Run/generation/credential/abort-bound model-service denial forwarding clears private values without mutation retry.",
+    "Canonical route-only Run ID, two inspect contracts, exact static mappings and bounded transport/mount ownership."
+  ],
+  "limits": "Reuse authored actual/independent evidence with exact original source attribution; no fabricated independent rerun or full-repository CI pass."
+}

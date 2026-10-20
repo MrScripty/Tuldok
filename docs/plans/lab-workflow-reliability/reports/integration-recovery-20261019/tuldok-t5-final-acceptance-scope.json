@@ -1,0 +1,177 @@
+{
+  "format": "t5_final_acceptance_scope_v1",
+  "recorded_utc": "2026-10-20T00:21:31.967414+00:00",
+  "review_source_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+  "disposition": "The previously missing real-byte mutation/refusal observation is now closed in its exact CPU asset-owner scope. No cache, preparation speedup, whole-workflow speedup or full T5/M4 pass follows. No actionable product-code gap is established by the reviewed acceptance text and evidence.",
+  "closed_integrity_observation": {
+    "source_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "driver_sha256": "941675c4c3f740e1e30a6599c7ffcdcd04f8cabe07cc9554d9506895891756df",
+    "result_sha256": "ecf843a4c9b53c015a83c5c3b8e06423a3be17ae1a9f94ede79ae0e480545e0f",
+    "state": "passed",
+    "root_reported_exit_code": 0,
+    "wall_seconds_total": 104.75393403099952,
+    "scope": "One private real CPU installation asset copy, observed through existing RuntimeSnapshots and TorchRuntimes owners; same-size/restored-mtime real Torch .py byte change; no Run/GO/training or numerical/device claim.",
+    "guards_closed": {
+      "managed_old_verified_get": {
+        "code": "unavailable",
+        "status": 409
+      },
+      "captured_old_verified_get": {
+        "code": "stale",
+        "status": 409
+      },
+      "old_expected_capture_request_from_changed_copy": {
+        "code": "stale",
+        "status": 409
+      },
+      "fresh_inspections_different": true,
+      "exact_restore_file_and_managed_descriptor": true,
+      "original_full_inventory_and_config_unchanged": true,
+      "all_six_effect_counts_zero": true
+    },
+    "checks": [
+      "real_capture_equal_inventory",
+      "private_real_copy_no_inode_alias",
+      "same_size_restored_mtime_byte_mutation",
+      "old_managed_verified_get_409",
+      "old_captured_verified_get_409",
+      "fresh_inspections_new_identity",
+      "old_expected_identity_capture_refused_without_second_copy",
+      "exact_restore_both_old_gets_pass",
+      "original_full_inventory_and_config_unchanged",
+      "zero_run_grant_job_accounting"
+    ],
+    "counts_before": {
+      "access_admissions": 0,
+      "access_execution_consumptions": 0,
+      "access_execution_grants": 0,
+      "model_attempt_reservations": 0,
+      "workspace_graphs": 0,
+      "workspace_runs": 0
+    },
+    "counts_after": {
+      "access_admissions": 0,
+      "access_execution_consumptions": 0,
+      "access_execution_grants": 0,
+      "model_attempt_reservations": 0,
+      "workspace_graphs": 0,
+      "workspace_runs": 0
+    },
+    "cleanup": {
+      "errors": [],
+      "owned_directory_absent": true,
+      "schema_absent": true
+    },
+    "independent_result_review": "25/25 checks passed; exact schema/root absence and original small Torch source file verified by M1. This reconciliation did not repeat PG access or runtime execution.",
+    "important_scope_difference": "Captured and managed inventories have different declared closures (20804 files/896562621B versus15714/773948539B). Their distinct identity hashes are not asserted equal. The installed source was never mutated; its disposable exact byte copy was."
+  },
+  "conditional_C4": {
+    "text_anchor": "contracts-and-acceptance.md:186-214, especially final no-safe-benefit cache omission clause; plan.md M4 tasks/admission",
+    "decision": "No added cache is required solely to satisfy a conditional mechanism. Retain canonical fresh current-byte checks and existing owned capture semantics. Baseline established runtime verification cost but did not establish a safe beneficial new preparation reuse mechanism; the admitted implementation instead removed measured request-local redundant collection work.",
+    "legitimately_omitted": [
+      "A new cross-call preparation/runtime cache or immutable reuse store.",
+      "Cache entry publication, count/byte eviction, cache hit/miss/invalidated counters and concurrent cache-caller cancellation tests when no such mechanism exists.",
+      "A cache-derived warm runtime/material speedup claim."
+    ],
+    "not_omitted": "Canonical mutable installed byte checks, changed-byte refusal and exact identities remain mandatory. The new real-copy witness supports this requirement without adding a cache.",
+    "no_inferred_code_gap": true
+  },
+  "measurement_coverage": [
+    {
+      "claim": "Descriptive preparation/preflight/capture and process/history costs",
+      "status": "measured_baseline_only",
+      "evidence": "83d7e8f52df92d10d3ff85709da6eff3231a0b06:18 fresh sequential processes,3 cycles each=54 full-reverification preparation/capture cycles; artifacts1/20, histories0/8/55; first-call n3 and warm n6 per cell. Warm means fresh same-process full verification, not a cache hit. Named helper counters, wall/processCPU/RSS/I/O/request bodies retained."
+    },
+    {
+      "claim": "Supported end-to-end neutral routine baseline",
+      "status": "measured_descriptively",
+      "evidence": "Six fresh-catalog workflows,3 per1/20 artifact layout: actual preflight, owner grant, agent submit, real queue completion and whole-hash individual collection. Project/Graph setup and bootstrap are excluded and separately retained; application imports already warm. Medians4304.9ms/6591.2ms are baseline observations, not candidate gains."
+    },
+    {
+      "claim": "Same-head bounded batch collection contribution",
+      "status": "measured_scoped_candidate_contribution",
+      "evidence": "98380228a7edb8eefb4715cba27ca76722756cf9:54 alternating individual/batch pairs108 arms on exact same catalog/inventory, first-process and same-process repeated conditions. Run histories8/55 and attached publicationRef history56; empty history explicitly unavailable for collection. All27 twenty-item pairs faster, pooled median paired ratios approximately0.700/0.695/0.710. All one-item regressions retained. Explicit workload-specific retention only; default individual collection unchanged."
+    },
+    {
+      "claim": "Integrity equality/current authority/partial outcome under collection",
+      "status": "scoped_evidence_retained",
+      "evidence": "Exact per-item whole SHA, original Run/resultRef identities, no replay/accounting change, corruption, revoked authority and partial failed item checks remain in immutable matrices/correctness qualification. New actual runtime mutation receipt is a separate integrity tail, not retroactively a measured matrix row."
+    },
+    {
+      "claim": "Cold process cost",
+      "status": "measured_at_declared_boundary",
+      "evidence": "Fresh process/import/reopen/bootstrap and first-call distributions exist. No OS/PG page-cache flush or physically cold host claim; T5 says cold process, which does not justify stronger cache-cold language."
+    },
+    {
+      "claim": "Preparation/reuse candidate improvement",
+      "status": "unmeasured_and_unclaimed",
+      "evidence": "No added C4 preparation reuse/cache candidate was benchmarked. Held-prepared helper excludes prerequisite preparation/current admission/launch; it does not prove safe cross-call reuse or an end-to-end speedup."
+    },
+    {
+      "claim": "Candidate paired end-to-end workflow improvement",
+      "status": "unmeasured_and_unclaimed",
+      "evidence": "Collection arms start from existing published inventories. The supported-workflow baseline is not an alternating individual-vs-batch whole-workflow candidate comparison. Component ratios cannot establish a facade/general/full-pipeline gain."
+    },
+    {
+      "claim": "Real Torch installed/captured preparation performance, device/numerical gain or general high-payload/history performance",
+      "status": "unmeasured_and_unclaimed",
+      "evidence": "The new104.754s integrity observation is one bounded owner-verification/copy/refusal/restoration execution, not a performance distribution, training or science sample. The neutral baseline uses a smaller system-Python closure and cannot substitute for real Torch workload timing."
+    }
+  ],
+  "remaining_acceptance_scope": {
+    "full_T5_M4_pass": false,
+    "reason": "Scope currently supports descriptive baseline plus a retained bounded collection contribution and the named real-byte negative; current plan explicitly disclaims full M4/T5 and broader C4 reuse/invalidation acceptance.",
+    "if_broader_claims_are_requested": [
+      "A preparation/reuse speedup needs an admitted safe owner mechanism and its own paired cold/first/warm/history measurements and relevant integrity proof, not a cache added for a checkbox. C4 permits omitting the mechanism.",
+      "A comparative end-to-end claim needs a declared same-source paired supported workflow with equal inputs/runtime/inventory and integrity/count checks, all arms/distributions retained; the collection component ratios alone cannot provide it.",
+      "Any complete T5 label requires an explicit acceptance-scope disposition for these conditional/unmeasured dimensions. It is not supplied by this receipt."
+    ],
+    "actual_code_findings": [],
+    "actionable_next_step": "Preserve the reviewed actual-byte receipt and scoped collection-retention decision. Keep broad performance/full-T5 claims unqualified. No source/cache changes or additional tests are justified by an established correctness defect in this reconciliation."
+  },
+  "historical_evidence_policy": "Do not rewrite baseline83d or original/refined raw records. Their runtime mutation unavailable labels describe the measurement-time scope. Append the later actual941 driver/result as a separately attributed integrity observation.",
+  "archive_reference_from_root": "Final driver/results archived in checkpoint9cf1730,238 manifest entries independently recovery-verified by root; this reviewer performed no remote archive operation.",
+  "evidence_files": {
+    "plan": {
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/plan.md",
+      "sha256": "3abfe256c37071a026cb67ea3aed34537bf93567ca8a473b1980265841709062",
+      "bytes": 43442
+    },
+    "acceptance": {
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md",
+      "sha256": "815dc87cfb438b83563c3671e0c91ab8ae51fc5b035cf030a7544eb8dfe257c5",
+      "bytes": 33308
+    },
+    "baseline_summary": {
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/summary.json",
+      "sha256": "433960fb7b577dc1c716348424ebf5d0a315fcddca0b9e7f03b8d5e451b785cf",
+      "bytes": 124710
+    },
+    "baseline_results": {
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/results.md",
+      "sha256": "2d4551ac7884094f3a84eca8d25d5002d146457ca7ba6d8ba7401d4887abc80a",
+      "bytes": 10340
+    },
+    "refined_summary": {
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-9838022/summary.json",
+      "sha256": "d155c0221f147ac406c4d13dfdcfcf36b037349f9008fe38ddc7763902e950b5",
+      "bytes": 35099
+    },
+    "refined_validation": {
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-9838022/validation.json",
+      "sha256": "a26762288696a6e0aac198a7132c41616ab12f979194e3fb438568a7be6c3c76",
+      "bytes": 8600
+    },
+    "actual_mutation_result": {
+      "path": "/tmp/tuldok-t5-actual-runtime-mutation-result-3bfa6524886642abae3cc1ee3da9a247.json",
+      "sha256": "ecf843a4c9b53c015a83c5c3b8e06423a3be17ae1a9f94ede79ae0e480545e0f",
+      "bytes": 5851
+    },
+    "independent_mutation_review": {
+      "path": "/tmp/tuldok-t5-runtime-result-independent-review.json",
+      "sha256": "cfdd3aff818a1f6184b3a966aad25f5b4cb75168dd607f4a2fd39edc951a29b8",
+      "bytes": 10953
+    }
+  },
+  "actions": "Read local acceptance source and retained JSON/markdown receipts only; wrote this /tmp disposition. No tests, runtime inventory/copy/mutation, PG access, polling, source/docs changes or remote operations."
+}

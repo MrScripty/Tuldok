@@ -1,0 +1,29 @@
+Error: Command failed: python3 access.py login --data /tmp/tmpvo88r3q1/catalog --out /tmp/tmpvo88r3q1/owner-login-827c0959-7107-4f18-acda-09cc9a29a8d3.txt
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-coordinator-ui-m2/access.py", line 500, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/Tuldok-lab-coordinator-ui-m2/access.py", line 474, in main
+    from metadata import Metadata
+  File "/workspace/Tuldok-lab-coordinator-ui-m2/metadata.py", line 21, in <module>
+    import psycopg
+ModuleNotFoundError: No module named 'psycopg'
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:942:11)
+    at execFileSync (node:child_process:978:15)
+    at Object.register (/workspace/Tuldok-lab-coordinator-ui-m2/tests/auth_helpers.cjs:13:7)
+    at /workspace/Tuldok-lab-coordinator-ui-m2/tests/browser_workspace_publication.cjs:20:55 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    <Buffer >,
+    <Buffer 54 72 61 63 65 62 61 63 6b 20 28 6d 6f 73 74 20 72 65 63 65 6e 74 20 63 61 6c 6c 20 6c 61 73 74 29 3a 0a 20 20 46 69 6c 65 20 22 2f 77 6f 72 6b 73 70 ... 385 more bytes>
+  ],
+  pid: 94432,
+  stdout: <Buffer >,
+  stderr: <Buffer 54 72 61 63 65 62 61 63 6b 20 28 6d 6f 73 74 20 72 65 63 65 6e 74 20 63 61 6c 6c 20 6c 61 73 74 29 3a 0a 20 20 46 69 6c 65 20 22 2f 77 6f 72 6b 73 70 ... 385 more bytes>
+}
+Fixture stderr: 

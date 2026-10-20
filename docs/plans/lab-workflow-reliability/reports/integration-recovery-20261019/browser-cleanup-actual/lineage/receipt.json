@@ -1,0 +1,25 @@
+{
+  "source_head": "b4070b60b0119c73284c4832610cc82ef471963a",
+  "scope": "Real neutral Study/Trial/custody publication lineage; no scientific/training claim",
+  "checks": [
+    "Real neutral Model/Study/Trial/admission and custody publication fault",
+    "Explicit pinned lineage metadata inspection with no status fanout or recovery control",
+    "Original interrupted outcome preserved beside separate published state and exact Ref",
+    "Navigation drops old metadata; explicit refresh observes attached publication",
+    "Keyboard exact Ref link reopens original Run and its real byte verifier",
+    "1440px/390px existing lineage detail without horizontal overflow"
+  ],
+  "browser": "Chrome/151.0.7922.173",
+  "result_ref": {
+    "catalog_id": "160d53ebf4eb43d8b18f46c8c26a211d",
+    "custody_receipt_sha256": "88fe898be78b461f970a604f1311c26cf700b3c8ece4388448a1cd858cebebb8",
+    "inventory_sha256": "84afb1364c2ecd99dbc7b34258f2d331b576f8e49b96aebd980cd73dd1450d84",
+    "kind": "recovered_publication_result",
+    "material_sha256": "ffb9c7519fc3534ddadb46c4471565506dd3afa7172d9d4d5e509a9a7203365b",
+    "run_id": "6dc688104e2640b8b9487548b39741fe",
+    "schema_version": 1,
+    "sha256": "72fac54d7b2d478a231d5e8f33d37ea4c7c9fd4a11317e9e3942f53e0366b4ed"
+  },
+  "trial_id": "aa1c2259ddb9448788ece076cb61e836",
+  "run_id": "6dc688104e2640b8b9487548b39741fe"
+}

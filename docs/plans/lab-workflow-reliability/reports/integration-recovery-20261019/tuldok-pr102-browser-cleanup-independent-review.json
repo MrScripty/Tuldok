@@ -1,0 +1,142 @@
+{
+  "format": "pr102_browser_cleanup_independent_review_v1",
+  "checked_utc": "2026-10-20T00:42:27.627979+00:00",
+  "assessment": "CLEAR narrow three-fixture cleanup repair; current hosted acceptance remains pending, no product/science clearance inferred.",
+  "source": {
+    "worktree": "/workspace/Tuldok-lab-coordinator-ui-m2",
+    "baseline_head": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "current_clean_head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "review_started_on_uncommitted_patch": "Root committed same reviewed three-file delta during read; final clean commit and contents rechecked.",
+    "changed_files": [
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "diff_stat": "3 files changed,6 insertions,3 deletions",
+    "functional_assertions_and_product_code_unchanged": true,
+    "mechanical_comparison": {
+      "tests/browser_workspace_publication.cjs": {
+        "baseline_sha256": "8fa1d095aca57f9e84c6a186fbecf3d3f35fc2dc8b6f152806b6354fc109e692",
+        "corrected_sha256": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+        "bytes": 10422,
+        "all_pre_finally_source_identical_after_one_import_removed": true,
+        "cleanup_suffix_exact_bounded_expected": true
+      },
+      "tests/browser_workspace_coordinator.cjs": {
+        "baseline_sha256": "66fdad4b33086fac6e310b06b26773d97d9f07e6d2124de72ea4799199c2e96b",
+        "corrected_sha256": "399c8ad4a6e4c36d12b9c216af4e0ec7d9b2b1f643f20344a97f79fd288617e3",
+        "bytes": 9634,
+        "all_pre_finally_source_identical_after_one_import_removed": true,
+        "cleanup_suffix_exact_bounded_expected": true
+      },
+      "tests/browser_workspace_publication_lineage.cjs": {
+        "baseline_sha256": "212f21fd4f713320468e8966442f3f95ec3df836c3ac5ff8fee4e9c1ce1de401",
+        "corrected_sha256": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c",
+        "bytes": 10753,
+        "all_pre_finally_source_identical_after_one_import_removed": true,
+        "cleanup_suffix_exact_bounded_expected": true
+      }
+    },
+    "helper": {
+      "path": "tests/browser_owned_cleanup.cjs",
+      "sha256": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+      "unchanged_from_baseline": true
+    },
+    "diff_check": "passed between exact baseline and corrected commit"
+  },
+  "fix_semantics": "Async finally closes CDP then awaits the existing stopOwnedChildren on copied/reversed supplied owned handles. Helper bounds TERM5s then KILL with2s completion allowance. Exact owned temp removal occurs only after successful wait, with5 bounded retries100ms. Failure is not swallowed; no global process killing, broader authority or product change.",
+  "original_hosted_failure": {
+    "review_receipt": "/tmp/tuldok-pr102-b407-failure-independent-review.json",
+    "job_id": 118358463687,
+    "run_id": 39339868173,
+    "source": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "failure": "Publication journey printedPASS, then nonawaited browser shutdown raced rmSync and raisedENOTEMPTY; lifecycle failed.",
+    "preserved": true
+  },
+  "actual_qualification": {
+    "executor": "Root-owned actual PG/Chromium executions; reviewer did not rerun or query PostgreSQL.",
+    "root_reported_exits": {
+      "publication": 0,
+      "coordinator": 0,
+      "lineage": 0
+    },
+    "log_attribution": "Each retained green log has the expectedPASS marker and no error. Since old failure also printedPASS before cleanup, successful full process exit is attributed explicitly to root terminal execution reports, not inferred from marker alone.",
+    "source_at_run": "Uncommitted corrected fixture files on baselineb407, now exactly committedaa7115a; browser receipts record baseline HEAD, so independent per-file current hashes bind correction without pretending it was committed at execution.",
+    "browser": "Chrome/151.0.7922.173",
+    "publication": "Exact neutral originalinterrupted outcome/events/counts preserved; recoveredpublished attempt2, exactdownloadhash, legacyartifactrefusal.",
+    "coordinator": "Lostreply reconciled generation2, one originalGO, completed originaladmission, custodydrained.",
+    "lineage": "Real neutralStudy/Trial resultRef with interrupted originaloutcome; lineage/reservation/events/counts/charges preserved; exactRef agrees with UIreceipt.",
+    "helper_controlled_test": "Root reports existing delayedfinalwrite, ignoredTERM escalation and already-exited handles testPASS. Its source is unchanged. Reviewer did not execute or locate a separate new raw helper-test log.",
+    "initial_environment_failure": {
+      "path": "/tmp/tuldok-pr102-publication-cleanup-attempt1-environment-failed.log",
+      "reason": "auth_helpers invokes ambientpython3 access.py; ambient interpreter lackedpsycopg.",
+      "correction": "Root qualifiedPATH before actual successful rerun; no source/dependency/assertion change for this environment correction.",
+      "preserved": true
+    },
+    "artifacts": [
+      {
+        "path": "/tmp/tuldok-pr102-cleanup-qualification/workspace-coordinator/run-DTrAtv/domain-receipt.json",
+        "sha256": "52cf924b8bea59acf1a136b5f28663b988ee96db444ffb2114a0e74f0f01bbf5",
+        "bytes": 1038
+      },
+      {
+        "path": "/tmp/tuldok-pr102-cleanup-qualification/workspace-coordinator/run-DTrAtv/receipt.json",
+        "sha256": "ccac592d1b6ab6bfebf89d08dbdd2e61e110657f902aa5140ef90e0107e634ca",
+        "bytes": 764
+      },
+      {
+        "path": "/tmp/tuldok-pr102-cleanup-qualification/workspace-publication/run-cN3KMw/domain-receipt.json",
+        "sha256": "cf64c7ae18429bb6e642786707e9160b2d070732e4260c0cc3dd09d23c9b9455",
+        "bytes": 1212
+      },
+      {
+        "path": "/tmp/tuldok-pr102-cleanup-qualification/workspace-publication/run-cN3KMw/receipt.json",
+        "sha256": "92b4d5417be5732ba574ddcde851d705fb95a87861c05c05659ee90ace3b9e7c",
+        "bytes": 828
+      },
+      {
+        "path": "/tmp/tuldok-pr102-cleanup-qualification/workspace-publication-lineage/run-LXvalp/domain-receipt.json",
+        "sha256": "46cb39fa5d42f5d4525c0f478c8f32f2a6476fe05abe22ded880465b51b686a1",
+        "bytes": 2577
+      },
+      {
+        "path": "/tmp/tuldok-pr102-cleanup-qualification/workspace-publication-lineage/run-LXvalp/receipt.json",
+        "sha256": "4741bf950673136e1846cb39ed7dcfa7bd1ecb6e82a1a8626ba970def007f6db",
+        "bytes": 1372
+      }
+    ],
+    "logs": [
+      {
+        "path": "/tmp/tuldok-pr102-coordinator-cleanup-green.log",
+        "sha256": "a575fc1a771fc48876df67989cbb590a2d0b0597c09e83d2ec216e5bf473add1",
+        "bytes": 99,
+        "text": "PASS coordinator browser: /tmp/tuldok-pr102-cleanup-qualification/workspace-coordinator/run-DTrAtv\n"
+      },
+      {
+        "path": "/tmp/tuldok-pr102-lineage-cleanup-green.log",
+        "sha256": "bffa418dd73fd2173bf9547bd288939725fbedf4712cd6240610176b5bb03522",
+        "bytes": 115,
+        "text": "PASS publication lineage browser: /tmp/tuldok-pr102-cleanup-qualification/workspace-publication-lineage/run-LXvalp\n"
+      },
+      {
+        "path": "/tmp/tuldok-pr102-publication-cleanup-attempt1-environment-failed.log",
+        "sha256": "7fcf2605f245a00c2989f68ca93add1613d8cc357d60bf67c802c713262383ea",
+        "bytes": 1477,
+        "text": null
+      },
+      {
+        "path": "/tmp/tuldok-pr102-publication-cleanup-green.log",
+        "sha256": "26359e58c19bbf8fbc8432fdf5c9a7f8181d2a86950a5f5fa8d36e1de4a4b0ba",
+        "bytes": 99,
+        "text": "PASS publication browser: /tmp/tuldok-pr102-cleanup-qualification/workspace-publication/run-cN3KMw\n"
+      }
+    ]
+  },
+  "limitations": [
+    "Not a passing hosted lifecycle or merge-readiness claim; new current-head CI is still required.",
+    "Neutral bytes/process custody/Study lineage only; no numerical/training/science claim.",
+    "PUBSCI and phase/scientific fixtures at other PR levels remain outside this review.",
+    "No duplicate actual test, PG query, process cleanup, remote call, source edit or rerun by reviewer."
+  ],
+  "findings": []
+}

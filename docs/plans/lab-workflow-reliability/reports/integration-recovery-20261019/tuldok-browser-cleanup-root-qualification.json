@@ -1,0 +1,109 @@
+{
+  "format": "tuldok_browser_cleanup_root_qualification_v1",
+  "observed_utc": "2026-10-20T00:44:11.669697+00:00",
+  "fix_scope": "Five task browser cleanup sites only; accepted helper unchanged; all program assertions and product sources unchanged.",
+  "actual": {
+    "publication": {
+      "cwd": "/workspace/Tuldok-lab-coordinator-ui-m2",
+      "process_exit": 0,
+      "session": 59041,
+      "report": "/tmp/tuldok-pr102-cleanup-qualification/workspace-publication/run-cN3KMw",
+      "log": "/tmp/tuldok-pr102-publication-cleanup-green.log",
+      "log_sha256": "26359e58c19bbf8fbc8432fdf5c9a7f8181d2a86950a5f5fa8d36e1de4a4b0ba",
+      "receipts": {
+        "receipt.json": {
+          "bytes": 828,
+          "sha256": "92b4d5417be5732ba574ddcde851d705fb95a87861c05c05659ee90ace3b9e7c"
+        },
+        "domain-receipt.json": {
+          "bytes": 1212,
+          "sha256": "cf64c7ae18429bb6e642786707e9160b2d070732e4260c0cc3dd09d23c9b9455"
+        }
+      }
+    },
+    "coordinator": {
+      "cwd": "/workspace/Tuldok-lab-coordinator-ui-m2",
+      "process_exit": 0,
+      "session": 66127,
+      "report": "/tmp/tuldok-pr102-cleanup-qualification/workspace-coordinator/run-DTrAtv",
+      "log": "/tmp/tuldok-pr102-coordinator-cleanup-green.log",
+      "log_sha256": "a575fc1a771fc48876df67989cbb590a2d0b0597c09e83d2ec216e5bf473add1",
+      "receipts": {
+        "receipt.json": {
+          "bytes": 764,
+          "sha256": "ccac592d1b6ab6bfebf89d08dbdd2e61e110657f902aa5140ef90e0107e634ca"
+        },
+        "domain-receipt.json": {
+          "bytes": 1038,
+          "sha256": "52cf924b8bea59acf1a136b5f28663b988ee96db444ffb2114a0e74f0f01bbf5"
+        }
+      }
+    },
+    "lineage": {
+      "cwd": "/workspace/Tuldok-lab-coordinator-ui-m2",
+      "process_exit": 0,
+      "session": 45714,
+      "report": "/tmp/tuldok-pr102-cleanup-qualification/workspace-publication-lineage/run-LXvalp",
+      "log": "/tmp/tuldok-pr102-lineage-cleanup-green.log",
+      "log_sha256": "bffa418dd73fd2173bf9547bd288939725fbedf4712cd6240610176b5bb03522",
+      "receipts": {
+        "receipt.json": {
+          "bytes": 1372,
+          "sha256": "4741bf950673136e1846cb39ed7dcfa7bd1ecb6e82a1a8626ba970def007f6db"
+        },
+        "domain-receipt.json": {
+          "bytes": 2577,
+          "sha256": "46cb39fa5d42f5d4525c0f478c8f32f2a6476fe05abe22ded880465b51b686a1"
+        }
+      }
+    },
+    "phase": {
+      "cwd": "/workspace/Tuldok-lab-phase-ui-m3",
+      "process_exit": 0,
+      "session": 70863,
+      "report": "/tmp/tuldok-pr104-cleanup-qualification/run-phase-timings/run-g3MrQw",
+      "log": "/tmp/tuldok-pr104-phase-cleanup-green.log",
+      "log_sha256": "89bd92bbabe32e9d106a0ce7813e1b30d85791f2283a46967fcee0d172e9932e",
+      "receipts": {
+        "receipt.json": {
+          "bytes": 848,
+          "sha256": "e8289bb85f7d97b611d0a618753aa3360d49bdf77bdd3298c9a98a182a923431"
+        },
+        "domain-receipt.json": {
+          "bytes": 9505,
+          "sha256": "5db076ec18822b69609b71b707af3d8bf0b9fe3e615d640881216ed892f700bd"
+        }
+      }
+    },
+    "scientific": {
+      "cwd": "/workspace/Tuldok-lab-field-comparison-m6",
+      "process_exit": 0,
+      "session": 65122,
+      "report": "/tmp/tuldok-pr106-cleanup-qualification/scientific-comparison/run-lynk1e",
+      "log": "/tmp/tuldok-pr106-scientific-cleanup-green.log",
+      "log_sha256": "425cbc94ed3887013ea6c73344965de010a3d3c49584fc341339eab8b1a17795",
+      "receipts": {
+        "receipt.json": {
+          "bytes": 13423,
+          "sha256": "078747d9ae588bb25c0389048b9cee9815dafefae7c9963bcba5eeab06baf2c1"
+        },
+        "domain-receipt.json": {
+          "bytes": 2378,
+          "sha256": "6487b341bc259c71032da69b3360386c8e6dd4d095a467cd9db3f18759c16acf"
+        }
+      }
+    }
+  },
+  "helper_test": "PASS existing delayed-final-write, ignored-TERM bounded escalation and already-exited handle test; root command exit0",
+  "initial_local_failure": {
+    "path": "/tmp/tuldok-pr102-publication-cleanup-attempt1-environment-failed.log",
+    "reason": "auth_helpers hardcodes python3; ambient Python lacks psycopg",
+    "disposition": "Retained; rerun with already-qualified runtime first on PATH passed; no dependency installation/source workaround"
+  },
+  "hosted_status": "Fresh exact heads require completed hosted lifecycle acceptance; no merge performed.",
+  "limits": [
+    "Neutral publication/coordinator/phase custody only; no model/scientific training claim.",
+    "Scientific actual HTTP/auth/DOM with synthetic terminal receipts/arrays; no producer, runtime or physical-validity acceptance.",
+    "Root process exits observed directly; independent reviewers do not infer exits from PASS markers alone."
+  ]
+}

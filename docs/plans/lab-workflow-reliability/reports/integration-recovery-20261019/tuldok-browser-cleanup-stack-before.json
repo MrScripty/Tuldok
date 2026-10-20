@@ -1,0 +1,47 @@
+[
+  {
+    "path": "/workspace/Tuldok-lab-coordinator-ui-m2",
+    "head": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "status": " M tests/browser_workspace_coordinator.cjs\n M tests/browser_workspace_publication.cjs\n M tests/browser_workspace_publication_lineage.cjs\n"
+  },
+  {
+    "path": "/workspace/Tuldok-lab-phase-timing-m3",
+    "head": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+    "head": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-phase-ui-m3",
+    "head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-workflow-client-m5",
+    "head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-field-comparison-m6",
+    "head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-bounded-collection-m4",
+    "head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-batch-client-m4",
+    "head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+    "status": ""
+  },
+  {
+    "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+    "head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "status": ""
+  }
+]

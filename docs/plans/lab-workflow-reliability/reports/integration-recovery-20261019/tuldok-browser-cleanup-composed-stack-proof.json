@@ -1,0 +1,175 @@
+[
+  {
+    "path": "/workspace/Tuldok-lab-coordinator-ui-m2",
+    "old_head": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "changed_files": [
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_workspace_coordinator.cjs": "399c8ad4a6e4c36d12b9c216af4e0ec7d9b2b1f643f20344a97f79fd288617e3",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-phase-timing-m3",
+    "old_head": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+    "head": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+    "changed_files": [
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_workspace_coordinator.cjs": "399c8ad4a6e4c36d12b9c216af4e0ec7d9b2b1f643f20344a97f79fd288617e3",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+    "old_head": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+    "head": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+    "changed_files": [
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_workspace_coordinator.cjs": "399c8ad4a6e4c36d12b9c216af4e0ec7d9b2b1f643f20344a97f79fd288617e3",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-phase-ui-m3",
+    "old_head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+    "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+    "changed_files": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "tests/browser_workspace_coordinator.cjs": "0d42340a3ce2079ab068c95612c495d7930176a010407ecd46a61f8fc6c756bf",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-workflow-client-m5",
+    "old_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+    "head": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+    "changed_files": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "tests/browser_workspace_coordinator.cjs": "0d42340a3ce2079ab068c95612c495d7930176a010407ecd46a61f8fc6c756bf",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-field-comparison-m6",
+    "old_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+    "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+    "changed_files": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_scientific_comparison.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+      "tests/browser_workspace_coordinator.cjs": "0d42340a3ce2079ab068c95612c495d7930176a010407ecd46a61f8fc6c756bf",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-bounded-collection-m4",
+    "old_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+    "head": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+    "changed_files": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_scientific_comparison.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+      "tests/browser_workspace_coordinator.cjs": "0d42340a3ce2079ab068c95612c495d7930176a010407ecd46a61f8fc6c756bf",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-batch-client-m4",
+    "old_head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+    "head": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+    "changed_files": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_scientific_comparison.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+      "tests/browser_workspace_coordinator.cjs": "0d42340a3ce2079ab068c95612c495d7930176a010407ecd46a61f8fc6c756bf",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  },
+  {
+    "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+    "old_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "head": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+    "changed_files": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_scientific_comparison.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "changed_sha256": {
+      "tests/browser_run_phase_timings.cjs": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+      "tests/browser_workspace_coordinator.cjs": "0d42340a3ce2079ab068c95612c495d7930176a010407ecd46a61f8fc6c756bf",
+      "tests/browser_workspace_publication.cjs": "8567d8500a8c7dd94e838f200ea65302cf26295ed073d887d40a7ada5ee58a84",
+      "tests/browser_workspace_publication_lineage.cjs": "b9adf762d29ab7072bd0690c994f6629758c2ede6620ce21b9e08c8497a0185c"
+    },
+    "production_unchanged": true,
+    "clean": true
+  }
+]

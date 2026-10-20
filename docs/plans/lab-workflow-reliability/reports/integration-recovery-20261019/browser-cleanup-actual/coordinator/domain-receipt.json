@@ -1,0 +1,32 @@
+{
+  "scope": "Real coordinator lock fault, HTTP acknowledgement loss and first neutral GO; no training/science claim",
+  "health": {
+    "format": "run_coordinator_health_v1",
+    "catalog_id": "0ee31cf0890e4038a002e9f2601a3c8f",
+    "generation": 2,
+    "state": "idle",
+    "updated_at": "2026-10-20T00:40:45.332464+00:00",
+    "fault": {
+      "category": "catalog_lock_timeout",
+      "at": "2026-10-20T00:40:41.054708+00:00"
+    },
+    "admission_ready": true,
+    "recovery_request": {
+      "actor_id": "b093fcadf2884a2e9ffd0d89b4b346b9",
+      "request_key": "5fdaf2d8-3b22-486b-b8a0-f8acebceb1a5",
+      "request_sha256": "7490e1ea75e53045d3ccbcc2aaaa674617c9607c6b18cd5b7444caa7c6fd8aa3",
+      "expected_generation": 1,
+      "completed_generation": 2
+    }
+  },
+  "go_sends": 1,
+  "dropped_reply": true,
+  "counts": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1
+  },
+  "original_admission_identity_unchanged": true,
+  "run_state": "completed",
+  "custody_drained": true
+}

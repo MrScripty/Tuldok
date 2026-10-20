@@ -1214,20 +1214,22 @@
       106,
       109,
       110,
-      108
+      108,
+      111
     ],
     "heads": {
-      "102": "b4070b60b0119c73284c4832610cc82ef471963a",
-      "103": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
-      "107": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
-      "104": "381bfccdad516010e83f6051f098a5835fb8aac3",
-      "105": "a635be3dcb7187eec17266714631a4e0485a20b7",
-      "106": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
-      "109": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
-      "110": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
-      "108": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897"
+      "102": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+      "103": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "107": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "104": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "105": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "106": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "109": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "110": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "108": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "111": "beead92d54e33e70eb9df82e872adf14ff314c91"
     },
-    "acceptance": "corrected latest-head hosted CI and serial integration pending"
+    "acceptance": "Corrected latest-head hosted CI and serial integration pending; all10heads remotely verified."
   },
   "m6_active": {
     "agent": "/root/scientific_comparison_m6",
@@ -2191,7 +2193,7 @@
       "production_changes": false
     }
   ],
-  "last_update_utc": "2026-10-20T00:20:26.863725+00:00",
+  "last_update_utc": "2026-10-20T00:46:58.129682+00:00",
   "pr92_to_101_terminal_retirement": {
     "purpose": "Retire exact accepted task-owned PR92\u2013101 branches/worktrees after dependent retarget and completed source-qualified CI acceptance",
     "authority": "User explicitly authorized deleting safely merged task branches; root serial integration owner selects this exact batch",
@@ -3965,5 +3967,113 @@
     "review_sha256": "cfdd3aff818a1f6184b3a966aad25f5b4cb75168dd607f4a2fd39edc951a29b8",
     "independent_schema_and_ownedroot_absent": true,
     "full_T5_performance_acceptance": false
+  },
+  "publication_browser_cleanup": {
+    "failed_source": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "failed_run": 39339868173,
+    "failed_job": 118358463687,
+    "failure": "Publication assertions PASS then ENOTEMPTY profile removal before Chromium shutdown; full1622tests/72skips passed, later113steps skipped.",
+    "fix": "Accepted awaited own-child cleanup with bounded removal at five task browser fixture sites; product/assertion text unchanged.",
+    "root_actual_browsers": "Five root PG/Chromium executions exited0; one initial environment failure retained.",
+    "root_receipt": "/tmp/tuldok-browser-cleanup-root-qualification.json",
+    "independent": [
+      "/tmp/tuldok-pr102-b407-failure-independent-review.json",
+      "/tmp/tuldok-pr102-browser-cleanup-independent-review.json",
+      "/tmp/tuldok-phase-scientific-browser-cleanup-independent-review.json"
+    ],
+    "published": {
+      "verified_utc": "2026-10-20T00:43:42.641843+00:00",
+      "mappings": [
+        {
+          "ref": "refs/heads/feature/lab-coordinator-panel-20261019",
+          "old": "b4070b60b0119c73284c4832610cc82ef471963a",
+          "new": "aa7115a4e148151d37f6895d053ae51b4b04ac2b"
+        },
+        {
+          "ref": "refs/heads/feature/lab-phase-timing-20261019",
+          "old": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+          "new": "6f6b7e8a76e0c14423154768f3742b43aafbb042"
+        },
+        {
+          "ref": "refs/heads/test/lab-workflow-baseline-20261019",
+          "old": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+          "new": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2"
+        },
+        {
+          "ref": "refs/heads/feature/lab-phase-panel-20261019",
+          "old": "381bfccdad516010e83f6051f098a5835fb8aac3",
+          "new": "8323d54856296f46d01892c20f9084164c1f1ded"
+        },
+        {
+          "ref": "refs/heads/feature/lab-workflow-client-20261019",
+          "old": "a635be3dcb7187eec17266714631a4e0485a20b7",
+          "new": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7"
+        },
+        {
+          "ref": "refs/heads/feature/lab-field-comparison-20261019",
+          "old": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+          "new": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e"
+        },
+        {
+          "ref": "refs/heads/feature/lab-bounded-collection-20261019",
+          "old": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+          "new": "861bcbcd495477b036f3f1e9307f320f965e8d8e"
+        },
+        {
+          "ref": "refs/heads/feature/lab-batch-client-20261019",
+          "old": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+          "new": "a9c12a0274c4c9166af67b0a4a2b6b0376606015"
+        },
+        {
+          "ref": "refs/heads/feature/lab-indexed-diagnostics-20261019",
+          "old": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+          "new": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70"
+        },
+        {
+          "ref": "refs/heads/feature/retained-analysis-query-20261019",
+          "old": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+          "new": "beead92d54e33e70eb9df82e872adf14ff314c91"
+        }
+      ],
+      "remote_old_heads_verified": true,
+      "all_fast_forward": true,
+      "publication_status": "acknowledged",
+      "command_exit": 0,
+      "completed_utc": "2026-10-20T00:43:49.340278+00:00",
+      "remote_new_heads_verified_utc": "2026-10-20T00:44:24.864243+00:00",
+      "remote_new_heads_verified": true
+    },
+    "ci_snapshot": "/tmp/tuldok-browser-cleanup-current-head-ci.json",
+    "superseded_ci": {
+      "requests_accepted": 18,
+      "independently_terminal_cancelled": 13,
+      "pending_ids": [
+        39343581605,
+        39343581513,
+        39343582569,
+        39343581966,
+        39343581470
+      ],
+      "receipt": "/tmp/tuldok-browser-cleanup-superseded-ci-terminal-independent.json",
+      "no_current_head_or_main_jobs_cancelled": true
+    }
+  },
+  "retained_analysis_integrated": {
+    "format": "tuldok_pr111_integrated_shared_scope_owner_disposition_v1",
+    "approved_utc": "2026-10-20T00:46:58.122978+00:00",
+    "current_published_head": "beead92d54e33e70eb9df82e872adf14ff314c91",
+    "worker_integrated_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+    "corrected_reliability_head": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+    "independent_review": "/tmp/tuldok-pr111-integrated-shared-scope-review.json",
+    "review_sha256": "ce6d21a50fa562db5be377447a30c1b220526606712042a5b68ed6c3bc509068",
+    "decision": "Bounded shared integration scope approved; no corrective source hunk required; merge pending exact-head CI.",
+    "page_policy": "Accept new page-specific /workspaces meta CSP as a bounded integration hunk: self-only scripts/connectivity, existing inline CSS still allowed, data/blob images. No global HTTP headers or server-wide policy changed. Full workspace compatibility remains gated on exact-head full lifecycle/CPU CI.",
+    "source_scope": "Normal corrected-dependency merge changes only five reviewed task browser teardown fixtures relative to worker08620; all retained-analysis production hooks remain byte-identical.",
+    "other_reviewed_hunks": [
+      "Initial dataset selector disabled until existing initializer installs listeners/enables it.",
+      "Current Run/generation/credential/abort-bound model-service denial forwarding clears private values without mutation retry.",
+      "Canonical route-only Run ID, two inspect contracts, exact static mappings and bounded transport/mount ownership."
+    ],
+    "limits": "Reuse authored actual/independent evidence with exact original source attribution; no fabricated independent rerun or full-repository CI pass."
   }
 }

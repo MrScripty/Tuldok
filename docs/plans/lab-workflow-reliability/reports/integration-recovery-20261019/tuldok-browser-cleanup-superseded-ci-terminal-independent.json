@@ -1,0 +1,1143 @@
+{
+  "kind": "Independent bounded terminal-state verification of exact superseded cancellation batch",
+  "observed_utc": "2026-10-20T00:47:11.888619+00:00",
+  "assessment": "Ownership CLEAR;13 terminalcancelled,5 pending at single snapshot",
+  "scope": "Only the18 exact runIDs in root acknowledged cancellation record; read-only one API GET per run in batches at most4; no current-run query, cancellation, rerun or polling.",
+  "counts": {
+    "recorded_ids": 18,
+    "independently_read": 18,
+    "unique_ids": 18,
+    "ownership_verified": 18,
+    "terminal_cancelled": 13,
+    "pending": 5,
+    "request_errors": 0
+  },
+  "exact_id_set_matches_ack_record": true,
+  "all_ownership_checks_pass": true,
+  "ownership_mismatch_run_ids": [],
+  "terminal_cancelled_ids": [
+    39339902973,
+    39341819254,
+    39343581301,
+    39343584140,
+    39343583318,
+    39343581467,
+    39343580870,
+    39343581959,
+    39348892564,
+    39348892567,
+    39348892647,
+    39348892730,
+    39348892763
+  ],
+  "pending_run_ids": [
+    39343581605,
+    39343581513,
+    39343582569,
+    39343581966,
+    39343581470
+  ],
+  "pending_disposition": "Terminal outcome remains pending for listed exact IDs; no further reads/retries requested or performed by reviewer. Parent owns later observation.",
+  "runs": [
+    {
+      "run": 39339902973,
+      "pr": 103,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39339902973",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+      "current_head_recorded": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+      "branch": "feature/lab-phase-timing-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/103",
+          "id": 4927729145,
+          "number": 103,
+          "head": {
+            "ref": "feature/lab-phase-timing-20261019",
+            "sha": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-coordinator-panel-20261019",
+            "sha": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:10:37Z",
+      "updated_at": "2026-10-20T00:46:21Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:10.127579+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39341819254,
+      "pr": 107,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341819254",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+      "current_head_recorded": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+      "branch": "test/lab-workflow-baseline-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/107",
+          "id": 4928142116,
+          "number": 107,
+          "head": {
+            "ref": "test/lab-workflow-baseline-20261019",
+            "sha": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-phase-timing-20261019",
+            "sha": "6f6b7e8a76e0c14423154768f3742b43aafbb042",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:28:49Z",
+      "updated_at": "2026-10-20T00:46:08Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:11.980678+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581301,
+      "pr": 104,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581301",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "current_head_recorded": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "branch": "feature/lab-phase-panel-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/104",
+          "id": 4927854438,
+          "number": 104,
+          "head": {
+            "ref": "feature/lab-phase-panel-20261019",
+            "sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "test/lab-workflow-baseline-20261019",
+            "sha": "9d62ef6ad07f4970afdb8ecb9f8bab79584224b2",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:45:42Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:14.178144+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343584140,
+      "pr": 105,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343584140",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "current_head_recorded": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "branch": "feature/lab-workflow-client-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/105",
+          "id": 4928106141,
+          "number": 105,
+          "head": {
+            "ref": "feature/lab-workflow-client-20261019",
+            "sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-phase-panel-20261019",
+            "sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:46:01Z",
+      "updated_at": "2026-10-20T00:45:51Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:16.039897+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343583318,
+      "pr": 105,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343583318",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "current_head_recorded": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+      "branch": "feature/lab-workflow-client-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/105",
+          "id": 4928106141,
+          "number": 105,
+          "head": {
+            "ref": "feature/lab-workflow-client-20261019",
+            "sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-phase-panel-20261019",
+            "sha": "8323d54856296f46d01892c20f9084164c1f1ded",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:46:00Z",
+      "updated_at": "2026-10-20T00:46:11Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:18.038078+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581467,
+      "pr": 106,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581467",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_head_recorded": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "branch": "feature/lab-field-comparison-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/106",
+          "id": 4928107058,
+          "number": 106,
+          "head": {
+            "ref": "feature/lab-field-comparison-20261019",
+            "sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-workflow-client-20261019",
+            "sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:45:55Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:19.744142+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581605,
+      "pr": 106,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581605",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "in_progress",
+      "conclusion": null,
+      "terminal": false,
+      "terminal_cancelled": false,
+      "old_head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "current_head_recorded": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "branch": "feature/lab-field-comparison-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/106",
+          "id": 4928107058,
+          "number": 106,
+          "head": {
+            "ref": "feature/lab-field-comparison-20261019",
+            "sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-workflow-client-20261019",
+            "sha": "3305f7de114eab6ca1f7e988a6f7b6bd018252c7",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:45:22Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:21.558835+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581513,
+      "pr": 109,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581513",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "in_progress",
+      "conclusion": null,
+      "terminal": false,
+      "terminal_cancelled": false,
+      "old_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "current_head_recorded": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "branch": "feature/lab-bounded-collection-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/109",
+          "id": 4928278896,
+          "number": 109,
+          "head": {
+            "ref": "feature/lab-bounded-collection-20261019",
+            "sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-field-comparison-20261019",
+            "sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:45:24Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:23.650761+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343580870,
+      "pr": 109,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343580870",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "current_head_recorded": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+      "branch": "feature/lab-bounded-collection-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/109",
+          "id": 4928278896,
+          "number": 109,
+          "head": {
+            "ref": "feature/lab-bounded-collection-20261019",
+            "sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-field-comparison-20261019",
+            "sha": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:46:17Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:25.693869+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343582569,
+      "pr": 110,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343582569",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "in_progress",
+      "conclusion": null,
+      "terminal": false,
+      "terminal_cancelled": false,
+      "old_head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "current_head_recorded": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "branch": "feature/lab-batch-client-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/110",
+          "id": 4928367035,
+          "number": 110,
+          "head": {
+            "ref": "feature/lab-batch-client-20261019",
+            "sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-bounded-collection-20261019",
+            "sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:46:00Z",
+      "updated_at": "2026-10-20T00:45:28Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:27.514319+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581966,
+      "pr": 110,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581966",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "in_progress",
+      "conclusion": null,
+      "terminal": false,
+      "terminal_cancelled": false,
+      "old_head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "current_head_recorded": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+      "branch": "feature/lab-batch-client-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/110",
+          "id": 4928367035,
+          "number": 110,
+          "head": {
+            "ref": "feature/lab-batch-client-20261019",
+            "sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-bounded-collection-20261019",
+            "sha": "861bcbcd495477b036f3f1e9307f320f965e8d8e",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:45:30Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:29.439176+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581470,
+      "pr": 108,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581470",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "in_progress",
+      "conclusion": null,
+      "terminal": false,
+      "terminal_cancelled": false,
+      "old_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "current_head_recorded": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/108",
+          "id": 4928158036,
+          "number": 108,
+          "head": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-batch-client-20261019",
+            "sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:45:33Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:32.172212+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39343581959,
+      "pr": 108,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39343581959",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "current_head_recorded": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "branch": "feature/lab-indexed-diagnostics-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/108",
+          "id": 4928158036,
+          "number": 108,
+          "head": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-batch-client-20261019",
+            "sha": "a9c12a0274c4c9166af67b0a4a2b6b0376606015",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-19T23:45:59Z",
+      "updated_at": "2026-10-20T00:46:02Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:34.386588+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39348892564,
+      "pr": 111,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39348892564",
+      "workflow": "Candidate package captured CPU",
+      "workflow_path": ".github/workflows/candidate-packages.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+      "current_head_recorded": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "branch": "feature/retained-analysis-query-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/111",
+          "id": 4929081706,
+          "number": 111,
+          "head": {
+            "ref": "feature/retained-analysis-query-20261019",
+            "sha": "beead92d54e33e70eb9df82e872adf14ff314c91",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-20T00:39:03Z",
+      "updated_at": "2026-10-20T00:45:37Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:36.443032+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39348892567,
+      "pr": 111,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39348892567",
+      "workflow": "Dataset lifecycle tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+      "current_head_recorded": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "branch": "feature/retained-analysis-query-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/111",
+          "id": 4929081706,
+          "number": 111,
+          "head": {
+            "ref": "feature/retained-analysis-query-20261019",
+            "sha": "beead92d54e33e70eb9df82e872adf14ff314c91",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-20T00:39:03Z",
+      "updated_at": "2026-10-20T00:45:40Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:38.204801+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39348892647,
+      "pr": 111,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39348892647",
+      "workflow": "Static extension authoring kit",
+      "workflow_path": ".github/workflows/extension-sdk.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+      "current_head_recorded": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "branch": "feature/retained-analysis-query-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/111",
+          "id": 4929081706,
+          "number": 111,
+          "head": {
+            "ref": "feature/retained-analysis-query-20261019",
+            "sha": "beead92d54e33e70eb9df82e872adf14ff314c91",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-20T00:39:03Z",
+      "updated_at": "2026-10-20T00:45:51Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:40.601051+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39348892730,
+      "pr": 111,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39348892730",
+      "workflow": "Inert extension catalog",
+      "workflow_path": ".github/workflows/extensions.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+      "current_head_recorded": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "branch": "feature/retained-analysis-query-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/111",
+          "id": 4929081706,
+          "number": 111,
+          "head": {
+            "ref": "feature/retained-analysis-query-20261019",
+            "sha": "beead92d54e33e70eb9df82e872adf14ff314c91",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-20T00:39:03Z",
+      "updated_at": "2026-10-20T00:45:53Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:42.778824+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    },
+    {
+      "run": 39348892763,
+      "pr": 111,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39348892763",
+      "workflow": "M1 workspace interface",
+      "workflow_path": ".github/workflows/workspaces-m1.yml",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "terminal": true,
+      "terminal_cancelled": true,
+      "old_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+      "current_head_recorded": "beead92d54e33e70eb9df82e872adf14ff314c91",
+      "branch": "feature/retained-analysis-query-20261019",
+      "event": "pull_request",
+      "repository": "MrScripty/Tuldok",
+      "head_repository": "MrScripty/Tuldok",
+      "pull_request_links": [
+        {
+          "url": "https://api.github.com/repos/MrScripty/Tuldok/pulls/111",
+          "id": 4929081706,
+          "number": 111,
+          "head": {
+            "ref": "feature/retained-analysis-query-20261019",
+            "sha": "beead92d54e33e70eb9df82e872adf14ff314c91",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          },
+          "base": {
+            "ref": "feature/lab-indexed-diagnostics-20261019",
+            "sha": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+            "repo": {
+              "id": 1369762795,
+              "url": "https://api.github.com/repos/MrScripty/Tuldok",
+              "name": "Tuldok"
+            }
+          }
+        }
+      ],
+      "run_attempt": 1,
+      "created_at": "2026-10-20T00:39:03Z",
+      "updated_at": "2026-10-20T00:45:46Z",
+      "record_cancellation_requested_at": "2026-10-20T00:45:44.991153+00:00",
+      "ownership_checks": {
+        "exact_run_id": true,
+        "repository_exact": true,
+        "pull_request_event_only": true,
+        "exact_old_head": true,
+        "record_current_is_different": true,
+        "exact_source_branch": true,
+        "PR_ownership_exact": true,
+        "nested_current_PR_head_matches_record": true,
+        "record_cancel_acknowledged": true,
+        "record_intent_pending_only": true
+      },
+      "ownership_verified": true,
+      "read_attempts": 1
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/tmp/tuldok-browser-cleanup-superseded-ci-cancellation-results.json",
+      "sha256": "9df105f2bfc15414526d1d1e41828c76916c18ada90da0ef1918b4a208fad83f"
+    },
+    {
+      "path": "/tmp/tuldok-browser-cleanup-superseded-ci-inventory.json",
+      "sha256": "033e6dcf1845e720590a463febf198cc0cbe46e6f233749e5bbffb7b377d15c0"
+    },
+    {
+      "path": "/tmp/tuldok-browser-cleanup-superseded-ci-terminal-independent-raw.json",
+      "sha256": "bbb078b735e798cdfbf41940b5b24bb746ca16297891551e98a4dd20129b112d"
+    }
+  ],
+  "limits": [
+    "Cancellation requestack0 doesnot imply completed; the5pending responses remain in_progress/conclusionnull in this snapshot.",
+    "Nested workflow pull_requests headsha reflects current PRhead while run.head_sha/head_commit.id bind cancelled oldsource; these were compared to their distinct recorded identities.",
+    "This audit checks ownership and observed terminal states only; canceled runs provide no acceptance/test pass evidence.",
+    "No main/push/currenthead/foreign run modifications or tests, local source edits, authchanges or forbiddenPR77 queries."
+  ]
+}

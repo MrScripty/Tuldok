@@ -41,6 +41,12 @@ PR92–101 feature refs and their ten clean task worktrees were safely retired
 after dependent PRs were retargeted. Their exact accepted commits remain on main;
 `tuldok-task-merged-cleanup-terminal.json` records the heads, retained ref and
 terminal disposition. Original refs/worktrees and unrelated aliases are protected.
-PR102–110 remain active pending source-qualified CI and serial integration.
+PR102–111 remain active pending source-qualified CI and serial integration.
+The latest ledger records the published browser-teardown correction at PR102
+`aa7115a4`, whole-stack PR108 `de5a3a8c`, and retained-analysis PR111 `beead92d`.
+Only five task browser cleanup fixtures changed; existing product behavior is
+unchanged relative to each prior head. Local actual browser witnesses passed;
+fresh hosted CI remains required. The real-runtime byte-integrity observation
+passed with independent exact cleanup proof; it is not full T5 performance acceptance.
 The original lab failure bytes and an owned scientific criterion/compatible lab
 pair are still missing inputs; synthetic diagnostics do not satisfy those claims.

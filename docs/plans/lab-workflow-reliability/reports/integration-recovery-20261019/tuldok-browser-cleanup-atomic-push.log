@@ -1,0 +1,11 @@
+To https://github.com/MrScripty/Tuldok.git
+   ff17f43..a9c12a0  a9c12a0274c4c9166af67b0a4a2b6b0376606015 -> feature/lab-batch-client-20261019
+   0dbaab7..861bcbc  861bcbcd495477b036f3f1e9307f320f965e8d8e -> feature/lab-bounded-collection-20261019
+   b4070b6..aa7115a  aa7115a4e148151d37f6895d053ae51b4b04ac2b -> feature/lab-coordinator-panel-20261019
+   fc034a0..5a83ead  5a83eadaaf58ab86c49033fc1b249bb1b163a99e -> feature/lab-field-comparison-20261019
+   83a1e12..de5a3a8  de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70 -> feature/lab-indexed-diagnostics-20261019
+   381bfcc..8323d54  8323d54856296f46d01892c20f9084164c1f1ded -> feature/lab-phase-panel-20261019
+   5cd2cf6..6f6b7e8  6f6b7e8a76e0c14423154768f3742b43aafbb042 -> feature/lab-phase-timing-20261019
+   a635be3..3305f7d  3305f7de114eab6ca1f7e988a6f7b6bd018252c7 -> feature/lab-workflow-client-20261019
+   08620a5..beead92  beead92d54e33e70eb9df82e872adf14ff314c91 -> feature/retained-analysis-query-20261019
+   6e44137..9d62ef6  9d62ef6ad07f4970afdb8ecb9f8bab79584224b2 -> test/lab-workflow-baseline-20261019

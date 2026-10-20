@@ -1,0 +1,129 @@
+{
+  "format": "pr111_integrated_shared_scope_review_v1",
+  "checked_utc": "2026-10-20T00:45:35.581983+00:00",
+  "assessment": "CLEAR bounded shared integration scope. No concrete corrective hunk required by this review; acceptance remains conditional on required exact-head CPU/full CI and lead-owned serial merge.",
+  "source": {
+    "worktree": "/workspace/Tuldok-retained-analysis-integration-20261020",
+    "reliability_base": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "authored_pr111_head": "08620a57f926da65cb382c5392b14b40cbceaa3a",
+    "integrated_head": "beead92d54e33e70eb9df82e872adf14ff314c91",
+    "clean": true,
+    "only_delta_from_authored": [
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_scientific_comparison.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "product_and_shared_hooks_identical_to_authored": true,
+    "independent_18_file_manifest_matches": true,
+    "shared_files_sha256": {
+      "agent_api.py": "bb14a25c63840f1701b13657fa1bce4659a2c6a180068e95f461e5fa7f9327b4",
+      "app.py": "c71b8b903fa8905ff5fd3ccaef1b86d3df3ddda5393f33bf3ec9661a98d02417",
+      "static/workspace-real.js": "de4036bab21c3ca2702488658a9fa8733cf0adb822f4ec3322d5e101a96b60a2",
+      "static/workspace-service.js": "568b8258c35e6b3ca2cfe08b64d914111e16ae98d45f5d40f7aa40a20c20098b",
+      "static/workspaces.html": "a85e465d317e8aaa14c5349ef1ae6b2dc75ac440e0cea2c5c5a313dbd4fb828e",
+      "static/workspaces.css": "3d0eacbd50425b4cd2ce9cfacdf5bcdb8fe533d7a57248f16325242f625cd278",
+      ".github/workflows/tests.yml": "100feb4cbcbd84cddc991602c24d196ee1a1f3e4b23b383adbcb49366453e38d"
+    }
+  },
+  "scope_decision": {
+    "CSP": "Acceptable as an explicitly reviewed /workspaces page integration hunk, not a server/global CSP policy project. It affects all controls in that document and must be disclosed as page-wide, not chart-element-only. Current document and representative real receipts establish no concrete incompatibility requiring removal or weakening. This is source/integration clearance, not all-browser acceptance.",
+    "original_scope_boundary": "No app-wide HTTP response policy, auth/role/schema migration, classic-workbench document policy or generic CSP infrastructure is introduced. Existing root exclusion of a global CSP policy change remains respected under this bounded page-specific interpretation; repository lead retains final admission/merge ownership.",
+    "corrective_hunk": null
+  },
+  "CSP_review": {
+    "path": "static/workspaces.html:6",
+    "content": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'",
+    "behavior": "Meta appears before all assets. Local external scripts are permitted; ordinary inline scripts/runtime code generation are blocked. Inline styles remain permitted for existing generated styles. Workspace APIs are same-origin, same-origin catalog iframe remains supported, data/blob image and blob-download use fit declared existing paths. The iframe is a distinct document; no global response header is changed.",
+    "concrete_compatibility_audit": [
+      "Reviewed workspace HTML has external local scripts, no inline script blocks/inline event handler attributes or base element requiring removed policy permissions.",
+      "Bounded reviewed workspace scripts use property/listener handlers, local API paths and Blob download URLs; no existing eval/Function/Worker/external-fetch dependency was identified in the audited shared paths.",
+      "Existing CSS sources inspected require no remote font/import.",
+      "Authored normal Runs browser records no unexpected CSP violations and explicitly probes blocked Function with DevTools allowUnsafeEvalBlockedByCSP=false. Isolated renderer uses stricter self-only styles; that stricter fixture is not falsely claimed as deployed policy.",
+      "Actual existing coordinator recovery/lost reply and scientific-comparison browser receipts passed with the deployed page."
+    ],
+    "risks_and_limits": [
+      "Page policy also covers existing Data/Pipeline/Runs functionality; unexecuted old-browser families and deployment variations still require ordinary full CI.",
+      "It is not global application hardening or a guarantee for arbitrary injected extensions/remote scripts.",
+      "style-src unsafe-inline is existing application compatibility; it does not permit inline script/eval."
+    ]
+  },
+  "initialization_review": {
+    "change": "Initial dataset select starts disabled in HTML.",
+    "existing_owner": "Unchanged static/workspaces.js already disables at startup, installs onchange aroundline289 and enables after its fixture/store initialization aroundline485.",
+    "decision": "Closes pre-initializer interaction loss while additional local assets load; no selection/authority semantics change, no new asynchronous listener gap identified."
+  },
+  "current_denial_wrapper_review": {
+    "path": "static/workspace-service.js WorkspaceModel api wrapper; static/workspace-real.js onAccessFailure/loadRuns catches",
+    "behavior": "Forwards original transport args unchanged; captures active Run, credential and model generation before dispatch; handles only current Run/generation, nonaborted401/403; notifies Runs before local presentation catches; rethrows original error. Runs callback additionally fences current view/Run/current credential and clears all private projections. Ordinary detail/prediction/model-evidence denial propagation handles auth.js already-null identity without allowing a newer credential/navigation late reply to clear current state.",
+    "evidence": "Actual retained browser includes real export/detail/prediction/model-evidence revocation and held old checkpoint denial after a newer authorized retained query; private graph/metric content disappears. Controlled model regression and independent actual rerun are retained.",
+    "decision": "Coherent current-denial clearing fix; no authority cache, mutation retry, changed request arguments or dispatch selection observed. Conservative clearing is a UI response, not a new server permission."
+  },
+  "additive_shared_API_and_CI": {
+    "app": "Six fixed local asset routes plus one explicitly selected path-owned retained query/export dispatch; no modification of existing route return values.",
+    "registry": "Two added inspect/read operations. Retained independent compatibility receipt reports all124 prior full contract documents and legacy discovery exactly equal; reviewer did not rerun registry tests.",
+    "CI": "Focused retained query/HTTP/renderer/actual Runs gate added using existing job Python/Chrome/PG with explicit opt-in environment. This is pending hosted acceptance, not success inferred from workflow presence."
+  },
+  "evidence_limits": {
+    "authored_query_http": "Raw retained log says27 tests in3.852s plainOK, including original13,6 actual retained,3 contract,5 actual HTTP.",
+    "authored_python_regressions": "Raw14phase +17agentAPI +4accessHTTP +1pin =36 tests, each plainOK; no duplicate execution by reviewer.",
+    "existing_coordinator_science": "Retained existing-runs-browsers.log contains coordinatorPASS and scientific-comparison passed JSON, including original custody/revocation/scoped layout outcomes.",
+    "independent_review": "Existing separate review.md records actual3contracts/5HTTP/modelcontroller/retainedRuns browser rerun and no blockers.18 source manifest entries independently recomputed here match integrated files.",
+    "tests_executed_by_this_review": 0,
+    "required_pending": "Exact composed published source must pass required capturedCPU and full lifecycle including existing and new browsers; no merge-readiness claim from local receipts alone."
+  },
+  "findings": [],
+  "excluded_scope": [
+    "No duplicate vendor implementation/license audit or complete118-file review.",
+    "No new PUBSCI/full numerical acceptance or performance/T5 claims.",
+    "No test execution, PG operation, source mutation, remote call/poll/rerun or merge by reviewer."
+  ],
+  "evidence_files": {
+    "docs/plans/retained-analysis/reports/m4-integrated/acceptance.md": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/acceptance.md",
+      "sha256": "fb8c9702404904711d67f5e2f6163e9c14fda1d5d237538cc04e028787fbd079",
+      "bytes": 4154
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/independent/review.md": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/independent/review.md",
+      "sha256": "1f153115c51c9d13b7bb23c39966315eb1481686c525c2d3778ba24bd072a60b",
+      "bytes": 1430
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/browser.json": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/browser.json",
+      "sha256": "9678399afe2fd1b3ea108bc9043741eeab2f21bc7d7c004aa381b01b0215e0ac",
+      "bytes": 1198
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/renderer.json": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/renderer.json",
+      "sha256": "dd7c12b4c42e54ab99c12488a3c0129c4878249773ebb369362132d93a3f0389",
+      "bytes": 511
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/existing-runs-browsers.log": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/existing-runs-browsers.log",
+      "sha256": "ce7b52eb5f6b319de38292bdfc27503ef65fb80514d2c9eaf53bb1356feac69c",
+      "bytes": 867
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/query-http-tests.log": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/query-http-tests.log",
+      "sha256": "133d3fa7c476d115af117295b080449bbc359ba38e393c23652d497a26d2b936",
+      "bytes": 4696
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/regressions.log": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/regressions.log",
+      "sha256": "71e5732813f8d0b5cce51161ce18f63198d0e1debffde1dbb9de214ed9cc1f37",
+      "bytes": 6355
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/independent/identity-compatibility.json": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/independent/identity-compatibility.json",
+      "sha256": "54d16fa5062bf1eecc887b39b16e0e80f340496d9d1fa636ec42575d56da43ca",
+      "bytes": 288
+    },
+    "docs/plans/retained-analysis/reports/m4-integrated/independent/source-sha256.json": {
+      "path": "/workspace/Tuldok-retained-analysis-integration-20261020/docs/plans/retained-analysis/reports/m4-integrated/independent/source-sha256.json",
+      "sha256": "7786815306f6c5511a31829a01de794b88e3c8fac3332b01f44de365b2727888",
+      "bytes": 1817
+    }
+  }
+}

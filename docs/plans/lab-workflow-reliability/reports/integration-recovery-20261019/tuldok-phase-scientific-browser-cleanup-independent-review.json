@@ -1,0 +1,374 @@
+{
+  "kind": "Independent narrow phase/scientific browser cleanup source review",
+  "reviewed_utc": "2026-10-20T00:42:54.607833+00:00",
+  "assessment": "CLEAR: exact narrow cleanup source changes and root-executed actual phase/scientific browser receipts reviewed",
+  "blockers": [],
+  "source_proof": [
+    {
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "parent": "23384588a137edfb73b2027b24c27058fdb0c308",
+      "path": "tests/browser_run_phase_timings.cjs",
+      "worktree": "/workspace/Tuldok-lab-phase-ui-m3",
+      "current_head_matches": true,
+      "clean": true,
+      "changed_paths": [
+        "tests/browser_run_phase_timings.cjs"
+      ],
+      "only_expected_test_changed": true,
+      "test_body_catch_assertions_byte_identical_excluding_helper_import": true,
+      "helper_sha256": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+      "helper_matches_accepted": true,
+      "test_sha256": "ff2f00a4ecaf928cd7590a86faf57182248e20b08e360409bef629a661ee7f29",
+      "test_working_tree_matches_commit": true,
+      "original102_cleanup_history_is_ancestor": true,
+      "diff": "diff --git a/tests/browser_run_phase_timings.cjs b/tests/browser_run_phase_timings.cjs\nindex 06cfd44..679b2d1 100644\n--- a/tests/browser_run_phase_timings.cjs\n+++ b/tests/browser_run_phase_timings.cjs\n@@ -5,6 +5,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod\n const {spawn,execFileSync}=require('node:child_process');\n const {authenticatedFixture}=require('./auth_helpers.cjs'),{waitForDebugger}=require('./browser_startup.cjs');\n const {pageLoadTracker}=require('./browser_page_load.cjs');\n+const {stopOwnedChildren}=require('./browser_owned_cleanup.cjs');\n const tracker=pageLoadTracker();\n const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');\n const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'run-phase-timings'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-phase-browser-'));\n@@ -85,4 +86,4 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo\n   checks.push('Live real preparation before any Run, explicitly latest actor/revision observation','Actual capacity wait and separate-thread catalog mutex observation','First neutral GO, live custodian phases, explicit UI cancellation and drainage','Second neutral original publication fault, incomplete interval and same-attempt recovery intervals','Original Run failure retained, two admissions/two GO/two consumptions','Exact selected timing operations,1440/390 layout and navigation polling cleanup');\n   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_head:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),scope:'Actual neutral phase lifecycle UI; no model training/CUDA/science',checks,browser:(await send('Browser.getVersion')).product,first_run:queued.run_id,second_run:second.run_id,timing_requests:timingRequests().length},null,2)+'\\n');\n   console.log('PASS phase timing browser:',report);\n-})().catch(async error=>{console.error(error);console.error('Fixture stderr:',stderr);if(evaluate)try{console.error(await evaluate('document.body.innerText.slice(-9000)'));}catch{}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())if(child.exitCode===null)child.kill('SIGTERM');fs.rmSync(temp,{recursive:true,force:true});});\n+})().catch(async error=>{console.error(error);console.error('Fixture stderr:',stderr);if(evaluate)try{console.error(await evaluate('document.body.innerText.slice(-9000)'));}catch{}process.exitCode=1;}).finally(async()=>{ws?.close();await stopOwnedChildren([...children].reverse());fs.rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});});\n",
+      "cleanup_semantics": "asyncfinally awaits acceptedhelper for snapshot reverse-ownedchildren before boundedrm; successpath fixture finish/exit/domainaccounting unchanged."
+    },
+    {
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "parent": "5e92b6211d7acecd80a1500b5d062b2dcf69cb01",
+      "path": "tests/browser_scientific_comparison.cjs",
+      "worktree": "/workspace/Tuldok-lab-field-comparison-m6",
+      "current_head_matches": true,
+      "clean": true,
+      "changed_paths": [
+        "tests/browser_scientific_comparison.cjs"
+      ],
+      "only_expected_test_changed": true,
+      "test_body_catch_assertions_byte_identical_excluding_helper_import": true,
+      "helper_sha256": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+      "helper_matches_accepted": true,
+      "test_sha256": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74",
+      "test_working_tree_matches_commit": true,
+      "original102_cleanup_history_is_ancestor": true,
+      "diff": "diff --git a/tests/browser_scientific_comparison.cjs b/tests/browser_scientific_comparison.cjs\nindex 6f397c5..06573c8 100644\n--- a/tests/browser_scientific_comparison.cjs\n+++ b/tests/browser_scientific_comparison.cjs\n@@ -5,6 +5,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod\n const {spawn,execFileSync}=require('node:child_process');\n const {authenticatedFixture}=require('./auth_helpers.cjs'),{waitForDebugger}=require('./browser_startup.cjs');\n const {pageLoadTracker}=require('./browser_page_load.cjs');\n+const {stopOwnedChildren}=require('./browser_owned_cleanup.cjs');\n const tracker=pageLoadTracker();\n const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');\n const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'scientific-comparison'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-scientific-comparison-browser-'));\n@@ -112,5 +113,6 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo\n   if(ws)ws.close();\n   for(const child of children.reverse())if(child.exitCode===null){if(child.stdin?.writable)child.stdin.end('done\\n');else child.kill('SIGTERM');}\n   await Promise.all(children.map(child=>child.exitCode!==null?Promise.resolve():new Promise(resolve=>{const timer=setTimeout(()=>{child.kill('SIGTERM');resolve();},3000);child.once('exit',()=>{clearTimeout(timer);resolve();});})));\n-  fs.rmSync(temp,{recursive:true,force:true});\n+  await stopOwnedChildren(children);\n+  fs.rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});\n });\n",
+      "done_and_three_second_grace_byte_identical": true,
+      "cleanup_semantics": "Existing stdin done and3s grace unchanged, then acceptedhelper awaits actual remaining childexit before rm; rejection preserves tempdir."
+    }
+  ],
+  "accepted_helper_unchanged_sha256": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+  "reviewed102_ancestor": {
+    "head": "aa7115a4e148151d37f6895d053ae51b4b04ac2b",
+    "parent": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "files": [
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_workspace_publication_lineage.cjs"
+    ],
+    "scope": "Only shared helper import and awaitedchildexit+boundedrm; no product/assertion/accounting changes. Three actualpasses root-reported, not independently rereviewed under this task yet."
+  },
+  "meaningful_invariants": [
+    "No product orPythonfixture scope touched by either phase/science cleanup commit.",
+    "All preceding test logic, exactselectedcontracts, accounting, expectedDOMvalues, currentauthority/refusal, shutdowncommands, receipts/screenshots remain byteidentical to respectiveparent.",
+    "Scientific graceful done path retained because Python fixture has noSIGTERMhandler and ownsheldroot/schemafinally.",
+    "OwnedChildProcesshandles only, boundedTERM/KILL/deadline; rm executes only after awaitedhelper, and failsretainingtempdir ifownerdoesnotexit.",
+    "Root owns propagation/publication and actualqualification; no new processcontrol/storage/admission protocol."
+  ],
+  "actual_review": {
+    "reviewed_utc": "2026-10-20T00:43:53.488822+00:00",
+    "result": "PASS",
+    "checks": {
+      "phase_exact_source_head": true,
+      "phase_expected_log_and_six_witnesses": true,
+      "phase_two_actual_neutral_admissions_and_GO": true,
+      "phase_original_failure_and_exact_recovered_ref": true,
+      "phase_retained_states_match_receipt": true,
+      "phase_actual_owner_intervals_remain_honest": true,
+      "science_exact_source_head": true,
+      "science_log_exact_result_and_six_checks": true,
+      "science_standalone_and_embedded_domain_equal": true,
+      "science_actual_reader_synthetic_terminal_scope": true,
+      "science_accounting_unchanged": true,
+      "science_original_interrupted_and_revoked": true,
+      "science_exact_pinned_readonly_comparison_requests": true,
+      "science_exact_attached_publication_reference": true,
+      "science_all_eight_qualified_source_hashes_match_commit": true,
+      "all_four_viewport_artifacts_present": true,
+      "final108_only_five_reviewed_fixture_deltas": true,
+      "final108_exact_phase_and_science_test_bytes": true
+    },
+    "failed_checks": [],
+    "root_execution_attribution": {
+      "phase_session": 70863,
+      "phase_exit": 0,
+      "science_session": 65122,
+      "science_exit": 0,
+      "source": "Parent terminal notifications; reviewer did not execute or rerun either process"
+    },
+    "phase": {
+      "head": "8323d54856296f46d01892c20f9084164c1f1ded",
+      "log": {
+        "path": "/tmp/tuldok-pr104-phase-cleanup-green.log",
+        "bytes": 96,
+        "sha256": "89bd92bbabe32e9d106a0ce7813e1b30d85791f2283a46967fcee0d172e9932e"
+      },
+      "browser_receipt": {
+        "path": "/tmp/tuldok-pr104-cleanup-qualification/run-phase-timings/run-g3MrQw/receipt.json",
+        "sha256": "e8289bb85f7d97b611d0a618753aa3360d49bdf77bdd3298c9a98a182a923431"
+      },
+      "domain_receipt": {
+        "path": "/tmp/tuldok-pr104-cleanup-qualification/run-phase-timings/run-g3MrQw/domain-receipt.json",
+        "sha256": "5db076ec18822b69609b71b707af3d8bf0b9fe3e615d640881216ed892f700bd"
+      },
+      "checks": [
+        "Live real preparation before any Run, explicitly latest actor/revision observation",
+        "Actual capacity wait and separate-thread catalog mutex observation",
+        "First neutral GO, live custodian phases, explicit UI cancellation and drainage",
+        "Second neutral original publication fault, incomplete interval and same-attempt recovery intervals",
+        "Original Run failure retained, two admissions/two GO/two consumptions",
+        "Exact selected timing operations,1440/390 layout and navigation polling cleanup"
+      ],
+      "accounting": {
+        "workspace_runs": 2,
+        "access_execution_grants": 2,
+        "access_execution_consumptions": 2
+      },
+      "GO": 2,
+      "states": {
+        "825fee354f2d49af83ca203a76028f10": "cancelled",
+        "31ac5971aa9a4eceae6f99a181296fb6": "interrupted"
+      },
+      "timing_owner_phase_states": [
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "pipeline",
+          "capture",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "runs",
+          "queue",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "runs",
+          "catalog_lock_wait",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "runs",
+          "catalog_lock_wait",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "runs",
+          "launch_verification",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "custodian",
+          "custodian_preparation",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "custodian",
+          "go_wait",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "custodian",
+          "runtime_verification",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "custodian",
+          "leader_lifetime",
+          "measured"
+        ],
+        [
+          "825fee354f2d49af83ca203a76028f10",
+          "custodian",
+          "drain",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "pipeline",
+          "capture",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "queue",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "catalog_lock_wait",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "launch_verification",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "output_validation",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "publication",
+          "incomplete"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "recovery_verification",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "runs",
+          "recovery_publication",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "custodian",
+          "custodian_preparation",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "custodian",
+          "go_wait",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "custodian",
+          "runtime_verification",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "custodian",
+          "leader_lifetime",
+          "measured"
+        ],
+        [
+          "31ac5971aa9a4eceae6f99a181296fb6",
+          "custodian",
+          "drain",
+          "measured"
+        ]
+      ],
+      "timing_requests": 14,
+      "browser": "Chrome/151.0.7922.173"
+    },
+    "scientific": {
+      "head": "5a83eadaaf58ab86c49033fc1b249bb1b163a99e",
+      "log": {
+        "path": "/tmp/tuldok-pr106-scientific-cleanup-green.log",
+        "bytes": 794,
+        "sha256": "425cbc94ed3887013ea6c73344965de010a3d3c49584fc341339eab8b1a17795"
+      },
+      "browser_receipt": {
+        "path": "/tmp/tuldok-pr106-cleanup-qualification/scientific-comparison/run-lynk1e/receipt.json",
+        "sha256": "078747d9ae588bb25c0389048b9cee9815dafefae7c9963bcba5eeab06baf2c1"
+      },
+      "domain_receipt": {
+        "path": "/tmp/tuldok-pr106-cleanup-qualification/scientific-comparison/run-lynk1e/domain-receipt.json",
+        "sha256": "6487b341bc259c71032da69b3360386c8e6dd4d095a467cd9db3f18759c16acf"
+      },
+      "checks": [
+        "Actual lineage opens exact ordered operands; selection causes no comparison/admission; keyboard submission returns independent expected delta 2 and explicit unknown criteria/memory.",
+        "1440/390px tables retain all values and keyboard scrolling without page overflow.",
+        "Actual overlapping HTTP responses clear pending values and fence stale delivery after exact point changes.",
+        "Exact attached publication Ref uses real publication readers and preserves original interrupted state.",
+        "Removed retained root refuses fresh candidate selection and clears prior values.",
+        "Actual browser credential revocation clears the session and all cached scientific values after the refused read."
+      ],
+      "counts_before": {
+        "workspace_runs": 3,
+        "access_execution_grants": 3,
+        "access_execution_consumptions": 3,
+        "model_attempt_reservations": 3
+      },
+      "counts_after": {
+        "workspace_runs": 3,
+        "access_execution_grants": 3,
+        "access_execution_consumptions": 3,
+        "model_attempt_reservations": 3
+      },
+      "synthetic_terminal_setup": true,
+      "producer_executed": false,
+      "runtime_is_runnable_python": false,
+      "original_state": "interrupted",
+      "eight_source_hashes": {
+        "agent_api.py": "87a342c187f104cbd2e7f410945fe125d7b8360f894aff5348f99faf2529dd6d",
+        "runs.py": "c5304cc65868e5ed62b7b4d9744067b432d62b4e318d60ef4f2ed7cf305d0953",
+        "run_publication.py": "99722ab20df6a28928ddf696d840b08cf81f02e82e5d996416d8a43693d23830",
+        "extension_evidence.py": "0375f74bf37ee168b2e037b2a62e8e822c0c9fc415cfb58b1bab4049541239d6",
+        "static/workspace-real.js": "412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2",
+        "static/workspace-scientific-comparison.js": "e2a1068011135bf845c1d962cf1e11147419c8c9ab8da36a80267be427762ade",
+        "tests/scientific_comparison_fixture.py": "c580c700aea4cfe0b9125200f2ad6991c9e80efe26acd405d1d5833faf87082f",
+        "tests/browser_scientific_comparison.cjs": "dc15f543ed4fb97a2d34d182210909a597a5ad018641c00d88b0c3b6543abb74"
+      },
+      "exact_pinned_comparison_requests": 6
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/tuldok-pr104-cleanup-qualification/run-phase-timings/run-g3MrQw/phases-1440.jpg",
+        "bytes": 115232,
+        "sha256": "c0e630ebf67e6f2aff603d8c3e28c210e1d23129714096ac8c19c407a35beedd",
+        "visual_inspection_performed": false
+      },
+      {
+        "path": "/tmp/tuldok-pr104-cleanup-qualification/run-phase-timings/run-g3MrQw/phases-390.jpg",
+        "bytes": 56417,
+        "sha256": "3068cbdcfbd4a1c23338c2c4019ed08e2b45cca190ab3764193018edf256cc7d",
+        "visual_inspection_performed": false
+      },
+      {
+        "path": "/tmp/tuldok-pr106-cleanup-qualification/scientific-comparison/run-lynk1e/comparison-1440.jpg",
+        "bytes": 123632,
+        "sha256": "7665d79329ca043c2bdd2110055d1baf4ab58572db076741bdbb9e078ca516fa",
+        "visual_inspection_performed": false
+      },
+      {
+        "path": "/tmp/tuldok-pr106-cleanup-qualification/scientific-comparison/run-lynk1e/comparison-390.jpg",
+        "bytes": 73047,
+        "sha256": "8eca64118605834989ca8bd181a1dcac222630d9445004be0ee35be5027eb1d5",
+        "visual_inspection_performed": false
+      }
+    ],
+    "final_composition": {
+      "head": "de5a3a8c8a2767141ac45ffbe8d1bb89c9cf4b70",
+      "old83_whole_ancestor": true,
+      "changed_paths": [
+        "tests/browser_run_phase_timings.cjs",
+        "tests/browser_scientific_comparison.cjs",
+        "tests/browser_workspace_coordinator.cjs",
+        "tests/browser_workspace_publication.cjs",
+        "tests/browser_workspace_publication_lineage.cjs"
+      ],
+      "product_tree_unchanged": true,
+      "phase_science_qualified_test_bytes_match": true
+    },
+    "scope_limits": [
+      "Actual phase neutral process/UI lifecycle witness; no model training/CUDA/scientific acceptance.",
+      "Scientific actual metadata/admission/retained-byte readers andHTTP/DOM use synthetic terminal receipts and arrays with tiny non-runnable metadata runtime; no numerical producer execution/runtime/custody/physics acceptance.",
+      "Expected scientific delta2, unknowncriteria/memory, stale delivery/rootremoval/revocation and no unexpected workspace mutations are assertions in unchanged exact reviewed script, not newly derived scientific criteria.",
+      "Source finally +root process exit0 support successful cleanup; this review made no new PG/schema or liveprocess absence query and did not independently inspect every descendant process.",
+      "Screenshot existence/hashes retained; no visual screenshot review in this source/log audit.",
+      "Hosted acceptance and serial integration remain root-owned."
+    ]
+  },
+  "reviewer_actions": "Read-only source/Git/hash and actual retained log/receipt review after root terminalnotifications; wrote only this /tmp receipt. No tests, browsers, PG/compute, source changes, deletion or remote writes."
+}

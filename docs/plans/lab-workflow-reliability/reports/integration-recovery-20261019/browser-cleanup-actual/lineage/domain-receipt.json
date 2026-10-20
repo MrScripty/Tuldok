@@ -1,0 +1,71 @@
+{
+  "scope": "Real neutral Study/Trial/custody publication lineage; no numerical or scientific acceptance",
+  "trial_id": "aa1c2259ddb9448788ece076cb61e836",
+  "run_id": "6dc688104e2640b8b9487548b39741fe",
+  "lineage_record": {
+    "format": "trial_lineage_v1",
+    "trial": {
+      "catalog_id": "160d53ebf4eb43d8b18f46c8c26a211d",
+      "trial_id": "aa1c2259ddb9448788ece076cb61e836",
+      "material_sha256": "39abf1b7b937c85bb7885ecd2a01c34c7f092abcd52dad7a066a86c38a063e63"
+    },
+    "intent": {
+      "ancestry": "root",
+      "baseline": null,
+      "change_summary": "Recover retained output without replaying its producer.",
+      "cohort": "Neutral publication UI",
+      "hypothesis": "Publication preserves the original exact byte result.",
+      "parent": null,
+      "target": {
+        "acceptance": "Inspect byte custody only; no model quality or scientific claim.",
+        "direction": "target",
+        "metric_definition_sha256": null,
+        "metric_id": "neutral_byte_identity",
+        "threshold": null
+      }
+    },
+    "actor_id": "d7a4f7c5af08431394c9ac81fa3b5207",
+    "recorded_at": "2026-10-20T00:41:02.747631+00:00",
+    "timing": "before_admission"
+  },
+  "counts_before": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 1
+  },
+  "counts_after": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 1
+  },
+  "charged_before": {
+    "attempt_slots": 1,
+    "admitted_wall_seconds": 37,
+    "retained_bytes": 2802248,
+    "peak_staging_bytes": 3210449
+  },
+  "charged_after": {
+    "attempt_slots": 1,
+    "admitted_wall_seconds": 37,
+    "retained_bytes": 2802248,
+    "peak_staging_bytes": 3210449
+  },
+  "reservation_unchanged": true,
+  "lineage_projection_unchanged": true,
+  "events_unchanged": true,
+  "original_run_state": "interrupted",
+  "publication_state": "published",
+  "result_ref": {
+    "catalog_id": "160d53ebf4eb43d8b18f46c8c26a211d",
+    "custody_receipt_sha256": "88fe898be78b461f970a604f1311c26cf700b3c8ece4388448a1cd858cebebb8",
+    "inventory_sha256": "84afb1364c2ecd99dbc7b34258f2d331b576f8e49b96aebd980cd73dd1450d84",
+    "kind": "recovered_publication_result",
+    "material_sha256": "ffb9c7519fc3534ddadb46c4471565506dd3afa7172d9d4d5e509a9a7203365b",
+    "run_id": "6dc688104e2640b8b9487548b39741fe",
+    "schema_version": 1,
+    "sha256": "72fac54d7b2d478a231d5e8f33d37ea4c7c9fd4a11317e9e3942f53e0366b4ed"
+  },
+  "legacy_artifact_refused": true
+}

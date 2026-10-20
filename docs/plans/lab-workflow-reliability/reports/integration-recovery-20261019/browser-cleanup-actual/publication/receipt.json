@@ -1,0 +1,16 @@
+{
+  "source_head": "b4070b60b0119c73284c4832610cc82ef471963a",
+  "scope": "Neutral publication UI and custody; no scientific/training claim",
+  "checks": [
+    "Real neutral custody fault retains original interrupted Run",
+    "Keyboard owner recovery and mouse pause reach real cancellation boundary",
+    "Fresh document reload retains exact request and resumes to published attempt2",
+    "Exact result inspection and segmented whole-hash browser download",
+    "Neutral field evidence remains unsupported",
+    "All publication operations pinned; no compute retry/promotion/submission",
+    "1440px and390px panel without horizontal overflow"
+  ],
+  "browser": "Chrome/151.0.7922.173",
+  "download_sha256": "54ae9355f214d827afd4ec287ff813d3af22683a52c10e9ed1ea62507cfa4d10",
+  "run_id": "2052dfdba0f24507bbbe14269c743630"
+}

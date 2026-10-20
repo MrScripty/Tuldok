@@ -1,0 +1,286 @@
+{
+  "format": "pr102_b407_failure_independent_review_v1",
+  "checked_utc": "2026-10-20T00:40:30.974898+00:00",
+  "head_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+  "run_id": 39339868173,
+  "job_id": 118358463687,
+  "job_url": "https://github.com/MrScripty/Tuldok/actions/runs/39339868173/job/118358463687",
+  "raw_log": {
+    "path": "/tmp/tuldok-pr102-b407-lifecycle-failed.log",
+    "bytes": 259172,
+    "sha256": "1d98ca9ff2bf981724cb44ab9be841dfb79aea4fcbdf8991dbf0d72941dbf12b"
+  },
+  "finding": {
+    "classification": "Browser fixture cleanup race after all publication journey assertions; lifecycle remains failed and requires a qualified correction/current-head gate.",
+    "failure_step": 49,
+    "command": "node tests/browser_workspace_publication.cjs",
+    "pass_marker": {
+      "time": "2026-10-20T00:30:24.3570663Z",
+      "raw_line": 2090,
+      "text": "PASS publication browser"
+    },
+    "exception": {
+      "time": "2026-10-20T00:30:24.4074868Z",
+      "code": "ENOTEMPTY",
+      "path": "/tmp/tuldok-publication-browser-2xkPt8",
+      "source": "tests/browser_workspace_publication.cjs:70:316",
+      "raw_line": 2095
+    },
+    "exit": {
+      "code": 1,
+      "time": "2026-10-20T00:30:24.4204193Z",
+      "raw_line": 2106
+    },
+    "source_cause": "finally closes CDP, sends SIGTERM to still-live owned ChildProcess handles, and immediately rmSyncs Chromium user-data/config/cache directory without awaiting child exit. SIGTERM delivery is asynchronous. Exact stack is that rmSync; the source permits a late profile writer to race removal. Which specific Chromium process performed a late write is not traced.",
+    "positive_scope_before_cleanup": "Source emits PASS only after original interrupted state, recovery/pause/reload/stable request, exact result/wholehash download, neutral evidence refusal, selected contracts, no replay and1440/390 layout assertions; fixture stdin finish/exit0 and domain receipt checks also precede PASS. This supports functional journey assertions on old head, not a passing browser step or clean final lifecycle.",
+    "other_source_audit": "Coordinator browser has the identical nonawaited SIGTERM/immediate rmSync pattern at its final line. This is an established same-source cleanup risk worth the same narrow fixture repair; its later hosted gate did not execute in this failed run, so no coordinator browser failure/pass is inferred."
+  },
+  "minimal_recommendation": {
+    "files": [
+      "tests/browser_workspace_publication.cjs",
+      "tests/browser_workspace_coordinator.cjs"
+    ],
+    "change": "Import accepted stopOwnedChildren from browser_owned_cleanup.cjs; make finally async; close CDP; await stopOwnedChildren on a copied/reversed supplied owned children list; only after success rmSync exact owned temp with bounded maxRetries/retryDelay matching accepted native text fixture. If child termination deadline fails, retain temp and fail instead of deleting under a live writer.",
+    "existing_helper": "Existing default5s TERM grace +2s kill deadline; only supplied child handles, awaits exit, bounded SIGKILL, harmless already-exited handles. Accepted native text fixture demonstrates await then rmSync(maxRetries5,retryDelay100).",
+    "preserve": [
+      "All current functional assertions, source identity and exact domain/wholehash checks.",
+      "All current execution/current authority/contract checks and product code.",
+      "The original failed raw archive and source attribution.",
+      "No permission broadening, global process killing, ignored cleanup error or weakened test bound."
+    ],
+    "qualification_next": "Root-owned focused existing cleanup controller plus actual affected publication/coordinator browser journeys at frozen corrected source, followed by current hosted acceptance; not executed by this reviewer."
+  },
+  "actual_unittest_summaries": [
+    {
+      "command": "python -m unittest discover -s tests -p 'test_run_preflight*.py' -v",
+      "tests": 30,
+      "seconds": 7.602,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1112
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v",
+      "tests": 32,
+      "seconds": 143.436,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1163
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+      "tests": 20,
+      "seconds": 35.857,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1202
+    },
+    {
+      "command": "build/workspace-training/bin/python -c \"import numpy, sklearn, psycopg\"",
+      "tests": 15,
+      "seconds": 21.079,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1427
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+      "tests": 11,
+      "seconds": 0.536,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1446
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+      "tests": 9,
+      "seconds": 0.098,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1465
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+      "tests": 12,
+      "seconds": 3.63,
+      "outcome": "OK (skipped=1)",
+      "skips": 1,
+      "raw_line": 1484
+    },
+    {
+      "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+      "tests": 9,
+      "seconds": 0.272,
+      "outcome": "OK (skipped=1)",
+      "skips": 1,
+      "raw_line": 1503
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+      "tests": 74,
+      "seconds": 535.309,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1655
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+      "tests": 19,
+      "seconds": 41.274,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1674
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+      "tests": 22,
+      "seconds": 94.07,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1693
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+      "tests": 24,
+      "seconds": 190.365,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1712
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+      "tests": 34,
+      "seconds": 108.301,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1731
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+      "tests": 13,
+      "seconds": 31.808,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1750
+    },
+    {
+      "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+      "tests": 5,
+      "seconds": 12.635,
+      "outcome": "OK",
+      "skips": 0,
+      "raw_line": 1798
+    },
+    {
+      "command": "python -m unittest discover -s tests",
+      "tests": 1622,
+      "seconds": 2063.534,
+      "outcome": "OK (skipped=72)",
+      "skips": 72,
+      "raw_line": 1851
+    }
+  ],
+  "key_counts": {
+    "full_python": {
+      "tests": 1622,
+      "seconds": 2063.534,
+      "outcome": "OK",
+      "skips": 72
+    },
+    "agents": {
+      "tests": 74,
+      "seconds": 535.309,
+      "outcome": "OK",
+      "skips": 0
+    },
+    "MCP_stdio": {
+      "tests": 19,
+      "seconds": 41.274,
+      "outcome": "OK",
+      "skips": 0
+    },
+    "MCP_observer": {
+      "tests": 22,
+      "seconds": 94.07,
+      "outcome": "OK",
+      "skips": 0
+    },
+    "interface": {
+      "tests": 24,
+      "seconds": 190.365,
+      "outcome": "OK",
+      "skips": 0
+    },
+    "experiments": {
+      "tests": 34,
+      "seconds": 108.301,
+      "outcome": "OK",
+      "skips": 0
+    },
+    "lineage": {
+      "tests": 13,
+      "seconds": 31.808,
+      "outcome": "OK",
+      "skips": 0
+    },
+    "artifact_segments": {
+      "tests": 5,
+      "seconds": 12.635,
+      "outcome": "OK",
+      "skips": 0
+    }
+  },
+  "earlier_actual_browser_markers": [
+    {
+      "raw_line": 1913,
+      "name": "access"
+    },
+    {
+      "raw_line": 1963,
+      "name": "scientific neutral fields; separate earlier existing gate"
+    },
+    {
+      "raw_line": 2059,
+      "name": "external recipe"
+    },
+    {
+      "raw_line": 2090,
+      "name": "publication functional journey before failing cleanup"
+    }
+  ],
+  "after_failure": "Root reports later normal gates skipped. Raw archive proceeds from exit1 to always artifact upload and cleanup; no later publication-lineage/coordinator/model-browser acceptance may be claimed from this run.",
+  "source_fingerprints": {
+    "tests/browser_workspace_publication.cjs": {
+      "sha256": "8fa1d095aca57f9e84c6a186fbecf3d3f35fc2dc8b6f152806b6354fc109e692",
+      "bytes": 10359,
+      "unsafe_finally_line": 70
+    },
+    "tests/browser_workspace_coordinator.cjs": {
+      "sha256": "66fdad4b33086fac6e310b06b26773d97d9f07e6d2124de72ea4799199c2e96b",
+      "bytes": 9571,
+      "unsafe_finally_line": 71
+    },
+    "tests/browser_owned_cleanup.cjs": {
+      "sha256": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+      "bytes": 851,
+      "unsafe_finally_line": null
+    },
+    "tests/browser_native_text_import.cjs": {
+      "sha256": "7e271bdcf33e4b576a4d7d2369c0487bd2bb9166309373a08ea9080e32f324d4",
+      "bytes": 16240,
+      "unsafe_finally_line": null
+    },
+    "tests/test_browser_owned_cleanup.cjs": {
+      "sha256": "4ea50d110b23d55daa7bf094a1447bdcf78cb06320a4ea225b123f176308040a",
+      "bytes": 1777,
+      "unsafe_finally_line": null
+    }
+  },
+  "PUBSCI": "No evaluation or disposition of separate publication/scientific comparison blockers in this review. Earlier neutral scientific-fields browser PASS is not new publication science qualification.",
+  "broader_T5_disposition": {
+    "path": "/tmp/tuldok-t5-final-acceptance-scope.json",
+    "sha256": "d1b8615b02387200627f9643c276d612ed16e65c12ad591bbb211fb090fd1cc2",
+    "scope": "Real-byte integrity closed only; no fullT5/M4/cache or whole-workflow speedup claim."
+  },
+  "actions": "Read exact local git objects and retained raw log only; wrote this /tmp receipt. No edits, tests, reruns, polling, remote operations or cleanup actions."
+}

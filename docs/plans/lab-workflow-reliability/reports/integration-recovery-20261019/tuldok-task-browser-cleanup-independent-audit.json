@@ -1,0 +1,70 @@
+{
+  "kind": "Narrow independent task-authored browser child-writer cleanup audit",
+  "observed_utc": "2026-10-20T00:41:13.930713+00:00",
+  "scope": "Coordinator/phase/scientific browser fixtures only, with same publication-lineage owner adjacency reported; no global fixture refactor",
+  "source_snapshots": {
+    "final108_head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "PR102_head": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "note": "Root began independent102 publication/coordinator edits during this read-only audit; exact findings refer publishedb407/final10883a snapshot before that repair, not a freeze of root current dirty candidate."
+  },
+  "recommendation": "Migrate the three named task owners now to existing bounded stopOwnedChildren helper before removing their own browser temporary directory; keep all assertions/accounting and graceful fixture shutdown unchanged.",
+  "findings": [
+    {
+      "path": "tests/browser_workspace_coordinator.cjs",
+      "line": 71,
+      "sha256_final108": "e9cda8cee306792c05517a5e5d9ce45a079f7d8f7e3715b1398b6ae00d148b23",
+      "mechanism": "Synchronous finally sendsSIGTERM to live owned children then immediately rmSync(temp); async Chromium profile/XDG writer may still be running on normalPASS. Same source pattern as confirmed publication ENOTEMPTY.",
+      "minimal_change": "Import existing helper; asyncfinally closes websocket, await stopOwnedChildren(children.reverse()), then bounded rmSync retries (same maxRetries5/retryDelay100 accepted convention).",
+      "must_preserve": "Existing finish command/fixture exit0, domain go_sends1,generation2,droppedreply and original admission accounting assertions stay verbatim.",
+      "parent_fixture": "coordinator_browser_fixture.py installs SIGTERM->KeyboardInterrupt cleanup handler and drops exact recorded schema in finally."
+    },
+    {
+      "path": "tests/browser_run_phase_timings.cjs",
+      "line": 88,
+      "sha256_final108": "b19ff694aa267a29fb5e972b18644768df88d5a0cf63be002090b3ba2fb9d771",
+      "mechanism": "Identical synchronous SIGTERM/immediate rmSync finally after normalPASS.",
+      "minimal_change": "Same helper import and asyncfinally awaited owned children before bounded rmSync.",
+      "must_preserve": "Explicit JSON finish/fixture exit0, twoGO/twoRun/two consumption proof, actual phase/UI assertions all unchanged.",
+      "parent_fixture": "phase_timing_browser_fixture.py installs SIGTERM handler and finally restores guards/cleans exact schema."
+    },
+    {
+      "path": "tests/browser_scientific_comparison.cjs",
+      "line": 111,
+      "sha256_final108": "5d97bf5c573b6966264a9b3f0ee034301b7d57212303ef573503041e20fe9075",
+      "mechanism": "Existing asyncfinally grants up to3s but timer sendsSIGTERM and resolves immediately rather than observing exit; remaining writer can race rmSync on slow shutdown. Normal fast exit alreadywaited; this is a fallback-path race.",
+      "minimal_change": "Import helper and await stopOwnedChildren(children) after current done/grace wait, before bounded rmSync; retain existing graceful done stage instead of blindly replacing it with immediateSIGTERM.",
+      "must_preserve": "Scientific fixture stdin done protocol and grace remain; successpath fixture exit0/domain beforeafter equality/original interruptedstate/readonlyPOST assertions unchanged.",
+      "important_semantics": "scientific_comparison_fixture.py lacks SIGTERM handler. Its stdin done/EOF path invokes Python finally restoring any held Run root and closing exact fixture schema. Immediate helper kill on stillclosing fixture can bypass that finally; do not shorten graceful stage."
+    }
+  ],
+  "exact_small_write_set": {
+    "requested_task_owner_files": [
+      "tests/browser_workspace_coordinator.cjs",
+      "tests/browser_run_phase_timings.cjs",
+      "tests/browser_scientific_comparison.cjs"
+    ],
+    "existing_helper": "tests/browser_owned_cleanup.cjs",
+    "helper_sha256": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+    "helper_change_required": false,
+    "product_or_python_fixture_change_required": false,
+    "root_already_owns": "tests/browser_workspace_publication.cjs repair; coordinator edit already observed in root102 worktree",
+    "adjacent_same_task_publication_owner": {
+      "path": "tests/browser_workspace_publication_lineage.cjs",
+      "line": 83,
+      "sha256": "212f21fd4f713320468e8966442f3f95ec3df836c3ac5ff8fee4e9c1ce1de401",
+      "finding": "Same immediateSIGTERM/rmSync pattern; include if root treats publication-family cleanup as one narrow change. No edit requested/performed by reviewer.",
+      "minimal_change": "Same helper import +asyncawaitcleanup before boundedrm; preserve finish/domain identity/lineage assertions."
+    }
+  },
+  "validation_recommendation_only": [
+    "Compare per-file main test body/assertions/accounting unchanged; restrict productiondiff tozero.",
+    "Existing helper controlled regression already covers delayed final write, TERM-resistant bounded kill, exited handles; helper source need not change.",
+    "Root may run affected publication/coordinator actual browser gates and downstream phase/scientific gates at their exact composed heads; this audit ran none."
+  ],
+  "evidence_limits": [
+    "Only publication ENOTEMPTY is root-reported observed CI failure. Other race findings derive from exact asyncprocess cleanup code, not fresh reproduced failures.",
+    "Helper joins only supplied owned ChildProcess handles; do not introduce whole-host signals/processgroups, schema guesses or unrelated worktree cleanup.",
+    "Do not weaken assertions, convert failed cleanup to pass or remove directory on helper failure; rejection should retain owned diagnostic path."
+  ],
+  "actions": "Read-only source/metadata audit; only this /tmp report written. No source edits, tests, browser/PG/compute, schema operations, remotes or deletion."
+}
