@@ -1,0 +1,45 @@
+{
+  "legacy_commit": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+  "legacy_schema": 3,
+  "execution": "real mesh integrity, no training",
+  "upgrade": {
+    "schema_version": 10,
+    "state": "completed",
+    "run_id": "fee1b4235b0241599379c9f2d58db9f0",
+    "artifacts": {
+      "validation-report.json": "6abf7dc996a8f91cdb932f7cdf3134d47168a1863c6deddbad94f4ca45f8db54",
+      "artifact-manifest.json": "4453fd428a4f032e321373d701da4feabaf4b0f008b3507fe9d4de1a6526aac5",
+      "release.zip": "d86366caeafcf2fc6895fb87a24466342f914e270d486f3a161f0b0e25748319"
+    }
+  },
+  "current_schema_restore": {
+    "schema_version": 10,
+    "state": "completed",
+    "run_id": "fee1b4235b0241599379c9f2d58db9f0",
+    "artifacts": {
+      "validation-report.json": "6abf7dc996a8f91cdb932f7cdf3134d47168a1863c6deddbad94f4ca45f8db54",
+      "artifact-manifest.json": "4453fd428a4f032e321373d701da4feabaf4b0f008b3507fe9d4de1a6526aac5",
+      "release.zip": "d86366caeafcf2fc6895fb87a24466342f914e270d486f3a161f0b0e25748319"
+    }
+  },
+  "schema3_restore_then_upgrade": {
+    "schema_version": 10,
+    "state": "completed",
+    "run_id": "fee1b4235b0241599379c9f2d58db9f0",
+    "artifacts": {
+      "validation-report.json": "6abf7dc996a8f91cdb932f7cdf3134d47168a1863c6deddbad94f4ca45f8db54",
+      "artifact-manifest.json": "4453fd428a4f032e321373d701da4feabaf4b0f008b3507fe9d4de1a6526aac5",
+      "release.zip": "d86366caeafcf2fc6895fb87a24466342f914e270d486f3a161f0b0e25748319"
+    }
+  },
+  "actual_legacy_startup_refusal": {
+    "legacy_schema_version": 3,
+    "outcome": "unsupported_current_schema",
+    "error": "Unsupported PostgreSQL catalog version or definition.",
+    "current_schema_version": 10,
+    "legacy_app_sha256": "c8f5bc913494e43f8e196d93f6e37cde3b9f6299358c74929c7f170090ec54a5",
+    "legacy_metadata_sha256": "2960b8b24de7ee0db79915d655256048f300d72288e7a0a0465b4b699bdd88de",
+    "raw_tables_sequences_files_unchanged": true
+  },
+  "original_backups_unchanged": true
+}
