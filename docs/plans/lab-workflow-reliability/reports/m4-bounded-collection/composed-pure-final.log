@@ -1,0 +1,16 @@
+test_all_existing_full_contracts_remain_equal (test_run_artifact_segments.ArtifactSegmentsTests.test_all_existing_full_contracts_remain_equal) ... ok
+test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) ... ok
+test_foreign_order_or_identity_is_not_correlated (test_run_artifact_segments.ArtifactSegmentsTests.test_foreign_order_or_identity_is_not_correlated) ... ok
+test_ordered_segments_and_typed_partial_failure (test_run_artifact_segments.ArtifactSegmentsTests.test_ordered_segments_and_typed_partial_failure) ... ok
+test_shutdown_cancel_and_deadline_discard_buffered_results (test_run_artifact_segments.ArtifactSegmentsTests.test_shutdown_cancel_and_deadline_discard_buffered_results) ... ok
+test_only_exact_whole_hash_receipts_are_comparable (test_benchmark_artifact_segments.PairedCollectionReportingTests.test_only_exact_whole_hash_receipts_are_comparable) ... ok
+test_partial_failure_or_service_error_does_not_fallback (test_benchmark_artifact_segments.PairedCollectionReportingTests.test_partial_failure_or_service_error_does_not_fallback) ... ok
+test_exact_reply_is_accepted_once (test_batch_client_correlation.BatchClientCorrelationTests.test_exact_reply_is_accepted_once) ... ok
+test_item_failure_is_returned_without_retry_or_fallback (test_batch_client_correlation.BatchClientCorrelationTests.test_item_failure_is_returned_without_retry_or_fallback) ... ok
+test_publication_catalog_is_checked_even_when_ref_echo_matches (test_batch_client_correlation.BatchClientCorrelationTests.test_publication_catalog_is_checked_even_when_ref_echo_matches) ... ok
+test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 5.240s
+
+OK

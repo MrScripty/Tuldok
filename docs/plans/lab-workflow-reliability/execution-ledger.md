@@ -456,3 +456,97 @@ claim. Candidate selection and any bounded batch reader remain a separate
 lead-owned admission after review; no cache is justified by submillisecond
 proof metadata reads. Actual installed-runtime mutation and candidate
 qualification remain pending.
+
+## 2026-10-19 — Bounded collection candidate checkpoint
+
+The lead independently accepted descriptive baseline07dde98 and admitted a new
+isolated bounded sequential read candidate from PR105 source2d8b7d7. Whole baseline
+history was normally merged as60861fe; no baseline ref/worktree changed. Added
+`runs.artifact_segments/1` for external Runs/attached Refs, bounded20 items/8 MiB/
+60 seconds, canonical readers, typed partial outcomes and current final delivery
+checks after serialization. Client class/CLI remain outside this worker's scope.
+
+Before-change witness ran five tests with missing-method errors/subtest errors;
+all 122 prior full contracts already matched. The initial implementation passed
+five pure cases in0.376s. The expanded eight-case actual PostgreSQL/neutral custody
+and pure group passed47.251s, zero skips, including actual late credential
+revocation and injected final transitive denial with no buffered bytes disclosed.
+Logs remain in `reports/m4-bounded-collection/`. This coherent checkpoint is for
+immutable backup/independent review; wider regressions, paired performance and
+candidate retention are pending. No improvement, cache, science or hosted pass
+is inferred.
+
+Frozen007e3de canonical reader regressions passed five cases in50.872 seconds,
+zero skips: real cold ordinary download/restart, actual >8 MiB recovered bounded
+segments with whole-scan tripwire, revocation during segment capture, prior
+publication contracts and exact evidence selector correlation. The independent
+reviewer found no blocking producer issue and independently passed five pure
+cases/122 full-contract equality; consumer request/configured-catalog correlation
+remains required. A two-artifact paired pilot passed actual normal and attached
+Ref whole-hash equality and exact own-schema cleanup. It is not final performance
+evidence. Two focused reporting tests reject a changed whole hash and all
+partial/service failures without fallback.
+
+The original before.log is retained byte-for-byte, including terminal trailing
+whitespace on line2 reported by cumulative cached-diff checking; that raw-evidence
+exception is not a source-whitespace pass. No failure log was rewritten.
+
+
+The complete same-head/catalog/inventory matrix at99741e5807e4260c58b53badafc5b6c549421645
+completed exit0 with54 pairs/108 arms in18 eligible fresh processes and six
+unavailable empty-history controls. Three first and six warm pairs per eligible
+cell retain all alternating orders/outliers. All whole hashes, accounting and
+original events match; both exact owned schemas and temporary directories were
+removed. CPU/RSS/I/O/HTTP/owner observations and raw receipts are retained in
+`reports/m4-bounded-collection/paired-99741e5/`. The start partially overlapped
+another agent's pure/oldCLI work for about15 seconds, apparently controls only;
+per-arm UTC starts are unavailable and no exclusive-host claim is made.
+
+All six median paired batch/individual ratios exceed1. One-item Run ratios are
+2.723/2.852 at histories8/55, twenty-item Run1.910/1.874; attached Ref ratios1.877
+(one) and1.034 (twenty), total history56. The request count reduction20 to1 did
+not demonstrate lower latency. Ordinary owner loads increased N to4N. This is an
+immutable negative candidate result, not a reason to weaken authorization.
+
+After full matrix archival, the lead admitted only a private external-only flag
+checked after the canonical load and exact-source deduplication independently
+inside each final-authority stage, keeping last-occurrence order (A,B,A→B,A).
+Every initial canonical read/auth, current transitive/attachment checks, final
+global checkpoints, caps, typed outcomes and whole-hash requirement remain.
+No loaded proof/authorization cache across stages/calls is admitted. Whole PR106
+composition precedes final refined qualification; the next performance window
+waits for the queued M5/M6 actual gates to finish.
+
+
+Implemented only the admitted Runs refinement. Three new before-change witnesses
+failed(two assertions/one missing-private-keyword error); the initial nine pure
+cases then passed0.363s. Expanded16-case qualification ran41.111s with15 passed
+and one new test-harness error: after proving HTTP409/noitems, the shutdown test
+indexed the established string error as an object. Only its assertion changed to
+the top-level code; the affected actual case then passed1/6.439s, zero skips.
+Both logs are retained. Production remained identical during that correction.
+Actual duplicate reads retain every canonical initial call, now three reads/five
+loads. Injected A/B/A authority loss refuses at both domain and post-serialization
+boundaries; duplicate late credential revocation/shutdown discard bytes. M1
+independently cleared the narrow source and passed all10 current pure cases.
+No wall-time improvement is inferred before new same-head paired measurements.
+
+
+The refined fixed-source98380228a7edb8eefb4715cba27ca76722756cf9 matrix completed
+exit0 with all54 pairs/108 arms,18 eligible processes and six empty-history
+unavailable controls. Both exact fresh schemas/temporary directories were removed;
+all whole hashes, events/accounting and source/harness identities match. All27
+twenty-artifact pairs were faster: median paired ratios0.700/0.695 for Run
+histories8/55 and0.710 for attached Ref at total history56. First n3 medians are
+0.714/0.700/0.710, warm n6 medians0.662/0.649/0.712. One-artifact medians still
+regress2.717/2.577/2.123. No observations/outliers were removed. Raw data, all
+first/warm/order strata and owner/resource distributions are retained under
+`reports/m4-bounded-collection/paired-9838022/`.
+
+The lead admitted scoped retention for explicit bounded many-small twenty-item
+collection on this evidence. Default individual collection stays unchanged;
+performance for2–19 items, other sizes, remote/scientific workloads or the
+separately owned facade is unmeasured. No generic workflow/science gain, cache,
+automatic threshold or full M4/T5 acceptance follows. The original negative997
+matrix remains immutable. The qualified source is983, even when report-only
+normal compositions later advance the branch tip.

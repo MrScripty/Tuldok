@@ -1,0 +1,7172 @@
+{
+  "arm_resource_distributions": [
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 688,
+        "median": 688,
+        "min": 688,
+        "n": 9,
+        "p90_nearest_rank": 688
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 438441,
+        "median": 438441,
+        "min": 438441,
+        "n": 9,
+        "p90_nearest_rank": 438441
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 109.401967,
+          "median": 86.897697,
+          "min": 71.950001,
+          "n": 9,
+          "p90_nearest_rank": 109.401967
+        },
+        "run_publication.result": {
+          "max": 69.912884,
+          "median": 55.776065,
+          "min": 47.201505,
+          "n": 9,
+          "p90_nearest_rank": 69.912884
+        },
+        "runs._load": {
+          "max": 181.064073,
+          "median": 133.221115,
+          "min": 124.892698,
+          "n": 9,
+          "p90_nearest_rank": 181.064073
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66180,
+        "median": 65956,
+        "min": 65508,
+        "n": 9,
+        "p90_nearest_rank": 66180
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 5,
+          "median": 5,
+          "min": 5,
+          "n": 9,
+          "p90_nearest_rank": 5
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 332817,
+          "min": 332817,
+          "n": 9,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 9,
+          "min": 9,
+          "n": 9,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 783.0729999999986,
+        "median": 478.6990000000003,
+        "min": 430.3690000000004,
+        "n": 9,
+        "p90_nearest_rank": 783.0729999999986
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66180,
+        "median": 65956,
+        "min": 65508,
+        "n": 9,
+        "p90_nearest_rank": 66180
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 824.60564,
+        "median": 495.423508,
+        "min": 447.164447,
+        "n": 9,
+        "p90_nearest_rank": 824.60564
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 612,
+        "median": 612,
+        "min": 612,
+        "n": 9,
+        "p90_nearest_rank": 612
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437835,
+        "median": 437835,
+        "min": 437835,
+        "n": 9,
+        "p90_nearest_rank": 437835
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 130.538598,
+          "median": 102.995013,
+          "min": 79.688868,
+          "n": 9,
+          "p90_nearest_rank": 130.538598
+        },
+        "run_publication.result": {
+          "max": 103.349356,
+          "median": 65.172775,
+          "min": 50.107216,
+          "n": 9,
+          "p90_nearest_rank": 103.349356
+        },
+        "runs._load": {
+          "max": 103.960719,
+          "median": 83.056749,
+          "min": 71.892096,
+          "n": 9,
+          "p90_nearest_rank": 103.960719
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66180,
+        "median": 65956,
+        "min": 65532,
+        "n": 9,
+        "p90_nearest_rank": 66180
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 9,
+          "p90_nearest_rank": 3
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 332817,
+          "min": 332817,
+          "n": 9,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 9,
+          "min": 9,
+          "n": 9,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 355.33500000000055,
+        "median": 265.2000000000001,
+        "min": 207.8149999999983,
+        "n": 9,
+        "p90_nearest_rank": 355.33500000000055
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66180,
+        "median": 65956,
+        "min": 65532,
+        "n": 9,
+        "p90_nearest_rank": 66180
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 362.96574,
+        "median": 271.35374,
+        "min": 212.881683,
+        "n": 9,
+        "p90_nearest_rank": 362.96574
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 688,
+        "median": 688,
+        "min": 688,
+        "n": 3,
+        "p90_nearest_rank": 688
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 438441,
+        "median": 438441,
+        "min": 438441,
+        "n": 3,
+        "p90_nearest_rank": 438441
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 86.897697,
+          "median": 79.419509,
+          "min": 77.132288,
+          "n": 3,
+          "p90_nearest_rank": 86.897697
+        },
+        "run_publication.result": {
+          "max": 53.621003,
+          "median": 50.794715,
+          "min": 49.093722,
+          "n": 3,
+          "p90_nearest_rank": 53.621003
+        },
+        "runs._load": {
+          "max": 162.682348,
+          "median": 131.48011,
+          "min": 124.892698,
+          "n": 3,
+          "p90_nearest_rank": 162.682348
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66180,
+        "median": 65956,
+        "min": 65508,
+        "n": 3,
+        "p90_nearest_rank": 66180
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 5,
+          "median": 5,
+          "min": 5,
+          "n": 3,
+          "p90_nearest_rank": 5
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 332817,
+          "min": 332817,
+          "n": 3,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 9,
+          "min": 9,
+          "n": 3,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 767.0439999999994,
+        "median": 478.6990000000003,
+        "min": 430.3690000000004,
+        "n": 3,
+        "p90_nearest_rank": 767.0439999999994
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66180,
+        "median": 65956,
+        "min": 65508,
+        "n": 3,
+        "p90_nearest_rank": 66180
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 797.651577,
+        "median": 495.423508,
+        "min": 447.164447,
+        "n": 3,
+        "p90_nearest_rank": 797.651577
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 612,
+        "median": 612,
+        "min": 612,
+        "n": 3,
+        "p90_nearest_rank": 612
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437835,
+        "median": 437835,
+        "min": 437835,
+        "n": 3,
+        "p90_nearest_rank": 437835
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 130.538598,
+          "median": 111.667539,
+          "min": 79.688868,
+          "n": 3,
+          "p90_nearest_rank": 130.538598
+        },
+        "run_publication.result": {
+          "max": 103.349356,
+          "median": 86.298703,
+          "min": 50.107216,
+          "n": 3,
+          "p90_nearest_rank": 103.349356
+        },
+        "runs._load": {
+          "max": 74.668909,
+          "median": 74.002648,
+          "min": 71.892096,
+          "n": 3,
+          "p90_nearest_rank": 74.668909
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66176,
+        "median": 65952,
+        "min": 65532,
+        "n": 3,
+        "p90_nearest_rank": 66176
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 3,
+          "p90_nearest_rank": 3
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 452227,
+          "min": 332817,
+          "n": 3,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 11,
+          "min": 9,
+          "n": 3,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 282.0489999999986,
+        "median": 256.4679999999986,
+        "min": 207.8149999999983,
+        "n": 3,
+        "p90_nearest_rank": 282.0489999999986
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66176,
+        "median": 65952,
+        "min": 65532,
+        "n": 3,
+        "p90_nearest_rank": 66176
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 290.736735,
+        "median": 265.185454,
+        "min": 212.881683,
+        "n": 3,
+        "p90_nearest_rank": 290.736735
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 688,
+        "median": 688.0,
+        "min": 688,
+        "n": 6,
+        "p90_nearest_rank": 688
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 438441,
+        "median": 438441.0,
+        "min": 438441,
+        "n": 6,
+        "p90_nearest_rank": 438441
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 109.401967,
+          "median": 88.677371,
+          "min": 71.950001,
+          "n": 6,
+          "p90_nearest_rank": 109.401967
+        },
+        "run_publication.result": {
+          "max": 69.912884,
+          "median": 58.609676,
+          "min": 47.201505,
+          "n": 6,
+          "p90_nearest_rank": 69.912884
+        },
+        "runs._load": {
+          "max": 181.064073,
+          "median": 138.626391,
+          "min": 127.376411,
+          "n": 6,
+          "p90_nearest_rank": 181.064073
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66180,
+        "median": 65956.0,
+        "min": 65548,
+        "n": 6,
+        "p90_nearest_rank": 66180
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 5,
+          "median": 5.0,
+          "min": 5,
+          "n": 6,
+          "p90_nearest_rank": 5
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 332817,
+          "median": 332817.0,
+          "min": 332817,
+          "n": 6,
+          "p90_nearest_rank": 332817
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9.0,
+          "min": 9,
+          "n": 6,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 783.0729999999986,
+        "median": 473.6959999999991,
+        "min": 440.4140000000004,
+        "n": 6,
+        "p90_nearest_rank": 783.0729999999986
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66180,
+        "median": 65956.0,
+        "min": 65548,
+        "n": 6,
+        "p90_nearest_rank": 66180
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 824.60564,
+        "median": 491.6428895,
+        "min": 456.009429,
+        "n": 6,
+        "p90_nearest_rank": 824.60564
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 612,
+        "median": 612.0,
+        "min": 612,
+        "n": 6,
+        "p90_nearest_rank": 612
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437835,
+        "median": 437835.0,
+        "min": 437835,
+        "n": 6,
+        "p90_nearest_rank": 437835
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 110.986529,
+          "median": 97.92133799999999,
+          "min": 82.049163,
+          "n": 6,
+          "p90_nearest_rank": 110.986529
+        },
+        "run_publication.result": {
+          "max": 76.676662,
+          "median": 64.8829165,
+          "min": 53.126355,
+          "n": 6,
+          "p90_nearest_rank": 76.676662
+        },
+        "runs._load": {
+          "max": 103.960719,
+          "median": 89.82420350000001,
+          "min": 74.99908,
+          "n": 6,
+          "p90_nearest_rank": 103.960719
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66180,
+        "median": 65956.0,
+        "min": 65532,
+        "n": 6,
+        "p90_nearest_rank": 66180
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3.0,
+          "min": 3,
+          "n": 6,
+          "p90_nearest_rank": 3
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 332817,
+          "median": 332817.0,
+          "min": 332817,
+          "n": 6,
+          "p90_nearest_rank": 332817
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9.0,
+          "min": 9,
+          "n": 6,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 355.33500000000055,
+        "median": 267.227,
+        "min": 235.25899999999922,
+        "n": 6,
+        "p90_nearest_rank": 355.33500000000055
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66180,
+        "median": 65956.0,
+        "min": 65532,
+        "n": 6,
+        "p90_nearest_rank": 66180
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 362.96574,
+        "median": 275.0371295,
+        "min": 242.997687,
+        "n": 6,
+        "p90_nearest_rank": 362.96574
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 13541,
+        "median": 13541,
+        "min": 13541,
+        "n": 9,
+        "p90_nearest_rank": 13541
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 466753,
+        "median": 466753,
+        "min": 466753,
+        "n": 9,
+        "p90_nearest_rank": 466753
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1851.40031,
+          "median": 1672.114012,
+          "min": 1511.650947,
+          "n": 9,
+          "p90_nearest_rank": 1851.40031
+        },
+        "run_publication.result": {
+          "max": 1217.48979,
+          "median": 1119.522606,
+          "min": 1006.973503,
+          "n": 9,
+          "p90_nearest_rank": 1217.48979
+        },
+        "runs._load": {
+          "max": 2864.910306,
+          "median": 2677.080562,
+          "min": 2402.394015,
+          "n": 9,
+          "p90_nearest_rank": 2864.910306
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 68316,
+        "median": 68316,
+        "min": 65788,
+        "n": 9,
+        "p90_nearest_rank": 68316
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 100,
+          "median": 100,
+          "min": 100,
+          "n": 9,
+          "p90_nearest_rank": 100
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704202,
+          "median": 584793,
+          "min": 584792,
+          "n": 9,
+          "p90_nearest_rank": 704202
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 106,
+          "median": 104,
+          "min": 104,
+          "n": 9,
+          "p90_nearest_rank": 106
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3261.7050000000013,
+        "median": 3091.721999999999,
+        "min": 2732.1879999999996,
+        "n": 9,
+        "p90_nearest_rank": 3261.7050000000013
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67372,
+        "median": 66984,
+        "min": 65788,
+        "n": 9,
+        "p90_nearest_rank": 67372
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3548.037137,
+        "median": 3317.873157,
+        "min": 3003.050628,
+        "n": 9,
+        "p90_nearest_rank": 3548.037137
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 12220,
+        "median": 12220,
+        "min": 12220,
+        "n": 9,
+        "p90_nearest_rank": 12220
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 9,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 455440,
+        "median": 455440,
+        "min": 455440,
+        "n": 9,
+        "p90_nearest_rank": 455440
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 2417.395141,
+          "median": 1799.830293,
+          "min": 1688.221564,
+          "n": 9,
+          "p90_nearest_rank": 2417.395141
+        },
+        "run_publication.result": {
+          "max": 1665.022265,
+          "median": 1234.420312,
+          "min": 1144.39982,
+          "n": 9,
+          "p90_nearest_rank": 1665.022265
+        },
+        "runs._load": {
+          "max": 2244.805316,
+          "median": 1692.429125,
+          "min": 1584.486984,
+          "n": 9,
+          "p90_nearest_rank": 2244.805316
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 68316,
+        "median": 68228,
+        "min": 66824,
+        "n": 9,
+        "p90_nearest_rank": 68316
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 60,
+          "median": 60,
+          "min": 60,
+          "n": 9,
+          "p90_nearest_rank": 60
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704204,
+          "median": 584793,
+          "min": 584792,
+          "n": 9,
+          "p90_nearest_rank": 704204
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 107,
+          "median": 104,
+          "min": 104,
+          "n": 9,
+          "p90_nearest_rank": 107
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3771.5690000000022,
+        "median": 2985.637,
+        "min": 2778.3789999999976,
+        "n": 9,
+        "p90_nearest_rank": 3771.5690000000022
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67372,
+        "median": 66420,
+        "min": 66088,
+        "n": 9,
+        "p90_nearest_rank": 67372
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 4078.352548,
+        "median": 3160.250545,
+        "min": 2956.285783,
+        "n": 9,
+        "p90_nearest_rank": 4078.352548
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 13541,
+        "median": 13541,
+        "min": 13541,
+        "n": 3,
+        "p90_nearest_rank": 13541
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 466753,
+        "median": 466753,
+        "min": 466753,
+        "n": 3,
+        "p90_nearest_rank": 466753
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1851.40031,
+          "median": 1672.114012,
+          "min": 1670.519759,
+          "n": 3,
+          "p90_nearest_rank": 1851.40031
+        },
+        "run_publication.result": {
+          "max": 1217.48979,
+          "median": 1119.522606,
+          "min": 1086.174164,
+          "n": 3,
+          "p90_nearest_rank": 1217.48979
+        },
+        "runs._load": {
+          "max": 2864.910306,
+          "median": 2706.089096,
+          "min": 2677.080562,
+          "n": 3,
+          "p90_nearest_rank": 2864.910306
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 68316,
+        "median": 68268,
+        "min": 65788,
+        "n": 3,
+        "p90_nearest_rank": 68316
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 100,
+          "median": 100,
+          "min": 100,
+          "n": 3,
+          "p90_nearest_rank": 100
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704202,
+          "median": 584793,
+          "min": 584792,
+          "n": 3,
+          "p90_nearest_rank": 704202
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 106,
+          "median": 104,
+          "min": 104,
+          "n": 3,
+          "p90_nearest_rank": 106
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3255.3169999999986,
+        "median": 3132.985,
+        "min": 3077.1359999999986,
+        "n": 3,
+        "p90_nearest_rank": 3255.3169999999986
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67036,
+        "median": 66984,
+        "min": 65788,
+        "n": 3,
+        "p90_nearest_rank": 67036
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3548.037137,
+        "median": 3337.631131,
+        "min": 3317.873157,
+        "n": 3,
+        "p90_nearest_rank": 3548.037137
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 12220,
+        "median": 12220,
+        "min": 12220,
+        "n": 3,
+        "p90_nearest_rank": 12220
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 3,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 455440,
+        "median": 455440,
+        "min": 455440,
+        "n": 3,
+        "p90_nearest_rank": 455440
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 2045.59342,
+          "median": 1799.830293,
+          "min": 1762.22836,
+          "n": 3,
+          "p90_nearest_rank": 2045.59342
+        },
+        "run_publication.result": {
+          "max": 1351.585126,
+          "median": 1234.420312,
+          "min": 1186.222432,
+          "n": 3,
+          "p90_nearest_rank": 1351.585126
+        },
+        "runs._load": {
+          "max": 1853.82024,
+          "median": 1692.429125,
+          "min": 1598.07539,
+          "n": 3,
+          "p90_nearest_rank": 1853.82024
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67236,
+        "median": 66884,
+        "min": 66824,
+        "n": 3,
+        "p90_nearest_rank": 67236
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 60,
+          "median": 60,
+          "min": 60,
+          "n": 3,
+          "p90_nearest_rank": 60
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704204,
+          "median": 704203,
+          "min": 584793,
+          "n": 3,
+          "p90_nearest_rank": 704204
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 107,
+          "median": 107,
+          "min": 105,
+          "n": 3,
+          "p90_nearest_rank": 107
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3219.28,
+        "median": 2985.637,
+        "min": 2868.156999999999,
+        "n": 3,
+        "p90_nearest_rank": 3219.28
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67236,
+        "median": 66420,
+        "min": 66088,
+        "n": 3,
+        "p90_nearest_rank": 67236
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3515.84957,
+        "median": 3160.250545,
+        "min": 3051.314098,
+        "n": 3,
+        "p90_nearest_rank": 3515.84957
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 13541,
+        "median": 13541.0,
+        "min": 13541,
+        "n": 6,
+        "p90_nearest_rank": 13541
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 466753,
+        "median": 466753.0,
+        "min": 466753,
+        "n": 6,
+        "p90_nearest_rank": 466753
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1804.668649,
+          "median": 1689.991595,
+          "min": 1511.650947,
+          "n": 6,
+          "p90_nearest_rank": 1804.668649
+        },
+        "run_publication.result": {
+          "max": 1171.352502,
+          "median": 1100.2362195,
+          "min": 1006.973503,
+          "n": 6,
+          "p90_nearest_rank": 1171.352502
+        },
+        "runs._load": {
+          "max": 2850.04827,
+          "median": 2668.0981125,
+          "min": 2402.394015,
+          "n": 6,
+          "p90_nearest_rank": 2850.04827
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 68316,
+        "median": 68316.0,
+        "min": 68212,
+        "n": 6,
+        "p90_nearest_rank": 68316
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 100,
+          "median": 100.0,
+          "min": 100,
+          "n": 6,
+          "p90_nearest_rank": 100
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 584793,
+          "median": 584792.5,
+          "min": 584792,
+          "n": 6,
+          "p90_nearest_rank": 584793
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 104,
+          "median": 104.0,
+          "min": 104,
+          "n": 6,
+          "p90_nearest_rank": 104
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3261.7050000000013,
+        "median": 3059.5234999999984,
+        "min": 2732.1879999999996,
+        "n": 6,
+        "p90_nearest_rank": 3261.7050000000013
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67372,
+        "median": 66996.0,
+        "min": 66756,
+        "n": 6,
+        "p90_nearest_rank": 67372
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3492.250595,
+        "median": 3268.029292,
+        "min": 3003.050628,
+        "n": 6,
+        "p90_nearest_rank": 3492.250595
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 12220,
+        "median": 12220.0,
+        "min": 12220,
+        "n": 6,
+        "p90_nearest_rank": 12220
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20.0,
+        "min": 20,
+        "n": 6,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 455440,
+        "median": 455440.0,
+        "min": 455440,
+        "n": 6,
+        "p90_nearest_rank": 455440
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 2417.395141,
+          "median": 1894.358666,
+          "min": 1688.221564,
+          "n": 6,
+          "p90_nearest_rank": 2417.395141
+        },
+        "run_publication.result": {
+          "max": 1665.022265,
+          "median": 1316.7415885,
+          "min": 1144.39982,
+          "n": 6,
+          "p90_nearest_rank": 1665.022265
+        },
+        "runs._load": {
+          "max": 2244.805316,
+          "median": 1774.1910165,
+          "min": 1584.486984,
+          "n": 6,
+          "p90_nearest_rank": 2244.805316
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 68316,
+        "median": 68316.0,
+        "min": 66840,
+        "n": 6,
+        "p90_nearest_rank": 68316
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 60,
+          "median": 60.0,
+          "min": 60,
+          "n": 6,
+          "p90_nearest_rank": 60
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 584793,
+          "median": 584793.0,
+          "min": 584792,
+          "n": 6,
+          "p90_nearest_rank": 584793
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 104,
+          "median": 104.0,
+          "min": 104,
+          "n": 6,
+          "p90_nearest_rank": 104
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3771.5690000000022,
+        "median": 3154.4029999999993,
+        "min": 2778.3789999999976,
+        "n": 6,
+        "p90_nearest_rank": 3771.5690000000022
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67372,
+        "median": 66386.0,
+        "min": 66088,
+        "n": 6,
+        "p90_nearest_rank": 67372
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 4078.352548,
+        "median": 3368.544958,
+        "min": 2956.285783,
+        "n": 6,
+        "p90_nearest_rank": 4078.352548
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 9,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 9,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.069376,
+          "median": 0.507467,
+          "min": 0.382028,
+          "n": 9,
+          "p90_nearest_rank": 1.069376
+        },
+        "runs._load": {
+          "max": 331.014677,
+          "median": 120.721725,
+          "min": 95.093051,
+          "n": 9,
+          "p90_nearest_rank": 331.014677
+        },
+        "runs.artifact_segment": {
+          "max": 217.735373,
+          "median": 28.492759,
+          "min": 27.000599,
+          "n": 9,
+          "p90_nearest_rank": 217.735373
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66260,
+        "median": 66240,
+        "min": 65700,
+        "n": 9,
+        "p90_nearest_rank": 66260
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 4,
+          "median": 4,
+          "min": 4,
+          "n": 9,
+          "p90_nearest_rank": 4
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1668.334000000001,
+        "median": 438.05699999999916,
+        "min": 413.93899999999917,
+        "n": 9,
+        "p90_nearest_rank": 1668.334000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66068,
+        "median": 66048,
+        "min": 65508,
+        "n": 9,
+        "p90_nearest_rank": 66068
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1809.133622,
+        "median": 471.290419,
+        "min": 427.938519,
+        "n": 9,
+        "p90_nearest_rank": 1809.133622
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 9,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 9,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 39.933772,
+          "median": 0.850085,
+          "min": 0.408858,
+          "n": 9,
+          "p90_nearest_rank": 39.933772
+        },
+        "runs._load": {
+          "max": 489.605813,
+          "median": 27.588298,
+          "min": 21.640133,
+          "n": 9,
+          "p90_nearest_rank": 489.605813
+        },
+        "runs.artifact_segment": {
+          "max": 505.345493,
+          "median": 35.822732,
+          "min": 26.477737,
+          "n": 9,
+          "p90_nearest_rank": 505.345493
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66260,
+        "median": 66240,
+        "min": 65700,
+        "n": 9,
+        "p90_nearest_rank": 66260
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 660.6109999999999,
+        "median": 170.98000000000096,
+        "min": 151.7970000000004,
+        "n": 9,
+        "p90_nearest_rank": 660.6109999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66068,
+        "median": 66048,
+        "min": 65508,
+        "n": 9,
+        "p90_nearest_rank": 66068
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 666.873873,
+        "median": 180.27113,
+        "min": 156.393045,
+        "n": 9,
+        "p90_nearest_rank": 666.873873
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 3,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 3,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.064358,
+          "median": 0.395224,
+          "min": 0.382028,
+          "n": 3,
+          "p90_nearest_rank": 1.064358
+        },
+        "runs._load": {
+          "max": 132.912088,
+          "median": 108.147116,
+          "min": 100.924057,
+          "n": 3,
+          "p90_nearest_rank": 132.912088
+        },
+        "runs.artifact_segment": {
+          "max": 28.492759,
+          "median": 27.472965,
+          "min": 27.342351,
+          "n": 3,
+          "p90_nearest_rank": 28.492759
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66260,
+        "median": 66240,
+        "min": 65700,
+        "n": 3,
+        "p90_nearest_rank": 66260
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 4,
+          "median": 4,
+          "min": 4,
+          "n": 3,
+          "p90_nearest_rank": 4
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1297.3480000000004,
+        "median": 424.728,
+        "min": 413.93899999999917,
+        "n": 3,
+        "p90_nearest_rank": 1297.3480000000004
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66068,
+        "median": 66048,
+        "min": 65508,
+        "n": 3,
+        "p90_nearest_rank": 66068
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1333.420553,
+        "median": 435.462606,
+        "min": 432.223129,
+        "n": 3,
+        "p90_nearest_rank": 1333.420553
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 3,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 3,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 39.933772,
+          "median": 36.968548,
+          "min": 1.775488,
+          "n": 3,
+          "p90_nearest_rank": 39.933772
+        },
+        "runs._load": {
+          "max": 489.605813,
+          "median": 22.489513,
+          "min": 21.640133,
+          "n": 3,
+          "p90_nearest_rank": 489.605813
+        },
+        "runs.artifact_segment": {
+          "max": 505.345493,
+          "median": 64.776551,
+          "min": 62.07156,
+          "n": 3,
+          "p90_nearest_rank": 505.345493
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66260,
+        "median": 66240,
+        "min": 65700,
+        "n": 3,
+        "p90_nearest_rank": 66260
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 449538,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 660.6109999999999,
+        "median": 192.26000000000022,
+        "min": 185.17399999999986,
+        "n": 3,
+        "p90_nearest_rank": 660.6109999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66060,
+        "median": 66040,
+        "min": 65508,
+        "n": 3,
+        "p90_nearest_rank": 66060
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 666.873873,
+        "median": 194.513086,
+        "min": 187.819954,
+        "n": 3,
+        "p90_nearest_rank": 666.873873
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228.0,
+        "min": 228,
+        "n": 6,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478.0,
+        "min": 437478,
+        "n": 6,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.069376,
+          "median": 0.623865,
+          "min": 0.385241,
+          "n": 6,
+          "p90_nearest_rank": 1.069376
+        },
+        "runs._load": {
+          "max": 331.014677,
+          "median": 130.0077375,
+          "min": 95.093051,
+          "n": 6,
+          "p90_nearest_rank": 331.014677
+        },
+        "runs.artifact_segment": {
+          "max": 217.735373,
+          "median": 29.800896,
+          "min": 27.000599,
+          "n": 6,
+          "p90_nearest_rank": 217.735373
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66260,
+        "median": 66240.0,
+        "min": 65700,
+        "n": 6,
+        "p90_nearest_rank": 66260
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 4,
+          "median": 4.0,
+          "min": 4,
+          "n": 6,
+          "p90_nearest_rank": 4
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330128,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330128
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1668.334000000001,
+        "median": 440.4404999999997,
+        "min": 416.1360000000005,
+        "n": 6,
+        "p90_nearest_rank": 1668.334000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66068,
+        "median": 66048.0,
+        "min": 65508,
+        "n": 6,
+        "p90_nearest_rank": 66068
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1809.133622,
+        "median": 481.7169105,
+        "min": 427.938519,
+        "n": 6,
+        "p90_nearest_rank": 1809.133622
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116.0,
+        "min": 116,
+        "n": 6,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332.0,
+        "min": 437332,
+        "n": 6,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.938347,
+          "median": 0.6224845,
+          "min": 0.408858,
+          "n": 6,
+          "p90_nearest_rank": 0.938347
+        },
+        "runs._load": {
+          "max": 49.424531,
+          "median": 28.3025435,
+          "min": 22.401017,
+          "n": 6,
+          "p90_nearest_rank": 49.424531
+        },
+        "runs.artifact_segment": {
+          "max": 54.045818,
+          "median": 31.6555015,
+          "min": 26.477737,
+          "n": 6,
+          "p90_nearest_rank": 54.045818
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66260,
+        "median": 66240.0,
+        "min": 65700,
+        "n": 6,
+        "p90_nearest_rank": 66260
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330128,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330128
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 178.70599999999885,
+        "median": 155.00049999999987,
+        "min": 151.7970000000004,
+        "n": 6,
+        "p90_nearest_rank": 178.70599999999885
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66068,
+        "median": 66048.0,
+        "min": 65508,
+        "n": 6,
+        "p90_nearest_rank": 66068
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 182.745683,
+        "median": 158.585877,
+        "min": 156.393045,
+        "n": 6,
+        "p90_nearest_rank": 182.745683
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 9,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 9,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 2.705781,
+          "median": 0.732297,
+          "min": 0.344825,
+          "n": 9,
+          "p90_nearest_rank": 2.705781
+        },
+        "runs._load": {
+          "max": 146.118951,
+          "median": 102.653584,
+          "min": 86.240199,
+          "n": 9,
+          "p90_nearest_rank": 146.118951
+        },
+        "runs.artifact_segment": {
+          "max": 60.570087,
+          "median": 28.448803,
+          "min": 22.63644,
+          "n": 9,
+          "p90_nearest_rank": 60.570087
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 66280,
+        "min": 65760,
+        "n": 9,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 4,
+          "median": 4,
+          "min": 4,
+          "n": 9,
+          "p90_nearest_rank": 4
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 476.3960000000009,
+        "median": 434.3970000000005,
+        "min": 394.547999999999,
+        "n": 9,
+        "p90_nearest_rank": 476.3960000000009
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66052,
+        "median": 66036,
+        "min": 65548,
+        "n": 9,
+        "p90_nearest_rank": 66052
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 506.465379,
+        "median": 446.967415,
+        "min": 408.999898,
+        "n": 9,
+        "p90_nearest_rank": 506.465379
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 9,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 9,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 38.228182,
+          "median": 0.407843,
+          "min": 0.366793,
+          "n": 9,
+          "p90_nearest_rank": 38.228182
+        },
+        "runs._load": {
+          "max": 29.232261,
+          "median": 25.095953,
+          "min": 21.736863,
+          "n": 9,
+          "p90_nearest_rank": 29.232261
+        },
+        "runs.artifact_segment": {
+          "max": 67.524458,
+          "median": 29.370391,
+          "min": 25.932342,
+          "n": 9,
+          "p90_nearest_rank": 67.524458
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 66280,
+        "min": 65760,
+        "n": 9,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 205.5500000000006,
+        "median": 150.76299999999998,
+        "min": 138.13200000000057,
+        "n": 9,
+        "p90_nearest_rank": 205.5500000000006
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66052,
+        "median": 66036,
+        "min": 65548,
+        "n": 9,
+        "p90_nearest_rank": 66052
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 210.065617,
+        "median": 153.151827,
+        "min": 140.145281,
+        "n": 9,
+        "p90_nearest_rank": 210.065617
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 3,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 3,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.802535,
+          "median": 0.469981,
+          "min": 0.391996,
+          "n": 3,
+          "p90_nearest_rank": 0.802535
+        },
+        "runs._load": {
+          "max": 113.119493,
+          "median": 100.075759,
+          "min": 86.240199,
+          "n": 3,
+          "p90_nearest_rank": 113.119493
+        },
+        "runs.artifact_segment": {
+          "max": 28.448803,
+          "median": 26.569624,
+          "min": 22.63644,
+          "n": 3,
+          "p90_nearest_rank": 28.448803
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 66280,
+        "min": 65760,
+        "n": 3,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 4,
+          "median": 4,
+          "min": 4,
+          "n": 3,
+          "p90_nearest_rank": 4
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 471.88400000000007,
+        "median": 405.7330000000004,
+        "min": 394.547999999999,
+        "n": 3,
+        "p90_nearest_rank": 471.88400000000007
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66052,
+        "median": 66036,
+        "min": 65548,
+        "n": 3,
+        "p90_nearest_rank": 66052
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 494.711433,
+        "median": 417.067047,
+        "min": 408.999898,
+        "n": 3,
+        "p90_nearest_rank": 494.711433
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 3,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 3,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 38.228182,
+          "median": 29.204402,
+          "min": 0.366793,
+          "n": 3,
+          "p90_nearest_rank": 38.228182
+        },
+        "runs._load": {
+          "max": 27.679746,
+          "median": 23.540689,
+          "min": 23.392091,
+          "n": 3,
+          "p90_nearest_rank": 27.679746
+        },
+        "runs.artifact_segment": {
+          "max": 67.524458,
+          "median": 59.95359,
+          "min": 25.957821,
+          "n": 3,
+          "p90_nearest_rank": 67.524458
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 66280,
+        "min": 65760,
+        "n": 3,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 449538,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 205.5500000000006,
+        "median": 183.89499999999958,
+        "min": 138.13200000000057,
+        "n": 3,
+        "p90_nearest_rank": 205.5500000000006
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66048,
+        "median": 66032,
+        "min": 65548,
+        "n": 3,
+        "p90_nearest_rank": 66048
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 210.065617,
+        "median": 187.489229,
+        "min": 140.474403,
+        "n": 3,
+        "p90_nearest_rank": 210.065617
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228.0,
+        "min": 228,
+        "n": 6,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478.0,
+        "min": 437478,
+        "n": 6,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 2.705781,
+          "median": 0.760591,
+          "min": 0.344825,
+          "n": 6,
+          "p90_nearest_rank": 2.705781
+        },
+        "runs._load": {
+          "max": 146.118951,
+          "median": 103.392867,
+          "min": 95.526106,
+          "n": 6,
+          "p90_nearest_rank": 146.118951
+        },
+        "runs.artifact_segment": {
+          "max": 60.570087,
+          "median": 31.4264235,
+          "min": 23.789826,
+          "n": 6,
+          "p90_nearest_rank": 60.570087
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 66280.0,
+        "min": 65760,
+        "n": 6,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 4,
+          "median": 4.0,
+          "min": 4,
+          "n": 6,
+          "p90_nearest_rank": 4
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330128,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330128
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 476.3960000000009,
+        "median": 439.4645000000001,
+        "min": 410.0429999999986,
+        "n": 6,
+        "p90_nearest_rank": 476.3960000000009
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66052,
+        "median": 66038.0,
+        "min": 65564,
+        "n": 6,
+        "p90_nearest_rank": 66052
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 506.465379,
+        "median": 451.209482,
+        "min": 419.150393,
+        "n": 6,
+        "p90_nearest_rank": 506.465379
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116.0,
+        "min": 116,
+        "n": 6,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332.0,
+        "min": 437332,
+        "n": 6,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.460751,
+          "median": 0.406698,
+          "min": 0.367749,
+          "n": 6,
+          "p90_nearest_rank": 1.460751
+        },
+        "runs._load": {
+          "max": 29.232261,
+          "median": 25.133184,
+          "min": 21.736863,
+          "n": 6,
+          "p90_nearest_rank": 29.232261
+        },
+        "runs.artifact_segment": {
+          "max": 33.350724,
+          "median": 28.5544665,
+          "min": 25.932342,
+          "n": 6,
+          "p90_nearest_rank": 33.350724
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 66280.0,
+        "min": 65760,
+        "n": 6,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330128,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330128
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 160.5890000000005,
+        "median": 148.0930000000008,
+        "min": 138.13800000000143,
+        "n": 6,
+        "p90_nearest_rank": 160.5890000000005
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66052,
+        "median": 66036.0,
+        "min": 65548,
+        "n": 6,
+        "p90_nearest_rank": 66052
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 163.71262,
+        "median": 152.2893215,
+        "min": 140.145281,
+        "n": 6,
+        "p90_nearest_rank": 163.71262
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 9,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 9,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 39.269965,
+          "median": 16.451326,
+          "min": 14.818886,
+          "n": 9,
+          "p90_nearest_rank": 39.269965
+        },
+        "runs._load": {
+          "max": 4813.914704,
+          "median": 2313.129687,
+          "min": 2087.30283,
+          "n": 9,
+          "p90_nearest_rank": 4813.914704
+        },
+        "runs.artifact_segment": {
+          "max": 1504.560024,
+          "median": 647.792265,
+          "min": 533.782704,
+          "n": 9,
+          "p90_nearest_rank": 1504.560024
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 69000,
+        "median": 67476,
+        "min": 66264,
+        "n": 9,
+        "p90_nearest_rank": 69000
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 80,
+          "median": 80,
+          "min": 80,
+          "n": 9,
+          "p90_nearest_rank": 80
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417053,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 5271.585000000001,
+        "median": 2739.563999999999,
+        "min": 2445.682,
+        "n": 9,
+        "p90_nearest_rank": 5271.585000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67788,
+        "median": 66776,
+        "min": 65192,
+        "n": 9,
+        "p90_nearest_rank": 67788
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 6036.909832,
+        "median": 3083.578271,
+        "min": 2609.106162,
+        "n": 9,
+        "p90_nearest_rank": 6036.909832
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 9,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 9,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 9,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 58.748669,
+          "median": 21.15814,
+          "min": 15.081902,
+          "n": 9,
+          "p90_nearest_rank": 58.748669
+        },
+        "runs._load": {
+          "max": 835.966412,
+          "median": 663.761367,
+          "min": 540.178458,
+          "n": 9,
+          "p90_nearest_rank": 835.966412
+        },
+        "runs.artifact_segment": {
+          "max": 937.863127,
+          "median": 735.667085,
+          "min": 594.46226,
+          "n": 9,
+          "p90_nearest_rank": 937.863127
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67808,
+        "median": 67476,
+        "min": 66140,
+        "n": 9,
+        "p90_nearest_rank": 67808
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417052,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 66,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 66
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1901.0630000000006,
+        "median": 1650.6759999999995,
+        "min": 1324.8900000000012,
+        "n": 9,
+        "p90_nearest_rank": 1901.0630000000006
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67808,
+        "median": 67052,
+        "min": 66140,
+        "n": 9,
+        "p90_nearest_rank": 67808
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 2163.255607,
+        "median": 1762.563343,
+        "min": 1436.463139,
+        "n": 9,
+        "p90_nearest_rank": 2163.255607
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 3,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 3,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 17.267195,
+          "median": 16.451326,
+          "min": 15.667437,
+          "n": 3,
+          "p90_nearest_rank": 17.267195
+        },
+        "runs._load": {
+          "max": 2428.913841,
+          "median": 2304.195443,
+          "min": 2087.30283,
+          "n": 3,
+          "p90_nearest_rank": 2428.913841
+        },
+        "runs.artifact_segment": {
+          "max": 715.285249,
+          "median": 563.574287,
+          "min": 533.782704,
+          "n": 3,
+          "p90_nearest_rank": 715.285249
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67656,
+        "median": 66748,
+        "min": 66264,
+        "n": 3,
+        "p90_nearest_rank": 67656
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 80,
+          "median": 80,
+          "min": 80,
+          "n": 3,
+          "p90_nearest_rank": 80
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417053,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3022.7390000000005,
+        "median": 2739.563999999999,
+        "min": 2445.682,
+        "n": 3,
+        "p90_nearest_rank": 3022.7390000000005
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67656,
+        "median": 66748,
+        "min": 65192,
+        "n": 3,
+        "p90_nearest_rank": 67656
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 3326.236603,
+        "median": 3083.578271,
+        "min": 2609.106162,
+        "n": 3,
+        "p90_nearest_rank": 3326.236603
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 3,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 3,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 3,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 58.748669,
+          "median": 53.993368,
+          "min": 21.15814,
+          "n": 3,
+          "p90_nearest_rank": 58.748669
+        },
+        "runs._load": {
+          "max": 694.888821,
+          "median": 685.152839,
+          "min": 663.761367,
+          "n": 3,
+          "p90_nearest_rank": 694.888821
+        },
+        "runs.artifact_segment": {
+          "max": 818.036277,
+          "median": 789.065099,
+          "min": 735.667085,
+          "n": 3,
+          "p90_nearest_rank": 818.036277
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67052,
+        "median": 66264,
+        "min": 66140,
+        "n": 3,
+        "p90_nearest_rank": 67052
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 536462,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 66,
+          "median": 66,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 66
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1731.4820000000009,
+        "median": 1628.6319999999996,
+        "min": 1613.3430000000003,
+        "n": 3,
+        "p90_nearest_rank": 1731.4820000000009
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67052,
+        "median": 66220,
+        "min": 66140,
+        "n": 3,
+        "p90_nearest_rank": 67052
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1843.66238,
+        "median": 1740.074079,
+        "min": 1706.445442,
+        "n": 3,
+        "p90_nearest_rank": 1843.66238
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341.0,
+        "min": 4341,
+        "n": 6,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493.0,
+        "min": 447493,
+        "n": 6,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 39.269965,
+          "median": 16.581102,
+          "min": 14.818886,
+          "n": 6,
+          "p90_nearest_rank": 39.269965
+        },
+        "runs._load": {
+          "max": 4813.914704,
+          "median": 2801.6002955000004,
+          "min": 2192.345888,
+          "n": 6,
+          "p90_nearest_rank": 4813.914704
+        },
+        "runs.artifact_segment": {
+          "max": 1504.560024,
+          "median": 679.886783,
+          "min": 552.086938,
+          "n": 6,
+          "p90_nearest_rank": 1504.560024
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 69000,
+        "median": 67580.0,
+        "min": 66776,
+        "n": 6,
+        "p90_nearest_rank": 69000
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 80,
+          "median": 80.0,
+          "min": 80,
+          "n": 6,
+          "p90_nearest_rank": 80
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417054,
+          "median": 417052.5,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417054
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 65,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 65
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 5271.585000000001,
+        "median": 3223.2475000000004,
+        "min": 2556.1729999999993,
+        "n": 6,
+        "p90_nearest_rank": 5271.585000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67788,
+        "median": 67208.0,
+        "min": 66128,
+        "n": 6,
+        "p90_nearest_rank": 67788
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 6036.909832,
+        "median": 3501.294121,
+        "min": 2744.110621,
+        "n": 6,
+        "p90_nearest_rank": 6036.909832
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300.0,
+        "min": 2300,
+        "n": 6,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20.0,
+        "min": 20,
+        "n": 6,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380.0,
+        "min": 445380,
+        "n": 6,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 28.184518,
+          "median": 19.464191,
+          "min": 15.081902,
+          "n": 6,
+          "p90_nearest_rank": 28.184518
+        },
+        "runs._load": {
+          "max": 835.966412,
+          "median": 605.103266,
+          "min": 540.178458,
+          "n": 6,
+          "p90_nearest_rank": 835.966412
+        },
+        "runs.artifact_segment": {
+          "max": 937.863127,
+          "median": 679.405169,
+          "min": 594.46226,
+          "n": 6,
+          "p90_nearest_rank": 937.863127
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67808,
+        "median": 67688.0,
+        "min": 66264,
+        "n": 6,
+        "p90_nearest_rank": 67808
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417053,
+          "median": 417052.0,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417053
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1901.0630000000006,
+        "median": 1720.451500000001,
+        "min": 1324.8900000000012,
+        "n": 6,
+        "p90_nearest_rank": 1901.0630000000006
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67808,
+        "median": 67688.0,
+        "min": 66220,
+        "n": 6,
+        "p90_nearest_rank": 67808
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 2163.255607,
+        "median": 1842.3015365,
+        "min": 1436.463139,
+        "n": 6,
+        "p90_nearest_rank": 2163.255607
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 9,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 9,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 934.74043,
+          "median": 15.917853,
+          "min": 13.972218,
+          "n": 9,
+          "p90_nearest_rank": 934.74043
+        },
+        "runs._load": {
+          "max": 6721.790854,
+          "median": 2487.17722,
+          "min": 2096.564738,
+          "n": 9,
+          "p90_nearest_rank": 6721.790854
+        },
+        "runs.artifact_segment": {
+          "max": 3060.049194,
+          "median": 585.436382,
+          "min": 505.798279,
+          "n": 9,
+          "p90_nearest_rank": 3060.049194
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67376,
+        "median": 66396,
+        "min": 66284,
+        "n": 9,
+        "p90_nearest_rank": 67376
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 80,
+          "median": 80,
+          "min": 80,
+          "n": 9,
+          "p90_nearest_rank": 80
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417052,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 8560.699999999999,
+        "median": 2968.641000000001,
+        "min": 2455.471000000001,
+        "n": 9,
+        "p90_nearest_rank": 8560.699999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66456,
+        "median": 66372,
+        "min": 65228,
+        "n": 9,
+        "p90_nearest_rank": 66456
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 10257.338121,
+        "median": 3198.956903,
+        "min": 2667.710996,
+        "n": 9,
+        "p90_nearest_rank": 10257.338121
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 9,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 9,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 9,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 81.65255,
+          "median": 23.421953,
+          "min": 16.702036,
+          "n": 9,
+          "p90_nearest_rank": 81.65255
+        },
+        "runs._load": {
+          "max": 1481.067135,
+          "median": 636.963184,
+          "min": 562.887627,
+          "n": 9,
+          "p90_nearest_rank": 1481.067135
+        },
+        "runs.artifact_segment": {
+          "max": 1598.69047,
+          "median": 703.859564,
+          "min": 617.06726,
+          "n": 9,
+          "p90_nearest_rank": 1598.69047
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67352,
+        "median": 66392,
+        "min": 65704,
+        "n": 9,
+        "p90_nearest_rank": 67352
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417053,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3043.9410000000007,
+        "median": 1593.3299999999977,
+        "min": 1486.8389999999997,
+        "n": 9,
+        "p90_nearest_rank": 3043.9410000000007
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66396,
+        "median": 66280,
+        "min": 65704,
+        "n": 9,
+        "p90_nearest_rank": 66396
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 3400.853296,
+        "median": 1721.230901,
+        "min": 1605.253266,
+        "n": 9,
+        "p90_nearest_rank": 3400.853296
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 3,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 3,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 101.970065,
+          "median": 15.917853,
+          "min": 13.972218,
+          "n": 3,
+          "p90_nearest_rank": 101.970065
+        },
+        "runs._load": {
+          "max": 6721.790854,
+          "median": 2410.043397,
+          "min": 2119.233054,
+          "n": 3,
+          "p90_nearest_rank": 6721.790854
+        },
+        "runs.artifact_segment": {
+          "max": 2245.460282,
+          "median": 552.774799,
+          "min": 505.798279,
+          "n": 3,
+          "p90_nearest_rank": 2245.460282
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66376,
+        "median": 66364,
+        "min": 66284,
+        "n": 3,
+        "p90_nearest_rank": 66376
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 80,
+          "median": 80,
+          "min": 80,
+          "n": 3,
+          "p90_nearest_rank": 80
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417052,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 8560.699999999999,
+        "median": 2968.641000000001,
+        "min": 2481.502000000001,
+        "n": 3,
+        "p90_nearest_rank": 8560.699999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66376,
+        "median": 66364,
+        "min": 65228,
+        "n": 3,
+        "p90_nearest_rank": 66376
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 9609.000432,
+        "median": 3198.956903,
+        "min": 2691.562847,
+        "n": 3,
+        "p90_nearest_rank": 9609.000432
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 3,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 3,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 3,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 81.65255,
+          "median": 62.937939,
+          "min": 24.991243,
+          "n": 3,
+          "p90_nearest_rank": 81.65255
+        },
+        "runs._load": {
+          "max": 1481.067135,
+          "median": 575.619044,
+          "min": 567.468138,
+          "n": 3,
+          "p90_nearest_rank": 1481.067135
+        },
+        "runs.artifact_segment": {
+          "max": 1598.69047,
+          "median": 691.671573,
+          "min": 686.499399,
+          "n": 3,
+          "p90_nearest_rank": 1598.69047
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66284,
+        "median": 65840,
+        "min": 65704,
+        "n": 3,
+        "p90_nearest_rank": 66284
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 536463,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 67,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3043.9410000000007,
+        "median": 1584.005999999999,
+        "min": 1486.8389999999997,
+        "n": 3,
+        "p90_nearest_rank": 3043.9410000000007
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66252,
+        "median": 65732,
+        "min": 65704,
+        "n": 3,
+        "p90_nearest_rank": 66252
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 3400.853296,
+        "median": 1707.396401,
+        "min": 1605.253266,
+        "n": 3,
+        "p90_nearest_rank": 3400.853296
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341.0,
+        "min": 4341,
+        "n": 6,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493.0,
+        "min": 447493,
+        "n": 6,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 934.74043,
+          "median": 16.095987,
+          "min": 15.075625,
+          "n": 6,
+          "p90_nearest_rank": 934.74043
+        },
+        "runs._load": {
+          "max": 4203.120842,
+          "median": 2538.807206,
+          "min": 2096.564738,
+          "n": 6,
+          "p90_nearest_rank": 4203.120842
+        },
+        "runs.artifact_segment": {
+          "max": 3060.049194,
+          "median": 624.3477755,
+          "min": 542.200344,
+          "n": 6,
+          "p90_nearest_rank": 3060.049194
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67376,
+        "median": 66848.0,
+        "min": 66384,
+        "n": 6,
+        "p90_nearest_rank": 67376
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 80,
+          "median": 80.0,
+          "min": 80,
+          "n": 6,
+          "p90_nearest_rank": 80
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417053,
+          "median": 417052.5,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417053
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 6642.7570000000005,
+        "median": 3162.407,
+        "min": 2455.471000000001,
+        "n": 6,
+        "p90_nearest_rank": 6642.7570000000005
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66456,
+        "median": 66378.0,
+        "min": 66112,
+        "n": 6,
+        "p90_nearest_rank": 66456
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 10257.338121,
+        "median": 3825.593401,
+        "min": 2667.710996,
+        "n": 6,
+        "p90_nearest_rank": 10257.338121
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300.0,
+        "min": 2300,
+        "n": 6,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20.0,
+        "min": 20,
+        "n": 6,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380.0,
+        "min": 445380,
+        "n": 6,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 26.539859,
+          "median": 20.9067235,
+          "min": 16.702036,
+          "n": 6,
+          "p90_nearest_rank": 26.539859
+        },
+        "runs._load": {
+          "max": 716.461806,
+          "median": 653.5905155,
+          "min": 562.887627,
+          "n": 6,
+          "p90_nearest_rank": 716.461806
+        },
+        "runs.artifact_segment": {
+          "max": 806.724457,
+          "median": 723.144442,
+          "min": 617.06726,
+          "n": 6,
+          "p90_nearest_rank": 806.724457
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67352,
+        "median": 66394.0,
+        "min": 66284,
+        "n": 6,
+        "p90_nearest_rank": 67352
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417053,
+          "median": 417053.0,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417053
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1977.0609999999997,
+        "median": 1716.0894999999973,
+        "min": 1540.3000000000013,
+        "n": 6,
+        "p90_nearest_rank": 1977.0609999999997
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66396,
+        "median": 66392.0,
+        "min": 66252,
+        "n": 6,
+        "p90_nearest_rank": 66396
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 2158.422004,
+        "median": 1835.5654679999998,
+        "min": 1662.434135,
+        "n": 6,
+        "p90_nearest_rank": 2158.422004
+      }
+    }
+  ],
+  "availability": {
+    "eligible_workers": 18,
+    "empty_history_unavailable_workers": 6,
+    "unavailable_files": [
+      "unavailable-artifacts-1-history-0-process-0.json",
+      "unavailable-artifacts-1-history-0-process-1.json",
+      "unavailable-artifacts-1-history-0-process-2.json",
+      "unavailable-artifacts-20-history-0-process-0.json",
+      "unavailable-artifacts-20-history-0-process-1.json",
+      "unavailable-artifacts-20-history-0-process-2.json"
+    ]
+  },
+  "counts": {
+    "aggregate_raw_bytes_per_arm": 327680,
+    "artifacts_per_arm": [
+      1,
+      20
+    ],
+    "collection_arms": 108,
+    "eligible_cells": 6,
+    "first_pairs": 18,
+    "pairs": 54,
+    "warm_pairs": 36
+  },
+  "invariants": {
+    "exact_recorded_owned_cleanup_checks": [
+      {
+        "dropped": true,
+        "owned_temporary_directory_removed": true,
+        "schema": "catalog_aa44570cd3464648972d79e9dfe7cf49"
+      },
+      {
+        "dropped": true,
+        "owned_temporary_directory_removed": true,
+        "schema": "catalog_7a4808ba4029419aa3321d0b83f10132"
+      }
+    ],
+    "no_child_compute_during_collection": true,
+    "original_events_and_run_grant_consumption_reservation_counts_unchanged": true,
+    "source_and_harness_stable": true,
+    "whole_hash_and_inventory_equality_all_arms": true
+  },
+  "kind": "full_predeclared_matrix_no_filtered_pairs",
+  "limits": [
+    "No OS/PG cache flush or cache implementation.",
+    "First pair alternates order; its second arm follows the first in the same process.",
+    "CPU covers app/HTTP/client/waitedchildren, not PostgreSQL backend CPU.",
+    "RSS/HWM are snapshots/lifetime values.",
+    "Observer I/O and inclusive owner timings are not additive phase peaks.",
+    "Whole hashes match; no science acceptance.",
+    "Original production_base field records branch admission ancestry2d8b7d7; actual measured source is composed99741e5 with exact source_sha256.",
+    "First ~15 seconds overlap M6 pure/oldCLI work; available receipts support control-only overlap, but per-arm UTC start times were not recorded. No exclusive-host claim.",
+    "No confidence interval or latency-budget acceptance; n3 first / n6 warm are descriptive.",
+    "Do not sum inclusive owner spans. All outliers retained."
+  ],
+  "measured_head": "99741e5807e4260c58b53badafc5b6c549421645",
+  "paired_distributions": [
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 555.228193,
+        "median": 237.990924,
+        "min": 107.259487,
+        "n": 9,
+        "p90_nearest_rank": 555.228193
+      },
+      "raw_files": [
+        "publication-artifacts-1-history-56-process-0.json",
+        "publication-artifacts-1-history-56-process-1.json",
+        "publication-artifacts-1-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.061153222674948,
+        "median": 1.8770504655657225,
+        "min": 1.2955085705885079,
+        "n": 9,
+        "p90_nearest_rank": 3.061153222674948
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 506.914842,
+        "median": 282.541825,
+        "min": 181.978993,
+        "n": 3,
+        "p90_nearest_rank": 506.914842
+      },
+      "raw_files": [
+        "publication-artifacts-1-history-56-process-0.json",
+        "publication-artifacts-1-history-56-process-1.json",
+        "publication-artifacts-1-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.7435527780828934,
+        "median": 2.3272246865879955,
+        "min": 1.686232937195718,
+        "n": 3,
+        "p90_nearest_rank": 2.7435527780828934
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 555.228193,
+        "median": 225.501333,
+        "min": 107.259487,
+        "n": 6,
+        "p90_nearest_rank": 555.228193
+      },
+      "raw_files": [
+        "publication-artifacts-1-history-56-process-0.json",
+        "publication-artifacts-1-history-56-process-1.json",
+        "publication-artifacts-1-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.061153222674948,
+        "median": 1.8768251701810308,
+        "min": 1.2955085705885079,
+        "n": 6,
+        "p90_nearest_rank": 3.061153222674948
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 535.115174,
+        "median": 108.285667,
+        "min": -1075.30192,
+        "n": 9,
+        "p90_nearest_rank": 535.115174
+      },
+      "raw_files": [
+        "publication-artifacts-20-history-56-process-0.json",
+        "publication-artifacts-20-history-56-process-1.json",
+        "publication-artifacts-20-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 1.181009284378783,
+        "median": 1.034443348731318,
+        "min": 0.7363391449502517,
+        "n": 9,
+        "p90_nearest_rank": 1.181009284378783
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 266.559059,
+        "median": 177.380586,
+        "min": 32.187567,
+        "n": 3,
+        "p90_nearest_rank": 266.559059
+      },
+      "raw_files": [
+        "publication-artifacts-20-history-56-process-0.json",
+        "publication-artifacts-20-history-56-process-1.json",
+        "publication-artifacts-20-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 1.0873587741015314,
+        "median": 1.0561286465975437,
+        "min": 1.0091549898137422,
+        "n": 3,
+        "p90_nearest_rank": 1.0873587741015314
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 535.115174,
+        "median": 3.6618925000000004,
+        "min": -1075.30192,
+        "n": 6,
+        "p90_nearest_rank": 535.115174
+      },
+      "raw_files": [
+        "publication-artifacts-20-history-56-process-0.json",
+        "publication-artifacts-20-history-56-process-1.json",
+        "publication-artifacts-20-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 1.181009284378783,
+        "median": 1.0031727024990837,
+        "min": 0.7363391449502517,
+        "n": 6,
+        "p90_nearest_rank": 1.181009284378783
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 1628.862492,
+        "median": 309.397719,
+        "min": 237.710043,
+        "n": 9,
+        "p90_nearest_rank": 1628.862492
+      },
+      "raw_files": [
+        "run-artifacts-1-history-8-process-0.json",
+        "run-artifacts-1-history-8-process-1.json",
+        "run-artifacts-1-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 10.035625904158918,
+        "median": 2.7228683749393947,
+        "min": 1.9995093629946423,
+        "n": 9,
+        "p90_nearest_rank": 10.035625904158918
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 666.54668,
+        "median": 247.642652,
+        "min": 237.710043,
+        "n": 3,
+        "p90_nearest_rank": 666.54668
+      },
+      "raw_files": [
+        "run-artifacts-1-history-8-process-0.json",
+        "run-artifacts-1-history-8-process-1.json",
+        "run-artifacts-1-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.3185108755803445,
+        "median": 2.222077382495489,
+        "min": 1.9995093629946423,
+        "n": 3,
+        "p90_nearest_rank": 2.3185108755803445
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 1628.862492,
+        "median": 312.1475465,
+        "min": 270.773919,
+        "n": 6,
+        "p90_nearest_rank": 1628.862492
+      },
+      "raw_files": [
+        "run-artifacts-1-history-8-process-0.json",
+        "run-artifacts-1-history-8-process-1.json",
+        "run-artifacts-1-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 10.035625904158918,
+        "median": 2.9181923702005683,
+        "min": 2.6930507682635656,
+        "n": 6,
+        "p90_nearest_rank": 10.035625904158918
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 353.313552,
+        "median": 284.645816,
+        "min": 221.510669,
+        "n": 9,
+        "p90_nearest_rank": 353.313552
+      },
+      "raw_files": [
+        "run-artifacts-1-history-55-process-0.json",
+        "run-artifacts-1-history-55-process-1.json",
+        "run-artifacts-1-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.306949638935747,
+        "median": 2.8520857786939517,
+        "min": 2.181458103921266,
+        "n": 9,
+        "p90_nearest_rank": 3.306949638935747
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 284.645816,
+        "median": 276.592644,
+        "min": 221.510669,
+        "n": 3,
+        "p90_nearest_rank": 284.645816
+      },
+      "raw_files": [
+        "run-artifacts-1-history-55-process-0.json",
+        "run-artifacts-1-history-55-process-1.json",
+        "run-artifacts-1-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.9689896386318866,
+        "median": 2.3550328705149304,
+        "min": 2.181458103921266,
+        "n": 3,
+        "p90_nearest_rank": 2.9689896386318866
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 353.313552,
+        "median": 290.9951825,
+        "min": 270.057259,
+        "n": 6,
+        "p90_nearest_rank": 353.313552
+      },
+      "raw_files": [
+        "run-artifacts-1-history-55-process-0.json",
+        "run-artifacts-1-history-55-process-1.json",
+        "run-artifacts-1-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.306949638935747,
+        "median": 2.9214567556190767,
+        "min": 2.7820185701016817,
+        "n": 6,
+        "p90_nearest_rank": 3.306949638935747
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 4114.870102,
+        "median": 1377.132829,
+        "min": 765.443782,
+        "n": 9,
+        "p90_nearest_rank": 4114.870102
+      },
+      "raw_files": [
+        "run-artifacts-20-history-8-process-0.json",
+        "run-artifacts-20-history-8-process-1.json",
+        "run-artifacts-20-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.174417947145517,
+        "median": 1.910324425665614,
+        "min": 1.361552313313847,
+        "n": 9,
+        "p90_nearest_rank": 3.174417947145517
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 1586.162524,
+        "median": 1377.132829,
+        "min": 765.443782,
+        "n": 3,
+        "p90_nearest_rank": 1586.162524
+      },
+      "raw_files": [
+        "run-artifacts-20-history-8-process-0.json",
+        "run-artifacts-20-history-8-process-1.json",
+        "run-artifacts-20-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 1.9115488490648334,
+        "median": 1.8070183758034264,
+        "min": 1.4151756798335278,
+        "n": 3,
+        "p90_nearest_rank": 1.9115488490648334
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 4114.870102,
+        "median": 1709.8731269999998,
+        "min": 782.130069,
+        "n": 6,
+        "p90_nearest_rank": 4114.870102
+      },
+      "raw_files": [
+        "run-artifacts-20-history-8-process-0.json",
+        "run-artifacts-20-history-8-process-1.json",
+        "run-artifacts-20-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.174417947145517,
+        "median": 1.9980892223104307,
+        "min": 1.361552313313847,
+        "n": 6,
+        "p90_nearest_rank": 3.174417947145517
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 8594.903986,
+        "median": 1491.560502,
+        "min": 817.311139,
+        "n": 9,
+        "p90_nearest_rank": 8594.903986
+      },
+      "raw_files": [
+        "run-artifacts-20-history-55-process-0.json",
+        "run-artifacts-20-history-55-process-1.json",
+        "run-artifacts-20-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 6.170071887389391,
+        "median": 1.8735877041361997,
+        "min": 1.419155405061573,
+        "n": 9,
+        "p90_nearest_rank": 6.170071887389391
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 6208.147136,
+        "median": 1491.560502,
+        "min": 1086.309581,
+        "n": 3,
+        "p90_nearest_rank": 6208.147136
+      },
+      "raw_files": [
+        "run-artifacts-20-history-55-process-0.json",
+        "run-artifacts-20-history-55-process-1.json",
+        "run-artifacts-20-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.8254674917326983,
+        "median": 1.8735877041361997,
+        "min": 1.6767216139711627,
+        "n": 3,
+        "p90_nearest_rank": 2.8254674917326983
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 8594.903986,
+        "median": 1968.6882864999998,
+        "min": 817.311139,
+        "n": 6,
+        "p90_nearest_rank": 8594.903986
+      },
+      "raw_files": [
+        "run-artifacts-20-history-55-process-0.json",
+        "run-artifacts-20-history-55-process-1.json",
+        "run-artifacts-20-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 6.170071887389391,
+        "median": 2.044126883293184,
+        "min": 1.419155405061573,
+        "n": 6,
+        "p90_nearest_rank": 6.170071887389391
+      }
+    }
+  ]
+}
