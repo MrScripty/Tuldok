@@ -1,5 +1,5 @@
 """Durable admission, one local worker, and verified immutable result custody."""
-from access import authorized
+from access import AccessError, authorized
 import base64
 import copy
 from contextlib import contextmanager
@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 import uuid
+import phase_timings
 
 import image_training
 import text_training
@@ -96,6 +97,7 @@ class Runs:
         self._external_blocked = False
         self._confirmed_external = set()
         self._closed = False
+        self._phase_book = phase_timings.Book()
         from run_capacity import Capacity
         self._capacity = Capacity.configured()
         with self.lock:
@@ -258,7 +260,89 @@ class Runs:
                 (list(states),)).fetchall()
             return [self._load(row[0]) for row in rows]
 
+    def _phase_clock(self, run_id):
+        if not hasattr(self, '_phase_book'): self._phase_book = phase_timings.Book()
+        return self._phase_book.ensure(run_id, 'runs')
+
+    @contextmanager
+    def _phase_catalog(self, run_id):
+        clock = self._phase_clock(run_id)
+        span = clock.begin('catalog_lock_wait', 'catalog_lock')
+        try:
+            with self.lock:
+                clock.finish(span)
+                yield
+        finally:
+            clock.finish(span, complete=False)
+
+    def _snapshot_phase_timings(self, run):
+        book = getattr(self, '_phase_book', None)
+        clock = book.get(run['id']) if book is not None else None
+        if clock is None or not clock.snapshot()['spans']: return
+        try:
+            if run.get('state') in TERMINAL:
+                for span in clock.snapshot()['spans']:
+                    if span['state'] == 'open' and not span['phase'].startswith('recovery_'):
+                        clock.finish(span['sequence'], complete=False)
+            previous = phase_timings.retained(run.get('_phase_timings', []))
+            records = [phase_timings.incomplete(item) for item in previous if item['clock_id'] != clock.clock_id]
+            run['_phase_timings'] = (records + [clock.snapshot()])[-phase_timings.MAX_RECORDS:]
+        except (ValueError, TypeError):
+            # Optional diagnostics must not alter an authoritative transition.
+            return
+
+    def phase_timings(self, run_id):
+        identifier(run_id, 'Run ID')
+        with self._coordinator.catalog(time.monotonic()+5):
+            self.access.require('inspect', 'runs.phase_timings', run_id)
+            run = self._load(run_id)
+            from candidate_packages import authorize_transitive_inputs
+            authorize_transitive_inputs(self, run)
+            book = getattr(self, '_phase_book', None)
+            live = book.get(run_id) if book is not None else None
+            evidence = 'unknown_granularity'
+            records = []
+            base_records = []
+            try:
+                records = [phase_timings.incomplete(item) for item in
+                           phase_timings.retained(run.get('_phase_timings', [])) if item['spans']]
+                if live is not None and not live.snapshot()['spans']: live = None
+                if live is not None:
+                    records = [item for item in records if item['clock_id'] != live.clock_id] + [live.snapshot()]
+                base_records = copy.deepcopy(records)
+                if self._external(run) and run.get('custody_identity') is not None:
+                    descriptor = self._diagnostic_directory(self._external_directory(run) / 'custody')
+                    try:
+                        raw, _, _ = self._diagnostic_read(descriptor, 'phase-timings-v1.json', 16384)
+                    finally:
+                        os.close(descriptor)
+                    value = self._progress_json(raw)
+                    expected = run['custody_identity']
+                    if (type(value) is not dict or set(value) != {'schema_version', 'attempt_id', 'request_sha256', 'spec_sha256', 'timing'}
+                            or value['schema_version'] != 1 or any(value[key] != expected[key]
+                                for key in ('attempt_id', 'request_sha256', 'spec_sha256'))):
+                        raise ValueError('Custodian diagnostic identity differs.')
+                    record = phase_timings.validate_record(value['timing'])
+                    if record['owner'] != 'custodian' or not record['spans']:
+                        raise ValueError('Missing custodian diagnostic observation.')
+                    # A sealed helper reports its own offsets. Never extrapolate
+                    # elapsed time from another process or after a cold reopen.
+                    records.append(record if live is not None and process_status(expected['helper']) == 'alive'
+                                   else phase_timings.incomplete(record))
+                records = phase_timings.retained(records[-phase_timings.MAX_RECORDS:])
+                if records: evidence = 'owner_observed'
+            except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError):
+                # Keep valid parent observations when the optional helper sample
+                # is absent/corrupt; the response makes that limitation explicit.
+                records = base_records
+                evidence = 'partial' if records else 'unavailable'
+            self.access.require('inspect', 'runs.phase_timings', run_id)
+            return {'format': 'run_phase_timings_v1', 'catalog_id': self.db.dataset_id,
+                'run_id': run_id, 'original_run_state': run['state'], 'evidence': evidence,
+                'records': records}
+
     def _save(self, run):
+        self._snapshot_phase_timings(run)
         self.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (encode(run), run['id']))
         action = 'runs.reconcile' if self.access.identity().get('mode') == 'system' else 'runs.update'
         evidence = {'state': run['state'], 'request_sha256': run['request_sha256'], 'graph_sha256': run['graph_sha256']}
@@ -354,7 +438,7 @@ class Runs:
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
         hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context'}
+                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context', '_phase_timings'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
         association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
         if association is not None or run['graph'].get('recipe')==image_training.MODEL_RECIPE:
@@ -452,6 +536,11 @@ class Runs:
     def compare_publication_evidence(self, ref, other_ref, body):
         import run_publication
         return run_publication.compare_evidence(self, ref, other_ref, body)
+
+    @authorized('inspect', 'runs.compare_scientific_evidence')
+    def compare_scientific_evidence(self, body):
+        import run_publication
+        return run_publication.compare_scientific(self, body)
 
     def _receipt(self, key, request_hash):
         row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()
@@ -646,6 +735,11 @@ class Runs:
                'custody_receipt_sha256': None, 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if captured.get('phase_timings'):
+            try: run['_phase_timings'] = phase_timings.retained(captured['phase_timings'])
+            except (ValueError, TypeError): pass
+        self._phase_clock(run_id).begin('queue', 'scheduler')
+        self._snapshot_phase_timings(run)
         if extension_context is not None:run['extension_context']=extension_context
         if approval_material_sha256 is not None:
             run['approval_material_sha256']=approved_sha
@@ -1005,6 +1099,8 @@ class Runs:
         handle = None
         run = None
         receipt = None
+        clock = self._phase_clock(run_id)
+        launch_span = None
         try:
             with self.lock, self.db.transaction():
                 run = self._load(run_id)
@@ -1013,12 +1109,16 @@ class Runs:
                     return
                 if run['spec']['cwd'] != str(self._external_directory(run)):
                     raise WorkbenchError('Restored execution paths cannot be dispatched. Approve a new attempt.', 'stale', 409)
+                for item in clock.snapshot()['spans']:
+                    if item['phase'] == 'queue' and item['state'] == 'open': clock.finish(item['sequence'])
+                launch_span = clock.begin('launch_verification', 'verifying_captures')
                 self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
                 run['started_at'] = timestamp()
                 self._save(run)
             if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
+            clock.finish(launch_span)
             preparation_seconds = recipe_process.preparation_seconds(run['spec'])
             ready_deadline = time.monotonic() + preparation_seconds + 2
             custody_deadline = ready_deadline
@@ -1090,9 +1190,10 @@ class Runs:
                 cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
                 inventory = None
                 if not cancelled and receipt['outcome'] == 'completed':
-                    inventory = recipe_contract.verify_outputs(Path(run['spec']['output_dir']),
-                        run['outputs'], run['spec']['max_output_bytes'], durable=True)
-                    run['publication_source'] = self._retain_external_publication_source(run, receipt, inventory)
+                    with phase_timings.observe(clock, 'output_validation', 'validating_outputs'):
+                        inventory = recipe_contract.verify_outputs(Path(run['spec']['output_dir']),
+                            run['outputs'], run['spec']['max_output_bytes'], durable=True)
+                        run['publication_source'] = self._retain_external_publication_source(run, receipt, inventory)
                 self._save(run)
             # Only an acknowledged drainage/proof commit permits copying. Cancellation
             # can arrive across that boundary, so read current owner state again.
@@ -1100,7 +1201,8 @@ class Runs:
                 run = self._load(run_id)
                 cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
                 if not cancelled and receipt['outcome'] == 'completed':
-                    artifacts, receipt_hash = self._publish_external(run, receipt, inventory=inventory)
+                    with phase_timings.observe(clock, 'publication', 'copying_outputs'):
+                        artifacts, receipt_hash = self._publish_external(run, receipt, inventory=inventory)
                     run['artifacts'], run['custody_receipt_sha256'] = artifacts, receipt_hash
                     self._event(run, 'completed', 'All descendants drained; declared outputs verified and retained.')
                     for node in run['node_attempts']:
@@ -1109,12 +1211,13 @@ class Runs:
                     self._event(run, 'cancelled' if cancelled else 'failed', 'External process drained without successful publication.')
                 self._save(run)
         finally:
+            clock.finish(launch_span, complete=False)
             if handle is not None:
                 # Independent of database availability. EOF asks the pinned helper
                 # to stop and drain; missing evidence remains unknown on reopen.
                 handle.close_control()
 
-    def _external_inventory(self, run):
+    def _external_inventory(self, run, *, checkpoint=None):
         import recipe_process
         import recipe_contract
         from candidate_packages import authorize_transitive_inputs
@@ -1168,10 +1271,14 @@ class Runs:
                 import extension_evidence
                 # All download/segment/capture/summary accessors share this
                 # structural gate and current transitive input authorization.
-                for item in run['artifacts']:self._copy_verified(descriptor,item['name'],item)
-                self._verify_extension(directory,run)
+                for item in run['artifacts']:
+                    if checkpoint is not None: checkpoint()
+                    self._copy_verified(descriptor,item['name'],item,
+                        cancelled=(lambda: (checkpoint(), False)[1]) if checkpoint is not None else None)
+                self._verify_extension(directory,run,checkpoint=checkpoint)
             return run['artifacts']
         except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
+            if checkpoint is not None and isinstance(error, WorkbenchError): raise
             raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
         finally:
             if descriptor is not None:
@@ -1547,6 +1654,8 @@ class Runs:
                             used = {cpu for _, _, cpus in active.values() for cpu in cpus}
                             cpus = tuple(cpu for cpu in self._capacity.cores if cpu not in used)[:claim[2]]
                             active[run['id']] = (executor.submit(self._run_attempt, run, cpus, claim), claim, cpus)
+                        elif self._external(run):
+                            self._phase_clock(run['id']).waiting('queue', 'capacity')
                     # With no pending work only admission/stop can change the queue.
                     # Queued resource waits still retry when headroom changes.
                     self._coordinator.transition('healthy' if active or queued else 'idle')
@@ -1567,7 +1676,7 @@ class Runs:
             # other attempts and the HTTP/coordinator threads remain independent.
             os.sched_setaffinity(0, cpus)
             with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
-                with self.lock, self.db.transaction():
+                with self._phase_catalog(admitted['id']), self.db.transaction():
                     current = self._load(admitted['id'])
                     # Executor submission is provisional. This transaction is
                     # the dispatch decision shared with sibling unknown fences.
@@ -2180,14 +2289,117 @@ class Runs:
                   'custody_receipt_base64': base64.b64encode(receipt_raw).decode('ascii')}
         return raw, source
 
+    def artifact_segments(self, body, *, _cancelled=None, _delivery_guard=None):
+        """Sequential bounded reads; no new publication, cache or whole-hash claim."""
+        import run_publication
+        from candidate_packages import authorize_transitive_inputs
+        deadline = time.monotonic() + 60
+        def checkpoint():
+            if self._closed or self._stop.is_set() or _cancelled is not None and _cancelled():
+                raise WorkbenchError('Artifact collection was cancelled.', 'cancelled', 409)
+            if time.monotonic() >= deadline:
+                raise WorkbenchError('Artifact collection reached its wall budget.', 'deadline', 504)
+        def global_authority():
+            checkpoint()
+            with self._coordinator.catalog(deadline):
+                self.access.require('inspect', 'runs.artifact_segments')
+            checkpoint()
+        global_authority()
+        closed(body, ('items',))
+        items = body['items']
+        if type(items) is not list or not 1 <= len(items) <= 20:
+            raise WorkbenchError('Artifact collection requires 1 through 20 items.')
+        seen, total = set(), 0
+        for request in items:
+            closed(request, ('key', 'source', 'name', 'expected_sha256', 'offset', 'max_bytes'))
+            key, source = request['key'], request['source']
+            if type(key) is not str or not re.fullmatch('[A-Za-z0-9_.:-]{1,64}', key) or key in seen:
+                raise WorkbenchError('Artifact collection keys must be unique bounded identifiers.')
+            seen.add(key)
+            if type(source) is not dict or source.get('kind') not in ('run', 'publication'):
+                raise WorkbenchError('Artifact collection requires an exact Run or publication reference.')
+            if source['kind'] == 'run':
+                closed(source, ('kind', 'run_id')); identifier(source['run_id'], 'Run ID')
+            else:
+                closed(source, ('kind', 'ref')); ref = source['ref']
+                closed(ref, ('kind', 'schema_version', 'catalog_id', 'run_id', 'material_sha256',
+                             'inventory_sha256', 'custody_receipt_sha256', 'sha256'))
+                if ref['kind'] != 'recovered_publication_result' or type(ref['schema_version']) is not int or ref['schema_version'] != 1:
+                    raise WorkbenchError('Unsupported publication reference.')
+                for field in ('catalog_id', 'run_id'): identifier(ref[field], field)
+                if any(not run_publication._hash(ref[field]) for field in ('material_sha256', 'inventory_sha256', 'custody_receipt_sha256', 'sha256')):
+                    raise WorkbenchError('Publication reference hashes are required.')
+            if (type(request['name']) is not str or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', request['name'])
+                    or request['name'] in ('artifact-manifest.json', 'custody-receipt.json')
+                    or not run_publication._hash(request['expected_sha256'])
+                    or type(request['offset']) is not int or not 0 <= request['offset'] <= 512*1024**2
+                    or type(request['max_bytes']) is not int or not 1 <= request['max_bytes'] <= 8*1024**2):
+                raise WorkbenchError('Artifact collection item needs exact bounded segment selectors.')
+            total += request['max_bytes']
+        if total > 8*1024**2:
+            raise WorkbenchError('Artifact collection requested bytes exceed 8 MiB.', 'too_large', 413)
+        # Freeze caller-owned selectors before any item reads or delivery closure.
+        items = copy.deepcopy(items)
+        outcomes, successful = [], []
+        for request in items:
+            global_authority()
+            source = request['source']; name = request['name']
+            selectors = {key: request[key] for key in ('expected_sha256', 'offset', 'max_bytes')}
+            outcome = {'key': request['key'], 'source': copy.deepcopy(source)}
+            try:
+                with self._coordinator.catalog(deadline):
+                    checkpoint()
+                    if source['kind'] == 'run':
+                        value = self.artifact_segment(source['run_id'], name, selectors,
+                            _checkpoint=checkpoint, _external_only=True)
+                    else:
+                        value = run_publication.artifact_segment(self, source['ref'], name, selectors,
+                            deadline=deadline, checkpoint=checkpoint)
+                    checkpoint()
+                outcome.update(status=200, result=value)
+                successful.append(source)
+            except (WorkbenchError, AccessError) as error:
+                # A revoked credential or stopping owner invalidates the complete
+                # buffered response, rather than becoming a successful partial read.
+                global_authority()
+                outcome.update(status=error.status, error={'code':error.code, 'message':str(error)[:240]})
+            outcomes.append(outcome)
+        def final_authority():
+            global_authority()
+            # Identity only, never a saved authority/proof. Rebuild at each
+            # domain/delivery stage, retaining the old last-refresh order.
+            sources = {}
+            for source in successful:
+                key = json.dumps(source, sort_keys=True, separators=(',', ':'))
+                sources.pop(key, None)
+                sources[key] = source
+            for source in sources.values():
+                with self._coordinator.catalog(deadline):
+                    checkpoint()
+                    run_id = source['run_id'] if source['kind'] == 'run' else source['ref']['run_id']
+                    self.access.require('inspect', 'runs.artifact_segments', run_id)
+                    run = self._load(run_id)
+                    authorize_transitive_inputs(self, run)
+                    if source['kind'] == 'publication':
+                        run_publication._result_ref(source['ref'], run)
+                        state = run.get('publication_continuation')
+                        if not state or state['state'] != 'published' or state['result_ref'] != source['ref']:
+                            raise WorkbenchError('Publication result is no longer attached.', 'stale', 409)
+                checkpoint()
+            global_authority()
+        final_authority()
+        if _delivery_guard is not None: _delivery_guard(final_authority)
+        return {'format':'artifact_segments_v1', 'items':outcomes}
+
     @authorized('inspect', 'runs.artifact_segment')
-    def artifact_segment(self, run_id, name, body):
+    def artifact_segment(self, run_id, name, body, *, _checkpoint=None, _external_only=False):
         """Read a bounded segment; only the client can verify the whole digest.
 
         Every call rechecks credentials. External Runs use retained custody;
         qualified built-ins verify their complete published evidence inventory.
         The returned segment still requires client-side whole-hash verification.
         """
+        if _checkpoint is not None: _checkpoint()
         closed(body, ('expected_sha256', 'offset', 'max_bytes'))
         expected = body['expected_sha256']
         offset, maximum = body['offset'], body['max_bytes']
@@ -2201,8 +2413,10 @@ class Runs:
             raise WorkbenchError('Artifact segment requires a declared flat output name.')
         with self.lock:
             run = self._load(run_id)
+        if _external_only and not self._external(run):
+            raise WorkbenchError('Batch segments currently support external Runs only.', 'unsupported', 400)
         if self._external(run):
-            inventory = self._external_inventory(run)
+            inventory = self._external_inventory(run,checkpoint=_checkpoint)
         else:
             adapter = adapter_for_graph(run['graph'])
             if run['graph'].get('recipe') != getattr(adapter, 'MODEL_RECIPE', None):
@@ -2227,6 +2441,7 @@ class Runs:
                     or before.st_nlink != 1 or before.st_size != item['bytes']):
                 raise ValueError('Artifact segment source differs from declared inventory.')
             count = min(maximum, item['bytes'] - offset)
+            if _checkpoint is not None: _checkpoint()
             raw = os.pread(descriptor, count, offset)
             after = os.fstat(descriptor)
             current = os.stat(name, dir_fd=directory, follow_symlinks=False)
@@ -2242,12 +2457,14 @@ class Runs:
             finally:
                 os.close(current_directory)
         except (OSError, ValueError) as error:
+            if _checkpoint is not None and isinstance(error, WorkbenchError): raise
             raise WorkbenchError('Artifact segment is unavailable or changed during read.', 'unavailable', 409) from error
         finally:
             if descriptor is not None:
                 os.close(descriptor)
             if directory is not None:
                 os.close(directory)
+        if _checkpoint is not None: _checkpoint()
         next_offset = offset + len(raw)
         return {'run_id':run_id, 'name':name, 'expected_sha256':expected,
                 'total_bytes':item['bytes'], 'media_type':item['media_type'],

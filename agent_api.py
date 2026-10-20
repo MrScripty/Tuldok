@@ -6,6 +6,7 @@ argument validation, never by the application discovery route.
 import base64
 import binascii
 import copy
+from contextlib import contextmanager
 import hashlib
 import http.client
 import json
@@ -630,6 +631,42 @@ model_operation('runs.cancel_publication', 'POST', '/api/workspace/runs/{run_id}
     scopes=('inspect', 'cancel'), mutation=True)
 _OWNER_OPERATION_IDS.update(('runs.recover_publication', 'runs.cancel_publication'))
 _MODEL_RECEIPT_IDS.add('runs.recover_publication')
+_PHASE_MAX_MS = 7*24*60*60*1000
+_PHASE_NAMES = ['catalog_lock_wait', 'prepare', 'capture', 'queue', 'launch_verification', 'custodian_preparation',
+    'go_wait', 'runtime_verification', 'leader_lifetime', 'drain', 'output_validation',
+    'publication', 'recovery_verification', 'recovery_publication']
+_PHASE_OWNERS = {
+    'pipeline': {'prepare', 'capture'},
+    'runs': {'catalog_lock_wait', 'queue', 'launch_verification', 'output_validation',
+             'publication', 'recovery_verification', 'recovery_publication'},
+    'custodian': {'custodian_preparation', 'go_wait', 'runtime_verification', 'leader_lifetime', 'drain'},
+}
+_PHASE_SPAN = obj({'sequence': integer(1, 2**31-1), 'phase': {'enum': _PHASE_NAMES},
+    'state': {'enum': ['open', 'measured', 'incomplete']},
+    'started_offset_ms': integer(0, _PHASE_MAX_MS),
+    'ended_offset_ms': {'oneOf': [{'type': 'null'}, integer(0, _PHASE_MAX_MS)]},
+    'elapsed_ms': integer(0, _PHASE_MAX_MS), 'wait_reason': {'enum': [None,
+        'catalog_lock', 'capacity', 'preparing_material', 'capturing_inputs', 'scheduler', 'verifying_captures',
+        'owner_go', 'leader', 'descendants', 'validating_outputs', 'copying_outputs']}})
+_PHASE_RECORD = obj({'format': const('owner_phase_timings_v1'),
+    'owner': {'enum': ['pipeline', 'runs', 'custodian']}, 'clock_id': ID,
+    'observed_at_ms': SAFE_NAT, 'dropped_spans': integer(0, 2**31-1), 'spans': array(_PHASE_SPAN, 32, 1)})
+model_operation('runs.phase_timings', 'GET', '/api/workspace/runs/{run_id}/phase-timings', {'run_id': ID},
+    output=obj({'format': const('run_phase_timings_v1'), 'catalog_id': ID, 'run_id': ID,
+        'original_run_state': {'enum': ['queued', 'running', 'cancelling', 'completed', 'failed', 'cancelled', 'interrupted', 'unknown']},
+        'evidence': {'enum': ['owner_observed', 'partial', 'unknown_granularity', 'unavailable']},
+        'records': array(_PHASE_RECORD, 4)}),
+    description='Bounded owner-clock observations; overlapping spans are not additive, incomplete history is never reconstructed. No readiness or result authority.')
+model_operation('graphs.preparation_timings', 'POST', '/api/workspace/graphs/{graph_id}/preparation-timings',
+    {'graph_id': ID, 'revision': integer(1, 2**31-1)},
+    output=obj({'format': const('graph_preparation_timings_v1'), 'catalog_id': ID, 'graph_id': ID,
+        'graph_revision': integer(1, 2**31-1), 'actor_id': ID,
+        'selection': const('latest_actor_graph_revision_observation'),
+        'observation': {'oneOf': [{'type': 'null'}, obj({
+            'operation': {'enum': ['graphs.preflight_external', 'graphs.capture_external']},
+            'clock_id': ID, 'material_sha256': {'oneOf': [{'type': 'null'}, SHA]}})]},
+        'evidence': {'enum': ['owner_observed', 'unknown_granularity']}, 'records': array(_PHASE_RECORD, 1)}),
+    description='Latest volatile exact actor/graph/revision preparation observation, including before a Run exists; never starts preparation.')
 _COORDINATOR_HEALTH = obj({'format': const('run_coordinator_health_v1'), 'catalog_id': ID,
     'generation': integer(1, 2**31-1),
     'state': {'enum': ['healthy', 'idle', 'blocked', 'recovering', 'stopped', 'faulted']},
@@ -654,10 +691,32 @@ _PUBLICATION_SEGMENT['required'].append('result_ref')
 model_operation('runs.publication_artifact_chunk', 'POST', '/api/workspace/publication-results/artifact-segment/{name}',
     {'ref': PUBLICATION_RESULT_REF, 'name': ARTIFACT, 'expected_sha256': SHA, 'offset': integer(),
      'max_bytes': integer(1, 8*1024*1024)}, output=_PUBLICATION_SEGMENT)
+_ARTIFACT_SEGMENT_SOURCE = {'oneOf': [obj({'kind':const('run'),'run_id':ID}),
+    obj({'kind':const('publication'),'ref':PUBLICATION_RESULT_REF})]}
+_ARTIFACT_SEGMENT_KEY = {'type':'string','pattern':'^[A-Za-z0-9_.:-]{1,64}$'}
+_ARTIFACT_SEGMENT_REQUEST = obj({'key':_ARTIFACT_SEGMENT_KEY,'source':_ARTIFACT_SEGMENT_SOURCE,
+    'name':ARTIFACT,'expected_sha256':SHA,'offset':integer(0,512*1024**2),
+    'max_bytes':integer(1,8*1024**2)})
+_ARTIFACT_SEGMENT_OUTCOME = {'oneOf': [
+    obj({'key':_ARTIFACT_SEGMENT_KEY,'source':_ARTIFACT_SEGMENT_SOURCE,'status':const(200),
+         'result':{'oneOf':[SEGMENT_SCHEMA,_PUBLICATION_SEGMENT]}}),
+    obj({'key':_ARTIFACT_SEGMENT_KEY,'source':_ARTIFACT_SEGMENT_SOURCE,'status':integer(400,599),
+         'error':obj({'code':text(120),'message':text(240)})})]}
+_ARTIFACT_SEGMENTS_RESULT = obj({'format':const('artifact_segments_v1'),
+    'items':array(_ARTIFACT_SEGMENT_OUTCOME,20,1)})
+model_operation('runs.artifact_segments','POST','/api/workspace/artifact-segments',
+    {'items':array(_ARTIFACT_SEGMENT_REQUEST,20,1)},output=_ARTIFACT_SEGMENTS_RESULT,
+    description='Explicit sequential external-Run or attached-publication segment collection; max20 items/8MiB requested raw bytes/60s. Typed item outcomes; current authority and client whole hashes remain required.')
 model_operation('runs.publication_model_evidence', 'POST', '/api/workspace/publication-results/model-evidence',
     {'ref': PUBLICATION_RESULT_REF, 'selectors': JSON_OBJECT}, ['ref'])
 model_operation('runs.compare_publication_evidence', 'POST', '/api/workspace/publication-results/compare-model-evidence',
     {'ref': PUBLICATION_RESULT_REF, 'other_ref': PUBLICATION_RESULT_REF, 'selection': JSON_OBJECT})
+_SCIENTIFIC_OPERAND = {'oneOf': [obj({'kind':const('completed_run'), 'catalog_id':ID, 'run_id':ID}),
+    obj({'kind':const('publication_result'), 'ref':PUBLICATION_RESULT_REF})]}
+model_operation('runs.compare_scientific_evidence', 'POST', '/api/workspace/scientific-comparison',
+    {'operands':array(_SCIENTIFIC_OPERAND,2,2), 'selection':JSON_OBJECT,
+     'point':obj({'field_id':REF, **{axis:integer(0,127) for axis in 'xyz'}})},
+    output=JSON_OBJECT, description='Read exact retained validation field-point diagnostics and scalar compatibility; no scientific criterion or compute is invented.')
 
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
@@ -706,6 +765,26 @@ _EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
 _exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
 _exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
 _CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+_scientific = _CONTRACTS['runs.compare_scientific_evidence'][1]
+_scientific['inputSchema']['properties']['selection'] = obj({key:copy.deepcopy(value)
+    for key,value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id','other_run_id')})
+_SCIENTIFIC_VALUE = {'oneOf':[obj({'state':const('missing'),'reason':text(120)}),
+    obj({'state':const('observed'),'member_ordinal':integer(0,7),'prediction':{'type':'number'},
+         'reference':{'type':'number'},'units':text(80)})]}
+_UNKNOWN_SCIENCE = obj({'state':const('unknown'),'reason':text(160)})
+_scientific['outputSchema']['oneOf'][0]['properties']['result'] = obj({
+    'format':const('scientific_comparison_v1'), 'scalar':copy.deepcopy(_EXACT_COMPARISON_RESULT),
+    'point':copy.deepcopy(_scientific['inputSchema']['properties']['point']),
+    'cases':array(obj({'case':JSON_OBJECT,'values':array(_SCIENTIFIC_VALUE,2,2),
+        'prediction_delta':{'oneOf':[{'type':'null'},obj({'value':{'type':'number'},'units':text(80)})]},
+        'acceptance':_UNKNOWN_SCIENCE}),16),
+    'coverage':obj({key:integer(0,16) for key in ('baseline','candidate','matched','union')}),
+    'interpretation':const('retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance'),
+    'criterion':_UNKNOWN_SCIENCE,
+    'operands':array(obj({'operand':_SCIENTIFIC_OPERAND,'original_run_state':text(32),
+        'model':JSON_OBJECT,'material':JSON_OBJECT,'study_membership':{'type':['object','null']},
+        'configuration':JSON_OBJECT,'timings':JSON_OBJECT,'memory':_UNKNOWN_SCIENCE,
+        'artifacts':array(JSON_OBJECT,256),'custody':const('managed_run_artifacts')}),2,2)})
 _publication_comparison = _CONTRACTS['runs.compare_publication_evidence'][1]
 _publication_comparison['inputSchema']['properties']['selection'] = obj({key: copy.deepcopy(value)
     for key, value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id', 'other_run_id')})
@@ -1128,11 +1207,15 @@ def _validator(schema):
     return Draft202012Validator(schema)
 
 
-def validate_registry():
+def validate_registry(*, checkpoint=None):
     for versions in _CONTRACTS.values():
         for op in versions.values():
+            if checkpoint is not None:
+                checkpoint()
             _validator(op['inputSchema'])
             _validator(op['outputSchema'])
+            if checkpoint is not None:
+                checkpoint()
     return REGISTRY_DIGEST
 
 
@@ -1141,6 +1224,34 @@ def validate_output(name, envelope, version=None):
     op = operation(name, version)
     if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if op['operation_id'] == 'runs.artifact_segments' and envelope['status'] < 400:
+        validate_artifact_segments(envelope['result'])
+    if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and envelope['status'] < 400:
+        value = envelope['result']; records = value['records']
+        if len({item['clock_id'] for item in records}) != len(records):
+            raise AgentAPIError('Owner timing clocks are duplicated.', 'transport', 502)
+        for record in records:
+            spans = record['spans']
+            if len({item['sequence'] for item in spans}) != len(spans):
+                raise AgentAPIError('Owner timing sequences are duplicated.', 'transport', 502)
+            for item in spans:
+                if (item['phase'] not in _PHASE_OWNERS[record['owner']]
+                        or item['started_offset_ms']+item['elapsed_ms'] > _PHASE_MAX_MS
+                        or (item['state'] == 'measured') != (item['ended_offset_ms'] is not None)
+                        or item['state'] == 'measured' and item['ended_offset_ms']-item['started_offset_ms'] != item['elapsed_ms']
+                        or item['state'] != 'open' and item['wait_reason'] is not None):
+                    raise AgentAPIError('Owner timing span is inconsistent.', 'transport', 502)
+        if op['operation_id'] == 'graphs.preparation_timings':
+            observation = value['observation']
+            if ((not records) != (observation is None) or observation is not None and
+                    (observation['clock_id'] != records[0]['clock_id'] or any(
+                        item['phase'] != ('prepare' if observation['operation'] == 'graphs.preflight_external' else 'capture')
+                        for item in records[0]['spans']))):
+                raise AgentAPIError('Latest preparation observation has inconsistent operation/clock identity.', 'transport', 502)
+        if (not records and value['evidence'] in ('owner_observed', 'partial')
+                or records and value['evidence'] in ('unknown_granularity', 'unavailable')
+                or op['operation_id'] == 'graphs.preparation_timings' and any(item['owner'] != 'pipeline' for item in records)):
+            raise AgentAPIError('Owner timing evidence is inconsistent.', 'transport', 502)
     if op['operation_id'] == 'runs.publication_result' and envelope['status'] < 400:
         value = envelope['result']; ref = value['result_ref']; source = value['source_ref']
         canonical = lambda item: json.dumps(item, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode('utf-8')
@@ -1196,6 +1307,12 @@ def validate_arguments(name, arguments, version=None):
         raise AgentAPIError('Inline import exceeds 512 KiB; use the supported HTTP/UI or scientific references.', 'too_large', 413)
     if op['operation_id'] == 'graphs.save' and len(json.dumps(arguments['document'], ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')) > 32768:
         raise AgentAPIError('Graph exceeds the 32 KiB bound.', 'too_large', 413)
+    if op['operation_id'] == 'runs.artifact_segments':
+        items = arguments['items']
+        if len({item['key'] for item in items}) != len(items):
+            raise AgentAPIError('Collection item keys must be unique.')
+        if sum(item['max_bytes'] for item in items) > 8*1024**2:
+            raise AgentAPIError('Collection requested raw bytes exceed 8 MiB.', 'too_large', 413)
     return copy.deepcopy(arguments)
 
 
@@ -1263,6 +1380,40 @@ class AgentClient:
         self._ready = False
         self._selected = None
         self._legacy = False
+        self._read_context = threading.local()
+
+    @contextmanager
+    def read_budget(self, deadline=None, cancelled=None):
+        """Bound a serial read workflow, including bootstrap, with one deadline.
+
+        The canonical request owner observes cancellation and joins its socket
+        watchdog. A cancellation-only context keeps each configured request
+        deadline. Mutation dispatch is prohibited inside this read-only context.
+        """
+        if deadline is not None and (type(deadline) not in (int, float) or not math.isfinite(deadline)):
+            raise AgentAPIError('Read deadline must be finite.')
+        if deadline is None and cancelled is None:
+            raise AgentAPIError('Select a read deadline or cancellation event.')
+        if cancelled is not None and not isinstance(cancelled, threading.Event):
+            raise AgentAPIError('Read cancellation must be a threading.Event.')
+        if getattr(self._read_context, 'value', None) is not None:
+            raise AgentAPIError('Read budgets cannot be nested.')
+        self._read_context.value = (deadline, cancelled)
+        try:
+            self._check_read_budget()
+            yield self
+        finally:
+            self._read_context.value = None
+
+    def _check_read_budget(self):
+        budget = getattr(self._read_context, 'value', None)
+        if budget is not None:
+            deadline, cancelled = budget
+            if cancelled is not None and cancelled.is_set():
+                raise AgentAPIError('Read workflow stopped; compute cancellation was not requested.', 'stopped', 409)
+            if deadline is not None and time.monotonic() >= deadline:
+                raise AgentAPIError('Read workflow deadline reached; execution state is unchanged.', 'deadline', 408)
+        return budget
 
     @classmethod
     def from_config(cls, path):
@@ -1276,8 +1427,12 @@ class AgentClient:
         return cls(config['endpoint'], token, config['catalog_id'], config.get('timeout', 120))
 
     def _request(self, method, path, body=None, selection=None):
-        connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, self.timeout))
+        budget = self._check_read_budget()
         deadline = time.monotonic() + self.timeout
+        if budget is not None and budget[0] is not None:
+            deadline = min(deadline, budget[0])
+        request_timeout = max(0.000001, deadline - time.monotonic())
+        connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, request_timeout))
         sockets = []
         response = None
         def expire():
@@ -1286,7 +1441,17 @@ class AgentClient:
                     owned.shutdown(socket.SHUT_RDWR)
                 except OSError:
                     pass
-        timer = threading.Timer(self.timeout, expire)
+        finished = None
+        if budget is None:
+            timer = threading.Timer(self.timeout, expire)
+        else:
+            finished = threading.Event()
+            def watch_read():
+                while not finished.wait(min(.025, max(0, deadline-time.monotonic()))):
+                    if time.monotonic() >= deadline or (budget[1] is not None and budget[1].is_set()):
+                        expire()
+                        return
+            timer = threading.Thread(target=watch_read, name='agent-read-budget')
         timer.daemon = True
         timer.start()
         try:
@@ -1298,8 +1463,10 @@ class AgentClient:
                 headers[CONTRACT_HEADER] = selected_header(*selection)
             if raw is not None:
                 headers['Content-Type'] = 'application/json'
+            self._check_read_budget()
             connection.connect()
             sockets.append(connection.sock)
+            self._check_read_budget()
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError()
@@ -1308,6 +1475,7 @@ class AgentClient:
             connection.sock.settimeout(remaining)
             connection.request(method, path, body=raw, headers=headers)
             response = connection.getresponse()
+            self._check_read_budget()
             if 300 <= response.status < 400:
                 raise AgentAPIError('Redirects are not supported.', 'transport', 502)
             lengths = response.headers.get_all('Content-Length', [])
@@ -1321,6 +1489,7 @@ class AgentClient:
                 raise AgentAPIError('HTTP response exceeds the agent receive bound.', 'response_too_large', 413)
             data = bytearray()
             while len(data) < length:
+                self._check_read_budget()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError()
@@ -1333,6 +1502,7 @@ class AgentClient:
             if time.monotonic() > deadline:
                 raise TimeoutError()
             value = decode(data)
+            self._check_read_budget()
             if response.status >= 400:
                 if not isinstance(value, dict) or not isinstance(value.get('error'), str):
                     raise AgentAPIError('Malformed HTTP error response.', 'transport', 502)
@@ -1345,15 +1515,22 @@ class AgentClient:
         except AgentAPIError:
             raise
         except (OSError, http.client.HTTPException, TimeoutError):
+            self._check_read_budget()
             raise AgentAPIError('Local HTTP request failed; inspect durable state before retrying a mutation.', 'transport', 503) from None
         finally:
-            timer.cancel()
+            if finished is None:
+                timer.cancel()
+            else:
+                finished.set()
             if response is not None:
                 response.close()
             connection.close()
             for owned in sockets:
                 owned.close()
-            timer.join(timeout=1)
+            if finished is None:
+                timer.join(timeout=1)
+            else:
+                timer.join()
 
     def _check_discovery(self):
         envelope = self._request('GET', '/api/agent/operations')
@@ -1369,7 +1546,9 @@ class AgentClient:
         return self._bootstrap('agent')
 
     def _bootstrap(self, identity_kind):
-        validate_registry()
+        self._check_read_budget()
+        validate_registry(checkpoint=self._check_read_budget)
+        self._check_read_budget()
         identity = self._request('GET', '/api/access/session')
         value = identity['result']
         if identity['status'] != 200 or not isinstance(value, dict) or value.get('kind') != identity_kind or value.get('catalog_id') != self.catalog_id:
@@ -1391,6 +1570,7 @@ class AgentClient:
             raise AgentAPIError(envelope['result']['error'], envelope['result']['code'], envelope['status'])
         else:
             self._selected = negotiate(envelope['result'], self.catalog_id)
+        self._check_read_budget()
         self._ready = True
         return {'identity': value, 'discovery': discovery(), 'mode': 'legacy' if self._legacy else 'negotiated',
                 'operations': sorted(self._selected)}
@@ -1407,6 +1587,8 @@ class AgentClient:
         from mcp_observer import observe_stage, observe_selection
         # Reject local invalid input before bootstrap/network side effects.
         op = operation(name)
+        if self._check_read_budget() is not None and op['side_effects']:
+            raise AgentAPIError('Read budgets cannot dispatch mutations.')
         errors = []
         for local_version in sorted(_CONTRACTS[op['operation_id']], reverse=True):
             try:
@@ -1431,6 +1613,7 @@ class AgentClient:
         observe_stage(observer, observation, 'dispatch')
         envelope = self._request(method, path, body, selection=selection)
         result = validate_output(name, envelope, version)
+        self._check_read_budget()
         if op['operation_id'] in ('runs.coordinator_health', 'runs.recover_coordinator') and result['status'] < 400:
             value = result['result']; request = value['recovery_request']
             if value['catalog_id'] != self.catalog_id:
@@ -1450,6 +1633,12 @@ class AgentClient:
                 raise AgentAPIError('Coordinator recovery acknowledgement differs from its exact request.', 'transport', 502)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
+        if op['operation_id'] == 'runs.artifact_segments' and result['status'] < 400:
+            validate_artifact_segments(result['result'], arguments)
+            if any(item['status'] == 200 and item['source']['kind'] == 'publication'
+                   and item['source']['ref']['catalog_id'] != self.catalog_id
+                   for item in result['result']['items']):
+                raise AgentAPIError('Collection publication belongs to another catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_artifact_chunk' and result['status'] < 400:
             if arguments['ref']['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Publication segment belongs to another catalog.', 'transport', 502)
@@ -1459,6 +1648,16 @@ class AgentClient:
                 raise AgentAPIError('Recovered publication does not match the requested Ref/catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_model_evidence' and result['status'] < 400:
             validate_publication_evidence(result['result'], arguments, self.catalog_id)
+        if op['operation_id'] == 'runs.compare_model_evidence' and version == 2 and result['status'] < 400:
+            value = result['result']
+            if value['mode'] != arguments['mode']:
+                raise AgentAPIError('Comparison mode differs from its exact request.', 'transport', 502)
+            for index, side in enumerate(value['sides']):
+                prefix = 'other_' if index else ''
+                if (side['run_id'] != arguments[prefix + 'run_id'] or side['metric_id'] != arguments['metric_id']
+                        or any(side[key] != arguments[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))):
+                    raise AgentAPIError('Comparison side differs from its exact selection.', 'transport', 502)
         if op['operation_id'] == 'runs.compare_publication_evidence' and result['status'] < 400:
             refs = [arguments['ref'], arguments['other_ref']]; value = result['result']
             if value['result_refs'] != refs or any(ref['catalog_id'] != self.catalog_id for ref in refs):
@@ -1470,6 +1669,26 @@ class AgentClient:
                                ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))
                         or value['comparison']['mode'] != choices['mode']):
                     raise AgentAPIError('Recovered comparison side differs from its exact selection.', 'transport', 502)
+        if op['operation_id'] == 'runs.compare_scientific_evidence' and result['status'] < 400:
+            value, choices = result['result'], arguments['selection']
+            operands = arguments['operands']
+            if (value['point'] != arguments['point'] or value['scalar']['mode'] != choices['mode']
+                    or [item['operand'] for item in value['operands']] != operands):
+                raise AgentAPIError('Scientific comparison differs from its exact ordered request.', 'transport', 502)
+            for index, (operand, side) in enumerate(zip(operands, value['scalar']['sides'], strict=True)):
+                source = operand['ref'] if operand['kind'] == 'publication_result' else operand
+                prefix = 'other_' if index else ''
+                if (source['catalog_id'] != self.catalog_id or side['run_id'] != source['run_id']
+                        or side['metric_id'] != choices['metric_id']
+                        or any(side[key] != choices[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))):
+                    raise AgentAPIError('Scientific comparison side differs from its exact selection/catalog.', 'transport', 502)
+        if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and result['status'] < 400:
+            value = result['result']
+            identity = ('run_id',) if op['operation_id'] == 'runs.phase_timings' else ('graph_id',)
+            if (value['catalog_id'] != self.catalog_id or any(value[key] != arguments[key] for key in identity)
+                    or op['operation_id'] == 'graphs.preparation_timings' and value['graph_revision'] != arguments['revision']):
+                raise AgentAPIError('Owner timing observation differs from its requested identity.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_status' and result['status'] < 400:
             value = result['result']; source = value['source_ref']; continuation = value['continuation']
             if (value['run_id'] != arguments['run_id'] or source is not None and
@@ -1646,3 +1865,33 @@ def verify_artifact(client, run_id, name, expected_sha256, *, consume=None, chun
             if checksum.hexdigest() != expected_sha256 or offset != total:
                 raise AgentAPIError('Whole artifact SHA256 differs; discard provisional bytes.', 'artifact_mismatch', 409)
             return {'sha256': expected_sha256, 'bytes': total, 'verification': 'whole_sha256_verified'}
+
+
+def validate_artifact_segments(value, request=None):
+    """Check correlation/segments; callers still verify each reassembled whole hash."""
+    if next(_validator(_ARTIFACT_SEGMENTS_RESULT).iter_errors(value), None) is not None:
+        raise AgentAPIError('Collection result shape differs.', 'transport', 502)
+    outcomes = value['items']
+    if len({item['key'] for item in outcomes}) != len(outcomes):
+        raise AgentAPIError('Collection result keys are duplicated.', 'transport', 502)
+    if request is not None and (len(outcomes) != len(request['items']) or any(
+            value['key'] != expected['key'] or value['source'] != expected['source']
+            for value, expected in zip(outcomes, request['items']))):
+        raise AgentAPIError('Collection result order or exact source differs.', 'transport', 502)
+    total = 0
+    for index, outcome in enumerate(outcomes):
+        if outcome['status'] != 200: continue
+        segment = outcome['result']; source = outcome['source']
+        selectors = request['items'][index] if request is not None else dict(segment, max_bytes=8*1024**2)
+        if source['kind'] == 'run':
+            if 'result_ref' in segment:
+                raise AgentAPIError('Ordinary segment carries a foreign result reference.', 'transport', 502)
+            selected = dict(selectors, run_id=source['run_id'])
+            raw = validate_segment(segment, selected)
+        else:
+            selected = dict(selectors, ref=source['ref'])
+            raw = validate_publication_segment(segment, selected)
+        total += len(raw)
+    if total > 8*1024**2:
+        raise AgentAPIError('Collection result exceeds its aggregate byte bound.', 'transport', 502)
+    return value

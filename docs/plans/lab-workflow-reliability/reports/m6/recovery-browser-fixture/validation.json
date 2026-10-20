@@ -1,0 +1,21 @@
+{
+  "base_head": "1176ea456fbb7488b6fc9f575043d4e03888d73f",
+  "change": "Load the actual scientific-comparison factory before WorkspaceReal in the isolated mocked-transport browser fixture, after composing the actual phase factory. Product and all assertions unchanged.",
+  "observed_red": "After phase repair, TypeError window.WorkspaceScientificComparison is not a function before the first assertion; localredexit1.",
+  "green": {
+    "command": "BROWSER=/usr/bin/chromium node tests/browser_workspace_recovery.cjs",
+    "exit": 0,
+    "pass_witnesses": 4,
+    "scope": "Actual Chromium/DOM with explicitly mocked transport; no backend/training/science claim"
+  },
+  "source_hashes": {
+    "tests/browser_workspace_recovery.cjs": "271f1bf999afd91a57ded847b0150f4fcbfb33f772363b65dd02e8335faf8c2e",
+    "static/workspace-phase-timings.js": "2230164b2b7200ef941e4f0c65a02b66ed16d477e483029d02306c403c58071e",
+    "static/workspace-scientific-comparison.js": "e2a1068011135bf845c1d962cf1e11147419c8c9ab8da36a80267be427762ade",
+    "static/workspace-real.js": "412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2"
+  },
+  "limits": [
+    "Independent exact-source check pending.",
+    "Corrected-head hosted lifecycle still required."
+  ]
+}

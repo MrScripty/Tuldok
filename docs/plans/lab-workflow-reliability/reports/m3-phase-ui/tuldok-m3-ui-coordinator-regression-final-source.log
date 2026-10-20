@@ -1,0 +1,46 @@
+Error: Real faulted coordinator health missing
+    at until (/workspace/Tuldok-lab-phase-ui-m3/tests/browser_workspace_coordinator.cjs:13:124)
+    at async /workspace/Tuldok-lab-phase-ui-m3/tests/browser_workspace_coordinator.cjs:39:3
+Fixture stderr: 
+Local owner · owner
+Session
+Sign out
+Skip to workspace
+t.
+Tuldok
+/ Workspaces
+● Local
+Classic workbench ↗
+Corner studio ↗
+CONTEXT
+Dataset
+Interface fixtures
+Current local catalog
+Neutral fixture; no scientific claim · project
+Open project
+fixture-dataset-v1 · 0 selected · authored CC0 examples · release fixture-release-v1
+Local preview
+01
+Data
+02
+Pipeline
+03
+Runs
+Inspect → compose → understand
+
+Fixture runs · browser-local examples only.
+
+EVIDENCE, AT EACH STEP
+Runs
+
+Trace results back to the exact source.
+
+Fixture results. Metrics and predictions below are authored interface examples. No training ran, no real checkpoint exists, and these values make no quality claim.
+
+No fixture runs yet
+
+Validate a graph in Pipeline, then record a fixture scenario.
+
+Open Pipeline →
+Tuldok · Dataset-centered workspaces
+Fixtures are isolated examples. Current catalog runs use an optional local CPU runtime.

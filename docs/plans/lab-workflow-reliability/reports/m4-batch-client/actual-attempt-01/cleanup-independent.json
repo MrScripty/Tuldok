@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-10-19T22:53:25.420131+00:00",
+  "read_only_independent_absence_queries": [
+    {
+      "schema": "catalog_0964c0b47aa643a58201b6b82d310d5d",
+      "exists": false
+    },
+    {
+      "schema": "catalog_2b3cfb84cbc74ad888407eed44283c00",
+      "exists": false
+    }
+  ]
+}

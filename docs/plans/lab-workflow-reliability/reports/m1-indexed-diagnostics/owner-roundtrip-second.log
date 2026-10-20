@@ -1,0 +1,25 @@
+test_impossible_population_refuses_before_graph_run_grant_or_reservation (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_impossible_population_refuses_before_graph_run_grant_or_reservation) ... ERROR
+test_real_custody_cold_recovery_and_exact_inventory_read_with_no_replay (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_real_custody_cold_recovery_and_exact_inventory_read_with_no_replay) ... ok
+
+======================================================================
+ERROR: test_impossible_population_refuses_before_graph_run_grant_or_reservation (test_indexed_diagnostics_publication.IndexedDiagnosticPublicationTests.test_impossible_population_refuses_before_graph_run_grant_or_reservation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/tests/test_indexed_diagnostics_publication.py", line 160, in test_impossible_population_refuses_before_graph_run_grant_or_reservation
+    self.dataset.projects.open_snapshot({'root': 'synthetic', 'manifest_path': 'project.json'})
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/access.py", line 73, in guarded
+    return function(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/projects.py", line 230, in open_snapshot
+    return self._open(body, True)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-indexed-diagnostics-m1/projects.py", line 258, in _open
+    raise WorkbenchError('This project ID already names a different snapshot or root. Keep the original or use a new project ID.', 'conflict', 409)
+workbench.WorkbenchError: This project ID already names a different snapshot or root. Keep the original or use a new project ID.
+
+----------------------------------------------------------------------
+Ran 2 tests in 17.778s
+
+FAILED (errors=1)
+Removed exact recorded fresh schema: catalog_bcd1d0b17e6340cdbccea964073b7d43
+Removed exact recorded fresh schema: catalog_9821a7d198e846369a511147fe6a982f

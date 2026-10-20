@@ -133,10 +133,12 @@ def validate_policy(value, definition):
     import recipe_contract
     bound=recipe_contract.is_bound_evidence(definition)
     canonical_mode=recipe_contract.is_canonical_evidence(definition)
+    indexed=recipe_contract.is_indexed_evidence(definition)
     closed(value,('format','task','adapter_sha256','profile','probe','fit_members','fields','field_outputs',
                   'metric_definitions','model_specification','preprocessing_policy','output_policy','probe_inputs',
-                  *(['field_targets'] if bound else []),*(['canonical'] if canonical_mode else [])),'Policy')
-    require(value['format']==(recipe_contract.CANONICAL_POLICY_FORMAT if canonical_mode else POLICY_FORMAT),'Unsupported policy.','unsupported')
+                  *(['field_targets'] if bound else []),*(['canonical'] if canonical_mode else []),
+                  *(['diagnostic_capture'] if indexed else [])),'Policy')
+    require(value['format']==(recipe_contract.CANONICAL_POLICY_FORMAT if canonical_mode else recipe_contract.INDEXED_POLICY_FORMAT if indexed else POLICY_FORMAT),'Unsupported policy.','unsupported')
     require(recipe_contract.is_evidence(definition),'Policy requires the selected model-evidence recipe.','unsupported')
     require(value['adapter_sha256']==digest(sorted(definition['sources'],key=lambda item:item['path'])),'Adapter source closure differs.')
     task=value['task'];closed(task,('id','revision','definition'),'Task declaration')
@@ -251,6 +253,10 @@ def validate_policy(value, definition):
     if canonical_mode:
         import extension_canonical
         extension_canonical.validate_declaration(value['canonical'],value,definition)
+    if indexed:
+        from tuldok_extension_sdk import diagnostics
+        try:diagnostics.validate_capture(value['diagnostic_capture'],value,definition['outputs'])
+        except diagnostics.EvidenceError as exc:raise WorkbenchError(str(exc),exc.state,400) from None
     return value
 
 
@@ -562,11 +568,16 @@ def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
                                                                                'gauge_policy':field['gauge_policy']}
                 field_records.append({'checkpoint_sha256':checkpoint_sha,'member_ordinal':member['ordinal'],'field_id':field['id'],'stage':output['stage'],'shape_zyx':output['shape_zyx'],'units':output['units']})
     guard()
-    return {'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
+    result={'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
             'manifest':manifest,'checkpoint_index':index,'probe':static['probe'],'metric_definitions':policy['metric_definitions'],
             'observations':observations,'model_definition':policy['model_specification'],'fields':field_records,
             'metric_definition_hashes':{item['id']:digest(item) for item in policy['metric_definitions']},
             'checkpoints':[item['descriptor'] for item in checkpoints.values()], '_arrays':arrays}
+    if recipe_contract.is_indexed_evidence(run['material']['recipe']):
+        from tuldok_extension_sdk import diagnostics
+        try:result['_diagnostics']=diagnostics.verify(policy['diagnostic_capture'],policy,payloads,admitted_context,index,guard)
+        except diagnostics.EvidenceError as exc:raise WorkbenchError(str(exc),exc.state,400) from None
+    return result
 
 
 @boundary
@@ -590,6 +601,65 @@ def compare(verified, contexts, body):
         result['reasons'].append('Field contracts, geometry or gauge semantics differ.')
         result.update(state='incompatible', delta=None)
     return result
+
+
+@boundary
+def compare_scientific(verified, contexts, selection, point):
+    """Exact retained point diagnostics, not a scientific error/acceptance operator.
+
+    Case correspondence is frozen-reference identity, never ordinal or shape.
+    The existing profile retains no per-case metric or owned acceptance criterion.
+    """
+    closed(point, ('field_id', 'x', 'y', 'z'), 'Comparison point')
+    text(point['field_id'], 'Field ID', 64)
+    for axis in 'xyz': natural(point[axis], 'Point '+axis, 0, 127)
+    result = compare(verified, contexts, selection)
+    if result['delta'] is not None and result['delta']['state'] == 'observed':
+        require(math.isfinite(result['delta']['value']), 'Scalar delta exceeds the finite numeric range.')
+    left, right = verified
+    for key, reason in (('data_sha256', 'Evaluation data identities differ.'),
+                        ('profile_sha256', 'Evidence profiles differ.')):
+        if left['manifest'][key] != right['manifest'][key]: result['reasons'].append(reason)
+    if left['probe']['split'] != right['probe']['split'] or left['probe']['split'] != 'validation':
+        result['reasons'].append('Evaluation splits differ or are unsupported.')
+    if left['probe']['selection_policy_sha256'] != right['probe']['selection_policy_sha256']:
+        result['reasons'].append('Case selection policies differ.')
+    if result['reasons']: result.update(state='incompatible', delta=None)
+    members = [{canonical(row['frozen_reference']): row for row in value['probe']['members']} for value in verified]
+    require(all(len(index) == len(value['probe']['members']) for index, value in zip(members, verified, strict=True)),
+            'Frozen case identities are ambiguous.')
+    cases = []
+    for identity in sorted(set(members[0]) | set(members[1])):
+        values = []
+        for index, value in enumerate(verified):
+            member = members[index].get(identity)
+            if member is None:
+                values.append({'state':'missing','reason':'case_not_retained'}); continue
+            checkpoint = selection[('other_' if index else '')+'checkpoint_sha256']
+            record = next((row for row in value['fields'] if row['checkpoint_sha256'] == checkpoint
+                           and row['member_ordinal'] == member['ordinal'] and row['field_id'] == point['field_id']), None)
+            if record is None:
+                values.append({'state':'missing','reason':'field_not_retained'}); continue
+            require(all(point[axis] < record['shape_zyx']['zyx'.index(axis)] for axis in 'xyz'),
+                    'Selected comparison point is outside the declared field geometry.')
+            field = query(value, {'checkpoint_sha256':checkpoint, 'member_ordinal':member['ordinal'],
+                'field_id':point['field_id'], 'axis':'z', 'index':point['z'], 'split':'validation'})['field']
+            values.append({'state':'observed', 'member_ordinal':member['ordinal'],
+                'prediction':field['prediction'][point['y']][point['x']],
+                'reference':field['reference'][point['y']][point['x']], 'units':field['units']})
+        delta = None
+        if result['state'] == 'compatible' and selection['mode'] == 'paired' and all(row['state'] == 'observed' for row in values):
+            difference = values[1]['prediction'] - values[0]['prediction']
+            require(math.isfinite(difference), 'Diagnostic point delta exceeds the finite numeric range.')
+            delta = {'value':difference, 'units':values[0]['units']}
+        member = members[0].get(identity) or members[1][identity]
+        cases.append({'case':copy.deepcopy(member['frozen_reference']), 'values':values, 'prediction_delta':delta,
+                      'acceptance':{'state':'unknown','reason':'owned_per_case_criterion_not_retained'}})
+    return {'format':'scientific_comparison_v1', 'scalar':result, 'point':copy.deepcopy(point), 'cases':cases,
+        'coverage':{'baseline':len(members[0]), 'candidate':len(members[1]),
+                    'matched':len(set(members[0]) & set(members[1])), 'union':len(cases)},
+        'interpretation':'retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance',
+        'criterion':{'state':'unknown','reason':'profile_has_no_owned_per_case_metric_or_criterion'}}
 
 
 @boundary

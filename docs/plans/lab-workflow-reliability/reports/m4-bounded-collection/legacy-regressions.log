@@ -1,0 +1,10 @@
+test_real_unicode_parameter_descendant_output_cold_download_and_restart (test_external_runs.ExternalExecutionTests.test_real_unicode_parameter_descendant_output_cold_download_and_restart) ... ok
+test_actual_large_recovered_artifact_uses_bounded_segments_without_full_scans (test_run_publication_http.PublicationHTTPTests.test_actual_large_recovered_artifact_uses_bounded_segments_without_full_scans) ... ok
+test_revocation_during_segment_capture_prevents_disclosure (test_run_publication_http.PublicationHTTPTests.test_revocation_during_segment_capture_prevents_disclosure) ... ok
+test_all_prior_full_publication_and_legacy_contracts_remain_equal (test_run_publication_http.PublicationContractCompatibilityTests.test_all_prior_full_publication_and_legacy_contracts_remain_equal) ... ok
+test_exact_checkpoint_and_slice_replies_are_correlated_without_retry (test_run_publication_http.PublicationContractCompatibilityTests.test_exact_checkpoint_and_slice_replies_are_correlated_without_retry) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 50.872s
+
+OK

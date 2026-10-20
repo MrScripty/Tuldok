@@ -1,0 +1,34 @@
+{
+  "command": "PATH=/workspace/tuldok-runtime/bin:$PATH PYTHONPATH=tests:. python -m unittest test_agent_api.RegistryTests test_agent_api.ClientTests test_agent_api.OutputTests test_agent_api.ParityRegressionTests test_agent_negotiation.ContractSelectionTests test_agent_project_cli.CommandSelectionTests test_agent_project_cli.PublicationTests -v",
+  "files": {
+    "agent_api.py": "019b029fe648de87451b5694a9bf2fabbac3540d2ab1663b32c632a81b1521f2",
+    "project_cli.py": "450f2c155928361e5db2b4ac5b686f00cb51ce9368ade531c6f97c9b70d7b015",
+    "tests/test_agent_api.py": "1c1eda9a673a77a77f02703db6ee4d2f0152fdfca55febff17943c373d0208a2",
+    "tests/test_agent_negotiation.py": "baab175eb228d89a0935f92586a8fa052e94c8bdb554e1a52a460178715a87fe",
+    "tests/test_agent_project_cli.py": "4d549f17dc51183d141df9e73702abb53dbbc988f8afa4223d1dfd14691f5829",
+    "tests/test_workflow_client.py": "7824b46e5b1f9ff840f4877fb18deb306c5462ddd56d1a4857a94528337ebe2b",
+    "tests/test_workflow_client_http.py": "25c489b8490f457840a2b88d1c9cb5e351e2dd0967eaf7cdd5bed3ee308eae7f",
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+  },
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "scope": "Existing low-level registry/client/output/parity, negotiation and CLI selection/publication/download compatibility checks on final M5 source; no application/custodian fixture",
+  "source_commit": "875038ade24a8a37c1431fbe0f8e4c2625e20a5e",
+  "source_tree": "d33d42df73ee4b832ab54c4066d244387f37f711",
+  "test_selectors": [
+    "test_agent_api.RegistryTests",
+    "test_agent_api.ClientTests",
+    "test_agent_api.OutputTests",
+    "test_agent_api.ParityRegressionTests",
+    "test_agent_negotiation.ContractSelectionTests",
+    "test_agent_project_cli.CommandSelectionTests",
+    "test_agent_project_cli.PublicationTests"
+  ],
+  "versions": {
+    "jsonschema": "4.26.0",
+    "numpy": "2.5.4",
+    "psycopg": "3.3.6",
+    "scikit-learn": "1.7.2",
+    "torch": "2.8.0+cpu",
+    "torchvision": "0.23.0+cpu"
+  }
+}

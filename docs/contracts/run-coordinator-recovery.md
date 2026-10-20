@@ -77,3 +77,38 @@ real neutral custodians, HTTP and CLI. The source includes an early required CI
 gate. Controller/UI health controls, phase timing, other reliability milestones
 and full M2 acceptance are separate follow-up work. No CUDA or scientific claim
 is made by this coordinator slice.
+
+## Existing Runs panel
+
+The Runs view inspects exact selected-v1 coordinator health separately from Run
+result verification. It shows state, generation, readiness/fence, last update,
+retained fault and recovery receipt. A list-read failure still exposes the
+independent health inspector. Healthy idle event waiting requires no new timer;
+the existing Run refresh lifecycle and explicit health refresh own reads.
+
+A current owner with inspect/execution approval can explicitly recover a
+faulted/blocked coordinator. Before dispatch the panel retains the exact
+generation/key body under a catalog/actor scope in bounded tab session storage
+(128 entries/128 KiB, no tokens). It reconciles an unacknowledged request under
+that same identity; it never silently chooses another mutation. A completed
+receipt remains complete after another fault or cold reopen, so a new explicit
+action uses the current generation and a fresh key. A conflicting retained
+pending request fails closed for inspection rather than guessing its outcome.
+Unavailable/corrupt storage leaves health inspection available and recovery
+disabled. Current server authority is always rechecked; tab state grants none.
+
+Both operations are pinned to their exact version/hash. The panel validates
+closed health and request identities, actor/body SHA256, generation and
+readiness/state consistency. New reads supersede older replies; navigation,
+session/actor/catalog changes fence all pending delivery. Invalidated reads and
+client mutation waits abort their fetches and release listeners/deadline timers.
+Aborting the client wait is not cancellation authority over an admitted server
+recovery; the retained exact request resolves its outcome on return. A mutation
+reply is followed by a fresh health read before readiness presentation.
+
+Controlled tests cover those delivery/storage boundaries. The actual browser
+fixture uses a separate PostgreSQL advisory-lock holder, one originally queued
+neutral attempt and a deliberately dropped successful recovery HTTP reply.
+Keyboard recovery, saved-read reconciliation, one first GO, original admission
+identity/count conservation, document reload, mouse refresh and 1440/390 layouts
+are qualified separately from model training or scientific acceptance.

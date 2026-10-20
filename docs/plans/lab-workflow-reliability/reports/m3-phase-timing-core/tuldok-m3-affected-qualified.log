@@ -1,0 +1,111 @@
+test_actual_catalog_mutex_wait_is_measured_by_owner_without_reconstructing_events (test_run_phase_timings.ActualPhaseTimingTests.test_actual_catalog_mutex_wait_is_measured_by_owner_without_reconstructing_events) ... ok
+test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority (test_run_phase_timings.ActualPhaseTimingTests.test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority) ... ok
+test_missing_or_foreign_custodian_diagnostics_cannot_change_completed_result (test_run_phase_timings.ActualPhaseTimingTests.test_missing_or_foreign_custodian_diagnostics_cannot_change_completed_result) ... ok
+test_pre_run_preparation_is_live_actor_revision_scoped_and_has_no_run_effect (test_run_phase_timings.ActualPhaseTimingTests.test_pre_run_preparation_is_live_actor_revision_scoped_and_has_no_run_effect) ... ok
+test_real_capacity_wait_single_go_and_active_cancel_keep_observations_separate (test_run_phase_timings.ActualPhaseTimingTests.test_real_capacity_wait_single_go_and_active_cancel_keep_observations_separate) ... ok
+test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait (test_run_phase_timings.ActualPhaseTimingTests.test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait) ... ERROR
+test_client_correlates_exact_run_catalog_graph_revision_and_never_retries (test_run_phase_timings.OwnerPhaseTimingTests.test_client_correlates_exact_run_catalog_graph_revision_and_never_retries) ... ok
+test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits (test_run_phase_timings.OwnerPhaseTimingTests.test_closed_wire_refuses_duplicate_clocks_forged_durations_and_waits) ... ok
+test_full_baseline_contracts_and_legacy_discovery_are_identical (test_run_phase_timings.OwnerPhaseTimingTests.test_full_baseline_contracts_and_legacy_discovery_are_identical) ... ok
+test_history_and_long_lived_open_span_are_bounded_without_false_duration (test_run_phase_timings.OwnerPhaseTimingTests.test_history_and_long_lived_open_span_are_bounded_without_false_duration) ... ok
+test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end (test_run_phase_timings.OwnerPhaseTimingTests.test_open_snapshot_cold_reopen_and_failed_phase_never_invent_an_end) ... ok
+test_overlapping_owner_spans_use_monotonic_time_and_are_not_added (test_run_phase_timings.OwnerPhaseTimingTests.test_overlapping_owner_spans_use_monotonic_time_and_are_not_added) ... ok
+test_client_correlates_graph_revision_and_catalog_without_retry (test_run_preflight_report.PreflightReportTests.test_client_correlates_graph_revision_and_catalog_without_retry) ... ok
+test_clone_or_revision_changes_report_without_claiming_new_execution (test_run_preflight_report.PreflightReportTests.test_clone_or_revision_changes_report_without_claiming_new_execution) ... ok
+test_consumer_refuses_inconsistent_identities_even_with_repaired_report_hash (test_run_preflight_report.PreflightReportTests.test_consumer_refuses_inconsistent_identities_even_with_repaired_report_hash) ... ok
+test_domain_calls_fresh_preparation_and_only_selected_v3_adds_report (test_run_preflight_report.PreflightReportTests.test_domain_calls_fresh_preparation_and_only_selected_v3_adds_report) ... ok
+test_graph_drift_or_preparation_failure_cannot_emit_checked_report (test_run_preflight_report.PreflightReportTests.test_graph_drift_or_preparation_failure_cannot_emit_checked_report) ... ok
+test_mutable_execution_facts_are_explicitly_deferred (test_run_preflight_report.PreflightReportTests.test_mutable_execution_facts_are_explicitly_deferred) ... ok
+test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives (test_run_preflight_report.PreflightReportTests.test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives) ... ok
+test_report_binds_exact_material_graph_and_its_own_content (test_run_preflight_report.PreflightReportTests.test_report_binds_exact_material_graph_and_its_own_content) ... ok
+test_report_preserves_prepared_material_and_approval_identity (test_run_preflight_report.PreflightReportTests.test_report_preserves_prepared_material_and_approval_identity) ... ok
+test_unsupported_report_versions_refuse_before_preparation (test_run_preflight_report.PreflightReportTests.test_unsupported_report_versions_refuse_before_preparation) ... ok
+test_utf8_content_identity_is_distinct_from_ascii_wire_encoding (test_run_preflight_report.PreflightReportTests.test_utf8_content_identity_is_distinct_from_ascii_wire_encoding) ... ok
+test_real_preparation_storage_refusal_has_no_admission_or_staging_effect (test_run_preflight_storage.PreflightStorageIntegrationTests.test_real_preparation_storage_refusal_has_no_admission_or_staging_effect) ... ok
+test_admission_keeps_existing_exact_policy_and_boundary (test_run_preflight_storage.PreflightStorageTests.test_admission_keeps_existing_exact_policy_and_boundary) ... ok
+test_generated_model_context_uses_existing_context_capture_limit (test_run_preflight_storage.PreflightStorageTests.test_generated_model_context_uses_existing_context_capture_limit) ... ok
+test_preflight_includes_capture_that_admission_already_staged (test_run_preflight_storage.PreflightStorageTests.test_preflight_includes_capture_that_admission_already_staged) ... ok
+test_report_labels_current_observation_without_claiming_a_reservation (test_run_preflight_storage.PreflightStorageTests.test_report_labels_current_observation_without_claiming_a_reservation) ... ok
+test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph (test_run_preflight_storage.PreflightStorageTests.test_selected_v3_checks_storage_before_issuing_report_and_rechecks_graph) ... ok
+test_storage_observation_cannot_hide_graph_drift_or_missing_owner (test_run_preflight_storage.PreflightStorageTests.test_storage_observation_cannot_hide_graph_drift_or_missing_owner) ... ok
+test_storage_refusal_cannot_emit_report_or_change_old_projections (test_run_preflight_storage.PreflightStorageTests.test_storage_refusal_cannot_emit_report_or_change_old_projections) ... ok
+test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior (test_run_preflight_storage.PreflightStorageTests.test_unknown_storage_refuses_and_other_profiles_keep_existing_behavior) ... ok
+test_impossible_declaration_refuses_before_graph_run_or_grant_effect (test_run_preflight_publication.BoundOutputPreflightIntegrationTests.test_impossible_declaration_refuses_before_graph_run_or_grant_effect) ... ok
+test_aggregate_counts_unique_required_arrays (test_run_preflight_publication.FieldOutputPreflightTests.test_aggregate_counts_unique_required_arrays) ... ok
+test_declared_maxima_are_not_claimed_as_required_output_sizes (test_run_preflight_publication.FieldOutputPreflightTests.test_declared_maxima_are_not_claimed_as_required_output_sizes) ... ok
+test_existing_valid_definition_is_unchanged_and_executes_nothing (test_run_preflight_publication.FieldOutputPreflightTests.test_existing_valid_definition_is_unchanged_and_executes_nothing) ... ok
+test_existing_writer_verifier_and_cold_read_still_round_trip (test_run_preflight_publication.FieldOutputPreflightTests.test_existing_writer_verifier_and_cold_read_still_round_trip) ... ok
+test_prediction_payload_must_fit_its_own_file_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_prediction_payload_must_fit_its_own_file_bound) ... ok
+test_probe_face_array_must_fit_the_profile_shard_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_probe_face_array_must_fit_the_profile_shard_bound) ... ok
+test_probe_input_payload_must_fit_its_own_file_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_probe_input_payload_must_fit_its_own_file_bound) ... ok
+test_reference_payload_must_fit_its_own_file_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_reference_payload_must_fit_its_own_file_bound) ... ok
+test_shared_reference_is_not_charged_once_per_checkpoint (test_run_preflight_publication.FieldOutputPreflightTests.test_shared_reference_is_not_charged_once_per_checkpoint) ... ok
+test_cancel_during_delayed_go_verification_drains_before_fork (test_recipe_process.CpuSnapshotContractTests.test_cancel_during_delayed_go_verification_drains_before_fork) ... ok
+test_canonical_roundtrip_without_live_packages (test_recipe_process.CpuSnapshotContractTests.test_canonical_roundtrip_without_live_packages) ... ok
+test_cpu_capture_and_input_bounds_are_profile_specific (test_recipe_process.CpuSnapshotContractTests.test_cpu_capture_and_input_bounds_are_profile_specific) ... ok
+test_cpu_exact_aggregate_boundaries_and_per_input_limit (test_recipe_process.CpuSnapshotContractTests.test_cpu_exact_aggregate_boundaries_and_per_input_limit) ... ok
+test_cpu_launch_environment_is_fresh_unicode_capable_and_locale_closed (test_recipe_process.CpuSnapshotContractTests.test_cpu_launch_environment_is_fresh_unicode_capable_and_locale_closed) ... ok
+test_cpu_launch_vector_requires_bound_descriptor (test_recipe_process.CpuSnapshotContractTests.test_cpu_launch_vector_requires_bound_descriptor) ... ok
+test_directory_and_preparation_budget_are_bounded (test_recipe_process.CpuSnapshotContractTests.test_directory_and_preparation_budget_are_bounded) ... ok
+test_large_output_scan_has_exact_file_total_and_count_bounds_without_large_writes (test_recipe_process.CpuSnapshotContractTests.test_large_output_scan_has_exact_file_total_and_count_bounds_without_large_writes) ... ok
+test_large_resource_profile_requires_full_cpu_identity_and_keeps_input_bounds (test_recipe_process.CpuSnapshotContractTests.test_large_resource_profile_requires_full_cpu_identity_and_keeps_input_bounds) ... ok
+test_manifest_change_and_kind_mismatch_refused (test_recipe_process.CpuSnapshotContractTests.test_manifest_change_and_kind_mismatch_refused) ... ok
+test_mutated_bytes_mode_missing_and_unlisted_refused (test_recipe_process.CpuSnapshotContractTests.test_mutated_bytes_mode_missing_and_unlisted_refused) ... ok
+test_output_scan_does_not_ignore_other_observation_errors (test_recipe_process.CpuSnapshotContractTests.test_output_scan_does_not_ignore_other_observation_errors) ... ok
+test_output_scan_tolerates_a_regular_file_renamed_after_listing (test_recipe_process.CpuSnapshotContractTests.test_output_scan_tolerates_a_regular_file_renamed_after_listing) ... ok
+test_pure_bounds_paths_modes_and_descriptor_binding (test_recipe_process.CpuSnapshotContractTests.test_pure_bounds_paths_modes_and_descriptor_binding) ... ok
+test_symlink_and_hardlink_file_custody_refused (test_recipe_process.CpuSnapshotContractTests.test_symlink_and_hardlink_file_custody_refused) ... ok
+test_virtual_torch_origins_are_exact_and_captured (test_recipe_process.CpuSnapshotContractTests.test_virtual_torch_origins_are_exact_and_captured) ... ok
+test_artifact_source_cold_identity_and_completed_custody (test_recipe_process.CustodyTests.test_artifact_source_cold_identity_and_completed_custody) ... ok
+test_barrier_complete_exact_output_and_cold_receipt (test_recipe_process.CustodyTests.test_barrier_complete_exact_output_and_cold_receipt) ... ok
+test_cancel_before_go_and_controller_loss (test_recipe_process.CustodyTests.test_cancel_before_go_and_controller_loss) ... ok
+test_closed_controller_channel_reports_lost_once_and_cancel_is_idempotent (test_recipe_process.CustodyTests.test_closed_controller_channel_reports_lost_once_and_cancel_is_idempotent) ... ok
+test_controller_eof_after_go_drains_escaped_child (test_recipe_process.CustodyTests.test_controller_eof_after_go_drains_escaped_child) ... ok
+test_helper_death_preserves_unknown_even_when_leader_is_dead (test_recipe_process.CustodyTests.test_helper_death_preserves_unknown_even_when_leader_is_dead) ... ok
+test_malformed_control_and_receipt_loss_never_claim_completion (test_recipe_process.CustodyTests.test_malformed_control_and_receipt_loss_never_claim_completion) ... ok
+test_native_policy_absence_is_closed_and_receipt_is_pure (test_recipe_process.CustodyTests.test_native_policy_absence_is_closed_and_receipt_is_pure) ... ok
+test_output_and_runtime_drift_bounds (test_recipe_process.CustodyTests.test_output_and_runtime_drift_bounds) ... ok
+test_setsid_double_fork_and_term_resistance_are_drained (test_recipe_process.CustodyTests.test_setsid_double_fork_and_term_resistance_are_drained) ... ok
+test_source_drift_after_ready_does_not_execute (test_recipe_process.CustodyTests.test_source_drift_after_ready_does_not_execute) ... ok
+test_spec_rejects_invalid_bounds_and_executable_hash_before_spawn (test_recipe_process.CustodyTests.test_spec_rejects_invalid_bounds_and_executable_hash_before_spawn) ... ok
+test_wall_and_stream_limits_and_nonzero_exit (test_recipe_process.CustodyTests.test_wall_and_stream_limits_and_nonzero_exit) ... ok
+test_cancel_active_publication_pauses_without_changing_original_outcome (test_run_publication_recovery.PublicationRecoveryTests.test_cancel_active_publication_pauses_without_changing_original_outcome) ... ok
+test_cancel_or_budget_during_existing_file_verification_preserves_bytes (test_run_publication_recovery.PublicationRecoveryTests.test_cancel_or_budget_during_existing_file_verification_preserves_bytes) ... ok
+test_changed_source_output_or_capture_refuses_before_copy (test_run_publication_recovery.PublicationRecoveryTests.test_changed_source_output_or_capture_refuses_before_copy) ... ok
+test_cold_result_reader_stops_at_deadline_without_changing_publication (test_run_publication_recovery.PublicationRecoveryTests.test_cold_result_reader_stops_at_deadline_without_changing_publication) ... ok
+test_concurrent_identical_requests_share_one_continuation (test_run_publication_recovery.PublicationRecoveryTests.test_concurrent_identical_requests_share_one_continuation) ... ok
+test_existing_study_reservation_and_conservative_charge_survive_recovery (test_run_publication_recovery.PublicationRecoveryTests.test_existing_study_reservation_and_conservative_charge_survive_recovery) ... ok
+test_original_manifest_sync_fault_recovery_syncs_every_reused_file (test_run_publication_recovery.PublicationRecoveryTests.test_original_manifest_sync_fault_recovery_syncs_every_reused_file) ... ok
+test_partial_copy_capacity_counts_remaining_bytes_before_replacement (test_run_publication_recovery.PublicationRecoveryTests.test_partial_copy_capacity_counts_remaining_bytes_before_replacement) ... ok
+test_recovery_is_owner_only_and_exact_source_ref_is_required (test_run_publication_recovery.PublicationRecoveryTests.test_recovery_is_owner_only_and_exact_source_ref_is_required) ... ok
+test_revocation_during_result_storage_prevents_attachment (test_run_publication_recovery.PublicationRecoveryTests.test_revocation_during_result_storage_prevents_attachment) ... ok
+test_same_run_recovers_exact_result_without_replay_or_new_run_or_grant (test_run_publication_recovery.PublicationRecoveryTests.test_same_run_recovers_exact_result_without_replay_or_new_run_or_grant) ... ok
+test_shutdown_drains_owned_recovery_before_closing_metadata (test_run_publication_recovery.PublicationRecoveryTests.test_shutdown_drains_owned_recovery_before_closing_metadata) ... ok
+test_stopped_backup_restores_original_proof_and_recovers_in_new_directory (test_run_publication_recovery.PublicationRecoveryTests.test_stopped_backup_restores_original_proof_and_recovers_in_new_directory) ... ok
+test_twenty_attempt_limit_stops_without_compute_or_unbounded_history (test_run_publication_recovery.PublicationRecoveryTests.test_twenty_attempt_limit_stops_without_compute_or_unbounded_history) ... ok
+test_unknown_final_commit_reply_reconciles_exact_result_without_recopy (test_run_publication_recovery.PublicationRecoveryTests.test_unknown_final_commit_reply_reconciles_exact_result_without_recopy) ... ok
+test_unowned_partial_and_changed_final_result_refuse (test_run_publication_recovery.PublicationRecoveryTests.test_unowned_partial_and_changed_final_result_refuse) ... ok
+
+======================================================================
+ERROR: test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait (test_run_phase_timings.ActualPhaseTimingTests.test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-phase-timing-m3/tests/test_run_phase_timings.py", line 231, in test_selected_http_cli_old_run_unknown_and_bounded_catalog_wait
+    called = subprocess.run([sys.executable, 'project_cli.py', '--config', str(config),
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 2116, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 1253, in _check_timeout
+    raise TimeoutExpired(
+subprocess.TimeoutExpired: Command '['/workspace/tuldok-runtime/bin/python', 'project_cli.py', '--config', '/tmp/tmpvdtjqlzu/agent.json', 'phase-timings', '--run-id', '9fb6c164a9004ad394d93d4fef936f08']' timed out after 30 seconds
+
+----------------------------------------------------------------------
+Ran 87 tests in 188.023s
+
+FAILED (errors=1)

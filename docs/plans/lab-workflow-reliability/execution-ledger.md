@@ -335,3 +335,218 @@ follow; hosted acceptance, indexed diagnostics and full M1 remain pending.
 Implemented Runs-owned generation/health, bounded durable diagnostic/request journal, stop/admission/GO fences and explicit current-owner recovery through selected HTTP/CLI. A joined executor and acknowledged durable custody reconciliation precede one replacement; healthy/stale refusals remain side-effect free, uncertain COMMIT/cleanup/runtime ownership stays fenced, and a secondary opener cannot write the primary journal.
 
 Core source3280ebe passed27 cases108.033s with no skips; normal whole-branch composition6ab211e includes independently reviewed UI/lineage61d2c2d/be9dba6. Composition passed16 cases52.070s and an actual neutralStudy/PG/Chromiumlineage journey; separate original custody/recipe-process40 cases74.360s passed. Final independent review found cleanup masking and peer-journal overwrite boundaries; focused corrected witnesses and exact-source hashes are retained in `reports/m2-coordinator-core/validation.json`. Independent final review and hosted gates remain pending. Existing UI coordinator controls and M3 timing are still separate work; no full milestone, CUDA or scientific acceptance is claimed.
+
+
+### M3 owner phase timing source core — isolated implementation
+
+Started in task-owned `feature/lab-phase-timing-20261019` from exact reviewed
+M2 core `5a1feac9f27e23e471c6b57d1f74c026c01c3dd6`. Normally composed the entire
+root-authored `5f1aa49` immutable-key followup. Independent review caught the
+cold-reopen completed-key edge; the corrected current/cold/unacknowledged-journal
+PostgreSQL cases all passed in the independent group. No M2 source was authored
+in this timing branch.
+
+Added monotonic per-owner clocks, bounded optional Run observations and sealed
+custodian diagnostic sidecar, current-authority selected Run/preparation reads,
+CLI reads and a focused existing-service CI gate. Original full contracts and
+legacy discovery remain frozen. Detailed external preparation, queue/capacity,
+actual dispatch catalog acquisition, custody, validation, publication and recovery
+are instrumented; unknown historical/builtin phases are not reconstructed.
+Publication remains inside its existing catalog boundary, so concurrent timing
+reads may be unavailable until authority can be checked. No readiness/reservation,
+result proof, compute replay, numerical training or science claim is introduced.
+
+The first compatibility run exposed unbound unit substitutions that had no new
+private timing method; the implementation now calls the class helper directly.
+The first pure harness used a nonexistent legacy-discovery helper and initially
+failed to put its mock client into negotiated state; both harness issues were
+corrected with explicit identity-error assertions and a complete prior-document
+hash fixture. The first actual HTTP/CLI harness incorrectly expected the CLI's
+direct result inside an envelope; this assertion was corrected without weakening
+the product checks. All initial failure logs are retained. An expanded 11-case
+source group then passed in 34.478 seconds with zero skips, including actual
+neutral custody/copy-fault/recovery and active capacity-wait/cancellation. Further
+exact-source qualification and receipts follow. Root independent review and
+full live-browser T4/T8/M3 acceptance remain pending.
+
+Root preliminary review caught an omitted-observation counter at the cap when all
+32 spans were open. The refused observation now increments dropped_spans; a new
+witness verifies no open span is fabricated/closed and every omission is counted.
+The broader affected group ran 87 cases in 188.023 seconds: 86 passed and the CLI
+subprocess exceeded the harness's 30-second wait. That harness limit now allows
+90 seconds, within the existing client budget; no production transport, catalog,
+execution or custody bound changed. Final isolated exact-source qualification
+will report actual outcome and wall time without inferring a cause.
+
+Root review of initial source206aeb6 requested explicit pre-Run correlation: the
+latest actor/graph/revision observation now names its operation, exact owner
+clock and nullable known material digest, with a closed latest-only selection
+label. A real overlapping same-actor preparation witness verifies a later
+observation remains selected even when the earlier request finishes afterward;
+forged clock/operation mappings are refused. Old preflight projections remain
+unchanged and these volatile diagnostics never identify a specific earlier reply
+from graph/revision alone. This is a coherent source followup before final
+qualification, not an acceptance claim for initial206aeb6.
+
+The exactfc1ca36 affected group ran 53 cases in 57.348 seconds: 52 passed and
+one newly added HTTP assertion incorrectly expected no submitting-agent
+preparation history. Admission actually captured under that actor, and the
+product correctly returned its exact capture operation/material/clock. The
+harness now asserts that real correlation. The existing separate-actor witness
+already verifies unknown history for another actor. No production source changed
+for this correction. The failed exact-head log is preserved; final qualification
+uses the corrected test head.
+
+Corrected exact38853e4 affected qualification passed all53 cases in84.878 seconds
+with zero skips. Final source review then caught an empty-clock evidence edge:
+a cold legacy queue can allocate a diagnostic clock before any owned span exists.
+Empty clocks are now omitted from persistence/projection and the closed wire
+requires at least one span in each returned record. The actual old-Run HTTP
+witness explicitly creates that empty-clock condition and still requires
+unknown_granularity. This strengthens evidence labels without changing authority
+or reconstructing history; final exact-source qualification follows.
+
+Exactbdcc5ca affected qualification passed all53 cases in59.147 seconds, zero
+skips. Root independent review then found that an exact-identity empty custodian
+sidecar still reached the min1 wire projection. The narrow reader boundary now
+rejects that optional sample before append and preserves valid parent timing as
+partial. The real completed-result witness includes that exact empty sample and
+continues to require unchanged public Run/result bytes. Final timing-module
+qualification covers the refined reader; prior53-case evidence is retained with
+its actual source head rather than attributed to this followup.
+
+## 2026-10-19 — M4 baseline-only harness qualification
+
+An isolated branch from exact production96c2ade adds only a bounded neutral
+workflow measurement harness, reporting tests and documentation/evidence. The
+first exploratory three preflights repeated the full current system-runtime
+identity (1315 files, 64,063,492 bytes) with equal material. These are exploratory
+same-process samples, not cache, OS-cold, lab or performance-improvement claims.
+
+Pilot01 failed before execution because the harness used unsupported recipe
+parameter keys; corrected to supported min/max. Its constructor failure occurred
+before the harness had its final ownership cleanup guard; no unknown schema was
+inferred or deleted. The task cluster may retain that small failed-fixture schema
+until its owner disposes of the cluster. Pilot02 passed one-artifact empty/two-Run
+cells. Pilot03 passed one-artifact integrity and real same-Run copy recovery, then
+its two-artifact proof check exposed filesystem inventory order. The comparison
+now checks exact unique path/bytes/SHA mappings, preserving duplicate/hash
+refusal. All original failures/raw logs are retained separately from final runs.
+
+The frozen harness/source commit `83d7e8f52df92d10d3ff85709da6eff3231a0b06`
+completed the full matrix with exit 0: 18 fresh read processes / 54 cycles,
+0/8/55 genuine completed histories in both one/twenty-artifact layouts, six
+fresh-catalog supported workflows and both actual integrity/same-Run recovery
+tails. Eight exact owned schema and temporary-directory cleanup checks passed.
+The production owner hashes stayed identical to composed source 96c2ade; no
+cache, batch endpoint or domain behavior changed. Three pure reporting tests
+passed. Raw rows, all 281 cohort-qualified distribution groups, source/tooling
+attribution and failed exploratory history are retained under
+`reports/m4-workflow-baseline/`. Qualified reporting separates the initial
+population workflow from the three fresh-catalog workflows by raw filename.
+
+At 55 completed Runs, the one-artifact first-call HTTP list median is 4.392 seconds
+with 10,890,771 body bytes; twenty artifacts median 5.372 seconds with 11,249,316 bytes.
+Whole-hash collection of one 327,680-byte artifact takes median 172.1 ms / one
+request, versus 1492.6 ms / twenty 16 KiB requests; twenty 16 KiB artifacts require
+twenty requests and median 1715.3 ms in default mode. Each first-call cell has
+three samples; warm cells have six. These descriptive measurements identify
+preparation/history/request costs without a speedup, OS-cold, lab or science
+claim. Candidate selection and any bounded batch reader remain a separate
+lead-owned admission after review; no cache is justified by submillisecond
+proof metadata reads. Actual installed-runtime mutation and candidate
+qualification remain pending.
+
+## 2026-10-19 — Bounded collection candidate checkpoint
+
+The lead independently accepted descriptive baseline07dde98 and admitted a new
+isolated bounded sequential read candidate from PR105 source2d8b7d7. Whole baseline
+history was normally merged as60861fe; no baseline ref/worktree changed. Added
+`runs.artifact_segments/1` for external Runs/attached Refs, bounded20 items/8 MiB/
+60 seconds, canonical readers, typed partial outcomes and current final delivery
+checks after serialization. Client class/CLI remain outside this worker's scope.
+
+Before-change witness ran five tests with missing-method errors/subtest errors;
+all 122 prior full contracts already matched. The initial implementation passed
+five pure cases in0.376s. The expanded eight-case actual PostgreSQL/neutral custody
+and pure group passed47.251s, zero skips, including actual late credential
+revocation and injected final transitive denial with no buffered bytes disclosed.
+Logs remain in `reports/m4-bounded-collection/`. This coherent checkpoint is for
+immutable backup/independent review; wider regressions, paired performance and
+candidate retention are pending. No improvement, cache, science or hosted pass
+is inferred.
+
+Frozen007e3de canonical reader regressions passed five cases in50.872 seconds,
+zero skips: real cold ordinary download/restart, actual >8 MiB recovered bounded
+segments with whole-scan tripwire, revocation during segment capture, prior
+publication contracts and exact evidence selector correlation. The independent
+reviewer found no blocking producer issue and independently passed five pure
+cases/122 full-contract equality; consumer request/configured-catalog correlation
+remains required. A two-artifact paired pilot passed actual normal and attached
+Ref whole-hash equality and exact own-schema cleanup. It is not final performance
+evidence. Two focused reporting tests reject a changed whole hash and all
+partial/service failures without fallback.
+
+The original before.log is retained byte-for-byte, including terminal trailing
+whitespace on line2 reported by cumulative cached-diff checking; that raw-evidence
+exception is not a source-whitespace pass. No failure log was rewritten.
+
+
+The complete same-head/catalog/inventory matrix at99741e5807e4260c58b53badafc5b6c549421645
+completed exit0 with54 pairs/108 arms in18 eligible fresh processes and six
+unavailable empty-history controls. Three first and six warm pairs per eligible
+cell retain all alternating orders/outliers. All whole hashes, accounting and
+original events match; both exact owned schemas and temporary directories were
+removed. CPU/RSS/I/O/HTTP/owner observations and raw receipts are retained in
+`reports/m4-bounded-collection/paired-99741e5/`. The start partially overlapped
+another agent's pure/oldCLI work for about15 seconds, apparently controls only;
+per-arm UTC starts are unavailable and no exclusive-host claim is made.
+
+All six median paired batch/individual ratios exceed1. One-item Run ratios are
+2.723/2.852 at histories8/55, twenty-item Run1.910/1.874; attached Ref ratios1.877
+(one) and1.034 (twenty), total history56. The request count reduction20 to1 did
+not demonstrate lower latency. Ordinary owner loads increased N to4N. This is an
+immutable negative candidate result, not a reason to weaken authorization.
+
+After full matrix archival, the lead admitted only a private external-only flag
+checked after the canonical load and exact-source deduplication independently
+inside each final-authority stage, keeping last-occurrence order (A,B,A→B,A).
+Every initial canonical read/auth, current transitive/attachment checks, final
+global checkpoints, caps, typed outcomes and whole-hash requirement remain.
+No loaded proof/authorization cache across stages/calls is admitted. Whole PR106
+composition precedes final refined qualification; the next performance window
+waits for the queued M5/M6 actual gates to finish.
+
+
+Implemented only the admitted Runs refinement. Three new before-change witnesses
+failed(two assertions/one missing-private-keyword error); the initial nine pure
+cases then passed0.363s. Expanded16-case qualification ran41.111s with15 passed
+and one new test-harness error: after proving HTTP409/noitems, the shutdown test
+indexed the established string error as an object. Only its assertion changed to
+the top-level code; the affected actual case then passed1/6.439s, zero skips.
+Both logs are retained. Production remained identical during that correction.
+Actual duplicate reads retain every canonical initial call, now three reads/five
+loads. Injected A/B/A authority loss refuses at both domain and post-serialization
+boundaries; duplicate late credential revocation/shutdown discard bytes. M1
+independently cleared the narrow source and passed all10 current pure cases.
+No wall-time improvement is inferred before new same-head paired measurements.
+
+
+The refined fixed-source98380228a7edb8eefb4715cba27ca76722756cf9 matrix completed
+exit0 with all54 pairs/108 arms,18 eligible processes and six empty-history
+unavailable controls. Both exact fresh schemas/temporary directories were removed;
+all whole hashes, events/accounting and source/harness identities match. All27
+twenty-artifact pairs were faster: median paired ratios0.700/0.695 for Run
+histories8/55 and0.710 for attached Ref at total history56. First n3 medians are
+0.714/0.700/0.710, warm n6 medians0.662/0.649/0.712. One-artifact medians still
+regress2.717/2.577/2.123. No observations/outliers were removed. Raw data, all
+first/warm/order strata and owner/resource distributions are retained under
+`reports/m4-bounded-collection/paired-9838022/`.
+
+The lead admitted scoped retention for explicit bounded many-small twenty-item
+collection on this evidence. Default individual collection stays unchanged;
+performance for2–19 items, other sizes, remote/scientific workloads or the
+separately owned facade is unmeasured. No generic workflow/science gain, cache,
+automatic threshold or full M4/T5 acceptance follows. The original negative997
+matrix remains immutable. The qualified source is983, even when report-only
+normal compositions later advance the branch tip.

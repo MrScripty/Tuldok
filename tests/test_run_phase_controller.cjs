@@ -1,0 +1,39 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const catalog='c'.repeat(32),run='a'.repeat(32),graph='b'.repeat(32),actor='d'.repeat(32),clock='e'.repeat(32);
+const span=(overrides={})=>({sequence:1,phase:'queue',state:'open',started_offset_ms:0,ended_offset_ms:null,elapsed_ms:7,wait_reason:'capacity',...overrides});
+const record=(overrides={})=>({format:'owner_phase_timings_v1',owner:'runs',clock_id:clock,observed_at_ms:1000,dropped_spans:0,spans:[span()],...overrides});
+const result=(overrides={})=>({format:'run_phase_timings_v1',catalog_id:catalog,run_id:run,original_run_state:'queued',evidence:'owner_observed',records:[record()],...overrides});
+const deferred=()=>{let resolve;return {promise:new Promise(r=>resolve=r),resolve};};
+const flush=()=>new Promise(resolve=>setImmediate(resolve));
+function fixture(){
+  let identity={catalog_id:catalog,actor_id:actor,credential_id:'f'.repeat(32)},handler=async()=>result(),tick=0,view=true,next=0;
+  const calls=[],timers=new Map(),window={workspaceEscape:value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../static/workspace-phase-timings.js'),'utf8'),{window,structuredClone,AbortController,performance,setTimeout,clearTimeout});
+  const ui=window.WorkspacePhaseTimings({api:async(route,body,version,timeout,signal)=>{calls.push({route,body,version,timeout,signal});return handler(route,body);},render(){},identity:()=>identity,now:()=>tick,schedule:fn=>{timers.set(++next,fn);return next;},unschedule:id=>timers.delete(id)});
+  return {ui,calls,timers,select:(id=run)=>ui.select({kind:'run',id},()=>view),prepare:()=>ui.select({kind:'preparation',id:graph,revision:3},()=>view),handler:fn=>handler=fn,async step(){const entry=timers.entries().next().value;assert.ok(entry);timers.delete(entry[0]);tick+=2000;entry[1]();await flush();},navigate(){view=false;ui.invalidate();},session(){identity={...identity,credential_id:'1'.repeat(32)};ui.invalidate();},restart(){let click;ui.bind({querySelector:()=>({addEventListener:(name,fn)=>click=fn})});click();},setTime:v=>tick=v};
+}
+(async()=>{
+  const good=fixture();good.select();await flush();assert.match(good.ui.html(),/capacity/);assert.match(good.ui.html(),/unknown end/);assert.match(good.ui.html(),/not extrapolated/);assert.equal(good.calls[0].body,undefined);assert.equal(good.calls[0].version,1);assert.equal(good.calls[0].timeout,10000);
+  good.handler(async()=>result({records:[record({spans:[span({state:'measured',ended_offset_ms:7,wait_reason:null}),span({sequence:2,phase:'publication',started_offset_ms:5,elapsed_ms:9,state:'incomplete',wait_reason:null})]})]}));await good.step();assert.match(good.ui.html(),/observed prefix/);assert.doesNotMatch(good.ui.html(),/total.*16/i);
+  for(const mutate of [v=>v.catalog_id='0'.repeat(32),v=>v.run_id='0'.repeat(32),v=>v.records[0].spans[0].elapsed_ms=-1,v=>v.records[0].spans[0].state='measured',v=>v.records[0].spans[0].wait_reason='<script>',v=>v.records[0].spans.push({...v.records[0].spans[0]}),v=>v.records.push({...v.records[0]}),v=>v.records[0].spans=[],v=>v.extra=true,v=>v.evidence='unknown_granularity']){
+    const f=fixture();f.handler(async()=>{const v=result();mutate(v);return v;});f.select();await flush();assert.doesNotMatch(f.ui.html(),/<table>/);assert.match(f.ui.html(),/differs|invalid|inconsistent|contradicts|another Run/);
+  }
+  const prep=fixture();prep.handler(async()=>({format:'graph_preparation_timings_v1',catalog_id:catalog,graph_id:graph,graph_revision:3,actor_id:actor,selection:'latest_actor_graph_revision_observation',observation:{operation:'graphs.preflight_external',clock_id:clock,material_sha256:null},evidence:'owner_observed',records:[record({owner:'pipeline',spans:[span({phase:'prepare',wait_reason:'preparing_material'})]})]}));prep.prepare();await flush();assert.match(prep.ui.html(),/another tab can replace/);assert.match(prep.ui.html(),/not yet known/);assert.deepEqual(JSON.parse(JSON.stringify(prep.calls[0].body)),{revision:3});
+  const wrongActor=fixture();wrongActor.handler(async()=>({format:'graph_preparation_timings_v1',catalog_id:catalog,graph_id:graph,graph_revision:3,actor_id:'0'.repeat(32),selection:'latest_actor_graph_revision_observation',observation:null,evidence:'unknown_granularity',records:[]}));wrongActor.prepare();await flush();assert.match(wrongActor.ui.html(),/another selection/);
+  const empty=fixture();empty.handler(async()=>result({evidence:'unknown_granularity',records:[]}));empty.select();await flush();assert.match(empty.ui.html(),/No detailed phase history/);
+  const bound=fixture();bound.select();await flush();for(let n=1;n<30;n++)await bound.step();assert.equal(bound.calls.length,30);assert.equal(bound.timers.size,0);assert.match(bound.ui.html(),/refresh paused/);bound.restart();await flush();assert.equal(bound.calls.length,31);
+  const lastRead=fixture();lastRead.select();await flush();lastRead.setTime(72000);await lastRead.step();assert.equal(lastRead.calls[1].timeout,1000,'Last read must fit the remaining refresh window');
+  const deadline=fixture();deadline.select();await flush();deadline.setTime(75000);await deadline.step();assert.equal(deadline.calls.length,1);assert.match(deadline.ui.html(),/refresh paused/);
+  for(const transition of ['navigate','session']){const f=fixture(),held=deferred();f.handler(()=>held.promise);f.select();assert.equal(f.calls.length,1);f[transition]();assert.equal(f.calls[0].signal.aborted,true);held.resolve(result());await flush();assert.equal(f.timers.size,0);assert.equal(f.ui.html(),'');}
+  const stale=fixture(),held=deferred();stale.handler(()=>held.promise);stale.select();stale.handler(async()=>result({run_id:'9'.repeat(32)}));stale.select('9'.repeat(32));await flush();held.resolve(result());await flush();assert.equal(stale.calls[0].signal.aborted,true);assert.match(stale.ui.html(),/<table>/);assert.equal(stale.calls.length,2);
+  const refused=fixture();refused.handler(async()=>{const error=Error('Current inspection refused');error.status=403;throw error;});refused.select();await flush();assert.equal(refused.timers.size,0);assert.match(refused.ui.html(),/Current inspection refused/);
+  const sameSelection=fixture(),oldGeneration=deferred();let generation=1;
+  sameSelection.handler(()=>oldGeneration.promise);sameSelection.ui.select({kind:'run',id:run},()=>generation===1);
+  generation=2;sameSelection.handler(async()=>result({records:[record({spans:[span({elapsed_ms:11})]})]}));
+  sameSelection.ui.select({kind:'run',id:run},()=>generation===2);assert.equal(sameSelection.calls.length,1,'Same-selection reads remain sequential across load generations');await flush();
+  oldGeneration.resolve(result({records:[record({spans:[span({elapsed_ms:777})]})]}));await flush();
+  assert.equal(sameSelection.calls[0].signal.aborted,false);assert.equal(sameSelection.calls.length,2);assert.doesNotMatch(sameSelection.ui.html(),/>777</);assert.match(sameSelection.ui.html(),/>11</);
+  const single=fixture(),pending=deferred();single.handler(()=>pending.promise);single.select();single.select();assert.equal(single.calls.length,1);pending.resolve(result());await flush();assert.equal(single.timers.size,1);
+  console.log('PASS phase identity/clock/duration/wait validation, latest-preparation labeling, bounded sequential refresh, abort and stale delivery/session cleanup');
+})().catch(error=>{console.error(error);process.exitCode=1;});

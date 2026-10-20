@@ -1,0 +1,3 @@
+Error: {"exceptionId":1,"text":"Uncaught","lineNumber":183,"columnNumber":26,"scriptId":"9","exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: window.WorkspacePhaseTimings is not a function\n    at window.WorkspaceReal (<anonymous>:184:27)\n    at <anonymous>:1:13","objectId":"-9163116454503993801.2.2"}}
+    at ev (/workspace/Tuldok-lab-phase-ui-m3/tests/browser_workspace_recovery.cjs:15:146)
+    at async /workspace/Tuldok-lab-phase-ui-m3/tests/browser_workspace_recovery.cjs:39:1

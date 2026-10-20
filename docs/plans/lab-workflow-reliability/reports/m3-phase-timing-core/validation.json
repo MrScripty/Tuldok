@@ -1,0 +1,206 @@
+{
+  "artifacts": {
+    "selected-contracts.json": {
+      "bytes": 199,
+      "sha256": "69eeba945bf8b06aab13617fd5f90beecec6a55915392fe45b81f86386a5207d"
+    },
+    "source-manifest.json": {
+      "bytes": 1735,
+      "sha256": "3c0563ded118e657cdcc4146dfe1a63adc597b94da8e33d6441104b97c4e8e17"
+    },
+    "tuldok-m3-affected-qualified.log": {
+      "bytes": 17706,
+      "sha256": "f75f390b1072f1a341ed8ef6d8d6feea18aeee66c7a23a6a7c71f1079c24192d"
+    },
+    "tuldok-m3-correlated-final-module.log": {
+      "bytes": 2945,
+      "sha256": "8e480d4d442ee9b29c27cfc3931d037cb0a5dd063ebdda1ae81f2d26cf1784ac"
+    },
+    "tuldok-m3-exact-source-qualified.log": {
+      "bytes": 11055,
+      "sha256": "39b62f843da0967d04c744ead1e083a0c4773c6693553c90771859e77b108e04"
+    },
+    "tuldok-m3-expanded-actual.log": {
+      "bytes": 2291,
+      "sha256": "903059d24d8b4f3eb6806c424fe81330c2022b478115d19fbbbaf6c831a796b2"
+    },
+    "tuldok-m3-final-closed-evidence-qualified.log": {
+      "bytes": 10143,
+      "sha256": "7186b5865f3b384a6d74b3fae2ae803a98cf612eace82962e6b94ad8cd226d28"
+    },
+    "tuldok-m3-final-qualified.log": {
+      "bytes": 10143,
+      "sha256": "bf41d3237649880f00a26b0147b0b998528f7ec470215815f22d628a10357616"
+    },
+    "tuldok-m3-final-reader-qualified.log": {
+      "bytes": 2945,
+      "sha256": "7f45748507ae0bea3255ad7f409f5e988bd53ba4cf7871b2a900743e13fed32d"
+    },
+    "tuldok-m3-first-actual-and-m2-followup.log": {
+      "bytes": 3138,
+      "sha256": "01cf5a79374df7d97a443b3b8d3cbe7e34f9bf0ae45b564b0c82f4b767ef9b49"
+    },
+    "tuldok-m3-first-compatibility.log": {
+      "bytes": 5701,
+      "sha256": "30e3952e0408e042836d75bdb764a0de779675fba0606ef9dcd935e9e3783d80"
+    },
+    "tuldok-m3-owner-final-shapes.log": {
+      "bytes": 1250,
+      "sha256": "84c4060dce35876c6da80d0694c3f69c2124ff84478f1b2780f6762965bc3450"
+    },
+    "tuldok-m3-owner-first.log": {
+      "bytes": 1982,
+      "sha256": "b006676a9a1f64208f334f6beb610d6716f83d427030f0ae8bfa5c91b5c20b23"
+    },
+    "tuldok-m3-second-compatibility.log": {
+      "bytes": 110,
+      "sha256": "3026c3769937438c6fe9253f005097cd1cc1242372f3b660f7a2a441490c497a"
+    }
+  },
+  "branch": "feature/lab-phase-timing-20261019",
+  "contract_compatibility": {
+    "baseline": "5a1feac9f27e23e471c6b57d1f74c026c01c3dd6",
+    "complete_prior_contracts": 120,
+    "legacy_discovery_equal": true,
+    "whole_document_sha256_manifest": "tests/fixtures/agent_contract_hashes_phase5a1feac.json"
+  },
+  "format": "m3_phase_timing_core_qualification_v1",
+  "limitations": [
+    "Root independent exact followup review/composition is separate; this authored slice does not self-clear.",
+    "Full live-browser T4/T8/M3 and detailed builtin phases remain pending.",
+    "Current authority is required; original catalog-owned publication can make concurrent timing reads unavailable until release.",
+    "Pre-Run observations are volatile latest actor/graph/revision/operation clocks, with null material until known; never identify a particular old preflight reply from graph/revision alone.",
+    "No hosted CI polling or qualification performed by this worker; no remote operation, installation, credential or unrelated worktree change."
+  ],
+  "runtime": {
+    "database": "Task-owned private disposable PostgreSQL17 on existing socket; each fixture opens a fresh catalog, no old catalog used.",
+    "executable": "/workspace/tuldok-runtime/bin/python",
+    "python": "3.12.14"
+  },
+  "scope": "Local source/span-validity core, detailed external path. No full M3/browser, readiness, training/CUDA/numerical/science acceptance.",
+  "source_head": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb",
+  "source_manifest": "source-manifest.json",
+  "source_manifest_sha256": "2da5580cff271caaabebf7773ec193563d239a497886d4caa902d5c3f6dbf099",
+  "tests": [
+    {
+      "cases": 14,
+      "log": "tuldok-m3-final-reader-qualified.log",
+      "outcome": "OK",
+      "passed": 14,
+      "scope": "Final whole timing module including real empty/foreign/malformed optional helper sample, actual selected HTTP/CLI, overlap, queue/cancel/custody/recovery and 120 full prior contract hashes.",
+      "seconds": 35.783,
+      "skipped": 0,
+      "source_head": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb"
+    },
+    {
+      "cases": 53,
+      "log": "tuldok-m3-final-closed-evidence-qualified.log",
+      "outcome": "OK",
+      "passed": 53,
+      "scope": "Affected preflight, custody, publication recovery/backup and root M2 immutable receipt followup; final 5c9e6f9 adds only nonempty helper read check + its actual corruption witness/ledger.",
+      "seconds": 59.147,
+      "skipped": 0,
+      "source_head": "bdcc5ca63df3e9eff3112a1df9c085cb07c4633f"
+    },
+    {
+      "cases": 53,
+      "log": "tuldok-m3-final-qualified.log",
+      "outcome": "OK",
+      "passed": 53,
+      "seconds": 84.878,
+      "skipped": 0,
+      "source_head": "38853e43fea00628d6420fcaedaf901f82ee0177"
+    },
+    {
+      "cases": 53,
+      "failures": 1,
+      "log": "tuldok-m3-exact-source-qualified.log",
+      "outcome": "FAILED",
+      "passed": 52,
+      "reason": "Harness incorrectly expected no same-agent preparation, although submission actually captured under that actor. Corrected to assert exact real capture/material/clock; no production code change.",
+      "seconds": 57.348,
+      "skipped": 0,
+      "source_head": "fc1ca369922a0fa490705fd74b00ac012f0eb7e9"
+    },
+    {
+      "cases": 14,
+      "log": "tuldok-m3-correlated-final-module.log",
+      "outcome": "OK",
+      "passed": 14,
+      "seconds": 46.639,
+      "skipped": 0,
+      "source_relation": "Uncommitted operation/material correlation followup before atomic Book publication and extra selected HTTP checks. Not final-source qualification."
+    },
+    {
+      "cases": 87,
+      "errors": 1,
+      "log": "tuldok-m3-affected-qualified.log",
+      "outcome": "FAILED",
+      "passed": 86,
+      "reason": "CLI subprocess exceeded 30-second harness timeout. Harness now permits 90 seconds within existing client budget; no product deadline changed. Cause not inferred.",
+      "seconds": 188.023,
+      "skipped": 0,
+      "source_relation": "Earlier uncommitted instrumentation; later shape/correlation/empty-record refinements followed."
+    },
+    {
+      "cases": 11,
+      "log": "tuldok-m3-expanded-actual.log",
+      "outcome": "OK",
+      "passed": 11,
+      "seconds": 34.478,
+      "skipped": 0,
+      "source_relation": "Earlier uncommitted instrumentation."
+    },
+    {
+      "cases": 12,
+      "errors": 1,
+      "log": "tuldok-m3-first-actual-and-m2-followup.log",
+      "outcome": "FAILED",
+      "passed": 11,
+      "reason": "Harness indexed direct CLI result as an envelope; all three actual PG M2 followup cases passed.",
+      "seconds": 22.975,
+      "skipped": 0,
+      "source_relation": "Earlier uncommitted timing + composed exact5f M2 followup."
+    },
+    {
+      "cases": 6,
+      "log": "tuldok-m3-owner-final-shapes.log",
+      "outcome": "OK",
+      "passed": 6,
+      "seconds": 0.408,
+      "skipped": 0,
+      "source_relation": "Earlier uncommitted consumer owner/offset guards."
+    },
+    {
+      "cases": 6,
+      "errors": 1,
+      "log": "tuldok-m3-owner-first.log",
+      "outcome": "FAILED",
+      "passed": 5,
+      "reason": "Harness used nonexistent legacy_discovery helper; mock client initially was not pre-negotiated. Corrected to full frozen document hashes and exact correlation error assertions.",
+      "seconds": 20.465,
+      "source_relation": "Initial uncommitted harness."
+    },
+    {
+      "cases": 30,
+      "log": "tuldok-m3-second-compatibility.log",
+      "outcome": "OK",
+      "passed": 28,
+      "seconds": 3.634,
+      "skipped": 2,
+      "source_relation": "Early uncommitted compatibility; PG was not selected for this command."
+    },
+    {
+      "cases": 30,
+      "errors": 5,
+      "log": "tuldok-m3-first-compatibility.log",
+      "outcome": "FAILED",
+      "passed": 23,
+      "reason": "Unbound unit substitutions lacked the new private timing method. Class-helper invocation corrected without changing old projections.",
+      "seconds": 4.09,
+      "skipped": 2,
+      "source_relation": "Initial uncommitted instrumentation; PG was not selected for this command."
+    }
+  ],
+  "worktree": "/workspace/Tuldok-lab-phase-timing-m3"
+}

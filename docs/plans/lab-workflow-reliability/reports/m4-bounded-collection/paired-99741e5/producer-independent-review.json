@@ -1,0 +1,56 @@
+{
+  "author_files_modified": false,
+  "author_worktree": "/workspace/Tuldok-lab-bounded-collection-m4",
+  "blocking_findings": [],
+  "consumer_integration_requirements": [
+    "Canonical AgentClient must call validate_artifact_segments(value, original_request) for exact key/source/name/hash/offset/max_bytes correlation. Generic validate_output calls the free decoder without a request and establishes only self-consistent shape/segments.",
+    "Successful publication items require configured-catalog correlation at the canonical client boundary."
+  ],
+  "format": "tuldok_independent_code_review_v1",
+  "next_action": "Root owns final qualification/publication/integration; author and root have received this read-only review.",
+  "read_only": true,
+  "review_conclusions": [
+    "Batch reads delegate existing canonical segment owners; no new artifact store, grant, scheduler, whole-hash or scientific acceptance authority.",
+    "Batch deadline is shared through existing catalog command ownership, copy callbacks and semantic checkpoints.",
+    "Final domain authorization and post-output-schema/serialization HTTP authorization fences are present.",
+    "Current authority loss at delivery discards the buffered response; individual reader defaults remain unchanged."
+  ],
+  "reviewed_export": "/tmp/tuldok-review-m4-007e3de",
+  "reviewer": "/root/indexed_diagnostics_m1",
+  "scope": [
+    "canonical ordinary Run and recovered-publication segment owners",
+    "shared deadline/catalog command and copy/semantic checkpoint plumbing",
+    "per-item and final authority",
+    "HTTP post-serialization delivery fence",
+    "closed operation registry and free response decoder"
+  ],
+  "scope_limits": [
+    "No independent PostgreSQL/custodian or performance qualification was run in this review.",
+    "Author initial actual eight-case qualification and paired performance/regression gates remain author/root-owned; those results are not claimed as this reviewer evidence.",
+    "Consumer AgentClient/CLI integration is root-owned and outside this producer clearance."
+  ],
+  "source_commit": "007e3de6bb51689f4208ca67c5e84683509960e7",
+  "source_sha256": {
+    "agent_api.py": "50d9e6c820c4f749609ea32599205e06bc782b3b947716c28c1f9fece8699317",
+    "app.py": "22c9443a94cbd4fb5a21b5e212ca98ef66d4f16a862c021b3a0938edd6dda016",
+    "run_publication.py": "34129247fc8fa5caf81c641897568247ae1b81cb855c1a9e59cc134dffe83400",
+    "runs.py": "dd48c2680743d1c9c77dded8cefd15ea7edb914e95158631adfe0575ef9fb537"
+  },
+  "target": "M4 bounded sequential artifact segment producer",
+  "verification": {
+    "checks": [
+      "all prior 122 full contracts remain equal",
+      "item caps and duplicate/malformed selectors refuse before reads",
+      "ordered mixed success/error correlation",
+      "foreign order/selector identity rejected",
+      "shutdown/cancellation/deadline discard buffered results"
+    ],
+    "command": "PYTHONPATH=tests:. /workspace/tuldok-runtime/bin/python -m unittest test_run_artifact_segments.ArtifactSegmentsTests -v",
+    "cwd": "/tmp/tuldok-review-m4-007e3de",
+    "elapsed_seconds": 0.705,
+    "log": "/tmp/tuldok-m4-independent-pure-tests.log",
+    "provenance": "Retained from completed tool output; no rerun while writing this receipt.",
+    "result": "passed",
+    "tests_run": 5
+  }
+}

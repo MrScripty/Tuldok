@@ -1,0 +1,8 @@
+test_distributions_keep_history_and_refusals_separate (test_benchmark_lab_workflow.BaselineReportingTests.test_distributions_keep_history_and_refusals_separate) ... ok
+test_inventory_order_does_not_mask_duplicate_or_changed_bytes (test_benchmark_lab_workflow.BaselineReportingTests.test_inventory_order_does_not_mask_duplicate_or_changed_bytes) ... ok
+test_typed_failure_is_recorded_and_propagated (test_benchmark_lab_workflow.BaselineReportingTests.test_typed_failure_is_recorded_and_propagated) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK

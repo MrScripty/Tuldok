@@ -1,0 +1,128 @@
+test_exact_v2_reply_accepts_requested_mode_and_ordered_operands (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_accepts_requested_mode_and_ordered_operands) ... ok
+test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) ... 
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=0) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=1) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=2) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=3) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=4) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=5) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=6) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=7) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=8) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=9) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=10) ... FAIL
+  test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=11) ... FAIL
+test_legacy_v1_reply_keeps_its_existing_wire_contract (test_workflow_client.ComparisonReplyTests.test_legacy_v1_reply_keeps_its_existing_wire_contract) ... ok
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=6)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=7)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=8)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=9)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=10)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) (fault=11)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-workflow-client-m5/tests/test_workflow_client.py", line 116, in test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes
+    with self.assertRaises(AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.382s
+
+FAILED (failures=12)

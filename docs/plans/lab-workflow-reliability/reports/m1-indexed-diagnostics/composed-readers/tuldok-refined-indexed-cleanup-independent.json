@@ -1,0 +1,22 @@
+[
+  {
+    "scope": "indexed",
+    "schema": "catalog_b8674cd6642d40c59051fda95a7cb9b5",
+    "independently_absent": true
+  },
+  {
+    "scope": "indexed",
+    "schema": "catalog_fc607ffa4125402994f62c319f632faa",
+    "independently_absent": true
+  },
+  {
+    "scope": "m4_refined",
+    "schema": "catalog_a160667f63dc4c29b5f53f49aa5a838b",
+    "independently_absent": true
+  },
+  {
+    "scope": "m4_refined",
+    "schema": "catalog_799f18cb732548b185f1cc1d7ec01a82",
+    "independently_absent": true
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "state": "local exact-source phase browser and independent review clear; hosted/postmerge pending",
+  "source_head": "31494ec1697804f63d670ffd85e1109271e3239e",
+  "base": "b906ba6990fadfb27715b69dd9ba06e527273888",
+  "scope": "Existing external Pipeline/Run owner observations, neutral actual processes/PG17/Chromium151; no training/optimizer/CUDA/science claim",
+  "checks": {
+    "controller": "passed exact clock/selection/actor consistency, finite remaining window, sequential same-selection stale generation red/green, navigation/session abort and no mutation",
+    "pins": "2 phase/coordinator canonical pin tests passed at53c; independent latest314 phase pin test passed",
+    "actual_phase": "passed exact314 source: pre-Run open preparation, actual queued capacity+catalog mutex, firstGO+explicitcancel/drain, secondGO+originalcopyfault+sameattemptrecovery,2Runs/2grants/2consumptions, keyboardfocus/table-scroll preservation,1440/390 fit, exactpins andnavigation pollingstop",
+    "actual_coordinator_regression": "passed8e source with real advisory-lockfault/lostsuccessfulreply/savedreadreconciliation/originalfirstGO; final314 changes onlyphasecontrollerpredicate pluscomposednativecleanup",
+    "actual_publication_regression": "passed53c source originalpause/reload/samekeyresume/wholeSHA download; later changes separately attributed",
+    "native_ancestor_repair": "complete realnativeimportbrowserexit0 at91fb composition; new314 onlyphasepredicate changes",
+    "independent_review": "wholeUIdelta and finalsame-selection correction clear; independentcontroller/pins/reproducer passed314"
+  },
+  "failures_preserved": {
+    "first_phase_browser": "Harness selected catalog before dataset onchange installed; fixture workspace remained; tightened readiness condition, no product fix",
+    "coordinator_regression_at53c": "Same observed harness readiness race; tightened only dataset-onchange-ready check; next actual8e regressionpassed",
+    "independent_red_at8e": "Older same-selection pending read adopted new mutable generation predicate; fixed captured originalpredicate and sequentialfreshread, cap/window preserved"
+  },
+  "pending": [
+    "correctedPR99 and dependent exact-head hosted qualification",
+    "postmerge integratedmain T4/T8 acceptance",
+    "M4 measuredcost/reuse decision and M5/M6 implementation",
+    "original lab diagnostic/scientific pair input remains absent"
+  ],
+  "source_sha256": {
+    ".github/workflows/tests.yml": "f0afea203c02085cae224b3e512f5cc4e35d964fc88c983dea17a58e25c50f5f",
+    "app.py": "c89d0ca91cd005f31f50722778d4ee0d5a4dc4f5306b62a904827efe1c01fd83",
+    "docs/contracts/run-phase-timings.md": "1b9d83e268d5d96cfd27dfdf33bd5bb856425315d1498d1b971b85e2f680c860",
+    "static/workspace-external.js": "117522dba6004de9e321795435334bcc75a2635c3d21d58c36e7da2be4ebd3de",
+    "static/workspace-phase-timings.js": "2230164b2b7200ef941e4f0c65a02b66ed16d477e483029d02306c403c58071e",
+    "static/workspace-real.js": "527fdbf6e92304684127abab0fbba3bd0a6b38fa9fbd2db84ff23c42949b49ec",
+    "static/workspaces.css": "fe5897636e4f4094cd84c54f8ac9b23cc9e598c7da13cf79e93bf470cb81a07f",
+    "static/workspaces.html": "2f3c9a095984dd3210972617e6b155949329e20cb6bfd1185f0bf6012a3048ac",
+    "tests/browser_run_phase_timings.cjs": "b19ff694aa267a29fb5e972b18644768df88d5a0cf63be002090b3ba2fb9d771",
+    "tests/browser_workspace_coordinator.cjs": "e9cda8cee306792c05517a5e5d9ce45a079f7d8f7e3715b1398b6ae00d148b23",
+    "tests/phase_timing_browser_fixture.py": "d2df33310585091c92794eca097b8293020956652ed295ed7b21ebbd51390291",
+    "tests/test_run_phase_controller.cjs": "0f9dbf41a7b44ddb095ff1c06b14891ff152c198d7f18f376b37eb7a00b13949",
+    "tests/test_workspace_phase_timings.py": "633543d6a014ab94340aa2a61c15884460520b80429e99ea2a22bc67b056af2e"
+  }
+}

@@ -24,6 +24,8 @@ import text_training
 import audio_training
 import release_validation
 import recipe_contract
+import phase_timings
+import time
 
 ID = re.compile(r'^[a-f0-9]{32}$')
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -216,6 +218,7 @@ class Pipelines:
     def __init__(self, dataset):
         self.access = dataset.access
         self.dataset, self.db, self.lock = dataset, dataset.db, dataset.lock
+        self._preparation_timings = phase_timings.Book()
         self.source_path = Path(__file__).resolve().parent
         self.material_path = dataset.path / 'workspace-recipe-materials'
         self.material_path.mkdir(mode=0o700, exist_ok=True)
@@ -314,38 +317,77 @@ class Pipelines:
                               {'revision':1,'document_sha256':digest(graph),'execution_sha256':execution_digest(graph)})
         return graph
 
+    def _preparation_clock(self, graph_id, revision, operation):
+        # Pre-Run observations are intentionally volatile and current-actor scoped.
+        identifier(graph_id, 'Graph ID')
+        if type(revision) is not int or not 1 <= revision < 2**31:
+            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+        if not hasattr(self, '_preparation_timings'):
+            self._preparation_timings = phase_timings.Book()
+        actor = self.access._context().actor_id
+        return self._preparation_timings.start((actor, graph_id, revision), 'pipeline', operation=operation)
+
+    def preparation_timings(self, graph_id, revision):
+        identifier(graph_id, 'Graph ID')
+        if type(revision) is not int or not 1 <= revision < 2**31:
+            raise WorkbenchError('An exact graph revision is required.')
+        with self.dataset.runs._coordinator.catalog(time.monotonic()+5):
+            self.access.require('inspect', 'pipeline.preparation_timings', graph_id)
+            graph = self.get(graph_id)
+            if graph['revision'] != revision:
+                raise WorkbenchError('Graph revision changed.', 'stale', 409)
+            actor = self.access._context().actor_id
+            book = getattr(self, '_preparation_timings', None)
+            record = book.get((actor, graph_id, revision)) if book is not None else None
+            if record is not None and not record.snapshot()['spans']: record = None
+            self.access.require('inspect', 'pipeline.preparation_timings', graph_id)
+            return {'format': 'graph_preparation_timings_v1', 'catalog_id': self.db.dataset_id,
+                'graph_id': graph_id, 'graph_revision': revision, 'actor_id': actor,
+                'selection': 'latest_actor_graph_revision_observation',
+                'observation': {'operation': record.operation, 'clock_id': record.clock_id,
+                    'material_sha256': record.material_sha256} if record else None,
+                'evidence': 'owner_observed' if record else 'unknown_granularity',
+                'records': [record.snapshot()] if record else []}
+
     @authorized('inspect', 'pipeline.preflight_external')
     def preflight_external(self, graph_id, revision, *, contract_version=None):
         if contract_version is not None and (type(contract_version) is not int or contract_version not in (1, 2, 3)):
             raise WorkbenchError('Unsupported external preflight version.', 'unsupported', 409)
-        graph = self.get(graph_id)
-        if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
-            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
-        result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
-                                                    getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
-        storage = None
-        if contract_version == 3 and result['material']['resources'].get('profile') == recipe_contract.LARGE_OUTPUT_PROFILE:
-            runs = getattr(self.dataset, 'runs', None)
-            if runs is None:
-                raise WorkbenchError('Execution storage owner is unavailable.', 'unavailable', 409)
-            storage = runs._check_external_storage(result['material'], pending_capture=True)
-        if self.get(graph_id) != graph:
-            raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
-        if contract_version == 3:
-            result = dict(result, preflight_report=_external_preflight_report(graph, result, storage=storage))
-        return result
+        timing = Pipelines._preparation_clock(self, graph_id, revision, 'graphs.preflight_external')
+        with phase_timings.observe(timing, 'prepare', 'preparing_material'):
+            graph = self.get(graph_id)
+            if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+                raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+            result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                        getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
+            timing.material_sha256 = result['material_sha256']
+            storage = None
+            if contract_version == 3 and result['material']['resources'].get('profile') == recipe_contract.LARGE_OUTPUT_PROFILE:
+                runs = getattr(self.dataset, 'runs', None)
+                if runs is None:
+                    raise WorkbenchError('Execution storage owner is unavailable.', 'unavailable', 409)
+                storage = runs._check_external_storage(result['material'], pending_capture=True)
+            if self.get(graph_id) != graph:
+                raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
+            if contract_version == 3:
+                result = dict(result, preflight_report=_external_preflight_report(graph, result, storage=storage))
+            return result
 
     @authorized('inspect', 'pipeline.capture_external')
     def capture_external(self, graph_id, revision, expected_digest, staging):
-        self.access.require_external_submission()
-        graph = self.get(graph_id)
-        if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
-            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
-        result, captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
-                                                   getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
-        if expected_digest != result['material_sha256'] or self.get(graph_id) != graph:
-            raise WorkbenchError('Reviewed execution material changed. Preflight again.', 'stale', 409)
-        return dict(recipe_contract.capture(result, captured, staging), graph=graph)
+        timing = Pipelines._preparation_clock(self, graph_id, revision, 'graphs.capture_external')
+        with phase_timings.observe(timing, 'capture', 'capturing_inputs'):
+            self.access.require_external_submission()
+            graph = self.get(graph_id)
+            if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+                raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+            result, captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                       getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
+            timing.material_sha256 = result['material_sha256']
+            if expected_digest != result['material_sha256'] or self.get(graph_id) != graph:
+                raise WorkbenchError('Reviewed execution material changed. Preflight again.', 'stale', 409)
+            captured = dict(recipe_contract.capture(result, captured, staging), graph=graph)
+        return dict(captured, phase_timings=[timing.snapshot()])
 
     @authorized('edit', 'pipeline.create')
     def create(self, body):

@@ -1,4 +1,103 @@
 "use strict";
+window.WorkspaceCoordinatorContracts = {
+  'runs.coordinator_health/1': 'a5d87e0cf67706641dc361c2d783fdb1557dd2c1198f0db2506726a132b8cae9',
+  'runs.recover_coordinator/1': 'd31aee53400b2f00adedb958feb054f636b9efd7e2e1a0afad0fd55a9fd46b19'
+};
+window.WorkspaceCoordinator = function ({api, render, identity=()=>window.TuldokAuth?.identity(),
+  getStorage=()=>window.sessionStorage}) {
+  const esc=window.workspaceEscape, documents=window.WorkspacePublicationDocuments;
+  let epoch=0, readEpoch=0, health=null, message='', busy=false, storageError='', current=()=>false,
+    activeRead=null, activeWrite=null;
+  const session=()=>JSON.stringify([identity()?.catalog_id,identity()?.actor_id,identity()?.credential_id]);
+  const owner=()=>identity()?.kind==='owner'&&['inspect','approve-execution'].every(scope=>identity()?.scopes?.includes(scope));
+  const closed=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(',');
+  const id=value=>typeof value==='string'&&/^[a-f0-9]{32}$/.test(value);
+  const key=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(value);
+  const generation=value=>Number.isInteger(value)&&value>=1&&value<2**31;
+  const storeKey='tuldok.coordinator.requests.v1';
+  const requestFields=['actor_id','request_key','request_sha256','expected_generation','completed_generation'];
+  function invalidate(){epoch++;readEpoch++;activeRead?.abort();activeWrite?.abort();activeRead=null;activeWrite=null;health=null;message='';busy=false;storageError='';current=()=>false;}
+  function snapshot(){const own=epoch, credential=session();return ()=>own===epoch&&credential===session()&&current();}
+  async function check(value){
+    if(!closed(value,['format','catalog_id','generation','state','updated_at','fault','admission_ready','recovery_request'])||value.format!=='run_coordinator_health_v1'||!id(value.catalog_id)||value.catalog_id!==identity()?.catalog_id||!generation(value.generation)||!['healthy','idle','blocked','recovering','stopped','faulted'].includes(value.state)||typeof value.updated_at!=='string'||!value.updated_at||value.updated_at.length>64||typeof value.admission_ready!=='boolean'||value.admission_ready&&!['healthy','idle'].includes(value.state))throw Error('Coordinator health identity or readiness differs.');
+    if(value.fault!==null&&(!closed(value.fault,['category','at'])||!(/^[a-z_]{1,80}$/.test(value.fault.category||''))||typeof value.fault.at!=='string'||!value.fault.at||value.fault.at.length>64))throw Error('Coordinator fault receipt is invalid.');
+    const request=value.recovery_request;
+    if(request!==null){
+      if(!closed(request,requestFields)||!id(request.actor_id)||!key(request.request_key)||!generation(request.expected_generation)||request.expected_generation>value.generation||request.completed_generation!==null&&(!generation(request.completed_generation)||request.completed_generation<=request.expected_generation||request.completed_generation>value.generation))throw Error('Coordinator recovery receipt is invalid.');
+      const body={expected_generation:request.expected_generation,request_key:request.request_key};
+      if(request.request_sha256!==await documents.digest({catalog_id:value.catalog_id,operation:'runs.recover_coordinator',actor_id:request.actor_id,body}))throw Error('Coordinator request hash differs from its actor and body.');
+    }
+    return value;
+  }
+  function requests(){
+    const raw=getStorage().getItem(storeKey);
+    if(raw&&raw.length>128*1024)throw Error('Coordinator request storage exceeds its bound.');
+    const values=raw?JSON.parse(raw):{};
+    if(!values||typeof values!=='object'||Array.isArray(values)||Object.keys(values).length>128)throw Error('Coordinator request storage is invalid.');
+    return values;
+  }
+  const scope=()=>identity().catalog_id+':'+identity().actor_id;
+  function pending(){
+    try{
+      const value=requests()[scope()]||null;
+      if(value&&(!closed(value,['expected_generation','request_key'])||!generation(value.expected_generation)||!key(value.request_key)))throw Error('Coordinator request identity is invalid.');
+      storageError='';return value;
+    }catch{storageError='Tab request storage is unavailable. Restore it before recovery; refresh health to inspect saved state.';return null;}
+  }
+  function retain(body){
+    const values={...requests(),[scope()]:body},raw=JSON.stringify(values);
+    if(raw.length>128*1024||Object.keys(values).length>128)throw Error('Coordinator request storage exceeds its bound.');
+    getStorage().setItem(storeKey,raw);
+  }
+  function body(){
+    const retained=pending(), request=health.recovery_request;
+    if(storageError)throw Error(storageError);
+    if(retained&&request&&(request.actor_id!==identity().actor_id||request.request_key!==retained.request_key||request.expected_generation!==retained.expected_generation)){
+      // The new request may never have reached the owner. An older completed
+      // receipt does not consume this exact pending current-generation key.
+      if(request.completed_generation!==null&&request.completed_generation<=retained.expected_generation&&retained.expected_generation===health.generation)return retained;
+      throw Error('Saved request and current receipt differ. Inspect the original recovery request before starting another.');
+    }
+    // A completed acknowledgement stays complete even if another fault occurs.
+    // A new explicit action then names the current generation with a fresh key.
+    if(request?.completed_generation!==null&&request?.completed_generation!==undefined){
+      return {expected_generation:health.generation,request_key:crypto.randomUUID()};
+    }
+    if(retained){
+      if(!request&&retained.expected_generation!==health.generation)throw Error('Saved recovery generation changed without an acknowledgement. Inspect the saved request first.');
+      return retained;
+    }
+    if(request?.actor_id===identity().actor_id)return {expected_generation:request.expected_generation,request_key:request.request_key};
+    return {expected_generation:health.generation,request_key:crypto.randomUUID()};
+  }
+  async function refresh(isCurrent=snapshot()){
+    pending();
+    activeRead?.abort();const controller=new AbortController();activeRead=controller;
+    const read=++readEpoch, selected=()=>isCurrent()&&read===readEpoch;
+    try{const value=await api('coordinator',undefined,1,10000,controller.signal);if(!selected())return;const checked=await check(value);if(!selected())return;health=checked;message='';}
+    catch(error){if(selected()){health=null;message=error.message;}}
+    finally{if(activeRead===controller)activeRead=null;if(selected())render();}
+  }
+  async function load(isCurrent){invalidate();current=isCurrent;pending();await refresh(snapshot());}
+  async function recover(){
+    const isCurrent=snapshot();if(!isCurrent()||busy||!owner()||!health||health.admission_ready||!['faulted','blocked'].includes(health.state))return;
+    let request;
+    try{request=body();retain(request);}catch(error){message=error.message;render();return;}
+    readEpoch++;activeRead?.abort();const controller=new AbortController();activeWrite=controller;busy=true;message='Waiting for owned attempts to drain and reconciling the queue…';render();
+    try{const value=await api('coordinator/recover',request,1,75000,controller.signal);if(!isCurrent())return;const checked=await check(value);if(!isCurrent())return;
+      if(!checked.recovery_request||checked.recovery_request.actor_id!==identity().actor_id||checked.recovery_request.request_key!==request.request_key||checked.recovery_request.expected_generation!==request.expected_generation)throw Error('Recovery acknowledgement identifies another request.');
+      message='Recovery response received. Checking current saved health…';
+    }catch(error){if(isCurrent())message=error.message+' The exact request is retained. Refresh health before reconciling it.';}
+    finally{if(activeWrite===controller)activeWrite=null;if(isCurrent()){busy=false;const previous=message;await refresh(isCurrent);if(isCurrent()){const receipt=health?.recovery_request;
+      message=health?.admission_ready&&receipt?.actor_id===identity().actor_id&&receipt.request_key===request.request_key&&receipt.expected_generation===request.expected_generation&&receipt.completed_generation!==null?'Saved recovery receipt confirmed. The queue may resume.':previous;render();}}}
+  }
+  function html(){
+    const request=health?.recovery_request, canRecover=!storageError&&owner()&&health&&!health.admission_ready&&['faulted','blocked'].includes(health.state);
+    return `<section id="coordinator-panel" aria-labelledby="coordinator-title"><h3 id="coordinator-title">Run coordinator</h3><p id="coordinator-message" role="status">${esc(message||storageError)}</p>${health?`<p id="coordinator-health"><strong>${esc(health.state)}</strong> · generation ${health.generation} · ${health.admission_ready?'ready for new work':'new work is fenced'}</p><p>Updated ${esc(health.updated_at)}${health.fault?` · retained fault: ${esc(health.fault.category)}`:''}</p>`:'<p>Current coordinator health is unavailable.</p>'}<div class="actions"><button id="coordinator-refresh">Refresh coordinator health</button>${canRecover?`<button id="coordinator-recover" ${busy?'disabled':''}>${request?.completed_generation===null&&request.actor_id===identity()?.actor_id?'Reconcile same recovery request':'Recover current coordinator'}</button>`:''}</div>${canRecover?'<p>Recovery reconciles existing custody before resuming the original queue.</p>':''}${!owner()?'<p>A current owner with execution approval can recover a fenced coordinator.</p>':''}${request?`<details><summary>Saved recovery receipt</summary><pre>${esc(JSON.stringify(request,null,2))}</pre></details>`:''}</section>`;
+  }
+  function bind(root){root.querySelector('#coordinator-refresh')?.addEventListener('click',()=>refresh());root.querySelector('#coordinator-recover')?.addEventListener('click',recover);}
+  return {load,invalidate,html,bind};
+};
 // Real HTTP boundary. Fixture state is never read or submitted by this module.
 // Server-owned graph definitions and validation determine execution eligibility.
 (() => {
@@ -7,16 +106,30 @@
     short = (s) => String(s || "").slice(0, 12),
     encoded = encodeURIComponent,
     terminal = new Set(["completed", "failed", "cancelled", "interrupted", "unknown"]);
-  async function api(route, body, selectedVersion, timeout=75000) {
+  async function api(route, body, selectedVersion, timeout=75000, requestSignal) {
     const headers = {"Content-Type": "application/json"};
     const path = route.split('?')[0].split('/');
     const modelRecipe=body?.recipe||body?.document?.recipe;
     const modelGraph=['image_classification_model_v2','text_classification_model_v2','audio_classification_model_v2'].includes(modelRecipe);
-    const operation = path[0]==='experiment-lineage' ? (path.length===1?(body===undefined?'studies.lineage':'studies.record_lineage'):path[1]==='branch'?'studies.branch_trial':'studies.lineage_trial') : path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
+    const operation = path[0]==='scientific-comparison'?'runs.compare_scientific_evidence':path[0]==='experiment-lineage' ? (path.length===1?(body===undefined?'studies.lineage':'studies.record_lineage'):path[1]==='branch'?'studies.branch_trial':'studies.lineage_trial') : path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
       path[0] === 'studies' ? (path.length === 1 ? (body === undefined ? 'studies.list' : 'studies.create') : path[2] ? ({'prepare-branch':'studies.prepare_branch','prepare-trial':'studies.prepare_trial',continue:'studies.continue',admit:'studies.admit',reconcile:'studies.reconcile',approve:'studies.approve','prepare-package':'studies.prepare_package','prepare-verifier':'studies.prepare_verifier','select-candidate':'studies.select_candidate'})[path[2]] : body === undefined ? 'studies.get' : 'studies.save') :
       path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'candidates' ? 'studies.candidates' : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
     const publicationOperation=path[0]==='publication-results'?(path.length===1?'runs.publication_result':path[1]==='model-evidence'?'runs.publication_model_evidence':path[1]==='artifact-segment'?'runs.publication_artifact_chunk':null):path[0]==='runs'?({'publication':'runs.publication_status','recover-publication':'runs.recover_publication','cancel-publication':'runs.cancel_publication'})[path[2]]:null;
-    if(publicationOperation){
+    const coordinatorOperation=path[0]==='coordinator'?(path.length===1?'runs.coordinator_health':path[1]==='recover'?'runs.recover_coordinator':null):null;
+    const phaseOperation=path[0]==='runs'&&path[2]==='phase-timings'?'runs.phase_timings':path[0]==='graphs'&&path[2]==='preparation-timings'?'graphs.preparation_timings':null;
+    if(operation==='runs.compare_scientific_evidence'){
+      const pin=window.WorkspaceScientificContracts?.[operation+'/1'];
+      if(selectedVersion!==1||!pin)throw Error('The exact scientific comparison contract is unavailable.');
+      headers['Tuldok-Operation-Contract']=operation+'/1/'+pin;
+    } else if(phaseOperation){
+      const pin=window.WorkspacePhaseContracts?.[phaseOperation+'/1'];
+      if(selectedVersion!==1||!pin)throw Error('The exact timing operation contract is unavailable.');
+      headers['Tuldok-Operation-Contract']=phaseOperation+'/1/'+pin;
+    } else if(coordinatorOperation){
+      const pin=window.WorkspaceCoordinatorContracts?.[coordinatorOperation+'/1'];
+      if(selectedVersion!==1||!pin)throw Error('The exact coordinator operation contract is unavailable.');
+      headers['Tuldok-Operation-Contract']=coordinatorOperation+'/1/'+pin;
+    } else if(publicationOperation){
       const version=publicationOperation==='runs.publication_status'?2:1;
       const pin=window.WorkspacePublicationContracts?.[publicationOperation+'/'+version];
       if(selectedVersion!==version||!pin)throw Error('The exact publication operation contract is unavailable.');
@@ -35,15 +148,17 @@
       if (!sha) throw Error('This model operation has no supported local contract: ' + operation);
       headers['Tuldok-Operation-Contract'] = operation + '/' + version + '/' + sha;
     }
-    const controller=publicationOperation?new AbortController():null;
+    const controller=publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'?new AbortController():null;
     const deadline=controller?setTimeout(()=>controller.abort(),Math.min(75000,Math.max(1,timeout))):null;
+    const abort=()=>controller?.abort();
+    if(requestSignal?.aborted)abort();else requestSignal?.addEventListener('abort',abort,{once:true});
     try {
     const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, {
       ...(body === undefined ? {} : {method: "POST", body: JSON.stringify(body)}), headers, ...(controller?{signal:controller.signal}:{}),
     });
-    if(publicationOperation){
+    if(publicationOperation||coordinatorOperation||phaseOperation||operation==='runs.compare_scientific_evidence'){
       const length=response.headers.get('Content-Length');
-      if(!/^\d+$/.test(length||'')||Number(length)>16*1024**2)throw Error('Publication response has no supported bounded length.');
+      if(!/^\d+$/.test(length||'')||Number(length)>(operation==='runs.compare_scientific_evidence'?2*1024**2:phaseOperation?48*1024:coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
     }
     const value = await response.json();
     if (!response.ok) {
@@ -51,7 +166,7 @@
       error.code = value.code; error.status = response.status; throw error;
     }
     return value;
-    } finally {if(deadline!==null)clearTimeout(deadline);}
+    } finally {if(deadline!==null)clearTimeout(deadline);requestSignal?.removeEventListener('abort',abort);}
   }
   window.WorkspaceReal = function ({ pipelineRoot, runsRoot, announce, openRecord, openRun, openImportedRecord }) {
     let definitions, releases = [], graphs = [], graph = null, saved = "", selectedNode = "train",
@@ -64,16 +179,20 @@
     const external = WorkspaceExternal({api,action,status,getGraph:()=>graph,getIntent:()=>loadGeneration,getRunId:()=>runId,isDirty:()=>dirty(),
       replaceGraph:document=>{if(!graphs.some(item=>item.id===document.id))graphs.push(document);adopt(document);},
       changeGraph:change,render:renderPipeline,refresh:loadPipeline,
-      onImported:openImportedRecord,
+      onImported:openImportedRecord,observePreparation:restart=>observePreparation(restart),
       onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     const model = WorkspaceModel({api, announce, openRecord, getIntent:()=>loadGeneration, getView:()=>view,
       openRun:result=>{run=result;runId=result.id;remember();if(view==='runs')loadRuns(runId);else openRun();}});
     const publication = window.WorkspacePublication({api,render:()=>{if(view==='runs')renderRuns();}});
+    const coordinator = window.WorkspaceCoordinator({api,render:renderCoordinator});
+    const phases = window.WorkspacePhaseTimings({api,render:renderPhases});
+    const preparation = window.WorkspacePhaseTimings({api,render:renderPreparation});
+    const scientific = window.WorkspaceScientificComparison({api,announce});
     const fieldEvidence = window.WorkspaceFieldEvidence({api,announce});
     const candidatePackages = window.WorkspaceCandidatePackageEvidence({api});
     const lineage = window.WorkspaceExperimentLineage({api,announce,getIntent:()=>loadGeneration,getView:()=>view,getGraph:()=>graph,isDirty:()=>dirty(),
       openRecipe:async(id,current)=>{if(await openGraph(id,current)){if(!graphs.some(item=>item.id===graph.id))graphs.push(copy(graph));if(current())renderPipeline();}},openRun:async(id,current)=>{if(await openRunById(id,current))openRun();},
-      compare:async(id,baseline,current)=>{if(await openRunById(id,current)){model.queueComparison(id,baseline);openRun();}}});
+      compare:async(id,baseline,current)=>{if(await openRunById(id,current)){if(run?.graph?.recipe==='external_recipe'){if(!await openRunById(baseline,current))return;scientific.queueComparison(baseline,id);}else model.queueComparison(id,baseline);openRun();}}});
     function mountModel() {
       const container=document.createElement('div');container.id='real-model-root';pipelineRoot.prepend(container);
       model.configure({definitions,releases,context});model.mount(container);
@@ -91,17 +210,19 @@
     }
     function retainFocus(root, render) {
       const focused = root.contains(document.activeElement) ? document.activeElement.id : null;
+      const phaseScroll=Array.from(root.querySelectorAll('.phase-timing-table[id]')).map(node=>[node.id,node.scrollLeft]);
       render();
+      for(const [id,left] of phaseScroll){const node=root.querySelector('#'+CSS.escape(id));if(node)node.scrollLeft=left;}
       if (focused) root.querySelector("#" + CSS.escape(focused))?.focus({ preventScroll: true });
     }
     function adopt(document) {
-      graph = document; graphId = graph.id; saved = JSON.stringify(graph);
+      preparation.invalidate();graph = document; graphId = graph.id; saved = JSON.stringify(graph);
       graphs = graphs.map(item => item.id === graph.id ? copy(graph) : item);
       validation = null; external.invalidate(true); undo = []; redo = []; remember();
     }
     function change(fn, render = true) {
       undo.push(copy(graph)); if (undo.length > 40) undo.shift(); redo = [];
-      fn(); validation = null;
+      fn(); validation = null;preparation.invalidate();renderPreparation();
       if(external.isGraph(graph)){external.invalidate();if(render)renderPipeline();else external.dirtyChanged(pipelineRoot);return;}
       if (render) renderPipeline(); else {
         pipelineRoot.querySelector("#real-dirty").textContent = "Unsaved changes";
@@ -205,11 +326,18 @@
       return (release?.allowed_recipes || (release?.recipe ? [release.recipe] : [])).map(id =>
         `<option value="${esc(id)}">${esc(integrityKinds[id] ? "Validate and export · " + integrityKinds[id].unit : "Train and evaluate · " + sourceUnit(id))}</option>`).join("");
     }
+    function renderPhases(){const target=runsRoot.querySelector('#real-phase-root');if(target){retainFocus(target,()=>{target.innerHTML=phases.html();});phases.bind(target);}}
+    function renderPreparation(){const target=pipelineRoot.querySelector('#preparation-phase-root');if(target){retainFocus(target,()=>{target.innerHTML=preparation.html();});preparation.bind(target);}}
+    function observePreparation(restart=false){
+      if(!external.isGraph(graph)||dirty()||view!=='pipeline'){preparation.invalidate();return;}
+      const selected=graph,generation=loadGeneration;
+      preparation.select({kind:'preparation',id:graph.id,revision:graph.revision},()=>view==='pipeline'&&graph===selected&&!dirty()&&generation===loadGeneration,restart);
+    }
     function renderPipeline() {
       if (!definitions) return;
       if(external.isGraph(graph)){
         retainFocus(pipelineRoot, () => external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}}));
-        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}mountModel();return;
+        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}const phaseRoot=document.createElement('div');phaseRoot.id='preparation-phase-root';pipelineRoot.append(phaseRoot);observePreparation();renderPreparation();mountModel();return;
       }
       const integrity = integrityKind(graph);
       const title = {...titles, train: trainingTitle(graph), ...(integrity ? {validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"} : {})};
@@ -323,10 +451,16 @@
       return `<span class="badge ${v.valid ? "green" : "amber"}">${esc(v.status)}</span>${(v.errors || []).map(e => `<p class="error-panel"><strong>${esc(e.path)}</strong> · ${esc(e.message)}</p>`).join("")}${v.release ? `<div class="real-preview"><h3>Verified frozen input</h3><p>${v.release.records} ${sourceUnit(v.release.recipe)} · ${esc(JSON.stringify(v.release.split_counts))}</p>${v.release.audio_summary ? `<p>${esc(v.release.audio_summary.coordinate_contract)}</p><p class="muted">${v.release.audio_summary.analyzed_frames.toLocaleString()} analyzed source frames · ${esc(v.release.audio_summary.sample_rates_hz.join(", "))} Hz</p>` : ""}<p class="muted">Release ${esc(v.release.id)}</p>${integrityKind(v.release) ? integritySummaryHTML(v.release, v.release.validation_summary) : `<p class="${v.release.prior_test_exposure?.exposed ? "error-panel" : "muted"}">${v.release.prior_test_exposure?.exposed ? "Previously exposed/reused test material. This is not fresh holdout evidence." : "No prior test-exposure event recorded for these records or canonical content."}</p>`}<a href="/api/workbench/releases/${encoded(v.release.id)}" download>Download verified release ZIP</a></div>` : ""}${v.runtime ? `<details><summary>Installed runtime and adapter identity</summary><pre>${esc(JSON.stringify(v.runtime, null, 2))}</pre></details>` : ""}`;
     }
     function artifactURL(name) { return `/api/workspace/runs/${encoded(run.id)}/artifacts/${encoded(name)}`; }
+    function renderCoordinator(){
+      if(view!=='runs')return;
+      const root=runsRoot.querySelector('#real-coordinator-root');
+      if(root){retainFocus(root,()=>{root.innerHTML=coordinator.html();});coordinator.bind(root);}
+    }
     async function loadRuns(chosen = runId, quiet = false) {
       const generation = ++runGeneration,session=window.TuldokAuth?.identity()?.credential_id;
-      candidatePackages.invalidate();publication.invalidate();
+      candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();scientific.invalidate();
       const current=()=>generation===runGeneration&&view==='runs'&&session===window.TuldokAuth?.identity()?.credential_id;
+      const coordinatorRead=coordinator.load(current);
       if (!quiet) runsRoot.innerHTML = '<p class="real-status" role="status">Loading durable run receipts…</p>';
       try {
         const list = await api("runs");
@@ -356,15 +490,19 @@
         if (!current()) return;
         await fieldEvidence.load(detail,current);
         if (!current()) return;
+        await scientific.load(detail,current);
+        if (!current()) return;
         await publication.load(detail,current);
         if (!current()) return;
+        if(detail)phases.select({kind:'run',id:detail.id},current);else phases.invalidate();
         const packageRead=candidatePackages.load(detail&&external.isGraph(detail.graph)?detail:null,current);
         runs = list; run = detail; runProgress = progress; runId = id || null; predictions = rows; predictionError = rowsError; remember(); renderRuns();
         packageRead.then(()=>{if(current())renderRuns();});
+        coordinatorRead.then(()=>{if(current())renderCoordinator();});
       } catch (error) {
         if (!current()) return;
-        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();publication.invalidate();renderRuns();status(error.message,true);return;}
-        if (!quiet) runsRoot.innerHTML = `<div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;
+        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);return;}
+        if (!quiet) {runsRoot.innerHTML = `<div id="real-coordinator-root">${coordinator.html()}</div><div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;coordinator.bind(runsRoot);coordinatorRead.then(()=>{if(current())renderCoordinator();});}
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));
       } finally {
@@ -377,7 +515,7 @@
       const openStreams=Array.from(runsRoot.querySelectorAll('details[data-external-stream][open]')).map(node=>node.dataset.externalStream);
       const openDisclosures=Array.from(runsRoot.querySelectorAll('details[data-external-disclosure][open]')).map(node=>node.id);
       retainFocus(runsRoot, () => {
-        runsRoot.innerHTML = `<p class="callout"><strong>Real local runs.</strong> Results retain their saved graph and exact admitted inputs. Classification, integrity and external execution receipts retain their own scope and limitations.</p><p class="real-status" role="status"></p><div class="actions"><button id="real-runs-refresh">Refresh saved runs</button><a class="button" href="#pipeline">Open Pipeline</a></div>${!run ? '<div class="panel empty"><h2>No real runs yet</h2><p>Save and validate a recipe in Pipeline, then run it on the local CPU.</p></div>' : `<div class="runs-layout"><aside class="panel"><div class="panel-title"><h2>Runs</h2><span class="badge">${runs.length}</span></div><div class="run-list">${runs.map(r => `<button id="real-run-${r.id}" data-real-run="${r.id}" class="run-item" aria-current="${r.id === runId}"><span class="badge ${r.state === "completed" ? "green" : "amber"}">${esc(r.state)}</span><strong>${esc(r.graph.name)}</strong><small>Graph r${r.graph_revision} · attempt ${r.attempt}</small><small>${esc(r.created_at)}</small></button>`).join("")}</div></aside>
+        runsRoot.innerHTML = `<p class="callout"><strong>Real local runs.</strong> Results retain their saved graph and exact admitted inputs. Classification, integrity and external execution receipts retain their own scope and limitations.</p><p class="real-status" role="status"></p><div class="actions"><button id="real-runs-refresh">Refresh saved runs</button><a class="button" href="#pipeline">Open Pipeline</a></div><div id="real-coordinator-root">${coordinator.html()}</div>${!run ? '<div class="panel empty"><h2>No real runs yet</h2><p>Save and validate a recipe in Pipeline, then run it on the local CPU.</p></div>' : `<div class="runs-layout"><aside class="panel"><div class="panel-title"><h2>Runs</h2><span class="badge">${runs.length}</span></div><div class="run-list">${runs.map(r => `<button id="real-run-${r.id}" data-real-run="${r.id}" class="run-item" aria-current="${r.id === runId}"><span class="badge ${r.state === "completed" ? "green" : "amber"}">${esc(r.state)}</span><strong>${esc(r.graph.name)}</strong><small>Graph r${r.graph_revision} · attempt ${r.attempt}</small><small>${esc(r.created_at)}</small></button>`).join("")}</div></aside>
         <article class="panel panel-pad"><div class="meta-row"><span id="real-run-state" class="badge ${run.state === "completed" ? "green" : "amber"}">${esc(run.state)}</span><span class="badge">${externalRun ? "Trusted local executable" : integrity ? `${integrity.name} integrity · no training` : "Real · CPU"}</span><span class="badge">${esc(short(run.id))}</span></div><h2 style="margin-top:14px">${esc(run.graph.name)}</h2><p class="muted">Frozen graph r${run.graph_revision} · attempt ${run.attempt}${externalRun ? "" : " · release " + esc(short(run.release_id))}</p><div class="actions">${(run.input_artifacts || []).map(a => `<a class="button" href="${artifactURL(a.name)}" download>Download verified frozen export</a>`).join("")}</div>
         ${run.error ? `<p class="error-panel" role="alert">${esc(run.error.code)}: ${esc(run.error.message)}</p>` : ""}
         ${run.artifact_status?.status === "unavailable" ? `<p class="error-panel" role="alert">Published artifacts unavailable: ${esc(run.artifact_status.message)}. Saved run identity is retained.</p>` : ""}
@@ -386,8 +524,8 @@
         ${run.study_membership&&["failed","cancelled","interrupted"].includes(run.state)?'<p>This finite-study attempt has stopped. Prepare another exact trial in <a href="#pipeline">Pipeline</a> before starting new training.</p>':""}
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
         ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
-        ${externalRun ? external.runHTML(run,runProgress)+publication.html(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
-        ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run):""}
+        <div id="real-phase-root">${phases.html()}</div>${externalRun ? external.runHTML(run,runProgress)+publication.html(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
+        ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run)+scientific.html(run,runs):""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
         <div class="${externalRun?'':'run-columns'}">${!externalRun?`<section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section>`:`<details id="external-lifecycle-events" data-external-disclosure><summary>Run lifecycle events</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details>`}<section><h3>${run.artifact_status?.status==='receipt_verified'?'Recorded outputs; verified on download':'Verified artifacts'}</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">${run.artifact_status?.status==='receipt_verified'?'Output receipt verified. Payload bytes are checked individually when requested.':'Every artifact read verifies its frozen hash.'}</p></section></div>
         ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
@@ -395,6 +533,9 @@
       });
       if (notice) { const target = runsRoot.querySelector('.real-status'); target.textContent = notice; target.classList.toggle('error-panel', noticeError); }
       runsRoot.querySelector("#real-runs-refresh").onclick = () => loadRuns();
+      coordinator.bind(runsRoot);
+      const scientificGeneration=runGeneration,scientificRunId=run?.id;
+      scientific.bind(runsRoot,run,runs,renderRuns,()=>view==='runs'&&scientificGeneration===runGeneration&&runId===scientificRunId,id=>loadRuns(id));
       runsRoot.querySelectorAll("[data-real-run]").forEach(button => button.onclick = () => { split = "validation"; selectedCell = null; loadRuns(button.dataset.realRun); });
       for(const button of runsRoot.querySelectorAll('[data-import-run-artifact]'))button.onclick=()=>{
         const selected=run,artifact=selected.artifacts.find(item=>item.name===button.dataset.importRunArtifact);
@@ -427,7 +568,7 @@
         openRecord({ ...prediction, run_id: run.id, release_id: run.release_id });
       });
       const displayedRun=runId,displayedGeneration=runGeneration,credential=window.TuldokAuth?.identity()?.credential_id;
-      publication.bind(runsRoot);
+      publication.bind(runsRoot);phases.bind(runsRoot);
       fieldEvidence.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
       model.bind(runsRoot,run,runs,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
       candidatePackages.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id,id=>loadRuns(id));
@@ -454,10 +595,10 @@
         const credential=window.TuldokAuth?.identity()?.credential_id,selected=await api('runs/'+encoded(id));
         if(!isCurrent()||credential!==window.TuldokAuth?.identity()?.credential_id)return false;
         if(selected.id!==id)throw Error('The admitted Run could not be identified.');
-        ++runGeneration;publication.invalidate();model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
+        ++runGeneration;coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
     }
     window.addEventListener('tuldok-session',()=>{
-      ++runGeneration;++loadGeneration;clearTimeout(timer);publication.invalidate();lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();model.sessionChanged();
+      ++runGeneration;++loadGeneration;clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();model.sessionChanged();
       if(view==='pipeline'){definitions=null;graph=null;graphs=[];releases=[];pipelineRoot.innerHTML='<p>Session changed. Refreshing current catalog…</p>';if(window.TuldokAuth?.identity())loadPipeline();}
       if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
     });
@@ -466,7 +607,7 @@
       openGraph,openRunById,
       identity: () => context?.dataset_id,
       async show(next) {
-        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);publication.invalidate();lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();candidatePackages.invalidate();
+        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();scientific.invalidate();candidatePackages.invalidate();
         if (next === "pipeline") {
           if (definitions && graph) renderPipeline(); else await loadPipeline();
         } else if (next === "runs") await loadRuns();

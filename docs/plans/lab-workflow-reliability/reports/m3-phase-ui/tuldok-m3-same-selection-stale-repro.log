@@ -1,0 +1,10 @@
+<section class="phase-timing-panel" aria-labelledby="phase-run-title"><h3 id="phase-run-title">Run phase observations</h3><p role="status">owner observed</p><button id="phase-run-refresh" type="button" data-phase-refresh>Refresh timing observations</button><p>Intervals can overlap. Different owner clocks cannot be subtracted or added. Open intervals describe the last observation; elapsed time is not extrapolated.</p><section><h4>runs owner</h4><p>Observed at 1970-01-01T00:00:01.000Z · clock <code class="project-path">eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee</code></p><div id="phase-run-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" class="phase-timing-table" tabindex="0" role="region" aria-label="runs phase intervals"><table><thead><tr><th scope="col">Phase</th><th scope="col">State</th><th scope="col">Observed ms</th><th scope="col">Wait</th><th scope="col">Clock offsets ms</th></tr></thead><tbody><tr><th scope="row">queue</th><td>open</td><td>777</td><td>capacity</td><td>0 → unknown end</td></tr></tbody></table></div></section></section>
+AssertionError [ERR_ASSERTION]: Prior-load-generation delivery must not be adopted by the new predicate
+    at /tmp/tuldok-m3-same-selection-stale-repro.cjs:26:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'ject-path">eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee</code></p><div id="phase-run-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" class="phase-timing-table" tabindex="0" role="region" aria-label="runs phase intervals"><table><thead><tr><th scope="col">Phase</th><th scope="col">State</th><th scope="col">Observed ms</th><th scope="col">Wait</th><th scope="col">Clock offsets ms</th></tr></thead><tbody><tr><th scope="row">queue</th><td>open</td><td>777</td><td>capacity</td><td>0 → unknown end</td></tr></tbody></table></div></section></section>...',
+  expected: /<td>777/,
+  operator: 'doesNotMatch',
+  diff: 'simple'
+}

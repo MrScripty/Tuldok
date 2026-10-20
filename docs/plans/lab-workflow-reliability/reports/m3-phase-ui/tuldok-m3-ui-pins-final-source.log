@@ -1,0 +1,7 @@
+test_phase_contract_pins_match_complete_selected_contracts (test_workspace_phase_timings.PhasePanelPins.test_phase_contract_pins_match_complete_selected_contracts) ... ok
+test_coordinator_pins_match_canonical_contracts (test_workspace_coordinator.CoordinatorPanelPins.test_coordinator_pins_match_canonical_contracts) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.002s
+
+OK

@@ -316,3 +316,26 @@ captures/context have already been written, so the same owner checks its origina
 space and do not account for future concurrent consumers. The later admission
 recheck and publication's separate actual-output-bytes plus 512 MiB check remain
 required. A passing observation cannot promise durable publication or recovery.
+
+The read-only [scientific comparison](scientific-comparison.md) accepts exact
+attached publication-result Refs alongside completed Run operands. It reuses
+publication-result identity and authority checks, preserves the original failed
+or interrupted outcome, and grants no legacy promotion or candidate eligibility.
+
+## Opt-in indexed diagnostic capture
+
+The noncanonical `extension_field_policy_indexed_v1` policy adds a hash-bound
+`diagnostic_capture_v1` declaration. Admission reserves its exact bounded index,
+ordered shard outputs, record populations and complete mandatory coverage under
+the existing output/file/aggregate caps. This opt-in variant reserves all
+declared output maxima within the selected profile aggregate budget. Existing
+policies and closed evidence/public projection grammars retain their meanings.
+
+The current evidence owner verifies scientific evidence first and diagnostic
+bytes against the same retained artifact inventory. Publication recovery and
+exact-hash result readers expose the admitted index/shards under the original
+Run and result Ref; no replay or alternate permission path is introduced. See
+[Indexed diagnostics v1](indexed-diagnostics.md) for the complete producer/host
+contract and the distinction between required coverage and explicit optional
+omission ranges. This generic contract does not classify absent original lab
+diagnostic bytes or repair an invalid original output.

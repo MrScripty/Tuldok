@@ -1,0 +1,7 @@
+test_only_exact_whole_hash_receipts_are_comparable (test_benchmark_artifact_segments.PairedCollectionReportingTests.test_only_exact_whole_hash_receipts_are_comparable) ... ok
+test_partial_failure_or_service_error_does_not_fallback (test_benchmark_artifact_segments.PairedCollectionReportingTests.test_partial_failure_or_service_error_does_not_fallback) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.176s
+
+OK
