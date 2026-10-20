@@ -362,6 +362,33 @@ separate from full live-browser T4/T8/M3 acceptance, which remains pending.
 
 ## Compatibility, Migration And Rollback
 
+### Facade collection cost acceptance admission — 2026-10-20
+
+The integration lead selects the remaining M4/M5 facade-specific measurement
+boundary on separate branch `test/workflow-collection-performance-20261020`, based
+on the unchanged stopped-transfer witness `322482d2ca6fa2af8effb7a6a5080313efe745b4`.
+The companion driver reuses the existing neutral Fixture/Metrics and owner/HTTP
+observers. It compares actual `WorkflowClient.collect` and explicit `collect_batch`
+on the same source/catalog/inventory, including their current verification and
+private whole-file publication. Exported manifests/bootstrap, independent output
+oracle rereads and fresh destination setup/cleanup are recorded separately or
+excluded equally from the timed calls.
+
+The fixed matrix measures twenty16KiB artifacts at histories8/55, a one320KiB
+control at history8, and the twenty-item exact attached result Ref after one
+additional real interrupted Run. Three fresh processes per cell each contribute
+one first and two warm alternating pairs. Raw samples/order/UTC bounds, wall,
+CPU/RSS/I/O, HTTP/owner observations, whole hashes, unchanged original Run/events/
+accounting and owned cleanup are retained. A bounded pilot and executable source
+review precede a quiet matrix window. No result, threshold or improvement is
+assumed before measurement; negative arms/outliers remain evidence.
+
+The write set is `tests/benchmark_workflow_collection.py`, its focused reporting
+oracle tests, this admission, the ledger and scoped reports. No producer,
+production/schema/contract/workflow/README change or installed-runtime mutation is
+admitted. This measures only the named local facade boundary, not2–19 items,
+arbitrary payloads/history, preparation, whole workflows, lab or scientific gain.
+
 ### Integrated stopped-transfer acceptance admission — 2026-10-20
 
 The fresh integration lead admits one narrow T8 witness from the exact reporting

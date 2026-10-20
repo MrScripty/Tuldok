@@ -1,5 +1,20 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-20 — Facade collection cost witness admission
+
+The integration lead admitted a companion M4/M5 paired witness from stopped-transfer
+checkpoint322482d on isolated `test/workflow-collection-performance-20261020`.
+It reuses the established neutral fixture, Metrics and owner/HTTP instrumentation,
+and measures the actual current facade's ordinary versus explicit batch collection
+including independent verification and private file publication. The admitted
+fixed matrix and exclusions are in the plan; every arm/outlier, exact source,
+environment, raw resource/request/owner observations and integrity/cleanup remain
+required. Two focused pure reporting-oracle tests pass: corrupt/provisional local
+bytes, partial receipts and a contradictory attached Ref cannot become a successful
+sample. Actual pilot/matrix and independent source review remain pending. No
+production, producer, schema, contract, runtime installation or generic speedup
+is inferred from this admission.
+
 ## 2026-10-20 — Integrated stopped-transfer acceptance admission
 
 The integration lead selected the existing T8 composition gap after verifying
