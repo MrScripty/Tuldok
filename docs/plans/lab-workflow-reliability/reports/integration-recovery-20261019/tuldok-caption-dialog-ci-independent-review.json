@@ -1,0 +1,96 @@
+{
+  "all_changed_files": [
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/acceptance.md",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/actual-captions.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/captions-desktop.jpg",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/captions-narrow.jpg",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/cdp-regression.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/cleanup.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/original-failure-excerpt.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/original-task-observation.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/owned-cleanup-regression.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/qualification.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/receipt.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-cleanup-attempt-01.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-cleanup.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-reservation-attempt-01.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-reservation.json",
+    "tests/browser_captions.cjs",
+    "tests/browser_cdp_session.cjs",
+    "tests/test_browser_cdp_session.cjs"
+  ],
+  "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "behavior_review": {
+    "assertions": "Original saved/unsaved caption, review reset/restore, export/filter/reopen/repeated-submit and390px assertions retained.",
+    "bounded_lifecycle": "Default CDP15000ms, dialog15000ms; inspect1000ms and skipped for known modal; timers clear for responses/failure; late timed-out replies ignored; socket close/error rejects pending; click rejection observed. A missing event or transport failure cannot indefinitely hold diagnostics/finally.",
+    "cleanup": "Accepted startup/stopOwnedChildren reused; temporary removal occurs only after own handles exit, with bounded retries. Production/static/workflow code unchanged.",
+    "dialog_ownership": "Fresh event waiter is armed before each click; exact confirm type/message required; original click promise handled immediately and awaited after dismissal. Unexpected/absent dialogs fail; original false,true,true outcomes and data assertions retained."
+  },
+  "branch": "fix/captions-dialog-ci-qualification-20261020",
+  "checks": {
+    "actual_three_confirm_decisions_preserved": true,
+    "all_source_hashes_match_actual_receipt_and_qualification": true,
+    "cleanup_receipt_own_handles_terminal": true,
+    "committed_browser_log_only_trailing_whitespace_projection": true,
+    "exact_two_owned_schemas_recorded_absent": true,
+    "frozen_exact_head": true,
+    "independent_controlled_node_regression_passed": true,
+    "independent_three_node_syntax_checks_passed": true,
+    "only_three_test_sources_and_scoped_evidence_changed": true,
+    "raw_browser_log_hash_and_size": true,
+    "raw_original_hosted_log_hash": true,
+    "worktree_clean": true,
+    "zero_workspace_runs_with_five_real_records": true
+  },
+  "disposition": "CLEAR within this test-harness repair scope",
+  "findings": [],
+  "head": "abbae728434fa0670478e12216a1d94603a97daf",
+  "implementation_files": [
+    "tests/browser_captions.cjs",
+    "tests/browser_cdp_session.cjs",
+    "tests/test_browser_cdp_session.cjs"
+  ],
+  "independent_tests": {
+    "actual_browser": "Author executed the retained PostgreSQL/Chromium app journey before commit; five exact file hashes match reviewed head. Reviewer did not rerun actual browser or independently query PostgreSQL. The receipt source_commit is base0ba because working files were uncommitted; exact source attribution is by retained file hashes, not a claim of a literal abbae checkout.",
+    "command": "node --check tests/browser_captions.cjs && node --check tests/browser_cdp_session.cjs && node --check tests/test_browser_cdp_session.cjs && node tests/test_browser_cdp_session.cjs",
+    "controlled_cases": [
+      "old100ms premature handling against180ms opening reproduces -32602",
+      "blocked diagnostic expires",
+      "three event-owned decisions false,true,true",
+      "absent/wrong dialog refuse",
+      "trigger failure observed",
+      "request timeout/late reply ignored",
+      "socket close/error drainage"
+    ],
+    "exit": 0
+  },
+  "limits": [
+    "Controlled protocol timing is not an original-host scheduling trace.",
+    "Actual browser uses existing controlled generation provider; no live-model/training/science/CUDA/performance claim.",
+    "No full heavy CPU suite rerun; hosted qualification and serial publication remain root-owned.",
+    "Cleanup schema absence is supported by author-retained qualified receipts, not a new reviewer PG observation."
+  ],
+  "retained_evidence": {
+    "actual_browser_log": {
+      "bytes": 5967,
+      "committed_log_projection": "Same lines; trailing whitespace removed from Chromium stderr for git diff --check. Raw bytes retained unchanged at the recorded path.",
+      "path": "/tmp/tuldok-caption-dialog-repair/actual-captions.log",
+      "sha256": "9ab368c6f9acd1c9d2efeb42199cf5f381171f1706c9572e63e7475d143a05b2"
+    },
+    "actual_receipt_sha256": "3ef80c2d268f15259d340d5b532fd286300f26b08f8655ae90ca6b703d30a63d",
+    "catalog": "b0725dd405a3495e9ca4c2dadffca047",
+    "original_late_modal_cause": "hypothesis only; original event trace unavailable",
+    "original_run_conclusion": "cancelled",
+    "qualification_sha256": "45044e04164bb604d45f09e255304ff32fc5c44ba0bbfa789b3f2501e19b5379",
+    "schema_cleanup_sha256": "ba60f6f7a8d8822c925c15006f6b1f2e2c76efbfffde2797bab3a73406d2e01b"
+  },
+  "reviewed_utc": "2026-10-20T03:32:23.080339+00:00",
+  "scope": "Independent source/retained-evidence review and permitted focused Node checks only. No source edits, PostgreSQL/browser rerun, remote operation or CI polling.",
+  "source_sha256": {
+    "static/workbench.js": "167a48d39b0831ba814c31321f0f936d969e9b322c71b11a25a3f24ca9fe889b",
+    "tests/browser_captions.cjs": "5cc3fd4b7e9dc299c8e9c22ad6d8f9100ddfa5b1c214e36f58e1b562d7349689",
+    "tests/browser_cdp_session.cjs": "ecfac048e343e0be85a02d22d284ea2c731617ec80807762a0691276f2bec40f",
+    "tests/browser_owned_cleanup.cjs": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+    "tests/test_browser_cdp_session.cjs": "1742a8b29c33b4ceb35ce76310df581cdb7e44b21aede4c1998526222e9eb7d2"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "observed_utc": "2026-10-20T03:35:03.470986+00:00",
+  "main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+  "order": [
+    108,
+    111,
+    112
+  ],
+  "prs": [
+    {
+      "pr": 108,
+      "head": "9f08427029d8b48c8f9b50927a1c835afb573276",
+      "source_worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+      "tree": "f245dcc821ebec18145a7e5340e19adab165d8f8",
+      "required_check_names": [
+        "lifecycle",
+        "static-kit",
+        "catalog"
+      ],
+      "existing_narrow_repair_reviews": [
+        "/tmp/tuldok-pr108-frozen-author-test-independent-review.json"
+      ],
+      "base": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
+      "merge_clearance": false,
+      "pending": "Fresh exact-head completed lifecycle review",
+      "activation": "Recheck actual GitHub state. Before111retarget,108mustmerge normally; prove oldbase tree=currentmain tree and prospective merge tree=source tree. No unexamined retries; preserve intents/acknowledgements/readbacks.",
+      "evidence_scope": "Existing local narrow repair checks do not replace fresh hosted lifecycle/CPU acceptance."
+    },
+    {
+      "pr": 111,
+      "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+      "source_worktree": "/workspace/Tuldok-retained-analysis-integration-20261020",
+      "tree": "610898ee259f0dd9c4e4397afa73309119a1401e",
+      "required_check_names": [
+        "lifecycle",
+        "captured-cpu",
+        "workspace-ui",
+        "catalog"
+      ],
+      "existing_narrow_repair_reviews": [
+        "/tmp/tuldok-pr111-revocation-gate-independent-review.json"
+      ],
+      "base": null,
+      "merge_clearance": false,
+      "pending": "Fresh exact-head completed lifecycle review and captured-CPU review including separate package/fresh-consumer qualification",
+      "activation": "Recheck actual GitHub state. Before111retarget,108mustmerge normally; prove oldbase tree=currentmain tree and prospective merge tree=source tree. No unexamined retries; preserve intents/acknowledgements/readbacks.",
+      "evidence_scope": "Existing local narrow repair checks do not replace fresh hosted lifecycle/CPU acceptance."
+    },
+    {
+      "pr": 112,
+      "head": "abbae728434fa0670478e12216a1d94603a97daf",
+      "source_worktree": "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
+      "tree": "a188f1296a557971823cfd27f5cbab95fad7a4cb",
+      "required_check_names": [
+        "lifecycle"
+      ],
+      "base": null,
+      "local_qualification": "Exact implementation hashes verified against actual PG/Chromium journey and independently rerun protocol regression; product/workflows unchanged.",
+      "existing_reviews": [
+        "/tmp/tuldok-captions-repair-root-actual-receipt-review.json",
+        "/tmp/tuldok-caption-dialog-ci-independent-review.json"
+      ],
+      "merge_clearance": false,
+      "pending": "Fresh exact-head lifecycle completion and independent completed-log review, then111merge/retarget/base-tree proof.",
+      "cleanup_dependency": "Keep111branch until112retargeted. Keep all unmerged task/repair branches."
+    }
+  ]
+}

@@ -4263,7 +4263,8 @@
     "main": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
     "remaining": [
       108,
-      111
+      111,
+      112
     ],
     "latest_ci_snapshot": "/tmp/tuldok-after-102-103-107-remaining-ci.json",
     "cleanup_precheck": "/tmp/tuldok-pr102-103-107-cleanup-precheck.json",
@@ -4297,15 +4298,16 @@
     "merge_gate_independent": "/tmp/tuldok-pr104-merge-gate-independent-review.json",
     "description_publication": "/tmp/tuldok-remaining-final-description-publication.json",
     "recovery_checkpoint_verified": "c37106eac3a80867543a5ce4d34d6db42dd9b600:438/438 entries by independent recovery clone",
-    "observed_utc": "2026-10-20T03:26:09.105016+00:00",
+    "observed_utc": "2026-10-20T03:35:03.466151+00:00",
     "cleanup_new": "Complete: five accepted remote/local/tracking refs and five worktrees removed after dependent retargets and564-entry recovery verification. Independent postcheck retained.",
     "cleanup_new_precheck": "/tmp/tuldok-pr104-105-106-109-110-cleanup-precheck.json",
     "cleanup_new_terminal": "/tmp/tuldok-pr104-105-106-109-110-cleanup-terminal.json",
     "cleanup_new_independent": "/tmp/tuldok-pr104-105-106-109-110-cleanup-independent-postcheck.json",
-    "pending_activation": "/tmp/tuldok-pending-108-111-activation.json",
+    "pending_activation": "/tmp/tuldok-pending-108-111-112-activation.json",
     "latest_ci_snapshots": [
-      "/tmp/tuldok-pr108-post-five-merges-ci.json",
-      "/tmp/tuldok-pr111-post-five-merges-ci.json"
+      "/tmp/tuldok-pr108-0330-ci-readiness.json",
+      "/tmp/tuldok-pr111-0330-ci-readiness.json",
+      "/tmp/tuldok-pr112-initial-ci-readiness.json"
     ]
   },
   "indexed_retained_ci_repairs": {
@@ -4795,7 +4797,7 @@
   },
   "main_after_pr110": "63f689ecace7bac2f20114efde53a9c6bc05a9ed",
   "caption_dialog_ci_repair": {
-    "status": "implementation in progress, not qualified",
+    "status": "Published draft PR112, locally qualified and independently reviewed; hosted lifecycle pending",
     "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
     "branch": "fix/captions-dialog-ci-qualification-20261020",
     "worktree": "/workspace/Tuldok-captions-dialog-ci-repair-20261020",
@@ -4805,6 +4807,13 @@
     "observation": "/tmp/tuldok-caption-dialog-race-qualification-task.json",
     "cancelled_obsolete_run": 39349523584,
     "cancel_receipt": "/tmp/tuldok-pr105-obsolete-duplicate-cancel-receipt.json",
-    "primary_acceptance_remains_success": 39349557067
+    "primary_acceptance_remains_success": 39349557067,
+    "head": "abbae728434fa0670478e12216a1d94603a97daf",
+    "pr": 112,
+    "url": "https://github.com/MrScripty/Tuldok/pull/112",
+    "publication_receipt": "/tmp/tuldok-caption-repair-publication.json",
+    "actual_receipt_review": "/tmp/tuldok-captions-repair-root-actual-receipt-review.json",
+    "independent_review": "/tmp/tuldok-caption-dialog-ci-independent-review.json",
+    "initial_ci": "/tmp/tuldok-pr112-initial-ci-readiness.json"
   }
 }

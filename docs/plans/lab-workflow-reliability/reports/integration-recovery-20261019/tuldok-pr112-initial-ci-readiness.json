@@ -1,0 +1,17 @@
+{
+  "observed_utc": "2026-10-20T03:33:39.859526+00:00",
+  "pr": 112,
+  "head": "abbae728434fa0670478e12216a1d94603a97daf",
+  "base": "feature/retained-analysis-query-20261019",
+  "base_sha": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "mergeable_state": "unstable",
+  "checks": [
+    {
+      "id": 118439417716,
+      "name": "lifecycle",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39364911305/job/118439417716"
+    }
+  ]
+}

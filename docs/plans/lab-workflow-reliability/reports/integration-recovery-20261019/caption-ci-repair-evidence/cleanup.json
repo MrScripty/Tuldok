@@ -1,0 +1,17 @@
+{
+  "temporary": "/tmp/tuldok-caption-browser-hAbzQw",
+  "removed": true,
+  "children": [
+    {
+      "pid": 112007,
+      "exit_code": null,
+      "signal": "SIGTERM"
+    },
+    {
+      "pid": 112014,
+      "exit_code": 0,
+      "signal": null
+    }
+  ],
+  "scope": "Only test-owned child handles; all exited before temporary removal"
+}

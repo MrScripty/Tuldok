@@ -1,0 +1,45 @@
+{
+  "observed_utc": "2026-10-20T03:32:13.576581+00:00",
+  "state": "actual_receipts_and_source_bounds_verified",
+  "head": "abbae728434fa0670478e12216a1d94603a97daf",
+  "base": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "changed_paths": [
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/acceptance.md",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/actual-captions.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/captions-desktop.jpg",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/captions-narrow.jpg",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/cdp-regression.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/cleanup.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/original-failure-excerpt.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/original-task-observation.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/owned-cleanup-regression.log",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/qualification.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/receipt.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-cleanup-attempt-01.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-cleanup.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-reservation-attempt-01.json",
+    "docs/plans/lab-workflow-reliability/reports/caption-dialog-ci-20261020/schema-reservation.json",
+    "tests/browser_captions.cjs",
+    "tests/browser_cdp_session.cjs",
+    "tests/test_browser_cdp_session.cjs"
+  ],
+  "source_hashes_verified": {
+    "tests/browser_captions.cjs": "5cc3fd4b7e9dc299c8e9c22ad6d8f9100ddfa5b1c214e36f58e1b562d7349689",
+    "tests/browser_cdp_session.cjs": "ecfac048e343e0be85a02d22d284ea2c731617ec80807762a0691276f2bec40f",
+    "tests/test_browser_cdp_session.cjs": "1742a8b29c33b4ceb35ce76310df581cdb7e44b21aede4c1998526222e9eb7d2",
+    "tests/browser_owned_cleanup.cjs": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+    "static/workbench.js": "167a48d39b0831ba814c31321f0f936d969e9b322c71b11a25a3f24ca9fe889b"
+  },
+  "actual_modal_decisions": [
+    false,
+    true,
+    true
+  ],
+  "exported_records": 4,
+  "records_before_cleanup": 5,
+  "workspace_runs": 0,
+  "both_schemas_recorded_absent": true,
+  "raw_log_and_original_failure_hashes_match": true,
+  "source_attribution_note": "Receipt source_commit is the pre-commit base HEAD0ba4; tested modified source bytes are explicitly pinned by source_sha256 and qualification.tested_before_commit_with_exact_file_hashes and independently match frozenabbae728. This is not a claim that original base0ba4 contains the repair.",
+  "independent_code_review": "Pending M4. No source edits or test repetition by root."
+}

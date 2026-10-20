@@ -1,0 +1,28 @@
+{
+  "head": "abbae728434fa0670478e12216a1d94603a97daf",
+  "branch": "fix/captions-dialog-ci-qualification-20261020",
+  "base": "feature/retained-analysis-query-20261019",
+  "base_sha": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "state": "draft_publication_verified",
+  "observed_utc": "2026-10-20T03:33:15.261057+00:00",
+  "independent_review_sha256": "b63fbdc4bbd6b596d49cbb1d58fb0703905cfdc9d40a2ecf51018a1043ca4cc4",
+  "root_actual_receipt_review_sha256": "9c6d60b4d0989063604367cb0b4352923575a5da6b8870fc1a4474907db9d686",
+  "push_exit": 0,
+  "push_stdout": "branch 'fix/captions-dialog-ci-qualification-20261020' set up to track 'origin/fix/captions-dialog-ci-qualification-20261020'.\n",
+  "push_stderr": "remote: \nremote: Create a pull request for 'fix/captions-dialog-ci-qualification-20261020' on GitHub by visiting:        \nremote:      https://github.com/MrScripty/Tuldok/pull/new/fix/captions-dialog-ci-qualification-20261020        \nremote: \nTo https://github.com/MrScripty/Tuldok.git\n * [new branch]      HEAD -> fix/captions-dialog-ci-qualification-20261020\n",
+  "observed_remote_head": "abbae728434fa0670478e12216a1d94603a97daf",
+  "create_exit": 0,
+  "create_stdout": "https://github.com/MrScripty/Tuldok/pull/112\n",
+  "create_stderr": "",
+  "observed_prs": [
+    {
+      "baseRefName": "feature/retained-analysis-query-20261019",
+      "headRefOid": "abbae728434fa0670478e12216a1d94603a97daf",
+      "isDraft": true,
+      "number": 112,
+      "url": "https://github.com/MrScripty/Tuldok/pull/112"
+    }
+  ],
+  "pr": 112,
+  "url": "https://github.com/MrScripty/Tuldok/pull/112"
+}

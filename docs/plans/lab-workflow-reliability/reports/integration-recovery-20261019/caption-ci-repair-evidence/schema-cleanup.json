@@ -1,0 +1,15 @@
+{
+  "schema": "catalog_b0725dd405a3495e9ca4c2dadffca047",
+  "reserved_before_creation": true,
+  "actual_browser_catalog_identity_matches": true,
+  "owned_children_exited_before_drop": true,
+  "temporary_removed_before_drop": true,
+  "observed_counts": {
+    "workbench_records": 5,
+    "workspace_runs": 0
+  },
+  "removed_and_queried_absent": true,
+  "preliminary_schema_independently_still_absent": "catalog_a9ff5f061eb54f17a1e2836abcc095de",
+  "observed_at": "2026-10-20T03:30:02.919478+00:00",
+  "scope": "Only the two exact task-created, preregistered fresh schemas; no other catalogs touched"
+}

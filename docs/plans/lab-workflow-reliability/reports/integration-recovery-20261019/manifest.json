@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "RESTORE.md",
-      "bytes": 5708,
-      "sha256": "98a3c27083e82dc72ec5f579e8feb0762f13bf1cd8e512016037e5a412161132"
+      "bytes": 5401,
+      "sha256": "54569119826f8a096e990bd4e7d070ccf7005704d9f97beb98f8829ddc4cbc62"
     },
     {
       "path": "browser-cleanup-actual/coordinator/domain-receipt.json",
@@ -60,6 +60,101 @@
       "path": "browser-cleanup-actual/scientific/receipt.json",
       "bytes": 13423,
       "sha256": "078747d9ae588bb25c0389048b9cee9815dafefae7c9963bcba5eeab06baf2c1"
+    },
+    {
+      "path": "caption-ci-repair-evidence/acceptance.md",
+      "bytes": 4080,
+      "sha256": "d062c54ebc1211973ba8746d4990ae437099bf45f3180485a1e67ee0c8e4f42d"
+    },
+    {
+      "path": "caption-ci-repair-evidence/actual-captions.log",
+      "bytes": 5957,
+      "sha256": "e927b5c4bd44be6350dfa60c8e8f5a9ac941ec386e3d1d89e3c3e2cd09e1701f"
+    },
+    {
+      "path": "caption-ci-repair-evidence/captions-desktop.jpg",
+      "bytes": 103658,
+      "sha256": "98bf9e66de881e8ed8af979788a3631027cad91c5c74f07a97442e3a568ed65f"
+    },
+    {
+      "path": "caption-ci-repair-evidence/captions-narrow.jpg",
+      "bytes": 45674,
+      "sha256": "d78acf5f18d2b2e0f84d5119862359c0080bb38663fb5b7672f2666269d1c7e7"
+    },
+    {
+      "path": "caption-ci-repair-evidence/cdp-regression.log",
+      "bytes": 314,
+      "sha256": "e178a09eba275688759c23d2982b58f1106c0309004afc7825a3b79e9610f871"
+    },
+    {
+      "path": "caption-ci-repair-evidence/cleanup.json",
+      "bytes": 338,
+      "sha256": "9052669a04cc8c0d0d69423b1f7cbc7f3c2ae9e8fc486da397422d6f5288eb4d"
+    },
+    {
+      "path": "caption-ci-repair-evidence/original-failure-excerpt.log",
+      "bytes": 726,
+      "sha256": "c61ea1cadc898a9363c1de534b4b228d3ea01c8d86d383be32ea50f652c6c3cb"
+    },
+    {
+      "path": "caption-ci-repair-evidence/original-task-observation.json",
+      "bytes": 1563,
+      "sha256": "a9b7b08d53c5e787efaaffe8f9b682706e25194ee14ba4fab1390ca4998b43de"
+    },
+    {
+      "path": "caption-ci-repair-evidence/owned-cleanup-regression.log",
+      "bytes": 121,
+      "sha256": "2ae2dbf1cca9e1cbf084da12fffd35175730cb8da4164f277d08eedc020c07d5"
+    },
+    {
+      "path": "caption-ci-repair-evidence/qualification.json",
+      "bytes": 3112,
+      "sha256": "45044e04164bb604d45f09e255304ff32fc5c44ba0bbfa789b3f2501e19b5379"
+    },
+    {
+      "path": "caption-ci-repair-evidence/receipt.json",
+      "bytes": 1742,
+      "sha256": "3ef80c2d268f15259d340d5b532fd286300f26b08f8655ae90ca6b703d30a63d"
+    },
+    {
+      "path": "caption-ci-repair-evidence/schema-cleanup-attempt-01.json",
+      "bytes": 371,
+      "sha256": "41f4623dd0a996501e83f66e24221a9c1c307b9e0790a4b9dfeccbf3ffeda323"
+    },
+    {
+      "path": "caption-ci-repair-evidence/schema-cleanup.json",
+      "bytes": 600,
+      "sha256": "ba60f6f7a8d8822c925c15006f6b1f2e2c76efbfffde2797bab3a73406d2e01b"
+    },
+    {
+      "path": "caption-ci-repair-evidence/schema-reservation-attempt-01.json",
+      "bytes": 382,
+      "sha256": "acef7e6062d1ac95153f5cc4c6dd235e5247a62feff641b74f045bdf851aee11"
+    },
+    {
+      "path": "caption-ci-repair-evidence/schema-reservation.json",
+      "bytes": 388,
+      "sha256": "deeebddabf140755068ffa99c92dc9c08fc5db3532c0f8107ca558bd5a35bfd2"
+    },
+    {
+      "path": "caption-ci-repair-raw/actual-captions.log",
+      "bytes": 5967,
+      "sha256": "9ab368c6f9acd1c9d2efeb42199cf5f381171f1706c9572e63e7475d143a05b2"
+    },
+    {
+      "path": "caption-ci-repair-source/tests/browser_captions.cjs",
+      "bytes": 14321,
+      "sha256": "5cc3fd4b7e9dc299c8e9c22ad6d8f9100ddfa5b1c214e36f58e1b562d7349689"
+    },
+    {
+      "path": "caption-ci-repair-source/tests/browser_cdp_session.cjs",
+      "bytes": 2775,
+      "sha256": "ecfac048e343e0be85a02d22d284ea2c731617ec80807762a0691276f2bec40f"
+    },
+    {
+      "path": "caption-ci-repair-source/tests/test_browser_cdp_session.cjs",
+      "bytes": 4582,
+      "sha256": "1742a8b29c33b4ceb35ce76310df581cdb7e44b21aede4c1998526222e9eb7d2"
     },
     {
       "path": "indexed-ci-repair-evidence/decoded-log-integrity.json",
@@ -822,9 +917,34 @@
       "sha256": "01103450675088b5bf30564e4179e674e580f38074c84baf8de371dcd08cb2ce"
     },
     {
+      "path": "tuldok-caption-dialog-ci-independent-review.json",
+      "bytes": 6759,
+      "sha256": "b63fbdc4bbd6b596d49cbb1d58fb0703905cfdc9d40a2ecf51018a1043ca4cc4"
+    },
+    {
       "path": "tuldok-caption-dialog-race-qualification-task.json",
       "bytes": 1563,
       "sha256": "a9b7b08d53c5e787efaaffe8f9b682706e25194ee14ba4fab1390ca4998b43de"
+    },
+    {
+      "path": "tuldok-caption-repair-pr-body.md",
+      "bytes": 1995,
+      "sha256": "f9ab679acba328043abb3e86748ccdeb271adcc3c1630a2110b7ab7de696e4fc"
+    },
+    {
+      "path": "tuldok-caption-repair-publication.json",
+      "bytes": 1608,
+      "sha256": "d2902baa1ce0b08cf47a54934f598a4a255f58d965d073164cd31f0a8276b131"
+    },
+    {
+      "path": "tuldok-captions-repair-root-actual-receipt-review.json",
+      "bytes": 3067,
+      "sha256": "9c6d60b4d0989063604367cb0b4352923575a5da6b8870fc1a4474907db9d686"
+    },
+    {
+      "path": "tuldok-checkpoint-a8b72d7-recovery-verification.json",
+      "bytes": 185,
+      "sha256": "cf0833671b2469d2664f6c2b4cf47314573742c24c4b867dde0ef3d7b28d0f32"
     },
     {
       "path": "tuldok-checkpoint-c37106e-recovery-verification.json",
@@ -1320,6 +1440,11 @@
       "path": "tuldok-open-stack-review-disposition.json",
       "bytes": 19675,
       "sha256": "d291033acdbba7335ab376cd5d56fa75fbdf64696504b598d220b509ec374b70"
+    },
+    {
+      "path": "tuldok-pending-108-111-112-activation.json",
+      "bytes": 3076,
+      "sha256": "04d202a12945bf7242fd57e86c1692b040596a14f20d2df9c81d0534b8ce7178"
     },
     {
       "path": "tuldok-pending-108-111-activation.json",
@@ -2292,6 +2417,11 @@
       "sha256": "a2c734792ed7deba6ad94c599ae85654b972bd97cbc9dbb95574168353ed75b9"
     },
     {
+      "path": "tuldok-pr108-0330-ci-readiness.json",
+      "bytes": 904,
+      "sha256": "337a716e9b5b1da7cf156ebba569f0483660a1db0663b741fb75826dd8947df7"
+    },
+    {
       "path": "tuldok-pr108-frozen-author-test-independent-review.json",
       "bytes": 9673,
       "sha256": "1b4bc66e00b6a8bd0048d1b63f11f3128c2812241905c35b8567792555940c9d"
@@ -2457,6 +2587,11 @@
       "sha256": "10f10c999e1326cfec63878f02373e439c8c3cc70657c526a9acedd21eddcd91"
     },
     {
+      "path": "tuldok-pr111-0330-ci-readiness.json",
+      "bytes": 2025,
+      "sha256": "1b5322f768c943684fcec51492f35c8c319b0c89b7585357358d642ad1a8778b"
+    },
+    {
       "path": "tuldok-pr111-composed-canonical-author-validation.log",
       "bytes": 3447,
       "sha256": "b0ee3155d8f92267cf3cb2301b6346c572ce99207d525e42d0c2b92835151821"
@@ -2505,6 +2640,11 @@
       "path": "tuldok-pr111-shared-hooks-independent-review.json",
       "bytes": 14281,
       "sha256": "24dcc2b94e7d758319b8d59f8d351118509597d1b0bc3f1722c12d0d337c2609"
+    },
+    {
+      "path": "tuldok-pr112-initial-ci-readiness.json",
+      "bytes": 498,
+      "sha256": "31c52763a09b69ae2f781f0c5417887978584d590af4294e6fcdde73a550d888"
     },
     {
       "path": "tuldok-pr89-combined-contract-registry.log",
@@ -2913,8 +3053,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 244396,
-      "sha256": "f98f514bfe06163779f08c854b9dcbcaa9190934f04d6ee9d2c228cdc53def9f"
+      "bytes": 244956,
+      "sha256": "87df83db250c4a87a101f0f89425cede7b8f238743f4d46d9a0a17f11c8c4e97"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",

@@ -1,0 +1,45 @@
+{
+  "base_commit": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "scope": "Test harness only; no product behavior, assertion relaxation, remote or inherited branch mutation",
+  "tested_before_commit_with_exact_file_hashes": {
+    "tests/browser_captions.cjs": "5cc3fd4b7e9dc299c8e9c22ad6d8f9100ddfa5b1c214e36f58e1b562d7349689",
+    "tests/browser_cdp_session.cjs": "ecfac048e343e0be85a02d22d284ea2c731617ec80807762a0691276f2bec40f",
+    "tests/test_browser_cdp_session.cjs": "1742a8b29c33b4ceb35ce76310df581cdb7e44b21aede4c1998526222e9eb7d2",
+    "tests/browser_owned_cleanup.cjs": "1cddb8bfe88999c89193b2c3f11f57ce842cb04e25dcdd99ba4f2f9ff28b3988",
+    "static/workbench.js": "167a48d39b0831ba814c31321f0f936d969e9b322c71b11a25a3f24ca9fe889b"
+  },
+  "actual_caption_entrypoint_includes_controlled_regression": true,
+  "command": "node tests/browser_captions.cjs",
+  "outcome": "passed",
+  "original_failure": {
+    "run": 39349523584,
+    "job": 118390149863,
+    "conclusion": "cancelled",
+    "decoded_log": "/tmp/tuldok-pr105-obsolete-duplicate-cancelled-job-118390149863.log",
+    "decoded_log_sha256": "abbea44875271000483136d48225c05bfe3be72352bcf608e69b6405f40f5dab",
+    "raw_response": "/tmp/tuldok-pr105-obsolete-duplicate-cancelled-job-118390149863-raw.json",
+    "raw_response_sha256": "0b57354b2329b8c74b5ca90b9b83df31d31d295be5df061c6723b99f74b6f3c3",
+    "late_modal_blocks_diagnostics": "Source-supported hypothesis; no original Page.javascriptDialogOpening trace was captured"
+  },
+  "controlled_regression": "Socket fixture:180ms opening defeats old100ms handling, then blocked diagnostic terminates in25ms; delayed three decisions and absent/wrong-dialog/request-lifecycle cases pass",
+  "environment": {
+    "postgres": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+    "python": "Python 3.12.14",
+    "node": "v24.19.0",
+    "browser": "Chrome/151.0.7922.173",
+    "mode": "headless, no-sandbox, disable-gpu; isolated browser profile; normal PostgreSQL/HTTP app via existing local controlled generation fixture"
+  },
+  "local_reservation_launcher": "Precreate only the reserved dataset_id through normal Metadata before tests/browser_server.py; all five records are generated, edited and reviewed by the unchanged browser journey. No handlers/data substitutions added.",
+  "limits": [
+    "Controlled CDP timing reproduction is not a trace of the original hosted scheduling.",
+    "Actual workflow uses the existing controlled generation provider, not a live external model.",
+    "No performance/model-quality/scientific/CUDA claim; original cancelled run remains cancelled.",
+    "No full heavy CPU suite rerun for a test-only caption harness change."
+  ],
+  "actual_browser_raw_log": {
+    "path": "/tmp/tuldok-caption-dialog-repair/actual-captions.log",
+    "bytes": 5967,
+    "sha256": "9ab368c6f9acd1c9d2efeb42199cf5f381171f1706c9572e63e7475d143a05b2",
+    "committed_log_projection": "Same lines; trailing whitespace removed from Chromium stderr for git diff --check. Raw bytes retained unchanged at the recorded path."
+  }
+}
