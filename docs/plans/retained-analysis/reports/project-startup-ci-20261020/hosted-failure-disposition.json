@@ -1,0 +1,27 @@
+{
+  "observed_utc": "2026-10-20T04:20:09.421507+00:00",
+  "head": "0ba4db01f04a77c262eb4b397f88849e9688b5ab",
+  "run": 39360310903,
+  "job": 118424712559,
+  "conclusion": "failure",
+  "failed_steps": [
+    {
+      "name": "Run node tests/browser_scientific_fields.cjs",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 44,
+      "started_at": "2026-10-20T04:15:40Z",
+      "completed_at": "2026-10-20T04:16:43Z"
+    }
+  ],
+  "successful_steps": 48,
+  "skipped_steps": 124,
+  "failure_location": "browser_scientific_fields.cjs openProject line59column77: firstdialog.open&&!submit.disabled wait",
+  "caption_race_equivalence": false,
+  "diagnosis": "Possible open-project control interactive before initializer handler ready; cause remains unproven until deterministic actual browser reproduction. Alternative dialog/roots availability still under independent examination.",
+  "decoded_log_sha256": "0c279bc15ca1488a9445b03763192fd6f4ab85c9c8ec1b8acb36d538a18b0e2b",
+  "source_author": "/root/pr111_ci_repair",
+  "independent_diagnosis_and_review": "/root/mcp_contract_ci_review",
+  "merge_clearance": false,
+  "other_pending_lifecycle_is_not_acceptance": true
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "catalog_a91651e7b01d45148d63ee0e3d87c82d",
+  "reserved_before_creation": true,
+  "app_stopped": true,
+  "counts": {
+    "workbench_records": 0,
+    "workspace_runs": 0
+  },
+  "removed_and_queried_absent": true
+}
