@@ -101,3 +101,36 @@ Qualification uses controlled monotonic clocks and fresh disposable PostgreSQL17
 real neutral process custody, queue capacity, catalog mutex/advisory waits,
 cancellation, publication fault/recovery, HTTP and CLI. Neutral fixtures make no
 training, CUDA, numerical producer or scientific claim.
+
+## Existing Pipeline and Runs views
+
+The existing Pipeline panel reads the selected saved external graph's latest
+actor/revision observation, including while real preflight is running before a
+Run exists. It shows the observed operation and nullable material digest and
+explicitly labels replacement by another same-actor tab. This projection never
+satisfies material approval or establishes successful preflight.
+
+The existing Runs detail displays a table per owner clock with phase, state,
+observed milliseconds, current observed wait and start/end offsets. UTC observation
+labels, omitted-span counts, incomplete prefixes, unknown historical granularity
+and unavailable reads remain explicit. Values are never extrapolated or summed;
+leader lifetime is a process interval, not an optimizer measurement. Recovery
+publication spans appear on the original Run without changing its saved outcome.
+
+Both read paths pin their complete selected contracts and validate closed shape,
+owner/phase, catalog/actor/selection, clock uniqueness and interval consistency.
+One sequential read per view has a ten-second client wait and bounded response;
+a refresh window performs at most30 reads over at most75 seconds, with a two-second
+delay between completed requests. A user can explicitly start another window.
+There is no mutation retry. Navigation, graph edits/selections and session changes
+abort the current client wait, clear timers and fence stale delivery. Authorization
+refusals stop automatic timing reads. Aborting a read cannot cancel admitted work.
+
+The UI admission includes the new static timing module and its single existing
+application static-file route, focused controller/pin tests, a neutral browser
+fixture and the existing CI workflow. No Python domain authority, operation
+schema, persisted clock or lifecycle transition changes in this UI slice. Browser
+qualification exercises actual preparation, capacity queue, a separate-thread
+catalog mutex wait, one explicit cancel/drain and an original publication fault
+followed by same-attempt recovery. It is neutral CPU process evidence; no model
+training, CUDA, optimizer or scientific performance claim is made.

@@ -55,6 +55,10 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v
       - name: Verify bounded owner phase timings with PostgreSQL
         run: python -m unittest discover -s tests -p 'test_run_phase_timings.py' -v
+      - name: Verify exact phase UI contracts and bounded delivery
+        run: |
+          python -m unittest discover -s tests -p 'test_workspace_phase_timings.py' -v
+          node tests/test_run_phase_controller.cjs
       - run: python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json
       - run: python -m venv build/workspace-training
       - run: build/workspace-training/bin/python -m pip install -r requirements.txt -r requirements-training.txt
@@ -293,6 +297,11 @@ jobs:
       - name: Verify real coordinator fault recovery and lost reply in Runs
         run: node tests/browser_workspace_coordinator.cjs
         env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Verify real live owner phase timing workflow
+        run: node tests/browser_run_phase_timings.cjs
+        env:
+          PYTHON: python
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_workspace_image_run.cjs
         env:

@@ -116,7 +116,12 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'candidates' ? 'studies.candidates' : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
     const publicationOperation=path[0]==='publication-results'?(path.length===1?'runs.publication_result':path[1]==='model-evidence'?'runs.publication_model_evidence':path[1]==='artifact-segment'?'runs.publication_artifact_chunk':null):path[0]==='runs'?({'publication':'runs.publication_status','recover-publication':'runs.recover_publication','cancel-publication':'runs.cancel_publication'})[path[2]]:null;
     const coordinatorOperation=path[0]==='coordinator'?(path.length===1?'runs.coordinator_health':path[1]==='recover'?'runs.recover_coordinator':null):null;
-    if(coordinatorOperation){
+    const phaseOperation=path[0]==='runs'&&path[2]==='phase-timings'?'runs.phase_timings':path[0]==='graphs'&&path[2]==='preparation-timings'?'graphs.preparation_timings':null;
+    if(phaseOperation){
+      const pin=window.WorkspacePhaseContracts?.[phaseOperation+'/1'];
+      if(selectedVersion!==1||!pin)throw Error('The exact timing operation contract is unavailable.');
+      headers['Tuldok-Operation-Contract']=phaseOperation+'/1/'+pin;
+    } else if(coordinatorOperation){
       const pin=window.WorkspaceCoordinatorContracts?.[coordinatorOperation+'/1'];
       if(selectedVersion!==1||!pin)throw Error('The exact coordinator operation contract is unavailable.');
       headers['Tuldok-Operation-Contract']=coordinatorOperation+'/1/'+pin;
@@ -139,7 +144,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       if (!sha) throw Error('This model operation has no supported local contract: ' + operation);
       headers['Tuldok-Operation-Contract'] = operation + '/' + version + '/' + sha;
     }
-    const controller=publicationOperation||coordinatorOperation?new AbortController():null;
+    const controller=publicationOperation||coordinatorOperation||phaseOperation?new AbortController():null;
     const deadline=controller?setTimeout(()=>controller.abort(),Math.min(75000,Math.max(1,timeout))):null;
     const abort=()=>controller?.abort();
     if(requestSignal?.aborted)abort();else requestSignal?.addEventListener('abort',abort,{once:true});
@@ -147,9 +152,9 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, {
       ...(body === undefined ? {} : {method: "POST", body: JSON.stringify(body)}), headers, ...(controller?{signal:controller.signal}:{}),
     });
-    if(publicationOperation||coordinatorOperation){
+    if(publicationOperation||coordinatorOperation||phaseOperation){
       const length=response.headers.get('Content-Length');
-      if(!/^\d+$/.test(length||'')||Number(length)>(coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
+      if(!/^\d+$/.test(length||'')||Number(length)>(phaseOperation?48*1024:coordinatorOperation?16*1024:16*1024**2))throw Error('Selected response has no supported bounded length.');
     }
     const value = await response.json();
     if (!response.ok) {
@@ -170,12 +175,14 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     const external = WorkspaceExternal({api,action,status,getGraph:()=>graph,getIntent:()=>loadGeneration,getRunId:()=>runId,isDirty:()=>dirty(),
       replaceGraph:document=>{if(!graphs.some(item=>item.id===document.id))graphs.push(document);adopt(document);},
       changeGraph:change,render:renderPipeline,refresh:loadPipeline,
-      onImported:openImportedRecord,
+      onImported:openImportedRecord,observePreparation:restart=>observePreparation(restart),
       onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     const model = WorkspaceModel({api, announce, openRecord, getIntent:()=>loadGeneration, getView:()=>view,
       openRun:result=>{run=result;runId=result.id;remember();if(view==='runs')loadRuns(runId);else openRun();}});
     const publication = window.WorkspacePublication({api,render:()=>{if(view==='runs')renderRuns();}});
     const coordinator = window.WorkspaceCoordinator({api,render:renderCoordinator});
+    const phases = window.WorkspacePhaseTimings({api,render:renderPhases});
+    const preparation = window.WorkspacePhaseTimings({api,render:renderPreparation});
     const fieldEvidence = window.WorkspaceFieldEvidence({api,announce});
     const candidatePackages = window.WorkspaceCandidatePackageEvidence({api});
     const lineage = window.WorkspaceExperimentLineage({api,announce,getIntent:()=>loadGeneration,getView:()=>view,getGraph:()=>graph,isDirty:()=>dirty(),
@@ -198,17 +205,19 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
     }
     function retainFocus(root, render) {
       const focused = root.contains(document.activeElement) ? document.activeElement.id : null;
+      const phaseScroll=Array.from(root.querySelectorAll('.phase-timing-table[id]')).map(node=>[node.id,node.scrollLeft]);
       render();
+      for(const [id,left] of phaseScroll){const node=root.querySelector('#'+CSS.escape(id));if(node)node.scrollLeft=left;}
       if (focused) root.querySelector("#" + CSS.escape(focused))?.focus({ preventScroll: true });
     }
     function adopt(document) {
-      graph = document; graphId = graph.id; saved = JSON.stringify(graph);
+      preparation.invalidate();graph = document; graphId = graph.id; saved = JSON.stringify(graph);
       graphs = graphs.map(item => item.id === graph.id ? copy(graph) : item);
       validation = null; external.invalidate(true); undo = []; redo = []; remember();
     }
     function change(fn, render = true) {
       undo.push(copy(graph)); if (undo.length > 40) undo.shift(); redo = [];
-      fn(); validation = null;
+      fn(); validation = null;preparation.invalidate();renderPreparation();
       if(external.isGraph(graph)){external.invalidate();if(render)renderPipeline();else external.dirtyChanged(pipelineRoot);return;}
       if (render) renderPipeline(); else {
         pipelineRoot.querySelector("#real-dirty").textContent = "Unsaved changes";
@@ -312,11 +321,18 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       return (release?.allowed_recipes || (release?.recipe ? [release.recipe] : [])).map(id =>
         `<option value="${esc(id)}">${esc(integrityKinds[id] ? "Validate and export · " + integrityKinds[id].unit : "Train and evaluate · " + sourceUnit(id))}</option>`).join("");
     }
+    function renderPhases(){const target=runsRoot.querySelector('#real-phase-root');if(target){retainFocus(target,()=>{target.innerHTML=phases.html();});phases.bind(target);}}
+    function renderPreparation(){const target=pipelineRoot.querySelector('#preparation-phase-root');if(target){retainFocus(target,()=>{target.innerHTML=preparation.html();});preparation.bind(target);}}
+    function observePreparation(restart=false){
+      if(!external.isGraph(graph)||dirty()||view!=='pipeline'){preparation.invalidate();return;}
+      const selected=graph,generation=loadGeneration;
+      preparation.select({kind:'preparation',id:graph.id,revision:graph.revision},()=>view==='pipeline'&&graph===selected&&!dirty()&&generation===loadGeneration,restart);
+    }
     function renderPipeline() {
       if (!definitions) return;
       if(external.isGraph(graph)){
         retainFocus(pipelineRoot, () => external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}}));
-        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}mountModel();return;
+        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}const phaseRoot=document.createElement('div');phaseRoot.id='preparation-phase-root';pipelineRoot.append(phaseRoot);observePreparation();renderPreparation();mountModel();return;
       }
       const integrity = integrityKind(graph);
       const title = {...titles, train: trainingTitle(graph), ...(integrity ? {validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"} : {})};
@@ -471,13 +487,14 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         if (!current()) return;
         await publication.load(detail,current);
         if (!current()) return;
+        if(detail)phases.select({kind:'run',id:detail.id},current);else phases.invalidate();
         const packageRead=candidatePackages.load(detail&&external.isGraph(detail.graph)?detail:null,current);
         runs = list; run = detail; runProgress = progress; runId = id || null; predictions = rows; predictionError = rowsError; remember(); renderRuns();
         packageRead.then(()=>{if(current())renderRuns();});
         coordinatorRead.then(()=>{if(current())renderCoordinator();});
       } catch (error) {
         if (!current()) return;
-        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();renderRuns();status(error.message,true);return;}
+        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();publication.invalidate();coordinator.invalidate();phases.invalidate();preparation.invalidate();renderRuns();status(error.message,true);return;}
         if (!quiet) {runsRoot.innerHTML = `<div id="real-coordinator-root">${coordinator.html()}</div><div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;coordinator.bind(runsRoot);coordinatorRead.then(()=>{if(current())renderCoordinator();});}
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));
@@ -500,7 +517,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         ${run.study_membership&&["failed","cancelled","interrupted"].includes(run.state)?'<p>This finite-study attempt has stopped. Prepare another exact trial in <a href="#pipeline">Pipeline</a> before starting new training.</p>':""}
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
         ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
-        ${externalRun ? external.runHTML(run,runProgress)+publication.html(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
+        <div id="real-phase-root">${phases.html()}</div>${externalRun ? external.runHTML(run,runProgress)+publication.html(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
         ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run):""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
         <div class="${externalRun?'':'run-columns'}">${!externalRun?`<section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section>`:`<details id="external-lifecycle-events" data-external-disclosure><summary>Run lifecycle events</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details>`}<section><h3>${run.artifact_status?.status==='receipt_verified'?'Recorded outputs; verified on download':'Verified artifacts'}</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">${run.artifact_status?.status==='receipt_verified'?'Output receipt verified. Payload bytes are checked individually when requested.':'Every artifact read verifies its frozen hash.'}</p></section></div>
@@ -542,7 +559,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         openRecord({ ...prediction, run_id: run.id, release_id: run.release_id });
       });
       const displayedRun=runId,displayedGeneration=runGeneration,credential=window.TuldokAuth?.identity()?.credential_id;
-      publication.bind(runsRoot);
+      publication.bind(runsRoot);phases.bind(runsRoot);
       fieldEvidence.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
       model.bind(runsRoot,run,runs,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
       candidatePackages.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id,id=>loadRuns(id));
@@ -569,10 +586,10 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
         const credential=window.TuldokAuth?.identity()?.credential_id,selected=await api('runs/'+encoded(id));
         if(!isCurrent()||credential!==window.TuldokAuth?.identity()?.credential_id)return false;
         if(selected.id!==id)throw Error('The admitted Run could not be identified.');
-        ++runGeneration;coordinator.invalidate();publication.invalidate();model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
+        ++runGeneration;coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
     }
     window.addEventListener('tuldok-session',()=>{
-      ++runGeneration;++loadGeneration;clearTimeout(timer);coordinator.invalidate();publication.invalidate();lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();model.sessionChanged();
+      ++runGeneration;++loadGeneration;clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();model.sessionChanged();
       if(view==='pipeline'){definitions=null;graph=null;graphs=[];releases=[];pipelineRoot.innerHTML='<p>Session changed. Refreshing current catalog…</p>';if(window.TuldokAuth?.identity())loadPipeline();}
       if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
     });
@@ -581,7 +598,7 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
       openGraph,openRunById,
       identity: () => context?.dataset_id,
       async show(next) {
-        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);coordinator.invalidate();publication.invalidate();lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();candidatePackages.invalidate();
+        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);coordinator.invalidate();publication.invalidate();phases.invalidate();preparation.invalidate();lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();candidatePackages.invalidate();
         if (next === "pipeline") {
           if (definitions && graph) renderPipeline(); else await loadPipeline();
         } else if (next === "runs") await loadRuns();

@@ -1146,3 +1146,9 @@ details > p {
 .project-live-activity h3{margin-top:0}
 .project-live-activity progress{display:block;width:100%;height:12px;margin:12px 0}
 .project-live-activity small{display:block;margin-top:12px;color:var(--muted)}
+
+.phase-timing-panel { min-width: 0; margin-block: 1rem; }
+.phase-timing-panel > section { min-width: 0; }
+.phase-timing-table { max-width: 100%; overflow-x: auto; }
+.phase-timing-table table { width: 100%; border-collapse: collapse; }
+.phase-timing-table th, .phase-timing-table td { padding: .45rem; text-align: left; vertical-align: top; border-bottom: 1px solid #b6bfcb; }

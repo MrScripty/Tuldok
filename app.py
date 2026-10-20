@@ -950,6 +950,7 @@ def make_handler(dataset, observer=None):
                     '/experiment-lineage.css': ('experiment-lineage.css', 'text/css'),
                     '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
+                    '/workspace-phase-timings.js': ('workspace-phase-timings.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),

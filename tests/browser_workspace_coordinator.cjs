@@ -35,7 +35,7 @@ function launch(command,args,options={}){const child=spawn(command,args,{cwd:roo
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');await send('Network.enable');await auth.browser(send,base);
   await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:path.join(temp,'downloads')});
   await send('Page.navigate',{url:base+'/workspaces#runs'});
-  await until(()=>evaluate('!!document.getElementById("dataset") && !document.getElementById("dataset").disabled'));
+  await until(()=>evaluate('!!document.getElementById("dataset") && !document.getElementById("dataset").disabled && typeof document.getElementById("dataset").onchange==="function"'));
   await evaluate('(()=>{const select=document.getElementById("dataset");select.value="catalog";select.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await until(()=>text('#coordinator-health').then(value=>value?.includes('generation 1')),'Real faulted coordinator health missing');
   assert.match(await text('#coordinator-health'),/faulted/);
