@@ -1,0 +1,10 @@
+{
+  "original_local_heads": 97,
+  "all_original_heads_exact": true,
+  "original_worktrees": 111,
+  "all_original_worktrees_present": true,
+  "only_added_local_heads": [
+    "refs/heads/feature/material-preflight-reports-20261020"
+  ],
+  "graph_checkpoint": "1442f1849c5894500d69823e60bfcd3d644dc683"
+}

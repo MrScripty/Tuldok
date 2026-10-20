@@ -1,0 +1,14 @@
+{
+  "started_utc": "2026-10-20T18:16:41.275819+00:00",
+  "completed_utc": "2026-10-20T18:17:02.334151+00:00",
+  "tests": 9,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "owned_schemas_removed": [
+    "catalog_d4774151cd4a4541b5cb7243b53bb68b",
+    "catalog_dbd310cf502344c19f0c0145ad97e420"
+  ],
+  "no_constructor_or_domain_substitution": "Testfixture setUp wrappers only record exact fresh schema after unchanged setup; no production constructor or result patched.",
+  "source_tree": "uncommitted isolated dependent branch from1442f184; exactsourcehashmanifest retained separately"
+}

@@ -338,6 +338,8 @@ model_operation('models.publish','POST','/api/workspace/models/{model_id}/publis
                 {'model_id':ID,'revision':SAFE_POS,'reconcile_capture':{'type':'boolean'}},['model_id','revision'],scopes=('inspect','edit'),mutation=True)
 model_operation('models.material','POST','/api/workspace/model-material',{'ref':MODEL_REF})
 model_operation('recipes.material','POST','/api/workspace/recipe-material',{'ref':MATERIAL_REF})
+model_operation('recipes.preflight_material','POST','/api/workspace/recipe-material/preflight',{'ref':MATERIAL_REF},
+    description='Revalidate exact retained external Study material without execution, grant or reservation; native builtin probes are unsupported.')
 model_operation('studies.trial','GET','/api/workspace/trials/{trial_id}',{'trial_id':ID})
 model_operation('studies.create','POST','/api/workspace/studies',{'name':text(120),'limits':BUDGET,'policy':SELECTION_POLICY},
                 scopes=('inspect','edit'),mutation=True)
@@ -925,6 +927,21 @@ _preflight_refusal_contract['outputSchema']['oneOf'][0]['properties']['result'][
 _preflight_refusal_contract['outputSchema']['oneOf'][1]['properties']['result']['properties']['preflight_report'] = PREFLIGHT_REPORT_V2
 _preflight_refusal_contract['description'] += ' Preserve typed preparation refusals with bounded request-only reports; unverified material identities remain null.'
 _CONTRACTS['graphs.preflight_external'][4] = _preflight_refusal_contract
+PREFLIGHT_REPORT_V3 = copy.deepcopy(PREFLIGHT_REPORT_V2)
+PREFLIGHT_REPORT_V3['properties'].update(
+    format=const('external_preflight_report_v3'),
+    graph_id={'oneOf': [ID, {'type': 'null'}]},
+    graph_revision={'oneOf': [integer(1), {'type': 'null'}]},
+    recipe_material_ref=MATERIAL_REF,
+    model_ref={'oneOf': [MODEL_REF, {'type': 'null'}]},
+    execution_material_sha256={'oneOf': [SHA, {'type': 'null'}]})
+PREFLIGHT_REPORT_V3['required'].extend(('recipe_material_ref','model_ref','execution_material_sha256'))
+_material_preflight_contract = _CONTRACTS['recipes.preflight_material'][1]
+_material_preflight_success = copy.deepcopy(_NEW_OUTPUTS['recipes.material'])
+_material_preflight_success['properties']['preflight_report'] = PREFLIGHT_REPORT_V3
+_material_preflight_success['required'].append('preflight_report')
+_material_preflight_contract['outputSchema']['oneOf'][0]['properties']['result'] = _material_preflight_success
+_material_preflight_contract['outputSchema']['oneOf'][1]['properties']['result']['properties']['preflight_report'] = PREFLIGHT_REPORT_V3
 # Managed Torch extends the recipe/runtime variants without rewriting the
 # independently deployed v2/v3 inspection contracts.
 _managed_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][3])
@@ -1290,7 +1307,8 @@ def validate_output(name, envelope, version=None):
                 or value['original_fault']['source_sha256'] != source['sha256']):
             raise AgentAPIError('Recovered publication result identity is inconsistent.', 'transport', 502)
     selected_version = max(_CONTRACTS[op['operation_id']]) if version is None else version
-    if (op['operation_id'] == 'graphs.preflight_external' and selected_version == 4
+    material_preflight = op['operation_id'] == 'recipes.preflight_material'
+    if ((op['operation_id'] == 'graphs.preflight_external' and selected_version == 4 or material_preflight)
             and 'preflight_report' in envelope['result']):
         report = envelope['result']['preflight_report']
         content = lambda value: hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
@@ -1327,6 +1345,11 @@ def validate_output(name, envelope, version=None):
                     or refusal['status'] in (401, 403) or refusal['code'] != envelope['result'].get('code')
                     or report['state'] != expected or report['material_sha256'] is not None
                     or report['execution_sha256'] is not None
+                    or material_preflight and (report['graph_id'] is not None or report['graph_revision'] is not None
+                        or report['model_ref'] is not None or report['execution_material_sha256'] is not None
+                        or report['recipe_material_ref']['catalog_id'] != report['catalog_id']
+                        or report['recipe_material_ref']['id'] != report['recipe_material_ref']['sha256']
+                        or failed != 'material_preparation')
                     or set(layout) != {row['code'] for row in report['checks']}
                     or any(row['state'] != (expected if row['code'] == failed else 'deferred')
                            or (row['owner'], row['phase'], row['boundary']) != layout.get(row['code'])
@@ -1336,6 +1359,37 @@ def validate_output(name, envelope, version=None):
         elif report['refusal'] is not None or report['state'] != 'prepared' or any(
                 row['state'] not in ('checked', 'deferred') for row in report['checks']):
             raise AgentAPIError('Prepared preflight report contradicts its outcome.', 'transport', 502)
+    if material_preflight and envelope['status'] < 400:
+        value=envelope['result'];report=value['preflight_report'];material=value['material'];ref=value['ref']
+        checks={row['code']:row for row in report['checks']}
+        layout={'source_inputs':('pipeline','preparation','checked'),
+                'runtime_inventory':('pipeline','preparation','checked'),
+                'host_closure':('pipeline','preparation','checked'),
+                'output_contract':('pipeline','preparation','checked'),
+                'capture_authority':('pipeline','preparation','checked'),
+                'authority_admission':('runs','admission','deferred'),
+                'resource_availability':('runs','admission','deferred'),
+                'runtime_ready_go':('runs','dispatch','deferred'),
+                'custody_completion':('runs','execution','deferred'),
+                'output_publication':('runs','publication','deferred')}
+        if (ref != report['recipe_material_ref'] or ref['id'] != ref['sha256']
+                or ref['sha256'] != content(material) or report['material_sha256'] != ref['sha256']
+                or report['catalog_id'] != ref['catalog_id'] or material['catalog_id'] != ref['catalog_id']
+                or report['model_ref'] != material['model'] or material['model']['catalog_id'] != ref['catalog_id']
+                or any(material[key]['catalog_id'] != ref['catalog_id'] for key in ('trainer','evaluation_profile','runtime'))
+                or material['trainer']['id'] not in ('external_recipe_v1','external_model_evidence_recipe_v1')
+                or material['data'] != [] or material['runtime']['id'] != material['runtime']['sha256']
+                or report['execution_material_sha256'] != material['executable_sha256']
+                or report['execution_sha256'] is None
+                or report['graph_id'] != material['recipe_id'] or report['graph_revision'] != material['recipe_revision']
+                or set(layout) != {row['code'] for row in report['checks']}
+                or any((row['owner'],row['phase'],row['state']) != layout[row['code']] for row in report['checks'])
+                or any(checks[code]['evidence_sha256'] != material['runtime']['sha256']
+                       for code in ('runtime_inventory','runtime_ready_go'))
+                or any(checks[code]['evidence_sha256'] != material['executable_sha256']
+                       for code in ('authority_admission','custody_completion'))
+                or checks['output_publication']['evidence_sha256'] != checks['output_contract']['evidence_sha256']):
+            raise AgentAPIError('Retained material preflight identity is inconsistent.', 'transport', 502)
     if (op['operation_id'] == 'graphs.preflight_external'
             and selected_version in (3, 4) and envelope['status'] < 400):
         result = envelope['result']; report = result['preflight_report']; material = result['material']
@@ -1582,7 +1636,7 @@ class AgentClient:
                 if (type(code) is not str or not re.fullmatch('[a-z][a-z0-9_]{0,79}', code)
                         or self._token in code):
                     raise AgentAPIError('Malformed HTTP error code.', 'transport', 502)
-                has_report = selection == ('graphs.preflight_external', 4) and 'preflight_report' in value
+                has_report = selection in (('graphs.preflight_external', 4), ('recipes.preflight_material', 1)) and 'preflight_report' in value
                 report = value['preflight_report'] if has_report else None
                 if has_report and self._token in json.dumps(report, ensure_ascii=False):
                     raise AgentAPIError('Preflight report contains credential material.', 'transport', 502)
@@ -1796,6 +1850,10 @@ class AgentClient:
             if (report['graph_id'] != arguments['graph_id'] or report['graph_revision'] != arguments['revision']
                     or report['catalog_id'] != self.catalog_id):
                 raise AgentAPIError('Preflight report does not match the requested graph or catalog.', 'transport', 502)
+        if op['operation_id'] == 'recipes.preflight_material' and 'preflight_report' in result['result']:
+            report=result['result']['preflight_report']
+            if report['recipe_material_ref'] != arguments['ref'] or report['catalog_id'] != self.catalog_id:
+                raise AgentAPIError('Preflight report does not match the requested material or catalog.', 'transport', 502)
         return result
 
 

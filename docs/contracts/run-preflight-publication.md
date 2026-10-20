@@ -42,8 +42,8 @@ observation when the selected recipe uses the large-output resource profile:
 The fixed-array capacity checks are described in
 [external recipes](external-recipes.md). Headers, variable diagnostics/context,
 actual output sizes and science remain later checks. A preparation refusal keeps
-its existing typed error and emits no successful report. Structured failure
-diagnostics and complete M1 preflight/publication recovery are not yet implemented.
+its existing typed error and emits no successful report. The selected refusal
+and retained-material extensions below do not complete all M1 acceptance.
 
 ### Selected v4 refusal reports
 
@@ -88,6 +88,61 @@ CLI `preflight` errors retain the validated report in stderr JSON with nonzero
 exit status; WorkflowClient preparation raises the same typed error carrying
 `preflight_report` and emits no submission manifest. Neither consumer retries.
 Current credential content in a received refusal report is rejected without echo.
+
+### Exact retained Study material preflight
+
+`recipes.preflight_material/1` is the inspect-only POST operation at
+`/api/workspace/recipe-material/preflight`, with closed input `{"ref": MATERIAL_REF}`.
+Use the exact `material` reference from `studies.trial`; the operation does not
+infer a Study, Trial membership, continuation state or budget from that reference.
+It exposes Pipeline's existing `recipes.preflight_material` owner action without
+changing `studies.prepare_trial` durable receipts or its replay behavior.
+
+The successful closed result extends `recipes.material`'s `{ref, material}` with
+`preflight_report: external_preflight_report_v3`. Pipeline verifies retained
+composition/Model/capture bytes, revalidates the stored external graph against
+current source/input/runtime/host state, then rechecks current retained disclosure
+before delivery. It uses the retained recipe ID/revision, even after the editable
+graph advances. It neither imports authored code nor launches a child. Builtin
+materials return typed `unsupported` before native preparation/probing; the
+existing internal Study approval/capture path retains its original behavior.
+
+V3 extends the same bounded report family and preserves these distinct identities:
+
+| Field | Meaning |
+| --- | --- |
+| `recipe_material_ref`, `material_sha256` | Exact outer composition reference and canonical hash of returned `material`. |
+| `model_ref` | The verified Model reference in that composition. |
+| `execution_material_sha256` | Inner prepared-material digest, equal to returned `material.executable_sha256`. |
+| `execution_sha256` | Graph execution digest, retaining the graph report meaning. |
+| `graph_id`, `graph_revision` | Stored graph in the retained recipe snapshot. |
+
+The ten success checks reuse the actual inner preparation proofs. Their hashes
+are not recomputed from the outer capture-blob list: that inventory has a different
+representation. Runtime evidence is correlated with the returned runtime digest;
+admission/custody evidence binds the inner material digest. Source, host, output
+and graph-execution details remain owner-attested provenance in this bounded
+projection. A client cannot independently reconstruct the graph execution digest
+from `{ref, material}`. Report hashing establishes content consistency, not a
+new scientific proof. No storage-capacity observation is added here; resource
+availability, authority, READY/GO, custody and publication remain deferred.
+
+Classified refusals preserve their typed code/status and eleven-row request-only
+layout. Only `recipe_material_ref` and its catalog are established: graph identity,
+Model, outer/inner material and execution digests are null, including after partial
+verification. No checked proof survives a refused preparation. Malformed/foreign
+references, authentication/disclosure failures, missing records and unclassified
+errors remain bare typed errors. No extra investigation decorates a refusal.
+
+AgentClient selects this additive contract, validates its closed bounds and hash,
+correlates the exact requested Ref/catalog and all locally available composition
+links, and rejects malformed/null reports or current credential contents in
+refusal reports.
+The generic CLI `call` retains validated refusal reports in stderr JSON and exits
+nonzero. Neither transport retries. Existing `recipes.material` remains a cold
+inspection operation; source drift can block fresh preflight while retained
+inspection and old Trial receipt replay still succeed. No admission grant,
+reservation, process, publication or scientific acceptance follows from this read.
 
 The success-only/early pending statements above describe the retained v3 slice.
 Publication/indexed-diagnostic implementation below has its own qualification;

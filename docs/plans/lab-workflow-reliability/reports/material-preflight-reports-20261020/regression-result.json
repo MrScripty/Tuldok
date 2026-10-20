@@ -1,0 +1,20 @@
+{
+  "started_utc": "2026-10-20T18:09:14.114818+00:00",
+  "completed_utc": "2026-10-20T18:13:20.758064+00:00",
+  "tests": 75,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "owned_schemas_removed": [
+    "catalog_1937048d1ac54ee8b748380c19a9fb16",
+    "catalog_4c40d8d1c09a45fab9fea7f0def45479",
+    "catalog_57796e8fbbc042a0b4f5a8144d5d3c53",
+    "catalog_6bea37acaf5c4744aea607d2322ed54e",
+    "catalog_8240f4833fef4881883718fac883e839",
+    "catalog_96a28c51b1a44e57b0c2201fa17d3b39",
+    "catalog_d491e85396da430cadc57c6faf285117",
+    "catalog_f36b38b44a804167a349f2a8e4bbc1a6"
+  ],
+  "no_constructor_or_domain_substitution": "Testfixture setUp wrappers only record exact fresh schema after unchanged setup; no production constructor or result patched.",
+  "source_tree": "uncommitted isolated dependent branch from1442f184; exactsourcehashmanifest retained separately"
+}

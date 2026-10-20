@@ -1,5 +1,39 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-20 — Local retained Study material preflight reports
+
+The next authorized C1 slice exposes the already named Pipeline
+`recipes.preflight_material` action as an additive inspect-only public operation.
+The dependent local branch `feature/material-preflight-reports-20261020` starts
+at graph checkpoint `1442f1849c5894500d69823e60bfcd3d644dc683`; that branch,
+all earlier evidence and unrelated README/local-agent work remain preserved.
+This is the concrete retained-material gap in C1's existing acceptance contract,
+not a new scientific criterion or a replacement material/schema authority.
+
+External material preflight reuses current retained-byte verification and live
+preparation, with a final current disclosure check. The bounded v3 report binds
+outer composition, Model and separately named inner material/graph execution
+digests. Refusals reuse the existing typed request-only report with unknown graph,
+Model and material/execution proofs. Builtin native probing is unsupported before
+preparation in this read path. Internal Study approval/capture, cold inspection
+and exact Trial receipts/replay retain their existing behavior.
+
+The direct write set is `pipeline.py`, `agent_api.py`, `app.py`, one focused test
+module, three canonical contract documents and this plan's acceptance evidence.
+Existing Coding Standards implementation/verification/contract guidance applies.
+All 127 preceding contract hashes and the full legacy projection remain exact.
+The source-frozen regression suite passed 75 tests with zero skips, failures or
+errors. A separate final focused run covers the strengthened isolated adversarial
+fixtures, live CLI refusal, headerless refusal and six-table inertness check;
+its exact source/result and independent disposition are retained in the
+[scoped acceptance report](reports/material-preflight-reports-20261020/acceptance.md).
+
+This slice does not close all C1/T1/M1 or add owned scientific acceptance. Native
+builtin read preflight remains explicitly unsupported, and dynamic admission,
+storage/device availability, custody and publication remain deferred. PUB-1 and
+SCI-1 still require the actual privately owned failure/scientific inputs. No
+publication, merge, branch deletion or authentication change is selected.
+
 ## 2026-10-20 — Local graph preflight refusal reporting
 
 The user selected continuation of this canonical plan's C1/T1 structured-refusal

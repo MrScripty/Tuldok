@@ -146,6 +146,14 @@ GPU use or remote execution.
 `python project_cli.py --config PRIVATE_CONFIG call --operation models.get --arguments model.json`
 uses the same installed registry, exact capability selection and bounded JSON
 argument reader. For example, `model.json` contains `{"model_id":"OPAQUE_ID"}`.
+For a fresh, inert external retained-material check, write
+`{"ref":RETAINED_MATERIAL_REF}` from `studies.trial.material` to a regular JSON
+file and call `--operation recipes.preflight_material --arguments FILE` through
+the existing `call` command. It returns the selected v3 bounded report or retains
+the validated typed refusal report in stderr JSON with a nonzero exit status.
+Builtin native probes are unsupported; no execution or Study reservation occurs.
+See the [exact material contract](run-preflight-publication.md#exact-retained-study-material-preflight).
+
 `recipes.material` accepts `{"ref":RETAINED_MATERIAL_REF}` and `studies.get`
 accepts `{"study_id":"OPAQUE_ID"}`. All print the same domain result available
 through selected HTTP and structured MCP. No project code executes on inspection.

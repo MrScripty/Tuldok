@@ -91,7 +91,7 @@ def _external_preflight_report(graph, prepared, *, storage=None, version=1):
     return dict(report, sha256=digest(report))
 
 
-def _external_preflight_refusal(catalog_id, graph_id, revision, error, *, storage=False):
+def _external_preflight_refusal(catalog_id, graph_id, revision, error, *, storage=False, material_ref=None):
     """Request provenance only: a refused preparation establishes no material proof."""
     states = {'invalid': 'invalid', 'unsupported': 'unsupported', 'unavailable': 'blocked',
               'stale': 'blocked', 'conflict': 'blocked', 'too_large': 'blocked', 'storage': 'blocked'}
@@ -102,6 +102,9 @@ def _external_preflight_refusal(catalog_id, graph_id, revision, error, *, storag
               'catalog_id': catalog_id, 'graph_id': graph_id, 'graph_revision': revision,
               'execution_sha256': None, 'material_sha256': None,
               'refusal': {'code': error.code, 'status': error.status}}
+    if material_ref is not None:
+        report.update(format='external_preflight_report_v3', recipe_material_ref=copy.deepcopy(material_ref),
+                      model_ref=None, execution_material_sha256=None)
     evidence = digest(report)
     report['checks'] = [{'code': 'storage_capacity' if storage else 'material_preparation',
         'owner': 'runs' if storage else 'pipeline', 'phase': 'preparation', 'state': state,
@@ -123,6 +126,16 @@ def _external_preflight_refusal(catalog_id, graph_id, revision, error, *, storag
             'evidence_sha256': evidence, 'boundary': boundary,
             'detail': 'Unknown in this refused preparation; no checked material, execution, device or scientific acceptance is claimed.'})
     return dict(report, sha256=digest(report))
+
+
+def _recipe_material_preflight_report(value, graph, prepared):
+    """Keep inner preparation proofs; bind their exact retained outer composition."""
+    report = _external_preflight_report(graph, prepared, version=2)
+    report.update(format='external_preflight_report_v3', recipe_material_ref=copy.deepcopy(value['ref']),
+                  model_ref=copy.deepcopy(value['material']['model']), material_sha256=value['ref']['sha256'],
+                  execution_material_sha256=prepared['material_sha256'])
+    report['sha256'] = digest({key: item for key, item in report.items() if key != 'sha256'})
+    return report
 
 
 def identifier(value, label='Identifier'):
@@ -1233,10 +1246,12 @@ class Pipelines:
             raise WorkbenchError('Retained extension profile/context differs.','unavailable',409)
         return (static,recipe_contract.captured_inputs(execution,captured)) if with_captured_inputs else static
 
-    def _prepare_recipe_material(self, ref):
+    def _prepare_recipe_material(self, ref, *, _verified=None):
         """Revalidate source/runtime against retained bytes, never the current graph."""
         from model_definitions import read_owned_blob,retained_json
-        value=self.recipe_material(ref,verify=True);material=value['material']
+        value=self.recipe_material(ref,verify=True) if _verified is None else _verified
+        if value['ref'] != ref:raise WorkbenchError('Verified material reference differs.','unavailable',409)
+        material=value['material']
         if material['trainer']['id'] in BUILTIN_TRAINERS:return self._prepare_builtin_recipe_material(value)
         raw=read_owned_blob(self.material_path,ref['sha256'],material['recipe_document'],2*1024**2)
         snapshot=retained_json(raw.decode(),2*1024**2)
@@ -1269,7 +1284,23 @@ class Pipelines:
         return preflight,retained,graph
 
     @authorized('inspect', 'recipes.preflight_material')
-    def preflight_recipe_material(self, ref):
+    def preflight_recipe_material(self, ref, *, report=False):
+        if report:
+            from model_definitions import reference
+            ref=reference(ref,'recipe_material',self.db.dataset_id)
+            try:
+                value=self.recipe_material(ref,verify=True)
+                if value['material']['trainer']['id'] in BUILTIN_TRAINERS:
+                    raise WorkbenchError('Read-only preflight does not support native builtin probes.','unsupported',409)
+                preflight,_retained,graph=self._prepare_recipe_material(ref,_verified=value)
+                # Reauthorize retained disclosure after potentially lengthy current-state checks.
+                current=self.recipe_material(ref,verify=True)
+                if current != value:raise WorkbenchError('Retained material changed during preflight.','stale',409)
+                return dict(value,preflight_report=_recipe_material_preflight_report(value,graph,preflight))
+            except WorkbenchError as error:
+                projection=_external_preflight_refusal(self.db.dataset_id,None,None,error,material_ref=ref)
+                if projection is not None:error.preflight_report=projection
+                raise
         prepared=self._prepare_recipe_material(ref)
         if type(prepared) is dict:return prepared
         preflight,_retained,graph=prepared

@@ -69,6 +69,14 @@ and configured catalog. Its `prepared`/`not_reserved` state leaves admission,
 device READY/GO, actual output validation and publication explicitly deferred.
 No execution authority, retry or new client dependency is introduced.
 
+`recipes.preflight_material/1` adds an inspect-only exact retained external
+Study-material read at `/api/workspace/recipe-material/preflight` with
+`{"ref": MATERIAL_REF}`. Its closed success result adds the same versioned
+[bounded report family](run-preflight-publication.md#exact-retained-study-material-preflight)
+to the existing material projection; typed refusals carry request-only provenance.
+Builtin native probes are unsupported. Existing cold material reads, Trial receipts
+and all prior contract identities remain unchanged.
+
 Selected `graphs.preflight_external/4` retains those versions and adds the
 [versioned refusal projection](run-preflight-publication.md#selected-v4-refusal-reports)
 to classified preparation errors. It preserves the original HTTP/code outcome;
