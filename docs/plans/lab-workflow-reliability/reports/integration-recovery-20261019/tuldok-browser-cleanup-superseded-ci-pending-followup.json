@@ -1,0 +1,38 @@
+{
+  "observed_utc": "2026-10-20T00:48:21.215152+00:00",
+  "scope": "One root read-only follow-up of only five acknowledged cancellation requests previously pending; no repeated cancellation or current-head lookup",
+  "runs": [
+    {
+      "run": 39343581605,
+      "head": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "run": 39343581513,
+      "head": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "run": 39343582569,
+      "head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "run": 39343581966,
+      "head": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "run": 39343581470,
+      "head": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "status": "completed",
+      "conclusion": "cancelled"
+    }
+  ],
+  "pending": [],
+  "uncertain_write": false
+}

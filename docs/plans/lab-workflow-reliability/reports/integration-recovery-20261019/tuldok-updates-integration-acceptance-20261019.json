@@ -4047,15 +4047,12 @@
     "superseded_ci": {
       "requests_accepted": 18,
       "independently_terminal_cancelled": 13,
-      "pending_ids": [
-        39343581605,
-        39343581513,
-        39343582569,
-        39343581966,
-        39343581470
-      ],
+      "pending_ids": [],
       "receipt": "/tmp/tuldok-browser-cleanup-superseded-ci-terminal-independent.json",
-      "no_current_head_or_main_jobs_cancelled": true
+      "no_current_head_or_main_jobs_cancelled": true,
+      "all_18_terminal_cancelled": true,
+      "final_root_followup": "/tmp/tuldok-browser-cleanup-superseded-ci-pending-followup.json",
+      "note": "Independent13 terminal plus root exact5followup terminal; no repeat cancellations."
     }
   },
   "retained_analysis_integrated": {

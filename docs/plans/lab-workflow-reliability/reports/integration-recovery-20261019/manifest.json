@@ -172,6 +172,11 @@
       "sha256": "033e6dcf1845e720590a463febf198cc0cbe46e6f233749e5bbffb7b377d15c0"
     },
     {
+      "path": "tuldok-browser-cleanup-superseded-ci-pending-followup.json",
+      "bytes": 1067,
+      "sha256": "01ec7a408479077fc69c70b3bc7d63032c7190d8bfc54ef8f3419fbfad46f6db"
+    },
+    {
       "path": "tuldok-browser-cleanup-superseded-ci-terminal-independent-raw.json",
       "bytes": 507568,
       "sha256": "bbb078b735e798cdfbf41940b5b24bb746ca16297891551e98a4dd20129b112d"
@@ -1383,8 +1388,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 212938,
-      "sha256": "0dd0bb8706ece4d9c247a51f9111c9ae66c3762877fecff7c31c302125a6aa0e"
+      "bytes": 213064,
+      "sha256": "6df00a3a076bd2d2531521de82ae31a37f20a7e073ec36922a379005bd8d6812"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",
