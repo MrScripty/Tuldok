@@ -1,0 +1,43 @@
+{
+  "format": "independent_interrupted_restore_reproduction_v1",
+  "source": {
+    "commit": "d02f034aa1bba6cd55dfd47ae44ebcb7014200a5",
+    "tree": "68f147908523a65ce495f47392eada87273cbfaf",
+    "test_sha256": "50ac2975b216052dc0d07248db9f21a8618f9cf096b22214c2c9a317c302d199",
+    "python": "3.12.14",
+    "psycopg": "3.3.6"
+  },
+  "tests_run": 1,
+  "successful": true,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "unittest_runner_seconds": 17.012795835998986,
+  "resources_before": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ],
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)"
+  },
+  "resources_after": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ],
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)"
+  },
+  "source_unchanged": true,
+  "log_sha256": "34169a1efd6154fe6f00c8ccb016b48c0e9a6097b8ecdbec54776f00a40d1cce",
+  "domain_sha256": "9b3f56f9fcfaee6c8934f1daa9abb7166b7b5c2c727019081a11b5037e9caf85",
+  "independent_exact_cleanup_query": {
+    "source_schema_absent": true,
+    "restored_database_absent": true
+  }
+}

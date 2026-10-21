@@ -17,9 +17,10 @@ from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
 import agent_api
+import backup_metadata as transfer
 from app import Dataset, make_handler
 from backup_metadata import (backup_catalog, read_catalog, read_sequences,
-                             restore_catalog, summaries, tree_manifest)
+                             restore_catalog, summaries, tree_manifest, tree_modes)
 from metadata import Metadata, connection_info
 from tuldok_client import WorkflowClient
 from workbench import WorkbenchError
@@ -95,6 +96,7 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):
 
         source.close()
         original_tree = tree_manifest(source.path)
+        original_modes = tree_modes(source.path, original_tree)
         journal_path = source.path/'workspace-runs'/'.coordinator-v1.json'
         journal_bytes = journal_path.read_bytes()
         journal = json.loads(journal_bytes)
@@ -102,6 +104,11 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):
         self.assertEqual(journal['request']['completed_generation'], 2)
         metadata = Metadata(source.path, dsn=original_dsn, create=False)
         try:
+            # Retain a nontrivial sequence high-water mark even with no live job
+            # row. This authored fixture state must survive every restore retry.
+            sequence = read_sequences(metadata)['generation_jobs']
+            metadata.connection.execute('SELECT setval(pg_get_serial_sequence(%s,%s),%s,true)',
+                ('generation_jobs', 'ordinal', sequence['last_value'] + 19))
             original_tables, original_sequences = read_catalog(metadata), read_sequences(metadata)
             original_version = metadata.schema_version
         finally:
@@ -109,6 +116,7 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):
         backup = fixture.path/'stopped-integrated-backup'
         receipt = backup_catalog(source.path, backup, dsn=original_dsn, quiesced=True)
         backup_tree = tree_manifest(backup)
+        self.assertEqual(tree_modes(backup/'catalog', original_tree), original_modes)
         self.assertEqual(receipt['files'], original_tree)
         self.assertEqual(receipt['tables'], summaries(original_tables))
 
@@ -128,9 +136,98 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):
         self.addCleanup(drop_restored_database)
 
         restored_path = fixture.path/'restored-integrated-catalog'
+        staging = restored_path.with_name(restored_path.name+'.restore-'+receipt['dataset_id'])
+        marker_name = '.restore-receipt-'+digest(receipt)+'.json'
+        interruptions = []
+
+        class AuthoredRestoreInterruption(OSError):
+            pass
+
+        def unchanged_originals():
+            self.assertEqual(tree_manifest(source.path), original_tree)
+            self.assertEqual(tree_modes(source.path, original_tree), original_modes)
+            self.assertEqual(tree_manifest(backup), backup_tree)
+            self.assertEqual(tree_modes(backup/'catalog', original_tree), original_modes)
+            original = Metadata(source.path, dsn=original_dsn, create=False)
+            try:
+                self.assertEqual(read_catalog(original), original_tables)
+                self.assertEqual(read_sequences(original), original_sequences)
+            finally:
+                original.close()
+
+        def checkpoint(seam, expected_tables, expected_sequences, *, published=False):
+            self.assertEqual(restored_path.exists(), published)
+            self.assertEqual(staging.exists(), not published)
+            path = restored_path if published else staging
+            self.assertEqual(json.loads((path/marker_name).read_bytes()), {
+                'kind': 'postgresql-restore', 'backup_sha256': digest(receipt),
+                'dataset_id': receipt['dataset_id']})
+            held = Metadata(path, dsn=restored_dsn, create=False)
+            try:
+                tables, sequences = read_catalog(held), read_sequences(held)
+                self.assertEqual(tables, expected_tables)
+                self.assertEqual(sequences, expected_sequences)
+            finally:
+                held.close()
+            unchanged_originals()
+            tree = tree_manifest(path, (marker_name,))
+            interruptions.append({'seam': seam, 'destination_published': published,
+                'table_sha256': digest(tables), 'sequence_sha256': digest(sequences),
+                'tree_sha256': digest(tree), 'source_and_backup_unchanged': True})
+            return tree
+
         with patch('recipe_process.launch', side_effect=AssertionError('Transfer/read replayed compute')) as launch:
+            # Real PostgreSQL inserts occur before the authored exception. The
+            # catalog transaction rolls back; its private staging identity stays
+            # resumable and no final destination has been published.
+            empty = {}
+            populate = transfer.populate_catalog
+
+            def interrupt_population(metadata, tables):
+                empty['tables'], empty['sequences'] = read_catalog(metadata), read_sequences(metadata)
+                populate(metadata, tables)
+                self.assertEqual(read_catalog(metadata), original_tables)
+                raise AuthoredRestoreInterruption('after real population, before commit')
+
+            with patch.object(transfer, 'populate_catalog', side_effect=interrupt_population):
+                with self.assertRaisesRegex(AuthoredRestoreInterruption, 'before commit'):
+                    restore_catalog(backup, restored_path, dsn=restored_dsn)
+            self.assertFalse(any(table['count'] for table in empty['tables'].values()))
+            checkpoint('metadata_transaction_rollback', empty['tables'], empty['sequences'])
+
+            # Interrupt after one exact journal file has actually been copied
+            # and renamed, while later Run artifacts are still absent. Metadata
+            # has committed; the public destination must still be absent.
+            rename = transfer.os.rename
+            journal_target = staging/'workspace-runs'/'.coordinator-v1.json'
+
+            def interrupt_copy(src, dst):
+                rename(src, dst)
+                if Path(dst) == journal_target:
+                    raise AuthoredRestoreInterruption('after journal file copy')
+
+            with patch.object(transfer.os, 'rename', side_effect=interrupt_copy):
+                with self.assertRaisesRegex(AuthoredRestoreInterruption, 'journal file copy'):
+                    restore_catalog(backup, restored_path, dsn=restored_dsn)
+            partial = checkpoint('committed_metadata_partial_files', original_tables, original_sequences)
+            self.assertEqual(journal_target.read_bytes(), journal_bytes)
+            self.assertLess(set(partial), set(original_tree))
+            self.assertTrue(all(original_tree[name] == entry for name, entry in partial.items()))
+
+            # A lost reply after the real final rename leaves a complete result.
+            # Retrying must reconcile that result instead of overwriting it.
+            def lose_rename_reply(src, dst):
+                rename(src, dst)
+                if Path(dst) == restored_path:
+                    raise AuthoredRestoreInterruption('after destination rename')
+
+            with patch.object(transfer.os, 'rename', side_effect=lose_rename_reply):
+                with self.assertRaisesRegex(AuthoredRestoreInterruption, 'destination rename'):
+                    restore_catalog(backup, restored_path, dsn=restored_dsn)
+            self.assertEqual(checkpoint('published_destination_lost_reply', original_tables,
+                                       original_sequences, published=True), original_tree)
+            self.assertEqual(tree_modes(restored_path, original_tree), original_modes)
             marker = restore_catalog(backup, restored_path, dsn=restored_dsn)
-            marker_name = '.restore-receipt-'+digest(receipt)+'.json'
             self.assertEqual(marker['dataset_id'], source.db.dataset_id)
             self.assertEqual(tree_manifest(restored_path, (marker_name,)), original_tree)
             self.assertEqual((restored_path/'workspace-runs'/'.coordinator-v1.json').read_bytes(), journal_bytes)
@@ -224,18 +321,11 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):
             launch.assert_not_called()
             restored.close()
 
-        self.assertEqual(tree_manifest(source.path), original_tree)
-        self.assertEqual(tree_manifest(backup), backup_tree)
-        original = Metadata(source.path, dsn=original_dsn, create=False)
-        try:
-            self.assertEqual(read_catalog(original), original_tables)
-            self.assertEqual(read_sequences(original), original_sequences)
-        finally:
-            original.close()
+        unchanged_originals()
         drop_restored_database()
         drop_source()
         if report_path := os.environ.get('TULDOK_RETENTION_ACCEPTANCE_REPORT'):
-            report = {'format': 'integrated_retention_restore_acceptance_v1',
+            report = {'format': 'integrated_retention_restore_acceptance_v2',
                 'scope': 'Real neutral custody, PostgreSQL stopped transfer and current HTTP/SDK/CLI; no science or performance claim',
                 'schema_version': original_version, 'catalog_id': ref['catalog_id'], 'run_id': run['id'],
                 'result_ref': ref, 'table_summaries': summaries(original_tables),
@@ -245,6 +335,9 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):
                 'stored_span_states': sorted({span['state'] for span in stored_spans}),
                 'artifact_sha256': hashlib.sha256(fixture.input).hexdigest(), 'artifact_bytes': len(fixture.input),
                 'raw_transfer_equal': True, 'source_and_backup_unchanged': True,
+                'restore_interruptions': interruptions, 'raw_permissions_equal': True,
+                'authored_sequence_fixture': {'table': 'generation_jobs', 'before': sequence,
+                    'retained': original_sequences['generation_jobs']},
                 'cold_reads_and_collection_preserve_all_tables_and_sequences': True,
                 'compute_replay_calls': launch.call_count, 'cleanup': cleanup}
             with Path(report_path).open('x') as stream:

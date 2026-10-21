@@ -1,0 +1,34 @@
+{
+  "format": "independent_interrupted_restore_source_review_v1",
+  "status": "preliminary_source_review_strengthening_agreed_pending_updated_head",
+  "reviewed_commit": "0bbc6a7c4cd58dc0451d6ba6c0983193763e1f91",
+  "reviewed_tree": "b2e7b8196a52b283fc79c93ff7fcdfdf00201f5a",
+  "baseline": "8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e",
+  "scope": "Read-only independent source review; no tests, PG queries, benchmarks or network writes performed by reviewer.",
+  "blocking_production_findings": [],
+  "requested_strengthening": [
+    {
+      "file": "tests/test_integrated_retention_restore.py",
+      "at": "unchanged_originals() and post-cold-read boundary",
+      "issue": "Backup content equality is asserted at each checkpoint but backup/catalog mode equality is only checked once before restore. Final repeated source/backup comparison also omits source modes.",
+      "recommendation": "Assert backup/catalog tree_modes equals original_modes in unchanged_originals(); use unchanged_originals() at the final post-cold-read boundary.",
+      "root_response": "Agreed; preserve running original subject, update after termination, then independent reproduction at final exact subject."
+    }
+  ],
+  "reviewed_invariants": [
+    "After real raw catalog population, authored exception leaves private staging and triggers SQL transaction rollback before final destination publication.",
+    "Partial-copy injection first performs the actual journal-file rename; strict subset tree and per-entry original equality prove an incomplete copied inventory.",
+    "Lost-return injection first performs the actual final destination rename; later exact marker, raw table/sequence/tree/mode comparison and idempotent restore check the published result.",
+    "Cold app activation may advance operational generation while immutable completed acknowledgement, original interrupted Run/events, exact attached result Ref, retained measured/incomplete timing records and current public SDK/CLI reads stay bound.",
+    "The independent raw source/backup tables, sequence states, bytes and mode snapshots are expected state; restored state is not accepted through a manufactured domain completion.",
+    "All source and destination resources have exact fixture identity and bounded cleanup callbacks; stopped server/app handles precede dropping the owned restored database.",
+    "No new old-version witness, migration framework, production/schema/README/workflow change, cache, science proof or whole-workflow speed claim."
+  ],
+  "limits": [
+    "Only a controlled Python exception after final rename is exercised; no host crash, kill, power loss or storage-device durability result is claimed.",
+    "The partial copy is a proper subset of complete verified files, not a torn file payload.",
+    "The generation_jobs high-water mark is explicitly authored administrative fixture state; it is not workload/performance evidence.",
+    "The fixture has no populated job-order rows; raw sequence equality does not establish transaction rollback semantics for arbitrary nonempty sequences.",
+    "PUB-1/SCI-1 missing real lab inputs remain absent; no full T8/M2/M3/M5 acceptance is established by this witness."
+  ]
+}

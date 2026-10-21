@@ -1,5 +1,31 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-21 — Current-version interrupted restore admission
+
+PR115 and PR116 are merged; main is
+`8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e`. All four applicable PR116 workflows
+passed at exact `9d699cc154e9dde89fe26df16ad57c421e68d734`, with independent
+source/policy review. Main's automatic push workflows are monitored separately;
+no expired CLI credential or denied raw log is retried.
+
+The lead admits only the existing T8 interruption gap on the same combined
+current-version fixture, with three real restore seams and raw independent
+state comparisons. The original clean witness and all measurements stay sealed
+at their original subjects. No benchmark, old-version witness, production cache,
+automatic migration, training or scientific claim is added. PUB-1 and SCI-1
+retain their genuine missing-input boundaries.
+
+The initial source `0bbc6a7` passed one focused test in 17.614621813 seconds.
+Independent review requested stronger backup permission/final-boundary checks,
+then cleared the strengthened source `d02f034` and independently passed one test
+in 17.012795836 seconds. Both runs had zero failures, errors or skips. Raw state
+across 43 tables, sequences, files and modes, three controlled restore
+interruptions, exact SDK/CLI result collection and zero replay passed. Exact
+owned-schema/database cleanup was independently queried; the task PostgreSQL
+container is stopped. See `reports/integrated-interrupted-restore-20261021/`.
+Current published-head hosted checks remain a merge gate; no full T8, performance
+or lab acceptance is inferred.
+
 ## 2026-10-20 — User removes backward-compatibility requirement
 
 The user explicitly states that existing projects must perform their own one-time
