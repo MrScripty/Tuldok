@@ -1,0 +1,70 @@
+{
+  "format": "study_recovered_result_transfer_evidence_manifest_v1",
+  "baseline_main": "8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e",
+  "qualified_source": {
+    "commit": "55fe1c6e6c214f71b00d00ea3cdd80030a6751da",
+    "tree": "96672fb93f5b2bf3f8ca6e8cbf1e537d2fa4da68",
+    "parents": [
+      "79fcbe6a84ca4d22b9a3d1039fa16d7f237fe6a4",
+      "a28034e06772d337200f4529e3545bf96bdc524c"
+    ],
+    "status": "",
+    "test_sha256": "e08eb764056b209aead37b6491cbced9f9adb9cea7813ec05ccc4ea3c147c8f3"
+  },
+  "inherited_interruption_source": "a28034e06772d337200f4529e3545bf96bdc524c",
+  "inherited_interruption_tree": "6fa29f84c442a126eea20c8484cef69855a59a97",
+  "inherited_interruption_test_and_reports_unchanged": true,
+  "evidence": {
+    "author/runner.py": {
+      "bytes": 4397,
+      "sha256": "ee1cfd4f25d815ccf6b9e1851525ecfeb3db52cdb8a04e16becb1b140c471d37"
+    },
+    "author/unittest.log": {
+      "bytes": 308,
+      "sha256": "cf836500fe4cbfca274a4bfba000e8af86083c518d7b14f1cedfd98cef093c81"
+    },
+    "author/result.json": {
+      "bytes": 1829,
+      "sha256": "fced28ffdae32884aa22a7ef24e25bc75629fd849a5a6194f45d3b2a865361a2"
+    },
+    "author/domain.json": {
+      "bytes": 21095,
+      "sha256": "e65fd1648af837095512f9cc57c754bff1f22c34ffe5f2d3decea8cd2348cbda"
+    },
+    "independent/runner.py": {
+      "bytes": 3921,
+      "sha256": "7418038e94ba0f5ca23b2a6a20caf75a6a290514dc55e4291ec20791499924c5"
+    },
+    "independent/unittest.log": {
+      "bytes": 308,
+      "sha256": "a3d9e7b10707c2073bc5056d60e7a57d8e104eaffe7fdb8998399488a53c0138"
+    },
+    "independent/result.json": {
+      "bytes": 1004,
+      "sha256": "7d6049d68de9e0845aa700256dcb929f34086dc6346830b7d9393fa53d6da573"
+    },
+    "independent/domain.json": {
+      "bytes": 21095,
+      "sha256": "3e42b9126b10e4a8609f650f60f53f96a5d9e6e62d374ccaba02f171d9d993af"
+    },
+    "independent/source-and-reproduction-review.json": {
+      "bytes": 2686,
+      "sha256": "4e98c56e3a90b4129acb653ef93f1dbafe516b889db7ff6df29bdc4b271eef54"
+    }
+  },
+  "independent_reproduction": {
+    "source": {
+      "head": "55fe1c6e6c214f71b00d00ea3cdd80030a6751da",
+      "tree": "96672fb93f5b2bf3f8ca6e8cbf1e537d2fa4da68",
+      "status": "",
+      "test_sha256": "e08eb764056b209aead37b6491cbced9f9adb9cea7813ec05ccc4ea3c147c8f3"
+    },
+    "tests_run": 1,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "unittest_seconds": 15.924,
+    "wrapper_seconds": 15.951664041000186,
+    "source_and_reproduction_review_sha256": "4e98c56e3a90b4129acb653ef93f1dbafe516b889db7ff6df29bdc4b271eef54"
+  }
+}

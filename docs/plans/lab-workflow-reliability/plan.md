@@ -429,6 +429,34 @@ arguments are not substituted for old source execution. No production, schema,
 workflow or README change is admitted. Actual qualification and independent
 review remain gates; this does not complete unrelated T8 or lab acceptance.
 
+### Populated Study and recovered-result transfer admission — 2026-10-21
+
+The integration lead admits the remaining composed T2/T6/T8 boundary on isolated
+branch `test/study-publication-restore-20261021`, based on exact main
+`8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e`. Its write set is the existing
+`tests/test_run_publication_recovery.py` Study accounting case, this plan,
+execution ledger and scoped `reports/study-recovered-result-transfer-20261021/`.
+Normally compose the separately reviewed interrupted-transfer slice before
+qualification, preserving both source/evidence histories.
+
+Existing tests separately prove live Study settlement through same-Run recovery,
+queued Study restore, and direct-Run recovered Ref restore. Extend the actual
+Study case to carry its one settled reservation/conservative charge, original
+interrupted Run/fault/events, Model/Trial/material and exact recovered Ref through
+stopped backup and an independent database/directory restore. Compare raw tables,
+sequences, file bytes and POSIX modes before activation, preserve the original
+source/backup, and use current authenticated SDK and separate CLI collection.
+Repeated reconciliation and same-key recovery must retain exactly one Run,
+execution grant/consumption and reservation, without a second charge or launch.
+
+Only the affected focused case and independent serial reproduction are needed
+locally; no long benchmark or duplicate generic interruption matrix is admitted.
+Published-head hosted checks and independent source/evidence review remain gates.
+No production change is admitted absent an observed correctness failure. This
+does not add backward adapters or automatic migration, qualify installed-runtime
+mutation/preparation reuse, complete all M1–M6/T1–T8, or supply missing PUB-1/SCI-1
+lab inputs. Their real provenance/criterion requirements remain explicit.
+
 ### Current-version interrupted-transfer acceptance admission — 2026-10-21
 
 After PR116 merged as `8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e`, the

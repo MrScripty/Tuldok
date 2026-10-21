@@ -95,20 +95,55 @@ class PublicationRecoveryTests(unittest.TestCase):
                 self.assertEqual(dataset.runs._load(saved['id'])['publication_continuation']['state'], 'paused')
 
     def test_existing_study_reservation_and_conservative_charge_survive_recovery(self):
+        from http.server import ThreadingHTTPServer
+        import json
+        from pathlib import Path
+        import subprocess
+        import sys
+        import uuid
+
+        import psycopg
+        from psycopg import sql
+        from psycopg.conninfo import make_conninfo
+
+        import agent_api
+        from app import Dataset, make_handler
+        import backup_metadata as transfer
+        from metadata import Metadata
+        import recipe_process
         import test_experiments as fixtures
+        from tuldok_client import WorkflowClient
+
         fixture = fixtures.StudyTests('runTest')
         self.addCleanup(fixture.doCleanups); fixture.setUp()
         dataset = fixture.dataset
+        source_dsn, source_schema = dataset.db.dsn, dataset.db.schema
+        cleanup = {}
+
+        def drop_source():
+            if cleanup.get('source_schema_removed'):
+                return
+            dataset.close()
+            with psycopg.connect(source_dsn, autocommit=True) as admin:
+                admin.execute(sql.SQL('DROP SCHEMA {} CASCADE').format(sql.Identifier(source_schema)))
+                self.assertIsNone(admin.execute('SELECT 1 FROM pg_namespace WHERE nspname=%s',
+                                                (source_schema,)).fetchone())
+            cleanup['source_schema_removed'] = source_schema
+        self.addCleanup(drop_source)
+
         trial, _ = fixture.prepare(); fixture.open()
         body = fixture.admission_body(trial, fixture.approve())
         with dataset.access.bind(fixture.agent['token']), patch.object(dataset.runs, '_start'):
             admitted = fixture.studies.admit(fixture.study['id'], body)
         run = dataset.runs._load(admitted['run']['id'])
-        with patch.object(dataset.runs, '_copy_verified', side_effect=OSError('Authored interrupted Study publication')):
+        with patch.object(dataset.runs, '_copy_verified', side_effect=OSError('Authored interrupted Study publication')), \
+                patch('recipe_process.launch', wraps=recipe_process.launch) as executed:
             dataset.runs._run_attempt(run, (dataset.runs._capacity.cores[0],),
                                       dataset.runs._capacity.claim(run))
+        self.assertEqual(executed.call_count, 1)
         saved = dataset.runs._load(run['id'])
         self.assertEqual(saved['state'], 'interrupted')
+        self.assertEqual(saved['custody_phase'], 'drained')
         self.assertEqual(saved['publication_fault']['code'], 'unavailable')
         with fixture.owner.bound(dataset):
             before = fixture.studies.reconcile(fixture.study['id'])
@@ -130,6 +165,177 @@ class PublicationRecoveryTests(unittest.TestCase):
         current = dataset.runs._load(run['id'])
         self.assertEqual(current['state'], 'interrupted')
         self.assertEqual(current['events'], saved['events'])
+
+        # Transfer this populated, already settled Study and its exact recovered
+        # result together. Separate queued-Study and direct-Run restore cases do
+        # not prove that this reservation/charge/ref composition survives.
+        self.assertEqual(counts, {'workspace_runs': 1, 'access_execution_grants': 1,
+            'access_execution_consumptions': 1, 'model_attempt_reservations': 1})
+        ref = first['result_ref']
+        with fixture.owner.bound(dataset):
+            expected_trial = copy.deepcopy(dataset.studies.trial(trial['id']))
+            expected_material = copy.deepcopy(dataset.pipelines.recipe_material(trial['material'], verify=True))
+            expected_result = copy.deepcopy(dataset.runs.publication_result(ref))
+            reader = dataset.access.issue({'label': 'Cold restored Study inspector', 'scopes': ['inspect']})
+        dataset.close()
+        source_tree = transfer.tree_manifest(dataset.path)
+        source_modes = transfer.tree_modes(dataset.path, source_tree)
+        original = Metadata(dataset.path, dsn=source_dsn, create=False)
+        try:
+            source_tables, source_sequences = transfer.read_catalog(original), transfer.read_sequences(original)
+            source_version = original.schema_version
+        finally:
+            original.close()
+        backup = fixture.path/'settled-study-backup'
+        receipt = transfer.backup_catalog(dataset.path, backup, dsn=source_dsn, quiesced=True)
+        backup_tree = transfer.tree_manifest(backup)
+        self.assertEqual(receipt['files'], source_tree)
+        self.assertEqual(receipt['tables'], transfer.summaries(source_tables))
+        self.assertEqual(transfer.tree_modes(backup/'catalog', source_tree), source_modes)
+
+        database = 'study_publication_restore_'+uuid.uuid4().hex
+        restored_dsn = make_conninfo(source_dsn, dbname=database)
+        with psycopg.connect(source_dsn, autocommit=True) as admin:
+            admin.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(database)))
+
+        def drop_restored_database():
+            if cleanup.get('restored_database_removed'):
+                return
+            with psycopg.connect(source_dsn, autocommit=True) as admin:
+                admin.execute(sql.SQL('DROP DATABASE {}').format(sql.Identifier(database)))
+                self.assertIsNone(admin.execute('SELECT 1 FROM pg_database WHERE datname=%s',
+                                                (database,)).fetchone())
+            cleanup['restored_database_removed'] = database
+        self.addCleanup(drop_restored_database)
+
+        restored_path = fixture.path/'restored-settled-study'
+        with patch('recipe_process.launch', side_effect=AssertionError('Study transfer replayed compute')) as replay:
+            marker = transfer.restore_catalog(backup, restored_path, dsn=restored_dsn)
+            marker_name = '.restore-receipt-'+transfer.digest(receipt)+'.json'
+            self.assertEqual(marker['dataset_id'], dataset.db.dataset_id)
+            self.assertEqual(transfer.tree_manifest(restored_path, (marker_name,)), source_tree)
+            self.assertEqual(transfer.tree_modes(restored_path, source_tree), source_modes)
+            held = Metadata(restored_path, dsn=restored_dsn, create=False)
+            try:
+                self.assertEqual(held.schema_version, source_version)
+                self.assertEqual(transfer.read_catalog(held), source_tables)
+                self.assertEqual(transfer.read_sequences(held), source_sequences)
+            finally:
+                held.close()
+
+            cold = Dataset(restored_path, dsn=restored_dsn, project_roots={'fixture': fixture.project_path})
+            self.addCleanup(cold.close)
+            with fixture.owner.bound(cold):
+                self.assertEqual(cold.studies.trial(trial['id']), expected_trial)
+                self.assertEqual(cold.pipelines.recipe_material(trial['material'], verify=True), expected_material)
+                self.assertEqual(cold.studies.reconcile(fixture.study['id']), after)
+                self.assertEqual(cold.studies.reconcile(fixture.study['id']), after)
+                self.assertEqual(cold.runs._load(run['id']), current)
+                self.assertEqual(cold.runs.publication_result(ref), expected_result)
+                self.assertEqual(cold.runs.recover_publication(self.body(saved)), first)
+                self.assertEqual(cold.db.execute('SELECT document FROM model_attempt_reservations WHERE run_id=%s',
+                                               (run['id'],)).fetchone()[0], reservation)
+                self.assertEqual(self.counts(cold), counts)
+                with self.assertRaises(WorkbenchError):
+                    cold.runs.artifact(run['id'], 'result.txt')
+            self.assertIsNone(cold.runs._thread)
+
+            server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(cold))
+            worker = threading.Thread(target=server.serve_forever)
+            worker.start()
+            stopped = []
+
+            def stop_server():
+                if not stopped:
+                    server.shutdown(); server.server_close(); worker.join(5)
+                    self.assertFalse(worker.is_alive())
+                    stopped.append(True)
+            self.addCleanup(stop_server)
+
+            endpoint = 'http://127.0.0.1:'+str(server.server_port)
+            client = agent_api.AgentClient(endpoint, reader['token'], cold.db.dataset_id)
+            self.assertEqual(client.call('studies.get', {'study_id': fixture.study['id']})['result'], after)
+            self.assertEqual(client.call('studies.trial', {'trial_id': trial['id']})['result'], expected_trial)
+            self.assertEqual(client.call('recipes.material', {'ref': trial['material']})['result'], expected_material)
+            workflow = WorkflowClient(client)
+            manifest = workflow.collection_manifest(result_ref=ref, names=['result.txt'])
+            self.assertEqual(manifest['source'], {'ref': ref})
+            sdk_directory = fixture.path/'study-sdk-collected'; sdk_directory.mkdir(mode=0o700)
+            sdk_receipt = workflow.collect(manifest, sdk_directory, chunk_bytes=7)
+            self.assertEqual(sdk_receipt['state'], 'complete', sdk_receipt)
+            self.assertEqual(sdk_receipt['items'][0]['receipt']['result_ref'], ref)
+            self.assertEqual((sdk_directory/'result.txt').read_bytes(), fixture.input)
+
+            token = fixture.path/'study-reader.token'; token.write_text(reader['token']); token.chmod(0o600)
+            config = fixture.path/'study-reader.json'
+            config.write_text(json.dumps({'endpoint': endpoint, 'catalog_id': cold.db.dataset_id,
+                'token_file': str(token), 'timeout': 20})); config.chmod(0o600)
+            ref_file = fixture.path/'study-result-ref.json'; ref_file.write_text(json.dumps(ref))
+            arguments = fixture.path/'study-read.json'
+            arguments.write_text(json.dumps({'study_id': fixture.study['id']}))
+
+            def cli(*arguments):
+                called = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1]/'project_cli.py'),
+                    '--config', str(config), *map(str, arguments)], capture_output=True, text=True, timeout=90)
+                self.assertEqual(called.returncode, 0, called.stderr+called.stdout)
+                self.assertNotIn(reader['token'], called.stderr+called.stdout)
+                return json.loads(called.stdout)
+
+            self.assertEqual(cli('call', '--operation', 'studies.get', '--arguments', arguments), after)
+            self.assertEqual(cli('publication-result', '--ref', ref_file), expected_result)
+            cli_manifest = cli('collection-manifest', '--ref', ref_file, '--name', 'result.txt')
+            self.assertEqual(cli_manifest, manifest)
+            manifest_file = fixture.path/'study-collection.json'; manifest_file.write_text(json.dumps(cli_manifest))
+            cli_directory = fixture.path/'study-cli-collected'; cli_directory.mkdir(mode=0o700)
+            cli_receipt = cli('collect', '--manifest', manifest_file, '--directory', cli_directory)
+            self.assertEqual(cli_receipt['state'], 'complete', cli_receipt)
+            self.assertEqual(cli_receipt['items'][0]['receipt']['result_ref'], ref)
+            self.assertEqual((cli_directory/'result.txt').read_bytes(), fixture.input)
+            for path in (sdk_directory/'result.txt', cli_directory/'result.txt'):
+                self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            stop_server()
+            self.assertEqual(transfer.read_catalog(cold.db), source_tables)
+            self.assertEqual(transfer.read_sequences(cold.db), source_sequences)
+            self.assertEqual(cold.runs._load(run['id']), current)
+            cold_counts = self.counts(cold)
+            self.assertEqual(cold_counts, counts)
+            self.assertIsNone(cold.runs._thread)
+            replay.assert_not_called()
+            cold.close()
+
+        self.assertEqual(transfer.tree_manifest(dataset.path), source_tree)
+        self.assertEqual(transfer.tree_modes(dataset.path, source_tree), source_modes)
+        self.assertEqual(transfer.tree_manifest(backup), backup_tree)
+        self.assertEqual(transfer.tree_modes(backup/'catalog', source_tree), source_modes)
+        original = Metadata(dataset.path, dsn=source_dsn, create=False)
+        try:
+            self.assertEqual(transfer.read_catalog(original), source_tables)
+            self.assertEqual(transfer.read_sequences(original), source_sequences)
+        finally:
+            original.close()
+        drop_restored_database()
+        drop_source()
+        if report_path := os.environ.get('TULDOK_STUDY_RESTORE_ACCEPTANCE_REPORT'):
+            report = {'format': 'study_publication_restore_acceptance_v1',
+                'scope': 'Real neutral Study recovery, stopped raw transfer and cold current clients; no science/performance claim',
+                'schema_version': source_version, 'catalog_id': ref['catalog_id'],
+                'study_id': fixture.study['id'], 'trial_id': trial['id'], 'run_id': run['id'],
+                'result_ref': ref, 'original_run_state': saved['state'],
+                'original_fault': saved['publication_fault'], 'custody_phase': saved['custody_phase'],
+                'reservation_document_sha256': hashlib.sha256(reservation.encode()).hexdigest(),
+                'settled_reservation': after['reservations'][0], 'charged_before': before['charged'],
+                'charged_after': after['charged'], 'original_envelope': admitted['reservation']['envelope'],
+                'counts_before': counts, 'counts_after': cold_counts,
+                'table_summaries': transfer.summaries(source_tables), 'sequences': source_sequences,
+                'source_tree_sha256': transfer.digest(source_tree), 'source_modes_sha256': transfer.digest(source_modes),
+                'backup_tree_sha256': transfer.digest(backup_tree), 'source_and_backup_unchanged': True,
+                'raw_transfer_equal_before_activation': True, 'cold_tables_and_sequences_unchanged': True,
+                'artifact_sha256': hashlib.sha256(fixture.input).hexdigest(), 'artifact_bytes': len(fixture.input),
+                'sdk_and_cli_collection_complete': True, 'same_key_result_unchanged': True,
+                'actual_attempt_launch_calls': executed.call_count, 'restore_and_consumer_replay_calls': replay.call_count,
+                'cleanup': cleanup}
+            with Path(report_path).open('x') as stream:
+                json.dump(report, stream, indent=2); stream.write('\n')
 
     def test_partial_copy_capacity_counts_remaining_bytes_before_replacement(self):
         fixture, saved = self.failed_publication(); dataset = fixture.dataset

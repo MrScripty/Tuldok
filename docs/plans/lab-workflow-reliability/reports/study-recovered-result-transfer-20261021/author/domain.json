@@ -1,0 +1,714 @@
+{
+  "format": "study_publication_restore_acceptance_v1",
+  "scope": "Real neutral Study recovery, stopped raw transfer and cold current clients; no science/performance claim",
+  "schema_version": 10,
+  "catalog_id": "d0d14aad4a754a42b274f919dd9f484d",
+  "study_id": "b3dabe7fe8ee44928c05d661dbc595a6",
+  "trial_id": "bcff5def0f754573b2cc8adb4aeb7362",
+  "run_id": "e29b681480db4fd18e749c65d92139d1",
+  "result_ref": {
+    "kind": "recovered_publication_result",
+    "schema_version": 1,
+    "catalog_id": "d0d14aad4a754a42b274f919dd9f484d",
+    "run_id": "e29b681480db4fd18e749c65d92139d1",
+    "material_sha256": "f26a4d9539c8a1af3e8ada840d61523afb0ace76b87e6e5032c2abf44e5e778a",
+    "inventory_sha256": "84afb1364c2ecd99dbc7b34258f2d331b576f8e49b96aebd980cd73dd1450d84",
+    "custody_receipt_sha256": "ea32867553288928096f43bca5e61fd2ee4397d9da6e3c165873943d43b9437a",
+    "sha256": "34a9d2b69c99df8afff999f129b2dd382230644ff35129a5bc60821260dce000"
+  },
+  "original_run_state": "interrupted",
+  "original_fault": {
+    "code": "unavailable",
+    "format": "external_publication_fault_v1",
+    "message": "Recipe output changed or could not be published.",
+    "recorded_at": "2026-10-21T01:47:36.877661+00:00",
+    "source_sha256": "4430f74ec039484162001c0371fe8a3e9c9848280731532cd4065e076b53c8cd"
+  },
+  "custody_phase": "drained",
+  "reservation_document_sha256": "d010e50c981e300095a91fc7cabfc8c011abe91a21a84320cd3b4e13d84cfc61",
+  "settled_reservation": {
+    "actor_id": "fa2d94d90d194d0f8f9339b0716cd029",
+    "admission_epoch": 1,
+    "envelope": {
+      "admitted_wall_seconds": 37,
+      "attempt_slots": 1,
+      "peak_staging_bytes": 3210449,
+      "retained_bytes": 2802248
+    },
+    "id": "9f186c488a314eadacc38f9cef976d4e",
+    "material_sha256": "51282dd9b1d2423b1b93e40f99d1618783f03016ec65ba8388bf06597897dddd",
+    "parent_run_id": null,
+    "request_key": "attempt-0bd55233e9a84b7d92a9b37a72b0edb8",
+    "request_sha256": "dcaf5347f7d4506fb9bf6005b16617dda54532a4dd63edcfe6ec23ffb25edb99",
+    "run_id": "e29b681480db4fd18e749c65d92139d1",
+    "settled": {
+      "admitted_wall_seconds": 37,
+      "attempt_slots": 1,
+      "peak_staging_bytes": 3210449,
+      "retained_bytes": 2802248
+    },
+    "state": "settled",
+    "study_id": "b3dabe7fe8ee44928c05d661dbc595a6",
+    "trial_id": "bcff5def0f754573b2cc8adb4aeb7362"
+  },
+  "charged_before": {
+    "attempt_slots": 1,
+    "admitted_wall_seconds": 37,
+    "retained_bytes": 2802248,
+    "peak_staging_bytes": 3210449
+  },
+  "charged_after": {
+    "attempt_slots": 1,
+    "admitted_wall_seconds": 37,
+    "retained_bytes": 2802248,
+    "peak_staging_bytes": 3210449
+  },
+  "original_envelope": {
+    "admitted_wall_seconds": 37,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 3210449,
+    "retained_bytes": 2802248
+  },
+  "counts_before": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 1
+  },
+  "counts_after": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 1
+  },
+  "table_summaries": {
+    "access_actors": {
+      "columns": [
+        "id",
+        "kind",
+        "label",
+        "created_at"
+      ],
+      "count": 4,
+      "row_sha256": [
+        "02b3a5dc37073f2cce5492185dfe9d4b279d46b73135a87e319931ff5bd08ba1",
+        "84614e428ef051cad5f45adc4b5f4f78d2ca1ae1d8857f01ba13544c40b5bbce",
+        "fbe1616671a3a769f63b4947ad1950bc59e1e35906af449d5f94589096f9e120",
+        "1567e85601bc6733d5f37240658e4f0027d52ff8fbc4ce1d05fc60628b72eb8c"
+      ],
+      "sha256": "a7facf4699cde261d07c4a8a41835338c688fafd48d76e57d251190809a0fafb"
+    },
+    "access_admissions": {
+      "columns": [
+        "id",
+        "catalog_id",
+        "actor_id",
+        "credential_id",
+        "kind",
+        "job_id",
+        "request_digest",
+        "effects_json",
+        "created_at"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "27216c7b4ce64f0ef4cdda28bd6e8c1975f766b5c3e761a6043cf94b00d16dfa"
+      ],
+      "sha256": "007f385cd1e492874fe186492ef8050ed4eb2ebeb382295be713965977d2f27d"
+    },
+    "access_audit": {
+      "columns": [
+        "id",
+        "actor_id",
+        "credential_id",
+        "action",
+        "target_json",
+        "details_json",
+        "result",
+        "created_at"
+      ],
+      "count": 28,
+      "row_sha256": [
+        "c89e0fe3895241a523ca1b7b8018d96e81e8b2a743fde277af35e7fd398c522a",
+        "0f8f8899e3c6437846e556ac79707067352629d787c2a5a04b57104ac687ebea",
+        "87ac3cb8ec4fd27a6e7171cf202bb4f2c5d1cc3411dcb7ac462eb937a8b0dab3",
+        "da98d1dcb0034a24a54e5fb29494e3005381fe9be38ea1c1f27d04c3c5a1d4ad",
+        "3b5c95601d8bc61c748993618d81208532beb73e731f715ea304d3d84cd08161",
+        "95f944937a7dc0b583d4097fa30058f942128f44e5bc63be38c8a92fb15290bf",
+        "1cb39f1be95e645e32f42d9ae384e0567aff13cf651920d3982f1f43e77947c2",
+        "e192070e5539a6bc1b339ceb3fc9474597c5f8cfe2ef7745181e6658b7bef585",
+        "1b9b9e5f910b1d444c6b3cb7365186cc59f7fdb345b8c69f76d3bfe925de98b6",
+        "31acc85b01f107e57a6a8d4dae4a3632dd9ea6898482f0ad327971b3848ad223",
+        "7d8a7fb3d0f79de4ee480f086b06c13e2aae1ce4b7075eb2bdb8a10dac0137e1",
+        "eb22036265927a001554baae8731fc0091b3ec3a38c1e3d561fd5d764e4fe565",
+        "8b64403dec358f1e8b04c19fb0987eaf0bbbcd4e86e8d5577cd13a10bb18c35c",
+        "ad55610e7c6cc407b3f4f9c779b915c7d6355e7d10f51fe51e41c66e387972f9",
+        "ba4523acc32f77694c16c2b884d78fe09604467fd9d927e09219e1348238b65f",
+        "bcd73c9dcd5bc525550beb0facc4452c917f3e29900eb779f5fd9f298623a674",
+        "681665589bf7eb5990dc604f8ac2d76ae456c2851340f7663d0f314aabafef7a",
+        "ea68a62299fbf2994f112d4eb9b0cea241d9e2e02b795267fda248ba04c50cf6",
+        "75b87cbb1cb7871f7e9da47dd05c3d0406aef762f5f7425d587224ca601b82b5",
+        "b9dcde6f037ecdb075d4fd57329b2e59ee35095b407ca870a5b6a8fa4d4509df",
+        "371bf5d7a503464cc6026b6d50f09b11f4b546b08bf412165084bb0cd9a965c7",
+        "2b1ffff2497cc63eb2725cce96566d96f2c69849fe9200ea64ae1cd2e14720f9",
+        "68ee33b2715d111407272efe13a2d2ec249e48b5f9161cb6f01e958089d65248",
+        "3d8ad56d527fc1fbbba7170d5bd2c44f350efd44496f922c81e71153ce77d00e",
+        "88e1e701673f5b373801eeee20917b91977a7737b0407d5cd9d58f05275f7d85",
+        "98a97bcf5cbc81359d140256581bc478044eace30803577954e26637c80b8573",
+        "8df1df593c3a2cb2d1b6aa11d3e4d687801f9bca8acaa4e1d4653954a501eded",
+        "9677960d550e606ef7cb06864fd7ce74767dff0c4c2e88b4297553254b64af3f"
+      ],
+      "sha256": "3b5011a2a95ed594291d9f182149775e0a8b565ca1d25c9dbbc72a611edff8b5"
+    },
+    "access_credentials": {
+      "columns": [
+        "id",
+        "actor_id",
+        "token_sha256",
+        "kind",
+        "scopes_json",
+        "expires_at",
+        "revoked",
+        "consumed",
+        "created_at"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "91bdce2628eb9ae59320fad4b20eaafac0c69d289a02c88944ee910b9769983c",
+        "e93a19c6008cc55d77593d5b0cb7e14395d04676cf5ae1a517014f8c9050bbe4",
+        "f30e2befc7ef66f283e36d8414ae217b0e7c0e003f1fcb0f09ba6b5db2760954",
+        "b06c6f533667e681cb407038328fefc5d664677f561ef962cb9773d3dffffa15",
+        "e7cdc936af57733f4b7a647ef0b475806ccf5bd61ef6162323f056251be1a005"
+      ],
+      "sha256": "0057d5d4ae41d4e41473fd47bad0952217a397789ffd5f3a9d00dea586c42524"
+    },
+    "access_execution_consumptions": {
+      "columns": [
+        "grant_id",
+        "run_id",
+        "admission_id",
+        "consumer_credential_id",
+        "request_sha256",
+        "consumed_at"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "566d626e83dfd9d7d05114e78e37bd1c267eeb9deb1e66b7d420486a0a108bdc"
+      ],
+      "sha256": "b67b48e1c148ffdbf7344d18b0e9b14e073fa03abaa51ab399e9f692a68d1e01"
+    },
+    "access_execution_grants": {
+      "columns": [
+        "id",
+        "catalog_id",
+        "approver_actor_id",
+        "approver_credential_id",
+        "consumer_actor_id",
+        "material_sha256",
+        "created_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "92182ed5addc4c9de8648373c6d49961542ee9a2ffde27ebb9831d3113440e0c"
+      ],
+      "sha256": "3747ceb317c91f69ba9196e3da125874ee05250633ec511853c520f18bfaad92"
+    },
+    "caption_proposals": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "generation_entries": {
+      "columns": [
+        "id",
+        "job_id",
+        "ordinal",
+        "data",
+        "storage_order"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "530faef7a9e5031599c72af9332f8c2472584ffd0d4110ab97eb445c3a9680dd"
+    },
+    "generation_jobs": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "grounded_jobs": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "model_attempt_reservations": {
+      "columns": [
+        "id",
+        "study_id",
+        "actor_id",
+        "request_key",
+        "request_sha256",
+        "trial_id",
+        "run_id",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "8f433744017d689b5bf2a6499212435ea054fa794755070448fdc4e47963eaab"
+      ],
+      "sha256": "6660517d89f2b32262bf18e2399028ecb510a2e843f676bf47527f3f1e2afe05"
+    },
+    "model_candidates": {
+      "columns": [
+        "id",
+        "study_id",
+        "trial_id",
+        "run_id",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8e150598074027645a884f8c83471a910abaabfaca5017c5154bed5b5f6ea480"
+    },
+    "model_definition_drafts": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "1bce4cb61599f3c7aab04f4d999b7d255a38c35ad91d1c240885a286a1de44c3"
+      ],
+      "sha256": "b05a077b3bae48b1b3338b05791d6cd66371ded18c4cb5f51dae2b907d426517"
+    },
+    "model_materials": {
+      "columns": [
+        "id",
+        "revision",
+        "sha256",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "0bd0f1e447ed1af675842a22b016a30f5904c0d6f67d5cb00a9b4d1c439c6307"
+      ],
+      "sha256": "467e8e12933732f2f54afa4e1fb539f2aba62014ed728408a65cfe5c33314696"
+    },
+    "model_operation_receipts": {
+      "columns": [
+        "actor_id",
+        "operation_id",
+        "request_key",
+        "request_sha256",
+        "document"
+      ],
+      "count": 2,
+      "row_sha256": [
+        "3d33ca34560bf402fc6c38aee3846d04e96e3e0850b41547d490665138d525c6",
+        "2cbac16d553709fcf21bd4a6b39cda1b2836bda1dfd509a9568e3b80905269af"
+      ],
+      "sha256": "8a595802c4618f9c7e256d405c0eb74cd109965892f63a99f9bca1fe55ccf3d2"
+    },
+    "model_selection_policies": {
+      "columns": [
+        "id",
+        "revision",
+        "sha256",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "dd2465d1922f54a3f7ac8fff7dbc5a9bc9917475f962ad60f7a63fcee71b4f89"
+      ],
+      "sha256": "85cef6a73c5303cdcf10d60f9edda7c51d03c299471b13fad0ff67870dc2e969"
+    },
+    "model_studies": {
+      "columns": [
+        "id",
+        "revision",
+        "admission_epoch",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "f9941320bc47476cd5deadbcfe7e7b5eab444c8be2dd9edf877ae2c4bedfc45e"
+      ],
+      "sha256": "e4ed2d862f796b4cd230c97fdae63403e36b13405c2a05f6919e345ee0ae952d"
+    },
+    "model_study_memberships": {
+      "columns": [
+        "study_id",
+        "revision",
+        "document"
+      ],
+      "count": 2,
+      "row_sha256": [
+        "ff706f6668d3fdfe1b85b690a951baeebcf84adb3d6aff08c13131cd984b5682",
+        "1f193a7380d5997865c36ae508fd940253b9e7cd6cf4df3799193134d9444c05"
+      ],
+      "sha256": "29b05ccfb99b1089a03bcd50124ef3bda67596410e731c009948d0bd46c5061f"
+    },
+    "model_trial_lineage": {
+      "columns": [
+        "trial_id",
+        "parent_trial_id",
+        "baseline_trial_id",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ce519910146db157ed46ee02a83bc6add785136de22e6b9cd48581c756299ec0"
+    },
+    "model_trials": {
+      "columns": [
+        "id",
+        "study_id",
+        "material_sha256",
+        "replicate",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "a6eeedbab7f17289adfea28c83b5e195136405177f0038729424b4cb4f965dc6"
+      ],
+      "sha256": "17425504a64efc0d6358eeffba545dac709410b62b4bfc29bb811616520632ee"
+    },
+    "samples": {
+      "columns": [
+        "id",
+        "sha256",
+        "filename",
+        "width",
+        "height",
+        "book_id",
+        "session_id",
+        "split",
+        "created_at",
+        "updated_at",
+        "revision",
+        "annotation"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "45cba19d248a0b126119bc05246fdfe6459c95d5cce245ec3a4cd47d1b5e2995"
+    },
+    "saved_searches": {
+      "columns": [
+        "id",
+        "name",
+        "revision",
+        "criteria_json",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "caa62ec987589481b04e93502d8f340a1a41703997b68a0c94df642ee8e5a8a6"
+    },
+    "saved_selections": {
+      "columns": [
+        "id",
+        "name",
+        "revision",
+        "members_json",
+        "member_count",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ef015a7aae83417e2ee6b9aa54c0f3f618358296ed201682901be8c0841b7e11"
+    },
+    "text_classification_proposals": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "workbench_deleted_sources": {
+      "columns": [
+        "id",
+        "book_id",
+        "session_id",
+        "split"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "c1c95154abd259591b21272e5324695db12a227e849c3fbd46d96ea2e554a7c2"
+    },
+    "workbench_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_mesh_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_pointcloud_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_preference_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_preferences": {
+      "columns": [
+        "id",
+        "prompt_id",
+        "revision",
+        "data"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "67b197c3ca40fbcbe1baf7d841be28c4e9c98b3ef3f22178c7732560f66e16c3"
+    },
+    "workbench_records": {
+      "columns": [
+        "id",
+        "kind",
+        "name",
+        "text",
+        "original_text",
+        "content_hash",
+        "pixel_hash",
+        "groups_json",
+        "parents_json",
+        "provenance_json",
+        "task",
+        "annotation_json",
+        "review",
+        "revision",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "e2e5e5e9cef6974f035aa0b76e15e13932e11b2f3fdb93574cf2791aacb19259"
+    },
+    "workbench_response_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_responses": {
+      "columns": [
+        "id",
+        "prompt_id",
+        "revision",
+        "completion",
+        "review",
+        "provenance_json",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "4eb68800cc161c30f33a81c52c233a59559a12f1a3744545088bf3cbe9930d67"
+    },
+    "workbench_rights_notes": {
+      "columns": [
+        "id",
+        "note",
+        "revision"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "894e92255b0040027f355105f88c51cff087e8471008b30731a6e0e849c3cdc3"
+    },
+    "workbench_sequence_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_target_proposals": {
+      "columns": [
+        "id",
+        "evidence"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "c610988ec09c1a996fba5c2d51051fd38b37a1b51d1defc6ea9647664742838e"
+    },
+    "workbench_volume_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workspace_exposures": {
+      "columns": [
+        "id",
+        "record_id",
+        "source_hash",
+        "reason",
+        "run_id",
+        "release_id",
+        "created_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "5bf95a047db8503a858f55e8095cb28322d6329af09b545dc4f67a3cb83e8599"
+    },
+    "workspace_graphs": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "80639fc527d3ae9ce3cea1652dcccdba789cf71cc30babf3a131056b945a1d23"
+      ],
+      "sha256": "7e78b070b662b6f1d05a183ebc50889736c5b5e1efa2a35d90ce7517621e81e1"
+    },
+    "workspace_projects": {
+      "columns": [
+        "id",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "634bd97ec5f97406f2878aff02eb67daf9e9a6182932c9d4139169aecbf8325d"
+      ],
+      "sha256": "cc68fbe6116f7d6a56c191531b968f46a60f9148caabbd2e75ddb809e458a9ad"
+    },
+    "workspace_recipe_drafts": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ffb3a23ecc7b51f988108891d577a0c846811cfcfddbb1427421287a201f347a"
+    },
+    "workspace_recipe_materials": {
+      "columns": [
+        "sha256",
+        "recipe_id",
+        "recipe_revision",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "2b5bf382ed80055fc591a31bdd15628bc3809352733aa372c47cabfe7dec411c"
+      ],
+      "sha256": "b93bd7a206370a3197f675e325ffd1bae6241254c5d6c680b90da42aabca1c32"
+    },
+    "workspace_runs": {
+      "columns": [
+        "id",
+        "request_key",
+        "request_sha256",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "66c1b0a9796df9898f5b60a43e5389be29bb954fca6f7c15846b4979761e9577"
+      ],
+      "sha256": "707a9ebf9ccfdfa1ee7b1696a3d3d5dc43a5b7b76a041c06cd73cdbe75676bab"
+    }
+  },
+  "sequences": {
+    "generation_jobs": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "grounded_jobs": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "caption_proposals": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "text_classification_proposals": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "generation_entries": {
+      "last_value": 1,
+      "is_called": false
+    }
+  },
+  "source_tree_sha256": "14757d42082e60d13f23f8b652be4532cc57e3497f2114a3227e451346a746e0",
+  "source_modes_sha256": "14fae5e444ef8e6a796844da35d9c82c165596e78728ebf8f1575d4391ce3568",
+  "backup_tree_sha256": "20d0ce064fd3d170b8280bea6bb7c3ba9b86d5cc6a13fd244f6829199f417644",
+  "source_and_backup_unchanged": true,
+  "raw_transfer_equal_before_activation": true,
+  "cold_tables_and_sequences_unchanged": true,
+  "artifact_sha256": "54ae9355f214d827afd4ec287ff813d3af22683a52c10e9ed1ea62507cfa4d10",
+  "artifact_bytes": 55,
+  "sdk_and_cli_collection_complete": true,
+  "same_key_result_unchanged": true,
+  "actual_attempt_launch_calls": 1,
+  "restore_and_consumer_replay_calls": 0,
+  "cleanup": {
+    "restored_database_removed": "study_publication_restore_a140970193ae4b75bc3f8292aaa3b3bf",
+    "source_schema_removed": "catalog_d0d14aad4a754a42b274f919dd9f484d"
+  }
+}
