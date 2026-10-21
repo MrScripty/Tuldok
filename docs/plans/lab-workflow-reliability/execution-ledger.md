@@ -1,5 +1,38 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-21 — Populated Study/recovered-result transfer admission
+
+The lead selects one composed T2/T6/T8 acceptance gap after the current-version
+interrupted-transfer witness. The original Study case already executes one
+neutral attempt, retains its publication copy fault, settles the original
+conservative reservation and recovers the same Run. Its extension carries that
+populated state through stopped backup, a separate database/directory restore,
+raw preactivation snapshots and cold current SDK/CLI result collection.
+
+The source branch is `test/study-publication-restore-20261021` from main
+`8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e`; normally compose the reviewed
+interrupted-transfer source/evidence before the one affected qualification.
+No production, schema, cache, runtime installation, old-version compatibility,
+automatic migration or new long benchmark is admitted. PUB-1/SCI-1 remain blocked
+on their genuine missing lab inputs.
+
+The normal source composition `55fe1c6` passed only the affected Study case once:
+15.550 seconds unittest / 15.582514518 seconds wrapper, zero failures/errors/skips.
+One actual neutral attempt launch and zero restore/consumer replay calls were
+observed. Raw 43-table/sequences/file/mode transfer, one settled reservation and
+the original charge, exact cold SDK/CLI result collection and source/backup
+preservation passed. Exact owned schema/database cleanup was queried and the
+task PostgreSQL container stopped afterward. Raw source/environment/result/domain
+receipts are sealed under `reports/study-recovered-result-transfer-20261021/`.
+Root independently passed that exact frozen source from a detached worktree:
+one test in 15.924 seconds unittest / 15.951664041 seconds wrapper, zero
+failures/errors/skips, independently absent exact owned resources and unchanged
+database inventory. Source/reproduction review is clear; the same test bytes
+remain sealed. Final report/source review and published-head hosted checks
+remain gates. This is one clean current-version transfer with Project roots
+available; no duplicate interruption matrix, new performance or science proof
+is implied.
+
 ## 2026-10-21 — Current-version interrupted restore admission
 
 PR115 and PR116 are merged; main is

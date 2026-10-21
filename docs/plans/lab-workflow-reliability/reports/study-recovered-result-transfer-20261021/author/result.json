@@ -1,0 +1,60 @@
+{
+  "format": "study_publication_restore_focused_run_v1",
+  "case": "test_run_publication_recovery.PublicationRecoveryTests.test_existing_study_reservation_and_conservative_charge_survive_recovery",
+  "source": {
+    "commit": "55fe1c6e6c214f71b00d00ea3cdd80030a6751da",
+    "tree": "96672fb93f5b2bf3f8ca6e8cbf1e537d2fa4da68",
+    "parents": [
+      "79fcbe6a84ca4d22b9a3d1039fa16d7f237fe6a4",
+      "a28034e06772d337200f4529e3545bf96bdc524c"
+    ],
+    "status": "",
+    "test_sha256": "e08eb764056b209aead37b6491cbced9f9adb9cea7813ec05ccc4ea3c147c8f3"
+  },
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "machine": "x86_64",
+    "executable": "/workspace/tuldok-qa-venv/bin/python",
+    "packages": {
+      "psycopg": "3.3.6",
+      "jsonschema": "4.26.0",
+      "Pillow": "12.3.0"
+    },
+    "container_image": "postgres:17",
+    "container_image_id": "sha256:327daa8fae7178d61f93142f146b098467b345e10997b9eb79f63bd58e5c8f3c"
+  },
+  "wrapper_seconds": 15.582514518000607,
+  "tests_run": 1,
+  "successful": true,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "resources_before": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ],
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)"
+  },
+  "resources_after": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ],
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)"
+  },
+  "source_unchanged": true,
+  "log_sha256": "cf836500fe4cbfca274a4bfba000e8af86083c518d7b14f1cedfd98cef093c81",
+  "domain_sha256": "e65fd1648af837095512f9cc57c754bff1f22c34ffe5f2d3decea8cd2348cbda",
+  "exact_cleanup_queries": {
+    "source_schema_absent": true,
+    "restored_database_absent": true
+  }
+}

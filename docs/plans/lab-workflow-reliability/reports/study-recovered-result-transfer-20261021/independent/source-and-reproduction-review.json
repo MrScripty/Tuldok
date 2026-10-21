@@ -1,0 +1,39 @@
+{
+  "format": "independent_study_publication_restore_review_v1",
+  "disposition": "clear_focused_subject_hosted_checks_pending",
+  "blocking_findings": [],
+  "reviewed_commit": "55fe1c6e6c214f71b00d00ea3cdd80030a6751da",
+  "reviewed_tree": "96672fb93f5b2bf3f8ca6e8cbf1e537d2fa4da68",
+  "test_sha256": "e08eb764056b209aead37b6491cbced9f9adb9cea7813ec05ccc4ea3c147c8f3",
+  "reproduction": {
+    "tests_run": 1,
+    "seconds": 15.951664041000186,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "source_clean_before_and_after": true,
+    "schemas_before_and_after": [],
+    "database_inventory_unchanged": true,
+    "exact_source_schema_and_restored_database_independently_absent": true,
+    "log_sha256": "a3d9e7b10707c2073bc5056d60e7a57d8e104eaffe7fdb8998399488a53c0138",
+    "domain_sha256": "3e42b9126b10e4a8609f650f60f53f96a5d9e6e62d374ccaba02f171d9d993af"
+  },
+  "review": [
+    "Extends the existing real Study recovery case instead of a duplicate feature or synthetic scientific workload.",
+    "One actual neutral recipe launch has terminal drained custody and retains its original interrupted Run, events and publication fault.",
+    "One populated Study reservation is settled once; its exact document and charged envelope survive repeated recovery/reconciliation and stopped transfer.",
+    "A separate restored database has all 43 raw table states, sequences, complete file hashes and POSIX modes equal before application activation.",
+    "Cold owner reads and same-key recovery preserve exact Trial/material/result Ref, reservation, charge, Run and counts.",
+    "Authenticated current SDK and separate CLI read the Study and collect exact recovered Ref bytes into mode0600 files with no extra compute.",
+    "Post-read raw tables/sequences remain equal; source and backup files/modes/raw state remain unchanged; exact owned resources are cleaned.",
+    "Existing PR117 test and sealed evidence are composed unchanged; no production/schema/workflow/README change is required."
+  ],
+  "limits": [
+    "One clean stopped current-version transfer; PR117 separately owns the three controlled interruption seams.",
+    "Project roots remain available; no new root-removal, scientific-training, power-loss, torn-payload or installed-runtime mutation proof.",
+    "No new performance samples, cache/admission policy or automatic migration system.",
+    "Owners migrate old projects themselves; current-version schema/integrity and no replay remain required.",
+    "No full M1-M6/T8 or PUB1/SCI1 acceptance; genuine original failure and comparison inputs remain absent.",
+    "Final report/source binding and required published-head hosted checks remain merge gates."
+  ]
+}

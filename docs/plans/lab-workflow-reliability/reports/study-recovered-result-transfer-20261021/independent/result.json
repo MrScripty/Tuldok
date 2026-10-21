@@ -1,0 +1,40 @@
+{
+  "format": "independent_study_restore_qualification_v1",
+  "source": {
+    "head": "55fe1c6e6c214f71b00d00ea3cdd80030a6751da",
+    "tree": "96672fb93f5b2bf3f8ca6e8cbf1e537d2fa4da68",
+    "status": "",
+    "test_sha256": "e08eb764056b209aead37b6491cbced9f9adb9cea7813ec05ccc4ea3c147c8f3"
+  },
+  "seconds": 15.951664041000186,
+  "tests_run": 1,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "successful": true,
+  "resources_before": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ]
+  },
+  "resources_after": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ]
+  },
+  "final_status": "",
+  "log_sha256": "a3d9e7b10707c2073bc5056d60e7a57d8e104eaffe7fdb8998399488a53c0138",
+  "independent_exact_cleanup_queries": {
+    "source_schema": true,
+    "restored_database": true
+  },
+  "domain_sha256": "3e42b9126b10e4a8609f650f60f53f96a5d9e6e62d374ccaba02f171d9d993af"
+}
