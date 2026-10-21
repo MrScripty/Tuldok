@@ -1,0 +1,99 @@
+{
+  "recorded_utc": "2026-10-20T18:18:09.251210+00:00",
+  "base": "1442f1849c5894500d69823e60bfcd3d644dc683",
+  "branch": "feature/material-preflight-reports-20261020",
+  "status": "scoped_external_material_reporting_accepted_locally",
+  "runs": [
+    {
+      "log": "regression.log",
+      "result": "regression-result.json",
+      "source": "regression-source.json",
+      "tests": 75,
+      "seconds": 246.263,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "owned_schemas_removed": 8
+    },
+    {
+      "log": "material-followup.log",
+      "result": "material-followup-result.json",
+      "source": "final-source.json",
+      "tests": 9,
+      "seconds": 20.883,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "owned_schemas_removed": 2
+    }
+  ],
+  "production_unchanged_between_runs": true,
+  "source_hashes": {
+    "pipeline.py": "5c879c741e7602c31cf1625d9673fc7464f5cef5c12554381a1ab662ccddca6d",
+    "agent_api.py": "b2c11bb56dd7688850cbfce5dc6445210056fbd7c966481e614e9eeb15a397c8",
+    "app.py": "0c8dc4da95fc803136ad2731a2e643e0fd14839535d740ef0d263ac117f9d276",
+    "tests/test_material_preflight_reports.py": "a8e43084b6b5145bfb5cd24b384cea3e3afba147b8ac1e4aa8c15ffe04af580c"
+  },
+  "compatibility": {
+    "prior_contracts": 127,
+    "all_hashes_exact": true,
+    "legacy_projection_exact": true,
+    "only_added": "recipes.preflight_material/1"
+  },
+  "preservation": {
+    "original_local_heads": 97,
+    "all_original_heads_exact": true,
+    "original_worktrees": 111,
+    "all_original_worktrees_present": true,
+    "only_added_local_heads": [
+      "refs/heads/feature/material-preflight-reports-20261020"
+    ],
+    "graph_checkpoint": "1442f1849c5894500d69823e60bfcd3d644dc683"
+  },
+  "early_attempts": [
+    {
+      "tests": 8,
+      "errors": 2,
+      "skipped": 2,
+      "cause": "New test harness used mutation/required_scopes instead of side_effects/scopes and positional CLI operation instead of --operation."
+    },
+    {
+      "tests": 8,
+      "errors": 1,
+      "skipped": 2,
+      "cause": "New CLI test supplied inline JSON where --arguments requires a regular JSON file."
+    },
+    {
+      "tests": 9,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "scope": "Pure/HTTP unit pass only; database acceptance awaited qualified run."
+    }
+  ],
+  "review_corrections": [
+    "Foreign trainer/profile/runtime and builtin success compositions rejected; directly correlatable runtime/inner/output evidence hashes checked.",
+    "Graph execution digest documented as owner-attested in bounded outer-material projection.",
+    "Adversarial fixture deep-copied so independent rehashed negatives cannot inherit earlier foreign refs.",
+    "Final focused run adds live Study HTTP through CLI (only from_config supplies existing real client), headerless refusal and exact six-table inertness."
+  ],
+  "limitations": [
+    "No hosted CI run/publication/merge selected.",
+    "No native builtin runtime or numerical/hardware/scientific acceptance claimed.",
+    "Late disclosure loss is an injected AccessError over actual retained material; malformed/auth/headerless/source-drift/tamper outcomes exercise their actual owners.",
+    "No PUB-1 failure input or SCI-1 scientific pair/criterion/environment supplied; full C1/T1/M1 remains open."
+  ],
+  "evidence_sha256": {
+    "regression.log": "a0076a14aa735c4a9f89137b8421388d641e0995d1944ec335a4544e80005f96",
+    "material-followup.log": "661f410c3848de2cf2f650cb5191b5bd8edcf2285d7c1350b4e262d818610df5",
+    "regression-source.json": "f8b08ef67ffbb4f3e9fb7ed11cc90a633ed56d819dc40c800c90db3dfb3ba6f1",
+    "final-source.json": "a73db2e5c0ab678ae4cef8d0391fdb7cb5e38d79ccd8f295602a39b379ab5fed",
+    "all-prior-contracts.json": "b3feb141cec0346b635ae06306d794c99064bf250b9c3d75d7293f5f80290a44",
+    "regression-result.json": "7c016eaa8d2ca1f398c9c0a770d6457d90b9f3f3d5c219893996e2db1e419f47",
+    "material-followup-result.json": "d0a141c09655e4e97d892f0c815b8bff053490929dfc6377b59287e96b465b41",
+    "regression-runner.py": "9f684c68b8a33cd90fb749c2a07143606edaf315cc5aee6cba5ae361a90211d1",
+    "material-followup-runner.py": "92bc771936069a605ba246a54dedefecd1844e274cdba9c75da182d2aa4ff41a",
+    "preservation.json": "ab16ba8f2e89fdd4e4c861dace7d92e4c93b7ec34cb3fcb7dc3217c0b215040a"
+  },
+  "independent_review": "independent-review.json; separately binds final source, both test subjects, compatibility and this acceptance evidence without a circular receipt hash"
+}

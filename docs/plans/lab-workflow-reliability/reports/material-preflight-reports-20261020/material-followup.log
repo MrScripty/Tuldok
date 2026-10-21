@@ -1,0 +1,19 @@
+test_actual_study_material_http_cli_drift_cold_read_and_replay_are_inert (test_material_preflight_reports.MaterialPreflightHTTPTests.test_actual_study_material_http_cli_drift_cold_read_and_replay_are_inert) ... {"fixture_owner": "StudyTests", "new_schema": "catalog_d4774151cd4a4541b5cb7243b53bb68b"}
+ok
+test_current_disclosure_rechecked_and_retained_tamper_has_unknown_proofs (test_material_preflight_reports.MaterialPreflightHTTPTests.test_current_disclosure_rechecked_and_retained_tamper_has_unknown_proofs) ... {"fixture_owner": "StudyTests", "new_schema": "catalog_dbd310cf502344c19f0c0145ad97e420"}
+ok
+test_builtin_refuses_before_probe_and_early_foreign_ref_stays_bare (test_material_preflight_reports.MaterialPreflightReportTests.test_builtin_refuses_before_probe_and_early_foreign_ref_stays_bare) ... ok
+test_client_correlates_ref_catalog_and_real_error_transport_with_no_retry (test_material_preflight_reports.MaterialPreflightReportTests.test_client_correlates_ref_catalog_and_real_error_transport_with_no_retry) ... ok
+test_consumer_refuses_rehashed_foreign_or_builtin_compositions_and_runtime_provenance (test_material_preflight_reports.MaterialPreflightReportTests.test_consumer_refuses_rehashed_foreign_or_builtin_compositions_and_runtime_provenance) ... ok
+test_consumer_rejects_forged_links_proofs_owners_states_and_bounds (test_material_preflight_reports.MaterialPreflightReportTests.test_consumer_rejects_forged_links_proofs_owners_states_and_bounds) ... ok
+test_default_internal_path_and_private_verified_ref_fence_are_preserved (test_material_preflight_reports.MaterialPreflightReportTests.test_default_internal_path_and_private_verified_ref_fence_are_preserved) ... ok
+test_distinct_outer_inner_and_graph_identities_and_deferred_execution (test_material_preflight_reports.MaterialPreflightReportTests.test_distinct_outer_inner_and_graph_identities_and_deferred_execution) ... ok
+test_refusal_is_bounded_request_provenance_with_unknown_identities (test_material_preflight_reports.MaterialPreflightReportTests.test_refusal_is_bounded_request_provenance_with_unknown_identities) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 20.883s
+
+OK
+{"removed_exact_owned_schema": "catalog_d4774151cd4a4541b5cb7243b53bb68b"}
+{"removed_exact_owned_schema": "catalog_dbd310cf502344c19f0c0145ad97e420"}
+{"started_utc": "2026-10-20T18:16:41.275819+00:00", "completed_utc": "2026-10-20T18:17:02.334151+00:00", "tests": 9, "failures": 0, "errors": 0, "skipped": 0, "owned_schemas_removed": ["catalog_d4774151cd4a4541b5cb7243b53bb68b", "catalog_dbd310cf502344c19f0c0145ad97e420"], "no_constructor_or_domain_substitution": "Testfixture setUp wrappers only record exact fresh schema after unchanged setup; no production constructor or result patched.", "source_tree": "uncommitted isolated dependent branch from1442f184; exactsourcehashmanifest retained separately"}

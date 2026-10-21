@@ -1071,6 +1071,15 @@ def make_handler(dataset, observer=None):
                                 self._snapshot_contract_access(source['source_selector']['project_id'],
                                                                'models.publish',2,'edit')
                         return self.reply(dataset.models.publish(parts[1],body,_source_guard=source_guard))
+                    if parts == ['recipe-material','preflight']:
+                        agent_api.require_selection(self._contract_selection,'recipes.preflight_material')
+                        projects.closed(body,('ref',))
+                        try:
+                            return self.reply(dataset.pipelines.preflight_recipe_material(body['ref'],report=True))
+                        except workbench.WorkbenchError as error:
+                            report=getattr(error,'preflight_report',None)
+                            if report is None:raise
+                            return self.reply({'error':str(error),'code':error.code,'preflight_report':report},error.status)
                     if parts in (['model-material'],['recipe-material']):
                         model=parts==['model-material'];name='models.material' if model else 'recipes.material'
                         agent_api.require_selection(self._contract_selection,name);projects.closed(body,('ref',))
@@ -1167,8 +1176,17 @@ def make_handler(dataset, observer=None):
                         if parts[2] == 'preflight-external':
                             projects.closed(body, ('revision',))
                             self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.preflight_external',2)
-                            if self._contract_selection is not None and self._contract_selection[:2] == ('graphs.preflight_external', 3):
-                                return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision'], contract_version=3))
+                            if self._contract_selection is not None and self._contract_selection[:2] in (
+                                    ('graphs.preflight_external', 3), ('graphs.preflight_external', 4)):
+                                try:
+                                    return self.reply(dataset.pipelines.preflight_external(
+                                        parts[1], body['revision'], contract_version=self._contract_selection[1]))
+                                except workbench.WorkbenchError as error:
+                                    report = getattr(error, 'preflight_report', None)
+                                    if report is None:
+                                        raise
+                                    return self.reply({'error': str(error), 'code': error.code,
+                                                       'preflight_report': report}, error.status)
                             return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)

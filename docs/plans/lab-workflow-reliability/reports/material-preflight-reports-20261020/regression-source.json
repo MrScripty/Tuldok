@@ -1,0 +1,10 @@
+{
+  "base": "1442f1849c5894500d69823e60bfcd3d644dc683",
+  "branch": "feature/material-preflight-reports-20261020",
+  "files": {
+    "pipeline.py": "5c879c741e7602c31cf1625d9673fc7464f5cef5c12554381a1ab662ccddca6d",
+    "agent_api.py": "b2c11bb56dd7688850cbfce5dc6445210056fbd7c966481e614e9eeb15a397c8",
+    "app.py": "0c8dc4da95fc803136ad2731a2e643e0fd14839535d740ef0d263ac117f9d276",
+    "tests/test_material_preflight_reports.py": "2b1ef0fd541d3f30b1db5fada7718dbb8ea5b3a385c9ec12038c162907707eaf"
+  }
+}

@@ -18,6 +18,14 @@ Definite old-server route absence permits exact frozen legacy fallback. Ordinary
 auth/server/malformed discovery failures never trigger fallback. Contract selection
 is internal to the client; there are no schema, telemetry or retry flags to manage.
 
+When negotiated graph preflight v4 returns a classified preparation refusal,
+`preflight` exits nonzero and stderr JSON includes its validated
+`preflight_report` beside the original code, message and status. Unknown material,
+runtime readiness and execution remain explicit. Ordinary early errors and older
+contracts keep their existing projection. A refusal does not create a submission
+manifest, grant, reservation or retry. See the
+[report contract](run-preflight-publication.md#selected-v4-refusal-reports).
+
 An owner issues an agent credential with `inspect,edit,execute` and optional
 `cancel` scopes. The CLI cannot approve execution. In Pipeline the owner reviews
 the exact graph preflight, expands **Grant this material to an actor**, selects
@@ -138,6 +146,14 @@ GPU use or remote execution.
 `python project_cli.py --config PRIVATE_CONFIG call --operation models.get --arguments model.json`
 uses the same installed registry, exact capability selection and bounded JSON
 argument reader. For example, `model.json` contains `{"model_id":"OPAQUE_ID"}`.
+For a fresh, inert external retained-material check, write
+`{"ref":RETAINED_MATERIAL_REF}` from `studies.trial.material` to a regular JSON
+file and call `--operation recipes.preflight_material --arguments FILE` through
+the existing `call` command. It returns the selected v3 bounded report or retains
+the validated typed refusal report in stderr JSON with a nonzero exit status.
+Builtin native probes are unsupported; no execution or Study reservation occurs.
+See the [exact material contract](run-preflight-publication.md#exact-retained-study-material-preflight).
+
 `recipes.material` accepts `{"ref":RETAINED_MATERIAL_REF}` and `studies.get`
 accepts `{"study_id":"OPAQUE_ID"}`. All print the same domain result available
 through selected HTTP and structured MCP. No project code executes on inspection.

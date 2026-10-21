@@ -13,6 +13,14 @@ changed identity; it is not a signature, grant or scientific approval. Inspect
 and retain exported manifests before an effect. Grant issuance, Study budgets,
 runtime installation, scheduling and scientific acceptance remain server-owned.
 
+`submission_manifest` propagates a negotiated v4 graph preflight refusal as the
+same `AgentAPIError` code/status, carrying its validated `preflight_report`.
+It creates no manifest and performs no submit, fallback or second preparation.
+Early errors and older selected contracts have no report. The
+[preflight owner contract](run-preflight-publication.md#selected-v4-refusal-reports)
+defines request-only provenance, null material/execution identities and deferred
+checks for those refused preparations.
+
 ```python
 from tuldok_client import WorkflowClient
 

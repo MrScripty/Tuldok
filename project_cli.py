@@ -42,7 +42,8 @@ def invoke(client, operation, arguments, *, observer=None, observation=None):
                 if observer is not None else client.call(operation, arguments))
     if envelope['status'] >= 400:
         error = envelope['result']
-        raise AgentAPIError(error['error'], error['code'], envelope['status'])
+        raise AgentAPIError(error['error'], error['code'], envelope['status'],
+                            preflight_report=error.get('preflight_report'))
     return envelope
 
 
@@ -324,7 +325,10 @@ def main(argv=None, *, observer=None):
             http_status = status
         return 0 if _write_output(sys.stdout, result, observer, observation, status=status, http_status=http_status) else 1
     except AgentAPIError as error:
-        _write_output(sys.stderr, {'code': error.code, 'error': str(error), 'status': error.status},
+        result = {'code': error.code, 'error': str(error), 'status': error.status}
+        if error.preflight_report is not None:
+            result['preflight_report'] = error.preflight_report
+        _write_output(sys.stderr, result,
                       observer, observation, status=error.status, failed=True, observed_outcome=(
                           'transport-error' if error.code in ('transport', 'response_too_large') else
                           'registry-refusal' if error.code == 'registry_mismatch' else

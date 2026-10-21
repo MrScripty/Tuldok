@@ -54,7 +54,7 @@ class SnapshotRegistryTests(unittest.TestCase):
         for name in ('list', 'get', 'open'):
             self.assertEqual(selected['project_snapshots.' + name], 1 if name == 'list' else 2)
         for name, version in (('recipes.inspect', 4), ('graphs.create_external', 2),
-                ('graphs.preflight_external', 3), ('models.publish', 2),
+                ('graphs.preflight_external', 4), ('models.publish', 2),
                 ('studies.prepare_trial', 2)):
             self.assertEqual(selected[name], version)
 

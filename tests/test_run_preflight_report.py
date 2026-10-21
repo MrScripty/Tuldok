@@ -68,7 +68,7 @@ class PreflightReportTests(unittest.TestCase):
         for version in (1, 2, 3):
             agent_api.validate_output('graphs.preflight_external', {'status': 200, 'result': result}, version)
         selected = agent_api.negotiate(agent_api.capabilities('b' * 32), 'b' * 32)
-        self.assertEqual(selected['graphs.preflight_external'], 3)
+        self.assertEqual(selected['graphs.preflight_external'], 4)
         for mutate in (lambda value: value.pop('preflight_report'),
                        lambda value: value.update(valid=False),
                        lambda value: value.update(status='blocked'),
@@ -165,7 +165,7 @@ class PreflightReportTests(unittest.TestCase):
             report.assert_not_called()
 
     def test_unsupported_report_versions_refuse_before_preparation(self):
-        for version in (True, 1.0, '3', 4):
+        for version in (True, 1.0, '3', 5):
             graph, owner, _prepared = self.domain_owner()
             with patch.object(pipeline.recipe_contract, 'prepare') as prepare:
                 with self.subTest(version=version), self.assertRaises(WorkbenchError) as caught:

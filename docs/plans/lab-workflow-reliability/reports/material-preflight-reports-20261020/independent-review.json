@@ -1,0 +1,134 @@
+{
+  "reviewed_utc": "2026-10-20T18:18:39.625818+00:00",
+  "disposition": "clear_for_local_source_checkpoint_with_stated_scope_limits",
+  "base": "1442f1849c5894500d69823e60bfcd3d644dc683",
+  "branch": "feature/material-preflight-reports-20261020",
+  "reviewed_state": "uncommitted isolated local dependent source; no publication or hosted acceptance inferred",
+  "reviewer_actions": "Source/test/docs/ledger review and local evidence hashing only. No test/import/PG query, repository edit or remote action.",
+  "source_hashes": {
+    "pipeline.py": "5c879c741e7602c31cf1625d9673fc7464f5cef5c12554381a1ab662ccddca6d",
+    "agent_api.py": "b2c11bb56dd7688850cbfce5dc6445210056fbd7c966481e614e9eeb15a397c8",
+    "app.py": "0c8dc4da95fc803136ad2731a2e643e0fd14839535d740ef0d263ac117f9d276",
+    "tests/test_material_preflight_reports.py": "a8e43084b6b5145bfb5cd24b384cea3e3afba147b8ac1e4aa8c15ffe04af580c"
+  },
+  "canonical_docs_sha256": {
+    "docs/contracts/run-preflight-publication.md": "471862b521514b2b07eba3c61df0e44c0354b3833aee4477c95443b514e1ac5c",
+    "docs/contracts/agent-operations.md": "6fecd23d55f9bce890b740dea0f65875645575f13606b31d09e2b173f1a79ad7",
+    "docs/contracts/project-cli.md": "63d9552e80d73bb913c2359778e7f24a7669bd7abfb4e04cae89ccbfefd0297c",
+    "docs/plans/lab-workflow-reliability/execution-ledger.md": "049c5d190fc74ce9ecd2034c41abf1bbaf5e8b087ddf288ec031bd455b984984"
+  },
+  "evidence_sha256": {
+    "source-for-regression-tests.json": "f8b08ef67ffbb4f3e9fb7ed11cc90a633ed56d819dc40c800c90db3dfb3ba6f1",
+    "source-for-final-tests.json": "a73db2e5c0ab678ae4cef8d0391fdb7cb5e38d79ccd8f295602a39b379ab5fed",
+    "regression-result.json": "7c016eaa8d2ca1f398c9c0a770d6457d90b9f3f3d5c219893996e2db1e419f47",
+    "material-followup-result.json": "d0a141c09655e4e97d892f0c815b8bff053490929dfc6377b59287e96b465b41",
+    "focused-attempt-01.log": "a0076a14aa735c4a9f89137b8421388d641e0995d1944ec335a4544e80005f96",
+    "material-followup.log": "661f410c3848de2cf2f650cb5191b5bd8edcf2285d7c1350b4e262d818610df5",
+    "all-prior-contracts.json": "b3feb141cec0346b635ae06306d794c99064bf250b9c3d75d7293f5f80290a44",
+    "run-focused.py": "9f684c68b8a33cd90fb749c2a07143606edaf315cc5aee6cba5ae361a90211d1",
+    "run-material-followup.py": "92bc771936069a605ba246a54dedefecd1844e274cdba9c75da182d2aa4ff41a"
+  },
+  "bindings": {
+    "all_final_four_files_match_manifest": true,
+    "production_three_files_unchanged_between_runs": true,
+    "regression_test_sha256": "2b1ef0fd541d3f30b1db5fada7718dbb8ea5b3a385c9ec12038c162907707eaf",
+    "final_test_sha256": "a8e43084b6b5145bfb5cd24b384cea3e3afba147b8ac1e4aa8c15ffe04af580c"
+  },
+  "tests": [
+    {
+      "tests": 75,
+      "unittest_seconds": 246.263,
+      "wrapper_utc_seconds": 246.643246,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source_manifest": "source-for-regression-tests.json",
+      "result_file": "regression-result.json",
+      "raw_log": "focused-attempt-01.log",
+      "owned_schemas_removed_as_reported": [
+        "catalog_1937048d1ac54ee8b748380c19a9fb16",
+        "catalog_4c40d8d1c09a45fab9fea7f0def45479",
+        "catalog_57796e8fbbc042a0b4f5a8144d5d3c53",
+        "catalog_6bea37acaf5c4744aea607d2322ed54e",
+        "catalog_8240f4833fef4881883718fac883e839",
+        "catalog_96a28c51b1a44e57b0c2201fa17d3b39",
+        "catalog_d491e85396da430cadc57c6faf285117",
+        "catalog_f36b38b44a804167a349f2a8e4bbc1a6"
+      ]
+    },
+    {
+      "tests": 9,
+      "unittest_seconds": 20.883,
+      "wrapper_utc_seconds": 21.058332,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "source_manifest": "source-for-final-tests.json",
+      "result_file": "material-followup-result.json",
+      "raw_log": "material-followup.log",
+      "owned_schemas_removed_as_reported": [
+        "catalog_d4774151cd4a4541b5cb7243b53bb68b",
+        "catalog_dbd310cf502344c19f0c0145ad97e420"
+      ]
+    }
+  ],
+  "compatibility": {
+    "prior_contracts": 127,
+    "all_recorded_baseline_current_hash_pairs_equal": true,
+    "legacy_projection_exact": true,
+    "only_addition": [
+      {
+        "operation": "recipes.preflight_material",
+        "version": 1
+      }
+    ],
+    "limit": "Root-generated comparison receipt inspected; no independent module import/recomputation."
+  },
+  "source_findings": [
+    "Inspect-only recipes.preflight_material/1 reuses existing retained material/Model/capture verification and current external preparation, then rechecks current disclosure.",
+    "Builtin refuses before native preparation/probe; default internal Study path, cold recipes.material and durable Trial receipts/replay preserved.",
+    "Three digest meanings distinct: outer composition material SHA, inner execution_material_sha256, graph execution_sha256; exact request Ref/catalog correlation enforced.",
+    "Refusals preserve original typed status/code with null graph/model/material/execution proofs and bounded eleven-row request-only provenance. Early auth/malformed/foreign/missing/unclassified remain bare.",
+    "Closed schema/content hash, external-only trainer, same-catalog nested refs, runtime content identity and directly available evidence links enforced; final rehashed negative cases isolated."
+  ],
+  "nits_disposition": {
+    "nested_ref_and_runtime_evidence_forgery": "Fixed in frozen source with final independent rehashed negative cases.",
+    "graph_execution_hash_limit": "Explicitly documented owner-attested provenance; not independently reconstructible from outer projection.",
+    "credential_scan_wording": "Now explicitly limited to refusal reports.",
+    "actual_cli_path": "Final actual Study-server refusal uses project_cli and real AgentClient transport; only from_config returns existing real client.",
+    "test_aliasing": "Final fixture deepcopy prevents cross-negative mutation; final nine cases bind revised test SHA.",
+    "duration_precision": "Regression unittest246.263s differs from wrapper246.643246s; both retained separately."
+  },
+  "coverage_limits": [
+    "Actual disposable-PG fixture verifies retained revision after newer draft, real source drift, cold read and Trial replay, raw headerless409/auth refusal before owner, no-Popen tripwire and six unchanged domain-table counts.",
+    "Late disclosure refusal is injected AccessError on second owner read, not actual credential revocation. Capture tamper and source drift are real file changes.",
+    "Schema removal/absence is root-driver assertion evidence; reviewer made no independent PG query.",
+    "Source/host/output/graph hashes remain owner-attested in bounded projection; content hashes do not establish scientific truth.",
+    "No native builtin/Torch training/CUDA/scientific, admission/storage/device reservation, publication, full C1/T1/M1, PUB-1 or SCI-1 qualification.",
+    "Historical initial harness/import errors remain separate; no future qualification/report file not yet reviewed is certified."
+  ],
+  "blockers": [],
+  "authored_report_review": {
+    "status": "final acceptance and qualification wording clear within explicit external-only scope",
+    "sha256": {
+      "acceptance.md": "c5c591259022a0176ad517f0b0983c28c6a6b1151c843d3246f18cc45c15cb4c",
+      "qualification.json": "d8479d60b7e379ab0d2b875a963687022ed810a144c8d2f081a569f7ec01b863",
+      "preservation.json": "ab16ba8f2e89fdd4e4c861dace7d92e4c93b7ec34cb3fcb7dc3217c0b215040a"
+    },
+    "all_ten_archived_evidence_hashes_match": true,
+    "source_checkpoint": "Base1442f184 plus final four byte hashes identify reviewed subject; future containing commit not yet created.",
+    "early_attempt_fidelity": "Early harness errors/pure skips explicitly retained as historical summary, distinct from75 and9 qualified runs; raw early error logs were not independently inspected.",
+    "cycle_avoidance": "Qualification references review filename, not review hash; receipt binds final qualification hash."
+  },
+  "independent_local_preservation": {
+    "all_97_prior_local_heads_exact": true,
+    "all_111_prior_worktree_records_exactly_present": true,
+    "only_added_local_head": [
+      "refs/heads/feature/material-preflight-reports-20261020"
+    ],
+    "only_added_worktree_records": 1,
+    "remote_preservation": "No remote reads performed."
+  },
+  "finalized_utc": "2026-10-20T18:19:48.626893+00:00",
+  "limitations_on_clearance": "No remaining local source blocker. This is clearance for exact local source checkpoint only; no remote publication, hosted qualification, full C1/T1/M1/science/hardware or remaining PUB-1/SCI-1 acceptance."
+}
