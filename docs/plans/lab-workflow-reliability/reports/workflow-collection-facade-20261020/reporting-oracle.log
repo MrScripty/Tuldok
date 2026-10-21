@@ -1,0 +1,7 @@
+test_complete_receipt_requires_independent_whole_bytes_and_no_provisional_files (test_benchmark_workflow_collection.FacadeReportingTests.test_complete_receipt_requires_independent_whole_bytes_and_no_provisional_files) ... ok
+test_partial_receipt_or_wrong_attached_ref_never_counts_as_success (test_benchmark_workflow_collection.FacadeReportingTests.test_partial_receipt_or_wrong_attached_ref_never_counts_as_success) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+OK

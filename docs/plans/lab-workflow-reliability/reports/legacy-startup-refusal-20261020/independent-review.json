@@ -1,0 +1,50 @@
+{
+  "format": "independent_legacy_startup_refusal_review_v1",
+  "disposition": "clear_scoped_source_and_execution_evidence",
+  "blocking_findings": [],
+  "source_commit": "8dbf9ae12bde9f88985ce2d11cb0757e38e60bed",
+  "source_tree": "4b56375c24586f80d9a4631d262dffaf1aa4a519",
+  "report_commit": "6a3cbf12db3118b31b414f20d5791277361c148a",
+  "legacy_commit": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+  "review": [
+    "Fresh subprocess imports actual pinned old app/metadata; loaded-path and oldschema3 assertions precede normal Dataset startup.",
+    "Only exact old StorageError unsupported-version/definition passes; unrelated exceptions and successful startup fail.",
+    "Inspected pinned old Dataset/Metadata source confirms version validation before Run owners and closed failed connection.",
+    "Current exact raw tables/sequences/files compared before/after old startup; result binds same preserved completed Run/artifact hashes through upgrade and both restore paths.",
+    "Qualifier and old app/metadata content SHA256 independently recomputed from exact Git objects.",
+    "Report source and domain/result evidence hashes match; authored scope and cleanup caveat accurate."
+  ],
+  "result": {
+    "exit_code": 0,
+    "old_schema": 3,
+    "current_schema": 10,
+    "original_backups_unchanged": true,
+    "raw_tables_sequences_files_unchanged": true,
+    "final_namespaces_as_recorded": []
+  },
+  "evidence": {
+    "acceptance.md": {
+      "bytes": 2073,
+      "sha256": "8c85e5d5a200533a34bb10df51c3c2f781460fec8b6a5d12e2d4e60c1f9e4806"
+    },
+    "domain-receipt.json": {
+      "bytes": 1981,
+      "sha256": "81094e15375053f143810d773eaeefc7d14c92ac3e8555fda1b36c57cf43f1e6"
+    },
+    "qualification.json": {
+      "bytes": 1464,
+      "sha256": "56d232baf4a0448b7963166a4992aae421066de4584293b51e31028e66c43715"
+    },
+    "result.json": {
+      "bytes": 754,
+      "sha256": "f660ed79e2c9774375b026e957e19087d3f7f13f492cc6724959cb9faa44c4b7"
+    }
+  },
+  "limits": [
+    "One actual schema3 implementation refusing schema10, not all historical binaries.",
+    "Reviewer did not rerun qualifier or PostgreSQL; root execution/result independently source/hash reviewed.",
+    "Existing qualifier does not emit exact cleanup identity; no exact-name receipt invented.",
+    "Raw stdout is identical to archived domain JSON by recorded SHA; separate duplicate log is not archived.",
+    "Hosted integration/current-main gates remain lead-owned; no full T8, performance, training or scientific acceptance."
+  ]
+}

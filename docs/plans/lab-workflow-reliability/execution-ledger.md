@@ -1,5 +1,96 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-20 — User removes backward-compatibility requirement
+
+The user explicitly states that existing projects must perform their own one-time
+migration to the new Tuldok version. The current plan/A8/T8/M5/T6 and consumer
+dispositions now target current-version correctness and backup/restore integrity.
+Breaking formats and explicit unsupported-version errors are intentional; no old
+client adapter or automatic migration system is required. Exact scientific meaning,
+custody/accounting, immutable failures, candidate-promotion fences and no data loss
+or replay remain required.
+
+The added actual old-startup qualifier had already completed successfully in
+hosted PR116 before this revision. Its source/checkpoints/raw evidence are retained
+as historical and non-gating. The active qualifier extension is removed rather
+than expanded. No new old-schema/client tests or local execution is requested.
+Current-version tests and hosted qualification continue under the revised scope.
+
+
+## 2026-10-20 — Facade collection cost witness admission
+
+The integration lead admitted a companion M4/M5 paired witness from stopped-transfer
+checkpoint322482d on isolated `test/workflow-collection-performance-20261020`.
+It reuses the established neutral fixture, Metrics and owner/HTTP instrumentation,
+and measures the actual current facade's ordinary versus explicit batch collection
+including independent verification and private file publication. The admitted
+fixed matrix and exclusions are in the plan; every arm/outlier, exact source,
+environment, raw resource/request/owner observations and integrity/cleanup remain
+required. Two focused pure reporting-oracle tests pass: corrupt/provisional local
+bytes, partial receipts and a contradictory attached Ref cannot become a successful
+sample. Root and independent executable-source reviews cleared frozen00d32f8
+before its pilot. The pilot passed2pairs/4arms with exact cleanup; the separately
+admitted quiet final matrix completed36pairs/72arms/12freshprocesses, retaining all
+samples, orders and outliers. All27 twenty-item pairs were faster; first/warm
+median paired ratios were0.791959/0.806177 at Run history8,0.800143/0.804662 at
+history55 and0.796211/0.788530 for exact attachedRef history56. All9 one-item
+controls regressed (2.166093 first/1.975566 warm). The evidence supports the
+existing explicit twenty-small-item facade; ordinary remains default and2–19
+remain unmeasured.
+
+All whole hashes, original Run/events/accounting and zero-replay tripwires passed;
+the exact two final schemas/temporary directories were removed. External source/
+namespace bookends stayed exact/empty. The window excluded concurrent tests/PG/
+heavy qualification, while light lead Git/prose/remote-CI activity continued.
+Raw resources/request/owner observations, honest first/warm/order strata and the
+scoped decision are retained in the
+[facade report](reports/workflow-collection-facade-20261020/acceptance.md).
+Its report-only follow-up also archives the independent322 stopped-transfer pass
+and the separate exactcd420 root12 neutral HTTP/CLI pass without changing their
+original attribution. Independent final evidence review and hosted integration
+remain pending. No production, producer, schema, contract, runtime installation,
+automatic threshold, fullT5 or generic speedup is inferred from this witness.
+
+## 2026-10-20 — Actual older-application startup refusal admission
+
+The cross-owner T8 audit identified one literal missing witness: an actual
+older application refusing the integrated schema10 catalog. Existing
+current-code version mismatch tests remain their original evidence. The narrow
+test-only follow-up starts at combined-transfer checkpoint `322482d`, extends
+the existing pinned schema3 retained-Run qualifier, and will execute normal old
+Dataset startup after a real explicit upgrade. Exact raw tables, sequences and
+files must remain unchanged. No production/schema/workflow/README edit or
+compute replay is admitted. Qualification waits for the facade measurement
+quiet window to finish; no new result or full T8 acceptance is inferred yet.
+
+## 2026-10-20 — Integrated stopped-transfer acceptance admission
+
+The integration lead selected the existing T8 composition gap after verifying
+the exact two reporting slices at `cd420c44c42ff85487965a858865170cfc0a9358`.
+Isolated branch `test/integrated-retention-acceptance-20261020` adds only a neutral
+combined M2/M3/publication backup/restore and current public-consumer witness,
+its scoped evidence and plan admission. It introduces no production behavior,
+SQL version or new design. The real process runs once; publication fault/recovery
+and a real PostgreSQL advisory-lock coordinator failure establish the retained
+state before stopping writers. Independent-database restore must preserve every
+raw table/sequence/file before activation, then immutable recovery acknowledgement,
+stored incomplete/measured clocks, original Run/events and exact result Ref under
+cold HTTP/SDK/CLI inspection and whole-file collection without compute replay.
+
+The actual source-frozen gate passed one test in16.930s, zero failures/errors/skips.
+All43 raw tables, sequence states and original files matched before restored
+activation; actual current HTTP/SDK and separate CLI inspection/collection retained
+all tables/sequences, exact result Ref, original interrupted Run/events and stored
+incomplete/measured clocks. The restore/read launch tripwire recorded zero calls.
+The original stopped catalog and backup stayed unchanged; the exact fresh source
+schema and restored database were removed with absence assertions. Source hashes,
+raw log, identities and limitations are in the
+[scoped acceptance report](reports/integrated-retention-restore-20261020/acceptance.md).
+Independent review and hosted/postmerge qualification remain pending. Historical
+source proofs, original failures, unrelated README PRs and dependent branches
+remain unchanged. No full milestone, performance or real-lab scientific acceptance
+is inferred from this test-only admission.
+
 ## 2026-10-20 — Local retained Study material preflight reports
 
 The next authorized C1 slice exposes the already named Pipeline

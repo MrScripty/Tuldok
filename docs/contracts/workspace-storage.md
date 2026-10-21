@@ -1,5 +1,12 @@
 # Workspace metadata and explicit schema upgrade
 
+Current product support targets the declared current version. Older projects,
+clients and catalog layouts have no backward-compatibility guarantee; their
+owners must perform a one-time migration/adaptation before use. Existing explicit
+tooling is an owner choice, not automatic migration or a compatibility promise.
+Current schema validation, honest unsupported-version errors and stopped
+backup/restore integrity remain required. Preserve original data and backups.
+
 Workspace graphs, runs and exposure evidence use the existing PostgreSQL
 catalog and its persistent dataset identity. `metadata.py` owns their physical
 tables and schema version. Pipeline/run owners validate the versioned JSON

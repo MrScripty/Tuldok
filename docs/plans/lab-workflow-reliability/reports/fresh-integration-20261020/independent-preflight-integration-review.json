@@ -1,0 +1,60 @@
+{
+  "format": "independent_preflight_integration_review_v1",
+  "disposition": "clear_scoped_combined_source_integration_hosted_checks_required",
+  "blocking_findings": [],
+  "chain": [
+    "360bbda950cc48ed3c3d9193539039b68e0ac8cb",
+    "1442f1849c5894500d69823e60bfcd3d644dc683",
+    "cd420c44c42ff85487965a858865170cfc0a9358"
+  ],
+  "reviewed_tree": "cdcfd9e2f348af530149314936c5efafbc6d8162",
+  "compatibility": {
+    "full_prior_contracts_recomputed_exact": 126,
+    "complete_legacy_discovery_exact": true,
+    "only_additions": [
+      "graphs.preflight_external/4",
+      "recipes.preflight_material/1"
+    ]
+  },
+  "retained_evidence_review": [
+    "Graph original source/log/authored acceptance and qualification hashes match graph commit1442f184.",
+    "Material final source/canonical docs/archived evidence and review-bound reports matchcd420c44.",
+    "Retained independent reviews contain no blocking findings.",
+    "Original65graph and75material/9strengthened subjects retain separate source attribution; no false reattribution of finaltest bytes to75.",
+    "Early historical /tmp failure logs not included in transferred archive were not independently recovered."
+  ],
+  "source_review": [
+    "Bounded request-only refusal reports preserve typed status/code, null unverified identities, explicit deferred execution boundaries and no exception text in report.",
+    "Selected consumers check report hash/closed shape/check provenance/owner/state and request graph/material/catalog correlation; no retry/submission added.",
+    "Retained external material preflight reuses owner validation and rechecks disclosure; builtin refuses before native preparation.",
+    "Legacy projections/private default paths retained; production ownership, schema, README and workflows unchanged by transfer scope."
+  ],
+  "independent_pure_run": {
+    "tests": 26,
+    "seconds": 3.803,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "raw_log": "/workspace/tuldok-transfer/current-qualification/independent-pure-reports.log",
+    "raw_log_sha256": "69eee3916d369afee5fa6be9583523aaf8dbcb4e6ea213c428e11309f6703b30",
+    "environment": "isolated pinned /workspace/tuldok-qa-venv"
+  },
+  "earlier_attempt": {
+    "tests": 26,
+    "seconds": 3.631,
+    "passed": 24,
+    "errors": 2,
+    "skipped": 0,
+    "cause": "Primary Python lacked psycopg importing model_definitions->metadata in two material boundary tests; existing .venv also lacked pinned deps. No product failure inferred; subsequent full26 pinned-env run passed.",
+    "affected_tests": [
+      "MaterialPreflightReportTests.test_builtin_refuses_before_probe_and_early_foreign_ref_stays_bare",
+      "MaterialPreflightReportTests.test_default_internal_path_and_private_verified_ref_fence_are_preserved"
+    ]
+  },
+  "limits": [
+    "No review-time PostgreSQL test rerun for initial reporting slices.",
+    "No full C1/T1/M1, PUB-1/SCI-1, native runtime/hardware or scientific acceptance.",
+    "Hosted exact-head/current-main checks and authorized integration remain lead-owned.",
+    "Read-only source review; no source/git/remote/settings mutations by reviewer."
+  ]
+}

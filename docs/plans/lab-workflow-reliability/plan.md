@@ -12,6 +12,28 @@
 
 **Issues:** [issues.md](issues.md)
 
+## Current-version support policy — user revision, 2026-10-20
+
+Backward compatibility is no longer a product requirement. Breaking project,
+client, operation and catalog-format changes are permitted for the new version.
+Owners of existing projects must perform their own one-time migration/adaptation
+to the current Tuldok formats before use. No automatic migration system or
+compatibility adapter is required solely to keep older projects working.
+
+This user instruction supersedes older compatibility promises and old-client,
+old-schema upgrade-chain and older-application qualification gates below. Their
+completed sources, raw evidence and reviews remain immutable historical records;
+they do not block current-version acceptance. The completed pinned old-startup
+witness is removed from active qualification. Existing incidental historical
+regression tests need not be expanded to preserve old-project compatibility.
+
+Current-version correctness remains required: declared schema/contract validation,
+honest unsupported-version errors, exact source/material/evidence meaning,
+authority, custody/accounting, stopped current-version backup/restore integrity,
+and no compute replay or data loss. An owner-led migration must preserve the
+original data/backup; unsupported bytes cannot be silently reinterpreted or erased.
+No schema number or wire-format change is invented by this policy-only amendment.
+
 ## Objective
 
 Let a lab submit an inspectable, exactly identified experiment, catch known
@@ -164,7 +186,7 @@ Exact cases, oracles and execution procedures are in
 | A5 | Paired cold/warm/history-size measurements establish whether verified reuse and bounded collection batching improve their named costs, while byte mutation, stale authority and partial failures retain the same integrity/refusal outcomes. | integration | representative | automated | pending | T5 |
 | A6 | A clean consumer uses the supported SDK and matching CLI to generate routine manifests, submit once, monitor, cancel, collect verified artifacts and compare exact results, without implementing a scheduler or gaining owner authority. | system | representative | automated | pending | T6 |
 | A7 | A real browser user compares compatible baseline/candidate evidence per case with owned pass/fail/unknown criteria and recorded passes/iterations, sees time/memory/config/logs/diagnostics and incompatibility reasons, and follows immutable lineage with honest external/managed labels. | user-workflow | representative | either | pending | T7 |
-| A8 | Supported older clients and retained catalogs preserve identities and access; explicit upgrade/restore, interrupted migration, cold reads and rollback procedures preserve raw evidence and do not replay compute. | contract | required-real | automated | pending | T8 |
+| A8 | Current-version clients, evidence and catalogs validate their declared schemas; unsupported versions fail explicitly. Stopped current-version backup/restore and interrupted restore preserve raw identities, bytes, permissions and accounting without replay or data loss; owners migrate older projects once themselves. | contract | required-real | automated | pending | T8 |
 
 ## Scope
 
@@ -259,7 +281,7 @@ fixtures to stand in for scientific acceptance.
 **Applicability:** `applicable`
 
 - Independent concepts and dimensions: submission material (Pipeline), process attempt and publication (Runs), installed environment (Pumas), finite experiment policy (Studies), and scientific interpretation (evidence owner/lab) change for different reasons. UI/client compose their typed projections; they own no execution policy.
-- State, identity, value, time, policy, and mechanism: exact material hashes reference source/runtime/input/profile authorities; health and spans are observations; publication has a separately owned continuation record. No single manifest becomes canonical for runtime installation, permission, budget and science. New operation versions own only changed wire promises; evidence versions own interpretation. Old supported versions retain exact projections. Material/profile/host/input changes invalidate preparation; credentials and mutable installation facts are rechecked at their own boundaries.
+- State, identity, value, time, policy, and mechanism: exact material hashes reference source/runtime/input/profile authorities; health and spans are observations; publication has a separately owned continuation record. No single manifest becomes canonical for runtime installation, permission, budget and science. New operation versions own only changed wire promises; evidence versions own interpretation. Current declared versions are validated; owners adapt older consumers themselves. Material/profile/host/input changes invalidate preparation; credentials and mutable installation facts are rechecked at their own boundaries.
 - Caller and composition-root knowledge: callers choose graph/Trial, exact material, grant and request key; they receive bounded results and typed failures. They do not know file-copy ordering, recovery locks, shard offsets, internal futures or cache layout. Dataset/Runs lifecycle remains the sole coordinator composition root.
 - Representative change paths and forced owners: changing an evidence shard policy touches its producer/verifier/readers and public version, not Pumas or Study policy; changing installed Torch bytes touches Pumas selection and verification, not metric meaning; changing a metric touches its evidence contract and comparison, not custody. A queue-lock failure touches Runs health/recovery and projections, not another scheduler. Broader required propagation triggers re-plan.
 - Stable Interfaces versus hidden knowledge: immutable refs, exact negotiated operations, existing custody receipts, metric definitions and bounded artifact descriptors are the stable boundaries. SDK and UI consume these; raw staging directories, thread handles, file mtimes and process-local clocks stay private.
@@ -342,9 +364,9 @@ separate from full live-browser T4/T8/M3 acceptance, which remains pending.
 
 **Allowed write set:** new `tuldok_client.py`, `agent_api.py`, `project_cli.py`, `docs/contracts/{project-cli,agent-operations}.md`, new `docs/contracts/workflow-client.md`, `README.md` client entrypoint only; new `tests/test_workflow_client.py`, `tests/test_workflow_client_http.py`; existing `tests/test_agent_project_cli.py`.
 
-**Tasks:** Implement C6 through negotiated operations; generate ordinary submission/collection manifests without custom script scaffolding; export exact JSON before submission; preserve explicit owner approval and explicit reconciliation after unknown mutations. Keep existing CLI and low-level AgentClient compatible. Add capabilities only alongside working server paths.
+**Tasks:** Implement C6 through negotiated operations; generate ordinary submission/collection manifests without custom script scaffolding; export exact JSON before submission; preserve explicit owner approval and explicit reconciliation after unknown mutations. Use the current CLI and canonical AgentClient transport; older-client compatibility is not required. Add capabilities only alongside working server paths.
 
-**Acceptance gate:** T6 plus old-client contract tests; actual clean Python consumer and CLI use one admitted neutral attempt, cancellation, denied calls, interrupted collection and lost-reply reconciliation. No app/DB/Torch startup on import and no new install dependency for routine CPU client use. Re-plan if client logic duplicates server policy or requires a second credential/transport system.
+**Acceptance gate:** T6 on current supported contracts; actual clean Python consumer and CLI use one admitted neutral attempt, cancellation, denied calls, interrupted collection and lost-reply reconciliation. No app/DB/Torch startup on import and no new install dependency for routine CPU client use. Re-plan if client logic duplicates server policy or requires a second credential/transport system.
 
 **Status:** `Planned`
 
@@ -362,22 +384,87 @@ separate from full live-browser T4/T8/M3 acceptance, which remains pending.
 
 ## Compatibility, Migration And Rollback
 
-Preserve all installed operation identities/projections. New closed outputs use
-new negotiated versions or distinct operations, selected once from capabilities;
-auth, corrupt responses and timeouts never trigger a second mutation dispatch.
-Older retained evidence stays on its original verifier and remains inspectable.
-No historical span, cache verification, scientific unit or lineage is synthesized.
+### Facade collection cost acceptance admission — 2026-10-20
 
-Before M1/M3 add persistence, inventory actual supported schema versions and
-backup/restore consumers on the integrated baseline. Extend the existing explicit
-stopped-writer migration, atomic ledger and storage contract; never migrate at
-inspection/startup by surprise. Validate upgrade, interrupted acknowledgement and
-stopped restore with raw bytes preserved. The lead records backup and target
-schema before activation. An older binary must refuse an unsupported new schema;
-rollback uses the recorded stopped backup plus retained new evidence, or a proved
-forward repair. Never reopen a new catalog with an incompatible binary or erase
-authority to downgrade. Cache data is independently disposable; remove only
-identified unreferenced cache entries after no reader owns them.
+The integration lead selects the remaining M4/M5 facade-specific measurement
+boundary on separate branch `test/workflow-collection-performance-20261020`, based
+on the unchanged stopped-transfer witness `322482d2ca6fa2af8effb7a6a5080313efe745b4`.
+The companion driver reuses the existing neutral Fixture/Metrics and owner/HTTP
+observers. It compares actual `WorkflowClient.collect` and explicit `collect_batch`
+on the same source/catalog/inventory, including their current verification and
+private whole-file publication. Exported manifests/bootstrap, independent output
+oracle rereads and fresh destination setup/cleanup are recorded separately or
+excluded equally from the timed calls.
+
+The fixed matrix measures twenty16KiB artifacts at histories8/55, a one320KiB
+control at history8, and the twenty-item exact attached result Ref after one
+additional real interrupted Run. Three fresh processes per cell each contribute
+one first and two warm alternating pairs. Raw samples/order/UTC bounds, wall,
+CPU/RSS/I/O, HTTP/owner observations, whole hashes, unchanged original Run/events/
+accounting and owned cleanup are retained. A bounded pilot and executable source
+review precede a quiet matrix window. No result, threshold or improvement is
+assumed before measurement; negative arms/outliers remain evidence.
+
+The write set is `tests/benchmark_workflow_collection.py`, its focused reporting
+oracle tests, this admission, the ledger and scoped reports. No producer,
+production/schema/contract/workflow/README change or installed-runtime mutation is
+admitted. This measures only the named local facade boundary, not2–19 items,
+arbitrary payloads/history, preparation, whole workflows, lab or scientific gain.
+
+### Historical older-application refusal witness — no longer gating
+
+This completed witness is retained as historical evidence and is no longer an
+acceptance requirement under the user revision above. Its active qualifier
+extension is removed; original checkpoints and raw results remain preserved.
+
+The earlier T8 audit found historical upgrade, rollback and stopped-transfer coverage,
+but no execution of the actual older application against a current schema10
+catalog. A separate test-only branch starts at the reviewed combined-transfer
+checkpoint `322482d2ca6fa2af8effb7a6a5080313efe745b4`. It extends the existing
+`tests/qualify_spatial_retained_runs.py` gate, using its unchanged pinned schema3
+application `f1ecf7888a8dfa5b67ac8b087034226d533c682e` after an actual explicit
+upgrade. The old application's normal Dataset startup must refuse the current
+catalog before changing any raw table, sequence or file. Current-code version
+arguments are not substituted for old source execution. No production, schema,
+workflow or README change is admitted. Actual qualification and independent
+review remain gates; this does not complete unrelated T8 or lab acceptance.
+
+### Integrated stopped-transfer acceptance admission — 2026-10-20
+
+The fresh integration lead admits one narrow T8 witness from the exact reporting
+composition `cd420c44c42ff85487965a858865170cfc0a9358`, on isolated branch
+`test/integrated-retention-acceptance-20261020`. It composes existing M2 coordinator
+journal/immutable acknowledgement, M3 retained owner clocks and same-Run attached
+publication-result Ref in one stopped backup and independent-database restore.
+Current authenticated HTTP/SDK and separate CLI consumers then inspect and collect
+that restored result with a compute-launch tripwire. The original stopped catalog
+and immutable backup remain intact until their exact owned test cleanup.
+
+The write set is `tests/test_integrated_retention_restore.py`, this admission,
+the execution ledger and a scoped report directory. No production code, schema,
+operation identity, README, workflow, original receipt or dependent branch changes
+are admitted. Real disposable PostgreSQL/neutral process qualification, explicit
+owned schema/database cleanup, independent review and hosted integration remain
+separate gates. This witness does not close all T8/M2/M3/M5, performance, PUB-1,
+SCI-1, native training or hardware acceptance. Existing historical tests and their
+source attribution are preserved; missing real lab inputs remain missing.
+
+Support the current declared operation, evidence and catalog formats. Breaking
+changes may require owners to migrate/adapt existing projects and consumers once;
+old projections, readers and schema-upgrade chains are not acceptance obligations.
+Current clients select implemented contracts explicitly; auth, corrupt responses
+and timeouts never trigger a second mutation dispatch or guessed reinterpretation.
+Missing historical observations remain unknown rather than fabricated.
+
+Before persistence changes, record the current schema and current backup/restore
+consumers. Preserve stopped current-version backups, exact raw rows/sequences/
+files/permissions and custody/accounting across restore and interrupted-current-
+restore reconciliation. Validate unsupported versions with honest errors. Owners
+perform their own migration with original data retained; no automatic startup
+migration, generic migration framework or legacy adapter is admitted by this work.
+Rollback/forward repair must preserve new evidence and cannot erase authority,
+replay compute or silently open data with an incompatible implementation. Cache
+cleanup remains limited to identified unreferenced entries with no active reader.
 
 Roll out milestones separately through exact candidate review/tests/CI. Disable
 new convenience operations on failure while retaining underlying inspection,

@@ -1,0 +1,26 @@
+{
+  "source_commit": "cd420c44c42ff85487965a858865170cfc0a9358",
+  "scope": "Root actual 12 existing neutral HTTP/CLI tests, explicit classifier exclusion; archived by later report-only branch",
+  "source_sha256": {
+    "tuldok_client.py": "3cdfb0a9823ec7527833a8838911c3a1d62ecc0d8376c438e3100c6c9f30aee6",
+    "agent_api.py": "b2c11bb56dd7688850cbfce5dc6445210056fbd7c966481e614e9eeb15a397c8",
+    "project_cli.py": "16f9da9c2d7d180a0bb43e403d4088c9bea73f7d175170f9e816157cb510f88d",
+    "tests/test_workflow_client_http.py": "25c489b8490f457840a2b88d1c9cb5e351e2dd0967eaf7cdd5bed3ee308eae7f",
+    "tests/test_external_runs.py": "59931dd73ebe7531e793a6dbe5ac4f9f9d5a6c8d6eb2df83930611d7e99118a4",
+    "tests/test_experiments.py": "1cdea9b92cdfe9bebf9f2453d870555423474ca7dba70cb9a52b5ee9a156c8d2"
+  },
+  "tests": 12,
+  "unittest_seconds": 97.352,
+  "wrapper_seconds": 97.36058763600005,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "schemas_before": [],
+  "schemas_after": [],
+  "owned_schemas_removed_by_runner": [],
+  "cleanup_limit": "Fixtures removed their own schemas; runner observed no residual namespace to remove.",
+  "classifier_scope": "Excluded: no explicitly selected qualified local Torch CPU runtime. No training/runtime installation was performed.",
+  "log_sha256": "4b5cd15255d3e70f5003a25b4bb7596441b4ef1c7cebbb5dd097991b9fffe75d",
+  "result_sha256": "7fd2ef65cb0369abbd52009608e31364180a25a59d2739f2bfec840ed227b773",
+  "runner_sha256": "cb8d4ce7474a30df4d2992000795734bd202022e76173918e8b7e45a25f3b384"
+}

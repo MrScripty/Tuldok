@@ -1,0 +1,51 @@
+{
+  "format": "independent_integrated_retention_restore_review_v1",
+  "reviewed_utc": "2026-10-20T23:14:10.178441+00:00",
+  "disposition": "clear_scoped_test_only_acceptance",
+  "blocking_findings": [],
+  "source_commit": "322482d2ca6fa2af8effb7a6a5080313efe745b4",
+  "source_tree": "19cfdf7b2186df5a39597e0256f9c5780fa04bbd",
+  "test_source_sha256": "3eeae36c3e538fd4a629893cb584e9613b805e80bcc1b1a71fdf134e09a4f64e",
+  "tests": {
+    "run": 1,
+    "seconds": 16.994,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "files": {
+    "independent-integrated-retention-restore.log": {
+      "bytes": 329,
+      "sha256": "294e973631a23a035fc1415a2ff61a958af0c6bd100c2e6c05edae17101560e8"
+    },
+    "independent-integrated-retention-restore-domain.json": {
+      "bytes": 17576,
+      "sha256": "367468a89a7495b2291565e1778159b82dbc55fcd9177e1240bbeef0755e37f7"
+    },
+    "independent-integrated-retention-restore-result.json": {
+      "bytes": 476,
+      "sha256": "a3fe25d23a5022291f5ee6d6781012ec616e370dec2d39ce83c392518cf5cbc5"
+    }
+  },
+  "source_review": [
+    "Test-only write set; no production/schema/contract/workflow changes.",
+    "Real neutral process and acknowledged drain precede authored original publication-copy fault; separate real PostgreSQL advisory-lock fault.",
+    "Same-Run owner recovery and immutable coordinator acknowledgement preserved through stopped independent-database restore.",
+    "Raw43-table representations, sequences and ordinary files compared before activation; retained clocks and exact Run/result after activation.",
+    "Current inspect-only HTTP/SDK and separate CLI collect private whole artifact with exact Ref and byte/hash/mode validation.",
+    "Post-consumer table/sequence equality, original source/backup preservation and exact owned cleanup."
+  ],
+  "verification": [
+    "All16 original qualification source/fixture hashes and archived raw-log/domain-receipt hashes match.",
+    "Independent rerun at sealed source passed; test SHA unchanged and git worktree clean afterward.",
+    "Separate post-drop source namespace and restored database lookups absent; before/after catalog namespaces empty."
+  ],
+  "limitations": [
+    "One direct neutral external attempt; one grant/consumption, zero Study reservations.",
+    "Not every historical schema/old-client/upgrade/interruption gate; no corrupted or interrupted transfer in this witness.",
+    "No performance, numerical/native training/CUDA or scientific acceptance.",
+    "PUB-1 and SCI-1 real inputs remain absent.",
+    "Hosted candidate integration and postmerge gates remain lead-owned."
+  ],
+  "pg_window": "released; no further PostgreSQL work authorized by this receipt"
+}

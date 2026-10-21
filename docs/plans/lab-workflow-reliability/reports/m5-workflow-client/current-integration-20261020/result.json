@@ -1,0 +1,12 @@
+{
+  "head": "cd420c44c42ff85487965a858865170cfc0a9358",
+  "tests": 12,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "seconds": 97.36058763600005,
+  "scope": "current12 neutral HTTP/CLI; explicit classifier exclusion",
+  "schemas_before": [],
+  "owned_schemas_removed": [],
+  "schemas_after": []
+}
