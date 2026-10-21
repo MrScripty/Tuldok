@@ -1,0 +1,665 @@
+{
+  "format": "integrated_retention_restore_acceptance_v2",
+  "scope": "Real neutral custody, PostgreSQL stopped transfer and current HTTP/SDK/CLI; no science or performance claim",
+  "schema_version": 10,
+  "catalog_id": "58ccf61daf6b44b581e785b21295ff79",
+  "run_id": "77db03cbf9294906b5921388e6dd366f",
+  "result_ref": {
+    "kind": "recovered_publication_result",
+    "schema_version": 1,
+    "catalog_id": "58ccf61daf6b44b581e785b21295ff79",
+    "run_id": "77db03cbf9294906b5921388e6dd366f",
+    "material_sha256": "829e505e0135cb1f2cda19fa5a2a4597cd6fe586433c426ffa41f22500131a06",
+    "inventory_sha256": "84afb1364c2ecd99dbc7b34258f2d331b576f8e49b96aebd980cd73dd1450d84",
+    "custody_receipt_sha256": "ecdf4a97e4642a071c5928c666cb6190e3ef0bc07530b25a120571cb14248bd2",
+    "sha256": "ec2317d166bcd83a3b94f7336fe613759c35dcd9cefe3aea0c8f01b64cec729e"
+  },
+  "table_summaries": {
+    "access_actors": {
+      "columns": [
+        "id",
+        "kind",
+        "label",
+        "created_at"
+      ],
+      "count": 4,
+      "row_sha256": [
+        "7349ad411c540158758c176f104cf98aa1d14ac56914bf467a3447a29c797c95",
+        "a04acd9f1ae27d96788d39b7eb6315dc10c6327859a3c69a1bb5037cf54b4a27",
+        "2db86771f7381fb276181be74c6969c20fa1efedd299eddf2a645f90738a6bc0",
+        "934f8a245d8e8c9906a0ae0de3cecc5962e2127e39a1a9317c6de60879fcba43"
+      ],
+      "sha256": "9bf2864091ef1c4aca1bf7417ca50c1c5d9933eb318d165291e12a0e2c197aab"
+    },
+    "access_admissions": {
+      "columns": [
+        "id",
+        "catalog_id",
+        "actor_id",
+        "credential_id",
+        "kind",
+        "job_id",
+        "request_digest",
+        "effects_json",
+        "created_at"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "937d6f9f16902b87b383906f69609bef564bbd1b633f7973f9cfc7cd18a7788a"
+      ],
+      "sha256": "69a8d3aef386920550a93c8bbd3805fd3b92f8b097411c641a4be3bce4912528"
+    },
+    "access_audit": {
+      "columns": [
+        "id",
+        "actor_id",
+        "credential_id",
+        "action",
+        "target_json",
+        "details_json",
+        "result",
+        "created_at"
+      ],
+      "count": 19,
+      "row_sha256": [
+        "da342e0bd7423e66317ec43f594c22cb62deba00e60a0f7a4a170bcedd14aa79",
+        "7f5a7a35eb43e51809e37641f047f7241ade917ac33022360e044ee69763f816",
+        "2d5001a2291e8dd595b2db3d13ad95741a5650d385665a4b813a26df9eddd975",
+        "2939ab6ec732f6b0a974e4c996d9bb2f5e3a0d4a45c32905c73c7caeb342f667",
+        "eac1fe2a1d7acde67b468293c181cf20c946ec17ae1fc5111302d9844b3cd2e0",
+        "791b6b8f0dc4058297e63b9492d638ca3a7c230dac7f759b36d6692cdc4272a8",
+        "e8ca32187b7006ad8ef60fa21250396d3393cacc6ef69c046753c03422b8dc7c",
+        "0fb76bc01b3a69f8184e2081495e19b567162a3b47be8260750b993d9f191473",
+        "2fd56da5f4ec78d299521b62f3156aa33c5f8abc7690e78b8778be32872627f7",
+        "871fff37224508a807b856789bc87f2649202587dfa069cefd883d6e4e003cc5",
+        "e4ea9688e4c6723be909c23f13039613de63711cc70d8bcc4eb6418b9f434a63",
+        "802961e0cb9cf0ef756d6a1108b1b00b08c1da258fd5daae2dbfe7a2feea31d8",
+        "e4f34683548f90dede62bcc5e07bcf77bcd34ae6a4eaf984f54767db9107b195",
+        "4b91b103c4202cd28b7f268796b1f9328654f442347a5fa8197abc4a268b8dc5",
+        "1746e80d7b71254e6bba59920fef7f407bcd6d54eff67b0ee5f5afd289529886",
+        "a15eb3eaa8cf34c964cba720c8c0c29698fd08e05200c45db74ae53d62c42a21",
+        "65ccab1e4926ea8017d3793c5a69b1da2f938d1755c3781e4ad41e244cde3683",
+        "68b11f07c05c6ebbacf8d778b8bca539f6034850cd348b4b5d2f66a758a8eba4",
+        "423a66d64088b92805146095959075621cf01feb1160803142651e46e982217c"
+      ],
+      "sha256": "24e2bbbcc727e6ecd0158907ba2d54c596a8f95f3c90ae5623e477e853d55128"
+    },
+    "access_credentials": {
+      "columns": [
+        "id",
+        "actor_id",
+        "token_sha256",
+        "kind",
+        "scopes_json",
+        "expires_at",
+        "revoked",
+        "consumed",
+        "created_at"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "6662fe4cfb5efccf66278bf7f4fa1312cc62891f03d677a32895c9f32bd0bf89",
+        "8aae2d00a16113a7f67bada6ccbc9a74d5c20c76b10d360ebaff9803dfa3e112",
+        "f2b6cbc0695e2d520785091d2610bfb0d17f760b820aa8c13018bde8f223280b",
+        "8a6ebdd98b7ca700a185c87ee98c41ecf839ea4fc670ef523d00bfe184c2241e",
+        "8fe42128f460c437dd4e396bb77eb9f26f13472c13747edbd4f27a09394757e4"
+      ],
+      "sha256": "f2acae779925959cf6af22f4f76a314dc982f43f32eb9d03baf52f31112ec2bc"
+    },
+    "access_execution_consumptions": {
+      "columns": [
+        "grant_id",
+        "run_id",
+        "admission_id",
+        "consumer_credential_id",
+        "request_sha256",
+        "consumed_at"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "56871ec5a8d81792625df440280cc0cef435539ed4519a430eb02c448fdd9d83"
+      ],
+      "sha256": "650dd95344c8bb4b5b38dfc6158edc3dc19efd8c3b861e2bd3abbe8a77b437bc"
+    },
+    "access_execution_grants": {
+      "columns": [
+        "id",
+        "catalog_id",
+        "approver_actor_id",
+        "approver_credential_id",
+        "consumer_actor_id",
+        "material_sha256",
+        "created_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "37d8af71d347afbf00e9a2ddbf1c4b057ead48ea238d9898ab4af3c093a5180e"
+      ],
+      "sha256": "c8c9c6b747fe4ac91891d23f3bfa94e058f7054df06859dccdcf163541d34b5d"
+    },
+    "caption_proposals": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "generation_entries": {
+      "columns": [
+        "id",
+        "job_id",
+        "ordinal",
+        "data",
+        "storage_order"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "530faef7a9e5031599c72af9332f8c2472584ffd0d4110ab97eb445c3a9680dd"
+    },
+    "generation_jobs": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "grounded_jobs": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "model_attempt_reservations": {
+      "columns": [
+        "id",
+        "study_id",
+        "actor_id",
+        "request_key",
+        "request_sha256",
+        "trial_id",
+        "run_id",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "952235730407a326f927ed027d547c534463ac174ce800ccd0f2630e7b02fe01"
+    },
+    "model_candidates": {
+      "columns": [
+        "id",
+        "study_id",
+        "trial_id",
+        "run_id",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8e150598074027645a884f8c83471a910abaabfaca5017c5154bed5b5f6ea480"
+    },
+    "model_definition_drafts": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ffb3a23ecc7b51f988108891d577a0c846811cfcfddbb1427421287a201f347a"
+    },
+    "model_materials": {
+      "columns": [
+        "id",
+        "revision",
+        "sha256",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "a519823d3f1dcbcb57d09c23d8ecf7e7ceb4b534d649da6804084448530962c2"
+    },
+    "model_operation_receipts": {
+      "columns": [
+        "actor_id",
+        "operation_id",
+        "request_key",
+        "request_sha256",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "58bf43af0b5efd8c06272e144beb72720bbdd6204e120fd4708e739555fb899c"
+    },
+    "model_selection_policies": {
+      "columns": [
+        "id",
+        "revision",
+        "sha256",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "a519823d3f1dcbcb57d09c23d8ecf7e7ceb4b534d649da6804084448530962c2"
+    },
+    "model_studies": {
+      "columns": [
+        "id",
+        "revision",
+        "admission_epoch",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "a50d931d7ec23487169070a69653a1b933dcc1d1985a8f3b60ff1e4b7091f94c"
+    },
+    "model_study_memberships": {
+      "columns": [
+        "study_id",
+        "revision",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "4b114a32959ae2c599d50d18ebfeccf1c757d45c03518d95820aa463c6b85c98"
+    },
+    "model_trial_lineage": {
+      "columns": [
+        "trial_id",
+        "parent_trial_id",
+        "baseline_trial_id",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ce519910146db157ed46ee02a83bc6add785136de22e6b9cd48581c756299ec0"
+    },
+    "model_trials": {
+      "columns": [
+        "id",
+        "study_id",
+        "material_sha256",
+        "replicate",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "d790df0190b101dba64d6025d8c10072d436e400152aad4059d8de5665f0545c"
+    },
+    "samples": {
+      "columns": [
+        "id",
+        "sha256",
+        "filename",
+        "width",
+        "height",
+        "book_id",
+        "session_id",
+        "split",
+        "created_at",
+        "updated_at",
+        "revision",
+        "annotation"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "45cba19d248a0b126119bc05246fdfe6459c95d5cce245ec3a4cd47d1b5e2995"
+    },
+    "saved_searches": {
+      "columns": [
+        "id",
+        "name",
+        "revision",
+        "criteria_json",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "caa62ec987589481b04e93502d8f340a1a41703997b68a0c94df642ee8e5a8a6"
+    },
+    "saved_selections": {
+      "columns": [
+        "id",
+        "name",
+        "revision",
+        "members_json",
+        "member_count",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ef015a7aae83417e2ee6b9aa54c0f3f618358296ed201682901be8c0841b7e11"
+    },
+    "text_classification_proposals": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "workbench_deleted_sources": {
+      "columns": [
+        "id",
+        "book_id",
+        "session_id",
+        "split"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "c1c95154abd259591b21272e5324695db12a227e849c3fbd46d96ea2e554a7c2"
+    },
+    "workbench_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_mesh_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_pointcloud_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_preference_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_preferences": {
+      "columns": [
+        "id",
+        "prompt_id",
+        "revision",
+        "data"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "67b197c3ca40fbcbe1baf7d841be28c4e9c98b3ef3f22178c7732560f66e16c3"
+    },
+    "workbench_records": {
+      "columns": [
+        "id",
+        "kind",
+        "name",
+        "text",
+        "original_text",
+        "content_hash",
+        "pixel_hash",
+        "groups_json",
+        "parents_json",
+        "provenance_json",
+        "task",
+        "annotation_json",
+        "review",
+        "revision",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "e2e5e5e9cef6974f035aa0b76e15e13932e11b2f3fdb93574cf2791aacb19259"
+    },
+    "workbench_response_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_responses": {
+      "columns": [
+        "id",
+        "prompt_id",
+        "revision",
+        "completion",
+        "review",
+        "provenance_json",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "4eb68800cc161c30f33a81c52c233a59559a12f1a3744545088bf3cbe9930d67"
+    },
+    "workbench_rights_notes": {
+      "columns": [
+        "id",
+        "note",
+        "revision"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "894e92255b0040027f355105f88c51cff087e8471008b30731a6e0e849c3cdc3"
+    },
+    "workbench_sequence_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_target_proposals": {
+      "columns": [
+        "id",
+        "evidence"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "c610988ec09c1a996fba5c2d51051fd38b37a1b51d1defc6ea9647664742838e"
+    },
+    "workbench_volume_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workspace_exposures": {
+      "columns": [
+        "id",
+        "record_id",
+        "source_hash",
+        "reason",
+        "run_id",
+        "release_id",
+        "created_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "5bf95a047db8503a858f55e8095cb28322d6329af09b545dc4f67a3cb83e8599"
+    },
+    "workspace_graphs": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "362309ffa0971284b206baefe87157df8a7cadfe57de19167c7bcfa60c158a73"
+      ],
+      "sha256": "6017ff1c1cfd07d4f3e7e0e130a38c20ddf880d1b788dbb8921839f2594a79d1"
+    },
+    "workspace_projects": {
+      "columns": [
+        "id",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "e4cead70471a5922596485e3c4aa89b0c3e61b7095f698bde5bbff68e7cc479b"
+      ],
+      "sha256": "b22e3acdb81513f135d1ef02a04e71a2d6db1379049122040d3b6fb204ecb697"
+    },
+    "workspace_recipe_drafts": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ffb3a23ecc7b51f988108891d577a0c846811cfcfddbb1427421287a201f347a"
+    },
+    "workspace_recipe_materials": {
+      "columns": [
+        "sha256",
+        "recipe_id",
+        "recipe_revision",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "7b2b46c5091c5e07e25b8648e2161ed0253aae41384b82f7923aba99bb5f04d0"
+    },
+    "workspace_runs": {
+      "columns": [
+        "id",
+        "request_key",
+        "request_sha256",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "cf340f870ad8715c188efec480597a9f5f4fe3f9f5fcceb7e25288ed8dc9f1fd"
+      ],
+      "sha256": "05d93df836be84537e05af58549c9f606d1c1072a1f8cf19f24dc2ab00e4f2e3"
+    }
+  },
+  "sequences": {
+    "generation_jobs": {
+      "last_value": 20,
+      "is_called": true
+    },
+    "grounded_jobs": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "caption_proposals": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "text_classification_proposals": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "generation_entries": {
+      "last_value": 1,
+      "is_called": false
+    }
+  },
+  "catalog_tree_sha256": "1b2dba4f8fd97fd9a41238e04075e6b82f8d51cf9e6d1d1fbe050c98c0ae843f",
+  "backup_tree_sha256": "b679b08e3c1a798456041b315ed336e28ae17baf806a6f860331124dccc368eb",
+  "journal_sha256": "d0ff910942362c8260eb9418026cb3a36b3ba4a44678aece9f6354a6a1d21156",
+  "retained_timing_sha256": "460d9dc7b814d5dbc4d52bef7824803725cda37002978151cd77da9c1ad5cb39",
+  "recovery_request": {
+    "actor_id": "d65ec61a214f4b39899e9fd2b5f7910a",
+    "completed_generation": 2,
+    "expected_generation": 1,
+    "request_key": "transfer-coordinator-recovery-0001",
+    "request_sha256": "7e484717aefbb27ee9e23cc37e10d115b41464ff53f05a04177ee7610c1bdcd0"
+  },
+  "stored_span_states": [
+    "incomplete",
+    "measured"
+  ],
+  "artifact_sha256": "54ae9355f214d827afd4ec287ff813d3af22683a52c10e9ed1ea62507cfa4d10",
+  "artifact_bytes": 55,
+  "raw_transfer_equal": true,
+  "source_and_backup_unchanged": true,
+  "restore_interruptions": [
+    {
+      "seam": "metadata_transaction_rollback",
+      "destination_published": false,
+      "table_sha256": "20ce31ed06a9ac732d86432973dfd4427d55a939c72b0ccdf1797979ae7322c5",
+      "sequence_sha256": "915979a8c675d1c5bb78aef6cc05730ce55215dc052fcc0a43c88459b5cbda19",
+      "tree_sha256": "bd9b3529c33398f26f5d2a0192556f92fea7d3b4fc559242db22e1b2e8639cbc",
+      "source_and_backup_unchanged": true
+    },
+    {
+      "seam": "committed_metadata_partial_files",
+      "destination_published": false,
+      "table_sha256": "c1154a34b12ce88d578acd51ceef63f9e86300b83cd8956cd7988db1e9f18e2e",
+      "sequence_sha256": "d1237a8b0395f7df3baca42edfabc8f33859625f77f1e4747a8f540884c25f78",
+      "tree_sha256": "f27acd85aa73d33f5933cb919f884f976fb3de299a6460b5038f16935f53cd74",
+      "source_and_backup_unchanged": true
+    },
+    {
+      "seam": "published_destination_lost_reply",
+      "destination_published": true,
+      "table_sha256": "c1154a34b12ce88d578acd51ceef63f9e86300b83cd8956cd7988db1e9f18e2e",
+      "sequence_sha256": "d1237a8b0395f7df3baca42edfabc8f33859625f77f1e4747a8f540884c25f78",
+      "tree_sha256": "1b2dba4f8fd97fd9a41238e04075e6b82f8d51cf9e6d1d1fbe050c98c0ae843f",
+      "source_and_backup_unchanged": true
+    }
+  ],
+  "raw_permissions_equal": true,
+  "authored_sequence_fixture": {
+    "table": "generation_jobs",
+    "before": {
+      "last_value": 1,
+      "is_called": false
+    },
+    "retained": {
+      "last_value": 20,
+      "is_called": true
+    }
+  },
+  "cold_reads_and_collection_preserve_all_tables_and_sequences": true,
+  "compute_replay_calls": 0,
+  "cleanup": {
+    "restored_database_removed": "retention_restore_1094643898f14f1495c439ccbf8a8f08",
+    "source_schema_removed": "catalog_58ccf61daf6b44b581e785b21295ff79"
+  }
+}

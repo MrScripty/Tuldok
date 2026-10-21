@@ -1,0 +1,135 @@
+{
+  "format": "independent_interrupted_restore_final_review_v1",
+  "disposition": "clear_focused_current_version_restore_subject_hosted_checks_pending",
+  "blocking_findings": [],
+  "reviewed_commit": "d02f034aa1bba6cd55dfd47ae44ebcb7014200a5",
+  "reviewed_tree": "68f147908523a65ce495f47392eada87273cbfaf",
+  "baseline": "8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e",
+  "test_sha256": "50ac2975b216052dc0d07248db9f21a8618f9cf096b22214c2c9a317c302d199",
+  "source_review": [
+    "Only the existing combined current-version test, existing plan and ledger differ from baseline; no application/schema/workflow/README change.",
+    "Actual raw PostgreSQL population precedes the authored first failure; all 43 table states return to the initially empty private staging state, with no final destination.",
+    "Second authored failure follows a real journal-file rename after raw metadata/sequence commit; the copied inventory is a strict subset of the original with every copied entry equal.",
+    "Third authored failure follows the real final directory rename; exact marker/raw tables/sequences/tree/modes and a normal retry reconcile the completed destination.",
+    "Source and backup/catalog byte and POSIX-mode checks now run at every interruption and final post-cold-read boundary; preliminary strengthening is resolved.",
+    "Current app activation keeps immutable completed recovery acknowledgement, original interrupted Run/events, recovered publication Ref and measured/incomplete timing records; actual SDK and separate CLI collect the same exact bytes without compute replay.",
+    "The authored generation_jobs high-water fixture is explicit; its retained value20/is_calledtrue survives committed state, retry and cold consumer reads.",
+    "No backward-compatibility/automatic-migration witness, synthetic PUB1/SCI1 acceptance, preparation-cache claim or performance result is introduced."
+  ],
+  "reproduction": {
+    "format": "independent_interrupted_restore_reproduction_v1",
+    "source": {
+      "commit": "d02f034aa1bba6cd55dfd47ae44ebcb7014200a5",
+      "tree": "68f147908523a65ce495f47392eada87273cbfaf",
+      "test_sha256": "50ac2975b216052dc0d07248db9f21a8618f9cf096b22214c2c9a317c302d199",
+      "python": "3.12.14",
+      "psycopg": "3.3.6"
+    },
+    "tests_run": 1,
+    "successful": true,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "unittest_runner_seconds": 17.012795835998986,
+    "resources_before": {
+      "schemas": [],
+      "databases": [
+        "postgres",
+        "template0",
+        "template1",
+        "tuldok_qa"
+      ],
+      "server_version": "17.11 (Debian 17.11-1.pgdg13+2)"
+    },
+    "resources_after": {
+      "schemas": [],
+      "databases": [
+        "postgres",
+        "template0",
+        "template1",
+        "tuldok_qa"
+      ],
+      "server_version": "17.11 (Debian 17.11-1.pgdg13+2)"
+    },
+    "source_unchanged": true,
+    "log_sha256": "34169a1efd6154fe6f00c8ccb016b48c0e9a6097b8ecdbec54776f00a40d1cce",
+    "domain_sha256": "9b3f56f9fcfaee6c8934f1daa9abb7166b7b5c2c727019081a11b5037e9caf85",
+    "independent_exact_cleanup_query": {
+      "source_schema_absent": true,
+      "restored_database_absent": true
+    }
+  },
+  "domain_inspection": {
+    "schema_version": 10,
+    "table_count": 43,
+    "seams": [
+      {
+        "seam": "metadata_transaction_rollback",
+        "destination_published": false,
+        "table_sha256": "20ce31ed06a9ac732d86432973dfd4427d55a939c72b0ccdf1797979ae7322c5",
+        "sequence_sha256": "915979a8c675d1c5bb78aef6cc05730ce55215dc052fcc0a43c88459b5cbda19",
+        "tree_sha256": "bd9b3529c33398f26f5d2a0192556f92fea7d3b4fc559242db22e1b2e8639cbc",
+        "source_and_backup_unchanged": true
+      },
+      {
+        "seam": "committed_metadata_partial_files",
+        "destination_published": false,
+        "table_sha256": "c1154a34b12ce88d578acd51ceef63f9e86300b83cd8956cd7988db1e9f18e2e",
+        "sequence_sha256": "d1237a8b0395f7df3baca42edfabc8f33859625f77f1e4747a8f540884c25f78",
+        "tree_sha256": "f27acd85aa73d33f5933cb919f884f976fb3de299a6460b5038f16935f53cd74",
+        "source_and_backup_unchanged": true
+      },
+      {
+        "seam": "published_destination_lost_reply",
+        "destination_published": true,
+        "table_sha256": "c1154a34b12ce88d578acd51ceef63f9e86300b83cd8956cd7988db1e9f18e2e",
+        "sequence_sha256": "d1237a8b0395f7df3baca42edfabc8f33859625f77f1e4747a8f540884c25f78",
+        "tree_sha256": "1b2dba4f8fd97fd9a41238e04075e6b82f8d51cf9e6d1d1fbe050c98c0ae843f",
+        "source_and_backup_unchanged": true
+      }
+    ],
+    "authored_sequence_fixture": {
+      "table": "generation_jobs",
+      "before": {
+        "last_value": 1,
+        "is_called": false
+      },
+      "retained": {
+        "last_value": 20,
+        "is_called": true
+      }
+    },
+    "grant_count": 1,
+    "consumption_count": 1,
+    "run_count": 1,
+    "study_reservation_count": 0,
+    "stored_span_states": [
+      "incomplete",
+      "measured"
+    ],
+    "compute_replay_calls": 0,
+    "raw_permissions_equal": true,
+    "cold_reads_preserve_all_tables_and_sequences": true,
+    "exact_cleanup_names": {
+      "restored_database_removed": "retention_restore_1094643898f14f1495c439ccbf8a8f08",
+      "source_schema_removed": "catalog_58ccf61daf6b44b581e785b21295ff79"
+    }
+  },
+  "files_sha256": {
+    "independent_runner.py": "1f8ccc36f96c8e56857cfe1ac73891a7910f3d50c563ae93f247edc175df8618",
+    "reproduction-d02f034/unittest.log": "34169a1efd6154fe6f00c8ccb016b48c0e9a6097b8ecdbec54776f00a40d1cce",
+    "reproduction-d02f034/domain.json": "9b3f56f9fcfaee6c8934f1daa9abb7166b7b5c2c727019081a11b5037e9caf85",
+    "reproduction-d02f034/result.json": "50b558e1c8138b77f7f4634f3202ed01ca15cc13345149c5231554da33ecce6d"
+  },
+  "remaining_gates": [
+    "Current published-head required hosted checks and final report/source binding before authorized merge."
+  ],
+  "limits": [
+    "Controlled Python exceptions/retry are qualified, not host crash, kill, power loss or storage-device durability.",
+    "Partial-copy proof covers a strict subset of complete verified files, not torn file payloads.",
+    "POSIX mode bits are compared; ownership/ACL/xattr/timestamp preservation is not newly qualified.",
+    "Job-order tables are empty; the high-water mark is explicit administrative fixture state, not arbitrary populated-sequence rollback proof.",
+    "Real neutral execution and PostgreSQL recovery/consumer integrity are covered, not scientific training acceptance or a performance comparison.",
+    "Full M2/M3/M5/T8 acceptance is not implied; real PUB1/SCI1 inputs remain missing."
+  ]
+}

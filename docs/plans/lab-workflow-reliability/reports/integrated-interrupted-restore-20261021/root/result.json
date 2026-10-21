@@ -1,0 +1,35 @@
+{
+  "format": "interrupted_restore_focused_qualification_v1",
+  "source": {
+    "head": "0bbc6a7c4cd58dc0451d6ba6c0983193763e1f91",
+    "tree": "b2e7b8196a52b283fc79c93ff7fcdfdf00201f5a",
+    "status": "",
+    "test_sha256": "acd006da64a5eb36db7196a2d03ca14c687bb863724dcff602eb57d0720d657e"
+  },
+  "seconds": 17.614621812999758,
+  "tests_run": 1,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "successful": true,
+  "resources_before": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ]
+  },
+  "resources_after": {
+    "schemas": [],
+    "databases": [
+      "postgres",
+      "template0",
+      "template1",
+      "tuldok_qa"
+    ]
+  },
+  "final_status": "",
+  "log_sha256": "51f85c0c2f20c80697cf1843ba84c3fe9aebd8d78942440ef7f6c79540212955"
+}

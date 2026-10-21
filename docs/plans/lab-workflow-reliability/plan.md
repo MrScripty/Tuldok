@@ -429,6 +429,31 @@ arguments are not substituted for old source execution. No production, schema,
 workflow or README change is admitted. Actual qualification and independent
 review remain gates; this does not complete unrelated T8 or lab acceptance.
 
+### Current-version interrupted-transfer acceptance admission — 2026-10-21
+
+After PR116 merged as `8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e`, the
+integration lead selects the remaining interrupted-restore part of T8. Extend
+the existing combined current-version witness, rather than duplicate its real
+neutral attempt. The isolated branch is
+`test/integrated-interrupted-restore-20261021`. Its write set is the existing
+`tests/test_integrated_retention_restore.py`, this plan, execution ledger and
+scoped evidence under `reports/integrated-interrupted-restore-20261021/`.
+
+Inject explicit failures after real catalog population before transaction commit,
+after committed metadata and an actual partial file copy, and after the final
+destination rename before its reply. At every safe checkpoint, reconcile raw
+tables/sequences and the exact transfer marker; prove the source and backup
+remain unchanged and the final destination is absent until publication. Retry
+the same transfer and preserve all bytes, permissions, a nontrivial sequence
+high-water mark, immutable coordinator acknowledgement, timing records and exact
+publication Ref. The existing cold SDK/CLI reads must still launch no compute.
+No production change is admitted without an observed correctness failure.
+
+Original and independent focused qualification, source review and current-head
+hosted checks remain gates. This advances current-version T8 integrity only; it
+does not revive backward-compatibility requirements, qualify preparation reuse,
+close all M2/M3/M5/T8 boundaries, or supply missing PUB-1/SCI-1 lab evidence.
+
 ### Integrated stopped-transfer acceptance admission — 2026-10-20
 
 The fresh integration lead admits one narrow T8 witness from the exact reporting

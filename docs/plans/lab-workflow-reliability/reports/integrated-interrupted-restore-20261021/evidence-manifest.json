@@ -1,0 +1,50 @@
+{
+  "baseline": "8b1f78eb06c17e3dba2a73dc0acc9568e53ccc7e",
+  "original_root_source": "0bbc6a7c4cd58dc0451d6ba6c0983193763e1f91",
+  "reviewed_source": "d02f034aa1bba6cd55dfd47ae44ebcb7014200a5",
+  "reviewed_tree": "68f147908523a65ce495f47392eada87273cbfaf",
+  "test_sha256": "50ac2975b216052dc0d07248db9f21a8618f9cf096b22214c2c9a317c302d199",
+  "root_to_final_diff": "diff --git a/tests/test_integrated_retention_restore.py b/tests/test_integrated_retention_restore.py\nindex 62d81d8..d0023dd 100644\n--- a/tests/test_integrated_retention_restore.py\n+++ b/tests/test_integrated_retention_restore.py\n@@ -147,6 +147,7 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):\n             self.assertEqual(tree_manifest(source.path), original_tree)\n             self.assertEqual(tree_modes(source.path, original_tree), original_modes)\n             self.assertEqual(tree_manifest(backup), backup_tree)\n+            self.assertEqual(tree_modes(backup/'catalog', original_tree), original_modes)\n             original = Metadata(source.path, dsn=original_dsn, create=False)\n             try:\n                 self.assertEqual(read_catalog(original), original_tables)\n@@ -320,14 +321,7 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):\n             launch.assert_not_called()\n             restored.close()\n \n-        self.assertEqual(tree_manifest(source.path), original_tree)\n-        self.assertEqual(tree_manifest(backup), backup_tree)\n-        original = Metadata(source.path, dsn=original_dsn, create=False)\n-        try:\n-            self.assertEqual(read_catalog(original), original_tables)\n-            self.assertEqual(read_sequences(original), original_sequences)\n-        finally:\n-            original.close()\n+        unchanged_originals()\n         drop_restored_database()\n         drop_source()\n         if report_path := os.environ.get('TULDOK_RETENTION_ACCEPTANCE_REPORT'):\n@@ -342,6 +336,8 @@ class IntegratedRetentionRestoreTests(unittest.TestCase):\n                 'artifact_sha256': hashlib.sha256(fixture.input).hexdigest(), 'artifact_bytes': len(fixture.input),\n                 'raw_transfer_equal': True, 'source_and_backup_unchanged': True,\n                 'restore_interruptions': interruptions, 'raw_permissions_equal': True,\n+                'authored_sequence_fixture': {'table': 'generation_jobs', 'before': sequence,\n+                    'retained': original_sequences['generation_jobs']},\n                 'cold_reads_and_collection_preserve_all_tables_and_sequences': True,\n                 'compute_replay_calls': launch.call_count, 'cleanup': cleanup}\n             with Path(report_path).open('x') as stream:\n",
+  "evidence": {
+    "root/runner.py": {
+      "bytes": 2768,
+      "sha256": "f68a94afd7be2985d2175fc65619933d387449b93dbd233901f39cd476128c21"
+    },
+    "independent/runner.py": {
+      "bytes": 4159,
+      "sha256": "1f8ccc36f96c8e56857cfe1ac73891a7910f3d50c563ae93f247edc175df8618"
+    },
+    "independent/preliminary-source-review.json": {
+      "bytes": 3198,
+      "sha256": "09c67142786156a91b8e9861c2331de2f21c7eb262397d5deb247f097d82b76c"
+    },
+    "independent/source-and-reproduction-review.json": {
+      "bytes": 6631,
+      "sha256": "92cc82aa677eeaca9496fe57af2997c8b45e95da58cba9fdb2778f5cb9df0700"
+    },
+    "root/result.json": {
+      "bytes": 816,
+      "sha256": "65176335b275a669885aa9dba91ca4ba1215aacbfc761d7060069fff68179c17"
+    },
+    "independent/result.json": {
+      "bytes": 1190,
+      "sha256": "50b558e1c8138b77f7f4634f3202ed01ca15cc13345149c5231554da33ecce6d"
+    },
+    "root/domain.json": {
+      "bytes": 18883,
+      "sha256": "c1f0fd6d54a8b0bbb7658e4def4836342bf005f76f5a7ac5fae758289e8de21d"
+    },
+    "independent/domain.json": {
+      "bytes": 19096,
+      "sha256": "9b3f56f9fcfaee6c8934f1daa9abb7166b7b5c2c727019081a11b5037e9caf85"
+    },
+    "root/unittest.log": {
+      "bytes": 329,
+      "sha256": "51f85c0c2f20c80697cf1843ba84c3fe9aebd8d78942440ef7f6c79540212955"
+    },
+    "independent/unittest.log": {
+      "bytes": 329,
+      "sha256": "34169a1efd6154fe6f00c8ccb016b48c0e9a6097b8ecdbec54776f00a40d1cce"
+    }
+  }
+}
