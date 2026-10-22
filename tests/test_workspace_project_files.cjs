@@ -30,8 +30,8 @@ function mount(initial=[reply(state()),reply(records())],capabilityValue=capabil
   for(const match of html.matchAll(/<([a-z][a-z0-9]*)\b([^>]*\bid="([^"]+)"[^>]*)>/g)){
     const node=new Node(match[1]);node.value=match[2].match(/\bvalue="([^"]*)"/)?.[1]??'';node.disabled=/\bdisabled\b/.test(match[2]);nodes.set(match[3],node);
   }
-  nodes.get('annotation-task').value='text_classification';nodes.get('record-review').value='draft';
-  const context={document:{getElementById:id=>{assert.ok(nodes.has(id),'Unknown node '+id);return nodes.get(id);},createElement:tag=>new Node(tag)},URLSearchParams,crypto,console,window:null};
+  nodes.get('annotation-task').value='text_classification';nodes.get('record-review').value='draft';nodes.get('project-explore-kind').value='data_query';nodes.get('project-source-kind').value='image';nodes.get('project-data-review').value='draft';
+  const context={document:{getElementById:id=>{assert.ok(nodes.has(id),'Unknown node '+id);return nodes.get(id);},createElement:tag=>new Node(tag)},URLSearchParams,TextEncoder,crypto,console,window:null};
   context.window=context;context.TuldokAuth={canReview:()=>true,fetch:(url,options)=>{if(url==='/api/agent/capabilities'){discoveries.push({url,options});return Promise.resolve(reply(capabilityValue));}const header=options.headers?.['Tuldok-Operation-Contract'];assert.ok(header,'Every project call selects an exact contract');const [operation,version,digest]=header.split('/');assert.equal(version,'1');assert.equal(digest,pins[operation]);requests.push({url,options});assert.ok(answers.length,'Unexpected fetch '+url);return Promise.resolve(answers.shift());}};
   context.addEventListener=(name,handler)=>events.set(name,handler);
   vm.createContext(context);vm.runInContext(source,context);
@@ -128,6 +128,110 @@ function mount(initial=[reply(state()),reply(records())],capabilityValue=capabil
     h.input('annotation-value','Never lose this label');h.answers.push(reply({code:'stale_checkpoint',error:'Reload current checkpoint.'},409));await h.submit('annotation-form');
     assert.equal(h.nodes.get('annotation-value').value,'Never lose this label');assert.equal(h.nodes.get('annotation-save').disabled,true);assert.match(h.nodes.get('project-files-error').textContent,/stale_checkpoint/);
     h.answers.push(reply(state(B,N)),reply(records(B,N)));await h.click('project-files-refresh');assert.equal(h.nodes.get('annotation-value').value,'Never lose this label');assert.equal(h.nodes.get('annotation-fields').disabled,true);
+  }
+  // M2 explores actual data through fixed contracts, preserves independent
+  // drafts and reads a bounded history page at the exact selected checkpoint.
+  {
+    const h=mount();await tick();
+    const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    const data={...record(),source_available:true,source_lineage_known:true};
+    h.answers.push(reply(boundValue({items:[data],offset:0,limit:40,total:1,analysis:{},criteria:{}})));
+    await h.click('project-explore-load');
+    assert.match(h.requests.at(-1).url,/\/data\?binding=/);
+    h.answers.push(reply(boundValue(data)));await h.nodes.get('project-explore-list').querySelectorAll('button')[0].onclick();await tick();
+    assert.equal(h.nodes.get('project-data-note-form').hidden,false);assert.equal(h.nodes.get('project-metadata-form').hidden,true);
+    assert.equal(h.nodes.get('project-detail-title').textContent,'Greeting');
+    h.answers.push(reply(boundValue({items:[data],offset:0,limit:1,total:2})));
+    await h.click('project-detail-history');assert.match(h.requests.at(-1).url,/limit=1/);assert.equal(h.nodes.get('project-detail-history-more').hidden,false);
+    h.answers.push(reply(boundValue({items:[data],offset:1,limit:1,total:2})));
+    await h.click('project-detail-history-more');assert.match(h.requests.at(-1).url,/offset=1/);assert.equal(h.nodes.get('project-detail-history-more').hidden,true);
+    h.input('project-search-name','Keep this independent draft');h.input('project-rights-note','Authored permission note');
+    h.answers.push(reply(boundValue({record:{...data,revision:2},changed:true},N)),reply(records(B,N)));
+    await h.submit('project-rights-form');const request=h.requests.at(-2),body=JSON.parse(request.options.body);
+    assert.equal(request.options.headers['Tuldok-Operation-Contract'].split('/')[0],'project_files.data_rights');
+    assert.equal(body.expected_checkpoint,C);assert.equal(body.revision,1);assert.equal(body.note,'Authored permission note');assert.match(body.request_key,/^[a-f0-9]{32}$/);
+    assert.match(h.nodes.get('project-files-dirty').textContent,/unsent or unacknowledged/);assert.equal(h.nodes.get('project-search-name').value,'Keep this independent draft');
+    assert.equal(h.nodes.get('project-rights-fields').disabled,true,'Old selected metadata is fenced after publication');
+    await h.click('project-files-discard');assert.equal(h.nodes.get('project-search-name').value,'');
+  }
+  // Missing/corrupt artifact observations are readable facts. A superseded M2
+  // request cannot attach its payload or authoring metadata to a new binding.
+  {
+    const h=mount();await tick();h.nodes.get('project-explore-kind').value='artifacts';
+    const facts={sha256:C,bytes:99,availability:{status:'corrupt',integrity:'mismatch',reason:'Exact unique bytes differ'}};
+    h.answers.push(reply({binding:B,project_id:P,checkpoint:C,value:{items:[facts],offset:0,limit:40,total:1}}));
+    await h.click('project-explore-load');await h.nodes.get('project-explore-list').querySelectorAll('button')[0].onclick();await tick();
+    const strings=node=>[node.textContent,...node.children.flatMap(strings)];
+    assert.ok(strings(h.nodes.get('project-detail-facts')).includes('corrupt'));
+    assert.ok(strings(h.nodes.get('project-detail-facts')).includes('Exact unique bytes differ'));
+    h.nodes.get('project-explore-kind').value='data_query';const delayed=defer();h.answers.push(delayed.promise);const loading=h.click('project-explore-load');await tick();
+    h.answers.push(reply(state(P,N)),reply(records(P,N)));h.events.get('tuldok-session')();await tick();
+    delayed.resolve(reply({binding:B,project_id:P,checkpoint:C,value:{items:[record('Obsolete history')],offset:0,limit:40,total:1}}));await loading;await tick();
+    assert.equal(h.nodes.get('project-explore-list').children.length,0);
+    assert.notEqual(h.nodes.get('project-detail-title').textContent,'Obsolete history');
+  }
+  // Model creation copies the current owner's complete inert template. Source
+  // registration selects declared scientific references without user hash edits.
+  {
+    const h=mount();await tick();const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    const template={name:'Owner template',task:{kind:'task',catalog_id:P,id:'classification',revision:1,sha256:C},kind:'template',specification:{template:'owned'},source_selector:null,preprocessing_policy:{owned:true},output_policy:{owned:true}};
+    h.answers.push(reply(boundValue({recipes:[{model_template:template}]})));await h.click('project-definitions-load');
+    h.input('project-model-create-name','My scientific model');h.answers.push(reply(boundValue({id:R,name:'My scientific model',revision:1},N)),reply(records(B,N)));
+    await h.submit('project-model-create-form');const created=JSON.parse(h.requests.at(-2).options.body);
+    assert.equal(created.name,'My scientific model');assert.deepEqual(created.specification,template.specification);assert.equal(created.source_selector,null);assert.equal(created.expected_checkpoint,C);assert.equal(created.task.catalog_id,P);
+    h.input('project-register-path','fixture/tuldok.json');h.answers.push(reply(boundValue({project_id:R,origin_catalog_id:P,manifest_sha256:C},C)),reply(boundValue({items:[{id:'measurements',label:'Captured scientific fields',sha256:N,observed_sha256:N,status:'available',integrity:'verified'}],offset:0,limit:40,total:1},C)));
+    await h.submit('project-register-form');assert.equal(h.nodes.get('project-scientific-fields').disabled,false);
+    h.input('project-scientific-name','Observed fields');h.answers.push(reply(boundValue({id:R,kind:'field_sequence'},N)),reply(records(B,N)));
+    await h.submit('project-scientific-form');const imported=JSON.parse(h.requests.at(-2).options.body);
+    assert.equal(imported.reference_id,'measurements');assert.equal(imported.expected_sha256,N);assert.equal(imported.snapshot.project_id,R);assert.equal(imported.snapshot.manifest_sha256,C);assert.equal(imported.expected_checkpoint,C);assert.equal(imported.document.name,'Observed fields');
+    assert.ok(h.requests.every(request=>!/(execute|submit-external|capture-runtime)/.test(request.url)));
+  }
+  // Resolving an explicitly selected missing artifact imports a trusted-root
+  // file by identity; its durable observation is followed by a fresh status read.
+  {
+    const h=mount();await tick();h.nodes.get('project-explore-kind').value='artifacts';
+    const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    h.answers.push(reply(boundValue({items:[{format:'project_artifact_v1',sha256:C,bytes:9,availability:{state:'missing'}}],offset:0,limit:40,total:1})));
+    await h.click('project-explore-load');await h.nodes.get('project-explore-list').querySelectorAll('button')[0].onclick();await tick();
+    assert.equal(h.nodes.get('project-artifact-resolve-form').hidden,false);assert.equal(h.nodes.get('project-artifact-root').value,'fixture');
+    h.input('project-artifact-path','unique/observation.bin');h.answers.push(reply(boundValue({format:'project_artifact_resolution_v1',sha256:C,bytes:9,actor_id:P,observed_at:'2026-10-22T12:00:00+00:00'},N)),reply(boundValue({state:'verified',expected_sha256:C,expected_bytes:9,observed_sha256:C,observed_bytes:9},N)));
+    await h.submit('project-artifact-resolve-form');
+    const resolve=h.requests.at(-2),body=JSON.parse(resolve.options.body),status=h.requests.at(-1);
+    assert.equal(resolve.options.headers['Tuldok-Operation-Contract'].split('/')[0],'project_files.artifact_resolve');
+    assert.equal(body.root,'fixture');assert.equal(body.path,'unique/observation.bin');assert.equal(body.sha256,C);assert.equal(body.expected_checkpoint,C);assert.match(body.request_key,/^[a-f0-9]{32}$/);
+    assert.equal(status.options.headers['Tuldok-Operation-Contract'].split('/')[0],'project_files.artifact_status');assert.equal(JSON.parse(status.options.body).checkpoint,N);
+    assert.equal(h.nodes.get('project-artifact-resolve-form').hidden,true);assert.equal(h.nodes.get('project-artifact-path').value,'');assert.equal(h.nodes.get('project-files-dirty').textContent,'No unsubmitted edits.');
+  }
+  // Native saved selections contain items without pagination fields. Their
+  // successful create and get results must stay distinct from page contracts.
+  {
+    const h=mount();await tick();const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    const data={...record(),source_available:true},selection={id:P,name:'Exact revision',revision:1,mode:'fixed',schema_version:1,items:[{id:R,revision:1,source_revision:1}]};
+    h.answers.push(reply(boundValue({items:[data],total:1,offset:0,limit:40,analysis:{},criteria:{}})));await h.click('project-explore-load');
+    h.answers.push(reply(boundValue(data)));await h.nodes.get('project-explore-list').querySelectorAll('button')[0].onclick();await tick();
+    h.input('project-selection-name','Exact revision');h.answers.push(reply(boundValue(selection,N)),reply(records(B,N)));
+    await h.submit('project-selection-form');assert.equal(h.nodes.get('project-files-error').textContent,'');assert.equal(h.nodes.get('project-files-dirty').textContent,'No unsubmitted edits.');
+    assert.equal(JSON.parse(h.requests.at(-2).options.body).expected_checkpoint,C);assert.ok(h.requests.at(-1).url.includes('checkpoint='+N));
+    h.nodes.get('project-explore-kind').value='selections';h.answers.push(reply(boundValue({items:[selection],total:1,offset:0,limit:40},N)));await h.click('project-explore-load');
+    h.answers.push(reply(boundValue(selection,N)));await h.nodes.get('project-explore-list').querySelectorAll('button')[0].onclick();await tick();
+    assert.equal(h.nodes.get('project-files-error').textContent,'');assert.equal(h.nodes.get('project-detail-title').textContent,'Exact revision');
+    // Strict continuation checks still apply to actual pages.
+    h.answers.push(reply(boundValue({items:[selection],total:2,offset:0,limit:40},N)));await h.click('project-explore-load');assert.match(h.nodes.get('project-files-error').textContent,/Saved page differs/);
+  }
+  // Unpinned references use the owner's actual observation and retain their
+  // unverified meaning. A declared digest mismatch is never selectable/imported.
+  {
+    const h=mount();await tick();const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    const refs=[{id:'unpinned',label:'Observed data',status:'available',integrity:'unverified',observed_sha256:N},
+                {id:'mismatch',label:'Changed declared data',status:'available',integrity:'mismatch',sha256:C,observed_sha256:N},
+                {id:'missing',label:'Missing declared data',status:'missing',integrity:'unverified',sha256:C}];
+    h.input('project-register-path','fixture/tuldok.json');h.answers.push(reply(boundValue({project_id:R,origin_catalog_id:P,manifest_sha256:C},N)),reply(boundValue({items:refs,total:3,offset:0,limit:40},N)));
+    await h.submit('project-register-form');const choices=h.nodes.get('project-scientific-reference').children;
+    assert.equal(choices[0].disabled,false);assert.match(choices[0].textContent,/unverified; not pinned/);assert.equal(choices[1].disabled,true);assert.match(choices[1].textContent,/mismatch/);assert.equal(choices[2].disabled,true);
+    h.nodes.get('project-scientific-reference').value='mismatch';const before=h.requests.length;await h.submit('project-scientific-form');assert.equal(h.requests.length,before);assert.match(h.nodes.get('project-files-error').textContent,/Declared digests must match/);
+    h.nodes.get('project-scientific-reference').value='unpinned';h.input('project-scientific-name','Observed fields');h.answers.push(reply(boundValue({id:R,kind:'field_sequence'},C)),reply(records(B,C)));
+    await h.submit('project-scientific-form');assert.equal(h.nodes.get('project-files-error').textContent,'');const imported=JSON.parse(h.requests.at(-2).options.body);
+    assert.equal(imported.reference_id,'unpinned');assert.equal(imported.expected_sha256,N);assert.equal(imported.expected_checkpoint,N);
   }
   console.log('PASS project-files controller: checkpoint requests, submit/history projection, dirty preservation, superseded replies, typed errors, unknown acknowledgements');
 })().catch(error=>{console.error(error);process.exitCode=1;});

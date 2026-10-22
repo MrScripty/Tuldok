@@ -50,7 +50,7 @@ def resolve(projects, project_id, expected_project_manifest_sha256, selections):
     return result
 
 
-def _resolve(saved, manifest_raw, selections, read_file):
+def _resolve(saved, manifest_raw, selections, read_file, *, historical=False):
     project_id = saved['manifest']['id']
     expected_project_manifest_sha256 = contract.digest(manifest_raw)
     requested = [_reference(value) for value in selections]
@@ -100,7 +100,7 @@ def _resolve(saved, manifest_raw, selections, read_file):
         if depth > contract.MAX_DEPTH or len(closure) + len(visiting) >= MAX_BINDINGS:
             raise WorkbenchError('Contribution dependency closure exceeds its bounds.', 'too_large', 400)
         available = providers.get(key, ())
-        choices = [choice for choice in available if choice[0]['host']['state'] == 'compatible']
+        choices = list(available) if historical else [choice for choice in available if choice[0]['host']['state'] == 'compatible']
         if available and not choices:
             raise WorkbenchError('Contribution provider requires unsupported host contracts.', 'unsupported', 400)
         if len(choices) != 1:
@@ -331,7 +331,7 @@ def validate_configuration(binding, recipe, parameters, *, specification=None, t
 
 
 def validate_captured(binding, blobs):
-    """Rederive a binding from exact retained bytes, without a live catalog/root."""
+    """Rederive historical integrity; live resolve alone qualifies current hosts."""
     from projects import manifest, decode
     try:
         if not isinstance(binding, dict) or set(binding) != {'format','project','schema_sha256','selections','contributions','inventory'}:
@@ -369,7 +369,7 @@ def validate_captured(binding, blobs):
                 raise WorkbenchError('Retained provider file exceeds its bound.', 'too_large', 400)
             return data
         result = _resolve({'manifest':value,'manifest_path':project['manifest_path']}, raw,
-                          binding['selections'], read)
+                          binding['selections'], read, historical=True)
         if encode(result['binding']) != encode(binding) or result['blobs'] != blobs:
             raise ValueError()
         return binding

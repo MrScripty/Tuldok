@@ -105,6 +105,20 @@ def decode(data, labels, typed_request_id=None):
         raise WorkbenchError('Model must return one complete JSON with an exact offered label or explicit abstention; invalid output was not applied.') from None
 
 
+def validate_retained_result(job):
+    """Pure frozen-label/result proof shared by completion and project history."""
+    encoded = job.get('raw_response_base64')
+    if encoded is None:
+        return
+    raw = base64.b64decode(encoded, validate=True)
+    if len(raw) > MAX_OUTPUT or hashlib.sha256(raw).hexdigest() != job['response_sha256']:
+        raise WorkbenchError('Retained classification response identity differs.')
+    if job['status'] in ('completed', 'applied', 'rejected', 'abstained'):
+        annotation, reported = decode(raw, job['config']['labels'], job['id'] if pumas.typed(job['config']) else None)
+        if annotation != job['annotation'] or reported != job.get('reported_model'):
+            raise WorkbenchError('Retained classification differs from its exact response.')
+
+
 class TextClassificationProposals:
     def __init__(self, workbench):
         self.workbench = workbench
@@ -295,6 +309,7 @@ class TextClassificationProposals:
                 self._source(dict(source_id=job['source']['id'], revision=job['source']['revision'],
                                   source_revision=job['source']['source_revision']), captured=job['source'])
                 job.update(status='abstained' if annotation is None else 'completed', annotation=annotation, reported_model=reported)
+                validate_retained_result(job)
                 self._save(job)
                 self.access.audit('text_classification.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:

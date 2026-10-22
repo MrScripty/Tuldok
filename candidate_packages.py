@@ -1524,37 +1524,70 @@ def prepare_candidate_verifier(experiments, study_id, body):
     return _prepare_operation(experiments, study_id, body, 'verify')
 
 
+def decode_preparation_receipt(operation_id, value, *, catalog_id, validate_trial):
+    """Retain preparation facts without replaying requests or opening destinations."""
+    from model_definitions import checked_json,reference
+    from pipeline import decode_graph
+    require(operation_id in ('studies.prepare_package','studies.prepare_verifier'),'Unsupported preparation receipt.','unsupported')
+    value=checked_json(value)
+    verification=operation_id=='studies.prepare_verifier'
+    fields={'state','candidate_id','trial','graph','model','runtime_snapshot_sha256'}
+    if verification:fields|={'package_run_id','package_sha256'}
+    closed(value,fields)
+    require(value['state']=='prepared','Preparation receipt must retain its actual prepared state.')
+    require(type(value['candidate_id']) is str and re.fullmatch('[a-f0-9]{32}',value['candidate_id']) is not None,'Invalid prepared candidate identity.')
+    trial=validate_trial(value['trial']);graph=decode_graph(value['graph']);model=reference(value['model'],'model',catalog_id)
+    require(trial==value['trial'],'Prepared Trial decoder changed retained facts.')
+    require(type(value['runtime_snapshot_sha256']) is str and HASH.fullmatch(value['runtime_snapshot_sha256']) is not None,'Invalid prepared runtime manifest.')
+    if verification:
+        require(type(value['package_run_id']) is str and re.fullmatch('[a-f0-9]{32}',value['package_run_id']) is not None and
+                type(value['package_sha256']) is str and HASH.fullmatch(value['package_sha256']) is not None,'Invalid prepared package reference.')
+    return value
+
+
 def candidate_package_state(experiments, candidate_id):
-    """Read current authorized package/verification receipts without executing code."""
-    experiments.access.require('inspect', 'studies.package_state', candidate_id)
-    candidate = experiments.candidate(candidate_id)
-    result = {'candidate': candidate, 'state': 'selected', 'packages': [], 'verifications': []}
-    rows = experiments.db.execute("SELECT operation_id,document FROM model_operation_receipts WHERE operation_id IN (%s,%s) AND (document::jsonb)->>'candidate_id'=%s ORDER BY actor_id,request_key LIMIT 101",
-        ('studies.prepare_package', 'studies.prepare_verifier', candidate_id)).fetchall()
-    require(len(rows) <= 100, 'Candidate package receipt limit exceeded.', 'unsupported')
+    experiments.access.require('inspect','studies.package_state',candidate_id)
+    candidate=experiments.candidate(candidate_id)
+    rows=experiments.db.execute("SELECT operation_id,document FROM model_operation_receipts WHERE operation_id IN (%s,%s) AND (document::jsonb)->>'candidate_id'=%s ORDER BY actor_id,request_key LIMIT 101",
+        ('studies.prepare_package','studies.prepare_verifier',candidate_id)).fetchall()
     from model_definitions import retained_json
+    operations=[{'operation_id':row['operation_id'],'result':retained_json(row['document'])} for row in rows]
+    def runs(trial_id):
+        reservations=experiments.db.execute('SELECT run_id FROM model_attempt_reservations WHERE trial_id=%s ORDER BY run_id LIMIT 101',(trial_id,)).fetchall()
+        require(len(reservations)<=100,'Candidate package reservation limit exceeded.','unsupported')
+        return [experiments.dataset.runs.get(row['run_id']) for row in reservations]
+    return retained_package_state(candidate,operations,runs_for_trial=runs,
+        read_artifact=lambda run_id,name:experiments.dataset.runs.artifact(run_id,name)[0])
+
+
+def retained_package_state(candidate, prepared_operations, *, runs_for_trial, read_artifact):
+    """Pure existing reduction over already-authorized exact retained facts."""
+    result = {'candidate': candidate, 'state': 'selected', 'packages': [], 'verifications': []}
+    rows=prepared_operations
+    require(type(rows) is list and len(rows)<=100,'Candidate package receipt limit exceeded.','unsupported')
     for row in rows:
-        prepared = retained_json(row['document'])
-        if prepared.get('candidate_id') != candidate_id:
+        closed(row,('operation_id','result'))
+        require(row['operation_id'] in ('studies.prepare_package','studies.prepare_verifier'),
+                'Unsupported retained preparation operation.','unsupported')
+        prepared = row['result']
+        if prepared.get('candidate_id') != candidate['ref']['id']:
             continue
-        reservations = experiments.db.execute('SELECT run_id FROM model_attempt_reservations WHERE trial_id=%s ORDER BY run_id LIMIT 101',
-                                              (prepared['trial']['id'],)).fetchall()
-        require(len(reservations) <= 100, 'Candidate package reservation limit exceeded.', 'unsupported')
-        for reservation in reservations:
-            run = experiments.dataset.runs.get(reservation['run_id'])
+        runs=runs_for_trial(prepared['trial']['id'])
+        require(type(runs) is list and len(runs)<=100,'Candidate package reservation limit exceeded.','unsupported')
+        for run in runs:
             if run['state'] != 'completed':
                 continue
             collection = 'packages' if row['operation_id'] == 'studies.prepare_package' else 'verifications'
             require(len(result[collection]) < 100, 'Candidate package state result limit exceeded.', 'unsupported')
             if row['operation_id'] == 'studies.prepare_package':
-                raw, _ = experiments.dataset.runs.artifact(run['id'], 'package.zip')
+                raw = read_artifact(run['id'],'package.zip')
                 item = next(item for item in run['artifacts'] if item['name'] == 'package.zip')
                 manifest, files = inspect_package(raw, item['sha256'])
                 require(manifest['candidate'] == candidate['ref'], 'Published package candidate differs.')
                 result['packages'].append({'run_id': run['id'], 'sha256': item['sha256'], 'bytes': item['bytes'],
                     'artifact_name': 'package.zip', 'url': f"/api/workspace/runs/{run['id']}/artifacts/package.zip"})
             else:
-                raw, _ = experiments.dataset.runs.artifact(run['id'], 'verification.json')
+                raw = read_artifact(run['id'],'verification.json')
                 receipt = decode(raw)
                 require(receipt.get('verified') is True and receipt.get('candidate') == candidate['ref']
                         and receipt.get('package_sha256') == prepared['package_sha256'], 'Published fresh verification differs.')

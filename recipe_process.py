@@ -279,6 +279,20 @@ def validate_cpu_manifest(value):
     return decode(encoded(value))
 
 
+def validate_cpu_snapshot_manifest(descriptor, manifest):
+    """Bind historical descriptor and exact manifest without reading a root."""
+    descriptor=validate_cpu_snapshot_descriptor(descriptor)
+    manifest=validate_cpu_manifest(manifest)
+    raw=encoded(manifest)
+    if len(raw)!=descriptor['manifest_bytes'] or digest(raw)!=descriptor['manifest_sha256']:
+        raise ProcessError('CPU descriptor manifest identity differs.','stale')
+    for key in ('profile','python_version','packages','launch','total_bytes'):
+        if manifest[key]!=descriptor[key]:raise ProcessError('CPU descriptor differs from manifest.','stale')
+    if len(manifest['files'])!=descriptor['file_count']:
+        raise ProcessError('CPU descriptor file count differs.','stale')
+    return manifest
+
+
 def _cpu_open_root(root):
     """Walk every absolute component without following symlinks."""
     fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
@@ -356,10 +370,7 @@ def verify_cpu_snapshot(descriptor, *, checkpoint=None):
             raise ProcessError('Captured CPU manifest hash changed.', 'stale')
         manifest = validate_cpu_manifest(decode(raw))
         if raw != encoded(manifest): raise ProcessError('CPU manifest is not canonical.', 'invalid')
-        for key in ('profile', 'python_version', 'packages', 'launch', 'total_bytes'):
-            if manifest[key] != descriptor[key]: raise ProcessError('CPU descriptor differs from manifest.', 'stale')
-        if len(manifest['files']) != descriptor['file_count']:
-            raise ProcessError('CPU descriptor file count differs.', 'stale')
+        validate_cpu_snapshot_manifest(descriptor,manifest)
         expected = {item['path'] for item in manifest['files']}
         expected_dirs = {str(parent) for path in expected for parent in Path(path).parents if str(parent) != '.'}
         observed = set(); directory_count = 0

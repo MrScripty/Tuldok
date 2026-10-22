@@ -47,6 +47,12 @@ ORDER BY c.epoch
 LIMIT %s
 '''
 
+# Both readers share the exact curve expression and verification. The historical
+# variant supplies bounded origin JSON and cannot insert a runnable Run row.
+HISTORY_CURVE_SQL = CURVE_SQL.replace(
+    "FROM workspace_runs r\nCROSS JOIN LATERAL jsonb_array_elements(r.document::jsonb->'metrics'->'history') h",
+    "FROM jsonb_array_elements(%s::jsonb->'metrics'->'history') h").replace('WHERE r.id=%s\n','')
+
 # Only bounded scalar rows enter this projection. Large probability arrays and
 # all original hash-bound bytes stay in managed evidence artifacts.
 EXAMPLES_SQL = '''
@@ -120,6 +126,14 @@ def _retained_run(db, request):
         _refuse('Retained Run document exceeds this query budget.', 'limit', 413)
     try:
         run = json.loads(stored['document'])
+    except (ValueError, TypeError):
+        _refuse('Retained Run envelope is unavailable.', 'unavailable', 409)
+    return validate_run_selection(run, request)
+
+
+def validate_run_selection(run, request):
+    """Exact saved result selection shared by live and inert readers."""
+    try:
         artifact = [item for item in run['artifacts'] if item['name'] == 'model-evidence.json']
         state, run_id = run['state'], run['id']
         actual_hash = artifact[0]['sha256'] if len(artifact) == 1 else None
@@ -184,13 +198,56 @@ def _projection(evidence, request):
     return definition, checkpoints, raw.decode('ascii')
 
 
-def query(runs, body, *, export=False):
-    """Read one exact result; callable by a later explicitly registered HTTP hook.
+def _query_result(db, run, evidence, request, *, catalog_id, historical=False):
+    validate_run_selection(run, request)
+    run_id = run['id']
+    definition, checkpoints, example_json = _projection(evidence, request)
+    curve_sql = HISTORY_CURVE_SQL if historical else CURVE_SQL
+    source = json.dumps(run,allow_nan=False) if historical else run_id
+    curve = [dict(row) for row in db.execute(curve_sql,
+        (canonical(checkpoints).decode('ascii'), request['metric_id'], source, MAX_CHECKPOINTS + 1))]
+    expected = {item['checkpoint_sha256']: item for item in evidence['observations']
+                if item['metric_id'] == request['metric_id'] and item['split'] == 'validation'}
+    if len(curve) != len(checkpoints):
+        _refuse('Catalog curve coverage differs from retained checkpoints.')
+    for point in curve:
+        observation = expected.get(point['checkpoint_sha256'])
+        if (observation is None or observation['state'] != 'observed'
+                or point['epoch'] != observation['clocks']['epoch']
+                or point['value'] != observation['value'] or point['support'] != observation['sample_count']):
+            _refuse('Catalog curve differs from retained metric observations.')
+    page = db.execute(EXAMPLES_SQL, (example_json, request['errors_only'],
+                                    request['limit'], request['offset'])).fetchone()
+    selected_rows = [{key: row[key] for key in (*request['fields'], 'ordinal', 'frozen_reference')}
+                     for row in page['rows']]
+    provenance = {'catalog_id': catalog_id, 'run_id': run_id,
+                  'evaluation_sha256': request['evaluation_sha256'],
+                  'checkpoint_sha256': request['checkpoint_sha256'],
+                  'metric_definition_sha256': request['metric_definition_sha256'],
+                  'population_sha256': definition['population_sha256'],
+                  'probe_sha256': evidence['manifest']['probe']['sha256'],
+                  'data_sha256': evidence['manifest']['data_sha256'],
+                  'producer': evidence['manifest']['producer']}
+    count = page['filtered_support']
+    result = {'state': 'verified', 'query_id': QUERY_ID, 'query_version': QUERY_VERSION,
+              'mode': 'frozen', 'provenance': provenance,
+              'metric': {'id': definition['id'], 'units': definition['units'],
+                         'definition': definition, 'support': len(evidence['probe']['members'])},
+              'curve': curve, 'columns': _columns(request['fields']),
+              'examples': {'rows': selected_rows, 'population_support': len(evidence['probe']['members']),
+                           'filtered_support': count, 'offset': request['offset'], 'limit': request['limit'],
+                           'next_offset': request['offset'] + len(selected_rows)
+                           if request['offset'] + len(selected_rows) < count else None,
+                           'filters': {'errors_only': request['errors_only']}},
+              'sampling': {'method': 'none', 'population': 'frozen_validation_probe'},
+              'selection_sha256': digest(request)}
+    if len(canonical(result)) > MAX_RESPONSE_BYTES:
+        _refuse('Retained analysis response exceeds this query budget.', 'limit', 413)
+    return result
 
-    No cache or download URL is returned. An export must call this boundary
-    again. Final authorization happens outside the read snapshot, so revocation
-    committed during verification/query cannot be hidden by Repeatable Read.
-    """
+
+def query(runs, body, *, export=False):
+    """Current authorization surrounds exact retained reads and SQL projection."""
     request = validate_request(body)
     if type(export) is not bool:
         raise TypeError('export must be a host-owned boolean')
@@ -199,58 +256,33 @@ def query(runs, body, *, export=False):
     db = runs.db
     with db.lock.bounded(time.monotonic() + LOCK_SECONDS):
         runs.access.require('inspect', action, run_id)
-        # SET TRANSACTION must own its snapshot, never alter a caller's write
-        # transaction or check current revocation inside an inherited snapshot.
         if db.connection.info.transaction_status != TransactionStatus.IDLE:
             _refuse('Retained analysis requires a standalone read.', 'unavailable', 503)
         with _read_snapshot(db):
             _retained_run(db, request)
         evidence = runs.model_evidence(run_id, {'checkpoint_sha256': request['checkpoint_sha256']},
                                        contract_version=1)
-        definition, checkpoints, example_json = _projection(evidence, request)
         with _read_snapshot(db):
-            _retained_run(db, request)
-            curve = [dict(row) for row in db.execute(CURVE_SQL,
-                (canonical(checkpoints).decode('ascii'), request['metric_id'], run_id, MAX_CHECKPOINTS + 1))]
-            expected = {item['checkpoint_sha256']: item for item in evidence['observations']
-                        if item['metric_id'] == request['metric_id'] and item['split'] == 'validation'}
-            if len(curve) != len(checkpoints):
-                _refuse('Catalog curve coverage differs from retained checkpoints.')
-            for point in curve:
-                observation = expected.get(point['checkpoint_sha256'])
-                if (observation is None or observation['state'] != 'observed'
-                        or point['epoch'] != observation['clocks']['epoch']
-                        or point['value'] != observation['value'] or point['support'] != observation['sample_count']):
-                    _refuse('Catalog curve differs from retained metric observations.')
-            page = db.execute(EXAMPLES_SQL, (example_json, request['errors_only'],
-                                            request['limit'], request['offset'])).fetchone()
-        selected_rows = [{key: row[key] for key in (*request['fields'], 'ordinal', 'frozen_reference')}
-                         for row in page['rows']]
-        provenance = {'catalog_id': db.dataset_id, 'run_id': run_id,
-                      'evaluation_sha256': request['evaluation_sha256'],
-                      'checkpoint_sha256': request['checkpoint_sha256'],
-                      'metric_definition_sha256': request['metric_definition_sha256'],
-                      'population_sha256': definition['population_sha256'],
-                      'probe_sha256': evidence['manifest']['probe']['sha256'],
-                      'data_sha256': evidence['manifest']['data_sha256'],
-                      'producer': evidence['manifest']['producer']}
-        count = page['filtered_support']
-        result = {'state': 'verified', 'query_id': QUERY_ID, 'query_version': QUERY_VERSION,
-                  'mode': 'frozen', 'provenance': provenance,
-                  'metric': {'id': definition['id'], 'units': definition['units'],
-                             'definition': definition, 'support': len(evidence['probe']['members'])},
-                  'curve': curve, 'columns': _columns(request['fields']),
-                  'examples': {'rows': selected_rows, 'population_support': len(evidence['probe']['members']),
-                               'filtered_support': count, 'offset': request['offset'], 'limit': request['limit'],
-                               'next_offset': request['offset'] + len(selected_rows)
-                               if request['offset'] + len(selected_rows) < count else None,
-                               'filters': {'errors_only': request['errors_only']}},
-                  'sampling': {'method': 'none', 'population': 'frozen_validation_probe'},
-                  'selection_sha256': digest(request)}
-        if len(canonical(result)) > MAX_RESPONSE_BYTES:
-            _refuse('Retained analysis response exceeds this query budget.', 'limit', 413)
+            run = _retained_run(db, request)
+            result = _query_result(db, run, evidence, request, catalog_id=db.dataset_id)
         runs.access.require('inspect', action, run_id)
         return result
+
+
+def query_history(db, run, evidence, body, *, authorize, export=False):
+    """Query supplied immutable origin facts without an active workspace_runs row."""
+    request = validate_request(body)
+    if type(export) is not bool:
+        raise TypeError('export must be a host-owned boolean')
+    action = 'runs.export_retained_analysis' if export else 'runs.retained_analysis'
+    authorize('inspect', action, run['id'])
+    with db.lock.bounded(time.monotonic() + LOCK_SECONDS):
+        if db.connection.info.transaction_status != TransactionStatus.IDLE:
+            _refuse('Retained analysis requires a standalone read.', 'unavailable', 503)
+        with _read_snapshot(db):
+            result = _query_result(db, run, evidence, request, catalog_id=run['dataset_id'],historical=True)
+    authorize('inspect', action, run['id'])
+    return result
 
 
 def _columns(fields):

@@ -1,0 +1,143 @@
+{
+  "format": "tuldok_project_m2_verification_v1",
+  "baseline": "af276565fae9c08c1084d37d8937ba5d97599f17",
+  "main_baseline": "133d53c0e2985a6559ba9cebd7d4a9f530051f06",
+  "standards_revision": "5bce3110fc64d61ff8b4f79468184bd6295855d5",
+  "source_manifest": "m2-source-manifest.json",
+  "source_manifest_file_sha256": "ef2dc94d76d73fc11a45bcb06cf32dc5399d84370ef2a94dfbf6db800cfa9937",
+  "source_manifest_content_fingerprint": "128302cf010c2d34b50c40d8f077b086bf35b9954b1b01bbad923b985caae24d",
+  "source_files": 226,
+  "public_qa": {
+    "status": "passed_with_scoped_evidence",
+    "deliverables": [
+      "tests/test_project_files_m2_http.py",
+      "tests/browser_project_files_m2.cjs"
+    ],
+    "passed_http_cases": [
+      {
+        "test": "test_real_sdk_cli_mcp_roles_lost_reply_and_stale_binding",
+        "log": "m2-http-public-first.log",
+        "note": "This method passed; same log also contains an earlier independent mixed-fixture error.",
+        "receipt": "artifacts/m2-http/test_real_sdk_cli_mcp_roles_lost_reply_and_stale_binding-87e5b66ddb2d42d2af79baf043230ef0.json"
+      },
+      {
+        "test": "test_unpinned_scientific_reference_uses_current_observed_hash",
+        "log": "m2-http-public-mixed-third.log",
+        "note": "This method passed; same log also contains an earlier independent mixed lexical-check error.",
+        "receipt": "artifacts/m2-http/test_unpinned_scientific_reference_uses_current_observed_hash-d275379e89044005902d9042f3cc6b54.json"
+      },
+      {
+        "test": "test_public_mixed_authoring_git_clone_and_cold_reconstruction",
+        "log": "m2-http-public-mixed-fourth.log",
+        "receipt": "artifacts/m2-http/test_public_mixed_authoring_git_clone_and_cold_reconstruction-2b655c5307474903bced1e1a46b03ba3.json"
+      }
+    ],
+    "actual_browser_functional_and_cold": {
+      "passed": true,
+      "source_manifest": "m2-final-product-freeze.json",
+      "source_manifest_file_sha256": "3de54866faec96fd5d8236178a2664ed93b791dc62fb8ea0166a2522cb798a31",
+      "receipt": "artifacts/project-files-m2/run-DDH5l1/receipt.json",
+      "overall_status": "failed due responsive overflow only",
+      "source_files": 226,
+      "http_errors": 0,
+      "runtime_errors": 0
+    },
+    "issues": [
+      {
+        "issue": "Selection result native items misclassified as page; server mutation committed but UI rejected acknowledgement",
+        "state": "fixed; actual UI selection and search/history flow passed on next source"
+      },
+      {
+        "issue": "Unpinned scientific reference UI ignored observed_sha256",
+        "state": "fixed; actual unpinned import and declared mismatch negative passed"
+      },
+      {
+        "issue": "Cold image history expands to650px at viewport390",
+        "state": "fixed by CSS owner: #project-detail-history-list overflow-wrap:anywhere; actual cold responsive check passed at390/1440"
+      }
+    ],
+    "precise_limits": [
+      "Git carries tracked canonical metadata. Required untracked artifacts were transferred explicitly as a separate exact sidecar.",
+      "Study creation/revision inspected zero actual charged accounting; no new admission/training claim. Historical Run was authored through the real closed codec, not executed.",
+      "No CPU preflight, training, generation, lab access, production data access, product commit or publication.",
+      "Passed HTTP evidence retained on earlier frozen source; parent owns targeted validation of subsequent unrelated closure/grammar fixes."
+    ],
+    "unrun": [
+      "CPU preflight, training, provider generation, and lab access (outside this M2 non-execution acceptance).",
+      "No broad HTTP rerun after the parent-scoped unrelated closure/grammar changes; original frozen-source HTTP evidence retained, latest source validated through focused browser and independent owner gates."
+    ],
+    "approval_denials": [],
+    "owned_file_sha256": {
+      "tests/test_project_files_m2_http.py": "97af3a4c378800861924fda80de80f1979358931d09dc434be188ed19c067a52",
+      "tests/browser_project_files_m2.cjs": "f2254befb37e932a76d41697c387b97f3a2f7c6843483d19399fec3eae8f0afb"
+    },
+    "focused_responsive": {
+      "passed": true,
+      "receipt": "artifacts/project-files-m2/run-SImFcf/receipt.json",
+      "log": "m2-browser-responsive-final.log",
+      "mode": "TULDOK_M2_RESPONSIVE_ONLY=1",
+      "cold_history_revisions": 2,
+      "measurements": [
+        {
+          "viewport": 390,
+          "scrollWidth": 375,
+          "clientWidth": 375,
+          "offenders": 0
+        },
+        {
+          "viewport": 1440,
+          "scrollWidth": 1425,
+          "clientWidth": 1425,
+          "offenders": 0
+        }
+      ],
+      "source_connect": false,
+      "runtime_errors": 0,
+      "http_errors": 0
+    },
+    "final_source": {
+      "manifest": "/workspace/scratch/tuldok-save-load-qa/m2-accepted-candidate-freeze.json",
+      "manifest_file_sha256": "7a8969d58594b4dc6f9412c5a31c77b2a13f59b807ad013084bfc351cdfde8f4",
+      "normalized_content_fingerprint": "cb070f64dfa11579ec3b759e6d2b02c12df59b6da2882f7e764489fe99dd3abe",
+      "file_count": 226,
+      "end_changed_files": [],
+      "css_sha256": "d1e051bc15f0b949e28860ed2e4acce2cc4c349b4329ecf41abd8da0e5f3f4d9"
+    },
+    "checks": {
+      "python_compile": "passed",
+      "node_syntax": "passed",
+      "diff_whitespace": "passed"
+    },
+    "remaining_delegated_blockers": []
+  },
+  "fresh_material_http": {
+    "selected": 1,
+    "ran": 1,
+    "errors": 0,
+    "failures": 0,
+    "skips": 0,
+    "seconds": 20.812,
+    "freeze_file_sha256": "7a8969d58594b4dc6f9412c5a31c77b2a13f59b807ad013084bfc351cdfde8f4",
+    "frozen_files": 226,
+    "source_matches_before": true,
+    "source_matches_after": true
+  },
+  "independent_review": "Clear after justified source and CI findings resolved; read-only review, not runtime evidence.",
+  "ci": "Configured, not yet run on the M2 commit. Existing M1 CI is a separate subject.",
+  "limitations": [
+    "Live execution and producer starts unavailable pending M3.",
+    "Independent Save As/relocation/adoption and extraction remain pending M4/M5.",
+    "No user lab, production data, training or provider generation was used.",
+    "Git carries text/manifests; required binary sidecars were transferred explicitly."
+  ],
+  "tested_source_manifest": "m2-tested-source-manifest.json",
+  "tested_source_manifest_file_sha256": "7a8969d58594b4dc6f9412c5a31c77b2a13f59b807ad013084bfc351cdfde8f4",
+  "post_qualification_change": {
+    "file": "project_data.py",
+    "change": "Remove one redundant EOF newline after the staged whitespace check identified it.",
+    "before_sha256": "a474aa047073e425d90a822732b94dfe403ad6d2c05c3b9b2458496ded6c0516",
+    "after_sha256": "227ea9c3dd7b7c9fa45b781b0f3aef92f6b776ebf74e108f0594e048afede64f",
+    "python_ast_equal": true,
+    "runtime_campaign_repeated": false
+  }
+}

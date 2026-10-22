@@ -71,6 +71,113 @@ def client(reply, *, owner=False):
     return value
 
 
+class M2Contracts(unittest.TestCase):
+    def test_fixed_consumers_cover_all_m2_operations_and_preserve_m1(self):
+        sdk = ProjectFilesClient(Mock())
+        cli = project_cli.parser()
+        for name in api.PROJECT_FILES_M2:
+            action = name.split('.')[1]
+            self.assertTrue(callable(getattr(sdk, action)), name)
+            parsed = cli.parse_args(['--config', '/not-read', 'file-' + action.replace('_', '-'), '--arguments', '/not-read'])
+            self.assertEqual(parsed.command, 'file-' + action.replace('_', '-'))
+            tool, = api.tool_definitions({name: 1})
+            self.assertEqual(tool['inputSchema'], api.operation(name)['inputSchema'])
+        for action in ('model_publish', 'recipe_prepare', 'data_annotate', 'lineage_record', 'expose_holdout'):
+            self.assertEqual(api.contract('project_files.' + action)['authority'], 'agent')
+        for action in ('study_create', 'study_save', 'source_register'):
+            self.assertEqual(api.contract('project_files.' + action)['authority'], 'owner')
+        self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)
+
+    def test_full_histories_have_smaller_bounds_than_summary_pages(self):
+        for action in ('data_history', 'data_response_history', 'data_preference_history'):
+            args = dict(binding=BINDING, checkpoint=CHECKPOINT, record_id=RECORD, offset=0, limit=4)
+            api.validate_arguments('project_files.' + action, args)
+            with self.assertRaises(api.AgentAPIError):
+                api.validate_arguments('project_files.' + action, dict(args, limit=5))
+        with self.assertRaises(api.AgentAPIError):
+            api.validate_arguments('project_files.data_query', dict(binding=BINDING, checkpoint=CHECKPOINT, limit=41))
+
+    def test_inline_imports_retain_aggregate_decoded_byte_bound(self):
+        import base64
+        blob = base64.b64encode(b'a' * (api.INLINE_LIMIT // 2 + 1)).decode()
+        arguments = dict(bound(), files={'mesh.ply': blob, 'mesh.json': blob}, groups=['source'])
+        with self.assertRaises(api.AgentAPIError) as caught:
+            api.validate_arguments('project_files.data_import_mesh', arguments)
+        self.assertEqual(caught.exception.code, 'too_large')
+
+    def test_sdk_checks_binding_checkpoint_target_and_page_correlation(self):
+        arguments = dict(binding=BINDING, checkpoint=CHECKPOINT, record_id=RECORD)
+        good = dict(binding=BINDING, project_id=PROJECT, checkpoint=CHECKPOINT, value={'id': RECORD, 'kind': 'image'})
+        # Bootstrap one real negotiated SDK; changing only its controlled response
+        # keeps this a transport claim and avoids any canonical storage substitute.
+        raw = client({'status': 200, 'result': good})
+        self.assertEqual(ProjectFilesClient(raw).data_get(**arguments), good)
+        for update in ({'binding': PROJECT}, {'checkpoint': OTHER}, {'value': {'id': PROJECT}}):
+            raw._request = Mock(return_value={'status': 200, 'result': {**good, **update}})
+            with self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(raw).data_get(**arguments)
+        page = dict(good, value={'items': [{'id': RECORD}], 'offset': 0, 'limit': 40, 'total': 41})
+        raw._request = Mock(return_value={'status': 200, 'result': page})
+        with self.assertRaises(api.AgentAPIError):
+            ProjectFilesClient(raw).studies(binding=BINDING, checkpoint=CHECKPOINT)
+        receipt = {'committed': True, 'selected': True, 'project_id': PROJECT, 'checkpoint': OTHER, 'request_key': 'different-request'}
+        raw._request = Mock(return_value={'status': 503, 'result': {'error': 'Projection unavailable', 'code': 'projection_unavailable', 'receipt': receipt}})
+        with self.assertRaises(api.AgentAPIError) as caught:
+            ProjectFilesClient(raw).data_rights(record_id=RECORD, revision=1, source_revision=1, note='authored', **bound())
+        self.assertEqual(caught.exception.code, 'transport')
+
+    def test_validator_cache_is_isolated_and_rejects_invalid_or_referenced_schemas(self):
+        schema = {'type': 'string', 'maxLength': 2}
+        first = api._validator(schema)
+        schema['maxLength'] = 8
+        self.assertIsNotNone(next(first.iter_errors('long'), None))
+        self.assertIsNone(next(api._validator(schema).iter_errors('long'), None))
+        for invalid in ({'type': 'unknown'}, {'$ref': 'https://invalid.example/schema'}, {'properties': {'value': {'$dynamicRef': '#anything'}}}):
+            with self.assertRaises(api.AgentAPIError):
+                api._validator(invalid)
+
+    def test_validator_cache_evicts_by_exact_schema_byte_budget(self):
+        with api._SCHEMA_CACHE_LOCK:
+            saved, saved_bytes = api._SCHEMA_CACHE.copy(), api._SCHEMA_CACHE_BYTES
+            api._SCHEMA_CACHE.clear(); api._SCHEMA_CACHE_BYTES = 0
+        try:
+            with patch.object(api, '_SCHEMA_CACHE_LIMIT_BYTES', 120), patch.object(api, '_SCHEMA_CACHE_LIMIT_ENTRIES', 2):
+                for count in range(1, 6):
+                    api._validator({'type': 'string', 'maxLength': count})
+                    self.assertLessEqual(len(api._SCHEMA_CACHE), 2)
+                    self.assertEqual(api._SCHEMA_CACHE_BYTES, sum(map(len, api._SCHEMA_CACHE)))
+                    self.assertLessEqual(api._SCHEMA_CACHE_BYTES, 120)
+                before = api._SCHEMA_CACHE_BYTES
+                api._validator({'type': 'string', 'description': 'large schema' * 20})
+                self.assertEqual(api._SCHEMA_CACHE_BYTES, before)
+        finally:
+            with api._SCHEMA_CACHE_LOCK:
+                api._SCHEMA_CACHE.clear(); api._SCHEMA_CACHE.update(saved); api._SCHEMA_CACHE_BYTES = saved_bytes
+
+    def test_retained_run_document_segment_checks_exact_selection_and_bytes(self):
+        import base64
+        arguments = dict(binding=BINDING, checkpoint=CHECKPOINT, run_id=RECORD,
+                         origin_catalog_id=PROJECT, expected_sha256=OTHER, offset=0, limit=4)
+        value = dict(format='project_run_document_segment_v1', origin_catalog_id=PROJECT,
+                     run_id=RECORD, sha256=OTHER, bytes=6, offset=0, limit=4,
+                     base64=base64.b64encode(b'abcd').decode(), next_offset=4)
+        result = dict(binding=BINDING, project_id=PROJECT, checkpoint=CHECKPOINT, value=value)
+        raw = client({'status': 200, 'result': result})
+        self.assertEqual(ProjectFilesClient(raw).run_document_segment(**arguments), result)
+        for change in ({'run_id': PROJECT}, {'sha256': CHECKPOINT}, {'offset': 1},
+                       {'next_offset': None}, {'base64': base64.b64encode(b'ab').decode()}):
+            raw._request = Mock(return_value={'status': 200, 'result': dict(result, value=dict(value, **change))})
+            with self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(raw).run_document_segment(**arguments)
+
+    def test_browser_fixed_routes_are_generated_from_the_registry(self):
+        source = (ROOT / 'static/project-files.js').read_text()
+        routes = json.loads(re.search(r'/\* PROJECT_FILES_ROUTES_START \*/\s*(.*?)\s*/\* PROJECT_FILES_ROUTES_END \*/', source, re.S)[1])
+        expected = {name: {'method': api.operation(name)['method'], 'path': api.operation(name)['path'],
+                          'mutation': api.operation(name)['side_effects']} for name in api.PROJECT_FILES_M2}
+        self.assertEqual(routes, expected)
+
+
 class Contracts(unittest.TestCase):
     def test_additive_negotiation_preserves_installed_legacy_and_mcp_contracts(self):
         self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)

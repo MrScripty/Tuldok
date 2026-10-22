@@ -26,6 +26,9 @@ jobs:
       TULDOK_TRAINING_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
       TULDOK_NATIVE_READER_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
       TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
+      TULDOK_PROJECT_FILES_COLD_DATABASE_URL: postgresql://tuldok_project_cold:isolated-cold-fixture@127.0.0.1:5432/tuldok_project_cold
+      TULDOK_QA_OUTPUT_ROOT: build/qa/external-project
+      TULDOK_M2_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the exact authored fixture used by canonical Release qualification
@@ -47,6 +50,32 @@ jobs:
       - name: Install independent WAV consumer
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python -m pip install -r requirements.txt -r requirements-spatial-qualification.txt
+      - name: Prepare isolated external-project cold reconstruction and exact source subject
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          import psycopg
+          from psycopg import sql
+          source = os.environ['TULDOK_DATABASE_URL']
+          database = psycopg.conninfo.conninfo_to_dict(source)['dbname']
+          # This job owns the disposable service and these fixed fixture names.
+          with psycopg.connect(source, autocommit=True) as connection:
+              connection.execute("CREATE ROLE tuldok_project_cold LOGIN PASSWORD 'isolated-cold-fixture' NOSUPERUSER NOCREATEDB NOCREATEROLE")
+              connection.execute('CREATE DATABASE tuldok_project_cold OWNER tuldok_project_cold')
+              connection.execute(sql.SQL('REVOKE CONNECT ON DATABASE {} FROM PUBLIC').format(sql.Identifier(database)))
+          with psycopg.connect(os.environ['TULDOK_PROJECT_FILES_COLD_DATABASE_URL']) as connection:
+              current, allowed = connection.execute('SELECT current_database(),has_database_privilege(current_user,%s,\'CONNECT\')', (database,)).fetchone()
+              assert current != database and allowed is False
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          paths = sorted(p for p in paths if p and ((p.endswith('.py') and '/' not in p) or p.startswith(('static/', 'extension_schemas/', 'tuldok_extension_sdk/'))))
+          subject = {'baseline': subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip(),
+                     'files': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}}
+          target = pathlib.Path(os.environ['TULDOK_M2_FREEZE_MANIFEST'])
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(subject, sort_keys=True, separators=(',', ':')) + '\n')
+          print('External-project product files:', len(subject['files']))
+          assert subject['files']
+          PY
       - name: Verify field output preflight and unchanged admission state
         run: python -m unittest discover -s tests -p 'test_run_preflight*.py' -v
       - name: Verify same-attempt publication retention and recovery boundaries
@@ -88,7 +117,23 @@ jobs:
       - run: node --check static/experiment-lineage.js
       - run: node tests/test_experiment_lineage_controller.cjs
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py
+      - name: Verify real external-project SDK CLI MCP and current authority
+        env:
+          PYTHONPATH: tests
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_files_m2_http.ProjectFilesM2HTTP.test_real_sdk_cli_mcp_roles_lost_reply_and_stale_binding')
+          assert not loader.errors and suite.countTestCases() == 1
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == 1 and not result.skipped else 1)
+          PY
       - run: python -m unittest discover -s tests
+      - name: Verify external-project authoring and cold reconstruction in Chromium
+        run: node tests/browser_project_files_m2.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node --check static/auth.js
       - run: node tests/test_auth_helpers.cjs
       - run: node tests/test_auth_controller.cjs

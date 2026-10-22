@@ -74,7 +74,7 @@ def complete(job, stop):
     return bytes(data)
 
 
-def decode(data, source, count, typed_request_id=None):
+def decode(data, source, count, typed_request_id=None, *, values_only=False):
     """All-or-nothing candidate validation; this is not a semantic verifier."""
     try:
         if typed_request_id is not None:
@@ -92,9 +92,19 @@ def decode(data, source, count, typed_request_id=None):
             raise ValueError()
     except (ValueError, KeyError, IndexError, TypeError, AttributeError):
         raise WorkbenchError('Model must return the complete requested candidate JSON; truncated or malformed output was not admitted.') from None
-    candidates, seen = [], {source['text']}
-    for proposal in result['candidates']:
-        if not isinstance(proposal, dict) or set(proposal) != {'text', 'label', 'evidence'}:
+    if any(type(value) is not dict or set(value) != {'text', 'label', 'evidence'} for value in result['candidates']):
+        raise WorkbenchError('Candidate fields must be text, label and evidence.')
+    values = validate_candidate_values(result['candidates'], source)
+    if values_only:
+        return values
+    return [dict(value, id=uuid.uuid4().hex, status='pending_review', record_id=None, review_note='') for value in values]
+
+
+def validate_candidate_values(proposals, source, *, existing_texts=None):
+    """Pure source/class/quote policy, shared by wire admission and history."""
+    candidates, seen = [], set(existing_texts) if existing_texts is not None else {source['text']}
+    for proposal in proposals:
+        if not isinstance(proposal, dict) or not {'text', 'label', 'evidence'} <= set(proposal):
             raise WorkbenchError('Candidate fields must be text, label and evidence.')
         text_value(proposal['text'], 'Candidate text', 4000)
         text = unicodedata.normalize('NFC', proposal['text'].replace('\r\n', '\n').replace('\r', '\n'))
@@ -114,9 +124,23 @@ def decode(data, source, count, typed_request_id=None):
                 raise WorkbenchError('Evidence offsets must index captured source Unicode code points.')
             if span['quote'] != source['text'][start:end]:
                 raise WorkbenchError('Evidence quote does not match the captured source.')
-        candidates.append({'id': uuid.uuid4().hex, 'text': text, 'label': proposal['label'], 'evidence': evidence,
-                           'status': 'pending_review', 'record_id': None, 'review_note': ''})
+        candidates.append({'text': text, 'label': proposal['label'], 'evidence': evidence})
     return candidates
+
+
+def validate_retained_result(job):
+    """Validate available response bytes without contacting a provider."""
+    encoded = job.get('raw_response_base64')
+    if encoded is None:
+        return
+    raw = base64.b64decode(encoded, validate=True)
+    if len(raw) > MAX_OUTPUT or hashlib.sha256(raw).hexdigest() != job['response_sha256']:
+        raise WorkbenchError('Retained grounded response identity differs.')
+    if job['status'] == 'completed':
+        values = decode(raw, job['source'], job['config']['count'], job['id'] if pumas.typed(job['config']) else None, values_only=True)
+        fields = ('text', 'label', 'evidence')
+        if [{k:v[k] for k in fields} for v in values] != [{k:v[k] for k in fields} for v in job['candidates']]:
+            raise WorkbenchError('Retained grounded candidates differ from the original response.')
 
 
 class Proposals:
@@ -277,6 +301,7 @@ class Proposals:
                     raise WorkbenchError('Generation cancelled.', 'cancelled')
                 self._source({'source_id': job['source']['id'], 'revision': job['source']['revision'], 'source_revision': job['source']['source_revision']})
                 job.update(status='completed', candidates=candidates)
+                validate_retained_result(job)
                 self._save(job)
                 self.access.audit('grounded.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:

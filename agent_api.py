@@ -6,6 +6,7 @@ argument validation, never by the application discovery route.
 import base64
 import binascii
 import copy
+from collections import OrderedDict
 from contextlib import contextmanager
 import hashlib
 import http.client
@@ -813,6 +814,207 @@ for _op in _OPERATIONS:
     if _op['operation_id'].startswith('project_files.'):
         _op['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt'] = PROJECT_FILES_RECEIPT
 
+# M2 operations are fixed domain projections. Domain owners validate versioned
+# documents; the public boundary owns selection, bounds and outcome correlation.
+PROJECT_FILES_M2 = set()
+_PROJECT_FILES_PAGE_INPUT = {'offset': integer(0, 1000000), 'limit': integer(1, 40)}
+_PROJECT_FILES_PAGE = obj({'items': array(JSON_OBJECT, 40), 'offset': integer(0, 1000000),
+    'total': integer(0, 1000000), 'limit': integer(1, 40)})
+_PROJECT_FILES_READ = {'binding': ID, 'checkpoint': SHA}
+_PROJECT_FILES_ORIGIN = {'origin_catalog_id': ID}
+
+
+def _project_file_operation(action, method, suffix, fields=None, *, required=None,
+                            output=JSON_OBJECT, mutation=False, owner=False, scopes=None,
+                            domain=None, page=False):
+    fields = copy.deepcopy(fields or {})
+    needed = list(fields) if required is None else list(required)
+    if domain is not None:
+        original = next(op for op in _OPERATIONS if op['operation_id'] == domain)
+        fields.update(copy.deepcopy(original['inputSchema'].get('properties', {})))
+        needed += original['inputSchema'].get('required', [])
+    bound = _PROJECT_FILES_MUTATION if mutation else _PROJECT_FILES_READ
+    fields.update(bound)
+    needed = list(dict.fromkeys(needed + list(bound)))
+    if action == 'data_query':
+        fields['limit'] = integer(1, 40)
+    if page:
+        fields.update(copy.deepcopy(_PROJECT_FILES_PAGE_INPUT))
+        output = copy.deepcopy(_PROJECT_FILES_PAGE)
+        if action in ('data_history', 'data_response_history', 'data_preference_history'):
+            fields['limit'] = integer(1, 4)
+            output['properties']['items']['maxItems'] = 4
+            output['properties']['limit'] = integer(1, 4)
+    name = 'project_files.' + action
+    model_operation(name, method, '/api/workspace/project-files' + suffix,
+        fields, needed, output=obj(dict(_PROJECT_FILES_BOUND_RESULT, value=output)),
+        query=tuple(key for key in fields if '{' + key + '}' not in suffix) if method == 'GET' else (),
+        scopes=scopes or (('inspect', 'edit') if mutation else ('inspect',)), mutation=mutation,
+        description=action.replace('_', ' ') + '; exact selected project checkpoint, existing domain validation, no execution.')
+    if domain is not None:
+        _OPERATIONS[-1]['binary_fields'] = copy.deepcopy(original['binary_fields'])
+    PROJECT_FILES_M2.add(name)
+    if mutation:
+        _MODEL_RECEIPT_IDS.add(name)
+    if owner:
+        _OWNER_OPERATION_IDS.add(name)
+    _OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt'] = PROJECT_FILES_RECEIPT
+
+
+_project_file_operation('definitions', 'GET', '/definitions')
+
+# Actual data and its authored histories. Inline source imports retain the
+# existing decoded-byte bound; compound sources use their existing parsers.
+_project_file_operation('data_query', 'GET', '/data', domain='data.query')
+_project_file_operation('data_get', 'GET', '/data/{record_id}', {'record_id': ID})
+_project_file_operation('data_availability', 'GET', '/data/{record_id}/availability', {'record_id': ID})
+for _action, _suffix in [('data_history', 'history'), ('data_responses', 'responses'),
+        ('data_response_history', 'response-history'), ('data_preferences', 'preferences'),
+        ('data_preference_history', 'preference-history')]:
+    _project_file_operation(_action, 'GET', '/data/{record_id}/' + _suffix, {'record_id': ID}, page=True)
+for _kind in ('text', 'image', 'audio', 'mesh', 'pointcloud', 'volume', 'sequence'):
+    _project_file_operation('data_import_' + _kind, 'POST', '/data/import-' + _kind,
+        domain='data.import_' + _kind, mutation=True)
+_project_file_operation('source_register', 'POST', '/sources/register',
+    {'root': text(160), 'manifest_path': text(512)}, mutation=True, owner=True)
+_project_file_operation('data_import_scientific', 'POST', '/data/import-scientific', {
+    'snapshot': obj({'origin_catalog_id': ID, 'project_id': ID, 'manifest_sha256': SHA}),
+    'reference_id': REF, 'expected_sha256': SHA,
+    'document': obj(OPTIONAL_META, required=['groups'])}, mutation=True)
+_project_file_operation('data_annotate', 'POST', '/data/{record_id}', {
+    'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
+    'task': {'enum': list(ANNOTATIONS)}, 'annotation': JSON_OBJECT,
+    'groups': _PROJECT_FILES_GROUPS, 'review': {'enum': ['draft', 'human_reviewed']}}, mutation=True)
+_project_file_operation('data_rights', 'POST', '/data/{record_id}/rights', {
+    'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
+    'note': text(1000, True)}, mutation=True)
+for _action, _suffix in [('data_source_save', '/source'), ('data_source_delete', '/source/delete')]:
+    _project_file_operation(_action, 'POST', '/data/{record_id}' + _suffix,
+        {'record_id': ID, 'document': JSON_OBJECT}, mutation=True,
+        scopes=('inspect', 'edit', 'approve-review') if _action == 'data_source_save' else ('inspect', 'edit'))
+_project_file_operation('data_response_save', 'POST', '/responses', {
+    'document': obj({'id': ID, 'prompt_id': ID, 'revision': SAFE_NAT,
+        'parent_revision': SAFE_POS, 'source_revision': SAFE_POS, 'completion': text(200000),
+        'review': {'enum': ['draft', 'human_reviewed']}})}, mutation=True)
+for _action, _suffix in [('data_preference_save', ''), ('data_preference_delete', '/delete')]:
+    _project_file_operation(_action, 'POST', '/preferences' + _suffix,
+        {'document': JSON_OBJECT}, mutation=True)
+for _singular, _plural, _key in [('selection', 'selections', 'selection_id'), ('search', 'searches', 'search_id')]:
+    _project_file_operation(_plural, 'GET', '/' + _plural, page=True)
+    if _singular == 'selection':
+        _project_file_operation('selection_get', 'GET', '/selections/{selection_id}', {'selection_id': ID})
+    _project_file_operation(_singular + '_create', 'POST', '/' + _plural,
+        {'document': JSON_OBJECT}, mutation=True)
+    for _verb in ('rename', 'delete'):
+        _project_file_operation(_singular + '_' + _verb, 'POST', '/' + _plural + '/{' + _key + '}' + ('/delete' if _verb == 'delete' else ''),
+            {_key: ID, 'revision': SAFE_POS, **({'name': text(120)} if _verb == 'rename' else {})}, mutation=True)
+for _action in ('preview', 'freeze'):
+    _project_file_operation('release_' + _action, 'POST', '/releases/' + _action,
+        domain='releases.' + _action, mutation=_action == 'freeze',
+        scopes=('inspect', 'freeze') if _action == 'freeze' else ('inspect',))
+
+# Current metadata uses the same Model/Pipeline validators, with canonical
+# publication wrapped by the project session. Runtime capture remains absent.
+for _plural, _key, _domain in [('models', 'model_id', 'models'), ('graphs', 'graph_id', 'graphs')]:
+    _project_file_operation(_plural, 'GET', '/' + _plural, page=True)
+    for _verb in ('get', 'create', 'save'):
+        _project_file_operation(('model_' if _plural == 'models' else 'graph_') + _verb,
+            'GET' if _verb == 'get' else 'POST', '/' + _plural + ('/{' + _key + '}' if _verb != 'create' else ''),
+            domain=_domain + '.' + _verb, mutation=_verb != 'get')
+_project_file_operation('graph_create_external', 'POST', '/graphs/external',
+    domain='graphs.create_external', mutation=True)
+_project_file_operation('graph_clone', 'POST', '/graphs/{graph_id}/clone', domain='graphs.clone', mutation=True)
+_project_file_operation('model_publish', 'POST', '/models/{model_id}/publish', domain='models.publish', mutation=True)
+_project_file_operation('recipes', 'GET', '/recipes', page=True)
+for _verb in ('get', 'create', 'save'):
+    _project_file_operation('recipe_' + _verb, 'GET' if _verb == 'get' else 'POST',
+        '/recipes' + ('/{recipe_id}' if _verb != 'create' else ''), domain='recipes.' + _verb,
+        mutation=_verb != 'get')
+_project_file_operation('recipe_prepare', 'POST', '/recipes/{graph_id}/prepare', {
+    'graph_id': ID, 'revision': SAFE_POS, 'model': MODEL_REF,
+    'builtin': {'type': 'boolean'}, 'reconcile_capture': {'type': 'boolean'}},
+    required=['graph_id', 'revision', 'model'], mutation=True)
+for _kind, _ref in [('model', MODEL_REF), ('recipe', MATERIAL_REF), ('runtime', material_ref('runtime'))]:
+    _project_file_operation(_kind + '_material', 'POST', '/materials/' + _kind,
+        {'ref': _ref, 'verify': {'type': 'boolean'}}, required=['ref'])
+_project_file_operation('snapshot', 'POST', '/materials/snapshot', {
+    'project_id': ID, 'manifest_sha256': SHA, 'origin_catalog_id': ID, 'verify': {'type': 'boolean'}},
+    required=['project_id', 'manifest_sha256', 'origin_catalog_id'])
+
+# Imported origin identity is an explicit selector, never a current grant.
+for _action, _suffix, _key in [('study', 'studies', 'study_id'), ('trial', 'trials', 'trial_id'),
+        ('run', 'runs', 'run_id'), ('candidate', 'candidates', 'candidate_id')]:
+    _project_file_operation(_action, 'GET', '/' + _suffix + '/{' + _key + '}',
+        {_key: ID, **_PROJECT_FILES_ORIGIN, **({'verify': {'type': 'boolean'}} if _action == 'candidate' else {})},
+        required=[_key, 'origin_catalog_id'])
+# Study reservations are independently bounded while charge totals remain complete.
+_study_operation = next(op for op in _OPERATIONS if op['operation_id'] == 'project_files.study')
+_study_operation['inputSchema']['properties'].update(_PROJECT_FILES_PAGE_INPUT | {'revision': SAFE_POS})
+_study_operation['query'].extend(['offset', 'limit', 'revision'])
+_run_operation = next(op for op in _OPERATIONS if op['operation_id'] == 'project_files.run')
+_run_operation['inputSchema']['properties'].update(_PROJECT_FILES_PAGE_INPUT)
+_run_operation['query'].extend(['offset', 'limit'])
+_PROJECT_RUN_DOCUMENT_SEGMENT = obj({'format': const('project_run_document_segment_v1'),
+    'origin_catalog_id': ID, 'run_id': ID, 'sha256': SHA, 'bytes': SAFE_NAT,
+    'offset': SAFE_NAT, 'limit': integer(1, 262144),
+    'base64': {'type': 'string', 'maxLength': 349528, 'pattern': '^[A-Za-z0-9+/]*={0,2}$'},
+    'next_offset': {'oneOf': [SAFE_NAT, {'type': 'null'}]}})
+_project_file_operation('run_document_segment', 'GET', '/runs/{run_id}/document-segment',
+    {'run_id': ID, 'origin_catalog_id': ID, 'expected_sha256': SHA,
+     'offset': SAFE_NAT, 'limit': integer(1, 262144)},
+    required=['run_id', 'origin_catalog_id', 'expected_sha256', 'offset', 'limit'],
+    output=_PROJECT_RUN_DOCUMENT_SEGMENT)
+_project_file_operation('source_references', 'GET', '/sources/{project_id}/references',
+    {'origin_catalog_id': ID, 'project_id': ID, 'manifest_sha256': SHA}, page=True)
+_project_file_operation('publication_result', 'GET', '/runs/{run_id}/publication-result',
+    {'run_id': ID, **_PROJECT_FILES_ORIGIN})
+_project_file_operation('package_state', 'GET', '/candidates/{candidate_id}/package-state',
+    {'candidate_id': ID, **_PROJECT_FILES_ORIGIN})
+_project_file_operation('dependencies', 'GET', '/runs/{run_id}/dependencies',
+    {'run_id': ID, **_PROJECT_FILES_ORIGIN, **_PROJECT_FILES_PAGE_INPUT},
+    required=['run_id', 'origin_catalog_id'])
+for _action in ('studies', 'runs', 'lineage', 'policies', 'artifacts', 'materials'):
+    _project_file_operation(_action, 'GET', '/' + _action, _PROJECT_FILES_ORIGIN,
+        required=[] if _action in ('studies', 'runs', 'artifacts', 'materials') else ['origin_catalog_id'], page=True)
+# Intrinsic artifact identities span all origins in the selected project.
+_artifacts_operation = next(op for op in _OPERATIONS if op['operation_id'] == 'project_files.artifacts')
+_artifacts_operation['inputSchema']['properties'].pop('origin_catalog_id')
+_artifacts_operation['query'].remove('origin_catalog_id')
+_project_file_operation('policy', 'POST', '/policies/get', {'ref': POLICY_REF})
+for _verb in ('create', 'save'):
+    _project_file_operation('study_' + _verb, 'POST', '/studies' + ('/{study_id}' if _verb == 'save' else ''),
+        domain='studies.' + _verb, mutation=True, owner=True)
+_project_file_operation('trial_prepare', 'POST', '/studies/{study_id}/trials', {
+    'study_id': ID, 'revision': SAFE_POS, 'material': MATERIAL_REF, 'replicate': SAFE_NAT}, mutation=True)
+_project_file_operation('lineage_record', 'POST', '/lineage', {'trial': _LINEAGE_REF, 'intent': _LINEAGE_INTENT}, mutation=True)
+_project_file_operation('candidate_select', 'POST', '/studies/{study_id}/candidates',
+    domain='studies.select_candidate', mutation=True)
+_project_file_operation('evidence', 'POST', '/runs/{run_id}/evidence', {
+    'run_id': ID, **_PROJECT_FILES_ORIGIN, 'selectors': JSON_OBJECT},
+    required=['run_id', 'origin_catalog_id'], output=_EVIDENCE_RESULT)
+for _action, _suffix in [('retained_analysis', ''), ('retained_analysis_export', '/export')]:
+    _project_file_operation(_action, 'POST', '/runs/{run_id}/analysis' + _suffix,
+        {**_retained_request['properties'], **_PROJECT_FILES_ORIGIN},
+        required=[*_retained_request['required'], 'origin_catalog_id'], output=_retained_result)
+_project_file_operation('artifact_status', 'POST', '/artifacts/status', {'sha256': SHA})
+_project_file_operation('artifact_resolve', 'POST', '/artifacts/resolve',
+    {'sha256': SHA, 'root': text(160), 'path': text(512)}, mutation=True, owner=True,
+    output=obj({'format': const('project_artifact_resolution_v1'), 'sha256': SHA, 'bytes': SAFE_NAT,
+                'actor_id': ID, 'observed_at': text(80)}))
+_project_file_operation('expose_holdout', 'POST', '/runs/{run_id}/disclose',
+    {'run_id': ID, **_PROJECT_FILES_ORIGIN, 'reason': text(500)}, mutation=True,
+    scopes=('inspect', 'expose-holdout'))
+_PROJECT_FILES_PRODUCER_FAMILY = {'enum': ['generation_history', 'grounded_history', 'caption_proposal_history', 'text_proposal_history']}
+_project_file_operation('producers', 'GET', '/producers',
+    {'family': _PROJECT_FILES_PRODUCER_FAMILY, **_PROJECT_FILES_ORIGIN}, required=['family'], page=True)
+_project_file_operation('producer', 'GET', '/producers/{origin_catalog_id}/{producer_id}',
+    {'family': _PROJECT_FILES_PRODUCER_FAMILY, 'origin_catalog_id': ID, 'producer_id': ID,
+     'entries_offset': integer(0, 1000000), 'entries_limit': integer(1, 40)},
+    required=['family', 'origin_catalog_id', 'producer_id'])
+PROJECT_FILES_M2 = frozenset(PROJECT_FILES_M2)
+_PROJECT_FILES_RECEIPT_IDS = _PROJECT_FILES_RECEIPT_IDS | frozenset(
+    name for name in PROJECT_FILES_M2 if next(op for op in _OPERATIONS if op['operation_id'] == name)['side_effects'])
+
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
@@ -1044,6 +1246,19 @@ _publication_status_output['properties']['continuation_request'] = {'oneOf': [{'
     obj({'actor_id': ID, 'request_key': KEY, 'request_sha256': SHA})]}
 _publication_status_output['required'].append('continuation_request')
 _CONTRACTS['runs.publication_status'][2] = _publication_status_request
+# Project mode is an additive consumer of the current fixed graph grammars.
+# Copy only inputs after the domain versions have been composed; installed
+# legacy graph contracts and all project binding/outcome fields retain owners.
+for _project_name, _domain_name in (
+        ('project_files.graph_create', 'graphs.create'),
+        ('project_files.graph_create_external', 'graphs.create_external'),
+        ('project_files.graph_save', 'graphs.save')):
+    _current_graph_input = copy.deepcopy(_CONTRACTS[_domain_name][max(_CONTRACTS[_domain_name])]['inputSchema'])
+    _current_graph_input['properties'].update(copy.deepcopy(_PROJECT_FILES_MUTATION))
+    _current_graph_input['required'] = list(dict.fromkeys(
+        _current_graph_input['required'] + list(_PROJECT_FILES_MUTATION)))
+    _CONTRACTS[_project_name][1]['inputSchema'] = _current_graph_input
+
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
@@ -1241,7 +1456,7 @@ def validate_selected(selection, method, target, body):
     arguments.update({key: unquote(value) for key, value in zip(fields, match.groups())})
     properties = op['inputSchema'].get('properties', {})
     for key, value in pairs:
-        if properties.get(key, {}).get('type') in ('integer', 'number'):
+        if properties.get(key, {}).get('type') in ('integer', 'number', 'boolean'):
             try:
                 value = decode(value)
             except AgentAPIError:
@@ -1311,7 +1526,42 @@ def decode(raw):
         raise AgentAPIError('Invalid bounded JSON.') from None
 
 
+# Compiled validators contain only schema data, never requests or credentials.
+# Bound both the exact source bytes retained and entry count; cache keys also
+# isolate validators from later mutation of a caller's schema dictionary.
+_SCHEMA_CACHE_LIMIT_BYTES = 8 * 1024 * 1024
+_SCHEMA_CACHE_LIMIT_ENTRIES = 1024
+_SCHEMA_CACHE = OrderedDict()
+_SCHEMA_CACHE_BYTES = 0
+_SCHEMA_CACHE_LOCK = threading.Lock()
+
+
 def _validator(schema):
+    global _SCHEMA_CACHE_BYTES
+    raw = encoded(schema)
+    with _SCHEMA_CACHE_LOCK:
+        validator = _SCHEMA_CACHE.get(raw)
+        if validator is not None:
+            _SCHEMA_CACHE.move_to_end(raw)
+            return validator
+    validator = _compile_validator(json.loads(raw))
+    if len(raw) > _SCHEMA_CACHE_LIMIT_BYTES:
+        return validator
+    with _SCHEMA_CACHE_LOCK:
+        existing = _SCHEMA_CACHE.get(raw)
+        if existing is not None:
+            _SCHEMA_CACHE.move_to_end(raw)
+            return existing
+        while _SCHEMA_CACHE and (_SCHEMA_CACHE_BYTES + len(raw) > _SCHEMA_CACHE_LIMIT_BYTES
+                                 or len(_SCHEMA_CACHE) >= _SCHEMA_CACHE_LIMIT_ENTRIES):
+            previous, _ = _SCHEMA_CACHE.popitem(last=False)
+            _SCHEMA_CACHE_BYTES -= len(previous)
+        _SCHEMA_CACHE[raw] = validator
+        _SCHEMA_CACHE_BYTES += len(raw)
+    return validator
+
+
+def _compile_validator(schema):
     try:
         from jsonschema import Draft202012Validator
         from jsonschema.exceptions import SchemaError
@@ -1551,7 +1801,8 @@ def project_request(name, arguments, version=None):
     path = op['path']
     for key in segments:
         path = path.replace('{'+key+'}', quote(arguments[key], safe=''))
-    query = {key: arguments[key] for key in op['query'] if key in arguments}
+    query = {key: ('true' if arguments[key] else 'false') if type(arguments[key]) is bool else arguments[key]
+             for key in op['query'] if key in arguments}
     if query:
         path += '?' + urlencode(query)
     body = {key: value for key, value in arguments.items() if key not in segments and key not in op['query']}
@@ -1856,6 +2107,43 @@ class AgentClient:
         envelope = self._request(method, path, body, selection=selection)
         result = validate_output(name, envelope, version)
         self._check_read_budget()
+        if op['operation_id'] in PROJECT_FILES_M2:
+            value = result['result']
+            if result['status'] >= 400:
+                receipt = value.get('receipt')
+                if receipt is not None and receipt['request_key'] != arguments.get('request_key'):
+                    raise AgentAPIError('Project receipt belongs to a different request.', 'transport', 502)
+            else:
+                if value['binding'] != arguments['binding']:
+                    raise AgentAPIError('Project response belongs to a different session binding.', 'transport', 502)
+                if not op['side_effects'] and value['checkpoint'] != arguments['checkpoint']:
+                    raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
+                page = value['value']
+                if isinstance(page, dict) and {'items', 'offset', 'limit', 'total'} <= page.keys():
+                    requested = arguments.get('limit', 1 if op['operation_id'] in ('project_files.data_history', 'project_files.data_response_history', 'project_files.data_preference_history') else 40)
+                    if (page['offset'] != arguments.get('offset', 0) or page['limit'] != requested
+                            or len(page['items']) > requested or (len(page['items']) > 0 and page['total'] < page['offset'] + len(page['items']))
+                            or len(page['items']) != min(requested, max(0, page['total'] - page['offset']))):
+                        raise AgentAPIError('Project page differs from its requested continuation.', 'transport', 502)
+                if 'origin_catalog_id' in arguments and isinstance(page, dict) and 'origin_catalog_id' in page:
+                    if page['origin_catalog_id'] != arguments['origin_catalog_id']:
+                        raise AgentAPIError('Historical response belongs to a different origin.', 'transport', 502)
+                if op['operation_id'] == 'project_files.run_document_segment':
+                    try:
+                        segment = base64.b64decode(page['base64'], validate=True)
+                    except (ValueError, binascii.Error):
+                        raise AgentAPIError('Invalid retained Run document segment bytes.', 'transport', 502) from None
+                    end = arguments['offset'] + len(segment)
+                    if (page['origin_catalog_id'] != arguments['origin_catalog_id'] or page['run_id'] != arguments['run_id']
+                            or page['sha256'] != arguments['expected_sha256'] or page['offset'] != arguments['offset']
+                            or page['limit'] != arguments['limit'] or page['offset'] > page['bytes']
+                            or len(segment) != min(page['limit'], page['bytes'] - page['offset'])
+                            or page['next_offset'] != (end if end < page['bytes'] else None)):
+                        raise AgentAPIError('Retained Run document segment differs from its exact selection.', 'transport', 502)
+                target_key = {'data_get': 'record_id', 'model_get': 'model_id', 'graph_get': 'graph_id',
+                    'recipe_get': 'recipe_id', 'trial': 'trial_id'}.get(op['operation_id'].split('.')[1])
+                if target_key and page.get('id') != arguments[target_key]:
+                    raise AgentAPIError('Project response belongs to a different record.', 'transport', 502)
         if op['operation_id'].startswith('project_files.') and result['status'] < 400:
             value = result['result']; action = op['operation_id'].split('.')[1]
             if action in ('query', 'get', 'import_text', 'annotate', 'save') and value['binding'] != arguments['binding']:
@@ -1987,7 +2275,7 @@ class AgentClient:
 class ProjectFilesOwnerClient(AgentClient):
     """Explicit owner file-project access; no unrelated owner operations."""
     OPERATIONS = frozenset('project_files.' + action for action in
-        ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate'))
+        ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate')) | PROJECT_FILES_M2
 
     def bootstrap(self):
         result = self._bootstrap('owner')

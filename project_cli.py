@@ -13,7 +13,7 @@ import signal
 import threading
 
 from agent_api import (AgentAPIError, AgentClient, ProjectFilesOwnerClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
-                       validate_arguments, verify_artifact, verify_publication_artifact)
+                       validate_arguments, verify_artifact, verify_publication_artifact, PROJECT_FILES_M2)
 from tuldok_client import WorkflowClient, download
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
@@ -71,6 +71,11 @@ def parser():
         command = commands.add_parser('file-' + action, help='Checkpoint-bound project text ' + action)
         command.add_argument('--arguments', type=Path, required=True,
                              help='Exact project_files operation JSON arguments including binding/checkpoint')
+    for operation in sorted(PROJECT_FILES_M2):
+        action = operation.split('.')[1].replace('_', '-')
+        command = commands.add_parser('file-' + action, help='Checkpoint-bound project ' + action)
+        command.add_argument('--arguments', type=Path, required=True,
+                             help='Exact selected project operation arguments')
     opening = commands.add_parser('open', help='Register/inspect a project without executing its code')
     opening.add_argument('--root', required=True)
     opening.add_argument('--manifest', required=True)

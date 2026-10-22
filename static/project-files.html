@@ -38,7 +38,7 @@
       </div>
       <p id="project-files-dirty" class="help" aria-live="polite">No unsubmitted edits.</p>
     </section>
-    <p class="scope">This version supports text, classification labels, entity spans, corpus notes and human review. Other asset families, execution, Save As and migration are unavailable here.</p>
+    <p class="scope">Authored edits are saved to the project before acknowledgement. Historical materials and artifacts remain inspectable when payloads are missing. Execution, Save As and migration remain unavailable.</p>
     <div class="workspace-grid">
       <section aria-labelledby="text-import-title">
         <h2 id="text-import-title">Author text</h2>
@@ -75,6 +75,97 @@
         <button id="record-history-more" type="button" hidden>Load older annotation history</button>
       </section>
     </div>
+    <section class="project-history-panel" aria-labelledby="project-explore-title">
+      <h2 id="project-explore-title">Project data and scientific history</h2>
+      <p>Inspect saved records, models, Studies, Runs and their exact artifact availability. Opening a project never starts computation or restores permission to disclose held-out data.</p>
+      <div class="project-location">
+        <label>Explore<select id="project-explore-kind"><option value="data_query">Data records</option><option value="models">Model definitions</option><option value="graphs">Pipeline graphs</option><option value="recipes">Model recipes</option><option value="studies">Studies</option><option value="runs">Historical Runs</option><option value="materials">Retained materials</option><option value="artifacts">Artifacts</option><option value="selections">Saved selections</option><option value="searches">Saved searches</option><option value="policies">Selection policies</option><option value="lineage">Trial lineage</option><option value="producers">Producer observations</option></select></label>
+        <label>Search data<input id="project-data-search" maxlength="200"></label>
+        <label>Data kind<select id="project-data-kind"><option value="">All data</option><option>text</option><option>image</option><option>audio</option><option>sequence</option><option>mesh</option><option>pointcloud</option><option>volume</option><option>field_sequence</option></select></label>
+      </div>
+      <label>Producer history<select id="project-producer-family"><option value="generation_history">Image generation</option><option value="grounded_history">Grounded candidates</option><option value="caption_proposal_history">Caption proposals</option><option value="text_proposal_history">Text classification proposals</option></select></label>
+      <div class="actions"><button id="project-explore-load" type="button">Load saved records</button><button id="project-explore-more" type="button" hidden>Load next page</button></div>
+      <p id="project-explore-summary" aria-live="polite"></p>
+      <div class="workspace-grid">
+        <div><ul id="project-explore-list" class="project-fact-list"></ul></div>
+        <div>
+          <h3 id="project-detail-title" tabindex="-1">Choose a saved record</h3>
+          <div id="project-detail-facts" class="project-facts"></div>
+          <label id="project-disclosure-label" hidden>Reason for held-out disclosure<input id="project-disclosure-reason" maxlength="500"></label>
+          <div class="actions"><button id="project-detail-history" type="button" hidden>Load saved revisions</button><button id="project-detail-availability" type="button" hidden>Check source availability</button><button id="project-run-evidence" type="button" hidden>Verify retained scientific evidence</button><button id="project-run-document" type="button" hidden>Download exact retained Run document</button><button id="project-run-disclose" type="button" hidden>Allow held-out disclosure on this installation</button></div>
+          <ol id="project-detail-history-list" class="project-fact-list"></ol>
+          <button id="project-detail-history-more" type="button" hidden>Load older saved revisions</button>
+          <form id="project-metadata-form" hidden><fieldset id="project-metadata-fields" disabled><legend>Update saved metadata</legend>
+            <label>Name<input id="project-metadata-name" maxlength="120" required></label>
+            <button type="submit">Save name to project</button><button id="project-model-publish" type="button" hidden>Publish retained model material</button>
+          </fieldset></form>
+          <form id="project-data-note-form" hidden><fieldset id="project-data-note-fields" disabled><legend>Annotate this data</legend>
+            <label>Annotation<input id="project-data-note" maxlength="4000" required aria-describedby="project-data-note-help"></label><p id="project-data-note-help" class="help">The selected record determines the annotation task.</p>
+            <label>Review<select id="project-data-review"><option value="draft">Draft</option><option value="human_reviewed">Human reviewed (owner)</option></select></label>
+            <button type="submit">Save annotation to project</button>
+          </fieldset></form>
+          <button id="project-artifact-status" type="button" hidden>Refresh artifact status</button>
+          <form id="project-artifact-resolve-form" hidden><fieldset id="project-artifact-resolve-fields" disabled><legend>Resolve missing artifact bytes</legend>
+            <p class="help">Choose the exact existing file under a configured local root. Its digest and size must match this artifact.</p>
+            <label>Local root<select id="project-artifact-root" required></select></label>
+            <label>File path relative to this root<input id="project-artifact-path" maxlength="512" required></label>
+            <button type="submit">Resolve artifact from local file</button>
+          </fieldset></form>
+          <form id="project-rights-form" hidden><fieldset id="project-rights-fields" disabled><legend>Correct the rights note</legend><label>Rights / permission note<input id="project-rights-note" maxlength="1000"></label><button type="submit">Save rights note</button></fieldset></form>
+          <form id="project-selection-form" hidden><fieldset id="project-selection-fields" disabled><legend>Remember this exact data revision</legend><label>Selection name<input id="project-selection-name" maxlength="120" required></label><button type="submit">Save selection</button></fieldset></form>
+        </div>
+      </div>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-authoring-title">
+      <h2 id="project-authoring-title">Add data and saved intent</h2>
+      <div class="workspace-grid">
+        <form id="project-source-form"><fieldset id="project-source-fields" disabled><legend>Import an image or audio source</legend>
+          <label>Source type<select id="project-source-kind"><option value="image">Image</option><option value="audio">WAV audio</option></select></label>
+          <label>File<input id="project-source-file" type="file" accept="image/*,audio/wav,.wav" required></label>
+          <label>Name<input id="project-source-name" maxlength="200" required></label>
+          <label>Protected groups<input id="project-source-groups" value="project" required></label>
+          <label>Rights / permission note<input id="project-source-rights" maxlength="1000" value="unknown" required></label>
+          <button type="submit">Import and save source</button>
+        </fieldset></form>
+        <form id="project-search-form"><fieldset id="project-search-fields" disabled><legend>Save the entered data search</legend>
+          <p class="help">Save the search text and data kind entered above. This records intent; it does not freeze a dataset.</p>
+          <label>Search name<input id="project-search-name" maxlength="120" required></label><button type="submit">Save search</button>
+        </fieldset></form>
+      </div>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-model-create-title">
+      <h2 id="project-model-create-title">Create a model definition</h2>
+      <p>Choose an available template from this installation. Saving a definition and publishing its source material never start training.</p>
+      <button id="project-definitions-load" type="button">Load available model templates</button>
+      <form id="project-model-create-form"><fieldset id="project-model-create-fields" disabled><legend>New model</legend>
+        <label>Template<select id="project-model-template" required></select></label><label>Name<input id="project-model-create-name" maxlength="120" required></label><button type="submit">Save model definition</button>
+      </fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-study-create-title">
+      <h2 id="project-study-create-title">Plan a Study</h2>
+      <p>Save scientific selection criteria and finite budget metadata. Run admission and execution remain unavailable.</p>
+      <form id="project-study-create-form"><fieldset id="project-study-create-fields" disabled><legend>New Study</legend>
+        <label>Name<input id="project-study-create-name" maxlength="120" required></label>
+        <label>Metric definition SHA256<input id="project-study-metric" pattern="[a-f0-9]{64}" maxlength="64" required aria-describedby="project-study-metric-help"></label>
+        <p id="project-study-metric-help" class="help">Use the exact saved metric definition from retained evidence. This does not create or infer a metric.</p>
+        <div class="project-location"><label>Attempt slots<input id="project-study-attempts" type="number" min="1" max="9007199254740991" value="1" required></label><label>Admitted wall seconds<input id="project-study-seconds" type="number" min="1" max="9007199254740991" value="60" required></label><label>Retained byte limit<input id="project-study-retained" type="number" min="1" max="9007199254740991" value="1048576" required></label></div>
+        <label>Peak staging byte limit<input id="project-study-staging" type="number" min="1" max="9007199254740991" value="1048576" required></label>
+        <div class="project-location"><label>Checkpoint selection<select id="project-study-checkpoint"><option value="selected">Selected</option><option value="last">Last</option><option value="explicit">Explicit</option></select></label><label>Replicate comparison<select id="project-study-replicates"><option value="individual">Individual</option><option value="mean">Mean</option></select></label><label>Numerical acceptance<select id="project-study-numerical"><option value="diagnostic">Diagnostic</option><option value="required">Required</option></select></label></div>
+        <button type="submit">Save Study plan</button>
+      </fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-scientific-title">
+      <h2 id="project-scientific-title">Import declared scientific data</h2>
+      <p>Choose a local source manifest, then one declared data reference. Tuldok reads the exact existing bytes without executing project code.</p>
+      <form id="project-register-form"><fieldset id="project-register-fields" disabled><legend>Register a local source</legend>
+        <p class="help">The local root selected at the top of this page applies.</p>
+        <label>Manifest path relative to the selected root<input id="project-register-path" maxlength="512" required></label><button type="submit">Read source manifest</button>
+      </fieldset></form>
+      <form id="project-scientific-form"><fieldset id="project-scientific-fields" disabled><legend>Import a declared reference</legend>
+        <label>Declared data<select id="project-scientific-reference" required></select></label><button id="project-source-references-more" type="button" hidden>Load more declared data references</button><label>Name<input id="project-scientific-name" maxlength="200" required></label>
+        <label>Protected groups<input id="project-scientific-groups" value="project" required></label><label>Rights / permission note<input id="project-scientific-rights" value="unknown" maxlength="1000" required></label><button type="submit">Import exact scientific data</button>
+      </fieldset></form>
+    </section>
   </main>
 </body>
 </html>

@@ -30,6 +30,198 @@ def request_key(value):
     return value
 
 
+def validate_retained_policy(value):
+    """Selection meaning shared by active Studies and inert history."""
+    closed(value,('format','metric_definition_sha256','checkpoint_rule','replicate_reduce',
+                  'required_capabilities','numerical_acceptance','tie_break'))
+    if (value['format']!='selection_policy_v1' or type(value['metric_definition_sha256']) is not str or
+            not SHA.fullmatch(value['metric_definition_sha256']) or value['checkpoint_rule'] not in ('selected','last','explicit') or
+            value['replicate_reduce'] not in ('individual','mean') or value['numerical_acceptance'] not in ('required','diagnostic') or
+            value['tie_break']!='trial_id' or type(value['required_capabilities']) is not list or
+            len(value['required_capabilities'])>64):
+        raise WorkbenchError('Unsupported selection policy.')
+    for item in value['required_capabilities']:text(item,'Required capability',64)
+    if len(set(value['required_capabilities']))!=len(value['required_capabilities']):
+        raise WorkbenchError('Duplicate required capability.')
+    return value
+
+
+def validate_retained_study(value, *, catalog_id, membership, policy):
+    """Validate saved intent and immutable membership without admission authority."""
+    value=checked_json(value,MAX_STUDY_DOCUMENT)
+    closed(value,('format','id','revision','name','admission_epoch','open','state','limits','policy',
+                  'membership_revision','trial_ids','stop_receipt_id'))
+    identifier(value['id'])
+    if (value['format']!='study_v1' or type(value['open']) is not bool or
+            value['state'] not in ('draft','open','stopping','stopped','unknown') or
+            value['open']!=(value['state']=='open')):
+        raise WorkbenchError('Stored study identity/lifecycle differs.','unavailable',409)
+    natural(value['revision'],'Study revision',1);natural(value['admission_epoch'],'Epoch')
+    natural(value['membership_revision'],'Membership revision',1);text(value['name'],'Study name')
+    budget(value['limits']);reference(value['policy'],'selection_policy',catalog_id)
+    validate_retained_policy(policy)
+    if digest(policy)!=value['policy']['sha256']:
+        raise WorkbenchError('Selection policy identity differs.','unavailable',409)
+    if type(value['trial_ids']) is not list or len(value['trial_ids'])>10000:
+        raise WorkbenchError('Stored study membership differs.','unavailable',409)
+    for trial_id in value['trial_ids']:identifier(trial_id)
+    if len(set(value['trial_ids']))!=len(value['trial_ids']):
+        raise WorkbenchError('Duplicate trial membership.','unavailable',409)
+    if value['stop_receipt_id'] is not None:identifier(value['stop_receipt_id'])
+    if membership!={'trial_ids':value['trial_ids']}:
+        raise WorkbenchError('Stored immutable membership differs.','unavailable',409)
+    return value
+
+
+def validate_retained_trial(value, *, catalog_id):
+    value=checked_json(value)
+    closed(value,('format','id','study_id','material','replicate'))
+    identifier(value['id']);identifier(value['study_id'])
+    reference(value['material'],'recipe_material',catalog_id);natural(value['replicate'],'Replicate')
+    if value['format']!='trial_v1':
+        raise WorkbenchError('Stored trial identity differs.','unavailable',409)
+    return value
+
+
+def validate_retained_reservation(value, *, trial, composition, run):
+    value=checked_json(value)
+    closed(value,('id','study_id','admission_epoch','request_key','actor_id','trial_id','parent_run_id','run_id',
+                  'request_sha256','material_sha256','envelope','state','settled'))
+    for key in ('id','study_id','actor_id','trial_id','run_id'):identifier(value[key])
+    request_key(value['request_key'])
+    for key in ('request_sha256','material_sha256'):
+        if type(value[key]) is not str or not SHA.fullmatch(value[key]):
+            raise WorkbenchError('Reservation digest differs.','unavailable',409)
+    budget(value['envelope']);natural(value['admission_epoch'],'Reservation epoch')
+    if value['parent_run_id'] is not None:identifier(value['parent_run_id'])
+    if value['state'] not in ('reserved','running','settled','unknown'):
+        raise WorkbenchError('Reservation state differs.','unavailable',409)
+    if value['state']=='settled':
+        if value['settled']!=value['envelope']:
+            raise WorkbenchError('Conservative settled charge differs.','unavailable',409)
+    elif value['settled'] is not None:
+        raise WorkbenchError('Open reservation cannot contain a settled charge.','unavailable',409)
+    if (trial['id']!=value['trial_id'] or trial['study_id']!=value['study_id'] or
+            value['material_sha256']!=trial['material']['sha256'] or
+            value['envelope']!=composition['material']['resource_envelope']):
+        raise WorkbenchError('Reservation material/envelope differs.','unavailable',409)
+    if (run['id']!=value['run_id'] or run['actor_id']!=value['actor_id'] or
+            run['request_sha256']!=value['request_sha256'] or run['parent_run_id']!=value['parent_run_id'] or
+            run.get('approval_material_sha256')!=value['material_sha256']):
+        raise WorkbenchError('Reservation and Run receipt differ.','unavailable',409)
+    return value
+
+
+def validate_retained_candidate(value, *, catalog_id, trial, policy, reservation):
+    value=checked_json(value)
+    closed(value,('format','id','study_id','trial_id','run_id','checkpoint_sha256','evaluation_sha256',
+                  'policy','decision','limitations'))
+    for key in ('id','study_id','trial_id','run_id'):identifier(value[key])
+    if value['format']!='candidate_v1' or value['decision']!='diagnostic':
+        raise WorkbenchError('Stored candidate identity differs.','unavailable',409)
+    for key in ('checkpoint_sha256','evaluation_sha256'):
+        if type(value[key]) is not str or not SHA.fullmatch(value[key]):
+            raise WorkbenchError('Stored candidate evidence identity differs.','unavailable',409)
+    if type(value['limitations']) is not list or len(value['limitations'])>64:
+        raise WorkbenchError('Stored candidate evidence identity differs.','unavailable',409)
+    for item in value['limitations']:text(item,'Candidate limitation',500)
+    reference(value['policy'],'selection_policy',catalog_id);validate_retained_policy(policy)
+    if (digest(policy)!=value['policy']['sha256'] or trial['id']!=value['trial_id'] or
+            trial['study_id']!=value['study_id'] or reservation['trial_id']!=trial['id'] or
+            reservation['run_id']!=value['run_id']):
+        raise WorkbenchError('Candidate Run association differs.','unavailable',409)
+    return value
+
+
+def select_retained_checkpoint(evidence, policy, requested):
+    if policy['replicate_reduce']!='individual':
+        raise WorkbenchError('Mean-replicate candidate selection is not qualified.','unsupported',409)
+    import model_evidence
+    definitions=evidence['metric_definitions']
+    matches=[item for item in definitions if model_evidence.digest(item)==policy['metric_definition_sha256']]
+    if len(matches)!=1:raise WorkbenchError('Selection metric differs from the retained evaluator definition.','incompatible',409)
+    coverage=evidence['manifest']['coverage']
+    available=set(coverage['required']+coverage['optional'])-{item['capability'] for item in coverage['omitted']}
+    if not set(policy['required_capabilities'])<=available:
+        raise WorkbenchError('Candidate lacks required evidence capabilities.','unsupported',409)
+    entries=evidence['checkpoint_index']['entries']
+    rule=policy['checkpoint_rule']
+    if rule=='explicit':
+        chosen=[item for item in entries if item['checkpoint']['sha256']==requested]
+    else:
+        chosen=[item for item in entries if item['selected']] if rule=='selected' else entries[-1:]
+        if requested is not None and (len(chosen)!=1 or chosen[0]['checkpoint']['sha256']!=requested):
+            raise WorkbenchError('Explicit checkpoint contradicts the selection policy.')
+    if len(chosen)!=1:raise WorkbenchError('Selection requires one retained checkpoint.')
+    checkpoint=chosen[0]['checkpoint']
+    observed=[item for item in evidence['observations'] if item['checkpoint_sha256']==checkpoint['sha256']
+              and item['metric_id']==matches[0]['id'] and item['state']=='observed']
+    if len(observed)!=1:raise WorkbenchError('Selection requires a defined metric at this checkpoint.','unavailable',409)
+    # A successful classifier fit supplies diagnostics, never an invented
+    # model-quality threshold or physical acceptance result.
+    if policy['numerical_acceptance']=='required':
+        raise WorkbenchError('This evaluator has no qualified numerical acceptance criterion.','unsupported',409)
+    return checkpoint
+
+
+def reservation_totals(reservations):
+    """Conservative obligation accounting shared by live and inert Studies."""
+    totals={key:0 for key in DIMENSIONS}
+    for value in reservations:
+        charge=value['settled'] if value['state']=='settled' else value['envelope']
+        if charge is None:raise WorkbenchError('Settled reservation lacks a charge.','unavailable',409)
+        for key in DIMENSIONS:totals[key]=natural(totals[key]+charge[key],'Study total')
+    return totals
+
+
+def validate_candidate_evidence(evidence,trial):
+    if evidence.get('state')!='verified':
+        raise WorkbenchError('Candidate requires verified model evidence.','unsupported',409)
+    if evidence['manifest']['producer']['material_sha256']!=trial['material']['sha256']:
+        raise WorkbenchError('Candidate evidence differs from its trial material.','unavailable',409)
+    return evidence
+
+
+def new_study_document(body, *, catalog_id, study_id, policy_id):
+    """Construct authored Study intent; no SQL, approval or lifecycle effects."""
+    closed(body,('name','limits','policy'));body=checked_json(body)
+    policy=validate_retained_policy(body['policy']);limits=budget(body['limits']);text(body['name'],'Study name')
+    identifier(study_id);identifier(policy_id)
+    ref={'kind':'selection_policy','catalog_id':catalog_id,'id':policy_id,'revision':1,'sha256':digest(policy)}
+    return {'format':'study_v1','id':study_id,'revision':1,'name':body['name'],'admission_epoch':0,
+            'open':False,'state':'draft','limits':limits,'policy':ref,'membership_revision':1,'trial_ids':[],
+            'stop_receipt_id':None}
+
+
+def edit_study_document(study, body, *, policy, charged, catalog_id):
+    closed(body,('revision','name','limits','policy'));body=checked_json(body)
+    natural(body['revision'],'Study revision',1);text(body['name'],'Study name');limits=budget(body['limits'])
+    if body['revision']!=study['revision']:raise WorkbenchError('Study changed. Reload.','stale',409)
+    ref=reference(body['policy'],'selection_policy',catalog_id);validate_retained_policy(policy)
+    if digest(policy)!=ref['sha256']:raise WorkbenchError('Selection policy identity differs.','unavailable',409)
+    if any(charged[key]>limits[key] for key in DIMENSIONS):
+        raise WorkbenchError('Limits are below existing obligations.','conflict',409)
+    value=copy.deepcopy(study);value.update(name=body['name'],limits=limits,policy=ref)
+    return value
+
+
+def new_trial_document(study, material, replicate, *, trial_id):
+    natural(replicate,'Replicate');identifier(trial_id)
+    if len(study['trial_ids'])>=10000:raise WorkbenchError('Study membership is full.','unavailable',409)
+    return {'format':'trial_v1','id':trial_id,'study_id':study['id'],'material':copy.deepcopy(material),'replicate':replicate}
+
+
+def new_candidate_document(study, trial, run, checkpoint, evaluation, *, candidate_id):
+    identifier(candidate_id)
+    if trial['study_id']!=study['id']:raise WorkbenchError('Trial belongs to another study.')
+    if run['state']!='completed':raise WorkbenchError('Candidate Run is not completed.','conflict',409)
+    if evaluation is None:raise WorkbenchError('Candidate evaluation artifact is unavailable.','unavailable',409)
+    return {'format':'candidate_v1','id':candidate_id,'study_id':study['id'],
+        'trial_id':trial['id'],'run_id':run['id'],'checkpoint_sha256':checkpoint['sha256'],
+        'evaluation_sha256':evaluation['sha256'],'policy':copy.deepcopy(study['policy']),'decision':'diagnostic',
+        'limitations':['Validation diagnostics only; no quality threshold or physical acceptance is qualified.']}
+
+
 class Experiments:
     def __init__(self,dataset):
         self.dataset=dataset;self.db=dataset.db;self.lock=dataset.lock;self.access=dataset.access
@@ -41,27 +233,14 @@ class Experiments:
         row=self.db.execute('SELECT revision,admission_epoch,document FROM model_studies WHERE id=%s',(study_id,)).fetchone()
         if row is None:raise WorkbenchError('Study not found.','not_found',404)
         value=retained_json(row['document'],MAX_STUDY_DOCUMENT)
-        closed(value,('format','id','revision','name','admission_epoch','open','state','limits','policy',
-                      'membership_revision','trial_ids','stop_receipt_id'))
-        if (value['format']!='study_v1' or value['id']!=study_id or value['revision']!=row['revision'] or
-                value['admission_epoch']!=row['admission_epoch'] or type(value['open']) is not bool or
-                value['state'] not in ('draft','open','stopping','stopped','unknown') or
-                value['open']!=(value['state']=='open')):
+        if (value.get('id')!=study_id or value.get('revision')!=row['revision'] or
+                value.get('admission_epoch')!=row['admission_epoch']):
             raise WorkbenchError('Stored study identity/lifecycle differs.','unavailable',409)
-        natural(value['revision'],'Study revision',1);natural(value['admission_epoch'],'Epoch')
-        natural(value['membership_revision'],'Membership revision',1);text(value['name'],'Study name')
-        budget(value['limits']);reference(value['policy'],'selection_policy',self.db.dataset_id)
-        self.policy(value['policy'])
-        if type(value['trial_ids']) is not list or len(value['trial_ids'])>10000:
-            raise WorkbenchError('Stored study membership differs.','unavailable',409)
-        for trial_id in value['trial_ids']:identifier(trial_id)
-        if len(set(value['trial_ids']))!=len(value['trial_ids']):raise WorkbenchError('Duplicate trial membership.','unavailable',409)
-        if value['stop_receipt_id'] is not None:identifier(value['stop_receipt_id'])
         membership=self.db.execute('SELECT document FROM model_study_memberships WHERE study_id=%s AND revision=%s',
-                                  (study_id,value['membership_revision'])).fetchone()
-        if membership is None or retained_json(membership[0],MAX_STUDY_DOCUMENT)!={'trial_ids':value['trial_ids']}:
-            raise WorkbenchError('Stored immutable membership differs.','unavailable',409)
-        return value
+                                  (study_id,value.get('membership_revision'))).fetchone()
+        return validate_retained_study(value,catalog_id=self.db.dataset_id,
+            membership=retained_json(membership[0],MAX_STUDY_DOCUMENT) if membership else None,
+            policy=self.policy(value['policy']))
 
     def _write(self,value,action,details=None):
         value['revision']=natural(value['revision']+1,'Study revision',1)
@@ -87,18 +266,7 @@ class Experiments:
 
     @staticmethod
     def _policy(value):
-        closed(value,('format','metric_definition_sha256','checkpoint_rule','replicate_reduce',
-                      'required_capabilities','numerical_acceptance','tie_break'))
-        if (value['format']!='selection_policy_v1' or type(value['metric_definition_sha256']) is not str or
-                not SHA.fullmatch(value['metric_definition_sha256']) or value['checkpoint_rule'] not in ('selected','last','explicit') or
-                value['replicate_reduce'] not in ('individual','mean') or value['numerical_acceptance'] not in ('required','diagnostic') or
-                value['tie_break']!='trial_id' or type(value['required_capabilities']) is not list or
-                len(value['required_capabilities'])>64):
-            raise WorkbenchError('Unsupported selection policy.')
-        for item in value['required_capabilities']:text(item,'Required capability',64)
-        if len(set(value['required_capabilities']))!=len(value['required_capabilities']):
-            raise WorkbenchError('Duplicate required capability.')
-        return value
+        return validate_retained_policy(value)
 
     @authorized('edit','studies.create',owner_only=True)
     def create(self,body):
@@ -110,10 +278,7 @@ class Experiments:
             prior=self.db.execute('SELECT id,revision FROM model_selection_policies WHERE sha256=%s',(policy_sha,)).fetchone()
             policy_id=prior['id'] if prior else uuid.uuid4().hex
             if not prior:self.db.execute('INSERT INTO model_selection_policies VALUES(%s,%s,%s,%s)',(policy_id,1,policy_sha,encode(policy)))
-            ref={'kind':'selection_policy','catalog_id':self.db.dataset_id,'id':policy_id,'revision':1,'sha256':policy_sha}
-            value={'format':'study_v1','id':study_id,'revision':1,'name':body['name'],'admission_epoch':0,
-                   'open':False,'state':'draft','limits':limits,'policy':ref,'membership_revision':1,'trial_ids':[],
-                   'stop_receipt_id':None}
+            value=new_study_document(body,catalog_id=self.db.dataset_id,study_id=study_id,policy_id=policy_id)
             self.db.execute('INSERT INTO model_studies VALUES(%s,%s,%s,%s)',(study_id,1,0,encode(value)))
             self.db.execute('INSERT INTO model_study_memberships VALUES(%s,%s,%s)',(study_id,1,encode({'trial_ids':[]})))
             self.access.audit('studies.create',study_id,{'policy_sha256':policy_sha,'limits':limits})
@@ -124,9 +289,8 @@ class Experiments:
         identifier(trial_id)
         row=self.db.execute('SELECT study_id,material_sha256,replicate,document FROM model_trials WHERE id=%s',(trial_id,)).fetchone()
         if row is None:raise WorkbenchError('Trial not found.','not_found',404)
-        value=retained_json(row['document']);closed(value,('format','id','study_id','material','replicate'))
-        reference(value['material'],'recipe_material',self.db.dataset_id);natural(value['replicate'],'Replicate')
-        if (value['format']!='trial_v1' or value['id']!=trial_id or value['study_id']!=row['study_id'] or
+        value=validate_retained_trial(retained_json(row['document']),catalog_id=self.db.dataset_id)
+        if (value['id']!=trial_id or value['study_id']!=row['study_id'] or
                 value['replicate']!=row['replicate'] or value['material']['sha256']!=row['material_sha256']):
             raise WorkbenchError('Stored trial identity differs.','unavailable',409)
         return value
@@ -159,7 +323,7 @@ class Experiments:
                 prior=self.db.execute('SELECT id FROM model_trials WHERE study_id=%s AND material_sha256=%s AND replicate=%s',
                                       (study_id,material['ref']['sha256'],body['replicate'])).fetchone()
                 if prior:raise WorkbenchError('Material/replicate already belongs to this study.','conflict',409)
-                value={'format':'trial_v1','id':uuid.uuid4().hex,'study_id':study_id,'material':material['ref'],'replicate':body['replicate']}
+                value=new_trial_document(study,material['ref'],body['replicate'],trial_id=uuid.uuid4().hex)
                 self.db.execute('INSERT INTO model_trials VALUES(%s,%s,%s,%s,%s)',
                                 (value['id'],study_id,material['ref']['sha256'],value['replicate'],encode(value)))
                 study['trial_ids'].append(value['id']);study['membership_revision']+=1
@@ -188,41 +352,19 @@ class Experiments:
 
     def _reservation(self,row):
         value=retained_json(row['document'])
-        closed(value,('id','study_id','admission_epoch','request_key','actor_id','trial_id','parent_run_id','run_id',
-                      'request_sha256','material_sha256','envelope','state','settled'))
         for key in ('id','study_id','actor_id','request_key','request_sha256','trial_id','run_id'):
-            if value[key]!=row[key]:raise WorkbenchError('Reservation identity differs.','unavailable',409)
-        budget(value['envelope']);natural(value['admission_epoch'],'Reservation epoch')
-        if value['state'] not in ('reserved','running','settled','unknown'):
-            raise WorkbenchError('Reservation state differs.','unavailable',409)
-        if value['state']=='settled':
-            if value['settled']!=value['envelope']:
-                raise WorkbenchError('Conservative settled charge differs.','unavailable',409)
-        elif value['settled'] is not None:
-            raise WorkbenchError('Open reservation cannot contain a settled charge.','unavailable',409)
+            if value.get(key)!=row[key]:raise WorkbenchError('Reservation identity differs.','unavailable',409)
         trial=self.trial(value['trial_id'])
-        material=self.dataset.pipelines.recipe_material(trial['material'])
-        if (trial['study_id']!=value['study_id'] or value['material_sha256']!=trial['material']['sha256'] or
-                value['envelope']!=material['material']['resource_envelope']):
-            raise WorkbenchError('Reservation material/envelope differs.','unavailable',409)
-        run=self.dataset.runs._load(value['run_id'])
-        if (run['actor_id']!=value['actor_id'] or run['request_sha256']!=value['request_sha256'] or
-                run['parent_run_id']!=value['parent_run_id'] or
-                run.get('approval_material_sha256')!=value['material_sha256']):
-            raise WorkbenchError('Reservation and Run receipt differ.','unavailable',409)
-        return value
+        return validate_retained_reservation(value,trial=trial,
+            composition=self.dataset.pipelines.recipe_material(trial['material']),
+            run=self.dataset.runs._load(value['run_id']))
 
     def _reservations(self,study_id):
         return [self._reservation(row) for row in self.db.execute(
             'SELECT * FROM model_attempt_reservations WHERE study_id=%s ORDER BY id',(study_id,))]
 
     def _totals(self,reservations):
-        totals={key:0 for key in DIMENSIONS}
-        for value in reservations:
-            charge=value['settled'] if value['state']=='settled' else value['envelope']
-            if charge is None:raise WorkbenchError('Settled reservation lacks a charge.','unavailable',409)
-            for key in DIMENSIONS:totals[key]=natural(totals[key]+charge[key],'Study total')
-        return totals
+        return reservation_totals(reservations)
 
     @authorized('inspect','studies.get')
     def get(self,study_id,*,offset=0,limit=100,revision=None):
@@ -257,9 +399,7 @@ class Experiments:
             self.access.require('edit','studies.save',study_id,owner_only=True)
             study=self._study(study_id);self._expected(study,body);self.policy(body['policy'])
             totals=self._totals(self._reservations(study_id))
-            if any(totals[key]>limits[key] for key in DIMENSIONS):
-                raise WorkbenchError('Limits are below existing obligations.','conflict',409)
-            study.update(name=body['name'],limits=limits,policy=body['policy'])
+            study=edit_study_document(study,body,policy=self.policy(body['policy']),charged=totals,catalog_id=self.db.dataset_id)
             return self._write(study,'studies.save')
 
     def _children_ceased(self,reservations):
@@ -481,9 +621,7 @@ class Experiments:
                 raise WorkbenchError('Run does not belong to the selected trial.')
         # Runs verifies retained bytes and task semantics outside a write transaction.
         evidence=self.dataset.runs.model_evidence(body['run_id'],{})
-        if evidence['state']!='verified':raise WorkbenchError('Candidate requires verified model evidence.','unsupported',409)
-        if evidence['manifest']['producer']['material_sha256']!=trial['material']['sha256']:
-            raise WorkbenchError('Candidate evidence differs from its trial material.','unavailable',409)
+        validate_candidate_evidence(evidence,trial)
         checkpoint=self._candidate_checkpoint(evidence,policy,body.get('checkpoint_sha256'))
         with self.lock,self.db.transaction():
             self.access.require('edit','studies.select_candidate',study_id)
@@ -494,10 +632,7 @@ class Experiments:
             if run['state']!='completed':raise WorkbenchError('Candidate Run is not completed.','conflict',409)
             metrics=self._candidate_evaluation(run)
             if metrics is None:raise WorkbenchError('Candidate evaluation artifact is unavailable.','unavailable',409)
-            candidate={'format':'candidate_v1','id':uuid.uuid4().hex,'study_id':study_id,
-                'trial_id':trial['id'],'run_id':run['id'],'checkpoint_sha256':checkpoint['sha256'],
-                'evaluation_sha256':metrics['sha256'],'policy':study['policy'],'decision':'diagnostic',
-                'limitations':['Validation diagnostics only; no quality threshold or physical acceptance is qualified.']}
+            candidate=new_candidate_document(study,trial,run,checkpoint,metrics,candidate_id=uuid.uuid4().hex)
             self.db.execute('INSERT INTO model_candidates VALUES(%s,%s,%s,%s,%s)',
                 (candidate['id'],study_id,trial['id'],run['id'],encode(candidate)))
             self.access.audit('studies.select_candidate',candidate['id'],{'study_id':study_id,'run_id':run['id'],
@@ -514,34 +649,7 @@ class Experiments:
         return next((item for item in run['artifacts'] if item['name']==name),None)
 
     def _candidate_checkpoint(self,evidence,policy,requested):
-        if policy['replicate_reduce']!='individual':
-            raise WorkbenchError('Mean-replicate candidate selection is not qualified.','unsupported',409)
-        import model_evidence
-        definitions=evidence['metric_definitions']
-        matches=[item for item in definitions if model_evidence.digest(item)==policy['metric_definition_sha256']]
-        if len(matches)!=1:raise WorkbenchError('Selection metric differs from the retained evaluator definition.','incompatible',409)
-        coverage=evidence['manifest']['coverage']
-        available=set(coverage['required']+coverage['optional'])-{item['capability'] for item in coverage['omitted']}
-        if not set(policy['required_capabilities'])<=available:
-            raise WorkbenchError('Candidate lacks required evidence capabilities.','unsupported',409)
-        entries=evidence['checkpoint_index']['entries']
-        rule=policy['checkpoint_rule']
-        if rule=='explicit':
-            chosen=[item for item in entries if item['checkpoint']['sha256']==requested]
-        else:
-            chosen=[item for item in entries if item['selected']] if rule=='selected' else entries[-1:]
-            if requested is not None and (len(chosen)!=1 or chosen[0]['checkpoint']['sha256']!=requested):
-                raise WorkbenchError('Explicit checkpoint contradicts the selection policy.')
-        if len(chosen)!=1:raise WorkbenchError('Selection requires one retained checkpoint.')
-        checkpoint=chosen[0]['checkpoint']
-        observed=[item for item in evidence['observations'] if item['checkpoint_sha256']==checkpoint['sha256']
-                  and item['metric_id']==matches[0]['id'] and item['state']=='observed']
-        if len(observed)!=1:raise WorkbenchError('Selection requires a defined metric at this checkpoint.','unavailable',409)
-        # A successful classifier fit supplies diagnostics, never an invented
-        # model-quality threshold or physical acceptance result.
-        if policy['numerical_acceptance']=='required':
-            raise WorkbenchError('This evaluator has no qualified numerical acceptance criterion.','unsupported',409)
-        return checkpoint
+        return select_retained_checkpoint(evidence,policy,requested)
 
     def _candidate_result(self,value,checkpoint):
         return {'ref':{'kind':'candidate','catalog_id':self.db.dataset_id,'id':value['id'],'sha256':digest(value)},
@@ -572,26 +680,16 @@ class Experiments:
             row=self.db.execute('SELECT * FROM model_candidates WHERE id=%s',(candidate_id,)).fetchone()
             if row is None:raise WorkbenchError('Candidate not found.','not_found',404)
             value=retained_json(row['document'])
-            closed(value,('format','id','study_id','trial_id','run_id','checkpoint_sha256','evaluation_sha256',
-                          'policy','decision','limitations'))
-            if (value['format']!='candidate_v1' or any(value[key]!=row[key] for key in ('id','study_id','trial_id','run_id'))
-                    or value['decision']!='diagnostic'):
+            if any(value.get(key)!=row[key] for key in ('id','study_id','trial_id','run_id')):
                 raise WorkbenchError('Stored candidate identity differs.','unavailable',409)
-            if (type(value['checkpoint_sha256']) is not str or not SHA.fullmatch(value['checkpoint_sha256'])
-                    or type(value['evaluation_sha256']) is not str or not SHA.fullmatch(value['evaluation_sha256'])
-                    or type(value['limitations']) is not list or len(value['limitations'])>64):
-                raise WorkbenchError('Stored candidate evidence identity differs.','unavailable',409)
-            for item in value['limitations']:text(item,'Candidate limitation',500)
-            reference(value['policy'],'selection_policy',self.db.dataset_id);policy=self.policy(value['policy'])
-            trial=self.trial(value['trial_id'])
-            if trial['study_id']!=value['study_id']:raise WorkbenchError('Candidate trial differs.','unavailable',409)
+            policy=self.policy(value['policy']);trial=self.trial(value['trial_id'])
             reservation=self.db.execute('SELECT * FROM model_attempt_reservations WHERE run_id=%s',(value['run_id'],)).fetchone()
-            if reservation is None or self._reservation(reservation)['trial_id']!=trial['id']:
+            if reservation is None:
                 raise WorkbenchError('Candidate Run association differs.','unavailable',409)
+            value=validate_retained_candidate(value,catalog_id=self.db.dataset_id,trial=trial,
+                policy=policy,reservation=self._reservation(reservation))
         evidence=self.dataset.runs.model_evidence(value['run_id'],{'checkpoint_sha256':value['checkpoint_sha256']})
-        if evidence['state']!='verified':raise WorkbenchError('Candidate evidence is unavailable.','unavailable',409)
-        if evidence['manifest']['producer']['material_sha256']!=trial['material']['sha256']:
-            raise WorkbenchError('Candidate evidence material differs.','unavailable',409)
+        validate_candidate_evidence(evidence,trial)
         checkpoint=self._candidate_checkpoint(evidence,policy,value['checkpoint_sha256'])
         run=self.dataset.runs.get(value['run_id'])
         evaluation=self._candidate_evaluation(run)

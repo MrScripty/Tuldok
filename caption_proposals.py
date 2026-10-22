@@ -114,6 +114,31 @@ def decode(data, source, request_id=None):
         raise WorkbenchError('Model must return one complete, valid caption JSON; partial or invalid output was not applied.') from None
 
 
+def validate_retained_result(job):
+    """Pure byte/result checks shared by live completion and inert history."""
+    image = job.get('input_image_base64')
+    if image is not None:
+        raw_image = base64.b64decode(image, validate=True)
+        captured = job['input_image']
+        if (len(raw_image) > MAX_IMAGE or len(raw_image) != captured['bytes'] or
+                hashlib.sha256(raw_image).hexdigest() != captured['sha256']):
+            raise WorkbenchError('Retained prepared image identity differs.')
+        with Image.open(io.BytesIO(raw_image)) as raster:
+            if raster.format != 'JPEG' or list(raster.size) != captured['size']:
+                raise WorkbenchError('Retained prepared image geometry differs.')
+            raster.load()
+    encoded = job.get('raw_response_base64')
+    if encoded is None:
+        return
+    raw = base64.b64decode(encoded, validate=True)
+    if len(raw) > MAX_OUTPUT or hashlib.sha256(raw).hexdigest() != job['response_sha256']:
+        raise WorkbenchError('Retained caption response identity differs.')
+    if job['status'] in ('completed', 'applied', 'rejected'):
+        annotation, reported = decode(raw, job['source'], job['id'] if pumas.typed(job['config']) else None)
+        if annotation != job['annotation'] or reported != job.get('reported_model'):
+            raise WorkbenchError('Retained caption differs from the original response.')
+
+
 class CaptionProposals:
     def __init__(self, workbench):
         self.workbench = workbench
@@ -320,6 +345,7 @@ class CaptionProposals:
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
                 self._source(dict(source_id=job['source']['id'], revision=job['source']['revision'], source_revision=job['source']['source_revision']))
                 job.update(status='completed', annotation=annotation, reported_model=reported)
+                validate_retained_result(job)
                 self._save(job)
                 self.access.audit('caption.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:

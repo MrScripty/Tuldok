@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M2 — complete historical records, artifacts and current metadata publication.
+**Current phase:** M3 — explicit execution, durable lifecycle facts and local custody.
 
-**Next slice:** Implement the agreed artifact/session boundary and owner codecs, then prove mixed-family cold reconstruction without imported authority.
+**Next slice:** Add the current-authority bridge, ordered projection locks and canonical transaction hooks, then qualify one actual generic Run before admitting Study and producer writers.
 
 **Acceptance status:** `pending`
 
@@ -301,15 +301,17 @@ The following named path groups are finite write sets, reused below for readabil
 
 ### M2 — Preserve complete project history and unique artifacts
 
-**Status:** `Active`
+**Status:** `Accepted` for inert history, artifacts and nonexecuting metadata; [source, review and required-real evidence](reports/m2-implementation.md).
 
 **Goal / production outcome:** cold project inspection retains the real data/model/Study/Run/lineage and scientific decision closure, including large unique artifacts, without active authority.
 
-**Allowed write set:** `project_store.py`, `project_text.py`, `project_workspace.py`; new `project_history.py`, `project_artifacts.py`, `project_session.py`, `project_data.py`, `project_material.py`, `image_sources.py`; `workbench.py`, `preferences.py`, `dataset_releases.py`, `saved_selections.py`, `saved_searches.py`, `pipeline.py`, `model_definitions.py`, `experiments.py`, `experiment_lineage.py`, `candidate_packages.py`, `runtime_snapshots.py`, `recipe_process.py`, `extension_bindings.py`, `extension_canonical.py`, `extension_evidence.py`, `model_evidence.py`, `field_evidence.py`, `one_fit_evidence.py`, `runs.py`, `run_publication.py`, `retained_analysis.py`, `retained_analysis_schema.py`, `immutable_assets.py`, `scientific_fields.py`, `audio_assets.py`, `sequence_assets.py`, `meshes.py`, `pointclouds.py`, `volume_assets.py`, `access.py`, `metadata.py`, `app.py`; Client/UI and Project docs; `docs/contracts/experiment-lineage.md`, `docs/contracts/model-development.md`, `docs/contracts/extensions.md`; Project evidence; `tests/test_workbench.py`, `tests/test_preferences.py`, `tests/test_dataset_releases.py`, `tests/test_saved_selections.py`, `tests/test_saved_searches.py`, `tests/test_model_definitions.py`, `tests/test_experiments.py`, `tests/test_experiment_lineage.py`, `tests/test_candidate_packages.py`, `tests/test_runtime_snapshots.py`, `tests/test_projects.py`, `tests/test_project_snapshot_capture.py`; new `tests/test_project_artifacts.py`, `tests/test_project_session.py`, `tests/test_project_data.py`, `tests/test_project_material.py`. Candidate/runtime writer changes here only fence unsupported project-mode effects; their live integration is M3.
+**Allowed write set:** `project_store.py`, `project_text.py`, `project_workspace.py`; new `project_history.py`, `project_artifacts.py`, `project_session.py`, `project_projection.py`, `project_data.py`, `project_material.py`, `project_producers.py`, `image_sources.py`; `workbench.py`, `preferences.py`, `dataset_releases.py`, `saved_selections.py`, `saved_searches.py`, `pipeline.py`, `model_definitions.py`, `experiments.py`, `experiment_lineage.py`, `candidate_packages.py`, `runtime_snapshots.py`, `recipe_process.py`, `extension_bindings.py`, `extension_canonical.py`, `extension_evidence.py`, `model_evidence.py`, `field_evidence.py`, `one_fit_evidence.py`, `runs.py`, `run_publication.py`, `retained_analysis.py`, `retained_analysis_schema.py`, `immutable_assets.py`, `scientific_fields.py`, `audio_assets.py`, `sequence_assets.py`, `meshes.py`, `pointclouds.py`, `volume_assets.py`, `access.py`, `metadata.py`, `app.py`; Client/UI and Project docs; `docs/contracts/experiment-lineage.md`, `docs/contracts/model-development.md`, `docs/contracts/extensions.md`; Project evidence; `tests/test_workbench.py`, `tests/test_preferences.py`, `tests/test_dataset_releases.py`, `tests/test_saved_selections.py`, `tests/test_saved_searches.py`, `tests/test_model_definitions.py`, `tests/test_experiments.py`, `tests/test_experiment_lineage.py`, `tests/test_candidate_packages.py`, `tests/test_runtime_snapshots.py`, `tests/test_projects.py`, `tests/test_project_snapshot_capture.py`; new `tests/test_project_artifacts.py`, `tests/test_project_session.py`, `tests/test_project_projection.py`, `tests/test_project_data.py`, `tests/test_project_material.py`, `tests/test_project_producers.py`. Candidate/runtime writer changes here only fence unsupported project-mode effects; their live integration is M3.
 
 **Dependencies / tasks:** M1; bound family/closure inventory against all retained domain tables and managed artifacts, with a codec or explicit unsupported-write disposition for each. Preserve annotation/deletion/review/exposure, response/preference histories and rationale, immutable source/extension/runtime closure, candidate preparation/selection facts, Study accounting, reservation association and cross-Study producer/lineage edges, with the visible-family table providing the minimum scope. Introduce inert historical proof and current disclosure checks, not fake grants. Externalize BYTEA as payloads and implement digest/availability/resolution manifests. Supported metadata writes use the canonical boundary. Active Run creation stays unavailable in project mode until M3; no DB-only bypass.
 
 **Admitted owner composition:** M1's separate store/text owners remain. M2 adds a narrow shared `ProjectSession` for one outer SQL transaction, complete `(family,id)` checkpoint merge, canonical original-result receipt and post-publication projection fencing. It is internal composition of fixed owners, not a public registry or arbitrary domain RPC. `ProjectArtifacts` owns intrinsic `{format,sha256,bytes}` declarations and verified immutable payload custody; domain edges own namespace, media type, role, unique/regenerable policy and required-use meaning. Data, material and historical proof codecs retain their own closed versioned families. Lead-owned `ImageSources` extracts existing Dataset image policy without constructing Dataset; legacy Dataset delegates to that same owner. Directly affected `one_fit_evidence.py` and `run_publication.py` expose retained reader seams instead of copied interpreters. These filename/write-set refinements follow actual owner inspection, without changing final scope.
+
+The concrete composition also admits `project_dispatch.py` (fixed public-to-owner calls), `project_sources.py` (explicit current source registration and bounded reference inspection), and their focused tests. Explicit artifact resolution supplies exact bytes from a selected configured local-root file; it does not download, install or regenerate them. A resolution receipt records the past observation, while a separate status read reports current availability. Built-in material preparation remains unavailable before its native runtime probe until M3 owns that effect. Exact historical Run documents use bounded, hash-correlated segments behind current disclosure; public summaries omit protected frozen source fields. Early pure `project_fork.py` / `project_data_fork.py` ownership seams support later M4 construction but do not expose or accept Save As before lifecycle integration and its gates.
 
 M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data records use `workbench_record_v1`; operations that require a new format refuse before effects on an older record unless an explicit conversion has been admitted. Historical binding/schema/source bytes establish integrity separately from current host compatibility. Current protected-data disclosure is granted explicitly by local authority and is never reconstructed from imported exposure facts.
 
@@ -319,7 +321,7 @@ M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data 
 
 ### M3 — Project execution preserves durable facts and local custody
 
-**Status:** `Planned`
+**Status:** `Active` — shared authority/transaction contracts agreed; execution remains unavailable until its production paths pass.
 
 **Goal / production outcome:** explicit existing Run/Study execution can operate in an external project without durable facts trapped in SQL, and cannot be resurrected by importing it elsewhere.
 
@@ -361,7 +363,9 @@ M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data 
 
 ## Blockers
 
-No missing user decision blocks M1. Implementation is authorized; user-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium environments are qualified for the M1 checks. Individual test results and unrun later-milestone claims remain distinct in implementation evidence.
+No missing user decision blocks product implementation. M1 and M2 are accepted at their recorded scope; M3 is active and M4/M5 remain pending. User-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium remain available for dependent checks. Individual results and unrun later-milestone claims remain distinct in implementation evidence.
+
+The initial draft-PR creation was denied by automatic approval review under the earlier planning-only restriction. The user explicitly approved the exact retry at 18:31 UTC; the lead first verified no existing PR, then retried once. [Draft PR #119](https://github.com/MrScripty/Tuldok/pull/119) was confirmed open/draft at `af276565fae9c08c1084d37d8937ba5d97599f17`, targeting unchanged main. No bypass or merge occurred. M2–M5 remain implementation/acceptance work, and exact-head CI is separately observed.
 
 Actual per-operation blockers are: unknown source membership during later extraction; missing unique bytes for a requested complete transfer; inseparable secret-bearing legacy proof; unknown active descendant effects; or an unsupported filesystem's inability to provide the promised durable publication. Owners and resolution conditions are in [issues](issues.md). These block only dependent operations, not inert inspection or independent planning. Format naming, no-op Save, single local writer, closed-project Git changes, inert imported history and independent Save As are safe defaults, not a questionnaire for the user.
 

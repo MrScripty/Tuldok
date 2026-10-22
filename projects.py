@@ -105,6 +105,21 @@ def manifest(value):
     return value
 
 
+def decode_retained_snapshot(value):
+    """Validate immutable registration facts without binding any current root."""
+    import copy
+    closed(value,('id','name','root','root_identity','manifest_path','manifest_sha256','manifest'))
+    if type(value['id']) is not str or not ID.fullmatch(value['id']):raise WorkbenchError('Invalid retained snapshot identity.')
+    text(value['name'],'Project name',120);text(value['root'],'Historical root alias',160)
+    relative_path(value['manifest_path'])
+    if type(value['manifest_sha256']) is not str or not SHA.fullmatch(value['manifest_sha256']):raise WorkbenchError('Invalid retained manifest hash.')
+    root=value['root_identity']
+    if type(root) is not list or len(root)!=2 or any(type(number) is not int or number<0 for number in root):raise WorkbenchError('Invalid historical root identity.')
+    document=manifest(value['manifest'])
+    if document['id']!=value['id'] or document['name']!=value['name']:raise WorkbenchError('Retained snapshot manifest identity differs.')
+    return copy.deepcopy(value)
+
+
 class Projects:
     """One catalog's immutable project snapshots and explicitly configured root handles."""
 

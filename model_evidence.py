@@ -211,8 +211,8 @@ def finish_capture(output, envelope, checkpoints, best_epoch, context):
                       'output_policy_sha256': digest(OUTPUT_POLICY)}})
 
 
-def read_document(directory, name, maximum=MAX_SHARD_BYTES):
-    value = _json(read_binary(directory/name,maximum),name)
+def decode_document(raw, name):
+    value = _json(raw,name)
     pending = [(value, 0)]
     visited = 0
     while pending:
@@ -229,14 +229,27 @@ def read_document(directory, name, maximum=MAX_SHARD_BYTES):
     return value
 
 
+def read_document(directory, name, maximum=MAX_SHARD_BYTES):
+    return decode_document(read_binary(directory/name,maximum),name)
+
+
 def _natural(value, minimum=0):
     return type(value) is int and minimum <= value <= MAX_INTEGER
 
 
 def verify(directory, run, metrics):
+    return verify_blobs(run,metrics,read_blob=lambda name,maximum:read_binary(Path(directory)/name,maximum))
+
+
+def verify_blobs(run, metrics, *, read_blob):
     """Validate task semantics before publication and again on every evidence read."""
-    directory = Path(directory)
-    manifest = read_document(directory, 'model-evidence.json', MAX_MANIFEST_BYTES)
+    def document(name, maximum=MAX_SHARD_BYTES):
+        return decode_document(read_blob(name,maximum),name)
+    def blob_for(name):
+        raw=read_blob(name,64*1024**2)
+        return {'name':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),
+                'media_type':'application/json' if name.endswith('.json') else 'application/octet-stream'}
+    manifest = document('model-evidence.json', MAX_MANIFEST_BYTES)
     keys = {'format','schema_version','producer','task','model_sha256','data_sha256','profile_sha256','probe',
             'metric_definitions','checkpoints','observations','field_index','coverage','inference'}
     if (set(manifest) != keys or manifest['format'] != FORMAT
@@ -249,16 +262,16 @@ def verify(directory, run, metrics):
             or manifest['data_sha256'] != run['release_sha256'] or manifest['model_sha256'] != context['model_sha256']
             or manifest['profile_sha256'] != digest(context['profile']) or manifest['field_index'] is not None
             or manifest['coverage'] != {'required':context['profile']['required_capabilities'],'optional':[],'omitted':[]}
-            or canonical(read_document(directory,'model-definition.json')) != canonical(context['model_definition'])
-            or canonical(read_document(directory,'profile.json')) != canonical(context['profile'])
-            or canonical(read_document(directory,'fitted-transform.json')) != canonical(EMPTY_FITTED_TRANSFORM)
-            or canonical(read_document(directory,'output-policy.json')) != canonical(OUTPUT_POLICY)):
+            or canonical(document('model-definition.json')) != canonical(context['model_definition'])
+            or canonical(document('profile.json')) != canonical(context['profile'])
+            or canonical(document('fitted-transform.json')) != canonical(EMPTY_FITTED_TRANSFORM)
+            or canonical(document('output-policy.json')) != canonical(OUTPUT_POLICY)):
         raise ValueError('Evidence differs from admitted model/profile/task/source.')
     def checked_blob(item):
         if type(item) is not dict or set(item) != {'name','sha256','bytes','media_type'} or item['name'] not in payload_names(run['parameters']['epochs']):
             raise ValueError('Invalid evidence blob reference.')
-        if blob(directory/item['name']) != item: raise ValueError('Evidence blob checksum differs.')
-        return read_document(directory,item['name']) if item['name'].endswith('.json') else None
+        if blob_for(item['name']) != item: raise ValueError('Evidence blob checksum differs.')
+        return document(item['name']) if item['name'].endswith('.json') else None
     probe = checked_blob(manifest['probe'])
     expected_probe = probe_manifest({'records':run['source_records']}, run['release_sha256'], context['profile'])
     if canonical(probe) != canonical(expected_probe): raise ValueError('Fixed validation membership differs.')
@@ -266,7 +279,7 @@ def verify(directory, run, metrics):
     if set(index) != {'format','run_id','entries'} or index['format'] != 'checkpoint_index_v1' or index['run_id'] != run['id']:
         raise ValueError('Invalid checkpoint index.')
     if len(index['entries']) != run['parameters']['epochs']: raise ValueError('Missing required epoch checkpoint.')
-    logit_document=read_document(directory,'validation-logits.json')
+    logit_document=document('validation-logits.json')
     if (set(logit_document)!={'format','run_id','probe_sha256','entries'}
             or logit_document['format']!='classifier_validation_logits_v1' or logit_document['run_id']!=run['id']
             or logit_document['probe_sha256']!=manifest['probe']['sha256']
@@ -286,12 +299,12 @@ def verify(directory, run, metrics):
                 or clocks['fit_pass'] is not None or clocks['physical_time'] is not None):
             raise ValueError('Checkpoint clocks differ from actual admitted progress.')
         expected = {'format':'checkpoint_state_v1','run_id':run['id'],'model_sha256':context['model_sha256'],
-                    'weights':blob(directory/f'weights-epoch-{epoch:04d}.pt'),
+                    'weights':blob_for(f'weights-epoch-{epoch:04d}.pt'),
                     'fitted_transform_sha256':fitted_transform_sha256(),'clocks':clocks}
         if canonical(descriptor) != canonical(expected) or any(entry[key] != descriptor[key] for key in ('model_sha256','fitted_transform_sha256','clocks')):
             raise ValueError('Checkpoint descriptor binding differs.')
         checked_blob(descriptor['weights'])
-        prediction = read_document(directory,f'probes-epoch-{epoch:04d}.json')
+        prediction = document(f'probes-epoch-{epoch:04d}.json')
         if (set(prediction) != {'run_id','checkpoint_sha256','probe_sha256','rows'} or prediction['run_id'] != run['id']
                 or prediction['checkpoint_sha256'] != entry['checkpoint']['sha256'] or prediction['probe_sha256'] != manifest['probe']['sha256']
                 or len(prediction['rows']) != len(probe['members'])):
@@ -344,10 +357,10 @@ def verify(directory, run, metrics):
         raise ValueError('Selected validation metrics differ from selected checkpoint observation.')
     if selected != [metrics['best_epoch']] or metrics['best_epoch'] != best:
         raise ValueError('Selected checkpoint differs from validation selection.')
-    if read_binary(directory/'checkpoint.pt') != read_binary(directory/f'weights-epoch-{best:04d}.pt'):
+    if read_blob('checkpoint.pt',64*1024**2) != read_blob(f'weights-epoch-{best:04d}.pt',64*1024**2):
         # torch serialization has filename metadata: trainer copies exact selected bytes below.
         raise ValueError('Selected weight bytes differ.')
-    selected_rows=read_document(directory,'predictions-validation.json')['rows']
+    selected_rows=document('predictions-validation.json')['rows']
     by_selected_id={row['id']:row for row in selected_rows}
     for member,row in zip(probe['members'],predictions[best-1]['rows'],strict=True):
         original=by_selected_id[member['frozen_reference']['id']]
@@ -355,7 +368,7 @@ def verify(directory, run, metrics):
             raise ValueError('Selected full predictions differ from retained checkpoint probes.')
     definitions = checked_blob(manifest['metric_definitions'])
     observations=[]
-    expected_observation_blobs=[blob(directory/'observations.json'),blob(directory/'validation-logits.json'), *[blob(directory/f'probes-epoch-{epoch:04d}.json') for epoch in range(1,run['parameters']['epochs']+1)]]
+    expected_observation_blobs=[blob_for('observations.json'),blob_for('validation-logits.json'), *[blob_for(f'probes-epoch-{epoch:04d}.json') for epoch in range(1,run['parameters']['epochs']+1)]]
     if manifest['observations']!=expected_observation_blobs:raise ValueError('Observation inventory differs.')
     for item in manifest['observations']:
         value=checked_blob(item)
@@ -375,7 +388,7 @@ def verify(directory, run, metrics):
                 'probe_sha256':manifest['probe']['sha256'],'metric_id':metric,'split':'validation','clocks':entry['clocks'],
                 'state':'observed','value':step['validation'][metric],'sample_count':step['validation']['examples']}
             if canonical(match) != canonical([expected]):raise ValueError('Scalar observation differs from actual validation.')
-    expected_inference={'mode':'eval_no_grad','fitted_transforms':[blob(directory/'fitted-transform.json')],
+    expected_inference={'mode':'eval_no_grad','fitted_transforms':[blob_for('fitted-transform.json')],
                         'output_policy_sha256':digest(OUTPUT_POLICY)}
     if manifest['inference'] != expected_inference:raise ValueError('Inference transform differs.')
     return {'state':'verified','manifest':manifest,'checkpoint_index':index,'probe':probe,

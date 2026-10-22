@@ -263,6 +263,221 @@ def source_content_hash(row):
     return row['content_hash'] if row['kind'] == 'text' else row['exported_pixel_sha256']
 
 
+def decode_recipe_draft(value, *, catalog_id):
+    from model_definitions import checked_json, natural, reference, text
+    value = checked_json(value)
+    closed(value, ('format', 'id', 'revision', 'name', 'task', 'data', 'model', 'trainer',
+                   'parameters', 'evaluation_profile', 'runtime', 'layout'))
+    if value['format'] != 'recipe_draft_v2':
+        raise WorkbenchError('Unsupported model-aware recipe format.', 'unsupported', 400)
+    identifier(value['id']); natural(value['revision'], 'Recipe revision', 1)
+    text(value['name'], 'Recipe name')
+    for key, kind in (('task', 'task'), ('model', 'model'), ('trainer', 'trainer'),
+                      ('evaluation_profile', 'profile'), ('runtime', 'runtime')):
+        reference(value[key], kind, catalog_id)
+    if type(value['data']) is not list or not 1 <= len(value['data']) <= 64:
+        raise WorkbenchError('A model-aware recipe requires1–64 immutable data references.')
+    for item in value['data']: reference(item, 'release', catalog_id)
+    if type(value['parameters']) is not dict or type(value['layout']) is not dict or len(value['layout']) > 10:
+        raise WorkbenchError('Recipe parameters/layout require bounded objects.')
+    for key, position in value['layout'].items():
+        if not NODE_ID.fullmatch(key): raise WorkbenchError('Invalid workflow layout key.')
+        closed(position, ('x', 'y'))
+        if any(type(number) not in (int, float) or not math.isfinite(number) or abs(number)>10000
+               for number in position.values()):
+            raise WorkbenchError('Workflow layout requires finite bounded coordinates.')
+    return value
+
+
+
+def decode_recipe_material(value, *, catalog_id):
+    from model_definitions import checked_json,reference,natural
+    value=checked_json(value);closed(value,('ref','material'));material=value['material']
+    closed(material,('format','catalog_id','recipe_id','recipe_revision','recipe_document','executable_sha256',
+                     'model','data','trainer','evaluation_profile','resolved_profile','runtime','captures','resource_envelope'))
+    ref=reference(value['ref'],'recipe_material',catalog_id)
+    if (material['format']!='recipe_material_v1' or digest(material)!=ref['sha256'] or
+            material['catalog_id']!=catalog_id):
+        raise WorkbenchError('Recipe material identity differs.','unavailable',409)
+    identifier(material['recipe_id']);natural(material['recipe_revision'],'Recipe revision',1)
+    for key,kind in (('model','model'),('trainer','trainer'),('evaluation_profile','profile'),('runtime','runtime')):
+        reference(material[key],kind,catalog_id)
+    if type(material['executable_sha256']) is not str or not HASH.fullmatch(material['executable_sha256']):
+        raise WorkbenchError('Recipe requires an exact execution identity.','unavailable',409)
+    if (type(material['data']) is not list or
+            material['data'] != [] and (len(material['data']) != 1 or material['trainer']['id'] not in BUILTIN_TRAINERS) or
+            type(material['captures']) is not list or not 1<=len(material['captures'])<=recipe_contract.MAX_FILES):
+        raise WorkbenchError('Unsupported external material inventory.','unavailable',409)
+    for item in material['data']:reference(item,'release',catalog_id)
+    envelope=material['resource_envelope'];closed(envelope,('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes'))
+    for number in envelope.values():natural(number,'Resource envelope',1)
+    inventory=[material['recipe_document'],material['resolved_profile'],*material['captures']]
+    names=[];total=0
+    for item in inventory:
+        closed(item,('name','sha256','bytes','media_type'));natural(item['bytes'],'Capture bytes',0,recipe_contract.CPU_CAPTURE_BYTES)
+        if (type(item['name']) is not str or not re.fullmatch(r'(?:recipe\.json|profile\.json|capture-\d{4}\.bin)',item['name']) or
+                type(item['sha256']) is not str or not HASH.fullmatch(item['sha256']) or
+                item['media_type']!=('application/octet-stream' if item['name'].startswith('capture-') else 'application/json')):
+            raise WorkbenchError('Invalid recipe blob identity.','unavailable',409)
+        if item['name'] in ('recipe.json','profile.json') and item['bytes']>2*1024**2:
+            raise WorkbenchError('Recipe/profile document exceeds its bound.','unavailable',409)
+        names.append(item['name']);total+=item['bytes']
+    if len(set(names))!=len(names) or total>recipe_contract.CPU_CAPTURE_BYTES+2*1024**2:
+        raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
+    if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
+        raise WorkbenchError('Recipe document names differ.','unavailable',409)
+    return value
+
+
+def _verify_extension_closure(composition, model, *, catalog_id, read_blob):
+    import extension_evidence as evidence
+    from model_definitions import retained_json,reference,MAX_SOURCE_BYTES,decode_model_material
+    ref=reference(composition['ref'],'recipe_material',catalog_id)
+    material=composition['material'];sha=ref['sha256']
+    if digest(material)!=sha or material['trainer']['id']!=recipe_contract.EVIDENCE_FORMAT:
+        raise WorkbenchError('Extension composition identity differs.','unavailable',409)
+    snapshot=retained_json(read_blob(ref,material['recipe_document'],2*1024**2).decode(),2*1024**2)
+    closed(snapshot,('format','graph','preflight','capture_paths','evidence_context'))
+    execution=snapshot['preflight']['material'];graph=decode_graph(snapshot['graph'])
+    recipe_contract.validate_material(execution)
+    runtime_sha=digest(execution.get('torch_runtime',execution.get('cpu_snapshot',execution['runtime'])))
+    if material['runtime']!={'kind':'runtime','catalog_id':catalog_id,
+                              'id':runtime_sha,'sha256':runtime_sha}:
+        raise WorkbenchError('Retained extension runtime differs from its measured execution descriptor.','unavailable',409)
+    if (snapshot['format']!='external_model_evidence_snapshot_v1' or
+            not recipe_contract.is_evidence(execution['recipe']) or
+            execution['catalog_id']!=catalog_id or
+            graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision'] or
+            digest(execution)!=material['executable_sha256'] or
+            snapshot['preflight']['material_sha256']!=material['executable_sha256'] or
+            execution['graph_execution_sha256']!=execution_digest(graph)):
+        raise WorkbenchError('Retained extension execution binding differs.','unavailable',409)
+    model_ref=reference(material['model'],'model',catalog_id)
+    model=decode_model_material(model,catalog_id=catalog_id)
+    if not evidence.identical(model['ref'],model_ref):
+        raise WorkbenchError('Retained extension Model identity differs.','unavailable',409)
+    # Read the exact Model closure; no imports or deserialization of state.
+    for item in [*(model['material'][key] for key in ('specification','preprocessing_policy','output_policy')),
+                 *(item['blob'] for item in model['material']['source_closure'])]:
+        read_blob(model_ref,item,MAX_SOURCE_BYTES)
+    sources={item['import_path']:item['blob'] for item in model['material']['source_closure']}
+    paths=snapshot['capture_paths']
+    if (type(paths) is not list or len(paths)!=len(material['captures']) or
+            len({item['path'] for item in paths})!=len(paths) or
+            not evidence.identical(sorted([item['blob'] for item in paths],key=lambda item:item['name']),
+                                   sorted(material['captures'],key=lambda item:item['name']))):
+        raise WorkbenchError('Retained extension capture map differs.','unavailable',409)
+    captured={}
+    for item in paths:
+        closed(item,('path','blob'))
+        captured[item['path']]=read_blob(ref,item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
+    expected={path:{'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()} for path,raw in captured.items()}
+    if not evidence.identical(expected,execution['captures']):
+        raise WorkbenchError('Retained extension captures differ.','unavailable',409)
+    for path,raw in captured.items():
+        if path.startswith('source/'):
+            original=sources.get(path[len('source/'):])
+            if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
+                raise WorkbenchError('Retained Model and execution source differ.','unavailable',409)
+    recipe_contract.validate_bound_captures(execution,captured)
+    recipe_contract.validate_canonical_captures(execution,captured)
+    bound=recipe_contract.is_bound_evidence(execution['recipe'])
+    resolved_spec=retained_json(read_blob(model_ref,model['material']['specification'],MAX_SOURCE_BYTES).decode()) if bound else None
+    static=evidence.resolve(execution['recipe']['model_evidence'],model,execution,
+        model_specification=resolved_spec,binding=execution.get('extension_binding'),captured=captured)
+    profile=retained_json(read_blob(ref,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
+    if (not evidence.identical(static,snapshot['evidence_context']) or not evidence.identical(profile,static['profile']) or
+            not evidence.identical(material['evaluation_profile'],static['profile']['definition']) or
+            material['trainer']['sha256']!=digest(execution['recipe'])):
+        raise WorkbenchError('Retained extension profile/context differs.','unavailable',409)
+    return {'kind':'external','graph':graph,'execution_material':execution,'static_context':static,
+            'captured_inputs':recipe_contract.captured_inputs(execution,captured)}
+
+
+
+def verify_recipe_closure(composition, model, *, read_blob):
+    """Exact retained closure only; never qualify a current runtime or source tree.
+
+    read_blob receives the exact owner ref, inventory item and maximum bytes.
+    Public callers separately authorize disclosure before entering this decoder.
+    """
+    from model_definitions import decode_model_material,verify_model_closure,retained_json,MAX_SOURCE_BYTES
+    original_reader=read_blob
+    def read_blob(ref,item,maximum):
+        raw=original_reader(ref,item,maximum)
+        if type(raw) is not bytes or len(raw)>maximum or len(raw)!=item['bytes'] or hashlib.sha256(raw).hexdigest()!=item['sha256']:
+            raise WorkbenchError('Retained composition blob differs.','unavailable',409)
+        return raw
+    catalog_id=composition['ref']['catalog_id']
+    composition=decode_recipe_material(composition,catalog_id=catalog_id)
+    model=decode_model_material(model,catalog_id=catalog_id)
+    material=composition['material'];ref=composition['ref']
+    if model['ref']!=material['model']:
+        raise WorkbenchError('Recipe and Model references differ.','unavailable',409)
+    verify_model_closure(model,read_blob=lambda item,maximum:read_blob(model['ref'],item,maximum))
+    if material['trainer']['id']==recipe_contract.EVIDENCE_FORMAT:
+        return _verify_extension_closure(composition,model,catalog_id=catalog_id,read_blob=read_blob)
+    snapshot=retained_json(read_blob(ref,material['recipe_document'],2*1024**2).decode(),2*1024**2)
+    graph=decode_graph(snapshot['graph'])
+    if graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision']:
+        raise WorkbenchError('Retained recipe graph differs.','unavailable',409)
+    paths=snapshot['capture_paths']
+    if type(paths) is not list or len(paths)!=len(material['captures']):
+        raise WorkbenchError('Retained capture map differs.','unavailable',409)
+    captures={};names=[]
+    for item in paths:
+        closed(item,('path','blob'));recipe_contract.relative_path(item['path'])
+        if item['path'] in captures or item['blob'] not in material['captures']:
+            raise WorkbenchError('Retained capture is duplicate or undeclared.','unavailable',409)
+        captures[item['path']]=read_blob(ref,item['blob'],recipe_contract.CPU_CAPTURE_BYTES);names.append(item['blob']['name'])
+    if len(set(names))!=len(names):raise WorkbenchError('Retained capture mapping repeats a blob.','unavailable',409)
+    for key in ('specification','preprocessing_policy','output_policy'):
+        read_blob(model['ref'],model['material'][key],MAX_SOURCE_BYTES)
+    sources={item['import_path']:item['blob'] for item in model['material']['source_closure']}
+    if snapshot['format']=='builtin_recipe_snapshot_v1':
+        closed(snapshot,('format','graph','validation','model_definition','capture_paths'))
+        validation=snapshot['validation']
+        if (not validation.get('valid') or validation['execution_sha256']!=material['executable_sha256']
+                or execution_digest(graph)!=material['executable_sha256']
+                or {name:hashlib.sha256(raw).hexdigest() for name,raw in captures.items()}!=validation['runtime']['definition_files']
+                or {name:item['sha256'] for name,item in sources.items()}!=validation['runtime']['definition_files']
+                or material['runtime']['sha256']!=digest(validation['runtime'])):
+            raise WorkbenchError('Retained built-in execution/source/runtime differs.','unavailable',409)
+        for key in ('specification','preprocessing_policy','output_policy'):
+            if retained_json(read_blob(model['ref'],model['material'][key],MAX_SOURCE_BYTES).decode())!=snapshot['model_definition'][key]:
+                raise WorkbenchError('Retained built-in Model policy differs.','unavailable',409)
+        owner=model_contract(graph)
+        profile=retained_json(read_blob(ref,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
+        expected_profile=owner.profile(catalog_id,model['ref']['sha256'],snapshot['model_definition']['parameters'],validation['release']['split_counts']['validation'])
+        trainer=adapter_identity_for_graph(graph)
+        if (profile!=expected_profile or material['evaluation_profile']!=profile['definition'] or
+                material['trainer']!={'kind':'trainer','catalog_id':catalog_id,'id':trainer['name']+'_v2','revision':2,'sha256':digest(trainer)} or
+                material['data']!=[{'kind':'release','catalog_id':catalog_id,'id':validation['release']['id'],'sha256':validation['release']['sha256']}]):
+            raise WorkbenchError('Retained built-in profile, trainer or data differs.','unavailable',409)
+        return {'kind':'builtin','graph':graph,'execution_material':validation,'static_context':None,'captured_inputs':{}}
+    closed(snapshot,('format','graph','preflight','capture_paths'))
+    if snapshot['format']!='external_recipe_snapshot_v1':raise WorkbenchError('Unsupported retained recipe snapshot.','unsupported',409)
+    preflight=snapshot['preflight'];execution=preflight['material'];recipe_contract.validate_material(execution)
+    runtime=execution.get('torch_runtime',execution.get('cpu_snapshot',execution['runtime']))
+    expected={name:{'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()} for name,raw in captures.items()}
+    if (digest(execution)!=material['executable_sha256'] or preflight['material_sha256']!=material['executable_sha256']
+            or execution['catalog_id']!=catalog_id or execution['graph_execution_sha256']!=execution_digest(graph)
+            or expected!=execution['captures'] or material['runtime']['sha256']!=digest(runtime)
+            or material['trainer']['sha256']!=digest(execution['recipe'])):
+        raise WorkbenchError('Retained external execution/capture differs.','unavailable',409)
+    for path,raw in captures.items():
+        if path.startswith('source/'):
+            source_blob=sources.get(path[len('source/'):])
+            if source_blob is None or source_blob['sha256']!=hashlib.sha256(raw).hexdigest() or source_blob['bytes']!=len(raw):
+                raise WorkbenchError('Retained Model/execution source differs.','unavailable',409)
+    profile=retained_json(read_blob(ref,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
+    if profile!={'format':'opaque_external_outputs_v1','outputs':preflight['outputs'],
+                 'numerical_evidence':'unsupported','automatic_checkpoints':'unsupported'}:
+        raise WorkbenchError('Retained opaque profile differs.','unavailable',409)
+    return {'kind':'external','graph':graph,'execution_material':execution,'static_context':None,
+            'captured_inputs':recipe_contract.captured_inputs(execution,captures)}
+
+
 class Pipelines:
     def __init__(self, dataset):
         self.access = dataset.access
@@ -790,29 +1005,7 @@ class Pipelines:
         return graph, result, self.inspect_release(result['release']['id'], private=True, recipe=graph.get('recipe', 'image_classification'))
 
     def _recipe_draft(self, value):
-        from model_definitions import checked_json, natural, reference, text
-        value = checked_json(value)
-        closed(value, ('format', 'id', 'revision', 'name', 'task', 'data', 'model', 'trainer',
-                       'parameters', 'evaluation_profile', 'runtime', 'layout'))
-        if value['format'] != 'recipe_draft_v2':
-            raise WorkbenchError('Unsupported model-aware recipe format.', 'unsupported', 400)
-        identifier(value['id']); natural(value['revision'], 'Recipe revision', 1)
-        text(value['name'], 'Recipe name')
-        for key, kind in (('task', 'task'), ('model', 'model'), ('trainer', 'trainer'),
-                          ('evaluation_profile', 'profile'), ('runtime', 'runtime')):
-            reference(value[key], kind, self.db.dataset_id)
-        if type(value['data']) is not list or not 1 <= len(value['data']) <= 64:
-            raise WorkbenchError('A model-aware recipe requires1–64 immutable data references.')
-        for item in value['data']: reference(item, 'release', self.db.dataset_id)
-        if type(value['parameters']) is not dict or type(value['layout']) is not dict or len(value['layout']) > 10:
-            raise WorkbenchError('Recipe parameters/layout require bounded objects.')
-        for key, position in value['layout'].items():
-            if not NODE_ID.fullmatch(key): raise WorkbenchError('Invalid workflow layout key.')
-            closed(position, ('x', 'y'))
-            if any(type(number) not in (int, float) or not math.isfinite(number) or abs(number)>10000
-                   for number in position.values()):
-                raise WorkbenchError('Workflow layout requires finite bounded coordinates.')
-        return value
+        return decode_recipe_draft(value,catalog_id=self.db.dataset_id)
 
     def _get_recipe(self, recipe_id):
         from model_definitions import retained_json
@@ -1119,32 +1312,9 @@ class Pipelines:
             row=self.db.execute('SELECT recipe_id,recipe_revision,document FROM workspace_recipe_materials WHERE sha256=%s',
                                 (ref['sha256'],)).fetchone()
         if row is None:raise WorkbenchError('Recipe material not found.','not_found',404)
-        value=retained_json(row['document']);closed(value,('ref','material'));material=value['material']
-        closed(material,('format','catalog_id','recipe_id','recipe_revision','recipe_document','executable_sha256',
-                         'model','data','trainer','evaluation_profile','resolved_profile','runtime','captures','resource_envelope'))
-        if (value['ref']!=ref or material['format']!='recipe_material_v1' or digest(material)!=ref['sha256'] or
-                material['catalog_id']!=self.db.dataset_id or row['recipe_id']!=material['recipe_id'] or
-                row['recipe_revision']!=material['recipe_revision']):
-            raise WorkbenchError('Recipe material identity differs.','unavailable',409)
-        identifier(material['recipe_id']);natural(material['recipe_revision'],'Recipe revision',1)
-        for key,kind in (('model','model'),('trainer','trainer'),('evaluation_profile','profile'),('runtime','runtime')):
-            reference(material[key],kind,self.db.dataset_id)
-        if (material['data'] != [] and (len(material['data']) != 1 or material['trainer']['id'] not in BUILTIN_TRAINERS)) or type(material['captures']) is not list or not 1<=len(material['captures'])<=recipe_contract.MAX_FILES:
-            raise WorkbenchError('Unsupported external material inventory.','unavailable',409)
-        envelope=material['resource_envelope'];closed(envelope,('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes'))
-        for number in envelope.values():natural(number,'Resource envelope',1)
-        inventory=[material['recipe_document'],material['resolved_profile'],*material['captures']]
-        names=[];total=0
-        for item in inventory:
-            closed(item,('name','sha256','bytes','media_type'));natural(item['bytes'],'Capture bytes',0,recipe_contract.CPU_CAPTURE_BYTES)
-            if (type(item['name']) is not str or not re.fullmatch(r'(?:recipe\.json|profile\.json|capture-\d{4}\.bin)',item['name']) or
-                    type(item['sha256']) is not str or not HASH.fullmatch(item['sha256'])):
-                raise WorkbenchError('Invalid recipe blob identity.','unavailable',409)
-            names.append(item['name']);total+=item['bytes']
-        if len(set(names))!=len(names) or total>recipe_contract.CPU_CAPTURE_BYTES+2*1024**2:
-            raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
-        if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
-            raise WorkbenchError('Recipe document names differ.','unavailable',409)
+        value=decode_recipe_material(retained_json(row['document']),catalog_id=self.db.dataset_id)
+        if value['ref']!=ref or row['recipe_id']!=value['material']['recipe_id'] or row['recipe_revision']!=value['material']['recipe_revision']:
+            raise WorkbenchError('Recipe row identity differs.','unavailable',409)
         return value
 
     def recipe_material(self, ref, *, verify=False):
@@ -1175,76 +1345,16 @@ class Pipelines:
         return value
 
     def _retained_extension_static(self, composition, *, with_captured_inputs=False):
-        """Pure retained integrity for Runs recovery; public callers guard access.
-
-        No current project, runtime, draft or caller context document is consulted.
-        Like Runs._load this private primitive does not authorize disclosure.
-        """
-        import extension_evidence as evidence
-        from model_definitions import read_owned_blob,retained_json,reference,MAX_SOURCE_BYTES
-        ref=reference(composition['ref'],'recipe_material',self.db.dataset_id)
-        material=composition['material'];sha=ref['sha256']
-        if digest(material)!=sha or material['trainer']['id']!=recipe_contract.EVIDENCE_FORMAT:
-            raise WorkbenchError('Extension composition identity differs.','unavailable',409)
-        snapshot=retained_json(read_owned_blob(self.material_path,sha,material['recipe_document'],2*1024**2).decode(),2*1024**2)
-        closed(snapshot,('format','graph','preflight','capture_paths','evidence_context'))
-        execution=snapshot['preflight']['material'];graph=decode_graph(snapshot['graph'])
-        recipe_contract.validate_material(execution)
-        runtime_sha=digest(execution.get('torch_runtime',execution.get('cpu_snapshot',execution['runtime'])))
-        if material['runtime']!={'kind':'runtime','catalog_id':self.db.dataset_id,
-                                  'id':runtime_sha,'sha256':runtime_sha}:
-            raise WorkbenchError('Retained extension runtime differs from its measured execution descriptor.','unavailable',409)
-        if (snapshot['format']!='external_model_evidence_snapshot_v1' or
-                not recipe_contract.is_evidence(execution['recipe']) or
-                execution['catalog_id']!=self.db.dataset_id or
-                graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision'] or
-                digest(execution)!=material['executable_sha256'] or
-                snapshot['preflight']['material_sha256']!=material['executable_sha256'] or
-                execution['graph_execution_sha256']!=execution_digest(graph)):
-            raise WorkbenchError('Retained extension execution binding differs.','unavailable',409)
-        model_ref=reference(material['model'],'model',self.db.dataset_id)
+        from model_definitions import retained_json,read_owned_blob
+        model_ref=composition['material']['model']
         row=self.db.execute('SELECT document FROM model_materials WHERE id=%s AND revision=%s AND sha256=%s',
-            (model_ref['id'],model_ref['revision'],model_ref['sha256'])).fetchone()
+                            (model_ref['id'],model_ref['revision'],model_ref['sha256'])).fetchone()
         if row is None:raise WorkbenchError('Retained extension Model is unavailable.','unavailable',409)
-        model=retained_json(row[0]);closed(model,('ref','material'))
-        if not evidence.identical(model['ref'],model_ref) or digest(model['material'])!=model_ref['sha256']:
-            raise WorkbenchError('Retained extension Model identity differs.','unavailable',409)
-        model_root=self.dataset.path/'model-materials'
-        # Read the exact Model closure; no imports or deserialization of state.
-        for item in [*(model['material'][key] for key in ('specification','preprocessing_policy','output_policy')),
-                     *(item['blob'] for item in model['material']['source_closure'])]:
-            read_owned_blob(model_root,model_ref['sha256'],item,MAX_SOURCE_BYTES)
-        sources={item['import_path']:item['blob'] for item in model['material']['source_closure']}
-        paths=snapshot['capture_paths']
-        if (type(paths) is not list or len(paths)!=len(material['captures']) or
-                len({item['path'] for item in paths})!=len(paths) or
-                not evidence.identical(sorted([item['blob'] for item in paths],key=lambda item:item['name']),
-                                       sorted(material['captures'],key=lambda item:item['name']))):
-            raise WorkbenchError('Retained extension capture map differs.','unavailable',409)
-        captured={}
-        for item in paths:
-            closed(item,('path','blob'))
-            captured[item['path']]=read_owned_blob(self.material_path,sha,item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
-        expected={path:{'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()} for path,raw in captured.items()}
-        if not evidence.identical(expected,execution['captures']):
-            raise WorkbenchError('Retained extension captures differ.','unavailable',409)
-        for path,raw in captured.items():
-            if path.startswith('source/'):
-                original=sources.get(path[len('source/'):])
-                if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
-                    raise WorkbenchError('Retained Model and execution source differ.','unavailable',409)
-        recipe_contract.validate_bound_captures(execution,captured)
-        recipe_contract.validate_canonical_captures(execution,captured)
-        bound=recipe_contract.is_bound_evidence(execution['recipe'])
-        resolved_spec=retained_json(read_owned_blob(model_root,model_ref['sha256'],model['material']['specification'],MAX_SOURCE_BYTES).decode()) if bound else None
-        static=evidence.resolve(execution['recipe']['model_evidence'],model,execution,
-            model_specification=resolved_spec,binding=execution.get('extension_binding'),captured=captured)
-        profile=retained_json(read_owned_blob(self.material_path,sha,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
-        if (not evidence.identical(static,snapshot['evidence_context']) or not evidence.identical(profile,static['profile']) or
-                not evidence.identical(material['evaluation_profile'],static['profile']['definition']) or
-                material['trainer']['sha256']!=digest(execution['recipe'])):
-            raise WorkbenchError('Retained extension profile/context differs.','unavailable',409)
-        return (static,recipe_contract.captured_inputs(execution,captured)) if with_captured_inputs else static
+        def read(ref,item,maximum):
+            root=self.dataset.path/'model-materials' if ref['kind']=='model' else self.material_path
+            return read_owned_blob(root,ref['sha256'],item,maximum)
+        closure=verify_recipe_closure(composition,retained_json(row[0]),read_blob=read)
+        return (closure['static_context'],closure['captured_inputs']) if with_captured_inputs else closure['static_context']
 
     def _prepare_recipe_material(self, ref, *, _verified=None):
         """Revalidate source/runtime against retained bytes, never the current graph."""

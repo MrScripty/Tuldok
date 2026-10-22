@@ -8,6 +8,7 @@ publication. An uncertain publication is reconciled by reopening and its receipt
 """
 import copy
 import ctypes
+from contextlib import contextmanager
 import errno
 import fcntl
 import hashlib
@@ -24,11 +25,39 @@ FORMAT = 'tuldok_project_v1'
 GITIGNORE = b'/artifacts/\n/.tuldok-local/\n/.venv/\n/__pycache__/\n/PGDATA/\n/output/\n'
 MAX_RECORD_BYTES = 40 * 1024 * 1024
 MAX_MANIFEST_BYTES = 16 * 1024 * 1024
-SUPPORTED_FAMILY = 'workbench_text'
-SUPPORTED_DOMAIN_FORMAT = 'workbench_text_v1'
+# Coordinated internal codecs; adding a family requires its owning decoder.
+SUPPORTED_FORMATS = {
+    'workbench_text': 'workbench_text_v1',
+    'workbench_record': 'workbench_record_v1',
+    'workbench_response': 'workbench_response_v1',
+    'workbench_preference': 'workbench_preference_v1',
+    'saved_selection': 'saved_selection_v1',
+    'saved_search': 'saved_search_v1',
+    'dataset_release': 'dataset_release_v1',
+    'dataset_exposure': 'dataset_exposure_v1',
+    'model_definition': 'model_definition_history_v1',
+    'pipeline_graph': 'pipeline_graph_history_v1',
+    'recipe_definition': 'recipe_definition_history_v1',
+    'model_material': 'retained_model_material_v1',
+    'recipe_material': 'retained_recipe_material_v1',
+    'project_snapshot': 'retained_project_snapshot_v1',
+    'runtime_material': 'retained_runtime_material_v1',
+    'study_history': 'project_study_history_v1',
+    'trial_history': 'project_trial_history_v1',
+    'run_history': 'project_run_history_v1',
+    'candidate_history': 'project_candidate_history_v1',
+    'project_artifact': 'project_artifact_v1',
+    'project_operation': 'project_operation_v1',
+    'project_fork': 'project_fork_v1',
+    'generation_history': 'project_generation_history_v1',
+    'grounded_history': 'project_grounded_history_v1',
+    'caption_proposal_history': 'project_caption_proposal_history_v1',
+    'text_proposal_history': 'project_text_proposal_history_v1',
+}
 MAX_RECORDS = 100_000
 MAX_TOTAL_BYTES = 256 * 1024 * 1024
 IDENTIFIER = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$')
+REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')
 DOMAIN_FORMAT = re.compile(r'^[a-z][a-z0-9_]{0,95}_v([1-9][0-9]*)$')
 SHA256 = re.compile(r'^[a-f0-9]{64}$')
 DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
@@ -119,11 +148,11 @@ def _digest(value, label):
         _fail(f'{label} must be a SHA256 digest.')
 
 
-def _domain_format(value):
+def _domain_format(value, family):
     match = DOMAIN_FORMAT.fullmatch(value) if type(value) is str else None
     if not match:
         _fail('Domain document requires a versioned format.')
-    if value != SUPPORTED_DOMAIN_FORMAT:
+    if value != SUPPORTED_FORMATS[family]:
         _fail('Unsupported domain document format.', 'unsupported', 422)
 
 
@@ -135,7 +164,7 @@ def _records(records):
         _keys(record, ('family', 'id', 'document'), 'Project record')
         family, identity, document = (record[k] for k in ('family', 'id', 'document'))
         _identifier(family, 'Record family')
-        if family != SUPPORTED_FAMILY:
+        if family not in SUPPORTED_FORMATS:
             _fail('Unsupported project record family.', 'unsupported', 422)
         _identifier(identity, 'Record ID')
         if (family, identity) in seen:
@@ -143,7 +172,7 @@ def _records(records):
         seen.add((family, identity))
         if type(document) is not dict:
             _fail('Domain document must be an object.')
-        _domain_format(document.get('format'))
+        _domain_format(document.get('format'), family)
         document = copy.deepcopy(document)
         raw = _encode(document)
         total += len(raw)
@@ -154,7 +183,8 @@ def _records(records):
 
 
 def _request(key, digest):
-    _identifier(key, 'Request key')
+    if type(key) is not str or not REQUEST_KEY.fullmatch(key):
+        _fail('Request key must contain 1–128 supported characters.')
     _digest(digest, 'Request body digest')
 
 
@@ -221,6 +251,29 @@ def _verify_origin(root_fd, root_path):
     finally:
         os.close(check)
     return absolute
+
+
+@contextmanager
+def anchored_directory(trusted_root_fd, relative='', *, root_path):
+    """Borrow a rooted no-follow directory capability; caller retains root fd."""
+    parts = _relative_parts(relative) if relative else []
+    descriptor = None
+    try:
+        _verify_origin(trusted_root_fd, root_path)
+        descriptor = _walk(trusted_root_fd, parts)
+        yield descriptor
+        _verify_origin(trusted_root_fd, root_path)
+        current = _walk(trusted_root_fd, parts)
+        try:
+            if _physical(current) != _physical(descriptor):
+                _fail('Anchored directory changed during use.', 'stale', 409)
+        finally:
+            os.close(current)
+    except OSError as exc:
+        _io_error(exc, 'access anchored directory')
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
 
 
 def _rename_noreplace(parent_fd, staging, destination):
@@ -491,6 +544,18 @@ class ProjectStore:
         finally:
             os.close(check)
 
+    @contextmanager
+    def root_directory(self):
+        """Borrow this project's physical root while its writer binding is pinned."""
+        with self._mutex:
+            self.snapshot()
+            descriptor = os.dup(self._root_fd)
+            try:
+                yield descriptor
+                self._binding()
+            finally:
+                os.close(descriptor)
+
     def _load(self):
         self._binding()
         raw = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
@@ -519,11 +584,11 @@ class ProjectStore:
             _keys(entry, ('family', 'id', 'format', 'namespace', 'path', 'bytes', 'sha256'), 'Inventory entry')
             family, record_id, digest = entry['family'], entry['id'], entry['sha256']
             _identifier(family, 'Record family')
-            if family != SUPPORTED_FAMILY:
+            if family not in SUPPORTED_FORMATS:
                 _fail('Unsupported project record family.', 'unsupported', 422)
             _identifier(record_id, 'Record ID')
             _digest(digest, 'Record digest')
-            _domain_format(entry['format'])
+            _domain_format(entry['format'], family)
             key = (family, record_id)
             if previous is not None and key <= previous:
                 _fail('Inventory must have unique sorted record identities.')

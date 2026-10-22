@@ -51,14 +51,24 @@ def manifest(raw, geometry):
         if isinstance(error, WorkbenchError):
             raise
         invalid('malformed UTF-8 JSON.')
+    value = manifest_declaration(value)
+    if value['geometry_bytes'] != len(geometry):
+        invalid('geometry filename or byte count mismatch.')
+    if hashlib.sha256(geometry).hexdigest() != value['geometry_sha256']:
+        invalid('geometry SHA256 mismatch or invalid lowercase hex.')
+    return value
+
+
+def manifest_declaration(value):
+    """Validate declared source metadata without reading or inventing points."""
     exact(value, ('format', 'geometry_file', 'geometry_bytes', 'geometry_sha256', 'units',
                   'coordinate_system', 'provenance', 'lineage'), 'sidecar')
     if value['format'] != 'tuldok_pointcloud_v1':
         raise WorkbenchError('Unsupported point-cloud sidecar version.', 'unsupported')
-    if value['geometry_file'] != 'points.ply' or type(value['geometry_bytes']) is not int or value['geometry_bytes'] != len(geometry):
+    if value['geometry_file'] != 'points.ply' or type(value['geometry_bytes']) is not int or not 0 < value['geometry_bytes'] <= PLY_LIMIT:
         invalid('geometry filename or byte count mismatch.')
     digest = value['geometry_sha256']
-    if type(digest) is not str or not HASH.fullmatch(digest) or hashlib.sha256(geometry).hexdigest() != digest:
+    if type(digest) is not str or not HASH.fullmatch(digest):
         invalid('geometry SHA256 mismatch or invalid lowercase hex.')
     if value['units'] not in ('m', 'cm', 'mm'):
         invalid('units must be m, cm or mm.')

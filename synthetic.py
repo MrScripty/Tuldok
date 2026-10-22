@@ -38,6 +38,44 @@ def saved_dimensions(value):
     return dict(value, **dimensions)
 
 
+def validate_saved_queue(job, entries):
+    """Pure retained geometry policy shared by live recovery and inert history."""
+    config = saved_dimensions(job['config'])
+    normalized = [saved_dimensions(entry) for entry in entries]
+    if any((entry['width'], entry['height']) != (config['width'], config['height']) for entry in normalized):
+        raise ValueError('Saved queue-entry dimensions conflict with the job configuration.')
+    return config, normalized
+
+
+def validate_retained_attempt(job, entry, evidence):
+    """Validate a retained typed request against its original queue intent.
+
+    Capability observations are already decoded values. This policy consumes
+    those historical values without discovering a server or admitting work.
+    """
+    config = job['config']
+    if not pumas.typed(config):
+        raise ValueError('Typed image evidence requires a typed image job.')
+    observed = evidence['capability_observation']
+    checked = pumas.validate_manifest(json.dumps(observed['capabilities']).encode())
+    if checked['capabilities']['model'] != config['model']:
+        raise ValueError('Retained image capability belongs to another model.')
+    options = {'width': entry['width'], 'height': entry['height']}
+    if entry['requested_seed'] is not None:
+        options['seed'] = entry['requested_seed']
+    pumas.require(observed, 'image_generation', 'text', 'png_base64', options)
+    request = {'contract_version': 1, 'request_id': entry['request_id'], 'model': config['model'],
+               'profile': observed['capabilities']['profile'], 'capability': 'image_generation',
+               'input': {'kind': 'text', 'text': entry['prompt']}, 'output': 'png_base64',
+               'options': dict(kind='image_generation', **options), 'stream': False}
+    retained = dict(capability_observation=observed)
+    pumas.request_evidence(retained, request)
+    if (evidence.get('canonical_request') != request
+            or evidence.get('canonical_request_sha256') != retained['canonical_request_sha256']):
+        raise ValueError('Retained image request differs from its queue intent.')
+    return request
+
+
 def prompt_batch(config, offset, count, previous):
     """Bound context independently of dataset size; uniqueness is checked locally."""
     payload = {
@@ -153,11 +191,8 @@ class Jobs:
                         (entry['id'], entry['job_id'], entry['ordinal'], json.dumps(entry)))
 
     def _normalize_saved(self, job):
-        config = saved_dimensions(job['config'])
         entries = self._entries(job['id'])
-        normalized = [saved_dimensions(entry) for entry in entries]
-        if any((entry['width'], entry['height']) != (config['width'], config['height']) for entry in normalized):
-            raise ValueError('Saved queue-entry dimensions conflict with the job configuration.')
+        config, normalized = validate_saved_queue(job, entries)
         # Decode the whole queue before writing, keeping migration atomic under
         # the caller's lock/transaction. Retain size and all original provenance.
         if config != job['config']:
@@ -348,6 +383,7 @@ class Jobs:
                     body['seed'] = (config['seed'] + ordinal) % 4294967296
                 self._check()
                 def retain_admission(evidence):
+                    validate_retained_attempt(job, entry, evidence)
                     with self.lock, self.db.transaction():
                         if self.stop.is_set():
                             raise pumas.OperationError('Cancelled before image provider admission.')

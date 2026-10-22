@@ -17,7 +17,7 @@ from access import Access
 import agent_api
 from metadata import Metadata
 from project_store import ProjectStore, ProjectStoreError
-from project_text import ProjectText
+from project_projection import ProjectProjection
 from workbench import WorkbenchError
 
 
@@ -27,6 +27,9 @@ PUBLIC_RECORD_FIELDS = ('id', 'kind', 'name', 'text', 'groups', 'parents', 'prov
 SUMMARY_FIELDS = ('id', 'kind', 'name', 'task', 'review', 'revision', 'source_revision',
                   'created_at', 'updated_at')
 PROJECT_ACTIONS = ('new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate')
+# Set only after the complete finite dispatcher is integrated. A capability is
+# a promise that the route reaches canonical publication, not an API wishlist.
+M2_ENABLED = True
 DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
 
 
@@ -37,6 +40,21 @@ def public_record(value):
 
 def _digest(value):
     return hashlib.sha256(agent_api.encoded(value)).hexdigest()
+
+
+def http_arguments(method, target, body=None):
+    """Use the fixed operation contracts for identical HTTP and SDK routing."""
+    names = ['project_files.status', *('project_files.' + action for action in PROJECT_ACTIONS)]
+    names.extend(sorted(agent_api.PROJECT_FILES_M2))
+    operations = {name: agent_api.operation(name) for name in names}
+    # A literal import route wins over a record-id placeholder. Contract
+    # validation still rejects an unexpected path/body/query representation.
+    ordered = sorted(operations.items(), key=lambda item: (item[1]['path'].count('{'), item[0]))
+    for name, operation in ordered:
+        if agent_api._route_matches(operation, method, target):
+            selected = (name, 1, agent_api.contract(name, 1)['sha256'])
+            return name, agent_api.validate_selected(selected, method, target, body)
+    raise WorkbenchError('Unknown project-file operation.', 'unsupported', 404)
 
 
 class ProjectWorkspace:
@@ -112,6 +130,8 @@ class ProjectWorkspace:
     def capabilities(self):
         value = agent_api.capabilities(self.db.dataset_id)
         for operation in value['operations']:
+            if operation['id'] in agent_api.PROJECT_FILES_M2 and not M2_ENABLED:
+                operation['availability'] = 'unavailable'
             if not operation['id'].startswith('project_files.') and operation['id'] not in ('context.get', 'identity.get'):
                 operation['availability'] = 'unavailable'
         return value
@@ -156,9 +176,9 @@ class ProjectWorkspace:
         snapshot = store.snapshot()
         projection = Metadata(path, dsn=self._dsn, dataset_id=snapshot['project_id'], projection_id=identity)
         try:
-            text = ProjectText(store, projection, self.access)
-            text.restore(snapshot)
-            return projection, text
+            owner = ProjectProjection(store, projection, self.access,
+                                      {alias: value[0] for alias, value in self._roots.items()})
+            return owner, owner.text
         except BaseException:
             projection.close()
             # Disposable failed projections remain identified for diagnosis;
@@ -309,7 +329,22 @@ class ProjectWorkspace:
             operation = agent_api.operation(name)
             for scope in operation['scopes']:
                 self.access.require(scope, name, owner_only=action in ('new', 'open', 'save', 'close'))
-            if action == 'status':
+            if name in agent_api.PROJECT_FILES_M2:
+                if not M2_ENABLED:
+                    raise WorkbenchError('This project capability is not yet available.', 'unavailable', 409)
+                self._bound(arguments, check_checkpoint=not operation['side_effects'])
+                from project_dispatch import dispatch
+                try:
+                    value = dispatch(self._projection, name, arguments)
+                except BaseException as error:
+                    if getattr(error, 'code', None) in ('unknown', 'outcome_unknown', 'projection_unavailable'):
+                        self._recovery_required('projection_unavailable', arguments.get('request_key'))
+                    raise
+                snapshot = self._store.snapshot()
+                self._last_project = {key: snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
+                result = dict(binding=self._binding, project_id=snapshot['project_id'],
+                              checkpoint=snapshot['checkpoint'], value=value)
+            elif action == 'status':
                 result = self._state()
             else:
                 # Lifecycle receipts are process-binding scoped. Domain edit

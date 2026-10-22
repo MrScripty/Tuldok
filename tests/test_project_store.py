@@ -124,6 +124,18 @@ class ProjectStoreTests(unittest.TestCase):
         self.assertEqual(self.store.reconcile('edit', body(records)), committed)
         self.assertEqual(self.store.reconcile('new', body('new')), committed)
 
+    def test_colon_request_keys_roundtrip_reconcile_and_reject_changed_body(self):
+        before = self.store.snapshot()['checkpoint']
+        records = [record()]
+        committed = self.store.commit(records, before, 'edit:fixture', body(records))
+        canonical = self.bytes_tree()
+        self.assertEqual(self.store.commit(records, before, 'edit:fixture', body(records)), committed)
+        self.assertEqual(self.reopen(), committed)
+        self.assertEqual(self.store.reconcile('edit:fixture', body(records)), committed)
+        self.assert_code('conflict', self.store.reconcile, 'edit:fixture', body('different input'))
+        self.assert_code('conflict', self.store.commit, records, before, 'edit:fixture', body('different input'))
+        self.assertEqual(self.bytes_tree(), canonical)
+
     def test_stale_checkpoint_cannot_commit_or_save(self):
         old = self.store.snapshot()['checkpoint']
         self.commit()

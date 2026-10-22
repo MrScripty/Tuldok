@@ -90,6 +90,78 @@
   image policy and retained evidence seams avoids a second interpreter. No
   later milestone is claimed complete and no product branch is merge-ready.
 
+## 2026-10-22 — M2 integration candidate and remaining gates
+
+- Draft implementation [PR #119](https://github.com/MrScripty/Tuldok/pull/119)
+  was confirmed after the user's explicit retry approval. The lead first
+  checked that no PR existed, then retried the denied creation once. Its head
+  remains M1 `af276565fae9c08c1084d37d8937ba5d97599f17`; captured-CPU,
+  inert-extension and workspace-UI CI succeeded, while dataset lifecycle was
+  still running at the observation. No duplicate CI run or merge was started.
+- M2 fixed owners now compose data and histories, immutable material/runtime
+  declarations, Study/Trial/Run/lineage facts, producer history, exact artifacts,
+  explicit current source bindings, and 84 finite public operations. M1 routes
+  delegate to the complete data owner. PostgreSQL remains disposable; Open
+  constructs no Dataset, Jobs or live Runs owner and restores no credentials,
+  grants, admissions, or current external-root bindings.
+- Focused real PostgreSQL evidence includes Data 16 cases after acquisition
+  classification, material 32 cases plus targeted receipt/audit/probe guards,
+  history 17 targeted cases, producer 12 new cases and five affected owner
+  regressions, source lifecycle/import seven plus one bounded-read case,
+  complete projection three, rooted artifact supply one, and M1 workspace
+  cutover 11. Counts describe distinct scoped campaigns; their fixture limits
+  and targeted corrections are retained in scratch logs, not represented as
+  one full-feature acceptance run. Full M2 HTTP/browser acceptance is pending.
+- Independent source review collected three justified pre-enable findings:
+  built-in preparation could execute a probe; raw historical Run metadata
+  exposed protected frozen inputs; historical audit/operation/acquisition
+  variants admitted unclassified fields. Owners added a pre-probe gate, a
+  shared safe public projection plus current-disclosure-gated exact document
+  segments, and finite semantic classification. Targeted re-review is pending.
+  Exact producer provenance containing historically hash-bound inline request
+  values is preserved; no recursive stripping or invented original wire bytes
+  is used to make it appear portable.
+- Product source was frozen for real owner and interface gates at fingerprint
+  `27a3117411fd21f016a4305fdafde893deabb9165c623814deec628fc40a469a`
+  (226 product files, baseline `af276565`), recorded at
+  `/workspace/scratch/tuldok-save-load-qa/m2-product-freeze.json`. A prior broad
+  historical campaign ran while host source was changing and failed current
+  fingerprint checks; it is not acceptance evidence and was not repeated.
+  The frozen seven-case selection passed six; one test incorrectly assumed
+  a large historical document fit a single bounded segment. Only that test's
+  segment-assembly fixture is being corrected and rerun, with source unchanged.
+- Targeted final repairs and review cleared all justified findings. Final product
+  tested manifest file SHA256 is
+  `7a8969d58594b4dc6f9412c5a31c77b2a13f59b807ad013084bfc351cdfde8f4`,
+  with 226 source files. Required-real final gates passed: fresh external graph /
+  actual nonexecuting material preparation / Study+Trial / cold reconstruction
+  over HTTP (one selected/run, no skip), and focused cold-history Chromium at
+  390/1440. Earlier actual browser functional+cold gates passed while retaining
+  their responsive failure; the measured CSS repair has its own passing gate.
+  Three actual public HTTP cases including SDK/CLI/MCP and current authority
+  passed, as did the corrected composed-history case and new guards. Detailed
+  scoped results, failures, subject hashes and review are retained in
+  [M2 implementation evidence](reports/m2-implementation.md). M2 was accepted
+  only after these gates; this does not accept execution, Save As or extraction.
+  A staged whitespace check subsequently removed one redundant EOF newline in
+  `project_data.py`, with Python AST parity verified. Both tested and normalized
+  final source manifests are retained; the final file SHA256 is
+  `ef2dc94d76d73fc11a45bcb06cf32dc5399d84370ef2a94dfbf6db800cfa9937`.
+  Runtime evidence remains bound to its tested subject; no identical campaign
+  was repeated for this formatting-only delta.
+- CI now provisions the required isolated cold role/database and registers the
+  actual non-skipped MCP and Chromium gates. Independent workflow review is
+  clear. It has not yet run on the M2 commit; the PR synchronize event, rather
+  than the branch push filter alone, triggers it. Existing M1 full-suite CI
+  remains running without a failed step. Its last successful main baseline
+  needed about 53 minutes for the same full-suite step, so elapsed time alone
+  is not treated as a hang and no duplicate or cancellation was requested.
+- M3 execution/custody integration, M4 complete fork/relocation/Git workflow,
+  and M5 extraction remain unfinished. Pure fork storage/data constructors
+  have focused evidence but are not a completed public lifecycle. The local
+  surrogate lab remains uninspected and unmigrated. There is no environment
+  or missing-user-decision blocker.
+
 ## Retained resources
 
 Planning worktree `/workspace/Tuldok-project-save-load-plan` and private branch `plan/external-project-save-load-20261022` are **retained-protected** for the user's review. The user owns integration/disposition; no synchronization or cleanup occurs without follow-up. The local final commit is the retained branch head (reported in the final response and resolvable with `git rev-parse plan/external-project-save-load-20261022`); its full SHA is not embedded into its own commit contents. Commit disposition is `retained`, reachable from this named local branch. The original checkout is outside this task's cleanup scope. `/workspace/Coding-Standards-readonly` remains an unchanged reference checkout, not an application worktree or deliverable.

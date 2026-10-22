@@ -3,6 +3,7 @@ from access import authorized
 import audio_export
 from contextlib import contextmanager
 import hashlib
+import io
 import json
 import os
 import re
@@ -160,6 +161,64 @@ class Releases:
         self.workbench = workbench
         self.path = workbench.dataset.path / 'releases'
         self.path.mkdir(exist_ok=True)
+
+    @staticmethod
+    def project_manifest(raw):
+        """Read retained release bytes inertly; never recreate a frozen archive."""
+        from canonical_release import decode
+        if type(raw) is not bytes or not 0 < len(raw) <= MAX_SELECTED_TEXT_BYTES:
+            raise WorkbenchError('Frozen release exceeds the retained archive bound.')
+        try:
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                entries = archive.infolist()
+                names = archive.namelist()
+                if len(names) != len(set(names)) or len(names) > 20000 or sum(i.file_size for i in entries) > MAX_SELECTED_TEXT_BYTES:
+                    raise ValueError('Invalid frozen inventory.')
+                for item in entries:
+                    parts = item.filename.split('/')
+                    if (not parts or any(p in ('', '.', '..') for p in parts) or '\\' in item.filename
+                            or item.flag_bits & 1 or stat.S_IFMT(item.external_attr >> 16) not in (0, stat.S_IFREG)):
+                        raise ValueError('Unsafe frozen inventory.')
+                if archive.getinfo('manifest.json').file_size > 8 * 1024 * 1024:
+                    raise ValueError('Frozen manifest is excessive.')
+                manifest = decode(archive.read('manifest.json'))
+                Releases.validate_project_manifest(manifest)
+                # Observe every CRC without extracting paths or executing code.
+                for item in entries:
+                    archive.read(item)
+                return manifest
+        except (ValueError, KeyError, zipfile.BadZipFile, RuntimeError, UnicodeError) as error:
+            raise WorkbenchError('Retained frozen release is malformed.') from error
+
+    @staticmethod
+    def validate_project_manifest(manifest):
+        """Validate the owned metadata variant even when its payload is missing."""
+        if type(manifest) is not dict or type(manifest.get('schema_version')) is not int or manifest['schema_version'] != 1:
+            raise WorkbenchError('Invalid frozen release manifest version.')
+        formats = ('canonical_v1', CAPTION_FORMAT, INSTRUCTION_FORMAT, PREFERENCE_FORMAT,
+                   classification_export.FORMAT, text_class_export.FORMAT, audio_class_export.FORMAT, corpus_export.FORMAT)
+        format_name = manifest.get('format', 'canonical_v1')
+        if format_name not in formats:
+            raise WorkbenchError('Unsupported frozen release format.', 'unsupported', 409)
+        if type(manifest.get('seed')) is not int or not 0 <= manifest['seed'] <= 2**32 - 1 or type(manifest.get('split_report')) is not dict:
+            raise WorkbenchError('Invalid frozen release seed or split report.')
+        common={'schema_version','seed','split_report'}
+        variants={
+            'canonical_v1':common|{'coordinate_contract','limitations','records','vocabulary'},
+            CAPTION_FORMAT:common|{'format','consumer','split_mapping','records','protected_components','warnings','limitations'},
+            classification_export.FORMAT:common|{'format','consumer','split_mapping','class_vocabulary','class_coverage','class_to_idx','protected_components','records','warnings','limitations'},
+            text_class_export.FORMAT:common|{'format','consumer','text_contract','class_vocabulary','class_to_idx','protected_components','records','limitations'},
+            audio_class_export.FORMAT:common|{'format','consumer','audio_contract','class_vocabulary','class_to_idx','protected_components','records','limitations'},
+            corpus_export.FORMAT:common|{'format','consumer','corpus_counts','files','text_contract','warnings','records','protected_components','limits'},
+            INSTRUCTION_FORMAT:common|{'format','consumer','prompts','responses','protected_components','text_contract','limits'},
+            PREFERENCE_FORMAT:common|{'format','consumer','prompts','responses','judgments','excluded','competing_reviewed_judgments','protected_components','text_contract','limits'},
+        }
+        if set(manifest)!=variants[format_name]:
+            raise WorkbenchError('Unexpected frozen release manifest fields.')
+        for key in ('records','responses','prompts','judgments','competing_reviewed_judgments','excluded'):
+            if key in manifest and (type(manifest[key]) is not list or len(manifest[key]) > 5000 or any(type(r) is not dict for r in manifest[key])):
+                raise WorkbenchError('Invalid frozen release evidence list.')
+        return manifest
 
     @authorized('inspect', 'dataset_releases.locate')
     def locate(self, release_id):
