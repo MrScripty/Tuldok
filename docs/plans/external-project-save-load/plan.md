@@ -1,10 +1,10 @@
 # External project save and load
 
-**Plan status:** `Active`
+**Plan status:** `Verifying`
 
-**Current phase:** M3 — explicit execution, durable lifecycle facts and local custody.
+**Current phase:** Final integration verification — native execution, independent forks and extraction.
 
-**Next slice:** Complete the finite built-in/native execution adapter: current explicit probe/material preparation, native Run admission, child custody, payload capture and original-host recovery. The public runtime recovery, retained disclosure snapshots and M3 Chromium path now have scoped passing evidence. Real Study, candidate, original-host crash, M4 client/browser and M5 client/browser gates also passed on separately identified subjects; the approved-agent HTTP case still needs its corrected cold-denial tail in CI. Freeze the complete candidate for independent review and exact-head CI after the native gate. Evidence is retained in [M3](reports/m3-implementation.md), [M4](reports/m4-implementation.md) and [M5](reports/m5-implementation.md). These component results do not accept the complete feature.
+**Next slice:** Publish the stable reviewed candidate to the dedicated draft PR and complete exact-head CI. Product review findings, note-deletion controls, native Save As repair and bounded fixture deadlines are resolved. M3 is enabled, matching the immutable qualification subjects. Actual native Run/fork/cold and Study science have scoped retained evidence; the original Study test timed out before its final SQL assertions, which remain for CI. The corrected approved-agent HTTP cold-denial tail also remains for CI. No training or full-suite campaign is repeated locally. Evidence is retained in [native completion](reports/m3-native-completion.md), [implementation review](reports/implementation-review.md), [M3](reports/m3-implementation.md), [M4](reports/m4-implementation.md) and [M5](reports/m5-implementation.md). These component results do not accept the complete feature.
 
 **Acceptance status:** `pending`
 
@@ -321,7 +321,7 @@ M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data 
 
 ### M3 — Project execution preserves durable facts and local custody
 
-**Status:** `Active` — shared authority/transaction contracts agreed; execution remains unavailable until its production paths pass.
+**Status:** `Verifying` — source complete and enabled after scoped actual execution, recovery, public controls and independent review; final exact-head CI remains.
 
 **Goal / production outcome:** explicit existing Run/Study execution can operate in an external project without durable facts trapped in SQL, and cannot be resurrected by importing it elsewhere.
 
@@ -342,7 +342,10 @@ their original validation; neither version reconstructs a current disclosure gra
 
 The native completion slice admits fixed `project_native_process.py`,
 `native_process_bootstrap.py`, `project_native_execution.py` and, where needed,
-`project_native_preparation.py`, with their focused tests. Existing native
+`project_native_preparation.py`, with their focused tests. The directly affected
+`release_validation.py` may expose its own finite pure summary DTO decoder for
+classification and whole-asset integrity results; original archive readers retain
+scientific/numeric validation, and old summary bytes are not rewritten. Existing native
 Pipeline/Runs/Study owners retain policy and scientific meaning. Every probe,
 training worker and verifier has an explicit current-owner intent and canonical
 ACK before GO through the existing custodian. A native immutable job template
@@ -354,19 +357,45 @@ preparation happens outside the short admission SQL transaction; a one-use
 current in-process validation context supplies that transaction without running
 another probe inside it. Imported records cannot create that context.
 
+The new finite native phase record retains exact small generated proof text
+(template, effective job, parent observation, drainage receipt and bounded probe
+response) canonically, correlated with its SHA256/byte-count artifact edges.
+Source captures, training logs, weights and outputs retain explicit untracked
+payload availability. Missing payloads must allow inert metadata Open while
+current use and complete copying require exact verified unique bytes. This is a
+new owner format, not an upgrade of old history or a general proof registry.
+
+Native execution retains the existing explicit operator-configured interpreter
+policy (`TULDOK_TRAINING_PYTHON`, otherwise the current application interpreter).
+Its executable, staged sources, bounded probe/version observations and actual
+custody/output evidence are retained. Installed packages and native libraries
+remain operator-managed dependencies; observed versions are not a complete
+hashed binary closure, reproducibility proof or model-quality claim. This work
+does not repeat D1–D4 qualification or require a new runtime-capture workflow.
+A configured virtual environment must be qualified through the sealed launch
+path with its original interpreter identity/prefix preserved.
+
 **Gate / risk-based tests:** T5/T6/T7 plus one explicit tiny generic script Run through existing custodian, fixture outputs and fresh historical read. Kill at canonical admission/pre-GO and terminal publication windows; no duplicate dispatch, no imported request/grant reactivation, no false cessation. Real process/PG and public busy/unknown states required, including Open/New/reload refusal during active generation/proposal work and delayed old-generation request rejection. Exercise candidate preparation and runtime capture writer fences/publication without installing or launching runtime binaries. No Rheon/GPU/model-quality campaign is needed for this custody claim.
 
 **Rollback / replan:** close new admission, retain canonical intent/artifacts and unresolved local custody; disable project execution while read-only history remains usable. No rollback to an older binary over new facts and no abandoned worker ownership. Replan if an effectful writer cannot be fenced or local runtime identity cannot establish safe continuation/cessation.
 
 ### M4 — Independent Save As, relocation and Git revision changes
 
-**Status:** `Active` — public lifecycle and cold client/browser component gates passed; acceptance depends on completed M3 custody and final integrated review/CI.
+**Status:** `Verifying` — independent fork, relocation/Git, explicit note deletion and cold client/browser controls passed on their named subjects; final integrated CI remains.
 
 **Goal / production outcome:** user forks a complete idle project into an independent directory, moves/rebinds it, or switches Git revisions without corruption, mistaken identity or lost work.
 
 **Allowed write set:** `project_store.py`, `project_history.py`; new `project_transfer.py`; `metadata.py`, `projects.py`, `app.py`, `pipeline.py`, `model_definitions.py`, `experiment_lineage.py`, `experiments.py`; Client/UI, Project docs and Project evidence; `docs/contracts/experiment-lineage.md`.
 
 The concrete M4 composition admits `project_fork.py`, `project_fork_composition.py`, `project_data_fork.py`, `project_material_fork.py` and `project_files.py`, their fixed owner integrations, and focused tests. These finite constructors retain original hashed envelopes and derive new editable values; they do not recursively rewrite IDs. `project_operation_v2` namespaces new receipts by project UUID while preserving exact v1 history. Working-file adoption records exact UTF-8 bytes and prior revisions; Save As refuses changed/unadopted files and materializes captured versions only into a new task-owned destination.
+
+Explicit adoption of an intentionally missing note adds a `project_file_v2`
+tombstone while preserving exact earlier `project_file_v1` positive revisions.
+This records a reviewed deletion observation; it does not delete files itself.
+Open remains inert, Save As does not recreate the deleted current note, and an
+explicit later adoption can retain a restored positive revision. Missing scripts
+remain protected until separately adopted from actual bytes; no script deletion
+or automatic source regeneration capability is inferred from note deletion.
 
 **Dependencies / tasks:** M2+M3 lifecycle; implement new destination publication, new project/editable IDs and explicit origins, inert inherited history and artifact copy completeness. Rebind physical root with new inode without changing canonical identity. Add strict stale binding/checkout/manual-merge validation, explicit editable-file adoption and Close-gated reload; separate physical runtime namespaces for same-UUID clones. No generic recursive ID rewriting or semantic merge machinery.
 
@@ -376,7 +405,7 @@ The concrete M4 composition admits `project_fork.py`, `project_fork_composition.
 
 ### M5 — Explicit mixed-catalog extraction and final acceptance
 
-**Status:** `Active` — collector/controller and real SDK/CLI/MCP/Chromium component gates passed; a reviewed producer-input closure correction and full integrated acceptance remain pending.
+**Status:** `Verifying` — extraction source is complete; collector/controller, producer-input/native-source closure and real SDK/CLI/MCP/Chromium component gates passed; full integrated acceptance remains pending.
 
 **Goal / production outcome:** an owner can preview and explicitly extract a selected legacy project into a proven portable directory while retaining the original; all A claims are closed for the admitted supported product scope.
 
@@ -392,9 +421,9 @@ The concrete M5 composition admits `project_extraction.py`, `project_transfer_co
 
 ## Blockers
 
-No missing user decision blocks product implementation. M1 and M2 are accepted at their recorded scope; M3–M5 integration and final acceptance remain pending. User-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium remain available for dependent checks. Individual results and unrun later-milestone claims remain distinct in implementation evidence.
+No missing user decision or unresolved material product review finding blocks the final candidate. M1 and M2 are accepted at their recorded scope; M3–M5 are implemented and undergoing final verification. Required exact-head CI, including the complete native Study's final SQL assertions and corrected approved-agent cold-denial tail, remains the release/merge gate. User-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium remain available. Performed, failed and unrun claims remain distinct in implementation evidence.
 
-The initial draft-PR creation was denied by automatic approval review under the earlier planning-only restriction. The user explicitly approved the exact retry at 18:31 UTC; the lead first verified no existing PR, then retried once. [Draft PR #119](https://github.com/MrScripty/Tuldok/pull/119) was confirmed open/draft at `af276565fae9c08c1084d37d8937ba5d97599f17`, targeting unchanged main. No bypass or merge occurred. M2–M5 remain implementation/acceptance work, and exact-head CI is separately observed.
+The initial draft-PR creation was denied by automatic approval review under the earlier planning-only restriction. The user explicitly approved the exact retry at 18:31 UTC; the lead first verified no existing PR, then retried once. [Draft PR #119](https://github.com/MrScripty/Tuldok/pull/119) was created and remains the dedicated integration PR, targeting unchanged main. M2 lifecycle run `39842528122` failed at the project-observation browser fixture; its precise arrival/application race repair is retained in the CI diagnosis. Three other M2 workflows passed. No bypass or merge occurred; no later CI success is implied by local component results.
 
 Actual per-operation blockers are: unknown source membership during later extraction; missing unique bytes for a requested complete transfer; inseparable secret-bearing legacy proof; unknown active descendant effects; or an unsupported filesystem's inability to provide the promised durable publication. Owners and resolution conditions are in [issues](issues.md). These block only dependent operations, not inert inspection or independent planning. Format naming, no-op Save, single local writer, closed-project Git changes, inert imported history and independent Save As are safe defaults, not a questionnaire for the user.
 
@@ -418,7 +447,8 @@ The user requested isolation. Original `/workspace/Tuldok` and reviewed planning
 ## Final Acceptance
 
 - Acceptance status: `pending`
+- This is the committed candidate-admission state. Terminal acceptance is conditional on successful exact-head checks in [PR #119](https://github.com/MrScripty/Tuldok/pull/119): Dataset lifecycle tests, M1 workspace interface, Inert extension catalog and Candidate package captured CPU. The CI product manifest binds evidence to that implementation commit; the PR/check result supplies the terminal run URL, SHA and conclusion. A missing or failed required check leaves acceptance pending. This external result closes the condition without a status-only source change or an identical CI campaign solely to rewrite this field.
 - Deferred follow-ups: distributed/live-Git collaboration, other writer platforms/filesystems, artifact auto-fetch/regeneration, semantic merges and automatic pruning; revisit only for a concrete requirement and owned evidence.
-- Final status: `Active`
+- Final status: `Verifying`
 
 [Independent plan review](reports/independent-review.md) and [planning verification](reports/verification.md) remain historical documentation evidence. Product implementation/results have their own dated ledger/report and independent code review; no planning check satisfies A1–A9. User migration is separately authorized per operation.

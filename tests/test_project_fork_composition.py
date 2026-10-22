@@ -140,6 +140,23 @@ class ArtifactDispositionTests(unittest.TestCase):
         self.assertEqual(caught.exception.code,'missing_unique')
         self.assertEqual(caught.exception.missing_unique,[dict(family='run_history',id=record['id'],role='host_source',name='recipe_process.py',sha256=missing,bytes=None)])
 
+    def test_native_measured_bytes_win_over_regenerable_runtime_alias_and_missing_declaration_blocks(self):
+        sha=hashlib.sha256(b'').hexdigest()
+        records,_,_=runtime_records(self.catalog,shared_sha=sha,shared_bytes=0)
+        self.assertEqual(self.policies(records)[sha],'regenerable')
+        for name,role in (('stdout.log','measured_stream'),('receipt.json','custody_proof'),
+                          ('source/text_training.py','execution_source'),('output/weights.bin','measured_output')):
+            phase=dict(family='native_execution_history',id=self.catalog+'.'+uuid.uuid4().hex,
+                document=dict(payloads=[dict(name=name,role=role,blob=dict(sha256=sha,bytes=0),
+                    preservation='unique',required_for=['execution_proof'])]))
+            with self.subTest(name=name):
+                self.assertEqual(self.policies(records+[phase])[sha],'unique')
+                with self.assertRaises(ProjectForkError) as caught:
+                    artifact_plan([record for record in records if record['id']!=sha]+[phase])
+                self.assertEqual(caught.exception.code,'missing_unique')
+                self.assertEqual(caught.exception.missing_unique,[dict(family=phase['family'],id=phase['id'],
+                    role=role,name=name,sha256=sha,bytes=0)])
+
     def test_intrinsic_conflicts_and_missing_known_owner_refs_refuse(self):
         records,manifest,_=runtime_records(self.catalog)
         with self.assertRaises((WorkbenchError,ProjectStoreError)):artifact_plan(records+[copy.deepcopy(records[-1])])

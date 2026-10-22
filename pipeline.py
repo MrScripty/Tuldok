@@ -5,6 +5,7 @@ Release custody and CPU adapter eligibility remain with their existing owners.
 """
 from access import authorized
 import copy
+from datetime import datetime
 import hashlib
 import json
 import math
@@ -40,6 +41,32 @@ PORTS = {
 
 def digest(value):
     return hashlib.sha256(encode(value).encode()).hexdigest()
+
+
+def decode_exposures(value):
+    """Decode exact reuse observations; historical facts confer no permission."""
+    closed(value, ('exposed','events'))
+    if type(value['exposed']) is not bool or type(value['events']) is not list:
+        raise WorkbenchError('Invalid exposure observation.')
+    if value['exposed'] != bool(value['events']):
+        raise WorkbenchError('Exposure flag differs from its observed events.')
+    seen=set()
+    for event in value['events']:
+        closed(event, ('id','record_id','source_hash','reason','run_id','release_id','created_at'))
+        for key in ('id','record_id','run_id'):identifier(event[key], 'Exposure '+key)
+        if event['id'] in seen:raise WorkbenchError('Duplicate exposure event identity.')
+        seen.add(event['id'])
+        for key in ('source_hash','release_id'):
+            if type(event[key]) is not str or not HASH.fullmatch(event[key]):
+                raise WorkbenchError('Invalid exposure '+key+'.')
+        text_value(event['reason'], 'Exposure reason', 500)
+        at=event['created_at']
+        if type(at) is not str or len(at)>80:
+            raise WorkbenchError('Invalid exposure observation time.')
+        try:
+            if datetime.fromisoformat(at).utcoffset() is None:raise ValueError()
+        except ValueError as error:raise WorkbenchError('Invalid exposure observation time.') from error
+    return copy.deepcopy(value)
 
 
 def _external_preflight_report(graph, prepared, *, storage=None, version=1):
@@ -478,6 +505,42 @@ def verify_recipe_closure(composition, model, *, read_blob):
             'captured_inputs':recipe_contract.captured_inputs(execution,captures)}
 
 
+def decode_probe_observation(recipe,value,*,with_definition=False):
+    """The finite native/pure runtime observation shared by current readers."""
+    fields=('schema_version','available','adapter','runtime','problems')
+    closed(value,fields+(('definition_files','adapter_definition_sha256') if with_definition else ()))
+    if value['schema_version']!=1 or type(value['available']) is not bool or value['adapter']!=adapter_identity_for_graph({'recipe':recipe}):
+        raise WorkbenchError('Malformed native probe identity.','invalid',409)
+    adapter=adapter_for_graph({'recipe':recipe});runtime=value['runtime']
+    if adapter is release_validation:
+        closed(runtime,('python','execution'))
+        if runtime['execution']!='bounded_local_integrity':raise WorkbenchError('Invalid integrity runtime observation.')
+        versions=()
+    else:
+        versions=tuple(name.replace('-','_') for name in image_training.RUNTIME_PINS) if adapter is image_training else ('scikit_learn','numpy','scipy','Pillow')
+        closed(runtime,('python','device','threads',*versions))
+        if runtime['device']!='cpu' or type(runtime['threads']) is not int or not 1<=runtime['threads']<=65536:
+            raise WorkbenchError('Invalid native CPU runtime observation.')
+    if type(runtime['python']) is not str or not 1<=len(runtime['python'])<=80:
+        raise WorkbenchError('Invalid native Python version observation.')
+    for name in versions:
+        if runtime[name] is not None and (type(runtime[name]) is not str or not 1<=len(runtime[name])<=120):
+            raise WorkbenchError('Invalid native package version observation.')
+    if type(value['problems']) is not list or len(value['problems'])>100:raise WorkbenchError('Invalid native runtime problems.')
+    for problem in value['problems']:
+        closed(problem,('code','message'))
+        if any(type(problem[key]) is not str or not 1<=len(problem[key])<=2000 for key in problem):
+            raise WorkbenchError('Invalid native runtime problem.')
+    if with_definition:
+        files=value['definition_files']
+        if type(files) is not dict or not 1<=len(files)<=10000:raise WorkbenchError('Invalid runtime source inventory.')
+        for name,sha in files.items():
+            if type(name) is not str or Path(name).name!=name or not name.endswith('.py') or type(sha) is not str or not HASH.fullmatch(sha):
+                raise WorkbenchError('Invalid runtime source identity.')
+        if digest(files)!=value['adapter_definition_sha256']:raise WorkbenchError('Runtime source digest differs.')
+    return copy.deepcopy(value)
+
+
 class Pipelines:
     def __init__(self, dataset):
         self.access = dataset.access
@@ -843,7 +906,7 @@ class Pipelines:
                 'SELECT id,record_id,source_hash,reason,run_id,release_id,created_at FROM workspace_exposures '
                 'WHERE record_id = ANY(%s) OR source_hash = ANY(%s) ORDER BY created_at,id',
                 ([row['id'] for row in records], [source_content_hash(row) for row in records]))]
-        return {'exposed': bool(exposures), 'events': exposures}
+        return decode_exposures({'exposed': bool(exposures), 'events': exposures})
 
     @authorized('inspect', 'pipeline.releases')
     def releases(self):
@@ -869,6 +932,10 @@ class Pipelines:
         # A native interpreter launch is execution even when its command only
         # reports runtime capability. Pure integrity recipes above never spawn.
         self.access.require('execute', 'pipeline.probe_native', recipe)
+        from project_native_preparation import preparation_owner
+        current=preparation_owner(self)
+        if current is not None:
+            return current.probe(self,recipe)
         worker_path = Path(adapter.__file__).resolve()
         executable = os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable
         try:
@@ -877,10 +944,7 @@ class Pipelines:
             if len(response.stdout) > 32768:
                 raise ValueError('Oversized runtime response.')
             probe = json.loads(response.stdout)
-            if (not isinstance(probe, dict) or probe.get('schema_version') != 1 or
-                    type(probe.get('available')) is not bool or probe.get('adapter') != adapter_identity_for_graph({'recipe':recipe})
-                    or not isinstance(probe.get('runtime'), dict) or not isinstance(probe.get('problems'), list)):
-                raise ValueError('Malformed runtime response.')
+            probe=decode_probe_observation(recipe,probe)
             if response.returncode and probe['available']:
                 raise ValueError('Runtime probe failed.')
         except (OSError, ValueError, subprocess.TimeoutExpired):
@@ -1090,6 +1154,21 @@ class Pipelines:
         names = self.definition_identity(image_training.MODEL_RECIPE)['definition_files']
         return 'image_training.py', {name:(self.source_path/name).read_bytes() for name in names}
 
+    def _builtin_model_for_graph(self,graph,model_ref):
+        """The existing exact template/policy decision, before native probing."""
+        from model_definitions import read_owned_blob,retained_json
+        owner=model_contract(graph)
+        model = self.dataset.models.material(model_ref, verify=True)
+        model_body = model['material']
+        definition = owner.model_definition(next(node['parameters'] for node in graph['nodes'] if node['type']=='train'))
+        if model_body['kind'] != 'template' or model_body['task'] != owner.task_ref(self.db.dataset_id):
+            raise WorkbenchError('Recipe requires its exact published classifier template.', 'unsupported', 409)
+        for key in ('specification','preprocessing_policy','output_policy'):
+            raw=read_owned_blob(self.dataset.models.path,model_ref['sha256'],model_body[key],1024**2)
+            if retained_json(raw.decode()) != definition[key]:
+                raise WorkbenchError('Published model policies differ from recipe parameters.', 'stale', 409)
+        return model,definition
+
     @authorized('edit', 'recipes.prepare_builtin_material')
     def prepare_builtin_material(self, graph_id, revision, model_ref, *, reconcile_capture=False):
         from model_definitions import blob, read_owned_blob, retained_json
@@ -1103,15 +1182,8 @@ class Pipelines:
         validation = self.validate_graph(graph)
         if not validation['valid']:
             error = validation['errors'][0]; raise WorkbenchError(error['message'], error['code'], 409)
-        model = self.dataset.models.material(model_ref, verify=True)
-        model_body = model['material']
-        definition = owner.model_definition(next(node['parameters'] for node in graph['nodes'] if node['type']=='train'))
-        if model_body['kind'] != 'template' or model_body['task'] != owner.task_ref(self.db.dataset_id):
-            raise WorkbenchError('Recipe requires its exact published classifier template.', 'unsupported', 409)
-        for key in ('specification','preprocessing_policy','output_policy'):
-            raw=read_owned_blob(self.dataset.models.path,model_ref['sha256'],model_body[key],1024**2)
-            if retained_json(raw.decode()) != definition[key]:
-                raise WorkbenchError('Published model policies differ from recipe parameters.', 'stale', 409)
+        model,definition=self._builtin_model_for_graph(graph,model_ref)
+        model_body=model['material']
         files=validation['runtime']['definition_files']
         captured={name:(self.source_path/name).read_bytes() for name in files}
         if any(hashlib.sha256(raw).hexdigest()!=files[name] for name,raw in captured.items()):
@@ -1128,7 +1200,8 @@ class Pipelines:
         capture_bytes=sum(map(len,payloads.values()))
         model_bytes=sum(item['blob']['bytes'] for item in model_body['source_closure'])+sum(model_body[key]['bytes'] for key in ('specification','preprocessing_policy','output_policy'))
         output_bytes=64*1024**2
-        envelope={'attempt_slots':1,'admitted_wall_seconds':750,'retained_bytes':capture_bytes+model_bytes+output_bytes+256*1024,
+        from project_native_execution import native_admission_wall_seconds
+        envelope={'attempt_slots':1,'admitted_wall_seconds':native_admission_wall_seconds(),'retained_bytes':capture_bytes+model_bytes+output_bytes+256*1024,
                   'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+256*1024}
         material={'format':'recipe_material_v1','catalog_id':self.db.dataset_id,'recipe_id':graph_id,'recipe_revision':revision,
             'recipe_document':blob(payloads['recipe.json'],'recipe.json'),'executable_sha256':validation['execution_sha256'],
@@ -1149,6 +1222,12 @@ class Pipelines:
             shutil.rmtree(staging,ignore_errors=True);raise
 
     def _prepare_builtin_recipe_material(self, value):
+        from project_native_preparation import preparation_owner
+        current=preparation_owner(self)
+        if current is not None:return current.current(self).capture_builtin(self,value)
+        return self._prepare_builtin_recipe_material_current(value)
+
+    def _prepare_builtin_recipe_material_current(self, value):
         from model_definitions import read_owned_blob, retained_json
         material=value['material'];sha=value['ref']['sha256']
         snapshot=retained_json(read_owned_blob(self.material_path,sha,material['recipe_document'],2*1024**2).decode(),2*1024**2)

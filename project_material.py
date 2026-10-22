@@ -698,10 +698,12 @@ class ProjectMaterial:
         operation='recipes.prepare_builtin_material' if builtin else 'recipes.prepare_external_material'
         self.session.access.require('edit',operation,graph_id,owner_only=reconcile_capture and not builtin)
         if builtin:
-            # Existing built-in qualification reaches the adapter --probe
-            # subprocess. Preserve that explicit execution gate until the
-            # project execution stage supplies current-host admission.
-            raise WorkbenchError('Built-in material preparation is unavailable while execution is disabled; it requires an explicit current runtime probe.','unavailable',409)
+            if reconcile_capture:
+                raise WorkbenchError('Built-in orphan capture reconciliation is unsupported.','unsupported',409)
+            from project_native_preparation import preparation_owner
+            current=preparation_owner(owner)
+            if current is None:raise WorkbenchError('Current project preparation for the runtime probe is unavailable.','unavailable',409)
+            return current.prepare_recipe(owner,graph_id,revision,model_ref,expected_checkpoint,key)
         body=dict(graph_id=graph_id,revision=revision,model=model_ref,reconcile_capture=reconcile_capture)
         def invoke():
             self.materialize_projection(model_ref,owner.dataset.models.path)

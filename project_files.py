@@ -15,6 +15,7 @@ from workbench import WorkbenchError, timestamp
 
 FAMILY='project_file'
 FORMAT='project_file_v1'
+DELETION_FORMAT='project_file_v2'
 MAX_FILE_BYTES=1024*1024
 MAX_FILES=1000
 KINDS={'script':'scripts','note':'notes'}
@@ -67,15 +68,20 @@ def _date(value):
     except (ValueError,TypeError):fail('Invalid adoption timestamp.')
 
 
-def _version(value):
-    closed(value,VERSION_FIELDS,'adopted working-file revision')
+def _version(value,*,allow_deleted=False):
+    deleted=allow_deleted and type(value) is dict and value.get('deleted') is True
+    closed(value,VERSION_FIELDS|{'deleted'} if deleted else VERSION_FIELDS,'adopted working-file revision')
     if type(value['revision']) is not int or not 1<=value['revision']<=2**53-1:fail('Invalid adoption revision.')
-    if type(value['text']) is not str:fail('Adopted source must be UTF-8 text.')
-    try:raw=value['text'].encode('utf-8')
-    except UnicodeEncodeError:fail('Adopted source must be strict UTF-8.')
-    sha(value['sha256'])
-    if type(value['bytes']) is not int or value['bytes']!=len(raw) or len(raw)>MAX_FILE_BYTES or digest(raw)!=value['sha256']:
-        fail('Adopted text bytes differ from their exact identity.')
+    if deleted:
+        if value['text'] is not None or value['sha256'] is not None or type(value['bytes']) is not int or value['bytes']!=0:
+            fail('A deleted note revision must retain an exact absence marker.')
+    else:
+        if type(value['text']) is not str:fail('Adopted source must be UTF-8 text.')
+        try:raw=value['text'].encode('utf-8')
+        except UnicodeEncodeError:fail('Adopted source must be strict UTF-8.')
+        sha(value['sha256'])
+        if type(value['bytes']) is not int or value['bytes']!=len(raw) or len(raw)>MAX_FILE_BYTES or digest(raw)!=value['sha256']:
+            fail('Adopted text bytes differ from their exact identity.')
     if type(value['actor_id']) is not str or len(value['actor_id'])!=32 or any(c not in '0123456789abcdef' for c in value['actor_id']):fail('Invalid historical adoption actor.')
     _date(value['adopted_at'])
 
@@ -88,17 +94,20 @@ def decode_records(records):
         if envelope.get('family')!=FAMILY:continue
         closed(envelope,{'family','id','document'},'working-file envelope')
         doc=envelope['document']
-        if type(doc) is not dict or doc.get('format')!=FORMAT:fail('Unsupported working-file format.','unsupported',409)
+        if type(doc) is not dict or doc.get('format') not in (FORMAT,DELETION_FORMAT):fail('Unsupported working-file format.','unsupported',409)
         closed(doc,{'format','project_id','kind','path','current','history','origin'},'working-file document')
         expected=file_id(doc['project_id'],doc['kind'],doc['path'])
         if envelope['id']!=expected or expected in seen:fail('Duplicate or mismatched working-file identity.')
         seen.add(expected)
         if type(doc['history']) is not list or not doc['history']:fail('Working-file history is missing.')
-        previous=None
+        previous=None;previous_deleted=False;has_deletion=False
         for revision,value in enumerate(doc['history'],1):
-            _version(value)
+            _version(value,allow_deleted=doc['format']==DELETION_FORMAT)
+            deleted=value.get('deleted') is True
+            if deleted and (doc['kind']!='note' or revision==1 or previous_deleted):fail('Only an adopted, present note can acquire a deleted revision.')
             if value['revision']!=revision or previous is not None and _date(value['adopted_at'])<previous:fail('Working-file history revisions or time differ.')
-            previous=_date(value['adopted_at'])
+            previous=_date(value['adopted_at']);previous_deleted=deleted;has_deletion=has_deletion or deleted
+        if doc['format']==DELETION_FORMAT and not has_deletion:fail('Working-file v2 requires an explicit retained deletion.')
         if doc['current']!=doc['history'][-1]:fail('Working-file current revision differs from its history.')
         owned.append(copy.deepcopy(envelope))
     counts={}
@@ -111,26 +120,62 @@ def decode_records(records):
 
 def _result(envelope,changed):
     doc=envelope['document'];value=doc['current']
-    return dict(id=envelope['id'],project_id=doc['project_id'],kind=doc['kind'],path=doc['path'],changed=changed,
+    result=dict(id=envelope['id'],project_id=doc['project_id'],kind=doc['kind'],path=doc['path'],changed=changed,
                 **{key:value[key] for key in ('revision','sha256','bytes','adopted_at')})
+    if value.get('deleted') is True:result['deleted']=True
+    return result
 
 
 def validate_operation_result(operation,result,records=None):
-    if operation!='files.adopt':return False
-    closed(result,RESULT_FIELDS,'adoption result')
+    if operation not in ('files.adopt','files.adopt_deletion'):return False
+    deleted=operation=='files.adopt_deletion'
+    closed(result,RESULT_FIELDS|{'deleted'} if deleted else RESULT_FIELDS,'adoption result')
     if result['id']!=file_id(result['project_id'],result['kind'],result['path']) or type(result['changed']) is not bool:fail('Invalid adoption result identity.')
-    sha(result['sha256']);_date(result['adopted_at'])
+    if deleted:
+        if result['deleted'] is not True or result['kind']!='note' or result['sha256'] is not None or result['bytes']!=0 or result['changed'] is not True or type(result['revision']) is not int or result['revision']<2:
+            fail('Invalid deleted note result.')
+    else:sha(result['sha256'])
+    _date(result['adopted_at'])
     if type(result['revision']) is not int or not 1<=result['revision']<=2**53-1 or type(result['bytes']) is not int or not 0<=result['bytes']<=MAX_FILE_BYTES:fail('Invalid adoption result bounds.')
     if records is not None:
         owned=decode_records(records)
         envelope=next((r for r in owned if r['id']==result['id']),None)
-        if envelope is None or not any(all(value[key]==result[key] for key in ('revision','sha256','bytes','adopted_at')) for value in envelope['document']['history']):
+        if envelope is None or not any((value.get('deleted') is True)==deleted and all(value[key]==result[key] for key in ('revision','sha256','bytes','adopted_at')) for value in envelope['document']['history']):
             fail('Adoption result is not an exact retained working-file revision.')
     return True
 
 
 class _WorkingError(Exception):
     def __init__(self,state):self.state=state
+
+
+def _missing(root,parts):
+    """Confirm absence beneath the actual root, never through an unsafe alias."""
+    parents=[os.dup(root)];missing=None
+    try:
+        for part in parts[:-1]:
+            try:child=os.open(part,DIR_FLAGS,dir_fd=parents[-1])
+            except FileNotFoundError:
+                missing=part;break
+            parents.append(child)
+        if missing is None:
+            try:
+                entry=os.stat(parts[-1],dir_fd=parents[-1],follow_symlinks=False)
+                if not stat.S_ISREG(entry.st_mode) or entry.st_nlink!=1:raise _WorkingError('unsafe_path')
+            except FileNotFoundError:missing=parts[-1]
+        for index in range(1,len(parents)):
+            entry=os.stat(parts[index-1],dir_fd=parents[index-1],follow_symlinks=False)
+            if not os.path.samestat(entry,os.fstat(parents[index])):raise _WorkingError('unstable')
+        if missing is not None:
+            try:os.stat(missing,dir_fd=parents[-1],follow_symlinks=False)
+            except FileNotFoundError:return True
+            raise _WorkingError('unstable')
+        return False
+    except OSError as error:
+        state='unsafe_path' if error.errno in (errno.ELOOP,errno.ENOTDIR) else 'unstable' if error.errno==errno.ENOENT else 'unreadable'
+        raise _WorkingError(state) from None
+    finally:
+        for descriptor in reversed(parents):os.close(descriptor)
 
 
 def _read(root,parts):
@@ -184,10 +229,17 @@ class ProjectFiles:
                     observation=dict(id=envelope['id'],kind=doc['kind'],path=doc['path'],revision=value['revision'],
                         expected_sha256=value['sha256'],expected_bytes=value['bytes'],observed_sha256=None,observed_bytes=None,state='missing',reason=None)
                     try:
-                        _,observed,size=_read(root,_path(doc['kind'],doc['path']))
-                        observation.update(observed_sha256=observed,observed_bytes=size,state='unchanged' if observed==value['sha256'] else 'changed')
+                        parts=_path(doc['kind'],doc['path'])
+                        if value.get('deleted') is True and _missing(root,parts):
+                            observation['state']='deleted'
+                        else:
+                            if value.get('deleted') is True:observation['state']='changed'
+                            _,observed,size=_read(root,parts)
+                            observation.update(observed_sha256=observed,observed_bytes=size,state='unchanged' if observed==value['sha256'] else 'changed')
                     except _WorkingError as error:
-                        observation.update(state='missing' if error.state=='missing' else 'invalid',reason=error.state)
+                        if value.get('deleted') is True:
+                            observation.update(state='changed' if error.state in ('invalid_utf8','too_large') else 'invalid',reason=error.state)
+                        else:observation.update(state='missing' if error.state=='missing' else 'invalid',reason=error.state)
                     items.append(observation)
             self.session.check()
             return dict(items=items,project_id=snapshot['project_id'],checkpoint=snapshot['checkpoint'])
@@ -213,7 +265,7 @@ class ProjectFiles:
     def require_clean(self):
         """Save As must not silently discard unadopted or missing source files."""
         report=self.inspect()
-        if any(item['state']!='unchanged' for item in report['items']):
+        if any(item['state'] not in ('unchanged','deleted') for item in report['items']):
             error=WorkbenchError('Adopt or restore changed, missing or invalid working files before Save As.','working_files_changed',409)
             error.report=report
             raise error
@@ -244,10 +296,38 @@ class ProjectFiles:
                 actor=self.access.require('edit','files.adopt',record_id)
                 value=dict(revision=revision+1,sha256=observed,bytes=size,text=text,adopted_at=timestamp(),actor_id=actor.actor_id)
                 history=copy.deepcopy(prior['document']['history']) if prior else [];history.append(value)
-                envelope=dict(family=FAMILY,id=record_id,document=dict(format=FORMAT,project_id=project_id,kind=body['kind'],path=body['path'],current=copy.deepcopy(value),history=history,origin=copy.deepcopy(prior['document']['origin']) if prior else None))
+                envelope=dict(family=FAMILY,id=record_id,document=dict(format=prior['document']['format'] if prior else FORMAT,project_id=project_id,kind=body['kind'],path=body['path'],current=copy.deepcopy(value),history=history,origin=copy.deepcopy(prior['document']['origin']) if prior else None))
                 decode_records([r for r in snapshot['records'] if not (r['family']==FAMILY and r['id']==record_id)]+[envelope]);pending.append(envelope)
                 return _result(envelope,True)
             return self.session.mutate('files.adopt',record_id,body,expected_checkpoint,key,invoke,
+                lambda result,before:dict(records=copy.deepcopy(pending),result=copy.deepcopy(result)))
+
+    def adopt_deletion(self,body,expected_checkpoint,key):
+        closed(body,{'path','expected_revision','expected_sha256'},'note deletion adoption')
+        parts=_path('note',body['path']);sha(body['expected_sha256'])
+        if type(body['expected_revision']) is not int or not 1<=body['expected_revision']<=2**53-1:fail('Invalid expected note revision.')
+        project_id=self.session.snapshot['project_id'];record_id=file_id(project_id,'note',body['path']);pending=[]
+        with self.access.lock:
+            self.access.require('edit','files.adopt_deletion',record_id)
+            def invoke():
+                snapshot=self.session.snapshot
+                prior=next((r for r in decode_records(snapshot['records']) if r['id']==record_id),None)
+                if prior is None:fail('Only an already adopted note can acquire a deletion.','unavailable',404)
+                current=prior['document']['current']
+                if current['revision']!=body['expected_revision'] or current['sha256']!=body['expected_sha256'] or current.get('deleted') is True:
+                    fail('Canonical note revision or digest changed.','conflict',409)
+                with self.store.root_directory() as root:
+                    try:missing=_missing(root,parts)
+                    except _WorkingError as error:fail('Note path is '+error.state+'.','invalid',400)
+                if not missing:fail('The reviewed note still exists; deletion cannot be adopted.','conflict',409)
+                actor=self.access.require('edit','files.adopt_deletion',record_id)
+                value=dict(revision=current['revision']+1,deleted=True,sha256=None,bytes=0,text=None,
+                           adopted_at=timestamp(),actor_id=actor.actor_id)
+                envelope=copy.deepcopy(prior);doc=envelope['document']
+                doc['format']=DELETION_FORMAT;doc['history'].append(value);doc['current']=copy.deepcopy(value)
+                decode_records([r for r in snapshot['records'] if not (r['family']==FAMILY and r['id']==record_id)]+[envelope]);pending.append(envelope)
+                return _result(envelope,True)
+            return self.session.mutate('files.adopt_deletion',record_id,body,expected_checkpoint,key,invoke,
                 lambda result,before:dict(records=copy.deepcopy(pending),result=copy.deepcopy(result)))
 
 
@@ -309,6 +389,7 @@ def materialize_captured(records,project_id,root_fd):
     try:
         for envelope in sorted(owned,key=lambda r:r['document']['path']):
             doc=envelope['document'];value=doc['current'];parts=_path(doc['kind'],doc['path'])
+            if value.get('deleted') is True:continue
             parent=os.dup(root_fd);descriptor=None
             try:
                 for part in parts[:-1]:

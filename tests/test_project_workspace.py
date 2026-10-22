@@ -72,6 +72,32 @@ class ProjectWorkspaceTests(unittest.TestCase):
         arguments = self.mutation(root='fixture', directory=directory, name='Workspace authored project')
         return self.call('new', arguments), arguments
 
+    def test_control_project_ancestry_is_rejected_before_destination_or_projection_creation(self):
+        with ProjectStore.create(self.external/'science','Existing portable project','existing-project','b'*64):pass
+        self.start(self.external/'science/control')
+        control=self.workspace.path
+        for action,directory in (('open','science'),('new','science/control/child')):
+            arguments=self.mutation(root='fixture',directory=directory)
+            if action=='new':arguments['name']='Must not create'
+            with self.subTest(action=action),self.assertRaisesRegex(ProjectStoreError,'private workspace control') as caught:
+                self.call(action,arguments)
+            self.assertEqual(caught.exception.code,'conflict')
+            self.assertIsNone(self.workspace._projection)
+            self.assertFalse((control/'.project-projections').exists())
+        self.assertFalse((control/'child').exists())
+        self.start(self.external/'sibling-control')
+        created,_=self.create('safe-project')
+        before=self.workspace._store.snapshot()
+        bad=self.mutation(root='fixture',directory='sibling-control/child',name='Must not fork')
+        with self.assertRaisesRegex(ProjectStoreError,'private workspace control') as caught:
+            self.call('save_as',bad)
+        self.assertEqual(caught.exception.code,'conflict')
+        self.assertFalse((self.workspace.path/'child').exists())
+        self.assertEqual(self.workspace._store.snapshot(),before)
+        fork=self.call('save_as',self.mutation(root='fixture',directory='safe-copy',name='Sibling copy'))
+        self.assertEqual(fork['state']['state'],'open')
+        self.assertNotEqual(fork['state']['project']['project_id'],created['project']['project_id'])
+
     def import_record(self, text='Authored source'):
         arguments = self.mutation(asset=dict(text=text, name='Source', groups=['owned'], rights='Fixture authorship'))
         return self.call('import_text', arguments), arguments

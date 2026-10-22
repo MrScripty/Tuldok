@@ -120,8 +120,8 @@ class ProjectTransferController:
         leaf(directory)
         descriptor = self._root(root)
         if selectable:
-            configured = self.workspace._roots.get(root)
-            if configured is None or _identity(configured[1]) != _identity(descriptor):
+            configured = self.workspace._root(root, directory)
+            if _identity(configured[1]) != _identity(descriptor):
                 fail('The destination root must also be configured in the control workspace.', 'conflict', 409)
         try:
             os.stat(directory, dir_fd=descriptor, follow_symlinks=False)

@@ -31,9 +31,10 @@ PROJECT_ACTIONS = ('new', 'open', 'save', 'close', 'query', 'get', 'import_text'
 # Set only after the complete finite dispatcher is integrated. A capability is
 # a promise that the route reaches canonical publication, not an API wishlist.
 M2_ENABLED = True
-M3_ENABLED = False
+M3_ENABLED = True
 M4_ENABLED = True
 _RECOVERY_OPERATIONS = frozenset(('project_files.execution_reconcile_current',
+    'project_files.native_reconcile',
     'project_files.runtime_capture', 'project_files.runtime_abandon',
     'project_files.execution_study_abandon_preparation', 'project_files.execution_study_reconcile_preparation'))
 _DRAINING_OPERATIONS = _RECOVERY_OPERATIONS | frozenset(('project_files.execution_producer_cancel',
@@ -196,6 +197,9 @@ class ProjectWorkspace:
                 any(part in ('', '.', '..') for part in relative.split('/')) or
                 len(relative.split('/')) > 16):
             raise WorkbenchError('Use a project directory relative to its configured root, without traversal.')
+        root_path, root_fd = self._roots[alias]
+        from project_store import assert_separate_project_control
+        assert_separate_project_control(root_fd, relative, root_path=root_path, control_path=self.path)
         return self._roots[alias]
 
     def _projection_for(self, store):
@@ -379,11 +383,11 @@ class ProjectWorkspace:
         from project_fork_composition import build_candidate
         from workbench import timestamp
         self._bound(arguments)
+        root_path, root_fd = self._root(arguments['root'], arguments['directory'])
         source = self._projection
         source.execution.assert_quiescent()
         source.files.require_clean()
         self._store.save(arguments['expected_checkpoint'])
-        root_path, root_fd = self._root(arguments['root'], arguments['directory'])
         published = None
         incoming = projection = None
         try:
@@ -441,6 +445,8 @@ class ProjectWorkspace:
         agent_api.validate_arguments(name, arguments)
         if not name.startswith('project_files.'):
             raise WorkbenchError('This domain is unavailable in external text-project mode.', 'unavailable', 409)
+        if name == 'project_files.execution_health':
+            return self._execution_health(arguments, selected_version=selected_version)
         if name in _DRAINING_OPERATIONS:
             return self._dispatch_draining(name, arguments)
         action = name.removeprefix('project_files.')
@@ -469,6 +475,8 @@ class ProjectWorkspace:
                 from project_dispatch import dispatch
                 try:
                     value = dispatch(self._projection, name, arguments)
+                    if name == 'project_files.execution_health' and selected_version == 1:
+                        value = {key: item for key, item in value.items() if key != 'native_phases'}
                 except BaseException as error:
                     if getattr(error, 'code', None) in ('unknown', 'outcome_unknown', 'projection_unavailable'):
                         self._recovery_required('projection_unavailable', arguments.get('request_key'))
@@ -543,7 +551,7 @@ class ProjectWorkspace:
             if len(agent_api.encoded(result)) > agent_api.RESPONSE_LIMIT:
                 raise WorkbenchError('This project result exceeds the synchronous response bound; canonical work is retained.',
                                      'too_large', 413)
-            agent_api.validate_output(name, {'status': 200, 'result': result})
+            agent_api.validate_output(name, {'status': 200, 'result': result},version=selected_version)
             return result
 
     def _dispatch_draining(self, name, arguments):
@@ -622,6 +630,35 @@ class ProjectWorkspace:
                     raise WorkbenchError('Project drainage result exceeds its response bound.', 'too_large', 413)
                 agent_api.validate_output(name, {'status': 200, 'result': result})
                 return result
+
+    def _execution_health(self, arguments, *, selected_version=None):
+        """Read only indexed current-local custody, including a fenced owner."""
+        name='project_files.execution_health'
+        with self._mutex,self.access.lock:
+            self._ensure_open()
+            if not M3_ENABLED:raise WorkbenchError('This project capability is not yet available.','unavailable',409)
+            self.access.require('inspect',name)
+            if self._projection is not None and not self._projection.session.available:
+                self._recovery_required('projection_unavailable')
+            self._bound(dict(arguments,expected_checkpoint=arguments['checkpoint']),allow_recovery=True)
+            incoming=self._projection
+            if incoming.pending_original:
+                if len(incoming.pending_original)!=1 or incoming.pending_original[0]['project_id']!=incoming.session.project_id:
+                    raise WorkbenchError('Original local custody requires its exact project identity.','local_custody_unavailable',409)
+                identity=incoming.pending_original[0]['projection_id']
+                if self._retained_recovery is None:
+                    self._retained_recovery=self._retained_projection_for(self._store,identity)
+                incoming=self._retained_recovery
+                if incoming.db.projection_id!=identity:
+                    raise WorkbenchError('Original physical custody changed.','local_custody_unavailable',409)
+            value=incoming.execution.health(arguments.get('offset',0),arguments.get('limit',40))
+            if selected_version==1:value={key:item for key,item in value.items() if key!='native_phases'}
+            result=dict(binding=self._binding,project_id=incoming.session.project_id,
+                checkpoint=arguments['checkpoint'],value=value)
+            if len(agent_api.encoded(result))>agent_api.RESPONSE_LIMIT:
+                raise WorkbenchError('Current custody health exceeds its response bound.','too_large',413)
+            agent_api.validate_output(name,dict(status=200,result=result),version=selected_version)
+            return result
 
     def close(self):
         with self._mutex:

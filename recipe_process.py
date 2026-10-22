@@ -416,6 +416,19 @@ def verify_cpu_snapshot(descriptor, *, checkpoint=None):
 
 
 def validate_spec(value):
+    return _validate_spec(value, current=True)
+
+
+def decode_retained_spec(value):
+    """Validate inert exact specification values, without current UID authority.
+
+    The original trusted installation UID remains a historical value. A new
+    launch always uses validate_spec and its current distinct-owner requirement.
+    """
+    return _validate_spec(value, current=False)
+
+
+def _validate_spec(value, *, current):
     keys = {'schema_version','attempt_id','request_sha256','argv','env','cwd','stdin_base64',
             'wall_seconds','executable_sha256','max_output_bytes','output_dir','captured_files','runtime_files','trusted_install_owner_uid'}
     if type(value) is not dict or type(value.get('schema_version')) is not int or value['schema_version'] not in (1,2):
@@ -444,7 +457,8 @@ def validate_spec(value):
             raise ValueError()
     except ValueError as error:
         raise ProcessError('Stdin exceeds its 64 KiB bound or is invalid base64.') from error
-    if type(value['trusted_install_owner_uid']) is not int or value['trusted_install_owner_uid'] == os.getuid() or value['trusted_install_owner_uid'] < 0:
+    if (type(value['trusted_install_owner_uid']) is not int or value['trusted_install_owner_uid'] < 0
+            or current and value['trusted_install_owner_uid'] == os.getuid()):
         raise ProcessError('Runtime owner must be an explicitly distinct trusted installation identity.')
     runtime = value['runtime_files']
     if type(runtime) is not list or len(runtime)>10000:
@@ -781,12 +795,34 @@ class Handle:
             return {'drained':False,'outcome':'unknown','reason':'missing_drain_receipt'}
 
 
-def launch(spec, custody_dir):
+def launch(spec, custody_dir, *, executable_fd=None, _before_spawn=None):
     spec = validate_spec(spec)
     # Full managed inventory hashing belongs to the cancellable custodian after
     # admission/GO. Synchronous dispatch only checks the bounded captured files.
     verify_captures(spec, include_torch=False)
-    executable = read_regular(spec['argv'][0], 128*1024*1024)
+    if executable_fd is None:
+        executable = read_regular(spec['argv'][0], 128*1024*1024)
+    else:
+        # A current owner may preserve a configured interpreter alias in argv0
+        # while supplying its independently verified physical regular file.
+        # Never open this capability from a retained specification.
+        descriptor = os.dup(executable_fd)
+        try:
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_size > 128*1024*1024:
+                raise ProcessError('Current executable capability is not a bounded regular file.')
+            chunks=[];offset=0
+            while offset<=128*1024*1024:
+                raw=os.pread(descriptor,min(1024*1024,128*1024*1024+1-offset),offset)
+                if not raw:break
+                chunks.append(raw);offset+=len(raw)
+            executable=b''.join(chunks);after=os.fstat(descriptor)
+            if (len(executable)>128*1024*1024 or
+                    (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns)!=
+                    (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns)):
+                raise ProcessError('Current executable capability changed.','stale')
+        finally:
+            os.close(descriptor)
     if digest(executable) != spec['executable_sha256']:
         raise ProcessError('Executable identity changed.', 'stale')
     directory = Path(custody_dir)
@@ -808,8 +844,12 @@ def launch(spec, custody_dir):
                 raise ProcessError('Managed Torch bootstrap changed before sealing.', 'stale')
             descriptors.append(sealed('tuldok-torch-owner',raw))
         command = [_trusted_python(spec['trusted_install_owner_uid']),'-I','-B',f'/proc/self/fd/{descriptors[0]}','--helper',str(child.fileno()),*(str(fd) for fd in descriptors[1:])]
-        process = subprocess.Popen(command, stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+        options = dict(stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
             pass_fds=(child.fileno(),*descriptors),close_fds=True,env={'PATH':'/usr/bin:/bin','LANG':'C.UTF-8'})
+        # The current owner may retire its volatile never-spawned proof only at
+        # this boundary. Entering Popen can have effects even when it raises.
+        if _before_spawn is not None: _before_spawn()
+        process = subprocess.Popen(command, **options)
         parent.setblocking(False)
         return Handle(process,parent,spec,directory)
     except BaseException:
@@ -1147,6 +1187,12 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                     leader=os.fork()
                     if leader==0:
                         try:
+                            # Arm before exec: a leader must never adopt a new
+                            # parent if its qualified custodian dies in startup.
+                            # The sealed ordinary executable has no privileged
+                            # file transition that could clear this signal.
+                            if libc.prctl(1,signal.SIGKILL,0,0,0) or os.getppid()!=who['pid']:
+                                os._exit(126)
                             os.setsid();os.chdir(spec['cwd'])
                             os.dup2(input_fd,0);os.dup2(pipes['stdout'][1],1);os.dup2(pipes['stderr'][1],2)
                             for entry in os.listdir('/proc/self/fd'):

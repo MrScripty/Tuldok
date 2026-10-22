@@ -42,6 +42,18 @@ MAX_PUBLICATION_SOURCE_BYTES = 48 * 1024
 _DOWNLOAD_PERMIT = threading.BoundedSemaphore(1)
 
 
+def native_payload_names(run):
+    """The native owner inventory, shared with retained phase evidence readers."""
+    if adapter_for_graph(run['graph']) is release_validation:return release_validation.PAYLOADS
+    if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+        import model_evidence
+        return model_evidence.payload_names(run['parameters']['epochs'])
+    if model_aware_graph(run['graph']):
+        from one_fit_evidence import payload_names
+        return payload_names()
+    return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
+
+
 def process_identity(pid):
     """Linux start ticks plus boot ID distinguish an owned PID from PID reuse."""
     try:
@@ -90,7 +102,7 @@ RUN_FIELDS = frozenset(('schema_version','mode','execution_kind','result_kind','
     'custody_phase','custody_identity','custody_receipt_sha256','quality_claim','progress','node_attempts',
     '_phase_timings','extension_context','approval_material_sha256','execution_resources','publication_source',
     'publication_fault','release_id','release_sha256','release_bytes','source_records','prior_test_exposure',
-    'adapter','runtime','exposure_events','evidence_context','validation_summary'))
+    'adapter','runtime','exposure_events','execution_test_exposure','evidence_context','validation_summary'))
 
 def project_run_projection(run, *, imported=False):
     """Closed portable Run observation; local continuation is never imported."""
@@ -126,6 +138,9 @@ def project_run_projection(run, *, imported=False):
             raise WorkbenchError('Historical Run observations exceed their bound.')
     if type(run['quality_claim']) is not bool or type(run['parameters']) is not dict or type(run['progress']) is not dict:
         raise WorkbenchError('Historical Run observations differ.')
+    if 'execution_test_exposure' in run:
+        from pipeline import decode_exposures
+        decode_exposures(run['execution_test_exposure'])
     if run['metrics'] is not None and type(run['metrics']) is not dict:
         raise WorkbenchError('Historical Run metrics differ.')
     seen=set()
@@ -963,19 +978,21 @@ class Runs:
         if self.project_execution is None or not self.db.in_transaction:
             raise RuntimeError('Project Run capture requires its current execution transaction.')
         selected = []
+        edges = []
         if self._external(run):
             for name, item in run['material']['captures'].items():
                 selected.append((name, '.external-' + run['id'] + '/' + name, item,
                                  'captured_input' if name.startswith('input/') else 'execution_source', 'unknown'))
         else:
-            # Native inputs use the same previously frozen, owner-verified Release.
-            # Its path is current-local authority, never imported/restored history.
-            raise WorkbenchError('Native Run project capture awaits its qualified execution adapter.', 'unsupported', 409)
+            edges = self.project_execution.native.capture_run_payloads(run, artifacts)
         for item in run['artifacts']:
             selected.append((item['name'], run['id'] + '/' + item['name'], item,
-                             item.get('role', 'output'), item.get('split', 'unknown')))
+                             item.get('role', 'output'), item.get('split') or 'unknown'))
         if run['state'] == 'completed':
-            for name, limit in (('custody-receipt.json', 16384), ('artifact-manifest.json', 65536)):
+            proofs = (('custody-receipt.json', 16384), ('artifact-manifest.json', 65536)) if self._external(run) else (
+                ('artifact-manifest.json', 65536),)
+            for name, limit in proofs:
+                if name in {item['name'] for item in run['artifacts']}:continue
                 raw = self._read_regular(self.path / run['id'] / name, limit)
                 selected.append((name, run['id'] + '/' + name,
                     dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)), 'custody_proof', 'unknown'))
@@ -993,7 +1010,7 @@ class Runs:
                 raise WorkbenchError('Current publication proof changed.', 'stale', 409)
             selected.append(('publication-source-v1.json', '.external-' + run['id'] + '/publication-source-v1.json',
                              dict(sha256=run['publication_source']['sha256'],bytes=len(raw)), 'publication_proof', 'unknown'))
-        edges = self._capture_project_host_sources(run, artifacts)
+        if self._external(run):edges.extend(self._capture_project_host_sources(run, artifacts))
         reader = Projects(self.dataset, {'current_runs': self.path})
         try:
             for name, relative, item, role, population in selected:
@@ -1781,6 +1798,7 @@ class Runs:
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
         if self.project_execution is not None:
+            self.project_execution.native.bind_run(run)
             self.project_execution.mark_run(run_id)
         return run
 
@@ -1990,6 +2008,8 @@ class Runs:
             selected = self._load(run_id)
         if self._external(selected):
             return self._execute_external(run_id)
+        if self.project_execution is not None:
+            return self.project_execution.native.execute_run(run_id)
         process = owner = None
         with self.lock, self.db.transaction():
             run = self._load(run_id)
@@ -2320,15 +2340,7 @@ class Runs:
         return run['parameters']['epochs'] if adapter_for_graph(run['graph']) is image_training else 1
 
     def _payloads(self, run):
-        if self._validation_run(run):
-            return release_validation.PAYLOADS
-        if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
-            import model_evidence
-            return model_evidence.payload_names(run['parameters']['epochs'])
-        if model_aware_graph(run['graph']):
-            from one_fit_evidence import payload_names
-            return payload_names()
-        return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
+        return native_payload_names(run)
 
     def _reference_keys(self, run):
         adapter = adapter_for_graph(run['graph'])

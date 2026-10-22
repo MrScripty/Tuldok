@@ -363,6 +363,16 @@ class LegacyCapture(unittest.TestCase):
         run.update(graph=graph, graph_revision=1, graph_sha256=execution_digest(graph), graph_document_sha256=digest(graph),
             adapter=adapter_identity_for_graph(graph), release_id=release_sha, release_sha256=release_sha, release_bytes=len(release_raw),
             source_records=[dict(row, split='train')], actor_id=self.actor, approval_material_sha256=sha)
+        # Controlled historical source custody, not an executed training claim.
+        originals = {'image_training.py': b'# Authored retained training source, never executed\n',
+                     'retained_helper.py': b'# Authored retained helper source\n'}
+        staging = self.db.path / 'workspace-runs' / ('.staging-' + run['id']);staging.mkdir(parents=True)
+        for name, raw in originals.items():(staging / name).write_bytes(raw)
+        definition_files = {name: hashlib.sha256(raw).hexdigest() for name, raw in originals.items()}
+        run['runtime'] = dict(schema_version=1, available=True, adapter=run['adapter'],
+            runtime=dict(python='3.12.authored', device='cpu', threads=1, torch='authored',
+                torchvision='authored', scikit_learn='authored'), problems=[],
+            definition_files=definition_files, adapter_definition_sha256=digest(definition_files))
         scientific_raw = {'checkpoint.bin': b'Unique inert checkpoint bytes\x00\xff', 'evaluation.json': b'{"metric":"custody only","value":null}'}
         run['artifacts'] = [dict(name=name, sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw), media_type='application/octet-stream') for name, raw in scientific_raw.items()]
         run_folder = self.db.path / 'workspace-runs' / run['id'];run_folder.mkdir(parents=True)

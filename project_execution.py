@@ -23,7 +23,7 @@ from project_session import operation_records
 from workbench import WorkbenchError
 
 
-OPERATIONS = frozenset(('runs.submit_external', 'runs.cancel', 'runs.approve_external'))
+OPERATIONS = frozenset(('runs.submit_external', 'runs.submit', 'runs.retry', 'runs.cancel', 'runs.approve_external'))
 
 
 class _FileEffect:
@@ -123,6 +123,8 @@ class ProjectExecution:
         self._custody_lock = threading.RLock()
         self._handles = {}
         self._active_attempts = set()
+        from project_native_execution import ProjectNativeExecution
+        self.native=ProjectNativeExecution(self)
         self.session.extra_capture = self.capture_dirty
         if self.custody is not None:self.session.publication_intent=self._publication_intent
         self.db.set_project_hooks(self.before_commit, self.outcome)
@@ -205,6 +207,7 @@ class ProjectExecution:
         """Observe only current physical owners and their unresolved local index."""
         with self._custody_lock:
             return (self._runs is not None or bool(self._handles)
+                    or self.native.has_local_custody
                     or self.producer_execution is not None and self.producer_execution.has_local_custody
                     or bool(self._runtime_pending or self._package_pending or self._runtime_active or self._package_active)
                     or self.custody is not None and self.custody.has_pending)
@@ -306,11 +309,12 @@ class ProjectExecution:
             other_pending=self._package_pending if kind=='runtime' else self._runtime_pending
             if expected not in journal[own]:
                 raise WorkbenchError('No exact original file writer matches this request.','unavailable',409)
-            if (journal['runs'] or journal['producers'] or journal[other]
+            if (journal['runs'] or journal['producers'] or journal.get('native_phases') or journal.get('native_admissions') or journal[other]
                     or journal[own]!=[expected] or other_pending
                     or any(key!=request_key or value!=expected for key,value in pending.items())):
                 raise WorkbenchError('Other original local custody remains unresolved.','outcome_unknown',409)
             self._assert_run_drained()
+            self.native.assert_quiescent()
             if self.producer_execution is not None:self.producer_execution.assert_quiescent()
             binding=self.custody.binding
             if (binding['projection_id']!=self.db.projection_id or binding['project_id']!=self.db.dataset_id
@@ -439,6 +443,7 @@ class ProjectExecution:
                     consumption=dict(consumption) if consumption is not None else None, admission=admission)
 
     def _authorize_observation(self):
+        self.native.authorize_dirty()
         context = self.runtime_access._context() if self._dirty_runs else None
         for identity in self._dirty_runs:
             row = self.db.execute('SELECT document FROM workspace_runs WHERE id=%s', (identity,)).fetchone()
@@ -484,11 +489,16 @@ class ProjectExecution:
                 runtime = self.projection.materials.capture_runtime(dict(ref=ref, descriptor=descriptor,
                     environment=None if descriptor is not None else environment, manifest=manifest), raw)
                 records.extend([runtime, *self.projection.materials.declarations(runtime)])
-        if self.custody is not None:
+        if self.custody is not None and run.get('execution_kind')=='external_recipe':
             with self._journal_guard():
                 if not self.custody.has_pending:self.custody.acknowledge(self.session.snapshot)
                 receipt=next((edge['blob']['sha256'] for edge in payloads if edge['name']=='custody-receipt.json'),None)
                 self.custody.observe_run(run,receipt_sha256=receipt)
+        elif self.custody is not None:
+            with self._journal_guard():
+                if not self.custody.has_pending:self.custody.acknowledge(self.session.snapshot)
+                if run['state'] in ('queued','running','cancelling','unknown'):
+                    self.custody.observe_native_admission(run)
         return records
 
     def capture_dirty(self, before_records):
@@ -507,6 +517,7 @@ class ProjectExecution:
             records.extend(self.study_execution.capture_dirty(before_records))
         if self.producer_execution is not None:
             records.extend(self.producer_execution.capture_dirty(before_records))
+        records.extend(self.native.capture_dirty(before_records))
         # Shared immutable blobs can appear on several domain edges.
         merged = {}
         for record in records:
@@ -519,7 +530,7 @@ class ProjectExecution:
     def before_commit(self):
         if self._reconstructing or self.session.foreground_publication:
             return
-        if not self._dirty_runs and not self._pending_studies and not any(self._pending_producers.values()) and self.study_execution is None and self.producer_execution is None:
+        if not self._dirty_runs and not self._pending_studies and not any(self._pending_producers.values()) and not self.native.has_dirty and self.study_execution is None and self.producer_execution is None:
             return
         snapshot = self.session.snapshot
         records = self.capture_dirty(snapshot['records'])
@@ -534,11 +545,16 @@ class ProjectExecution:
         if self._reconstructing:
             return
         self.session._observation_outcome(outcome)
+        self.native.outcome(outcome)
         if self.custody is not None and outcome=='committed':
             try:
                 if self._journal_publication_pending:self.custody.acknowledge(self.session.snapshot)
                 for identity in sorted(self._dirty_runs):
                     run=self.runs._load(identity)
+                    self.native.settle_run(run)
+                    if run.get('execution_kind')!='external_recipe' and run['state'] in ('completed','failed','cancelled','interrupted'):
+                        if any(row['run_id']==identity for row in self.custody.snapshot().get('native_admissions',[])):
+                            self.custody.settle_native_admission(identity)
                     entry=next((item for item in self.custody.snapshot()['runs'] if item['run_id']==identity),None)
                     if entry is not None and run['state'] in ('completed','failed','cancelled','interrupted') and (
                             run['custody_phase']=='drained' and entry['receipt_sha256'] is not None
@@ -562,6 +578,7 @@ class ProjectExecution:
         if not self._reconstructing:
             raise RuntimeError('Pending execution capture may clear only during guarded inert reconstruction.')
         self._dirty_runs.clear();self._pending_studies.clear()
+        self.native.abandon_pending()
         for values in self._pending_producers.values():values.clear()
 
     def mutate(self, operation, target, body, expected_checkpoint, key, invoke, capture, *, scope='edit'):
@@ -576,6 +593,64 @@ class ProjectExecution:
         with self.access.lock, self.session.lock, self.db.lock:
             self.session.check()
             return self.projection.pipelines.preflight_external(graph_id, revision)
+
+    def native_preflight(self,graph_id,revision,expected_checkpoint,key):
+        self.runtime_access.require('execute','runs.native_preflight',graph_id,owner_only=True)
+        return self.projection.native_preparation.validate_graph(self.projection.pipelines,
+            graph_id,revision,expected_checkpoint,key)
+
+    def _native_replay(self,operation,target,body,expected_checkpoint,key):
+        prior=operation_records(self.session.snapshot['records']).get(key)
+        if prior is None:return None
+        if (prior['operation']!=operation or self.db.execute('SELECT id FROM workspace_runs WHERE id=%s',
+                (prior['result'].get('run_id'),)).fetchone() is None):
+            raise WorkbenchError('A retained native receipt cannot create current local execution.','unavailable',409)
+        def forbidden():raise RuntimeError('Native admission replay attempted another qualification.')
+        return self.mutate(operation,target,body,expected_checkpoint,key,forbidden,
+            lambda value,before:dict(records=[],result=value),scope='execute')
+
+    def native_submit(self,body,expected_checkpoint,key):
+        from pipeline import closed
+        closed(body,('graph_id','graph_revision','validation_token'))
+        actor=self.runtime_access.require('execute','runs.submit',body['graph_id'],owner_only=True)
+        effective=dict(body,actor_id=actor.actor_id)
+        with self.db.lock:
+            self.session.check()
+            replay=self._native_replay('runs.submit',body['graph_id'],effective,expected_checkpoint,key)
+            if replay is not None:return replay
+        with self.projection.native_preparation.current_graph(self.projection.pipelines,body['graph_id'],
+                body['graph_revision'],expected_checkpoint,key) as context:
+            if context.validation['validation_token']!=body['validation_token']:
+                raise WorkbenchError('Native validation is stale. Explicitly validate this saved graph.','stale',409)
+            def invoke():
+                context.consume_admission()
+                owner=self._local_owner();public=owner.submit(dict(body,request_key=key))
+                return _admission_result(owner._load(public['id']))
+            return self.mutate('runs.submit',body['graph_id'],effective,self.session.snapshot['checkpoint'],key,
+                invoke,lambda value,before:dict(records=[],result=value),scope='execute')
+
+    def native_retry(self,run_id,expected_checkpoint,key):
+        actor=self.runtime_access.require('execute','runs.retry',run_id,owner_only=True)
+        body=dict(actor_id=actor.actor_id)
+        with self.db.lock:
+            self.session.check()
+            replay=self._native_replay('runs.retry',run_id,body,expected_checkpoint,key)
+            if replay is not None:return replay
+            if self._runs is None:raise WorkbenchError('Retry requires the actual current local Run owner.','unavailable',409)
+            parent=self._runs._load(run_id)
+            if self._runs._external(parent) or parent['state'] not in ('failed','cancelled','interrupted'):
+                raise WorkbenchError('Choose a drained failed/cancelled/interrupted current native Run.','conflict',409)
+        with self.projection.native_preparation.current_graph(self.projection.pipelines,parent['graph']['id'],
+                parent['graph_revision'],expected_checkpoint,key) as context:
+            def invoke():
+                context.consume_admission()
+                owner=self.runs;public=owner.retry(run_id,dict(request_key=key))
+                return _admission_result(owner._load(public['id']))
+            return self.mutate('runs.retry',run_id,body,self.session.snapshot['checkpoint'],key,
+                invoke,lambda value,before:dict(records=[],result=value),scope='execute')
+
+    def native_reconcile(self,phase_id,expected_checkpoint):
+        return self.native.reconcile(phase_id,expected_checkpoint)
 
     def submit_external(self, body, expected_checkpoint, key):
         authority = self.runtime_access.require_external_submission()
@@ -650,11 +725,19 @@ class ProjectExecution:
             rows = [json.loads(row['document']) for row in self.db.execute('SELECT document FROM workspace_runs')]
             active = {row['id'] for row in rows if row['state'] in ('queued','running','cancelling','unknown')}
             with self._custody_lock:active.update(self._active_attempts)
+            native=self.custody.snapshot().get('native_phases',[]) if self.custody is not None else []
+            native=sorted(native,key=lambda item:item['phase_id'])
+            phases=[dict(format='project_native_phase_v1',origin_catalog_id=self.db.dataset_id,
+                phase_id=item['phase_id'],phase=item['phase'],run_id=item['run_id'],
+                state='prepared' if item['state'] in ('launch_intent','launched') else item['state'],
+                spec_sha256=item['spec_sha256'],receipt_sha256=item['receipt_sha256']) for item in native[offset:offset+limit]]
             return dict(format='project_execution_health_v1', active_run_ids=sorted(active)[offset:offset+limit],
                         active_count=len(active), offset=offset, limit=limit,
+                        native_phases=dict(items=phases,total=len(native),offset=offset,limit=limit),
                         local_owner_active=self._runs is not None,
                         available=self.session.available and self.db.dataset_id != self.access.catalog_id,
                         drain_required=bool(self.custody is not None and self.custody.has_pending
+                            or self.native.has_local_custody
                             or self._runtime_active or self._package_active
                             or self._runs is not None and self._runs._thread is not None and self._runs._thread.is_alive()))
 
@@ -668,11 +751,12 @@ class ProjectExecution:
                 if any(_allow_file!=(kind,key) for key in pending):
                     raise WorkbenchError('A current runtime or package publication requires exact reconciliation.','outcome_unknown',409)
             self._assert_run_drained()
+            self.native.assert_quiescent()
             for adapter in (self.study_execution,self.producer_execution):
                 if adapter is not None:adapter.assert_quiescent()
             if self.custody is not None:
                 journal=self.custody.snapshot()
-                if journal['runs'] or journal['producers']:
+                if journal['runs'] or journal['producers'] or journal.get('native_phases') or journal.get('native_admissions'):
                     raise WorkbenchError('Original local custody remains unresolved.','outcome_unknown',409)
 
     def _assert_run_drained(self):
@@ -713,6 +797,7 @@ class ProjectExecution:
     def reconcile_current(self):
         """Reconcile only retained current-local custody, never imported handles."""
         self.runtime_access.require('cancel', 'project_execution.reconcile', owner_only=True)
+        self._require_no_native_phase_reconciliation()
         if self._runs is None:
             raise WorkbenchError('No current local custody owner exists to reconcile.', 'unavailable', 409)
         if self.db.lock.owned_by_current_thread or self.db.in_transaction:
@@ -740,6 +825,7 @@ class ProjectExecution:
         if self.producer_execution is not None:self.producer_execution.assert_quiescent()
         with self.access.lock, self.session.lock, self.db.lock:
             self.runtime_access.require('cancel','project_execution.reconcile',owner_only=True)
+            self._require_no_native_phase_reconciliation()
             snapshot = self.session.store.recover_checkpoint()
             self.projection.reconcile_inert(snapshot)
             canonical = {item['document']['run']['id']:item['document']['run'] for item in snapshot['records']
@@ -758,6 +844,17 @@ class ProjectExecution:
                             raise WorkbenchError('Current local admission differs from canonical custody.', 'unknown', 409)
                         run = copy.deepcopy(retained)
                         handle = handles.get(run['id'])
+                        if run.get('execution_kind')!='external_recipe':
+                            # No native phase can launch without first entering
+                            # the private phase journal. A drained original
+                            # supervisor plus a never-started native admission
+                            # may therefore terminate without inventing receipt
+                            # or interpreting an external custody specification.
+                            self._native_never_started(local,retained)
+                            owner._event(run,'interrupted','Original native admission ended before phase dispatch; execution was not replayed.')
+                            from runs import LOCAL_RUN_FIELDS
+                            run.update({key:copy.deepcopy(value) for key,value in local.items() if key in LOCAL_RUN_FIELDS})
+                            owner._save(run);reconciled.append(run['id']);continue
                         if handle is None:
                             if run['custody_phase']!='prepared' or run.get('custody_identity') is not None:
                                 raise WorkbenchError('Canonical execution has no current local custody proof.', 'unknown', 409)
@@ -778,6 +875,13 @@ class ProjectExecution:
                         owner._event(run,state,'Explicit current-host reconciliation confirmed custody drainage; execution was not replayed.')
                         owner._save(run)
                         reconciled.append(run['id'])
+                # A foreground canonical admission may have survived a rolled
+                # back SQL admission. Clearing that original non-effect intent
+                # neither restores SQL authority nor rewrites historical state.
+                for entry in self.custody.snapshot().get('native_admissions',[]) if self.custody is not None else []:
+                    if self.db.execute('SELECT id FROM workspace_runs WHERE id=%s',(entry['run_id'],)).fetchone() is None:
+                        self._native_unacknowledged(entry,canonical.get(entry['run_id']))
+                        with self._journal_guard():self.custody.settle_native_admission(entry['run_id'])
                 self.assert_quiescent()
             except BaseException:
                 self.session.available = False
@@ -785,6 +889,33 @@ class ProjectExecution:
                 raise
             return dict(format='project_execution_reconciliation_v1', origin_catalog_id=self.db.dataset_id,
                         run_ids=sorted(reconciled), available=self.session.available)
+
+    def _require_no_native_phase_reconciliation(self):
+        if self.native.has_local_custody or self.custody is not None and self.custody.snapshot().get('native_phases'):
+            raise WorkbenchError('Reconcile the exact current native phase with native_reconcile before generic Run reconciliation.','unavailable',409)
+
+    def _native_never_started(self,local,retained):
+        """Prove absence of phase dispatch from the original private journal."""
+        entry=next((row for row in self.custody.snapshot().get('native_admissions',[])
+                    if row['run_id']==local['id']),None) if self.custody is not None else None
+        if (entry is None or entry['phase_started'] or local.get('process_phase')!='not_started'
+                or local.get('worker') is not None or local.get('execution_kind')=='external_recipe'
+                or any(retained.get(key)!=local.get(key) for key in
+                    ('id','dataset_id','admission_id','request_sha256','graph_sha256','release_sha256','runtime'))
+                or entry['admission_id']!=local['admission_id'] or entry['request_sha256']!=local['request_sha256']
+                or entry['graph_sha256']!=local['graph_sha256'] or entry['release_sha256']!=local['release_sha256']
+                or entry['runtime_sha256']!=digest(local['runtime'])):
+            raise WorkbenchError('Native admission lacks original never-dispatched phase proof.','unknown',409)
+
+    def _native_unacknowledged(self,entry,retained):
+        if entry['phase_started']:
+            raise WorkbenchError('A native phase may have dispatched; its current receipt is required.','unknown',409)
+        if self.db.execute('SELECT id FROM access_admissions WHERE id=%s',(entry['admission_id'],)).fetchone() is not None:
+            raise WorkbenchError('An incomplete original native SQL admission needs investigation.','unknown',409)
+        if retained is not None and (retained.get('execution_kind')=='external_recipe' or retained['state']!='queued'
+                or any(entry[key]!=retained[key] for key in ('admission_id','request_sha256','graph_sha256','release_sha256'))
+                or entry['runtime_sha256']!=digest(retained['runtime'])):
+            raise WorkbenchError('Original unacknowledged native admission differs from canonical history.','unknown',409)
 
     def reconcile_original(self, *, expected_checkpoint, timeout=15):
         """Explicit original-host receipt reconciliation, without PID control.
@@ -794,6 +925,7 @@ class ProjectExecution:
         No Run owner exists until all journal/local-SQL/receipt proofs pass.
         """
         self.runtime_access.require('cancel','project_execution.reconcile_original',owner_only=True)
+        self._require_no_native_phase_reconciliation()
         if self.custody is None or self._runs is not None:
             raise WorkbenchError('Original custody requires its indexed inactive physical projection.','local_custody_unavailable',409)
         if self.db.lock.owned_by_current_thread or self.db.in_transaction:
@@ -808,7 +940,7 @@ class ProjectExecution:
                    if item['family']=='run_history' and item['document']['origin_catalog_id']==self.db.dataset_id}
         plans=[];unacknowledged=[];receipts={}
         with self.db.lock:
-            if journal['runs'] and not self.db.claim_runtime('workspace_runs'):
+            if (journal['runs'] or journal.get('native_admissions')) and not self.db.claim_runtime('workspace_runs'):
                 raise WorkbenchError('The original Run application still owns this physical projection.','busy',409)
             from project_producer_execution import TABLES as PRODUCER_TABLES
             for producer in journal['producers']:
@@ -835,6 +967,17 @@ class ProjectExecution:
                 if entry['phase']!='admitted' and entry['custody_identity'] is None:
                     raise WorkbenchError('Original spawn window lacks an observed helper identity; cessation remains unknown.','unknown',409)
                 plans.append((entry,copy.deepcopy(retained)))
+            native_plans=[]
+            for entry in journal.get('native_admissions',[]):
+                row=self.db.execute('SELECT document FROM workspace_runs WHERE id=%s',(entry['run_id'],)).fetchone()
+                if row is None:
+                    self._native_unacknowledged(entry,canonical.get(entry['run_id']))
+                    unacknowledged.append(entry['run_id']);continue
+                local=json.loads(row['document']);retained=canonical.get(entry['run_id'])
+                self._proof(local)
+                if retained is None:raise WorkbenchError('Original native Run is missing its canonical admission.','unknown',409)
+                self._native_never_started(local,retained)
+                native_plans.append((local,copy.deepcopy(retained)))
         # Poll only exact original local receipt files. Never signal a stored PID,
         # import a controller handle, replay GO or execute a project script.
         if any(entry['custody_identity'] is not None for entry,run in plans):
@@ -861,7 +1004,7 @@ class ProjectExecution:
             self.runtime_access.require('cancel','project_execution.reconcile_original',owner_only=True)
             self.custody.validate_selection(self.session.store.snapshot())
             self.projection.reconcile_inert(snapshot)
-            owner=self._local_owner(recover=False) if plans else None
+            owner=self._local_owner(recover=False) if plans or native_plans else None
             if owner is not None:owner._fence_coordinator()
             try:
                 if owner is not None:
@@ -878,7 +1021,15 @@ class ProjectExecution:
                             else:state='cancelled'
                             owner._event(run,state,'Original-host exact local custody reconciled; execution was not resumed.')
                             owner._save(run)
-                for identity in unacknowledged:self.custody.settle_run(identity)
+                        for local,run in native_plans:
+                            from runs import LOCAL_RUN_FIELDS
+                            run.update({key:copy.deepcopy(value) for key,value in local.items() if key in LOCAL_RUN_FIELDS})
+                            owner._event(run,'interrupted','Original native admission ended before phase dispatch; execution was not resumed.')
+                            owner._save(run)
+                for identity in unacknowledged:
+                    if any(row['run_id']==identity for row in journal.get('native_admissions',[])):
+                        self.custody.settle_native_admission(identity)
+                    else:self.custody.settle_run(identity)
                 for producer in journal['producers']:
                     self.custody.producer_outcome(producer['family'],producer['producer_id'],'not_admitted',True)
                 self.custody.acknowledge(self.session.snapshot)
@@ -887,4 +1038,4 @@ class ProjectExecution:
                 if owner is not None:owner._fence_coordinator()
                 raise
             return dict(format='project_execution_reconciliation_v1',origin_catalog_id=self.db.dataset_id,
-                        run_ids=sorted([run['id'] for entry,run in plans]),available=self.session.available)
+                        run_ids=sorted([run['id'] for entry,run in plans]+[run['id'] for local,run in native_plans]),available=self.session.available)

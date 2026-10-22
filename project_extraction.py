@@ -594,6 +594,27 @@ class _Capture:
             self.need('dataset_release', run['release_id'], key, 'exact native frozen input')
             for source in run['source_records']:
                 self.need('workbench_record', source['id'], key, 'retained native scientific input')
+            from pipeline import adapter_for_graph, decode_probe_observation
+            import release_validation
+            # Whole-asset integrity runs execute in-process and do not create
+            # the training source staging directory. Trainable native runs do;
+            # only those original, hash-bound copies prove their implementation.
+            if adapter_for_graph(run['graph']) is not release_validation:
+                if 'definition_files' not in run['runtime']:
+                    self.issue(key, 'source_identity_unavailable', 'Native training Run has no retained original source inventory.')
+                else:
+                    observation = decode_probe_observation(run['graph'].get('recipe', 'image_classification'),
+                        run['runtime'], with_definition=True)
+                    for name, expected in sorted(observation['definition_files'].items()):
+                        try:
+                            raw = self.source.read_catalog('workspace-runs/.staging-' + identity + '/' + name, MAX_PAYLOAD)
+                        except (OSError, WorkbenchError):
+                            self.issue(key, 'missing_source', 'Original native training source ' + name + ' is unavailable.')
+                            continue
+                        if hashlib.sha256(raw).hexdigest() != expected:
+                            self.issue(key, 'corrupt_source', 'Original native training source ' + name + ' differs from its retained hash.')
+                            continue
+                        payload('source/' + name, dict(sha256=expected, bytes=len(raw)), 'execution_source', raw=raw)
         for item in run['artifacts']:
             try:raw = self.source.read_catalog('workspace-runs/' + identity + '/' + item['name'], min(MAX_PAYLOAD, max(item['bytes'], 1)))
             except (OSError, WorkbenchError):raw = None

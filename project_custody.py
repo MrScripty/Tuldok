@@ -13,6 +13,9 @@ import re
 import stat
 import threading
 import uuid
+from run_capacity import MAX_ATTEMPTS
+
+NATIVE_PHASE_LIMIT=3*MAX_ATTEMPTS+1
 
 import agent_api
 from workbench import WorkbenchError
@@ -49,9 +52,12 @@ def records_sha256(records):
 
 
 def validate(value):
-    _shape(value,('format','host_catalog_id','project_id','root_identity','projection_id',
-                  'project_name','selected_checkpoint','attempted','runs','producers','runtime_effects','package_effects'))
-    if value['format']!='project_local_custody_v1':_fail('Unsupported local custody format.')
+    version=value.get('format') if type(value) is dict else None
+    fields=('format','host_catalog_id','project_id','root_identity','projection_id',
+            'project_name','selected_checkpoint','attempted','runs','producers','runtime_effects','package_effects')
+    _shape(value,(*fields,*(['native_phases'] if version in ('project_local_custody_v2','project_local_custody_v3') else []),
+                        *(['native_admissions'] if version=='project_local_custody_v3' else [])))
+    if version not in ('project_local_custody_v1','project_local_custody_v2','project_local_custody_v3'):_fail('Unsupported local custody format.')
     for key in ('host_catalog_id','project_id','projection_id'):_id(value[key])
     if type(value['project_name']) is not str or not value['project_name'].strip() or len(value['project_name'])>200:
         _fail('Invalid retained local project name.')
@@ -107,6 +113,38 @@ def validate(value):
             seen.add(key)
             for field in ('input_sha256',identity_field):
                 if entry[field] is not None:_sha(entry[field])
+    native=value.get('native_phases',[])
+    if type(native) is not list or len(native)>(NATIVE_PHASE_LIMIT if version=='project_local_custody_v3' else 16):_fail('Too many unresolved native phases.')
+    seen=set()
+    for phase in native:
+        _shape(phase,('phase_id','phase','run_id','request_sha256','spec_sha256','state','helper','receipt_sha256'))
+        _id(phase['phase_id']);_sha(phase['request_sha256']);_sha(phase['spec_sha256'])
+        if phase['phase_id'] in seen or phase['phase'] not in ('probe','train','verify'):
+            _fail('Invalid or duplicate native phase custody.')
+        seen.add(phase['phase_id'])
+        if phase['phase']!='probe' and phase['run_id'] is None:_fail('Native phase Run association differs.')
+        if phase['run_id'] is not None:_id(phase['run_id'])
+        if phase['state'] not in ('prepared','launch_intent','launched','ready','go_intent','completed','failed','unknown'):
+            _fail('Unclassified native custody state.')
+        from recipe_process import valid_identity
+        if phase['helper'] is not None and not valid_identity(phase['helper']):_fail('Invalid native helper observation.')
+        if phase['state'] in ('launched','ready','go_intent','completed') and phase['helper'] is None:
+            _fail('Native launched custody lacks its actual helper identity.')
+        if phase['receipt_sha256'] is not None:
+            _sha(phase['receipt_sha256'])
+            if phase['state'] not in ('completed','failed') or phase['helper'] is None:
+                _fail('Native terminal receipt lacks exact helper drainage.')
+        if phase['state']=='completed' and phase['receipt_sha256'] is None:_fail('Native completion requires drainage proof.')
+    admissions=value.get('native_admissions',[])
+    if type(admissions) is not list or len(admissions)>16:_fail('Too many unresolved native admissions.')
+    seen=set()
+    for admission in admissions:
+        _shape(admission,('run_id','admission_id','request_sha256','graph_sha256','release_sha256','runtime_sha256','phase_started'))
+        for key in ('run_id','admission_id'):_id(admission[key])
+        for key in ('request_sha256','graph_sha256','release_sha256','runtime_sha256'):_sha(admission[key])
+        if admission['run_id'] in seen or type(admission['phase_started']) is not bool:
+            _fail('Invalid or duplicate native admission custody.')
+        seen.add(admission['run_id'])
     return copy.deepcopy(value)
 
 
@@ -192,7 +230,7 @@ class ProjectCustody:
                 if self._name(value)!=name or value['host_catalog_id']!=self.host_catalog_id:
                     _fail('Local custody filename differs from its host binding.')
                 if value['root_identity']!=binding['root_identity']:continue
-                if value['runs'] or value['producers'] or value['runtime_effects'] or value['package_effects']:
+                if value['runs'] or value['producers'] or value['runtime_effects'] or value['package_effects'] or value.get('native_phases') or value.get('native_admissions'):
                     result.append({key:copy.deepcopy(value[key]) for key in ('host_catalog_id','project_id','root_identity','projection_id')})
             return result
         finally:os.close(directory)
@@ -217,7 +255,7 @@ class CustodyJournal:
 
     @property
     def has_pending(self):
-        with self.lock:return bool(self.value['runs'] or self.value['producers'] or self.value['runtime_effects'] or self.value['package_effects'])
+        with self.lock:return bool(self.value['runs'] or self.value['producers'] or self.value['runtime_effects'] or self.value['package_effects'] or self.value.get('native_phases') or self.value.get('native_admissions'))
 
     def snapshot(self):
         with self.lock:return copy.deepcopy(self.value)
@@ -333,6 +371,97 @@ class CustodyJournal:
 
     def settle_run(self, run_id):
         def change(value):value['runs']=[item for item in value['runs'] if item['run_id']!=run_id]
+        self._change(change)
+
+    def observe_native_admission(self,run):
+        """Original physical admission intent; never a replay/GO capability."""
+        from pipeline import digest
+        entry=dict(run_id=run['id'],admission_id=run['admission_id'],request_sha256=run['request_sha256'],
+            graph_sha256=run['graph_sha256'],release_sha256=run['release_sha256'],runtime_sha256=digest(run['runtime']))
+        def change(value):
+            value['format']='project_local_custody_v3';value.setdefault('native_phases',[])
+            rows=value.setdefault('native_admissions',[])
+            old=next((item for item in rows if item['run_id']==run['id']),None)
+            if old is None:rows.append(dict(entry,phase_started=False))
+            elif any(old[key]!=item for key,item in entry.items()):_fail('Native admission differs from its original physical intent.')
+            rows.sort(key=lambda row:row['run_id'])
+        self._change(change)
+
+    def settle_native_admission(self,run_id):
+        def change(value):
+            if any(row['run_id']==run_id for row in value.get('native_phases',[])):
+                _fail('Native admission still has unresolved phase custody.')
+            value['native_admissions']=[row for row in value.get('native_admissions',[]) if row['run_id']!=run_id]
+        self._change(change)
+
+    def native_prepared(self, phase):
+        """Fence one acknowledged, current native phase on this physical host."""
+        from recipe_process import encoded
+        entry=dict(phase_id=phase['phase_id'],phase=phase['phase'],run_id=phase['run_id'],
+            request_sha256=phase['request_sha256'],spec_sha256=hashlib.sha256(encoded(phase['spec'])).hexdigest(),
+            state='prepared',helper=None,receipt_sha256=None)
+        def change(value):
+            if value['format']=='project_local_custody_v1':value['format']='project_local_custody_v2'
+            value.setdefault('native_phases',[])
+            if entry['run_id'] is not None:
+                admission=next((row for row in value.get('native_admissions',[]) if row['run_id']==entry['run_id']),None)
+                if admission is None:_fail('A current native Run phase requires its original physical admission.')
+                admission['phase_started']=True
+            old=next((row for row in value['native_phases'] if row['phase_id']==entry['phase_id']),None)
+            if old is not None:_fail('A native phase cannot register another current launch.')
+            value['native_phases'].append(entry);value['native_phases'].sort(key=lambda row:row['phase_id'])
+        self._change(change)
+
+    def native_launch_intent(self, phase_id):
+        def change(value):
+            row=next((row for row in value.get('native_phases',[]) if row['phase_id']==phase_id),None)
+            if row is None or row['state']!='prepared':_fail('Native launch requires its current acknowledged specification.')
+            row['state']='launch_intent'
+        self._change(change)
+
+    def native_launched(self, phase_id, helper):
+        def change(value):
+            row=next((row for row in value.get('native_phases',[]) if row['phase_id']==phase_id),None)
+            if row is None or row['state']!='launch_intent':_fail('Native helper has no current launch intent.')
+            row.update(state='launched',helper=copy.deepcopy(helper))
+        self._change(change)
+
+    def native_observed(self, phase):
+        from recipe_process import encoded
+        def change(value):
+            row=next((row for row in value.get('native_phases',[]) if row['phase_id']==phase['phase_id']),None)
+            if row is None:_fail('Native observation has no original local phase.')
+            event=phase['events'][-1]
+            if (row['request_sha256']!=phase['request_sha256'] or row['phase']!=phase['phase']
+                    or row['run_id']!=phase['run_id'] or event['helper']!=row['helper']
+                    or row['spec_sha256']!=hashlib.sha256(encoded(phase['spec'])).hexdigest()):
+                _fail('Native observation differs from original local custody.')
+            transitions={'prepared':('failed',),'launch_intent':('failed',),
+                         'launched':('ready','failed','unknown'),'ready':('go_intent','failed','unknown'),
+                         'go_intent':('completed','failed','unknown')}
+            if event['state'] not in transitions.get(row['state'],()):
+                _fail('Native custody observation cannot skip or replay its acknowledged phase.')
+            row.update(state=event['state'],receipt_sha256=event['receipt_sha256'])
+        self._change(change)
+
+    def native_confirmed(self, phase_id):
+        def change(value):
+            row=next((row for row in value.get('native_phases',[]) if row['phase_id']==phase_id),None)
+            if row is None or row['state'] not in ('completed','failed') or row['receipt_sha256'] is None:
+                _fail('Native phase cannot settle without acknowledged terminal drainage.')
+            value['native_phases']=[item for item in value['native_phases'] if item['phase_id']!=phase_id]
+        self._change(change)
+
+    def native_not_launched(self,phase_id):
+        """Settle only the caller's proven never-entered launch boundary."""
+        def change(value):
+            row=next((item for item in value.get('native_phases',[]) if item['phase_id']==phase_id),None)
+            if row is None or row['state']!='failed' or row['helper'] is not None or row['receipt_sha256'] is not None:
+                _fail('Never-launched native settlement requires its acknowledged failed non-process fact.')
+            value['native_phases']=[item for item in value['native_phases'] if item['phase_id']!=phase_id]
+            if row['run_id'] is not None and not any(item['run_id']==row['run_id'] for item in value['native_phases']):
+                admission=next((item for item in value.get('native_admissions',[]) if item['run_id']==row['run_id']),None)
+                if admission is not None:admission['phase_started']=False
         self._change(change)
 
     def register_producer(self, family, producer_id, admission_id, request_digest):

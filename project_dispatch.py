@@ -29,14 +29,14 @@ _HISTORY_ACTIONS = frozenset(('studies', 'study', 'study_create', 'study_save', 
     'retained_analysis', 'retained_analysis_export', 'policies', 'policy', 'dependencies',
     'publication_result', 'package_state', 'expose_holdout', 'run_document_segment'))
 _OTHER_ACTIONS = frozenset(('artifacts', 'artifact_status', 'artifact_resolve', 'producers', 'producer', 'source_register', 'source_references'))
-_EXECUTION_ACTIONS = frozenset(('execution_health', 'execution_preflight_external', 'execution_approve_external',
+_EXECUTION_ACTIONS = frozenset(('native_preflight','native_submit','native_retry','native_reconcile','execution_health', 'execution_preflight_external', 'execution_approve_external',
     'execution_submit_external', 'execution_cancel', 'execution_study_continue', 'execution_study_approve',
     'execution_study_admit', 'execution_study_stop', 'execution_reconcile_current',
     'execution_producer_start', 'execution_generation_resume', 'execution_grounded_review',
     'execution_producer_decide', 'execution_producer_cancel', 'execution_producer_health',
     'execution_study_prepare_package','execution_study_prepare_verifier','execution_study_abandon_preparation','execution_study_reconcile_preparation'))
 _RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon'))
-_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','material_intents','material_intent','material_intent_capabilities','fork_info'))
+_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
     _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS)
 
@@ -202,8 +202,14 @@ def _material(projection, action, a):
         body = _body(a, 'recipe_id')
         return materials.mutate_definition('recipe_definition', 'recipes.save', a['recipe_id'], body, cp, key, lambda: pipelines.save_recipe(a['recipe_id'], body))
     if action == 'recipe_prepare':
+        from pipeline import model_aware_graph
+        graph=pipelines.get(a['graph_id']);builtin=model_aware_graph(graph)
+        if graph.get('recipe')!='external_recipe' and not builtin:
+            raise WorkbenchError('This native graph does not support composed model material.','unsupported',409)
+        if 'builtin' in a and a['builtin'] is not builtin:
+            raise WorkbenchError('Recipe preparation kind differs from the saved graph.','conflict',409)
         return materials.prepare_recipe(pipelines, a['graph_id'], a['revision'], a['model'], cp, key,
-            builtin=a.get('builtin', False), reconcile_capture=a.get('reconcile_capture', False),
+            builtin=builtin, reconcile_capture=a.get('reconcile_capture', False),
             runtime_manifest=projection.runtime_manifest)
     raise AssertionError('Closed material dispatch is incomplete.')
 
@@ -300,7 +306,11 @@ def _execution(projection, action, a):
     if action=='execution_study_reconcile_preparation':
         if execution.study_execution is None:raise WorkbenchError('Current Study execution is unavailable.','unavailable',409)
         return execution.study_execution.reconcile_preparation(a['study_id'],_body(a,'study_id'),a['expected_checkpoint'])
+    if action=='native_reconcile':return execution.native_reconcile(a['phase_id'],a['expected_checkpoint'])
     cp, key = a['expected_checkpoint'], a['request_key']
+    if action=='native_preflight':return execution.native_preflight(a['graph_id'],a['revision'],cp,key)
+    if action=='native_submit':return execution.native_submit(_body(a),cp,key)
+    if action=='native_retry':return execution.native_retry(a['run_id'],cp,key)
     if action == 'execution_producer_start' or action in ('execution_generation_resume', 'execution_grounded_review', 'execution_producer_decide', 'execution_producer_cancel'):
         producers = execution.producer_execution
         if producers is None:
@@ -349,13 +359,15 @@ def _m4(projection,action,a):
     session=projection.session
     if action=='file_adopt':
         return projection.files.adopt(_body(a),a['expected_checkpoint'],a['request_key'])
+    if action=='file_adopt_deletion':
+        return projection.files.adopt_deletion(_body(a),a['expected_checkpoint'],a['request_key'])
     with session.access.lock,session.lock,session.db.lock:
         session.access.require('inspect','project_files.'+action);snapshot=session.check()
         if action=='files_inspect':return _page(projection.files.inspect()['items'],a)
         if action=='file_get':return projection.files.read(a['file_id'],a.get('revision'))
         if action=='file_history':
             values=projection.files.history(a['file_id'])
-            return dict(id=a['file_id'],**_page([{k:v[k] for k in ('revision','sha256','bytes','adopted_at','actor_id')} for v in values],a))
+            return dict(id=a['file_id'],**_page([{k:v[k] for k in ('revision','sha256','bytes','adopted_at','actor_id',*(['deleted'] if v.get('deleted') is True else []))} for v in values],a))
         if action in ('material_intents','material_intent'):
             intents=projection.materials.intents()
             if action=='material_intent':

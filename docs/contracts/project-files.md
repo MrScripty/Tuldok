@@ -118,8 +118,9 @@ Owner-only artifact resolution selects an existing file relative to a configured
 root. It verifies and durably copies the exact declared bytes. The receipt is a
 past resolution observation; `artifact_status` reports current availability.
 No network fetch, runtime installation, dependency activation or regeneration
-is performed. Built-in recipe preparation remains unavailable before a native
-runtime probe; retained native materials and historical evidence stay readable.
+is performed. For supported built-in graphs, explicit recipe preparation performs
+a guarded current native probe before retaining the immutable material. Reading
+retained native materials or historical evidence does not launch that probe.
 
 ## Explicit execution and recovery
 
@@ -129,6 +130,26 @@ intent are canonical before worker acknowledgement or GO. Measured terminal
 evidence, spent budget and lineage remain project facts. Imported history supplies
 no approval, admission epoch, cancellation right or resumable process. Producer
 requests and candidate preparation follow the same intent-before-effects rule.
+
+For supported native graphs, the current owner explicitly calls
+`project_files.native_preflight` with the saved graph ID and revision. A valid
+result binds its validation token to that exact graph and measured runtime.
+`native_submit` takes the graph ID, graph revision and token; admission rechecks
+current inputs and authority before launching a native Run. `native_retry`
+requires an actual current local Run and creates a new attempt. These actions
+require current owner execute permission, the workspace binding, expected
+checkpoint and a request key. `native_reconcile` instead selects an original
+current local phase with the binding and expected checkpoint, requires current
+owner cancel permission, and never sends GO. Its phase ID is available through
+the current native-phase page of execution health v2; imported phases are history,
+not current custody.
+
+Native execution uses the current operator's `TULDOK_TRAINING_PYTHON`, or the
+service interpreter when unset. Its installed packages remain an operator trust
+assumption; a runtime observation does not prove a complete dependency closure or
+model quality. Open and ordinary inspection do not probe, install, train, resume
+or activate a runtime. Retained validation, admission and phase facts do not grant
+execution authority after a cold Open.
 
 An optional current operator binding selects runtime sources:
 
@@ -196,7 +217,35 @@ Adopt explicitly captures the exact UTF-8 bytes of a selected script or note,
 including its history and measured hash. Merely editing a working file does not
 replace an immutable scientific capture. Open never executes, repairs or restores
 working files. Save As refuses an adopted file that is missing or changed until
-the owner explicitly adopts the intended version.
+its intended current bytes or an eligible note deletion are explicitly adopted.
+A missing script remains protected: note-deletion adoption cannot remove its
+captured script or make a missing script eligible for Save As.
+
+`project_files.file_adopt_deletion` is
+`POST /api/workspace/project-files/files/adopt-deletion`. It requires current edit
+permission and the usual `binding`, `expected_checkpoint` and `request_key`, plus
+`path`, `expected_revision` and `expected_sha256`. The path must identify an
+already adopted note that is safely absent. The revision and digest must match
+its current positive captured revision; an existing file, changed canonical
+revision/digest or unsafe path is refused. This action records absence; it never
+deletes a filesystem entry. Inspection and Open never adopt a deletion.
+
+The first adopted deletion changes that note's document to `project_file_v2`.
+All earlier positive revisions retain their exact original fields and text. A
+closed deletion revision adds `deleted:true` and contains `revision`,
+`sha256:null`, `bytes:0`, `text:null`, `adopted_at` and `actor_id`. This is distinct
+from an empty positive file, whose text is `""` and whose SHA256 is the empty-byte
+digest. `file_get` can select either revision; paged `file_history` returns
+metadata, including the deletion marker, without embedding full texts. Current
+inspection reports `deleted` only while that note remains safely absent, with
+null expected/observed digests and zero expected bytes.
+
+Save As retains the complete note history and deletion marker and leaves its
+current note path absent in the new destination. If a note is later recreated,
+inspection reports its changed current bytes. Explicit `file_adopt` with the
+tombstone's expected revision and the recreated file's measured SHA256 appends a
+positive revision; it preserves the deletion and earlier text in history. Open
+does not recreate the note or adopt its restoration.
 
 Save As publishes into a new absent directory, creates a new logical project and
 editable identities, retains original hashed envelopes and records origin maps.

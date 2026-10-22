@@ -589,6 +589,7 @@ class ProjectStudyExecution:
         closed(body,('revision','admission_epoch','trial_id'),('approval_id','parent_run_id'));request_key(key)
         authority=self.access.require_external_submission()
         with self.session.access.lock,self.session.lock,self.db.lock:
+            builtin=None
             self.session.check();self.refresh_authoring()
             prior=operation_records(self.session.snapshot['records']).get(key)
             if prior is not None:
@@ -600,7 +601,19 @@ class ProjectStudyExecution:
                 if expected_checkpoint!=self.session.snapshot['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
                 self.require_current_epoch(self.studies._study(study_id))
                 self.reject_historical_request(study_id,authority.actor_id,key,None)
-                self._materialize_trial(study_id,body['trial_id'])
+                trial=self._materialize_trial(study_id,body['trial_id'])
+                from pipeline import BUILTIN_TRAINERS
+                material=self.materials.recipe(trial['material'])
+                if material['material']['trainer']['id'] in BUILTIN_TRAINERS:
+                    self.access.require('execute','studies.admit_builtin',study_id,owner_only=True)
+                    from project_native_execution import native_admission_wall_seconds
+                    if material['material']['resource_envelope']['admitted_wall_seconds']<native_admission_wall_seconds():
+                        _invalid('Retained native material has an insufficient custody budget; explicitly prepare a new material.','stale')
+                    owner=self.execution._local_owner()
+                    from project_native_preparation import preparation_owner
+                    preparation=preparation_owner(owner.pipelines)
+                    if preparation is None:_invalid('Current native preparation is unavailable.','unavailable')
+                    builtin=(preparation,owner.pipelines,trial['material'])
             def invoke():
                 self.execution._local_owner()
                 result=self.studies.admit(study_id,dict(body,request_key=key));reservation=result['reservation']
@@ -609,6 +622,12 @@ class ProjectStudyExecution:
             # The submission policy above permits an approved agent. The native
             # admission consumes its exact current grant atomically; execute
             # here would incorrectly impose the host's owner-only policy.
+            if builtin is not None:
+                preparation,pipelines,ref=builtin
+                # Qualification may launch the explicit probe. It finishes
+                # before Session opens the finite admission transaction.
+                with preparation.admission(pipelines,ref,expected_checkpoint,key):
+                    return self._mutate('study_execution.admit',study_id,body,self.session.snapshot['checkpoint'],key,invoke,'inspect')
             return self._mutate('study_execution.admit',study_id,body,expected_checkpoint,key,invoke,'inspect')
 
     def stop(self,study_id,body,expected_checkpoint,key):

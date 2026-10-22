@@ -76,6 +76,40 @@ Re-reviewed collector SHA256:
 tests SHA256:
 `45193fbbc023061cd8dd91c22277f41ad626809e0c7ade81c99a8d9c2443b1ad`.
 
+## Native original-source closure correction
+
+A later source audit found that legacy native Run extraction retained source
+hashes but did not copy the original adapter bytes from the Run's retained
+`.staging-<Run ID>` directory. Non-model-aware Runs could therefore lack those
+unique bytes even when extraction reported complete. The finite collector now
+validates the declared runtime observation with the Pipeline owner and reads
+each original staged source through the anchored stopped-source capability.
+These are unique `source/<name>` history payloads. Missing/tampered originals or
+missing source identities block complete extraction; current host source code
+and source resolvers are never substitutes. The existing in-process integrity
+adapter has no training staging and is handled by that explicit owner distinction.
+
+Five distinct actual PostgreSQL cases passed across a first batch with three
+passes/two fixture errors and a corrected run of only those two cases (0.874s).
+They cover original bytes, missing/tampered capture, missing inventory and the
+affected two-Study history fixture. This is controlled retained-custody evidence;
+no native probe, training, child process or model-quality campaign ran. An earlier
+runner's output handle was lost; its exit status cannot be recovered and remains
+unverified. A subsequent `/proc` inspection found no surviving matching unittest
+process. No success/failure claim or reconstruction rerun is made for it.
+
+Final collector SHA256:
+`5164987980a236942ec066cbf61742f8b285b5641655dee15548251dac21285f`;
+new test file SHA256:
+`c260ed8276c917185377a0c8c31387de18b2dca59c32953be7f8df5ed320ed5a`.
+Raw logs:
+`/workspace/scratch/tuldok-save-load-qa/native-extraction-focused.log` and
+`/workspace/scratch/tuldok-save-load-qa/native-extraction-repaired-fixtures.log`.
+Independent targeted source review cleared this subject against actual legacy
+staging, the shared runtime decoder and the in-process integrity distinction.
+The reviewer performed no execution. This does not accept M5 or replace
+the pending complete native Run/Study/public and final integrated gates.
+
 See the
 [runbook](../../../runbooks/external-project-extraction.md) for the explicit
 source/control credential handoff and source-preservation boundary.

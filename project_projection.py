@@ -28,6 +28,8 @@ from project_files import ProjectFiles, decode_records as decode_file_records
 from project_files import validate_operation_result as validate_file_result
 from project_study_execution import ProjectStudyExecution, validate_operation_result as validate_study_execution_result
 from project_runtime import ProjectRuntime, validate_operation_result as validate_runtime_result
+from project_native_execution import FAMILY as NATIVE_FAMILY, decode_records as decode_native_records
+from project_native_preparation import ProjectNativePreparation, validate_operation_result as validate_preparation_result
 from project_sources import SourceAdapter, validate_operation_result as validate_source_result
 from workbench import WorkbenchError
 from workbench import timestamp
@@ -96,6 +98,8 @@ class ProjectProjection:
             self.source_adapter = SourceAdapter(self)
             self.text = _TextView(self)
             self.execution = ProjectExecution(self)
+            self.native_preparation=ProjectNativePreparation(self)
+            self.context.project_native_preparation=self.native_preparation
             self.runtime = ProjectRuntime(self, resolve_configuration=self.runtime_configuration)
             self.execution.producer_execution = ProjectProducerExecution(
                 self.session, self.data, self.producers,
@@ -121,7 +125,7 @@ class ProjectProjection:
 
     def validate_records(self, records, *, project_id=None):
         project_id = self.project_id if project_id is None else project_id
-        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_extraction'} | set(DATA_FAMILIES) | set(
+        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_extraction', NATIVE_FAMILY} | set(DATA_FAMILIES) | set(
             MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
         identities = set()
         declarations = {}
@@ -142,6 +146,7 @@ class ProjectProjection:
         decode_extraction_records(records)
         operation_records(records, project_id=project_id)
         decode_file_records(records)
+        decode_native_records(records,artifacts=self.artifacts)
         materials = decode_material_records(records)
         for document in materials.values():
             for edge in document.get('artifacts', []):
@@ -165,6 +170,7 @@ class ProjectProjection:
                     or validate_file_result(operation, result, records)
                     or validate_study_execution_result(operation, result, records)
                     or validate_runtime_result(operation, result, records)
+                    or validate_preparation_result(operation, result, records)
                     or validate_artifact_resolution(operation, result, records)):
                 continue
             raise WorkbenchError('No project owner accepts this operation receipt.', 'unsupported', 409)

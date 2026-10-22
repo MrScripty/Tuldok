@@ -70,8 +70,8 @@ class M4Clients(unittest.TestCase):
         with self.assertRaises(api.AgentAPIError): api.capabilities(CATALOG, profile='arbitrary')
         self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)
 
-    def test_nine_operations_have_fixed_consumers_and_closed_inputs(self):
-        self.assertEqual(len(api.PROJECT_FILES_M4), 9)
+    def test_ten_operations_have_fixed_consumers_and_closed_inputs(self):
+        self.assertEqual(len(api.PROJECT_FILES_M4), 10)
         self.assertEqual(project_dispatch.SUPPORTED_OPERATIONS & api.PROJECT_FILES_M4,
                          api.PROJECT_FILES_M4 - {'project_files.save_as'})
         client = ProjectFilesClient(Mock())

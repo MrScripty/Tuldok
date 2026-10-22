@@ -579,6 +579,18 @@ class ProjectFilesClient:
     def graph_create_external(self, **arguments):
         return self._call('graph_create_external', arguments)
 
+    def native_preflight(self, **arguments):
+        return self._call('native_preflight', arguments)
+
+    def native_submit(self, **arguments):
+        return self._call('native_submit', arguments)
+
+    def native_retry(self, **arguments):
+        return self._call('native_retry', arguments)
+
+    def native_reconcile(self, **arguments):
+        return self._call('native_reconcile', arguments)
+
     def execution_health(self, **arguments):
         return self._call('execution_health', arguments)
 
@@ -671,6 +683,10 @@ class ProjectFilesClient:
 
     def file_adopt(self, **arguments):
         return self._call('file_adopt',arguments)
+
+    def file_adopt_deletion(self, **arguments):
+        """Retain an explicitly reviewed missing note as a deletion revision."""
+        return self._call('file_adopt_deletion',arguments)
 
     def material_intents(self, **arguments):
         return self._call('material_intents',arguments)

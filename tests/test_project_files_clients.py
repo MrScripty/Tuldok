@@ -182,7 +182,8 @@ class M3Contracts(unittest.TestCase):
     def test_current_custody_pages_refuse_uncorrelated_or_duplicate_ids(self):
         arguments = dict(binding=BINDING, checkpoint=CHECKPOINT, offset=0, limit=2)
         value = dict(format='project_execution_health_v1', active_run_ids=[PROJECT, RECORD],
-            active_count=2, offset=0, limit=2, local_owner_active=True, available=True, drain_required=True)
+            active_count=2, offset=0, limit=2, local_owner_active=True, available=True, drain_required=True,
+            native_phases=dict(items=[], total=0, offset=0, limit=2))
         result = dict(binding=BINDING, project_id=PROJECT, checkpoint=CHECKPOINT, value=value)
         raw = client({'status': 200, 'result': result})
         self.assertEqual(ProjectFilesClient(raw).execution_health(**arguments), result)

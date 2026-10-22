@@ -1193,15 +1193,33 @@ _runtime_status_value=_runtime_status['outputSchema']['oneOf'][0]['properties'][
 _runtime_status['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']={'oneOf':[
     copy.deepcopy(_runtime_status_value),obj({'state':const('abandoned'),'intent':_PROJECT_RUNTIME_INTENT,
         'result':const(None),'abandonment':_PROJECT_RUNTIME_ABANDON})]}
+# Explicit current native probes and Runs. Current operator runtime is selected
+# by the native owner; no imported descriptor or serialized probe is authority.
+_PROJECT_NATIVE_PHASE = obj({'format':const('project_native_phase_v1'),'origin_catalog_id':ID,
+    'phase_id':ID,'phase':{'enum':['probe','train','verify']},'run_id':{'oneOf':[const(None),ID]},
+    'state':{'enum':['prepared','ready','go_intent','completed','failed','unknown']},
+    'spec_sha256':SHA,'receipt_sha256':{'oneOf':[const(None),SHA]}})
+_project_file_operation('native_preflight','POST','/execution/native/preflight',
+    {'graph_id':ID,'revision':SAFE_POS},mutation=True,owner=True,scopes=('inspect','execute'),milestone=3)
+_project_file_operation('native_submit','POST','/execution/native/runs',
+    {'graph_id':ID,'graph_revision':SAFE_POS,'validation_token':SHA},output=PROJECT_RUN_ADMISSION,
+    mutation=True,owner=True,scopes=('inspect','execute'),milestone=3)
+_project_file_operation('native_retry','POST','/execution/native/runs/{run_id}/retry',
+    {'run_id':ID},output=PROJECT_RUN_ADMISSION,mutation=True,owner=True,scopes=('inspect','execute'),milestone=3)
+_project_file_operation('native_reconcile','POST','/execution/native/phases/{phase_id}/reconcile',
+    {'phase_id':ID},output=_PROJECT_NATIVE_PHASE,mutation=True,owner=True,
+    scopes=('inspect','cancel'),milestone=3,receipt=False)
 PROJECT_FILES_M3 = frozenset(PROJECT_FILES_M3)
 _PROJECT_FILES_RECEIPT_IDS |= frozenset(name for name in PROJECT_FILES_M3
-    if next(op for op in _OPERATIONS if op['operation_id'] == name)['side_effects'] and name not in ('project_files.execution_reconcile_current','project_files.execution_study_reconcile_preparation'))
+    if next(op for op in _OPERATIONS if op['operation_id'] == name)['side_effects'] and name not in ('project_files.execution_reconcile_current','project_files.execution_study_reconcile_preparation','project_files.native_reconcile'))
 
 # M4 adds independent Save As and explicit inert working-file adoption without
 # changing the frozen lifecycle state/actions or earlier per-operation pins.
 _PROJECT_FILE_KIND={'enum':['script','note']}
 _PROJECT_FILE_VERSION_META={'revision':SAFE_POS,'sha256':SHA,'bytes':integer(0,1048576),
     'adopted_at':text(80),'actor_id':ID}
+_PROJECT_FILE_DELETED_META={'revision':integer(2,9007199254740991),'deleted':const(True),'sha256':{'type':'null'},
+    'bytes':const(0),'adopted_at':text(80),'actor_id':ID}
 _PROJECT_FILE_RESULT=obj({'id':SHA,'project_id':ID,'kind':_PROJECT_FILE_KIND,'path':text(512),
     'revision':SAFE_POS,'sha256':SHA,'bytes':integer(0,1048576),'adopted_at':text(80),'changed':{'type':'boolean'}})
 _PROJECT_FORK_RESULT=obj({'source_project_id':ID,'source_checkpoint':SHA,'project_id':ID,'checkpoint':SHA,
@@ -1214,19 +1232,24 @@ model_operation('project_files.save_as','POST','/api/workspace/project-files/sav
 _OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=PROJECT_FILES_RECEIPT
 PROJECT_FILES_M4.add('project_files.save_as');_OWNER_OPERATION_IDS.add('project_files.save_as');_MODEL_RECEIPT_IDS.add('project_files.save_as')
 _PROJECT_FILE_INSPECTION=obj({'id':SHA,'kind':_PROJECT_FILE_KIND,'path':text(512),'revision':SAFE_POS,
-    'expected_sha256':SHA,'expected_bytes':integer(0,1048576),
+    'expected_sha256':{'oneOf':[SHA,{'type':'null'}]},'expected_bytes':integer(0,1048576),
     'observed_sha256':{'oneOf':[SHA,{'type':'null'}]},'observed_bytes':{'oneOf':[integer(0,1048576),{'type':'null'}]},
-    'state':{'enum':['unchanged','changed','missing','invalid']},
+    'state':{'enum':['unchanged','changed','missing','invalid','deleted']},
     'reason':{'oneOf':[{'type':'null'},{'enum':['missing','unsafe_path','too_large','invalid_utf8','unreadable','unstable']}]}})
 _project_file_operation('files_inspect','GET','/files',_PROJECT_FILES_PAGE_INPUT,required=[],
     output=obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(_PROJECT_FILE_INSPECTION,40))),milestone=4)
 _project_file_operation('file_get','GET','/files/{file_id}',{'file_id':SHA,'revision':SAFE_POS},required=['file_id'],
     output=obj({'id':SHA,'project_id':ID,'kind':_PROJECT_FILE_KIND,'path':text(512),
-        'version':obj(dict(_PROJECT_FILE_VERSION_META,text=text(1048576,empty=True)))}),milestone=4)
+        'version':{'oneOf':[obj(dict(_PROJECT_FILE_VERSION_META,text=text(1048576,empty=True))),
+            obj(dict(_PROJECT_FILE_DELETED_META,text={'type':'null'}))]}}),milestone=4)
 _project_file_operation('file_history','GET','/files/{file_id}/history',{'file_id':SHA,**_PROJECT_FILES_PAGE_INPUT},required=['file_id'],
-    output=obj(dict(_PROJECT_FILES_PAGE['properties'],id=SHA,items=array(obj(_PROJECT_FILE_VERSION_META),40))),milestone=4)
+    output=obj(dict(_PROJECT_FILES_PAGE['properties'],id=SHA,items=array({'oneOf':[obj(_PROJECT_FILE_VERSION_META),obj(_PROJECT_FILE_DELETED_META)]},40))),milestone=4)
 _project_file_operation('file_adopt','POST','/files/adopt',{'kind':_PROJECT_FILE_KIND,'path':text(512),
     'expected_revision':SAFE_NAT,'expected_sha256':SHA},output=_PROJECT_FILE_RESULT,mutation=True,milestone=4)
+_project_file_operation('file_adopt_deletion','POST','/files/adopt-deletion',{'path':text(512),
+    'expected_revision':SAFE_POS,'expected_sha256':SHA},output=obj(dict(_PROJECT_FILE_RESULT['properties'],
+    kind=const('note'),revision=integer(2,9007199254740991),deleted=const(True),sha256={'type':'null'},bytes=const(0),changed=const(True))),
+    mutation=True,milestone=4)
 _PROJECT_INTENT_FAMILY={'enum':['model_definition','pipeline_graph','recipe_definition']}
 _PROJECT_INTENT_FIELDS={'enum':['task','specification','source_selector','preprocessing_policy','output_policy',
     'recipe_source','inputs','runtime','release','nodes','data','evaluation_profile','model','trainer']}
@@ -1336,6 +1359,15 @@ _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# v1 remains the closed Run-only current custody view. v2 additionally exposes
+# bounded original local native phases; imported history never populates it.
+_native_health=copy.deepcopy(_CONTRACTS['project_files.execution_health'][1])
+_native_health_value=_native_health['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']
+_native_health_value['properties']['native_phases']=obj({'items':array(_PROJECT_NATIVE_PHASE,40),
+    'total':SAFE_NAT,'offset':SAFE_NAT,'limit':integer(1,40)})
+_native_health_value['required'].append('native_phases')
+_CONTRACTS['project_files.execution_health'][2]=_native_health
+
 # Fork-origin text requires an additive result contract; import-only v1 remains
 # exact. Both record and each historical revision retain the actual origin.
 _PROJECT_FILES_FORK_PROVENANCE=obj({'method':const('project_fork'),'rights':text(1000),
@@ -1825,6 +1857,33 @@ def operation(name, version=None):
     op = _LOOKUP[name]
     versions = _CONTRACTS[op['operation_id']]
     return copy.deepcopy(versions[max(versions) if version is None else version])
+
+
+def _native_validation_result_ok(value, revision):
+    """Check the finite public truth fields without interpreting native runtime data.
+
+    The native owner validates its scientific release/runtime observation. This
+    transport check prevents contradictory success and coercion into an ACK.
+    """
+    fields={'status','valid','errors','validation_token','graph_revision','execution_sha256','release','runtime'}
+    def sha(raw):
+        return type(raw) is str and re.fullmatch('[a-f0-9]{64}',raw) is not None
+    if (type(value) is not dict or not fields.issubset(value) or set(value)-fields-{'selection_policy'}
+            or type(value['graph_revision']) is not int or value['graph_revision']!=revision
+            or type(value['valid']) is not bool or type(value['status']) is not str
+            or not value['status'].strip() or len(value['status'])>120
+            or not sha(value['execution_sha256']) or type(value['errors']) is not list or len(value['errors'])>100
+            or any(type(value[field]) is not dict and value[field] is not None for field in ('release','runtime'))):
+        return False
+    errors=value['errors']
+    if any(type(error) is not dict or set(error)!={'path','message','code'}
+            or any(type(part) is not str or len(part)>2000 for part in error.values()) for error in errors):
+        return False
+    if value['valid']:
+        return (value['status']=='valid' and not errors and sha(value['validation_token'])
+                and value['release'] is not None and value['runtime'] is not None
+                and value['runtime'].get('available') is True)
+    return bool(errors) and value['status']==errors[0]['code'] and value['validation_token'] is None
 
 
 def _finite(value, depth=0, *, nul_path=None, _path=()):
@@ -2528,16 +2587,20 @@ class AgentClient:
                     raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
                 page = value['value']
                 action=op['operation_id'].removeprefix('project_files.')
-                if action in ('file_get','file_adopt'):
+                if action in ('file_get','file_adopt','file_adopt_deletion'):
                     kind,path=page['kind'],page['path']
                     expected_id=hashlib.sha256((value['project_id']+'\0'+kind+'\0'+path).encode()).hexdigest()
                     if page['id']!=expected_id or page['project_id']!=value['project_id']:
                         raise AgentAPIError('Working file belongs to a different project or path.','transport',502)
                     if action=='file_get':
-                        version=page['version'];raw=version['text'].encode('utf-8')
-                        if (page['id']!=arguments['file_id'] or arguments.get('revision',version['revision'])!=version['revision']
-                                or len(raw)!=version['bytes'] or len(raw)>1048576 or hashlib.sha256(raw).hexdigest()!=version['sha256']):
+                        version=page['version'];deleted=version.get('deleted') is True
+                        raw=None if deleted else version['text'].encode('utf-8')
+                        if (deleted and kind!='note' or page['id']!=arguments['file_id'] or arguments.get('revision',version['revision'])!=version['revision']
+                                or not deleted and (len(raw)!=version['bytes'] or len(raw)>1048576 or hashlib.sha256(raw).hexdigest()!=version['sha256'])):
                             raise AgentAPIError('Captured working file differs from its exact revision or bytes.','transport',502)
+                    elif action=='file_adopt_deletion':
+                        if (kind!='note' or path!=arguments['path'] or page['revision']!=arguments['expected_revision']+1):
+                            raise AgentAPIError('Note deletion differs from the reviewed path or revision.','transport',502)
                     elif (kind!=arguments['kind'] or path!=arguments['path'] or page['sha256']!=arguments['expected_sha256']
                             or page['revision']!=arguments['expected_revision']+int(page['changed'])):
                         raise AgentAPIError('Working-file adoption differs from the reviewed current bytes.','transport',502)
@@ -2547,7 +2610,9 @@ class AgentClient:
                     for item in page['items']:
                         identity=hashlib.sha256((value['project_id']+'\0'+item['kind']+'\0'+item['path']).encode()).hexdigest()
                         if (item['id']!=identity or item['state']=='unchanged' and (item['observed_sha256']!=item['expected_sha256']
-                                or item['observed_bytes']!=item['expected_bytes'] or item['reason'] is not None)):
+                                or item['observed_bytes']!=item['expected_bytes'] or item['reason'] is not None)
+                                or item['expected_sha256'] is None and (item['kind']!='note' or item['expected_bytes']!=0 or item['state'] in ('unchanged','missing'))
+                                or item['state']=='deleted' and (item['expected_sha256'] is not None or item['observed_sha256'] is not None or item['observed_bytes'] is not None or item['reason'] is not None)):
                             raise AgentAPIError('Working-file observation differs from its selected identity or declared bytes.','transport',502)
                 if action=='material_intents':
                     for item in page['items']:
@@ -2584,6 +2649,13 @@ class AgentClient:
                             or page['active_run_ids'] != sorted(set(page['active_run_ids']))
                             or len(page['active_run_ids']) != min(requested, max(0, page['active_count'] - page['offset']))):
                         raise AgentAPIError('Current custody page differs from its requested continuation.', 'transport', 502)
+                    if version>=2:
+                        phases=page['native_phases'];identities=[item['phase_id'] for item in phases['items']]
+                        if (phases['offset']!=arguments.get('offset',0) or phases['limit']!=requested
+                                or len(phases['items'])!=min(requested,max(0,phases['total']-phases['offset']))
+                                or identities!=sorted(set(identities))
+                                or any(item['origin_catalog_id']!=value['project_id'] for item in phases['items'])):
+                            raise AgentAPIError('Current native phase page differs from its selected project or continuation.','transport',502)
                 if action in ('execution_study_prepare_package','execution_study_prepare_verifier','execution_study_reconcile_preparation'):
                     if (page['trial']['study_id']!=arguments['study_id'] or page['trial']['material']['catalog_id']!=value['project_id']
                             or page['model']['catalog_id']!=value['project_id']
@@ -2626,6 +2698,13 @@ class AgentClient:
                                 or complete['runtime_ref']['catalog_id']!=value['project_id']
                                 or complete['runtime_ref']['id']!=complete['runtime_ref']['sha256'])):
                         raise AgentAPIError('Runtime status differs from its retained capture request.','transport',502)
+                if action=='native_preflight' and not _native_validation_result_ok(page,arguments['revision']):
+                    raise AgentAPIError('Native validation differs from the saved graph revision or result.','transport',502)
+                if action=='native_reconcile' and (page['origin_catalog_id']!=value['project_id'] or page['phase_id']!=arguments['phase_id']):
+                    raise AgentAPIError('Native phase observation differs from the selected current phase.','transport',502)
+                if action in ('native_submit','native_retry') and (page['origin_catalog_id']!=value['project_id']
+                        or action=='native_retry' and page['run_id']==arguments['run_id']):
+                    raise AgentAPIError('Native admission differs from the selected project.','transport',502)
                 if action in ('execution_approve_external', 'execution_study_approve'):
                     grant = page['grant']
                     expected = arguments['expected_digest'] if action == 'execution_approve_external' else arguments['expected_material_sha256']

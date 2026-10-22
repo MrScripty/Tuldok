@@ -209,3 +209,31 @@ was inspected, no user migration ran and no publication/merge was performed at
 this checkpoint.
 
 Planning worktree `/workspace/Tuldok-project-save-load-plan` and private branch `plan/external-project-save-load-20261022` are **retained-protected** for the user's review. The user owns integration/disposition; no synchronization or cleanup occurs without follow-up. The local final commit is the retained branch head (reported in the final response and resolvable with `git rev-parse plan/external-project-save-load-20261022`); its full SHA is not embedded into its own commit contents. Commit disposition is `retained`, reachable from this named local branch. The original checkout is outside this task's cleanup scope. `/workspace/Coding-Standards-readonly` remains an unchanged reference checkout, not an application worktree or deliverable.
+
+
+## 2026-10-22 — Complete native source and final integration qualification
+
+The integration lead retained `b252fb4a2a545a6968ee1eae981fc45a19ad43f0` before
+completing native subprocess/preparation/execution, note tombstones and original
+source extraction. Complete immutable-subject review found three medium issues;
+all have exact-source reviewed repairs and focused deciding evidence. Actual
+CPU science, independent fork/cold reconstruction and real public/browser
+controls are recorded in [native completion](reports/m3-native-completion.md)
+and [M4](reports/m4-implementation.md). Earlier ERROR/FAIL results remain distinct
+from corrected no-fit tails against the same measured Runs.
+
+The retained second Study Run completed after its test's arbitrary 180-second
+wait. Read-only proof verified both Runs and 79 artifacts; original-host final
+SQL counts were not reached. The finite fixture deadline now derives from the
+existing 990-second native budget plus 120 seconds of bounded catalog
+publication/observation. No repeated fit or full-suite campaign was run locally.
+CI preflight corrected explicit interpreter and QA-root portability and proved
+nonzero/no-skip selection without executing another campaign.
+
+Main and Coding-Standards were rechecked unchanged at
+`133d53c0e2985a6559ba9cebd7d4a9f530051f06` and
+`5bce3110fc64d61ff8b4f79468184bd6295855d5`. The reviewed plan commit
+`2c9c9b098c9f1c4c2557c58818574ebdbc1e7d41` and protected worktree remain intact.
+M2 CI's actual failed browser step and repaired fixture remain recorded; no final
+CI success is inferred. Local lab/user-data migration, Standards edits, unrelated
+branches, merge and branch cleanup remain outside this checkpoint's actions.

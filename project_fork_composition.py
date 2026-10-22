@@ -91,6 +91,13 @@ def artifact_plan(records):
                 for name, sha in run['material']['host_files'].items():
                     mark(sha,record,'host_source',name)
 
+        # Native measured proof/source/output bytes retain unique custody even
+        # when identical bytes also occur in a regenerable runtime dependency.
+        for record in records:
+            if record['family'] != 'native_execution_history': continue
+            for edge in record['document']['payloads']:
+                mark(edge['blob']['sha256'],record,edge['role'],edge['name'],edge['blob']['bytes'])
+
         # Existing pure getter covers the four producer families, entry history
         # payload maps, and variation prompt-batch request/response observations.
         from project_producers import FAMILIES as PRODUCER_FAMILIES, _referenced_artifacts

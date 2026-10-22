@@ -46,6 +46,7 @@ SUPPORTED_FORMATS = {
     'trial_history': 'project_trial_history_v1',
     'run_history': 'project_run_history_v1',
     'run_observation': 'project_run_observation_v1',
+    'native_execution_history': 'native_execution_history_v1',
     'candidate_history': 'project_candidate_history_v1',
     'project_artifact': 'project_artifact_v1',
     'project_operation': 'project_operation_v1',
@@ -155,7 +156,9 @@ def _domain_format(value, family):
     match = DOMAIN_FORMAT.fullmatch(value) if type(value) is str else None
     if not match:
         _fail('Domain document requires a versioned format.')
-    if value != SUPPORTED_FORMATS[family] and not (family == 'project_operation' and value == 'project_operation_v2'):
+    if value != SUPPORTED_FORMATS[family] and not (
+            family == 'project_operation' and value == 'project_operation_v2'
+            or family == 'project_file' and value == 'project_file_v2'):
         _fail('Unsupported domain document format.', 'unsupported', 422)
 
 
@@ -277,6 +280,63 @@ def anchored_directory(trusted_root_fd, relative='', *, root_path):
     finally:
         if descriptor is not None:
             os.close(descriptor)
+
+
+def _directory_inside(candidate_fd, ancestor_fd):
+    """Compare physical directory ancestry without following path aliases."""
+    current = os.dup(candidate_fd)
+    try:
+        ancestor = _physical(ancestor_fd)
+        while True:
+            if _physical(current) == ancestor:
+                return True
+            parent = os.open('..', DIR_FLAGS, dir_fd=current)
+            if _physical(parent) == _physical(current):
+                os.close(parent)
+                return False
+            os.close(current)
+            current = parent
+    finally:
+        os.close(current)
+
+
+def assert_separate_project_control(trusted_root_fd, relative, *, root_path, control_path):
+    """Reject portable project/control overlap before creating any destination.
+
+    The caller retains its configured root handle. Existing targets must be
+    physically disjoint from control in both directions; for an absent leaf,
+    its existing anchored parent must be outside control. A broad root may
+    still contain disjoint project and control siblings.
+    """
+    parts = _relative_parts(relative)
+    control_fd = target_fd = None
+    try:
+        _, control_fd = _open_directory_path(control_path)
+        with anchored_directory(trusted_root_fd, '/'.join(parts[:-1]), root_path=root_path) as parent_fd:
+            try:
+                target_fd = _directory(parent_fd, parts[-1])
+            except FileNotFoundError:
+                overlap = _directory_inside(parent_fd, control_fd)
+            else:
+                overlap = (_directory_inside(target_fd, control_fd) or
+                           _directory_inside(control_fd, target_fd))
+            if overlap:
+                _fail('Keep the private workspace control directory separate from portable project directories.', 'conflict', 409)
+            if target_fd is not None:
+                current = _directory(parent_fd, parts[-1])
+                try:
+                    if _physical(current) != _physical(target_fd):
+                        _fail('Project directory changed during control separation check.', 'stale', 409)
+                finally:
+                    os.close(current)
+            _verify_origin(control_fd, control_path)
+    except OSError as error:
+        _io_error(error, 'verify project/control separation')
+    finally:
+        if target_fd is not None:
+            os.close(target_fd)
+        if control_fd is not None:
+            os.close(control_fd)
 
 
 def _rename_noreplace(parent_fd, staging, destination):

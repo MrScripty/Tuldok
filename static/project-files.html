@@ -104,6 +104,11 @@
         <label>Optional matching local file to calculate the SHA256<input id="project-working-local" type="file"></label>
         <p class="help">This picker calculates a digest in your browser. Adoption reads the existing file at the relative project path; it does not upload or replace it.</p>
         <button type="submit">Adopt reviewed bytes</button></fieldset></form>
+      <form id="project-working-delete-form"><fieldset id="project-working-delete-fields" disabled><legend>Adopt a missing note as a deletion</legend>
+        <p id="project-working-delete-summary">Inspect and select a known missing note first. This action records its absence and keeps all captured revisions.</p>
+        <label><input id="project-working-delete-confirm" type="checkbox" required> I reviewed this missing note and want to retain a deletion revision.</label>
+        <button id="project-working-delete" type="submit">Adopt reviewed note deletion</button>
+      </fieldset></form>
       <h3 id="project-working-heading" tabindex="-1">Select a captured file revision</h3>
       <p id="project-working-summary"></p><label>Captured UTF-8 text<textarea id="project-working-text" rows="12" readonly></textarea></label>
       <button id="project-working-history" type="button" disabled>Load captured revision history</button>
@@ -260,6 +265,32 @@
       </fieldset></form>
       <form id="project-execution-submit-form"><fieldset id="project-execution-submit-fields" disabled><legend>Start explicitly approved execution</legend><p id="project-execution-grant" class="help">No current local approval selected.</p><button type="submit">Start approved Run</button></fieldset></form>
       <form id="project-execution-cancel-form"><fieldset id="project-execution-cancel-fields" disabled><legend>Cancel a current local Run</legend><label>Current Run ID<input id="project-execution-run-id" maxlength="32" pattern="[a-f0-9]{32}" required></label><button type="submit">Request cancellation</button></fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-native-title">
+      <h2 id="project-native-title">Current native CPU execution</h2>
+      <p>These explicit owner actions use this installation's operator-selected Python environment. Installed packages remain operator trust; a successful probe does not establish model quality or a complete software closure. Opening saved history never probes or starts a Run.</p>
+      <button id="project-native-graphs" type="button">Load saved native graphs</button><button id="project-native-more" type="button" hidden>More saved native graphs</button>
+      <form id="project-native-preflight-form"><fieldset id="project-native-preflight-fields" disabled><legend>Validate with a current native probe</legend>
+        <label>Saved native graph<select id="project-native-graph" required></select></label>
+        <label><input id="project-native-probe-confirm" type="checkbox" required>I authorize the bounded current CPU probe for this exact saved graph.</label>
+        <button id="project-native-preflight" type="submit">Run current native preflight</button>
+      </fieldset></form>
+      <form id="project-native-submit-form"><fieldset id="project-native-submit-fields" disabled><legend>Start the validated native Run</legend>
+        <label><input id="project-native-submit-confirm" type="checkbox" required>I authorize starting this exact validated graph on this installation.</label>
+        <button id="project-native-submit" type="submit">Start validated native Run</button>
+      </fieldset></form>
+      <form id="project-native-retry-form"><fieldset id="project-native-retry-fields" disabled><legend>Retry a current native attempt</legend>
+        <label>Current Run ID<input id="project-native-run-id" maxlength="32" pattern="[a-f0-9]{32}" required></label>
+        <label><input id="project-native-retry-confirm" type="checkbox" required>I authorize a new attempt after current revalidation.</label>
+        <button id="project-native-retry" type="submit">Retry current native Run</button>
+      </fieldset></form>
+      <form id="project-native-reconcile-form"><fieldset id="project-native-reconcile-fields" disabled><legend>Reconcile an original current phase</legend>
+        <label>Original local phase ID<input id="project-native-phase-id" maxlength="32" pattern="[a-f0-9]{32}" required></label>
+        <button id="project-native-reconcile" type="submit">Reconcile current phase without starting it</button>
+      </fieldset></form>
+      <button id="project-native-pending-retry" type="button" disabled>Retry exact pending native request</button>
+      <p>Use “Refresh current custody” above to inspect original local phase IDs. Select a phase below, then explicitly reconcile it.</p><ul id="project-native-phases" class="project-fact-list"></ul>
+      <p id="project-native-pending" role="status"></p><p id="project-native-summary" role="status"></p><div id="project-native-facts" class="project-facts"></div>
     </section>
     <section class="project-history-panel" aria-labelledby="project-study-execution-title">
       <h2 id="project-study-execution-title">Current Study execution</h2>

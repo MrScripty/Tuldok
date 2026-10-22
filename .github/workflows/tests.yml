@@ -34,6 +34,7 @@ jobs:
       TULDOK_OWNER_MCP_MANIFEST: build/qa/external-project/product-manifest.json
       TULDOK_M5_CLIENTS_MANIFEST: build/qa/external-project/product-manifest.json
       TULDOK_M5_UI_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_NATIVE_PUBLIC_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the exact authored fixture used by canonical Release qualification
@@ -110,6 +111,27 @@ jobs:
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py
+      - name: Verify actual native project Run fork Study custody and cold accounting
+        env:
+          PYTHONPATH: tests
+          TULDOK_NATIVE_PROJECT_GO: '1'
+          TULDOK_NATIVE_RETENTION_DIR: ${{ github.workspace }}/build/qa/external-project/native-retained
+        run: |
+          build/workspace-training/bin/python - <<'PY'
+          import os, sys, unittest
+          import numpy, sklearn, psycopg, torch
+          assert os.environ['TULDOK_TRAINING_PYTHON'] == sys.executable
+          names = [
+              'test_project_native_run.NativeRunSaveAsTests.test_one_actual_native_run_save_as_cold_role_and_metadata_only_git_clone',
+              'test_project_native_study.NativeStudyCustodyTests.test_actual_native_study_spent_budget_and_cold_history_require_fresh_admission',
+              'test_project_native_study.NativeStudyCustodyTests.test_native_study_admission_canonical_ack_then_sql_failure_never_starts_training',
+          ]
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromNames(names)
+          assert not loader.errors and suite.countTestCases() == len(names)
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == len(names) and not result.skipped else 1)
+          PY
       - name: Create isolated optional agent verification environment
         run: python -m venv build/workspace-agent
       - run: build/workspace-agent/bin/python -m pip install -r requirements.txt
@@ -164,6 +186,32 @@ jobs:
           result = unittest.TextTestRunner(verbosity=2).run(suite)
           sys.exit(0 if result.wasSuccessful() and result.testsRun == selected and not result.skipped else 1)
           PY
+      - name: Verify real native project SDK CLI MCP and zero-GO recovery
+        env:
+          PYTHONPATH: tests
+          TULDOK_NATIVE_PROJECT_GO: '1'
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_native_clients_http.NativePublicClientsHTTP.test_real_native_preflight_replay_zero_go_failure_and_original_phase_recovery')
+          assert not loader.errors and suite.countTestCases() == 1
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == 1 and not result.skipped else 1)
+          PY
+      - name: Verify explicit note deletion history and cold fork across owner transports
+        env:
+          PYTHONPATH: tests
+          TULDOK_NOTE_DELETION_GO: '1'
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_file_deletion_clients_http.NoteDeletionClientsHTTP.test_real_note_deletion_restore_history_and_cold_independent_fork')
+          assert not loader.errors and suite.countTestCases() == 1
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == 1 and not result.skipped else 1)
+          PY
       - run: python -m unittest discover -s tests
       - name: Verify external-project authoring and cold reconstruction in Chromium
         run: node tests/browser_project_files_m2.cjs
@@ -182,12 +230,26 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           TULDOK_M5_UI_BROWSER_GO: '1'
+      - name: Verify named native preflight and original-phase recovery in Chromium
+        run: node tests/browser_project_files_native.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_NATIVE_PROJECT_GO: '1'
+      - name: Verify explicit note deletion restore and inert cold fork in Chromium
+        run: node tests/browser_project_file_deletion.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_NOTE_DELETION_GO: '1'
       - name: Verify external-project working file and recovery controls
         run: |
           node tests/test_workspace_project_files_m4.cjs
           node tests/test_workspace_project_fork_text.cjs
           node tests/test_workspace_project_runtime.cjs
           node tests/test_workspace_project_candidate.cjs
+          node tests/test_workspace_project_transfer.cjs
+          node tests/test_workspace_project_native.cjs
+          node tests/test_workspace_project_native_validation.cjs
+          node tests/test_workspace_project_file_deletion.cjs
       - run: node --check static/auth.js
       - run: node tests/test_auth_helpers.cjs
       - run: node tests/test_auth_controller.cjs

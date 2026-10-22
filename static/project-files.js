@@ -62,9 +62,10 @@
   "project_files.execution_submit_external": "fc33d4eac346c1f08423ccb5d593db43b561124629d53f2a8896ff9838db99f3",
   "project_files.expose_holdout": "d69478ed54267ee1f1966f423f412a32f90b95a55997c6dc7d8348e3cdd78fd7",
   "project_files.file_adopt": "a190326d5c54296f8359be594996908fa28acbbd125168821c3fa1f520ef9b07",
-  "project_files.file_get": "02c613da6365ee558fcf5a48cb7e9260d470b5efa4c8b58b8c939b684ddcfc43",
-  "project_files.file_history": "0f30a11b23fe1f56b1460cf07dd81710ce0d9bf40fb5a338b52ca7fad27e068f",
-  "project_files.files_inspect": "254e276494cc38e21fe8c014943f593c10489a2a3dcc6dfc55c5a579576bdcfa",
+  "project_files.file_adopt_deletion": "7b6d661856a614d1b83d8011d1ffc7f9e2619853495faf9250888739f880685c",
+  "project_files.file_get": "a22c27e2fd890ffcb479e0aa8ea40a0cb32d06d1e5750b970b40f27915fe4d24",
+  "project_files.file_history": "c83477f7b0f8616c96ad79cebaf0eb3887fe289567f5d5ceb1d1502bebed7423",
+  "project_files.files_inspect": "0c2ff3ed93109ea19b5c92ffa24ac8f67e4bcfa3fe386921e984b5dfa3bfe7eb",
   "project_files.fork_info": "958bc1aa269b5459c7e2d9c6bcb6725c06f7055502d73c49a95330cc4065aea4",
   "project_files.get": "6b0f4e16a00aa119b86cbb5493be0bac945ff08a5e63773a8f2c2f9296658d5b",
   "project_files.graph_clone": "8f9b460530f0f136900734345fc338a1993ffdaddf5f4d90faf352c39f397514",
@@ -86,6 +87,10 @@
   "project_files.model_publish": "97c0ec706fd663d322764a2dd72bd920e7e7ac8defaee2d23624502ed239fc62",
   "project_files.model_save": "a90f8d985578191dee672824c9178559452f8b0dd759f74ed91337a96ca670e8",
   "project_files.models": "92e13621050d7f229a4785ed6845df2f191a9e037bcdf377fa7fb0ba796aebe3",
+  "project_files.native_preflight": "494c907dac56a3126d26f064ec20bb980f918bded8e7f727c1fdaaa118059b13",
+  "project_files.native_reconcile": "74299207459fbd08d23ad7e8c1db205a4297f014415fd463c9857ba60dda4c7e",
+  "project_files.native_retry": "489655b49dadc184d95d6455ad2662bd5e7fd2cde2170fd303a92b2de77471c1",
+  "project_files.native_submit": "82468f35f04306fd4f39a0cc94a487fc05ae739e28f24f0be49ed35644639643",
   "project_files.new": "672373f8ddc0b89fea15165798aab97cf4ac2cdf678a04d96839512cc8976b6f",
   "project_files.open": "fd4b9f97c03cd7050981cfafd1177bff8c86351bb603b8f7980aaa149d2b0368",
   "project_files.package_state": "6f0369eafab3b8ed1db71ffb12e7d5a2bbcf400b46315d46ba1e2fb13e63baf7",
@@ -143,6 +148,10 @@
   "project_files.annotate": {
     "1": "70feae2ad14c49c4ae95b5bb69b4a50fbf93191cde840544cf89b6cbe8dc5c58",
     "2": "2ae39dd621161500061bc8f57bb465e90fed04cfaf921e0dc368f82bd50cd107"
+  },
+  "project_files.execution_health": {
+    "1": "c3b1d0017f5a49cf69c3a4c5c33e1d3db9846404d12627563d97ef40de7404a5",
+    "2": "6b7a834881da36960c0a0ee393c0c26e0d918b857d30791e8e5af79c2ae4a73e"
   },
   "project_files.get": {
     "1": "6b0f4e16a00aa119b86cbb5493be0bac945ff08a5e63773a8f2c2f9296658d5b",
@@ -419,6 +428,11 @@
     "path": "/api/workspace/project-files/files/adopt",
     "mutation": true
   },
+  "project_files.file_adopt_deletion": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/files/adopt-deletion",
+    "mutation": true
+  },
   "project_files.file_get": {
     "method": "GET",
     "path": "/api/workspace/project-files/files/{file_id}",
@@ -528,6 +542,26 @@
     "method": "GET",
     "path": "/api/workspace/project-files/models",
     "mutation": false
+  },
+  "project_files.native_preflight": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/execution/native/preflight",
+    "mutation": true
+  },
+  "project_files.native_reconcile": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/execution/native/phases/{phase_id}/reconcile",
+    "mutation": true
+  },
+  "project_files.native_retry": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/execution/native/runs/{run_id}/retry",
+    "mutation": true
+  },
+  "project_files.native_submit": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/execution/native/runs",
+    "mutation": true
   },
   "project_files.package_state": {
     "method": "GET",
@@ -756,7 +790,8 @@
   let importDirty=false, annotationDirty=false, m2Dirty=false, pending=null;
   let registeredSource=null,modelTemplates=[],templateBinding=null;
   let runtimeInspection=null,runtimePending=null,runtimeSourceOffset=0,runtimeSourceTotal=0,runtimeFileOffset=0,runtimeFileTotal=0;
-  let forkPending=null,workingSelection=null,workingOffset=0,workingTotal=0,workingHistoryOffset=0,workingHistoryTotal=0,intentsOffset=0,intentsTotal=0,forkOffset=0,forkTotal=0,intentCapsOffset=0,intentCapsTotal=0;
+  let forkPending=null,workingSelection=null,workingDeletion=null,workingOffset=0,workingTotal=0,workingHistoryOffset=0,workingHistoryTotal=0,intentsOffset=0,intentsTotal=0,forkOffset=0,forkTotal=0,intentCapsOffset=0,intentCapsTotal=0;
+  let nativeGraphs=[],nativePrepared=null,nativePending=null,nativeOffset=0,nativeTotal=0;
   let executionGraphs=[],executionPrepared=null,executionApproval=null,executionBinding=null,executionOffset=0,executionTotal=0,executionStudy=null,executionTrials=[],studyApproval=null,executionGraphOffset=0,executionGraphTotal=0,studyTrialOffset=0,studyTrialTotal=0,producerSource=null,producerCurrent=null,producerHealthOffset=0,producerHealthTotal=0;
   let explored=null,exploreOffset=0,exploreTotal=0,historyOffset=0,historyTotal=0;
   const m2DirtyForms=new Set();
@@ -836,7 +871,7 @@
     if(window.TuldokAuth&&!window.TuldokAuth.canReview())$('record-review').value='draft';
   }
   function showState(){
-    if(executionBinding!==state.binding){executionBinding=state.binding;executionPrepared=null;executionApproval=null;executionStudy=null;studyApproval=null;executionGraphs=[];executionTrials=[];producerSource=null;producerCurrent=null;$('project-execution-grant').textContent='No current local approval selected.';}
+    if(executionBinding!==state.binding){nativeGraphs=[];nativePrepared=null;nativePending=null;nativeOffset=nativeTotal=0;$('project-native-graph').replaceChildren();$('project-native-phases').replaceChildren();executionBinding=state.binding;executionPrepared=null;executionApproval=null;executionStudy=null;studyApproval=null;executionGraphs=[];executionTrials=[];producerSource=null;producerCurrent=null;$('project-execution-grant').textContent='No current local approval selected.';}
     const root=$('project-files-root'), previous=root.value;root.replaceChildren();
     for(const alias of state.roots){const option=document.createElement('option');option.value=alias;option.textContent=alias;root.append(option);}
     if(state.roots.includes(previous))root.value=previous;
@@ -1053,21 +1088,29 @@
     const shaBytes=async raw=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),n=>n.toString(16).padStart(2,'0')).join('');
     const fileID=async value=>shaBytes(new TextEncoder().encode(project+'\0'+value.kind+'\0'+value.path));
     const metadata=value=>exact(value,['revision','sha256','bytes','adopted_at','actor_id'])&&positive(value.revision)&&sha(value.sha256)&&natural(value.bytes)&&value.bytes<=1048576&&safeText(value.adopted_at,80)&&id(value.actor_id);
+    const deletedMetadata=value=>exact(value,['revision','deleted','sha256','bytes','adopted_at','actor_id'])&&positive(value.revision)&&value.revision>=2&&value.deleted===true&&value.sha256===null&&value.bytes===0&&safeText(value.adopted_at,80)&&id(value.actor_id);
     const families=['model_definition','pipeline_graph','recipe_definition'];
     const fields=['task','specification','source_selector','preprocessing_policy','output_policy','recipe_source','inputs','runtime','release','nodes','data','evaluation_profile','model','trainer'];
     const reselection=value=>Array.isArray(value)&&value.length<=14&&new Set(value).size===value.length&&value.every(field=>fields.includes(field));
     const origin=value=>exact(value,['project_id','checkpoint','family','id','revision','created_at'])&&id(value.project_id)&&sha(value.checkpoint)&&families.includes(value.family)&&safeText(value.id,512)&&positive(value.revision)&&safeText(value.created_at,80);
-    if(['file_get','file_adopt'].includes(action)){
-      const keys=action==='file_get'?['id','project_id','kind','path','version']:['id','project_id','kind','path','revision','sha256','bytes','adopted_at','changed'];
+    if(['file_get','file_adopt','file_adopt_deletion'].includes(action)){
+      const keys=action==='file_get'?['id','project_id','kind','path','version']:['id','project_id','kind','path','revision','sha256','bytes','adopted_at','changed',...(action==='file_adopt_deletion'?['deleted']:[])];
       if(!exact(value,keys)||!sha(value.id)||value.project_id!==project||!filePath(value.kind,value.path)||value.id!==await fileID(value))invalid();
       if(action==='file_get'){
-        const v=value.version;if(!exact(v,['revision','sha256','bytes','adopted_at','actor_id','text'])||!metadata(Object.fromEntries(Object.entries(v).filter(([k])=>k!=='text')))||typeof v.text!=='string'||Array.from(v.text).some(ch=>ch.length===1&&ch.charCodeAt(0)>=0xd800&&ch.charCodeAt(0)<=0xdfff))invalid();
-        const bytes=new TextEncoder().encode(v.text);if(value.id!==args.file_id||(args.revision!==undefined&&args.revision!==v.revision)||bytes.length>1048576||bytes.length!==v.bytes||await shaBytes(bytes)!==v.sha256)invalid();
+        const v=value.version,deleted=v?.deleted===true,meta=Object.fromEntries(Object.entries(v??{}).filter(([k])=>k!=='text'));
+        if(deleted){if(value.kind!=='note'||!exact(v,['revision','deleted','sha256','bytes','adopted_at','actor_id','text'])||!deletedMetadata(meta)||v.text!==null)invalid();}
+        else{if(!exact(v,['revision','sha256','bytes','adopted_at','actor_id','text'])||!metadata(meta)||typeof v.text!=='string'||Array.from(v.text).some(ch=>ch.length===1&&ch.charCodeAt(0)>=0xd800&&ch.charCodeAt(0)<=0xdfff))invalid();
+          const bytes=new TextEncoder().encode(v.text);if(bytes.length>1048576||bytes.length!==v.bytes||await shaBytes(bytes)!==v.sha256)invalid();}
+        if(value.id!==args.file_id||(args.revision!==undefined&&args.revision!==v.revision))invalid();
+      }else if(action==='file_adopt_deletion'){
+        if(value.kind!=='note'||value.path!==args.path||value.deleted!==true||value.sha256!==null||value.bytes!==0||value.changed!==true||value.revision!==args.expected_revision+1||!safeText(value.adopted_at,80))invalid();
       }else if(value.kind!==args.kind||value.path!==args.path||value.sha256!==args.expected_sha256||!positive(value.revision)||typeof value.changed!=='boolean'||value.revision!==args.expected_revision+Number(value.changed)||!natural(value.bytes)||value.bytes>1048576||!safeText(value.adopted_at,80))invalid();
     }
-    if(action==='file_history'&&(!exact(value,['id','items','total','offset','limit'])||value.id!==args.file_id||!value.items.every(metadata)))invalid();
+    if(action==='file_history'&&(!exact(value,['id','items','total','offset','limit'])||value.id!==args.file_id||!value.items.every(item=>metadata(item)||deletedMetadata(item))))invalid();
     if(action==='files_inspect')for(const item of value.items){
-      if(!exact(item,['id','kind','path','revision','expected_sha256','expected_bytes','observed_sha256','observed_bytes','state','reason'])||!filePath(item.kind,item.path)||item.id!==await fileID(item)||!positive(item.revision)||!sha(item.expected_sha256)||!natural(item.expected_bytes)||item.expected_bytes>1048576||!(item.observed_sha256===null||sha(item.observed_sha256))||!(item.observed_bytes===null||natural(item.observed_bytes)&&item.observed_bytes<=1048576)||!['unchanged','changed','missing','invalid'].includes(item.state)||!(item.reason===null||['missing','unsafe_path','too_large','invalid_utf8','unreadable','unstable'].includes(item.reason)))invalid();
+      if(!exact(item,['id','kind','path','revision','expected_sha256','expected_bytes','observed_sha256','observed_bytes','state','reason'])||!filePath(item.kind,item.path)||item.id!==await fileID(item)||!positive(item.revision)||!(item.expected_sha256===null||sha(item.expected_sha256))||!natural(item.expected_bytes)||item.expected_bytes>1048576||!(item.observed_sha256===null||sha(item.observed_sha256))||!(item.observed_bytes===null||natural(item.observed_bytes)&&item.observed_bytes<=1048576)||!['unchanged','changed','missing','invalid','deleted'].includes(item.state)||!(item.reason===null||['missing','unsafe_path','too_large','invalid_utf8','unreadable','unstable'].includes(item.reason)))invalid();
+      if(item.expected_sha256===null&&(item.kind!=='note'||item.expected_bytes!==0||['unchanged','missing'].includes(item.state)))invalid();
+      if(item.state==='deleted'&&(item.expected_sha256!==null||item.observed_sha256!==null||item.observed_bytes!==null||item.reason!==null))invalid();
       if(item.state==='unchanged'&&(item.observed_sha256!==item.expected_sha256||item.observed_bytes!==item.expected_bytes||item.reason!==null))invalid();
     }
     if(action==='material_intents')for(const item of value.items)if(!exact(item,['family','id','catalog_id','definition_id','name','revision','required_reselection','fork_origin'])||!families.includes(item.family)||item.catalog_id!==project||!id(item.definition_id)||item.id!==project+'.'+item.definition_id||!safeText(item.name,200)||item.revision!==1||!reselection(item.required_reselection)||!origin(item.fork_origin)||item.fork_origin.family!==item.family)invalid();
@@ -1093,7 +1136,7 @@
     const options={method:definition.method,cache:'no-store',headers:{'Tuldok-Operation-Contract':selectedHeader(operation)}};
     if(definition.method==='GET')path+='?'+new URLSearchParams(remaining);
     else{
-      if(definition.mutation&&!['execution_reconcile_current','execution_study_reconcile_preparation'].includes(action)){
+      if(definition.mutation&&!['execution_reconcile_current','execution_study_reconcile_preparation','native_reconcile'].includes(action)){
         let prepared;
         if(action==='runtime_capture'){
           const signature=JSON.stringify(arguments_);
@@ -1102,6 +1145,12 @@
           prepared=runtimePending.body;$('project-runtime-status-key').value=prepared.request_key;$('project-runtime-abandon-key').value=prepared.request_key;
           $('project-runtime-pending').textContent=`Pending capture ${prepared.request_key}: source ${prepared.source}, inventory ${prepared.expected_inventory_sha256}, reserve ${prepared.reserve_bytes??6442450944} bytes. Retry uses these exact fields. Preserve the key until its retained outcome is known.`;
           Object.assign(remaining,prepared);
+        }else if(['native_preflight','native_submit','native_retry'].includes(action)){
+          const signature=JSON.stringify({action,arguments_});
+          if(nativePending&&(nativePending.signature!==signature||nativePending.body.binding!==binding))throw Error('Keep the exact pending native request until its outcome is known, or explicitly discard unsubmitted fields before choosing a different action.');
+          if(!nativePending)nativePending={action,signature,body:mutationBody(path,arguments_)};
+          prepared=nativePending.body;Object.assign(remaining,Object.fromEntries(Object.entries(prepared).filter(([field])=>!definition.path.includes('{'+field+'}'))));
+          $('project-native-pending').textContent=`Pending ${action}: request ${prepared.request_key}. Keep this exact key and fields after a lost acknowledgement. No automatic retry is performed.`;
         }else prepared=mutationBody(path,arguments_);
         values={...values,...prepared};remaining.request_key=prepared.request_key;
       }
@@ -1125,7 +1174,7 @@
       const page=value.value,limit=arguments_.limit??(m2HistoryActions.has(action)?1:40),offset=arguments_.offset??0;
       if(!Array.isArray(page.items)||page.items.length>limit||page.offset!==offset||page.limit!==limit||!Number.isSafeInteger(page.total)||page.total<0||page.items.length!==Math.min(limit,Math.max(0,page.total-offset))){const failure=Error('Saved page differs from its requested continuation.');failure.code='transport';throw failure;}
     }
-    if(['files_inspect','file_get','file_history','file_adopt','material_intents','material_intent','material_intent_capabilities','fork_info'].includes(action)){await m4Response(action,value.value,arguments_,project);if(ticket!==epoch)return null;}
+    if(['files_inspect','file_get','file_history','file_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'].includes(action)){await m4Response(action,value.value,arguments_,project);if(ticket!==epoch)return null;}
     if(action.startsWith('execution_')){
       const result=value.value,invalid=()=>{const failure=Error('Current execution response differs from the selected project, material or action.');failure.code='transport';throw failure;};
       if(Object.hasOwn(result,'origin_catalog_id')&&result.origin_catalog_id!==project)invalid();
@@ -1318,12 +1367,12 @@
   for(const [form,fields] of [['project-study-create-form',['project-study-create-name','project-study-metric','project-study-attempts','project-study-seconds','project-study-retained','project-study-staging','project-study-checkpoint','project-study-replicates','project-study-numerical']],['project-register-form',['project-register-path']],['project-scientific-form',['project-scientific-reference','project-scientific-name','project-scientific-groups','project-scientific-rights']]])for(const field of fields)$(field).addEventListener('input',()=>{m2DirtyForms.add(form);m2Dirty=true;controls();});
   function executionControls(){
     const prepared=!!executionPrepared&&executionPrepared.binding===state?.binding,approved=!!executionApproval&&executionApproval.binding===state?.binding;
-    producerControls();
+    producerControls();nativeControls();
     $('project-execution-reconcile').disabled=busy||blocked||!state?.project||!['open','recovery_required'].includes(state.state)||!selectedContracts.has('project_files.execution_reconcile_current');
     $('project-execution-graphs-more').disabled=!m2Allowed('graphs');$('project-execution-graphs-more').hidden=executionGraphOffset>=executionGraphTotal;
     $('project-study-trials-more').disabled=!executionStudy||!m2Allowed('study');$('project-study-trials-more').hidden=studyTrialOffset>=studyTrialTotal;
-    $('project-execution-health').disabled=!m2Allowed('execution_health');
-    $('project-execution-health-more').disabled=!m2Allowed('execution_health');$('project-execution-health-more').hidden=executionOffset>=executionTotal;
+    $('project-execution-health').disabled=!preparationRecoveryAllowed('execution_health');
+    $('project-execution-health-more').disabled=!preparationRecoveryAllowed('execution_health');$('project-execution-health-more').hidden=executionOffset>=executionTotal;
     $('project-execution-graphs').disabled=!m2Allowed('graphs');
     $('project-execution-preflight-fields').disabled=!executionGraphs.length||!m2Allowed('execution_preflight_external');
     $('project-execution-approval-fields').disabled=!prepared||!m2Allowed('execution_approve_external');
@@ -1336,12 +1385,82 @@
     $('project-study-stop-fields').disabled=!executionStudy||!m2Allowed('execution_study_stop');
   }
   function executionFact(value){$('project-execution-facts').replaceChildren(projectValue(value));}
+  function nativePhaseOK(value,phaseId=null){
+    return exact(value,['format','origin_catalog_id','phase_id','phase','run_id','state','spec_sha256','receipt_sha256'])&&value.format==='project_native_phase_v1'&&value.origin_catalog_id===state.project.project_id&&id(value.phase_id)&&(!phaseId||value.phase_id===phaseId)&&['probe','train','verify'].includes(value.phase)&&(value.run_id===null||id(value.run_id))&&['prepared','ready','go_intent','completed','failed','unknown'].includes(value.state)&&sha(value.spec_sha256)&&(value.receipt_sha256===null||sha(value.receipt_sha256));
+  }
+  function nativeValidationOK(value,revision){
+    const fields=['status','valid','errors','validation_token','graph_revision','execution_sha256','release','runtime'];
+    if(!value||typeof value!=='object'||Array.isArray(value)||!fields.every(field=>Object.hasOwn(value,field))||!Object.keys(value).every(field=>fields.includes(field)||field==='selection_policy')||!str(value.status,120)||typeof value.valid!=='boolean'||!Array.isArray(value.errors)||value.errors.length>100||!positive(value.graph_revision)||value.graph_revision!==revision||!sha(value.execution_sha256)||!['release','runtime'].every(field=>value[field]===null||typeof value[field]==='object'&&!Array.isArray(value[field])))return false;
+    if(!value.errors.every(error=>exact(error,['path','message','code'])&&Object.values(error).every(part=>str(part,2000,true))))return false;
+    return value.valid?value.status==='valid'&&value.errors.length===0&&sha(value.validation_token)&&value.release!==null&&value.runtime!==null&&value.runtime.available===true:value.errors.length>0&&value.status===value.errors[0].code&&value.validation_token===null;
+  }
+  function nativeAdmissionOK(value){return exact(value,['format','origin_catalog_id','run_id','request_sha256'])&&value.format==='project_run_admission_v1'&&value.origin_catalog_id===state.project.project_id&&id(value.run_id)&&sha(value.request_sha256);}
+  function nativeControls(){
+    $('project-native-graphs').disabled=!m2Allowed('graphs');$('project-native-more').disabled=!m2Allowed('graphs');$('project-native-more').hidden=nativeOffset>=nativeTotal;
+    $('project-native-preflight-fields').disabled=!nativeGraphs.length||!m2Allowed('native_preflight');
+    $('project-native-submit-fields').disabled=!nativePrepared||nativePrepared.binding!==state?.binding||nativePrepared.checkpoint!==checkpoint()||!m2Allowed('native_submit');
+    $('project-native-retry-fields').disabled=!m2Allowed('native_retry');
+    $('project-native-reconcile-fields').disabled=!preparationRecoveryAllowed('native_reconcile');
+    $('project-native-pending-retry').disabled=!nativePending||nativePending.body.binding!==state?.binding||!preparationRecoveryAllowed(nativePending.action);
+  }
+  async function loadNativeGraphs(ticket,more=false){
+    const value=await m2Request('graphs',{offset:more?nativeOffset:0,limit:40},ticket);if(!value)return;
+    if(!more){nativeGraphs=[];nativePrepared=null;$('project-native-graph').replaceChildren();}
+    for(const graph of value.items.filter(graph=>graph.recipe!=='external_recipe')){if(!id(graph.id)||!positive(graph.revision))throw Error('Saved native graph has invalid identity.');nativeGraphs.push(graph);const option=document.createElement('option');option.value=graph.id;option.textContent=`${graph.name??graph.id} · ${graph.recipe??'native'} · revision ${graph.revision}`;$('project-native-graph').append(option);}
+    nativeOffset=value.offset+value.items.length;nativeTotal=value.total;controls();message('Saved graph metadata loaded. No native probe or Run started.');
+  }
+  $('project-native-graphs').onclick=()=>run(ticket=>loadNativeGraphs(ticket));$('project-native-more').onclick=()=>run(ticket=>loadNativeGraphs(ticket,true));
+  $('project-native-graph').addEventListener('change',()=>{nativePrepared=null;$('project-native-probe-confirm').checked=false;$('project-native-submit-confirm').checked=false;controls();});
+  $('project-native-preflight-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
+    const graph=nativeGraphs.find(value=>value.id===$('project-native-graph').value);if(!graph||!$('project-native-probe-confirm').checked)throw Error('Select a saved native graph and explicitly authorize its current CPU probe.');
+    nativePrepared=null;controls();
+    const value=await m2Request('native_preflight',{graph_id:graph.id,revision:graph.revision},ticket);if(!value)return;
+    if(!nativeValidationOK(value,graph.revision))throw Error('Native validation differs from the selected saved graph.');
+    nativePending=null;nativePrepared=value.valid?{binding:state.binding,checkpoint:checkpoint(),graph_id:graph.id,revision:graph.revision,validation_token:value.validation_token}:null;
+    executionFormSaved('project-native-preflight-form');$('project-native-probe-confirm').checked=false;$('project-native-submit-confirm').checked=false;$('project-native-facts').replaceChildren(projectValue(value));$('project-native-pending').textContent='Native validation acknowledgement saved.';controls();message(value.valid?'Native validation succeeded. Starting a Run requires a separate explicit action.':'Native validation reported errors. No Run was started.');
+  });};
+  $('project-native-submit-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
+    if(!nativePrepared||nativePrepared.binding!==state.binding||nativePrepared.checkpoint!==checkpoint()||!$('project-native-submit-confirm').checked)throw Error('Validate this current graph and separately authorize starting its Run.');
+    const value=await m2Request('native_submit',{graph_id:nativePrepared.graph_id,graph_revision:nativePrepared.revision,validation_token:nativePrepared.validation_token},ticket);if(!value)return;if(!nativeAdmissionOK(value))throw Error('Native admission differs from the selected project.');
+    nativePending=null;nativePrepared=null;$('project-native-run-id').value=value.run_id;$('project-execution-run-id').value=value.run_id;$('project-native-submit-confirm').checked=false;executionFormSaved('project-native-submit-form');$('project-native-facts').replaceChildren(projectValue(value));$('project-native-pending').textContent='Native admission acknowledged. Refresh current custody to inspect execution.';controls();message($('project-native-pending').textContent);
+  });};
+  $('project-native-retry-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
+    const run_id=$('project-native-run-id').value;if(!id(run_id)||!$('project-native-retry-confirm').checked)throw Error('Enter a current native Run ID and explicitly authorize a new attempt.');
+    const value=await m2Request('native_retry',{run_id},ticket);if(!value)return;if(!nativeAdmissionOK(value)||value.run_id===run_id)throw Error('Native retry admission differs from the selected project.');
+    nativePending=null;$('project-native-run-id').value=value.run_id;$('project-execution-run-id').value=value.run_id;$('project-native-retry-confirm').checked=false;executionFormSaved('project-native-retry-form');$('project-native-facts').replaceChildren(projectValue(value));$('project-native-pending').textContent='Native retry admission acknowledged. A saved admission is not proof of completion.';controls();message($('project-native-pending').textContent);
+  });};
+  $('project-native-pending-retry').onclick=()=>run(async ticket=>{
+    if(!nativePending||nativePending.body.binding!==state.binding)throw Error('This tab has no exact current pending native request.');
+    const saved=nativePending,{binding,expected_checkpoint,request_key,...args}=saved.body;if(saved.action==='native_preflight'){nativePrepared=null;controls();}const value=await m2Request(saved.action,args,ticket);if(!value)return;
+    if(saved.action==='native_preflight'){
+      if(!nativeValidationOK(value,args.revision))throw Error('Native validation differs from the original saved graph.');
+      nativePrepared=value.valid?{binding:state.binding,checkpoint:checkpoint(),graph_id:args.graph_id,revision:args.revision,validation_token:value.validation_token}:null;
+      executionFormSaved('project-native-preflight-form');$('project-native-probe-confirm').checked=false;
+    }else{
+      if(!nativeAdmissionOK(value)||saved.action==='native_retry'&&value.run_id===args.run_id)throw Error('Native acknowledgement differs from the selected project.');nativePrepared=null;$('project-native-run-id').value=value.run_id;$('project-execution-run-id').value=value.run_id;
+      const kind=saved.action==='native_submit'?'submit':'retry';executionFormSaved('project-native-'+kind+'-form');$('project-native-'+kind+'-confirm').checked=false;
+    }
+    nativePending=null;$('project-native-facts').replaceChildren(projectValue(value));$('project-native-pending').textContent='Exact pending native request acknowledged. No new request key was created.';controls();message($('project-native-pending').textContent);
+  });
+  $('project-native-reconcile-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
+    const phase_id=$('project-native-phase-id').value;if(!id(phase_id))throw Error('Enter the original current local phase ID.');
+    const value=await m2Request('native_reconcile',{phase_id},ticket);if(!value)return;if(!nativePhaseOK(value,phase_id))throw Error('Native reconciliation differs from the original phase.');
+    executionFormSaved('project-native-reconcile-form');$('project-native-facts').replaceChildren(projectValue(value));message('Original current native phase observed. Reconciliation does not start or resume it. Refresh project status before another action.');
+  });};
+  for(const [form,fields] of [['project-native-preflight-form',['project-native-probe-confirm']],['project-native-submit-form',['project-native-submit-confirm']],['project-native-retry-form',['project-native-run-id','project-native-retry-confirm']],['project-native-reconcile-form',['project-native-phase-id']]])for(const field of fields)$(field).addEventListener(field.endsWith('confirm')?'change':'input',()=>{m2DirtyForms.add(form);m2Dirty=true;controls();});
   function localConsumer(){const actor=window.TuldokAuth.identity?.()?.actor_id;return id(actor)?actor:'';}
   async function currentHealth(ticket,more=false){
     const value=await m2Request('execution_health',{offset:more?executionOffset:0,limit:40},ticket);if(!value)return;
     if(value.format!=='project_execution_health_v1'||!Array.isArray(value.active_run_ids)||typeof value.drain_required!=='boolean'||value.offset!==(more?executionOffset:0)||value.limit!==40||value.active_run_ids.length!==Math.min(40,Math.max(0,value.active_count-value.offset)))throw Error('Unsupported current custody observation.');
-    executionOffset=value.offset+value.active_run_ids.length;executionTotal=value.active_count;executionFact(value);
-    $('project-execution-summary').textContent=`${value.active_count} current active or unresolved Runs. Local owner ${value.local_owner_active?'active':'inactive'}. ${value.drain_required?'Explicit reconciliation must drain current custody before closing or extracting.':value.available?'The project projection is available.':'The current outcome needs explicit reconciliation.'}`;
+    let nativeTotal=0;
+    if(selectedVersions.get('project_files.execution_health')>=2){
+      const page=value.native_phases,ids=page?.items?.map(item=>item.phase_id);
+      if(!page||!exact(page,['items','total','offset','limit'])||!Array.isArray(page.items)||!Number.isSafeInteger(page.total)||page.total<0||page.offset!==(more?executionOffset:0)||page.limit!==40||page.items.length!==Math.min(40,Math.max(0,page.total-page.offset))||!page.items.every(item=>nativePhaseOK(item))||ids.join()!==[...new Set(ids)].sort().join())throw Error('Current native phases differ from the selected project or continuation.');
+      nativeTotal=page.total;if(!more)$('project-native-phases').replaceChildren();
+      for(const phase of page.items){const li=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent=`${phase.phase_id} · ${phase.phase} · ${phase.state}`;button.onclick=()=>{$('project-native-phase-id').value=phase.phase_id;$('project-native-phase-id').focus();};li.append(button);$('project-native-phases').append(li);}
+    }else if(Object.hasOwn(value,'native_phases'))throw Error('Version 1 cannot represent native phase custody. Refresh contracts.');
+    executionOffset=(more?executionOffset:0)+40;executionTotal=Math.max(value.active_count,nativeTotal);executionFact(value);
+    $('project-execution-summary').textContent=`${value.active_count} current active or unresolved Runs; ${nativeTotal} original current native phases. Local owner ${value.local_owner_active?'active':'inactive'}. ${value.drain_required?'Explicit reconciliation must drain current custody before closing or extracting.':value.available?'The project projection is available.':'The current outcome needs explicit reconciliation.'}`;
     if(value.active_run_ids.length)$('project-execution-run-id').value=value.active_run_ids[0];controls();
   }
   $('project-execution-health').onclick=()=>run(ticket=>currentHealth(ticket));
@@ -1585,13 +1704,14 @@
     $('project-save-as-fields').disabled=!m2Allowed('save_as');
     $('project-working-load').disabled=!m2Allowed('files_inspect');$('project-working-more').disabled=!m2Allowed('files_inspect');
     $('project-working-adopt-fields').disabled=!m2Allowed('file_adopt');
+    $('project-working-delete-fields').disabled=!m2Allowed('file_adopt_deletion')||!workingDeletion||workingDeletion.binding!==state?.binding||workingDeletion.checkpoint!==checkpoint();
     $('project-working-history').disabled=!workingSelection||workingSelection.binding!==state?.binding||!m2Allowed('file_history');
     $('project-working-history-more').disabled=!m2Allowed('file_history');
     for(const [button,action] of [['project-fork-load','fork_info'],['project-fork-more','fork_info'],['project-intents-load','material_intents'],['project-intents-more','material_intents'],['project-intent-capabilities','material_intent_capabilities'],['project-intent-capabilities-more','material_intent_capabilities']])$(button).disabled=!m2Allowed(action);
   }
   function m4Reset(){
     runtimeInspection=null;runtimeSourceOffset=runtimeSourceTotal=runtimeFileOffset=runtimeFileTotal=0;$('project-runtime-source').replaceChildren();$('project-runtime-files').replaceChildren();$('project-runtime-layout').textContent='';$('project-runtime-summary').textContent='';$('project-runtime-confirm').checked=false;
-    workingSelection=null;workingOffset=workingTotal=workingHistoryOffset=workingHistoryTotal=intentsOffset=intentsTotal=forkOffset=forkTotal=intentCapsOffset=intentCapsTotal=0;
+    workingSelection=null;clearWorkingDeletion();workingOffset=workingTotal=workingHistoryOffset=workingHistoryTotal=intentsOffset=intentsTotal=forkOffset=forkTotal=intentCapsOffset=intentCapsTotal=0;
     for(const name of ['project-working-list','project-working-history-list','project-fork-list','project-intents-list'])$(name).replaceChildren();
     $('project-working-text').value='';$('project-working-summary').textContent='';$('project-intent-detail').textContent='';
     for(const name of ['project-working-more','project-working-history-more','project-fork-more','project-intents-more','project-intent-capabilities-more'])$(name).hidden=true;
@@ -1619,25 +1739,31 @@
   });};
   async function inspectWorking(ticket,more=false){
     const offset=more?workingOffset:0,value=await m2Request('files_inspect',{offset,limit:40},ticket);if(!value)return;
-    if(!more)$('project-working-list').replaceChildren();
+    clearWorkingDeletion();if(!more)$('project-working-list').replaceChildren();
     for(const item of value.items){const li=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent=`${item.path} · ${item.state} · captured revision ${item.revision}`;button.onclick=()=>run(async next=>{
       const version=await m2Request('file_get',{file_id:item.id},next);if(!version)return;showWorking(version);
-      $('project-working-kind').value=item.kind;$('project-working-path').value=item.path;$('project-working-revision').value=String(item.revision);$('project-working-sha').value=item.observed_sha256??'';
+      if(item.kind==='note'&&item.state==='missing'&&sha(item.expected_sha256)){workingDeletion={binding:state.binding,checkpoint:checkpoint(),path:item.path,revision:item.revision,sha256:item.expected_sha256};$('project-working-delete-summary').textContent=`Missing note ${item.path} · captured revision ${item.revision} · SHA256 ${item.expected_sha256}. Earlier text will remain in revision history.`;}
+      controls();$('project-working-kind').value=item.kind;$('project-working-path').value=item.path;$('project-working-revision').value=String(item.revision);$('project-working-sha').value=item.observed_sha256??'';
       message(item.state==='unchanged'?'Captured bytes match the current file.':'Current file differs or is unavailable. Review its exact current digest before adoption.');return $('project-working-heading');
     },{clean:true});li.append(button);$('project-working-list').append(li);}
     workingOffset=offset+value.items.length;workingTotal=value.total;$('project-working-more').hidden=workingOffset>=workingTotal;
   }
+  function clearWorkingDeletion(){
+    workingDeletion=null;$('project-working-delete-confirm').checked=false;executionFormSaved('project-working-delete-form');
+    $('project-working-delete-summary').textContent='Inspect and select a known missing note first. This action records its absence and keeps all captured revisions.';
+  }
   function showWorking(value){
+    clearWorkingDeletion();
     workingSelection={id:value.id,binding:state.binding};$('project-working-heading').textContent=value.path;
-    $('project-working-summary').textContent=`Captured revision ${value.version.revision} · ${value.version.sha256} · ${value.version.bytes} bytes.`;
-    $('project-working-text').value=value.version.text;controls();
+    $('project-working-summary').textContent=value.version.deleted===true?`Captured revision ${value.version.revision} · note deletion retained. No text is present in this revision; select an earlier revision to read its captured text.`:`Captured revision ${value.version.revision} · ${value.version.sha256} · ${value.version.bytes} bytes${value.version.bytes===0?' · empty file':''}.`;
+    $('project-working-text').value=value.version.deleted===true?'':value.version.text;controls();
   }
   async function workingHistory(ticket,more=false){
     if(!workingSelection||workingSelection.binding!==state.binding)throw Error('Select a file from the current project first.');
     const offset=more?workingHistoryOffset:0,value=await m2Request('file_history',{file_id:workingSelection.id,offset,limit:40},ticket);if(!value)return;
     if(value.id!==workingSelection.id)throw Error('Working-file history belongs to another file.');
     if(!more)$('project-working-history-list').replaceChildren();
-    for(const version of value.items){const li=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent=`Revision ${version.revision} · ${version.sha256} · ${version.adopted_at}`;button.onclick=()=>run(async next=>{const result=await m2Request('file_get',{file_id:workingSelection.id,revision:version.revision},next);if(result)showWorking(result);return $('project-working-heading');});li.append(button);$('project-working-history-list').append(li);}
+    for(const version of value.items){const li=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent=`Revision ${version.revision} · ${version.deleted===true?'note deletion':version.sha256} · ${version.adopted_at}`;button.onclick=()=>run(async next=>{const result=await m2Request('file_get',{file_id:workingSelection.id,revision:version.revision},next);if(result)showWorking(result);return $('project-working-heading');});li.append(button);$('project-working-history-list').append(li);}
     workingHistoryOffset=offset+value.items.length;workingHistoryTotal=value.total;$('project-working-history-more').hidden=workingHistoryOffset>=workingHistoryTotal;
   }
   $('project-working-local').addEventListener('change',()=>run(async()=>{
@@ -1650,6 +1776,14 @@
     const args={kind:$('project-working-kind').value,path:$('project-working-path').value,expected_revision:Number($('project-working-revision').value),expected_sha256:$('project-working-sha').value};
     const result=await m2Request('file_adopt',args,ticket);if(!result)return;executionFormSaved('project-working-adopt-form');$('project-working-revision').value=String(result.revision);
     await inspectWorking(ticket);const saved=await m2Request('file_get',{file_id:result.id,revision:result.revision},ticket);if(saved)showWorking(saved);message('Exact working-file bytes adopted. The captured text remains inert.');return $('project-working-heading');
+  });};
+  $('project-working-delete-confirm').addEventListener('change',()=>{m2DirtyForms.add('project-working-delete-form');m2Dirty=true;controls();});
+  $('project-working-delete-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
+    const selected=workingDeletion;if(!selected||selected.binding!==state.binding||selected.checkpoint!==checkpoint()||!$('project-working-delete-confirm').checked)throw Error('Inspect and select a known missing note, then explicitly confirm its deletion revision.');
+    const result=await m2Request('file_adopt_deletion',{path:selected.path,expected_revision:selected.revision,expected_sha256:selected.sha256},ticket);if(!result)return;
+    executionFormSaved('project-working-delete-form');clearWorkingDeletion();await inspectWorking(ticket);
+    const saved=await m2Request('file_get',{file_id:result.id,revision:result.revision},ticket);if(saved)showWorking(saved);
+    message('Note deletion retained. Earlier captured text remains available in revision history.');return $('project-working-heading');
   });};
   async function forkInfo(ticket,more=false){
     const offset=more?forkOffset:0,value=await m2Request('fork_info',{offset,limit:40},ticket);if(!value)return;
@@ -1680,7 +1814,7 @@
   $('project-files-refresh').onclick=refresh;
   $('records-more').onclick=()=>run(async ticket=>{await query(ticket,true);message('More text records loaded.');return nextRecord===null?$('records-title'):$('records-more');});
   $('record-history-more').onclick=olderHistory;
-  $('project-files-discard').onclick=()=>{importDirty=false;annotationDirty=false;m2Dirty=false;m2DirtyForms.clear();forkPending=null;runtimePending=null;runtimeInspection=null;for(const field of ['project-candidate-study','project-candidate-id','project-candidate-directory','project-candidate-runtime','project-candidate-package-run','project-candidate-package-sha','project-candidate-recovery-study','project-candidate-recovery-key','project-candidate-abandon-reason','project-runtime-abandon-key','project-runtime-abandon-reason'])$(field).value='';$('project-runtime-confirm').checked=false;$('project-runtime-pending').textContent='';for(const field of ['project-save-as-directory','project-save-as-name','project-working-path','project-working-sha','project-working-local'])$(field).value='';$('project-working-revision').value='0';executionApproval=null;studyApproval=null;producerCurrent=null;for(const field of ['project-producer-url','project-producer-model','project-producer-instruction','project-producer-labels','project-producer-note','project-producer-profile','project-producer-session','project-producer-prompt-url','project-producer-prompt-model'])$(field).value='';$('project-producer-confirm').checked=false;$('project-execution-confirm').checked=false;$('project-artifact-path').value='';for(const form of ['project-model-create-form','project-study-create-form','project-register-form','project-scientific-form'])for(const field of $(form).querySelectorAll('input'))field.value=field.defaultValue??'';clearExplorationDetail();$('project-source-file').value='';$('project-source-name').value='';$('project-search-name').value='';$('project-selection-name').value='';$('text-name').value='';$('text-content').value='';$('text-groups').value='project';$('text-rights').value='unknown';showRecord();clearError();message('Unsubmitted edits discarded. Saved project records are unchanged.');};
+  $('project-files-discard').onclick=()=>{importDirty=false;annotationDirty=false;m2Dirty=false;m2DirtyForms.clear();clearWorkingDeletion();nativePending=null;nativePrepared=null;for(const field of ['project-native-probe-confirm','project-native-submit-confirm','project-native-retry-confirm'])$(field).checked=false;forkPending=null;runtimePending=null;runtimeInspection=null;for(const field of ['project-candidate-study','project-candidate-id','project-candidate-directory','project-candidate-runtime','project-candidate-package-run','project-candidate-package-sha','project-candidate-recovery-study','project-candidate-recovery-key','project-candidate-abandon-reason','project-runtime-abandon-key','project-runtime-abandon-reason'])$(field).value='';$('project-runtime-confirm').checked=false;$('project-runtime-pending').textContent='';for(const field of ['project-save-as-directory','project-save-as-name','project-working-path','project-working-sha','project-working-local'])$(field).value='';$('project-working-revision').value='0';executionApproval=null;studyApproval=null;producerCurrent=null;for(const field of ['project-producer-url','project-producer-model','project-producer-instruction','project-producer-labels','project-producer-note','project-producer-profile','project-producer-session','project-producer-prompt-url','project-producer-prompt-model'])$(field).value='';$('project-producer-confirm').checked=false;$('project-execution-confirm').checked=false;$('project-artifact-path').value='';for(const form of ['project-model-create-form','project-study-create-form','project-register-form','project-scientific-form'])for(const field of $(form).querySelectorAll('input'))field.value=field.defaultValue??'';clearExplorationDetail();$('project-source-file').value='';$('project-source-name').value='';$('project-search-name').value='';$('project-selection-name').value='';$('text-name').value='';$('text-content').value='';$('text-groups').value='project';$('text-rights').value='unknown';showRecord();clearError();message('Unsubmitted edits discarded. Saved project records are unchanged.');};
   for(const field of ['text-name','text-content','text-groups','text-rights'])$(field).addEventListener('input',()=>{importDirty=true;controls();});
   for(const field of ['annotation-value','annotation-groups','record-review','annotation-task'])$(field).addEventListener(field==='annotation-task'||field==='record-review'?'change':'input',()=>{annotationDirty=true;annotationHelp();controls();});
   window.addEventListener('beforeunload',event=>{if(dirty()){event.preventDefault();event.returnValue='';}});
