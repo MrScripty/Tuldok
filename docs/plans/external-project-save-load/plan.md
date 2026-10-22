@@ -1,10 +1,10 @@
 # External project save and load
 
-**Plan status:** `Planned`
+**Plan status:** `Active`
 
-**Current phase:** Implementation planning complete; product work has not started.
+**Current phase:** M2 — complete historical records, artifacts and current metadata publication.
 
-**Next slice:** M1 — one external text project through New, edit, Save, Close and cold Open, only after separate implementation authorization.
+**Next slice:** Implement the agreed artifact/session boundary and owner codecs, then prove mixed-family cold reconstruction without imported authority.
 
 **Acceptance status:** `pending`
 
@@ -12,7 +12,7 @@
 
 **Issues:** [issues.md](issues.md)
 
-This is the canonical current implementation plan. “Planned” records the direction within the user's requested requirements; it does not authorize starting implementation. The planning deliverable and its independent review have their own [verification record](reports/verification.md). All product acceptance below is prospective. No product code, catalog, user data or local surrogate lab was changed or validated by this task.
+This is the canonical current implementation plan. The user authorized implementation on 2026-10-22; the integration lead admitted `start` for this exact plan after rechecking current main and preserved work. The earlier planning-only boundary is historical in the [ledger](execution-ledger.md) and [planning verification](reports/verification.md). Product acceptance below remains pending until the named evidence passes. The local surrogate lab remains outside all implementation, inspection and migration authority.
 
 ## Objective
 
@@ -49,7 +49,7 @@ All rows are required for final product acceptance. The implementation owner rec
 ### Out Of Scope
 
 - Any inspection, migration or execution of the user's local surrogate lab. Its local state is ahead of GitHub; GitHub is a code baseline only, never its current project truth.
-- Product implementation in this task; pushing, opening a PR, merging, or changing Coding-Standards.
+- Unrelated product changes and Coding-Standards edits. A dedicated feature branch and draft implementation PR are authorized; incomplete milestones must not be merged as the completed feature. Any eventual merge requires relevant independent review, exact-head CI and acceptance gates.
 - Repeating completed model-development D1–D4 architecture work, redesigning scientific metrics/training, adding a scheduler, domain-specific importer, universal object registry or recipe engine.
 - Live export/fork during active or uncertain execution; collaborative/distributed writers, network-filesystem locking guarantees, semantic Git auto-merge, automatic conflict repair, cloud synchronization, automatic artifact fetch/install/regenerate, automatic garbage collection, automatic format upgrade/downgrade.
 - Binary weights/data in Git, database dumps as the project format, and a promise that Git history alone backs up unique binary evidence. External artifact backup remains required.
@@ -287,11 +287,11 @@ The following named path groups are finite write sets, reused below for readabil
 
 ### M1 — A new external text project survives a cold reopen
 
-**Status:** `Planned`
+**Status:** `Accepted` for the stated text vertical. [Implementation evidence](reports/m1-implementation.md) records independent review and real PostgreSQL/HTTP/SDK/CLI/MCP/browser gates. This is not full-feature acceptance.
 
 **Goal / production outcome:** user creates a new project, authors text/annotations/notes through the normal workspace, saves/closes and opens it from a moved/cloned folder with a new DB. Submitted work is canonical before acknowledgement.
 
-**Allowed write set:** new `project_store.py`; `metadata.py`, `app.py`, `workbench.py`, `projects.py`; Client/UI, Project docs, and Project evidence as defined above. Only New/Open/Save/Close and the text family are advertised in M1.
+**Allowed write set:** new `project_store.py`, `project_text.py`, `project_workspace.py`; `metadata.py`, `app.py`, `workbench.py`, `projects.py`; Client/UI, Project docs, and Project evidence as defined above; new `static/project-files.html`, `static/project-files.js`, `static/project-files.css`, `tests/test_project_text.py`, `tests/test_project_workspace.py`. M1 uses an explicit `--project-files-root ALIAS=PATH` inert startup mode and dedicated text workspace; every legacy domain route is unavailable in this mode until its canonical writer is integrated. Installation-local Access stays outside portable records. Only New/Open/Save/Close and the text family are advertised in M1.
 
 **Dependencies / tasks:** prove filesystem capability on disposable root; freeze format and operation contracts; separate physical DB binding from logical project identity; add inert project-mode app construction and generation-bound workspace controller with Close-gated replacement; bind one text/annotation/history codec to canonical mutation/publication; implement New/Open/Save/Close across adapters and UI. Declare exact supported families; disable unsupported project-mode writes before dispatch so no family becomes DB-only. Preserve legacy catalog/registration behavior in its own explicit mode. Make the format examples executable fixtures only with their codecs.
 
@@ -301,13 +301,17 @@ The following named path groups are finite write sets, reused below for readabil
 
 ### M2 — Preserve complete project history and unique artifacts
 
-**Status:** `Planned`
+**Status:** `Active`
 
 **Goal / production outcome:** cold project inspection retains the real data/model/Study/Run/lineage and scientific decision closure, including large unique artifacts, without active authority.
 
-**Allowed write set:** `project_store.py`; new `project_history.py`; `workbench.py`, `preferences.py`, `dataset_releases.py`, `saved_selections.py`, `saved_searches.py`, `pipeline.py`, `model_definitions.py`, `experiments.py`, `experiment_lineage.py`, `candidate_packages.py`, `runtime_snapshots.py`, `recipe_process.py`, `extension_bindings.py`, `extension_canonical.py`, `extension_evidence.py`, `model_evidence.py`, `field_evidence.py`, `runs.py`, `retained_analysis.py`, `retained_analysis_schema.py`, `immutable_assets.py`, `scientific_fields.py`, `audio_assets.py`, `sequence_assets.py`, `meshes.py`, `pointclouds.py`, `volume_assets.py`, `access.py`, `metadata.py`, `app.py`; Client/UI and Project docs; `docs/contracts/experiment-lineage.md`, `docs/contracts/model-development.md`, `docs/contracts/extensions.md`; Project evidence; `tests/test_workbench.py`, `tests/test_preferences.py`, `tests/test_dataset_releases.py`, `tests/test_saved_selections.py`, `tests/test_saved_searches.py`, `tests/test_model_definitions.py`, `tests/test_experiments.py`, `tests/test_experiment_lineage.py`, `tests/test_candidate_packages.py`, `tests/test_runtime_snapshots.py`, `tests/test_projects.py`, `tests/test_project_snapshot_capture.py`. Candidate/runtime writer changes here only fence unsupported project-mode effects; their live integration is M3.
+**Allowed write set:** `project_store.py`, `project_text.py`, `project_workspace.py`; new `project_history.py`, `project_artifacts.py`, `project_session.py`, `project_data.py`, `project_material.py`, `image_sources.py`; `workbench.py`, `preferences.py`, `dataset_releases.py`, `saved_selections.py`, `saved_searches.py`, `pipeline.py`, `model_definitions.py`, `experiments.py`, `experiment_lineage.py`, `candidate_packages.py`, `runtime_snapshots.py`, `recipe_process.py`, `extension_bindings.py`, `extension_canonical.py`, `extension_evidence.py`, `model_evidence.py`, `field_evidence.py`, `one_fit_evidence.py`, `runs.py`, `run_publication.py`, `retained_analysis.py`, `retained_analysis_schema.py`, `immutable_assets.py`, `scientific_fields.py`, `audio_assets.py`, `sequence_assets.py`, `meshes.py`, `pointclouds.py`, `volume_assets.py`, `access.py`, `metadata.py`, `app.py`; Client/UI and Project docs; `docs/contracts/experiment-lineage.md`, `docs/contracts/model-development.md`, `docs/contracts/extensions.md`; Project evidence; `tests/test_workbench.py`, `tests/test_preferences.py`, `tests/test_dataset_releases.py`, `tests/test_saved_selections.py`, `tests/test_saved_searches.py`, `tests/test_model_definitions.py`, `tests/test_experiments.py`, `tests/test_experiment_lineage.py`, `tests/test_candidate_packages.py`, `tests/test_runtime_snapshots.py`, `tests/test_projects.py`, `tests/test_project_snapshot_capture.py`; new `tests/test_project_artifacts.py`, `tests/test_project_session.py`, `tests/test_project_data.py`, `tests/test_project_material.py`. Candidate/runtime writer changes here only fence unsupported project-mode effects; their live integration is M3.
 
 **Dependencies / tasks:** M1; bound family/closure inventory against all retained domain tables and managed artifacts, with a codec or explicit unsupported-write disposition for each. Preserve annotation/deletion/review/exposure, response/preference histories and rationale, immutable source/extension/runtime closure, candidate preparation/selection facts, Study accounting, reservation association and cross-Study producer/lineage edges, with the visible-family table providing the minimum scope. Introduce inert historical proof and current disclosure checks, not fake grants. Externalize BYTEA as payloads and implement digest/availability/resolution manifests. Supported metadata writes use the canonical boundary. Active Run creation stays unavailable in project mode until M3; no DB-only bypass.
+
+**Admitted owner composition:** M1's separate store/text owners remain. M2 adds a narrow shared `ProjectSession` for one outer SQL transaction, complete `(family,id)` checkpoint merge, canonical original-result receipt and post-publication projection fencing. It is internal composition of fixed owners, not a public registry or arbitrary domain RPC. `ProjectArtifacts` owns intrinsic `{format,sha256,bytes}` declarations and verified immutable payload custody; domain edges own namespace, media type, role, unique/regenerable policy and required-use meaning. Data, material and historical proof codecs retain their own closed versioned families. Lead-owned `ImageSources` extracts existing Dataset image policy without constructing Dataset; legacy Dataset delegates to that same owner. Directly affected `one_fit_evidence.py` and `run_publication.py` expose retained reader seams instead of copied interpreters. These filename/write-set refinements follow actual owner inspection, without changing final scope.
+
+M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data records use `workbench_record_v1`; operations that require a new format refuse before effects on an older record unless an explicit conversion has been admitted. Historical binding/schema/source bytes establish integrity separately from current host compatibility. Current protected-data disclosure is granted explicitly by local authority and is never reconstructed from imported exposure facts.
 
 **Gate / risk-based tests:** T2/T4/T7: unique annotation and observation bytes; cross-Study parents/baselines and producer Run inputs; no live grant/credential/control import; missing/corrupt artifacts distinguish unavailable from unverified. Test real cold SQL projections/history readers and representative owned modality codecs rather than training every modality. A family inventory is deciding evidence against silent omission, not a requirement to test every unrelated feature again.
 
@@ -357,7 +361,7 @@ The following named path groups are finite write sets, reused below for readabil
 
 ## Blockers
 
-No missing user decision blocks this planning deliverable or M1's proposed new-project vertical. Product execution is not authorized by this task. There is no claim that future environment-dependent tests are currently runnable.
+No missing user decision blocks M1. Implementation is authorized; user-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium environments are qualified for the M1 checks. Individual test results and unrun later-milestone claims remain distinct in implementation evidence.
 
 Actual per-operation blockers are: unknown source membership during later extraction; missing unique bytes for a requested complete transfer; inseparable secret-bearing legacy proof; unknown active descendant effects; or an unsupported filesystem's inability to provide the promised durable publication. Owners and resolution conditions are in [issues](issues.md). These block only dependent operations, not inert inspection or independent planning. Format naming, no-op Save, single local writer, closed-project Git changes, inert imported history and independent Save As are safe defaults, not a questionnaire for the user.
 
@@ -376,12 +380,12 @@ Repair failed tests within the same admitted meaning; do not restart an identica
 
 Planning has one serial writer/integrator and an independent read-only reviewer. The reviewer checks the complete material plan against actual pinned code and standards; findings are collected before revisions. A review report is non-authorizing. There are no outstanding mutable integration proposals, so the concurrent-plan-integration profile is not selected.
 
-The user requested isolation. Private branch `plan/external-project-save-load-20261022` and worktree `/workspace/Tuldok-project-save-load-plan` are based on Tuldok main `133d53c0e2985a6559ba9cebd7d4a9f530051f06`. The planning author owns only `docs/plans/external-project-save-load/`; the user is integration owner. No remote publication/integration is authorized. Retain the local branch/worktree protected for user review; synchronize/replan only on an explicit follow-up, and retire only after the user dispositions this proposal under Commit's reachability rules. The original `/workspace/Tuldok` checkout is preserved. The standards checkout is read-only reference material, never an output target.
+The user requested isolation. Original `/workspace/Tuldok` and reviewed planning branch/worktree `plan/external-project-save-load-20261022` at `/workspace/Tuldok-project-save-load-plan` remain preserved. Active integration branch `feat/external-project-save-load-20261022` at `/workspace/Tuldok-project-save-load-impl` starts from local plan commit `2c9c9b098c9f1c4c2557c58818574ebdbc1e7d41`, whose parent is current main `133d53c0e2985a6559ba9cebd7d4a9f530051f06` (reconfirmed before branching). This lead owns integration, review and authorized dedicated draft-PR publication. Workers share this worktree with disjoint write sets; only this lead commits/publishes. No retired lead is resumed, no unrelated README/qualification branch is changed, and incomplete feature scaffolding is not merge-ready. Retain branches/worktrees until dependent retargeting and safe merge/reachability proof; standards checkout remains unchanged reference material.
 
 ## Final Acceptance
 
 - Acceptance status: `pending`
 - Deferred follow-ups: distributed/live-Git collaboration, other writer platforms/filesystems, artifact auto-fetch/regeneration, semantic merges and automatic pruning; revisit only for a concrete requirement and owned evidence.
-- Final status: `Planned`
+- Final status: `Active`
 
-The plan is a reviewable implementation proposal. [Independent review](reports/independent-review.md) and [planning verification](reports/verification.md) concern documentation and source reasoning only; they do not satisfy product A1–A9 or authorize migration/execution.
+[Independent plan review](reports/independent-review.md) and [planning verification](reports/verification.md) remain historical documentation evidence. Product implementation/results have their own dated ledger/report and independent code review; no planning check satisfies A1–A9. User migration is separately authorized per operation.

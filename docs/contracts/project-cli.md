@@ -1,5 +1,10 @@
 # Project execution CLI
 
+The separate `file-*` commands operate on the explicit external text-project
+mode. See [project files](project-files.md) for its canonical authority, owner
+selection, checkpoint binding and current milestone limits. Registration `open`
+below keeps its existing meaning.
+
 `project_cli.py` uses the existing authenticated agent operations. Saved graphs,
 execution grants, Run custody, progress, cancellation and artifacts keep their
 existing owners and remain visible in `/workspaces` → Current local catalog →

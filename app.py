@@ -45,6 +45,7 @@ import math
 import re
 import shutil
 from metadata import Metadata, StorageError, CommitOutcomeUnknown, CatalogBusy
+from project_store import ProjectStoreError
 import tempfile
 import threading
 import uuid
@@ -504,6 +505,14 @@ def make_handler(dataset, observer=None):
             self.end_headers()
             self._write_observed((data,), status)
 
+        def project_error(self, error):
+            value = {'error': str(error), 'code': error.code}
+            # Only the typed project boundary can attach a non-secret durable
+            # receipt. Selected output validation checks its closed schema.
+            if getattr(dataset, 'project_files_mode', False) and hasattr(error, 'receipt'):
+                value['receipt'] = error.receipt
+            return self.reply(value, error.status)
+
         def reply_stream(self, stream, metadata):
             # The owner has already verified a private spool before HTTP success.
             observe_stage(observer, getattr(self, '_observation', None), 'returned',
@@ -702,6 +711,10 @@ def make_handler(dataset, observer=None):
                     if path.startswith('/api/access/credentials/') and path.endswith('/revoke'):
                         self._access_body()
                         return self.reply(dataset.access.revoke(path.split('/')[-2]))
+                    if (getattr(dataset, 'project_files_mode', False) and
+                            not path.startswith('/api/workspace/project-files/')):
+                        return self.reply({'error': 'This domain is unavailable until its canonical project publication is implemented.',
+                                           'code': 'unavailable'}, 409)
                     if path.startswith('/api/access/execution-grants/') and path.endswith('/revoke'):
                         projects.closed(self._access_body(), ())
                         return self.reply(dataset.access.revoke_execution(path.split('/')[-2]))
@@ -721,7 +734,41 @@ def make_handler(dataset, observer=None):
                 if path == '/api/agent/operations':
                     return self.reply(agent_api.discovery())
                 if path == '/api/agent/capabilities':
-                    return self.reply(agent_api.capabilities(dataset.db.dataset_id))
+                    capabilities = (dataset.capabilities() if getattr(dataset, 'project_files_mode', False)
+                                    else agent_api.capabilities(dataset.db.dataset_id))
+                    if not getattr(dataset, 'project_files_mode', False):
+                        for operation in capabilities['operations']:
+                            if operation['id'].startswith('project_files.'):
+                                operation['availability'] = 'unavailable'
+                    return self.reply(capabilities)
+                if path == '/api/workspace/context' and getattr(dataset, 'project_files_mode', False):
+                    # Bootstrap identifies the installation that owns this
+                    # credential, without constructing a legacy domain owner.
+                    return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
+                                       'project_files': True})
+                if path == '/api/workspace/project-files' or path.startswith('/api/workspace/project-files/'):
+                    if not getattr(dataset, 'project_files_mode', False):
+                        raise workbench.WorkbenchError('Start explicit project-file mode to use this capability.', 'unavailable', 409)
+                    query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+                    if any(len(value) != 1 for value in query.values()):
+                        raise workbench.WorkbenchError('Project-file query fields must be unique.')
+                    arguments = {key: value[0] for key, value in query.items()}
+                    if path == '/api/workspace/project-files':
+                        name = 'project_files.status'
+                    elif path == '/api/workspace/project-files/records':
+                        name = 'project_files.query'
+                    elif re.fullmatch('/api/workspace/project-files/records/[a-f0-9]{32}', path):
+                        name = 'project_files.get'
+                        arguments['record_id'] = path.rsplit('/', 1)[-1]
+                    else:
+                        raise workbench.WorkbenchError('Unknown project-file read.', 'unsupported', 404)
+                    for key in ('limit', 'before_revision', 'history_limit'):
+                        if key in arguments:
+                            arguments[key] = agent_api.decode(arguments[key])
+                    return self.reply(dataset.dispatch(name, arguments))
+                if getattr(dataset, 'project_files_mode', False) and path.startswith('/api/'):
+                    raise workbench.WorkbenchError('This domain is unavailable until its canonical project publication is implemented.',
+                                                  'unavailable', 409)
                 if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/')
                         or path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/')):
                     self.project_access()
@@ -937,6 +984,9 @@ def make_handler(dataset, observer=None):
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 # Opt-in workspace shell keeps fixture and real service boundaries distinct.
                 assets.update({
+                    '/project-files': ('project-files.html', 'text/html'),
+                    '/project-files.js': ('project-files.js', 'text/javascript'),
+                    '/project-files.css': ('project-files.css', 'text/css'),
                     '/auth.js': ('auth.js', 'text/javascript'),
                     '/auth.css': ('auth.css', 'text/css'),
                     '/workspace-project-activity.js': ('workspace-project-activity.js', 'text/javascript'),
@@ -971,6 +1021,8 @@ def make_handler(dataset, observer=None):
                     '/workspaces-data.js': ('workspaces-data.js', 'text/javascript'),
                     '/workspaces-data.css': ('workspaces-data.css', 'text/css'),
                 })
+                if getattr(dataset, 'project_files_mode', False) and path in ('/', '/workspaces', '/workbench'):
+                    path = '/project-files'
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -984,7 +1036,9 @@ def make_handler(dataset, observer=None):
             except access.AccessError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except workbench.WorkbenchError as error:
-                return self.reply({'error': str(error), 'code': error.code}, error.status)
+                return self.project_error(error)
+            except ProjectStoreError as error:
+                return self.project_error(error)
             except (ValueError, OSError) as error:
                 return self.reply({'error': str(error)}, 400)
 
@@ -1007,6 +1061,8 @@ def make_handler(dataset, observer=None):
                     limit = spatial_assets.MAX_REQUEST
                 if path.startswith('/api/workspace/'):
                     limit = 256 * 1024
+                if path == '/api/workspace/project-files' or path.startswith('/api/workspace/project-files/'):
+                    limit = agent_api.REQUEST_LIMIT
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
@@ -1016,10 +1072,30 @@ def make_handler(dataset, observer=None):
                     # Strict JSON at the selected boundary, preserving ordinary HTTP semantics.
                     body = agent_api.decode(raw_body)
                     agent_api.validate_selected(self._contract_selection, self.command, self.path, body)
+                elif path == '/api/workspace/project-files' or path.startswith('/api/workspace/project-files/'):
+                    body = agent_api.decode(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 self._observe_dispatch(body)
                 path = urlsplit(self.path).path
+                if path == '/api/workspace/project-files' or path.startswith('/api/workspace/project-files/'):
+                    if not getattr(dataset, 'project_files_mode', False):
+                        raise workbench.WorkbenchError('Start explicit project-file mode to use this capability.', 'unavailable', 409)
+                    actions = {'/api/workspace/project-files/' + action: 'project_files.' + action
+                               for action in ('new', 'open', 'save', 'close')}
+                    actions['/api/workspace/project-files/import-text'] = 'project_files.import_text'
+                    name = actions.get(path)
+                    if re.fullmatch('/api/workspace/project-files/records/[a-f0-9]{32}', path):
+                        if 'record_id' in body:
+                            raise workbench.WorkbenchError('Record ID belongs in the route, not the body.')
+                        name = 'project_files.annotate'
+                        body = dict(body, record_id=path.rsplit('/', 1)[-1])
+                    if name is None:
+                        raise workbench.WorkbenchError('Unknown project-file mutation.', 'unsupported', 404)
+                    return self.reply(dataset.dispatch(name, body))
+                if getattr(dataset, 'project_files_mode', False):
+                    raise workbench.WorkbenchError('This domain is unavailable until its canonical project publication is implemented.',
+                                                  'unavailable', 409)
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
                     if parts == ['scientific-comparison']:
@@ -1352,7 +1428,9 @@ def make_handler(dataset, observer=None):
             except access.AccessError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except workbench.WorkbenchError as error:
-                return self.reply({'error': str(error), 'code': error.code}, error.status)
+                return self.project_error(error)
+            except ProjectStoreError as error:
+                return self.project_error(error)
             except Conflict as error:
                 return self.reply({'error': str(error)}, 409)
             except FileNotFoundError:
@@ -1370,6 +1448,8 @@ def main():
     parser.add_argument('--port', type=int, default=8091)
     parser.add_argument('--project-root', action='append', default=[], metavar='ALIAS=PATH',
                         help='Allow read-only project inspection beneath a local directory; repeat for multiple roots.')
+    parser.add_argument('--project-files-root', action='append', default=[], metavar='ALIAS=PATH',
+                        help='Use inert external text-project mode beneath explicit local roots; other domain writes are unavailable.')
     args = parser.parse_args()
     roots = {}
     for binding in args.project_root:
@@ -1378,7 +1458,19 @@ def main():
             parser.error('Each project root needs a unique ALIAS=PATH.')
         roots[alias] = location
     try:
-        dataset = Dataset(args.data, project_roots=roots)
+        if args.project_files_root:
+            if roots:
+                parser.error('Choose project-file mode or legacy snapshot inspection roots, not both.')
+            file_roots = {}
+            for binding in args.project_files_root:
+                alias, separator, location = binding.partition('=')
+                if not separator or not location or alias in file_roots:
+                    parser.error('Each project-file root needs a unique ALIAS=PATH.')
+                file_roots[alias] = location
+            from project_workspace import ProjectWorkspace
+            dataset = ProjectWorkspace(args.data, file_roots)
+        else:
+            dataset = Dataset(args.data, project_roots=roots)
     except (StorageError, workbench.WorkbenchError) as error:
         parser.exit(2, str(error) + "\n")
     observer = configured_interface(args, 'http')

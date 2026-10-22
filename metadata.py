@@ -13,6 +13,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import threading
 import time
@@ -190,12 +191,15 @@ class CatalogLock:
 
 class Metadata:
     def __init__(self, path, dsn=None, *, create=True, dataset_id=None,
-                 schema_version=SCHEMA_VERSION, initial_file_modes=None):
+                 schema_version=SCHEMA_VERSION, initial_file_modes=None, projection_id=None):
         # Version selection belongs to offline transfer/upgrade tools. Runtime
         # callers omit it and require the current schema, never auto-upgrade.
         if schema_version is not None and (type(schema_version) is not int or
                                            schema_version not in SUPPORTED_SCHEMA_VERSIONS):
             raise StorageError('Unsupported PostgreSQL catalog version.')
+        if projection_id is not None and (type(projection_id) is not str or
+                not re.fullmatch('[a-f0-9]{32}', projection_id)):
+            raise StorageError('Invalid local project projection identity.')
         path = Path(path).resolve()
         if create:
             path.mkdir(parents=True, exist_ok=True)
@@ -229,10 +233,11 @@ class Metadata:
                     os.fsync(guard.fileno())
             fcntl.flock(guard, fcntl.LOCK_EX)
             self._initialize(path, dsn, create=create, dataset_id=dataset_id,
-                             schema_version=schema_version, initial_file_modes=initial_file_modes)
+                             schema_version=schema_version, initial_file_modes=initial_file_modes,
+                             projection_id=projection_id)
 
     def _initialize(self, path, dsn=None, *, create=True, dataset_id=None,
-                    schema_version=SCHEMA_VERSION, initial_file_modes=None):
+                    schema_version=SCHEMA_VERSION, initial_file_modes=None, projection_id=None):
         self.path = Path(path).resolve()
         self.schema_version = SCHEMA_VERSION if schema_version is None else schema_version
         self.dsn = connection_info(dsn)
@@ -248,7 +253,9 @@ class Metadata:
             try:
                 value = json.loads(manifest.read_text())
                 identity = value['dataset_id']
-                if value != {'version': 1, 'dataset_id': identity} or uuid.UUID(hex=identity).hex != identity:
+                expected = {'version': 1, 'dataset_id': identity} if projection_id is None else {
+                    'version': 2, 'dataset_id': identity, 'projection_id': projection_id}
+                if value != expected or uuid.UUID(hex=identity).hex != identity:
                     raise ValueError()
                 if dataset_id is not None and dataset_id != identity:
                     raise ValueError()
@@ -263,7 +270,11 @@ class Metadata:
                 try:
                     reservation = json.loads(pending.read_text())
                     identity = reservation['dataset_id']
-                    if reservation != {'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash(self.schema_version)}:
+                    expected = {'version': 1, 'dataset_id': identity,
+                                'definition_sha256': definition_hash(self.schema_version)}
+                    if projection_id is not None:
+                        expected.update(version=2, projection_id=projection_id)
+                    if reservation != expected:
                         raise ValueError()
                     if dataset_id is not None and identity != dataset_id:
                         raise ValueError()
@@ -274,7 +285,12 @@ class Metadata:
             if not isinstance(identity, str) or uuid.UUID(hex=identity).hex != identity:
                 raise StorageError('Invalid dataset identity.')
         self.dataset_id = identity
-        self.schema = 'catalog_' + identity
+        # Portable logical identity participates in domain hashes. A project
+        # checkout's disposable physical projection must never alias another
+        # checkout or machine merely because it has the same project UUID.
+        self.projection_id = projection_id
+        self.schema = ('catalog_' + identity if projection_id is None else
+                       'projection_' + projection_id)
         self._lock_key = _key(self.schema)
         try:
             self.connection = psycopg.connect(self.dsn, autocommit=True, row_factory=row_factory)
@@ -292,7 +308,11 @@ class Metadata:
                     raise StorageError('Destination catalog already exists; refuse adopting it without its dataset manifest.')
                 if not manifest.exists() and not pending.exists():
                     with pending.open('x') as handle:
-                        json.dump({'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash(self.schema_version)}, handle)
+                        reservation = {'version': 1, 'dataset_id': identity,
+                                       'definition_sha256': definition_hash(self.schema_version)}
+                        if projection_id is not None:
+                            reservation.update(version=2, projection_id=projection_id)
+                        json.dump(reservation, handle)
                         handle.flush()
                         os.fsync(handle.fileno())
                     _sync_directory(self.path)
@@ -328,9 +348,13 @@ class Metadata:
                            for table in self.tables):
                         raise StorageError('Interrupted catalog initialization contains unexpected application rows.')
                     if initial_file_modes is None:
-                        _publish_manifest(manifest, {'version': 1, 'dataset_id': identity})
+                        value = {'version': 1, 'dataset_id': identity} if projection_id is None else {
+                            'version': 2, 'dataset_id': identity, 'projection_id': projection_id}
+                        _publish_manifest(manifest, value)
                     else:
-                        _publish_manifest(manifest, {'version': 1, 'dataset_id': identity},
+                        value = {'version': 1, 'dataset_id': identity} if projection_id is None else {
+                            'version': 2, 'dataset_id': identity, 'projection_id': projection_id}
+                        _publish_manifest(manifest, value,
                                           initial_mode=initial_file_modes[MANIFEST])
                 if pending.exists():
                     pending.unlink()

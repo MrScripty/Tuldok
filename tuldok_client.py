@@ -56,7 +56,7 @@ def _invoke(client, operation, arguments):
     if envelope['status'] >= 400:
         error = envelope['result']
         raise AgentAPIError(error['error'], error.get('code', 'http_error'), envelope['status'],
-                            preflight_report=error.get('preflight_report'))
+                            preflight_report=error.get('preflight_report'), receipt=error.get('receipt'))
     return envelope['result']
 
 
@@ -153,6 +153,70 @@ def _verified_local(path, item):
             raise AgentAPIError('Resumed artifact differs from its exact whole hash.', 'artifact_mismatch', 409)
     finally:
         os.close(fd)
+
+
+class ProjectFilesClient:
+    """Thin, explicit checkpoint-bound file-project calls; never retries a mutation.
+
+    Retain each request_key until its outcome is known. Binding and checkpoint
+    come from status or the last acknowledged project response, never a local
+    project path or a logical project UUID.
+    """
+    def __init__(self, client):
+        self.client = client
+
+    @classmethod
+    def from_config(cls, path):
+        return cls(AgentClient.from_config(path))
+
+    def _call(self, action, arguments):
+        operation = 'project_files.' + action
+        validate_arguments(operation, arguments)
+        return _invoke(self.client, operation, arguments)
+
+    def status(self):
+        return self._call('status', {})
+
+    def new(self, *, root, directory, name, binding, expected_checkpoint, request_key):
+        return self._call('new', dict(root=root, directory=directory, name=name,
+            binding=binding, expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def open(self, *, root, directory, binding, expected_checkpoint, request_key):
+        return self._call('open', dict(root=root, directory=directory,
+            binding=binding, expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def save(self, *, binding, expected_checkpoint, request_key):
+        return self._call('save', dict(binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def close(self, *, binding, expected_checkpoint, request_key):
+        return self._call('close', dict(binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def query(self, *, binding, checkpoint, after_id=None, limit=None):
+        arguments = dict(binding=binding, checkpoint=checkpoint)
+        if after_id is not None:
+            arguments['after_id'] = after_id
+        if limit is not None:
+            arguments['limit'] = limit
+        return self._call('query', arguments)
+
+    def get(self, record_id, *, binding, checkpoint, before_revision=None, history_limit=None):
+        arguments = dict(record_id=record_id, binding=binding, checkpoint=checkpoint)
+        if before_revision is not None:
+            arguments['before_revision'] = before_revision
+        if history_limit is not None:
+            arguments['history_limit'] = history_limit
+        return self._call('get', arguments)
+
+    def import_text(self, asset, *, binding, expected_checkpoint, request_key):
+        return self._call('import_text', dict(asset=copy.deepcopy(asset), binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def annotate(self, record_id, annotation, *, binding, expected_checkpoint, request_key):
+        return self._call('annotate', dict(record_id=record_id,
+            annotation=copy.deepcopy(annotation), binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
 
 
 class WorkflowClient:

@@ -12,7 +12,7 @@ import sys
 import signal
 import threading
 
-from agent_api import (AgentAPIError, AgentClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
+from agent_api import (AgentAPIError, AgentClient, ProjectFilesOwnerClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
                        validate_arguments, verify_artifact, verify_publication_artifact)
 from tuldok_client import WorkflowClient, download
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
@@ -43,7 +43,7 @@ def invoke(client, operation, arguments, *, observer=None, observation=None):
     if envelope['status'] >= 400:
         error = envelope['result']
         raise AgentAPIError(error['error'], error['code'], envelope['status'],
-                            preflight_report=error.get('preflight_report'))
+                            preflight_report=error.get('preflight_report'), receipt=error.get('receipt'))
     return envelope
 
 
@@ -51,8 +51,26 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument('--config', type=Path, required=True,
                         help='Private existing AgentClient endpoint/catalog/token-file configuration')
+    result.add_argument('--owner-project-files', action='store_true',
+                        help='Use an existing owner credential, restricted to file-* commands')
     add_interface_options(result)
     commands = result.add_subparsers(dest='command', required=True)
+    commands.add_parser('file-status', help='Inspect the active external file project and process binding')
+    for action in ('new', 'open', 'save', 'close'):
+        command = commands.add_parser('file-' + action, help='Explicit external project ' + action)
+        command.add_argument('--binding', required=True)
+        command.add_argument('--expected-checkpoint', required=True,
+                             help='Exact SHA256; use null only when no project is open for New/Open')
+        command.add_argument('--request-key', required=True)
+        if action in ('new', 'open'):
+            command.add_argument('--root', required=True)
+            command.add_argument('--directory', required=True)
+        if action == 'new':
+            command.add_argument('--name', required=True)
+    for action in ('query', 'get', 'import-text', 'annotate'):
+        command = commands.add_parser('file-' + action, help='Checkpoint-bound project text ' + action)
+        command.add_argument('--arguments', type=Path, required=True,
+                             help='Exact project_files operation JSON arguments including binding/checkpoint')
     opening = commands.add_parser('open', help='Register/inspect a project without executing its code')
     opening.add_argument('--root', required=True)
     opening.add_argument('--manifest', required=True)
@@ -253,6 +271,10 @@ def main(argv=None, *, observer=None):
         client_type = PublicationOwnerClient if args.command in ('recover-publication', 'cancel-publication') else AgentClient
         if args.command == 'recover-coordinator':
             client_type = CoordinatorOwnerClient
+        if args.owner_project_files:
+            if not args.command.startswith('file-'):
+                raise AgentAPIError('--owner-project-files is restricted to file-* commands.', 'configuration')
+            client_type = ProjectFilesOwnerClient
         client = client_type.from_config(args.config)
         if args.command in WORKFLOW_COMMANDS:
             result, success = workflow_command(client, args)
@@ -271,7 +293,21 @@ def main(argv=None, *, observer=None):
                 observe_stage(observer, observation, phase)
             result = download(client, run_id, args.name, args.expected_sha256, args.out, result_ref=ref)
         else:
-            if args.command == 'call':
+            if args.command == 'file-status':
+                operation, arguments = 'project_files.status', {}
+            elif args.command.startswith('file-'):
+                action = args.command[5:].replace('-', '_')
+                operation = 'project_files.' + action
+                if action in ('new', 'open', 'save', 'close'):
+                    arguments = dict(binding=args.binding, request_key=args.request_key,
+                        expected_checkpoint=None if args.expected_checkpoint == 'null' else args.expected_checkpoint)
+                    if action in ('new', 'open'):
+                        arguments.update(root=args.root, directory=args.directory)
+                    if action == 'new':
+                        arguments['name'] = args.name
+                else:
+                    arguments = read_arguments(args.arguments)
+            elif args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
             elif args.command == 'phase-timings':
                 operation, arguments = 'runs.phase_timings', {'run_id': args.run_id}
@@ -328,6 +364,8 @@ def main(argv=None, *, observer=None):
         result = {'code': error.code, 'error': str(error), 'status': error.status}
         if error.preflight_report is not None:
             result['preflight_report'] = error.preflight_report
+        if error.receipt is not None:
+            result['receipt'] = error.receipt
         _write_output(sys.stderr, result,
                       observer, observation, status=error.status, failed=True, observed_outcome=(
                           'transport-error' if error.code in ('transport', 'response_too_large') else

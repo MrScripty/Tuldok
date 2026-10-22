@@ -98,8 +98,11 @@ def error_response(request_id, code, message):
             'error': {'code': code, 'message': message}}
 
 
-def tool_error(code, message, status=502):
-    return {'status': status, 'result': {'code': code, 'error': message}}
+def tool_error(code, message, status=502, *, receipt=None):
+    result = {'code': code, 'error': message}
+    if receipt is not None:
+        result['receipt'] = receipt
+    return {'status': status, 'result': result}
 
 
 def encode_response(value):
@@ -194,7 +197,6 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
     from mcp.shared.message import SessionMessage
     import agent_api
 
-    agent_api.validate_registry()
     definitions = (client.tool_definitions() if hasattr(client, 'tool_definitions')
                    else agent_api.tool_definitions())
     selected = client.selected_contracts() if hasattr(client, 'selected_contracts') else {}
@@ -241,7 +243,7 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
                                else 'domain-error' if envelope['status'] >= 400 else 'success')
         except agent_api.AgentAPIError as exc:
             # Owner supplies bounded, public API errors; no raw transport exception.
-            envelope = tool_error(exc.code, str(exc), exc.status)
+            envelope = tool_error(exc.code, str(exc), exc.status, receipt=exc.receipt)
             pending_outcome = ('transport-error' if exc.code in ('transport', 'response_too_large')
                                else 'registry-refusal' if exc.code == 'registry_mismatch'
                                else 'permission-refusal' if exc.status in (401, 403) else 'call-error')

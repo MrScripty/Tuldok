@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Text projects · Tuldok</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/auth.css">
+  <link rel="stylesheet" href="/project-files.css">
+  <script defer src="/auth.js"></script>
+  <script defer src="/project-files.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#project-files-main">Skip to project workspace</a>
+  <main id="project-files-main">
+    <header><p class="eyebrow">Tuldok / external projects</p><h1>Text project workspace</h1>
+      <p>Create or open a folder under a configured local root. Submitted text and annotations are saved before acknowledgement.</p>
+    </header>
+    <p id="project-files-status" role="status" aria-live="polite">Reading project status…</p>
+    <p id="project-files-receipt" role="status" hidden></p>
+    <p id="project-files-error" role="alert" tabindex="-1" hidden></p>
+    <section aria-labelledby="project-files-title">
+      <h2 id="project-files-title">Project file</h2>
+      <p id="project-files-summary">No project status available.</p>
+      <div class="project-location">
+        <label>Local root<select id="project-files-root" required></select></label>
+        <label>Relative project directory<input id="project-files-directory" maxlength="512" required aria-describedby="directory-help"></label>
+        <label>New project name<input id="project-files-name" maxlength="200"></label>
+      </div>
+      <p id="directory-help" class="help">Use a relative directory within this root. New creates a new directory; Open reads an existing project. Close the current project before opening another.</p>
+      <div class="actions">
+        <button id="project-files-new" type="button">New project</button>
+        <button id="project-files-open" type="button">Open project</button>
+        <button id="project-files-save" type="button">Save project</button>
+        <button id="project-files-close" type="button">Close project</button>
+        <button id="project-files-refresh" type="button">Refresh project status</button>
+        <button id="project-files-discard" type="button" disabled>Discard unsubmitted edits</button>
+      </div>
+      <p id="project-files-dirty" class="help" aria-live="polite">No unsubmitted edits.</p>
+    </section>
+    <p class="scope">This version supports text, classification labels, entity spans, corpus notes and human review. Other asset families, execution, Save As and migration are unavailable here.</p>
+    <div class="workspace-grid">
+      <section aria-labelledby="text-import-title">
+        <h2 id="text-import-title">Author text</h2>
+        <form id="text-import-form"><fieldset id="text-import-fields" disabled>
+          <legend>New text record</legend>
+          <label>Name<input id="text-name" maxlength="200" required></label>
+          <label>Text<textarea id="text-content" rows="10" maxlength="200000" required></textarea></label>
+          <label>Protected groups<input id="text-groups" value="project" maxlength="3630" required aria-describedby="groups-help"></label>
+          <p id="groups-help" class="help">Comma-separated group IDs; keep at least one. These preserve source grouping.</p>
+          <label>Rights / permission note<input id="text-rights" value="unknown" maxlength="1000" required></label>
+          <button id="import-text" type="submit">Submit text</button>
+        </fieldset></form>
+        <h2 id="records-title" tabindex="-1">Text records</h2>
+        <ul id="records-list" aria-labelledby="records-title"></ul>
+        <button id="records-more" type="button" hidden>Load more text records</button>
+      </section>
+      <section aria-labelledby="record-heading">
+        <h2 id="record-heading" tabindex="-1">Select a text record</h2>
+        <p id="record-summary"></p>
+        <label>Saved source text<textarea id="record-text" rows="10" readonly aria-describedby="source-help"></textarea></label>
+        <p id="source-help" class="help">Source text is immutable. Submit a new record to author different text.</p>
+        <form id="annotation-form"><fieldset id="annotation-fields" disabled>
+          <legend>Annotation and human review</legend>
+          <label>Task<select id="annotation-task"><option value="text_classification">Classification</option><option value="text_entities">Entities</option><option value="text_corpus">Corpus note</option></select></label>
+          <label id="annotation-label" for="annotation-value">Class label</label>
+          <textarea id="annotation-value" rows="5" required aria-describedby="annotation-help"></textarea>
+          <p id="annotation-help" class="help">Enter one classification label, up to 80 characters.</p>
+          <label>Protected groups<input id="annotation-groups" maxlength="3630" required></label>
+          <label>Review<select id="record-review"><option value="draft">Draft</option><option value="human_reviewed">Human reviewed (owner)</option></select></label>
+          <button id="annotation-save" type="submit">Submit annotation</button>
+        </fieldset></form>
+        <h3 id="record-history-title" tabindex="-1">Saved annotation history</h3>
+        <ol id="record-history"></ol>
+        <button id="record-history-more" type="button" hidden>Load older annotation history</button>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

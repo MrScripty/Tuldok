@@ -37,14 +37,15 @@ ARTIFACT = {'type': 'string', 'pattern': '^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$',
 
 class AgentAPIError(Exception):
     """Safe transport error: never contains a credential or remote traceback."""
-    def __init__(self, message, code='invalid', status=400, *, preflight_report=None):
+    def __init__(self, message, code='invalid', status=400, *, preflight_report=None, receipt=None):
         super().__init__(message)
         self.code, self.status = code, status
         self.preflight_report = copy.deepcopy(preflight_report)
+        self.receipt = copy.deepcopy(receipt)
 
 
-def encoded(value):
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+def encoded(value, *, ensure_ascii=True):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=ensure_ascii,
                       allow_nan=False).encode('utf-8')
 
 
@@ -727,6 +728,91 @@ model_operation('runs.compare_scientific_evidence', 'POST', '/api/workspace/scie
      'point':obj({'field_id':REF, **{axis:integer(0,127) for axis in 'xyz'}})},
     output=JSON_OBJECT, description='Read exact retained validation field-point diagnostics and scalar compatibility; no scientific criterion or compute is invented.')
 
+# External file projects have independent lifecycle and text-only contracts.
+# Keep these additive operations outside the installed legacy registry projection.
+_PROJECT_FILES_ACTIONS = ['new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate']
+_PROJECT_FILES_GROUPS = dict(GROUPS, uniqueItems=True)
+_PROJECT_FILES_PARENTS = dict(array(text(120), 30), uniqueItems=True)
+_PROJECT_FILES_PROVENANCE = obj({'method': const('import'), 'rights': text(1000),
+    'normalization': const('NFC; LF newlines')})
+_PROJECT_FILES_RECORD_FIELDS = {
+    'id': ID, 'kind': const('text'), 'name': text(200), 'text': text(200000),
+    'groups': _PROJECT_FILES_GROUPS, 'parents': _PROJECT_FILES_PARENTS,
+    'provenance': _PROJECT_FILES_PROVENANCE, 'review': {'enum': ['draft', 'human_reviewed']},
+    'revision': SAFE_POS, 'source_revision': const(1),
+    'created_at': text(80), 'updated_at': text(80)}
+_PROJECT_FILES_TASKS = ('text_classification', 'text_entities', 'text_corpus')
+PROJECT_FILES_RECORD = {'oneOf': [obj(dict(_PROJECT_FILES_RECORD_FIELDS,
+    task=const(task), annotation={'oneOf': [{'type': 'null'}, ANNOTATIONS[task]]}))
+    for task in _PROJECT_FILES_TASKS]}
+PROJECT_FILES_SUMMARY = obj({key: _PROJECT_FILES_RECORD_FIELDS[key] for key in
+    ('id', 'kind', 'name', 'review', 'revision', 'source_revision', 'created_at', 'updated_at')} |
+    {'task': {'enum': list(_PROJECT_FILES_TASKS)}})
+_PROJECT_FILES_PROJECT = obj({'project_id': ID, 'name': text(200), 'checkpoint': SHA})
+_PROJECT_FILES_RECOVERY = obj({'action': const('open'), 'root': text(160), 'directory': text(512),
+    'reason': {'enum': ['unknown_publication', 'projection_unavailable']},
+    'request_key': {'oneOf': [KEY, {'type': 'null'}]}})
+PROJECT_FILES_RECEIPT = {'oneOf': [
+    obj({'committed': const(True), 'selected': const(True), 'project_id': ID,
+         'checkpoint': SHA, 'request_key': KEY}),
+    obj({'committed': const(True), 'selected': const(False), 'project_id': ID,
+         'checkpoint': SHA, 'request_key': KEY, 'root': text(160), 'directory': text(512)})]}
+_PROJECT_FILES_STATE_FIELDS = {'format': const('project_files_state_v1'), 'binding': ID,
+    'roots': dict(array(text(160), 100), uniqueItems=True),
+    'available_actions': dict(array({'enum': _PROJECT_FILES_ACTIONS}, 8), uniqueItems=True)}
+PROJECT_FILES_STATE = {'oneOf': [
+    obj(dict(_PROJECT_FILES_STATE_FIELDS, state=const('no_project_open'), project={'type': 'null'})),
+    obj(dict(_PROJECT_FILES_STATE_FIELDS, state=const('open'),
+        project=_PROJECT_FILES_PROJECT)),
+    obj(dict(_PROJECT_FILES_STATE_FIELDS, state=const('recovery_required'),
+        project=_PROJECT_FILES_PROJECT, recovery=_PROJECT_FILES_RECOVERY,
+        available_actions=const(['open'])))]}
+_PROJECT_FILES_BOUND_RESULT = {'binding': ID, 'project_id': ID, 'checkpoint': SHA}
+PROJECT_FILES_RECORD_RESULT = obj(dict(_PROJECT_FILES_BOUND_RESULT, record=PROJECT_FILES_RECORD,
+    history=array(PROJECT_FILES_RECORD, 4),
+    next_history_before_revision={'oneOf': [SAFE_POS, {'type': 'null'}]}))
+_PROJECT_FILES_MUTATION = {'binding': ID, 'expected_checkpoint': SHA, 'request_key': KEY}
+model_operation('project_files.status', 'GET', '/api/workspace/project-files', output=PROJECT_FILES_STATE)
+for _action in ('new', 'open'):
+    _fields = dict(_PROJECT_FILES_MUTATION, expected_checkpoint={'oneOf': [SHA, {'type': 'null'}]},
+        root=text(160), directory=text(512))
+    if _action == 'new':
+        _fields['name'] = text(200)
+    model_operation('project_files.' + _action, 'POST', '/api/workspace/project-files/' + _action,
+        _fields, output=PROJECT_FILES_STATE, scopes=('inspect', 'edit'), mutation=True,
+        description='Explicit file project ' + _action + '; requires the current process binding and checkpoint. Never executes project code.')
+for _action in ('save', 'close'):
+    model_operation('project_files.' + _action, 'POST', '/api/workspace/project-files/' + _action,
+        _PROJECT_FILES_MUTATION, output=PROJECT_FILES_STATE, scopes=('inspect', 'edit'), mutation=True)
+model_operation('project_files.query', 'GET', '/api/workspace/project-files/records',
+    {'binding': ID, 'checkpoint': SHA, 'after_id': ID, 'limit': integer(1, 100)},
+    required=['binding', 'checkpoint'], query=('binding', 'checkpoint', 'after_id', 'limit'),
+    output=obj(dict(_PROJECT_FILES_BOUND_RESULT, items=array(PROJECT_FILES_SUMMARY, 100),
+        next_after_id={'oneOf': [ID, {'type': 'null'}]})))
+model_operation('project_files.get', 'GET', '/api/workspace/project-files/records/{record_id}',
+    {'record_id': ID, 'binding': ID, 'checkpoint': SHA, 'before_revision': SAFE_POS,
+     'history_limit': integer(1, 4)}, required=['record_id', 'binding', 'checkpoint'],
+    query=('binding', 'checkpoint', 'before_revision', 'history_limit'), output=PROJECT_FILES_RECORD_RESULT)
+model_operation('project_files.import_text', 'POST', '/api/workspace/project-files/import-text',
+    dict(_PROJECT_FILES_MUTATION, asset=obj({'text': text(200000), 'name': text(200),
+        'groups': _PROJECT_FILES_GROUPS, 'parents': _PROJECT_FILES_PARENTS, 'rights': text(1000)},
+        required=['text', 'groups'])), output=PROJECT_FILES_RECORD_RESULT,
+    scopes=('inspect', 'edit'), mutation=True)
+model_operation('project_files.annotate', 'POST', '/api/workspace/project-files/records/{record_id}',
+    dict(_PROJECT_FILES_MUTATION, record_id=ID, annotation={'oneOf': [obj({
+        'revision': SAFE_POS, 'source_revision': const(1), 'task': const(task),
+        'annotation': ANNOTATIONS[task], 'groups': _PROJECT_FILES_GROUPS,
+        'review': {'enum': ['draft', 'human_reviewed']}}) for task in _PROJECT_FILES_TASKS]}),
+    output=PROJECT_FILES_RECORD_RESULT, scopes=('inspect', 'edit'), mutation=True,
+    description='Save ordinary human text annotation or review at the exact checkpoint. Human review additionally requires the existing owner approve-review authority.')
+_PROJECT_FILES_RECEIPT_IDS = frozenset('project_files.' + action
+    for action in ('new', 'open', 'save', 'close', 'import_text', 'annotate'))
+_MODEL_RECEIPT_IDS.update(_PROJECT_FILES_RECEIPT_IDS)
+_OWNER_OPERATION_IDS.update('project_files.' + action for action in ('new', 'open', 'save', 'close'))
+for _op in _OPERATIONS:
+    if _op['operation_id'].startswith('project_files.'):
+        _op['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt'] = PROJECT_FILES_RECEIPT
+
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
@@ -1266,6 +1352,22 @@ def validate_output(name, envelope, version=None):
     op = operation(name, version)
     if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if op['operation_id'].startswith('project_files.') and envelope['status'] < 400:
+        value = envelope['result']
+        if 'record' in value:
+            record, history = value['record'], value['history']
+            revisions = [item['revision'] for item in history]
+            cursor = value['next_history_before_revision']
+            if (any(item['id'] != record['id'] or item['revision'] > record['revision'] for item in history)
+                    or revisions != sorted(set(revisions), reverse=True)
+                    or cursor is not None and (not history or cursor != history[-1]['revision'])):
+                raise AgentAPIError('Project annotation history differs from its record.', 'transport', 502)
+        if 'items' in value:
+            identities = [item['id'] for item in value['items']]
+            cursor = value['next_after_id']
+            if (identities != sorted(set(identities))
+                    or cursor is not None and (not identities or cursor != identities[-1])):
+                raise AgentAPIError('Project record page identity or continuation differs.', 'transport', 502)
     if op['operation_id'] == 'runs.artifact_segments' and envelope['status'] < 400:
         validate_artifact_segments(envelope['result'])
     if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and envelope['status'] < 400:
@@ -1411,7 +1513,7 @@ def validate_output(name, envelope, version=None):
 def validate_arguments(name, arguments, version=None):
     op = operation(name, version)
     _finite(arguments)
-    if len(encoded(arguments)) > REQUEST_LIMIT:
+    if len(encoded(arguments, ensure_ascii=not op['operation_id'].startswith('project_files.'))) > REQUEST_LIMIT:
         raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
     if (op['operation_id'] == 'data.import_sequence' and type(arguments) is dict
             and type(arguments.get('files')) is dict
@@ -1581,7 +1683,7 @@ class AgentClient:
         timer.daemon = True
         timer.start()
         try:
-            raw = encoded(body) if body is not None else None
+            raw = encoded(body, ensure_ascii=not (selection is not None and selection[0].startswith('project_files.'))) if body is not None else None
             if raw is not None and len(raw) > REQUEST_LIMIT:
                 raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
             headers = {'Authorization': 'Bearer '+self._token, 'Accept': 'application/json', 'Accept-Encoding': 'identity', 'Connection': 'close'}
@@ -1640,7 +1742,15 @@ class AgentClient:
                 report = value['preflight_report'] if has_report else None
                 if has_report and self._token in json.dumps(report, ensure_ascii=False):
                     raise AgentAPIError('Preflight report contains credential material.', 'transport', 502)
+                receipt = None
+                if selection is not None and selection[0].startswith('project_files.') and 'receipt' in value:
+                    receipt = value['receipt']
+                    if (next(_validator(PROJECT_FILES_RECEIPT).iter_errors(receipt), None) is not None
+                            or self._token in json.dumps(receipt, ensure_ascii=False)):
+                        raise AgentAPIError('Malformed project outcome receipt.', 'transport', 502)
                 value = {'code': code, 'error': value['error'].replace(self._token, '[redacted]')[:1000]}
+                if receipt is not None:
+                    value['receipt'] = copy.deepcopy(receipt)
                 if has_report:
                     value['preflight_report'] = report
             return {'status': response.status, 'result': value}
@@ -1746,6 +1856,23 @@ class AgentClient:
         envelope = self._request(method, path, body, selection=selection)
         result = validate_output(name, envelope, version)
         self._check_read_budget()
+        if op['operation_id'].startswith('project_files.') and result['status'] < 400:
+            value = result['result']; action = op['operation_id'].split('.')[1]
+            if action in ('query', 'get', 'import_text', 'annotate', 'save') and value['binding'] != arguments['binding']:
+                raise AgentAPIError('Project response belongs to a different session binding.', 'transport', 502)
+            if action in ('query', 'get') and value['checkpoint'] != arguments['checkpoint']:
+                raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
+            if action == 'query' and (len(value['items']) > arguments.get('limit', 40)
+                    or any(item['id'] <= arguments.get('after_id', '') for item in value['items'])):
+                raise AgentAPIError('Project record page differs from its requested continuation.', 'transport', 502)
+            if action in ('get', 'import_text', 'annotate'):
+                if (len(value['history']) > arguments.get('history_limit', 1)
+                        or 'before_revision' in arguments and any(item['revision'] >= arguments['before_revision'] for item in value['history'])):
+                    raise AgentAPIError('Project history page differs from its requested continuation.', 'transport', 502)
+            if action in ('get', 'annotate') and value['record']['id'] != arguments['record_id']:
+                raise AgentAPIError('Project response belongs to a different record.', 'transport', 502)
+            if action == 'save' and (value['state'] != 'open' or value['project']['checkpoint'] != arguments['expected_checkpoint']):
+                raise AgentAPIError('Project Save response differs from its selected checkpoint.', 'transport', 502)
         if op['operation_id'] in ('runs.coordinator_health', 'runs.recover_coordinator') and result['status'] < 400:
             value = result['result']; request = value['recovery_request']
             if value['catalog_id'] != self.catalog_id:
@@ -1855,6 +1982,23 @@ class AgentClient:
             if report['recipe_material_ref'] != arguments['ref'] or report['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Preflight report does not match the requested material or catalog.', 'transport', 502)
         return result
+
+
+class ProjectFilesOwnerClient(AgentClient):
+    """Explicit owner file-project access; no unrelated owner operations."""
+    OPERATIONS = frozenset('project_files.' + action for action in
+        ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate'))
+
+    def bootstrap(self):
+        result = self._bootstrap('owner')
+        self._selected = {name: version for name, version in self._selected.items() if name in self.OPERATIONS}
+        result['operations'] = sorted(self._selected)
+        return result
+
+    def call(self, name, arguments, **kwargs):
+        if name not in self.OPERATIONS:
+            raise AgentAPIError('Owner project client only supports explicit file-project operations.', 'operation_unsupported', 409)
+        return super().call(name, arguments, **kwargs)
 
 
 class PublicationOwnerClient(AgentClient):
