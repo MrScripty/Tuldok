@@ -451,6 +451,86 @@ class ProjectHistoryPostgresTests(unittest.TestCase):
             with self.assertRaisesRegex(WorkbenchError,'disclosure'):
                 self.history.artifact(run['id'],'test-metrics.json',origin_catalog_id=ORIGIN)
 
+    def test_disclosure_snapshot_survives_payload_growth_and_replacement_without_new_permission(self):
+        from project_fork_composition import artifact_plan
+        run=legacy_run();run.update(state='running',finished_at=None)
+        run['progress']['stage']='running'
+        def artifact(raw,name='test-metrics.json'):
+            item=dict(name=name,sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw),media_type='application/json',split='test')
+            edge=dict(name=name,blob={k:item[k] for k in ('sha256','bytes')},population='test',role='model_evidence',
+                preservation='unique',required_for=['inspection'])
+            self.session.artifacts.publish_bytes(raw,dict(format='project_artifact_v1',**edge['blob']))
+            return item,edge
+        old_item,old_edge=artifact(b'{"partial":1}')
+        run['artifacts']=[old_item]
+        original=capture_run(run,payloads=[old_edge])
+        self.store.commit([original,*declarations(original)],self.store.snapshot()['checkpoint'],'growing-run','d'*64)
+        self.session.adopt(self.store.snapshot())
+        body=dict(origin_catalog_id=ORIGIN,reason='Inspect the exact current observation')
+        with self.owner.bound(self.host),patch('runs.Runs',side_effect=AssertionError('No Run recovery in disclosure')):
+            first=self.history.record_disclosure(run['id'],body,self.session.snapshot['checkpoint'],'disclose-running')
+            self.assertEqual(first['format'],'project_disclosure_v2')
+            saved=copy.deepcopy(self.session.snapshot['records'])
+            observation=next(r for r in saved if r['family']=='run_observation')
+            self.assertEqual(observation['document']['observation'],original['document'])
+            legacy={k:v for k,v in first.items() if k!='observation_sha256'}
+            legacy['format']='project_disclosure_v1'
+            self.assertTrue(validate_operation_result('history.disclose',legacy,saved))
+            replacement,replacement_edge=artifact(b'{"complete":2}')
+            added,added_edge=artifact(b'{"late":3}','late-output.json')
+            run.update(state='completed',finished_at='2026-10-22T12:01:00+00:00',artifacts=[replacement,added])
+            run['progress']['stage']='completed'
+            grown=capture_run(run,payloads=[replacement_edge,added_edge])
+            merged={(r['family'],r['id']):r for r in [*saved,grown,*declarations(grown)]}
+            candidate=list(merged.values())
+            decode_records(candidate,materials=Materials())
+            self.assertTrue(validate_operation_result('history.disclose',first,candidate))
+            with self.assertRaisesRegex(WorkbenchError,'payload set'):
+                validate_operation_result('history.disclose',legacy,candidate)
+            self.store.commit(candidate,self.session.snapshot['checkpoint'],'complete-growing-run','e'*64)
+            self.session.adopt(self.store.snapshot())
+            self.assertEqual(self.history.disclosure_facts(run['id'],origin_catalog_id=ORIGIN),[first])
+            second=self.history.record_disclosure(run['id'],body,self.session.snapshot['checkpoint'],'disclose-completed')
+            self.assertNotEqual(second['observation_sha256'],first['observation_sha256'])
+            self.assertNotEqual(second['payload_set_sha256'],first['payload_set_sha256'])
+            # A snapshot is science evidence, never a restored local capability.
+            cold=ProjectHistory(self.session,materials=Materials())
+            with self.assertRaisesRegex(WorkbenchError,'disclosure'):
+                cold.artifact(run['id'],'test-metrics.json',origin_catalog_id=ORIGIN)
+            current=self.session.snapshot['records']
+            forged=copy.deepcopy(first);forged['payload_set_sha256']='0'*64
+            with self.assertRaisesRegex(WorkbenchError,'payload set'):
+                validate_operation_result('history.disclose',forged,current)
+            foreign=copy.deepcopy(observation)
+            foreign['document']['observation']['run']['request_sha256']='9'*64
+            from project_store import _encode as canonical
+            sha=hashlib.sha256(canonical(foreign['document']['observation'])).hexdigest()
+            foreign['id']=foreign['document']['sha256']=sha
+            forged=dict(first,observation_sha256=sha)
+            with self.assertRaisesRegex(WorkbenchError,'immutable identity'):
+                validate_operation_result('history.disclose',forged,[*current,foreign])
+            foreign_payload=copy.deepcopy(observation)
+            next(edge for edge in foreign_payload['document']['observation']['payloads']
+                 if edge['name']=='test-metrics.json')['blob']=copy.deepcopy(added_edge['blob'])
+            sha=hashlib.sha256(canonical(foreign_payload['document']['observation'])).hexdigest()
+            foreign_payload['id']=foreign_payload['document']['sha256']=sha
+            # These bytes have a real global declaration, but belong to a
+            # different output than the observed Run inventory names here.
+            with self.assertRaisesRegex(WorkbenchError,'Run artifact closure'):
+                decode_records([*current,foreign_payload],materials=Materials())
+            missing=[r for r in current if not (r['family']=='project_artifact' and r['id']==old_item['sha256'])]
+            with self.assertRaisesRegex(WorkbenchError,'artifact declaration'):
+                decode_records(missing,materials=Materials())
+            # The exact old snapshot bytes stay unique even if its retained
+            # edge is labelled regenerable; weak labels cannot discard science.
+            weaker=copy.deepcopy(current)
+            for record in weaker:
+                if record['family']=='run_observation':
+                    for edge in record['document']['observation']['payloads']:edge['preservation']='regenerable'
+            plan=artifact_plan(weaker)
+            self.assertEqual(next(v['preservation'] for v in plan if v['declaration']['sha256']==old_item['sha256']),'unique')
+        self.assertEqual(self.host.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],0)
+
     def test_sql_analysis_uses_supplied_origin_json_and_no_active_run_row(self):
         from test_retained_analysis import fixture, EVALUATION, RUN
         from retained_analysis import query_history

@@ -456,6 +456,12 @@ class CandidateNativePublicationTests(unittest.TestCase):
     def checkpoint(self):return self.projection.session.snapshot['checkpoint']
 
     def test_actual_verifier_owner_publication_is_canonical_and_cold_inert(self):
+        self._native_publication()
+
+    def test_native_completion_before_wrapper_ack_reconciles_without_repeating_writer(self):
+        self._native_publication(wrapper_loss=True)
+
+    def _native_publication(self,*,wrapper_loss=False):
         import shutil
         import candidate_packages as packages
         import recipe_contract,recipe_process
@@ -566,8 +572,39 @@ class CandidateNativePublicationTests(unittest.TestCase):
                     self.assertFalse((self.source_root/'verifier').exists())
                     writes.append(self.checkpoint());return original_writer(root,files)
                 with patch.object(packages,'_write_project',side_effect=write_after_intent):
-                    result=self.adapter.prepare_verifier(study_id,request,self.checkpoint(),'verify-authored-fixture')
+                    if wrapper_loss:
+                        original_mutate=self.adapter._mutate
+                        def lose_wrapper(operation,*args,**kwargs):
+                            if operation=='study_execution.prepare_verifier':
+                                raise OSError('Controlled failure before public wrapper acknowledgement')
+                            return original_mutate(operation,*args,**kwargs)
+                        with patch.object(self.adapter,'_mutate',side_effect=lose_wrapper),self.assertRaisesRegex(OSError,'public wrapper'):
+                            self.adapter.prepare_verifier(study_id,request,self.checkpoint(),'verify-authored-fixture')
+                    else:result=self.adapter.prepare_verifier(study_id,request,self.checkpoint(),'verify-authored-fixture')
                 self.assertEqual(len(writes),1)
+                if wrapper_loss:
+                    self.assertTrue(self.projection.custody.has_pending)
+                    self.assertNotIn('verify-authored-fixture',operation_records(self.projection.session.snapshot['records']))
+                    native=next(value for record in self.projection.session.snapshot['records'] if record['family']=='study_history'
+                        and record['document']['study']['id']==study_id for value in record['document']['operations']
+                        if value['operation_id']=='studies.prepare_verifier' and value['request_key']=='verify-authored-fixture')
+                    self.assertEqual(native['result']['state'],'prepared')
+                    before=copy.deepcopy(self.projection.session.snapshot)
+                    with self.assertRaisesRegex(WorkbenchError,'complete'):
+                        self.adapter.abandon_preparation(study_id,dict(preparation_key='verify-authored-fixture',reason='Must retain complete science'),
+                            self.checkpoint(),'forbidden-complete-abandon')
+                    self.assertEqual(self.projection.session.snapshot,before)
+                    with patch.object(packages,'_write_project',side_effect=AssertionError('Recovery repeated native filesystem writes')):
+                        result=self.adapter.reconcile_preparation(study_id,dict(preparation_key='verify-authored-fixture'),self.checkpoint())
+                    self.assertEqual(result,native['result'])
+                    receipt=operation_records(self.projection.session.snapshot['records'])['verify-authored-fixture']
+                    self.assertEqual(receipt['operation'],'study_execution.prepare_verifier')
+                    self.assertEqual(receipt['result'],native['result'])
+                    self.assertFalse(self.projection.custody.has_pending)
+                    self.assertEqual(self.adapter.prepare_verifier(study_id,request,self.checkpoint(),'verify-authored-fixture'),result)
+                    for table in ('workspace_runs','access_execution_grants','access_admissions','model_attempt_reservations'):
+                        self.assertEqual(self.db.execute('SELECT count(*) FROM '+table).fetchone()[0],0,table)
+                    return
                 self.assertEqual(result['state'],'prepared');self.assertTrue((self.source_root/'verifier/project.json').is_file())
                 receipts=operation_records(self.projection.session.snapshot['records'])
                 self.assertEqual(receipts['verify-authored-fixture']['operation'],'study_execution.prepare_verifier')
@@ -575,6 +612,35 @@ class CandidateNativePublicationTests(unittest.TestCase):
                 saved=self.projection.session.snapshot
                 self.assertEqual(self.adapter.prepare_verifier(study_id,request,self.checkpoint(),'verify-authored-fixture'),result)
                 self.assertEqual(self.projection.session.snapshot,saved)
+                consumer=self.projection.materials.recipe(result['trial']['material'])
+                # The actual native reader must consume an archived producer
+                # through current disclosure, with no live producer SQL row.
+                self.assertEqual(self.projection.pipelines.recipe_material(result['trial']['material'],verify=True),consumer)
+                self.projection._disclosures.clear()
+                with self.assertRaisesRegex(WorkbenchError,'disclose'):
+                    self.projection.pipelines.recipe_material(result['trial']['material'],verify=True)
+                self.projection.disclose(run_id,dict(origin_catalog_id=self.db.dataset_id,reason='New consumer read permission'),
+                    self.checkpoint(),'disclose-consumer-input')
+                snapshot=json.loads(self.projection.materials.blob(consumer['ref'],consumer['material']['recipe_document']))
+                tampered=copy.deepcopy(snapshot['preflight']['material'])
+                import base64
+                source=tampered['inputs']['package']['source']
+                forged=recipe_process.decode(base64.b64decode(source['custody_receipt_base64']))
+                forged['reason']='Different self-consistent authored receipt'
+                forged_raw=recipe_process.encoded(forged)
+                source['custody_receipt_base64']=base64.b64encode(forged_raw).decode('ascii')
+                source['custody_receipt_sha256']=packages.sha(forged_raw)
+                recipe_contract.validate_material(tampered)
+                with self.assertRaisesRegex(WorkbenchError,'producer proof differs'):
+                    packages.authorize_material_inputs(self.projection.history,tampered)
+                # The named current execution composition selects the same
+                # history proof seam; it cannot call a general live resolver.
+                execution=self.projection.execution
+                local_reader=SimpleNamespace(project_execution=execution,
+                    _load=lambda _:(_ for _ in ()).throw(AssertionError('Imported producer reached live SQL resolver')))
+                execution._runs=local_reader
+                try:packages.authorize_material_inputs(local_reader,snapshot['preflight']['material'])
+                finally:execution._runs=None
                 # A synchronous failure after actual source/graph/model draft
                 # publication preserves its directory and every canonical phase.
                 partial=dict(request,revision=self.adapter.studies._study(study_id)['revision'],directory='partial')
@@ -612,8 +678,9 @@ class CandidateNativePublicationTests(unittest.TestCase):
             self.assertFalse(self.projection.execution.has_local_custody)
             self.assertIn(result['trial']['id'],self.projection.history.study(study_id)['study']['trial_ids'])
             self.assertEqual(self.adapter.prepare_verifier(study_id,request,self.checkpoint(),'verify-authored-fixture'),result)
-            with self.assertRaisesRegex(WorkbenchError,'original package writer'):
+            with self.assertRaisesRegex(WorkbenchError,'exact original file writer') as refused:
                 self.adapter.reconcile_preparation(study_id,dict(preparation_key='verify-ack-lost'),self.checkpoint())
+            self.assertEqual(refused.exception.code,'unavailable')
             self.assertFalse(self.projection._disclosures)
             with self.assertRaisesRegex(WorkbenchError,'disclose'):
                 self.projection.history.artifact(run_id,'package.zip')

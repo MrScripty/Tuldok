@@ -1182,6 +1182,17 @@ _PROJECT_PREPARATION_COMPLETED={'oneOf':[obj(_PACKAGE_PREPARED_FIELDS),obj(dict(
 _project_file_operation('execution_study_reconcile_preparation','POST','/execution/studies/{study_id}/preparations/reconcile',
     {'study_id':ID,'preparation_key':_PROJECT_PREPARATION_KEY},output=_PROJECT_PREPARATION_COMPLETED,
     mutation=True,owner=True,scopes=('inspect','cancel'),milestone=3,receipt=False)
+# Explicitly abandon only a current local stopped copy, retaining its science.
+_PROJECT_RUNTIME_ABANDON=obj({'format':const('project_runtime_capture_abandon_v1'),'project_id':ID,
+    'capture_key':KEY,'input_sha256':SHA,'manifest_sha256':SHA,'actor_id':ID,'reason':text(1000),
+    'observed_checkpoint':SHA,'observed_at':text(80)})
+_project_file_operation('runtime_abandon','POST','/runtime/abandon',{'capture_key':KEY,'reason':text(1000)},
+    output=_PROJECT_RUNTIME_ABANDON,mutation=True,owner=True,scopes=('inspect','admin'),milestone=3)
+_runtime_status=next(op for op in _OPERATIONS if op['operation_id']=='project_files.runtime_status')
+_runtime_status_value=_runtime_status['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']
+_runtime_status['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']={'oneOf':[
+    copy.deepcopy(_runtime_status_value),obj({'state':const('abandoned'),'intent':_PROJECT_RUNTIME_INTENT,
+        'result':const(None),'abandonment':_PROJECT_RUNTIME_ABANDON})]}
 PROJECT_FILES_M3 = frozenset(PROJECT_FILES_M3)
 _PROJECT_FILES_RECEIPT_IDS |= frozenset(name for name in PROJECT_FILES_M3
     if next(op for op in _OPERATIONS if op['operation_id'] == name)['side_effects'] and name not in ('project_files.execution_reconcile_current','project_files.execution_study_reconcile_preparation'))
@@ -2597,10 +2608,17 @@ class AgentClient:
                     if (page['project_id']!=value['project_id'] or page['manifest_sha256']!=arguments['expected_inventory_sha256']
                             or page['request_key']!=arguments['request_key'] or ref['catalog_id']!=value['project_id'] or ref['id']!=ref['sha256']):
                         raise AgentAPIError('Runtime capture differs from its exact reviewed inventory or request.','transport',502)
+                if action=='runtime_abandon' and (page['project_id']!=value['project_id']
+                        or page['capture_key']!=arguments['capture_key'] or page['reason']!=arguments['reason']):
+                    raise AgentAPIError('Runtime abandonment differs from its current exact capture and reason.','transport',502)
                 if action=='runtime_status':
                     intent,complete=page['intent'],page['result']
-                    expected='captured' if complete is not None else 'intent_recorded' if intent is not None else 'absent'
+                    abandonment=page.get('abandonment')
+                    expected='abandoned' if abandonment is not None else 'captured' if complete is not None else 'intent_recorded' if intent is not None else 'absent'
                     if (page['state']!=expected or complete is not None and intent is None
+                            or abandonment is not None and (intent is None or complete is not None
+                                or abandonment['project_id']!=value['project_id'] or abandonment['capture_key']!=arguments['capture_key']
+                                or abandonment['manifest_sha256']!=intent['manifest_sha256'])
                             or any(item['project_id']!=value['project_id'] or item['request_key']!=arguments['capture_key']
                                    for item in (intent,complete) if item is not None)
                             or complete is not None and (any(intent[field]!=complete[field] for field in

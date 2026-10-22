@@ -27,5 +27,21 @@ function confirm(h){const checkbox=h.nodes.get('project-runtime-confirm');checkb
     const h=mount();await tick();await inspect(h);h.input('project-runtime-status-key','capture-request-0001');
     h.answers.push(response(bound({state:'captured',intent:null,result:summary('capture-request-0001',true)})));await h.submit('project-runtime-status-form');assert.match(h.nodes.get('project-files-error').textContent,/Retained runtime status differs/);assert.equal(h.nodes.get('project-runtime-status').textContent,'');
   }
-  console.log('Runtime controller: 3 selected groups PASS');
+  {
+    const h=mount();await tick();await inspect(h);h.input('project-runtime-reserve','0');confirm(h);
+    h.answers.push(()=>Promise.reject(Error('lost acknowledgement')));await h.submit('project-runtime-capture-form');const original=JSON.parse(h.requests.at(-1).options.body);
+    const recovery={...state(B,NEXT),state:'recovery_required',available_actions:['open'],recovery:{action:'open',root:'fixture',directory:'alpha',reason:'projection_unavailable',request_key:original.request_key}};
+    h.answers.push(response(recovery));await h.click('project-files-refresh');assert.equal(h.nodes.get('project-runtime-capture-fields').disabled,true);assert.equal(h.nodes.get('project-runtime-retry').disabled,false);
+    const count=h.requests.length;await tick();assert.equal(h.requests.length,count,'No automatic retry or inspection');
+    h.answers.push(({options})=>{assert.deepEqual(JSON.parse(options.body),original);return response(bound(summary(original.request_key,true),NEXT));});await h.click('project-runtime-retry');assert.equal(h.nodes.get('project-files-error').textContent,'');assert.equal(h.nodes.get('project-runtime-retry').disabled,true);
+  }
+  {
+    const h=mount();await tick();const key='stopped-capture-key',recovery={...state(),state:'recovery_required',available_actions:['open'],recovery:{action:'open',root:'fixture',directory:'alpha',reason:'projection_unavailable',request_key:key}};
+    h.answers.push(response(recovery));await h.click('project-files-refresh');assert.equal(h.nodes.get('project-runtime-abandon-fields').disabled,false);h.input('project-runtime-abandon-key',key);
+    const count=h.requests.length;await h.submit('project-runtime-abandon-form');assert.equal(h.requests.length,count);h.input('project-runtime-abandon-reason','Original source is gone; preserve partial bytes Ω');
+    let abandoned;
+    h.answers.push(({options})=>{const body=JSON.parse(options.body);assert.notEqual(body.request_key,key);assert.equal(body.capture_key,key);abandoned={format:'project_runtime_capture_abandon_v1',project_id:P,capture_key:key,input_sha256:NEXT,manifest_sha256:C,actor_id:ACTOR,reason:body.reason,observed_checkpoint:C,observed_at:'2026-10-22T12:00:00+00:00'};return response(bound(abandoned,NEXT));});await h.submit('project-runtime-abandon-form');assert.equal(h.nodes.get('project-files-error').textContent,'');assert.match(h.nodes.get('project-files-status').textContent,/partial bytes and scientific intent remain/);
+    h.answers.push(response(bound({state:'abandoned',intent:summary(key),result:null,abandonment:abandoned},NEXT)));await h.submit('project-runtime-status-form');assert.equal(h.nodes.get('project-files-error').textContent,'');assert.match(h.nodes.get('project-files-status').textContent,/Current local readiness was not inspected/);
+  }
+  console.log('Runtime controller: 5 selected groups PASS');
 })().catch(error=>{console.error(error);process.exitCode=1;});

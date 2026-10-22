@@ -108,11 +108,12 @@
   "project_files.run": "3cd94d46587596c36da4d1187b4648442cf6f216d2972daa496b7879e294ddec",
   "project_files.run_document_segment": "bd6599cb89b106ba0be4141fc5d38ad5e07b2c57c5b24e1fcf91802ba9ff9006",
   "project_files.runs": "cab46b11c5376ba641a717ceb1ce2bbe3693b7ac264e41192849f8522eb5d61d",
+  "project_files.runtime_abandon": "21086c2a92f23a8d42085678a7b99a69897bacb5e84341d482b0d2e9d6b69df8",
   "project_files.runtime_capture": "2d787e49e7f911820d4341b33b4738219fa773a783bb2fb5a674d05dbfbb173a",
   "project_files.runtime_inspect": "ece28c002151d36b9a415d4b7692536318765d1a7f742e3fd1f60c53b3a28204",
   "project_files.runtime_material": "da48c927442878373434e93bb97fc65fc7056bd8e5a4b97e8a18627eb768cb07",
   "project_files.runtime_sources": "6b94cbb5c712fbbea5645cbb64f8fd8b7f72c28042ddeacd96aaaad828a81460",
-  "project_files.runtime_status": "76b454147741da2711e1de2f40eb9766916105f0ef29e0c3e77456a8aa2cfb30",
+  "project_files.runtime_status": "80931340bab620ca52c05277bc0380c97b7e9191a808312caedabc30f4ab7e96",
   "project_files.save": "38572e376db36f81582dc6419fded35ff9d7c9185f5af2cdaafd74c94790f90a",
   "project_files.save_as": "2b0558049ca0055a9682bcda6eb81ce9f48358b7cf804b5d499067a5594e2d33",
   "project_files.search_create": "ae5c51158d849cda199cc007c42ea7a1cb62cd15a7ca8957bd32df813548e942",
@@ -623,6 +624,11 @@
     "path": "/api/workspace/project-files/runs",
     "mutation": false
   },
+  "project_files.runtime_abandon": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/runtime/abandon",
+    "mutation": true
+  },
   "project_files.runtime_capture": {
     "method": "POST",
     "path": "/api/workspace/project-files/runtime/capture",
@@ -1093,8 +1099,8 @@
           const signature=JSON.stringify(arguments_);
           if(runtimePending&&(runtimePending.signature!==signature||runtimePending.body.binding!==binding))throw Error('Inspect the pending runtime capture outcome, then keep its exact request or explicitly discard the capture form before changing source, inventory or reserve.');
           if(!runtimePending)runtimePending={signature,body:mutationBody(path,arguments_)};
-          prepared=runtimePending.body;$('project-runtime-status-key').value=prepared.request_key;
-          $('project-runtime-pending').textContent=`Pending capture request ${prepared.request_key}. Preserve this key until its retained outcome is known.`;
+          prepared=runtimePending.body;$('project-runtime-status-key').value=prepared.request_key;$('project-runtime-abandon-key').value=prepared.request_key;
+          $('project-runtime-pending').textContent=`Pending capture ${prepared.request_key}: source ${prepared.source}, inventory ${prepared.expected_inventory_sha256}, reserve ${prepared.reserve_bytes??6442450944} bytes. Retry uses these exact fields. Preserve the key until its retained outcome is known.`;
           Object.assign(remaining,prepared);
         }else prepared=mutationBody(path,arguments_);
         values={...values,...prepared};remaining.request_key=prepared.request_key;
@@ -1487,7 +1493,7 @@
   async function candidateRecover(ticket,abandon){
     const study_id=$('project-candidate-recovery-study').value,preparation_key=$('project-candidate-recovery-key').value;
     if(!id(study_id)||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(preparation_key))throw Error('Choose the exact current Study and original preparation request key.');
-    const action='execution_study_'+(abandon?'abandon':'reconcile')+'_preparation';if(!preparationRecoveryAllowed(action)&&!busy)throw Error('Current preparation recovery is unavailable.');
+    const action='execution_study_'+(abandon?'abandon':'reconcile')+'_preparation';if(!state?.project||!['open','recovery_required'].includes(state.state)||!selectedContracts.has('project_files.'+action))throw Error('Current preparation recovery is unavailable.');
     const args={study_id,preparation_key};if(abandon){args.reason=$('project-candidate-abandon-reason').value;if(!str(args.reason,1000))throw Error('Enter an explicit reason before abandoning the stopped partial preparation.');}
     const value=await m2Request(action,args,ticket);if(!value)return;
     if(abandon){if(value.format!=='project_candidate_preparation_abandon_v1'||value.state!=='abandoned'||value.origin_catalog_id!==state.project.project_id||value.study_id!==study_id||value.preparation_key!==preparation_key||value.reason!==args.reason||!sha(value.input_sha256)||!sha(value.observed_checkpoint)||value.candidate?.catalog_id!==state.project.project_id)throw Error('Abandonment differs from the exact current preparation intent.');executionFormSaved('project-candidate-recovery-form');}
@@ -1508,7 +1514,9 @@
     $('project-runtime-files-more').disabled=!runtimeInspection||runtimeInspection.binding!==state?.binding||!m2Allowed('runtime_inspect');
     $('project-runtime-capture-fields').disabled=!runtimeInspection||runtimeInspection.binding!==state?.binding||!m2Allowed('runtime_capture');
     $('project-runtime-capture').disabled=$('project-runtime-capture-fields').disabled||!$('project-runtime-confirm').checked;
-    $('project-runtime-status-fields').disabled=!m2Allowed('runtime_status');
+    $('project-runtime-status-fields').disabled=!preparationRecoveryAllowed('runtime_status');
+    $('project-runtime-abandon-fields').disabled=!preparationRecoveryAllowed('runtime_abandon');
+    $('project-runtime-retry').disabled=!runtimePending||runtimePending.body.binding!==state?.binding||!preparationRecoveryAllowed('runtime_capture');
   }
   async function runtimeSources(ticket,more=false){
     const offset=more?runtimeSourceOffset:0,value=await m2Request('runtime_sources',{offset,limit:40},ticket);if(!value)return;
@@ -1534,20 +1542,43 @@
   $('project-runtime-sources').onclick=()=>run(ticket=>runtimeSources(ticket));$('project-runtime-sources-more').onclick=()=>run(ticket=>runtimeSources(ticket,true));
   $('project-runtime-inspect').onclick=()=>run(ticket=>runtimeInspect(ticket));$('project-runtime-files-more').onclick=()=>run(ticket=>runtimeInspect(ticket,true));
   $('project-runtime-source').addEventListener('change',()=>{runtimeInspection=null;$('project-runtime-confirm').checked=false;controls();});
-  $('project-runtime-capture-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
-    if(runtimeInspection?.binding!==state.binding||!$('project-runtime-confirm').checked)throw Error('Inspect and explicitly confirm the current source inventory before capture.');
-    const reserve_bytes=Number($('project-runtime-reserve').value);if(!Number.isSafeInteger(reserve_bytes)||reserve_bytes<0)throw Error('Choose a nonnegative safe integer disk reserve.');
-    const value=await m2Request('runtime_capture',{source:runtimeInspection.source,expected_inventory_sha256:runtimeInspection.inventory_sha256,reserve_bytes},ticket);if(!value)return;
-    if(!runtimeSummaryOK(value,true)||value.project_id!==state.project.project_id||value.manifest_sha256!==runtimeInspection.inventory_sha256||value.request_key!==runtimePending?.body.request_key||value.runtime_ref?.catalog_id!==state.project.project_id||value.runtime_ref?.id!==value.runtime_ref?.sha256||!sha(value.runtime_ref?.sha256))throw Error('Runtime capture acknowledgement differs from the reviewed inventory or pending request.');
-    $('project-runtime-status-key').value=value.request_key;runtimePending=null;executionFormSaved('project-runtime-capture-form');$('project-runtime-confirm').checked=false;
+  function runtimeAbandonmentOK(value,key,reason=null){
+    return exact(value,['format','project_id','capture_key','input_sha256','manifest_sha256','actor_id','reason','observed_checkpoint','observed_at'])&&value.format==='project_runtime_capture_abandon_v1'&&value.project_id===state.project.project_id&&value.capture_key===key&&sha(value.input_sha256)&&sha(value.manifest_sha256)&&id(value.actor_id)&&str(value.reason,1000)&&(reason===null||value.reason===reason)&&sha(value.observed_checkpoint)&&str(value.observed_at,80);
+  }
+  async function captureRuntime(ticket,retry=false){
+    let args;
+    if(retry){
+      if(!runtimePending||runtimePending.body.binding!==state.binding)throw Error('This tab has no exact current pending capture request. Inspect retained status before choosing a new action.');
+      const {binding,expected_checkpoint,request_key,...saved}=runtimePending.body;args=saved;
+    }else{
+      if(runtimeInspection?.binding!==state.binding||!$('project-runtime-confirm').checked)throw Error('Inspect and explicitly confirm the current source inventory before capture.');
+      const reserve_bytes=Number($('project-runtime-reserve').value);if(!Number.isSafeInteger(reserve_bytes)||reserve_bytes<0)throw Error('Choose a nonnegative safe integer disk reserve.');
+      args={source:runtimeInspection.source,expected_inventory_sha256:runtimeInspection.inventory_sha256,reserve_bytes};
+    }
+    const value=await m2Request('runtime_capture',args,ticket);if(!value)return;
+    if(!runtimeSummaryOK(value,true)||value.project_id!==state.project.project_id||value.manifest_sha256!==args.expected_inventory_sha256||value.request_key!==runtimePending?.body.request_key)throw Error('Runtime capture acknowledgement differs from the reviewed inventory or pending request.');
+    $('project-runtime-status-key').value=value.request_key;runtimePending=null;
+    if(Number($('project-runtime-reserve').value)===args.reserve_bytes)executionFormSaved('project-runtime-capture-form');$('project-runtime-confirm').checked=false;
     $('project-runtime-pending').textContent=`Capture request ${value.request_key} acknowledged. Retained capture facts do not grant permission to execute.`;$('project-runtime-status').textContent=JSON.stringify(value,null,2);controls();message('Reviewed runtime bytes captured locally and scientific metadata saved. No project execution started.');
+  }
+  $('project-runtime-capture-form').onsubmit=event=>{event.preventDefault();run(ticket=>captureRuntime(ticket));};
+  $('project-runtime-retry').onclick=()=>run(ticket=>captureRuntime(ticket,true));
+  $('project-runtime-abandon-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
+    const capture_key=$('project-runtime-abandon-key').value,reason=$('project-runtime-abandon-reason').value;
+    if(!/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(capture_key)||!str(reason,1000))throw Error('Choose the exact current capture key and an explicit abandonment reason.');
+    const value=await m2Request('runtime_abandon',{capture_key,reason},ticket);if(!value)return;
+    if(!runtimeAbandonmentOK(value,capture_key,reason))throw Error('Runtime abandonment differs from the current exact capture and reason.');
+    if(runtimePending?.body.request_key===capture_key){if(Number($('project-runtime-reserve').value)===runtimePending.body.reserve_bytes)executionFormSaved('project-runtime-capture-form');runtimePending=null;}
+    executionFormSaved('project-runtime-abandon-form');$('project-runtime-status-key').value=capture_key;$('project-runtime-status').textContent=JSON.stringify(value,null,2);$('project-runtime-pending').textContent='Stopped partial capture abandoned. Original partial bytes and scientific intent remain. Refresh project status.';message($('project-runtime-pending').textContent);controls();
   });};
   $('project-runtime-status-form').onsubmit=event=>{event.preventDefault();run(async ticket=>{
     const capture_key=$('project-runtime-status-key').value;if(!/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(capture_key))throw Error('Choose the exact retained capture request key.');
     const value=await m2Request('runtime_status',{capture_key},ticket);if(!value)return;
-    if(!exact(value,['state','intent','result'])||!['absent','intent_recorded','captured'].includes(value.state)||value.state!==(value.result?'captured':value.intent?'intent_recorded':'absent')||value.result&&!value.intent||value.intent!==null&&!runtimeSummaryOK(value.intent)||value.result!==null&&!runtimeSummaryOK(value.result,true)||[value.intent,value.result].some(item=>item!==null&&(item.project_id!==state.project.project_id||item.request_key!==capture_key))||value.result&&['project_id','manifest_sha256','file_count','total_bytes','request_key'].some(field=>value.intent[field]!==value.result[field]))throw Error('Retained runtime status differs from the selected capture request.');
+    const abandoned=value?.state==='abandoned';
+    if(!exact(value,abandoned?['state','intent','result','abandonment']:['state','intent','result'])||!['absent','intent_recorded','captured','abandoned'].includes(value.state)||value.state!==(abandoned?'abandoned':value.result?'captured':value.intent?'intent_recorded':'absent')||value.result&&!value.intent||value.intent!==null&&!runtimeSummaryOK(value.intent)||value.result!==null&&!runtimeSummaryOK(value.result,true)||[value.intent,value.result].some(item=>item!==null&&(item.project_id!==state.project.project_id||item.request_key!==capture_key))||value.result&&['project_id','manifest_sha256','file_count','total_bytes','request_key'].some(field=>value.intent[field]!==value.result[field])||abandoned&&(!value.intent||value.result!==null||!runtimeAbandonmentOK(value.abandonment,capture_key)||value.abandonment.manifest_sha256!==value.intent.manifest_sha256))throw Error('Retained runtime status differs from the selected capture request.');
     $('project-runtime-status').textContent=JSON.stringify(value,null,2);message('Retained capture outcome loaded. Current local readiness was not inspected.');
   });};
+  for(const field of ['project-runtime-abandon-key','project-runtime-abandon-reason'])$(field).addEventListener('input',()=>{m2DirtyForms.add('project-runtime-abandon-form');m2Dirty=true;controls();});
   for(const field of ['project-runtime-reserve','project-runtime-confirm'])$(field).addEventListener(field.endsWith('confirm')?'change':'input',()=>{m2DirtyForms.add('project-runtime-capture-form');m2Dirty=true;controls();});
 
   function m4Controls(){
@@ -1649,7 +1680,7 @@
   $('project-files-refresh').onclick=refresh;
   $('records-more').onclick=()=>run(async ticket=>{await query(ticket,true);message('More text records loaded.');return nextRecord===null?$('records-title'):$('records-more');});
   $('record-history-more').onclick=olderHistory;
-  $('project-files-discard').onclick=()=>{importDirty=false;annotationDirty=false;m2Dirty=false;m2DirtyForms.clear();forkPending=null;runtimePending=null;runtimeInspection=null;for(const field of ['project-candidate-study','project-candidate-id','project-candidate-directory','project-candidate-runtime','project-candidate-package-run','project-candidate-package-sha','project-candidate-recovery-study','project-candidate-recovery-key','project-candidate-abandon-reason'])$(field).value='';$('project-runtime-confirm').checked=false;$('project-runtime-pending').textContent='';for(const field of ['project-save-as-directory','project-save-as-name','project-working-path','project-working-sha','project-working-local'])$(field).value='';$('project-working-revision').value='0';executionApproval=null;studyApproval=null;producerCurrent=null;for(const field of ['project-producer-url','project-producer-model','project-producer-instruction','project-producer-labels','project-producer-note','project-producer-profile','project-producer-session','project-producer-prompt-url','project-producer-prompt-model'])$(field).value='';$('project-producer-confirm').checked=false;$('project-execution-confirm').checked=false;$('project-artifact-path').value='';for(const form of ['project-model-create-form','project-study-create-form','project-register-form','project-scientific-form'])for(const field of $(form).querySelectorAll('input'))field.value=field.defaultValue??'';clearExplorationDetail();$('project-source-file').value='';$('project-source-name').value='';$('project-search-name').value='';$('project-selection-name').value='';$('text-name').value='';$('text-content').value='';$('text-groups').value='project';$('text-rights').value='unknown';showRecord();clearError();message('Unsubmitted edits discarded. Saved project records are unchanged.');};
+  $('project-files-discard').onclick=()=>{importDirty=false;annotationDirty=false;m2Dirty=false;m2DirtyForms.clear();forkPending=null;runtimePending=null;runtimeInspection=null;for(const field of ['project-candidate-study','project-candidate-id','project-candidate-directory','project-candidate-runtime','project-candidate-package-run','project-candidate-package-sha','project-candidate-recovery-study','project-candidate-recovery-key','project-candidate-abandon-reason','project-runtime-abandon-key','project-runtime-abandon-reason'])$(field).value='';$('project-runtime-confirm').checked=false;$('project-runtime-pending').textContent='';for(const field of ['project-save-as-directory','project-save-as-name','project-working-path','project-working-sha','project-working-local'])$(field).value='';$('project-working-revision').value='0';executionApproval=null;studyApproval=null;producerCurrent=null;for(const field of ['project-producer-url','project-producer-model','project-producer-instruction','project-producer-labels','project-producer-note','project-producer-profile','project-producer-session','project-producer-prompt-url','project-producer-prompt-model'])$(field).value='';$('project-producer-confirm').checked=false;$('project-execution-confirm').checked=false;$('project-artifact-path').value='';for(const form of ['project-model-create-form','project-study-create-form','project-register-form','project-scientific-form'])for(const field of $(form).querySelectorAll('input'))field.value=field.defaultValue??'';clearExplorationDetail();$('project-source-file').value='';$('project-source-name').value='';$('project-search-name').value='';$('project-selection-name').value='';$('text-name').value='';$('text-content').value='';$('text-groups').value='project';$('text-rights').value='unknown';showRecord();clearError();message('Unsubmitted edits discarded. Saved project records are unchanged.');};
   for(const field of ['text-name','text-content','text-groups','text-rights'])$(field).addEventListener('input',()=>{importDirty=true;controls();});
   for(const field of ['annotation-value','annotation-groups','record-review','annotation-task'])$(field).addEventListener(field==='annotation-task'||field==='record-review'?'change':'input',()=>{annotationDirty=true;annotationHelp();controls();});
   window.addEventListener('beforeunload',event=>{if(dirty()){event.preventDefault();event.returnValue='';}});

@@ -12,11 +12,11 @@ import os
 import agent_api
 from model_definitions import reference
 from project_material import decode_records as material_records
-from project_session import operation_records, REQUEST_KEY
+from project_session import operation_records, REQUEST_KEY, _digest as operation_digest
 from runtime_snapshots import RuntimeSnapshots, DEFAULT_RESERVE, MAX_FILES, MAX_BYTES, MAX_MANIFEST
 from workbench import WorkbenchError, timestamp
 
-OPERATIONS = frozenset(('runtime.capture_intent', 'runtime.capture'))
+OPERATIONS = frozenset(('runtime.capture_intent', 'runtime.capture', 'runtime.abandon'))
 RESULT_FIELDS = frozenset(('format','project_id','manifest_sha256','file_count','total_bytes',
                            'actor_id','observed_at','request_key'))
 
@@ -57,6 +57,12 @@ def _body(config_request, expected_inventory_sha256, reserve_bytes):
                 reserve_bytes=reserve_bytes)
 
 
+def _intent_input(body):
+    """Use the canonical intent owner's exact request identity for local custody."""
+    return operation_digest(dict(operation='runtime.capture_intent',
+        target=body['expected_inventory_sha256'], body=body))
+
+
 def _summary(project_id, observed, actor_id, key, *, runtime_ref=None):
     value = dict(format='project_runtime_capture_intent_v1' if runtime_ref is None else 'project_runtime_capture_v1',
         project_id=project_id,manifest_sha256=observed['inventory_sha256'],file_count=observed['file_count'],
@@ -69,6 +75,32 @@ def validate_operation_result(operation, result, records=None):
     """Validate inert capture facts; no retained path becomes a local binding."""
     if operation not in OPERATIONS: return False
     try:
+        if operation == 'runtime.abandon':
+            fields = {'format','project_id','capture_key','input_sha256','manifest_sha256',
+                      'actor_id','reason','observed_checkpoint','observed_at'}
+            if type(result) is not dict or set(result) != fields or result['format'] != 'project_runtime_capture_abandon_v1':
+                _fail('Invalid runtime abandonment observation.')
+            _id(result['project_id']); _id(result['actor_id']); _key(result['capture_key'])
+            for field in ('input_sha256','manifest_sha256','observed_checkpoint'): _sha(result[field])
+            if type(result['reason']) is not str or not result['reason'].strip() or len(result['reason']) > 1000:
+                _fail('Runtime abandonment requires the retained owner reason.')
+            if type(result['observed_at']) is not str or datetime.fromisoformat(result['observed_at']).utcoffset() is None:
+                _fail('Runtime abandonment requires an offset timestamp.')
+            if records is not None:
+                intents = [r['document'] for r in records if r['family']=='project_operation'
+                           and r['document']['operation']=='runtime.capture_intent'
+                           and r['document']['request_key']==_intent_key(result['capture_key'])
+                           and r['document']['input_sha256']==result['input_sha256']
+                           and r['document']['result'].get('project_id')==result['project_id']
+                           and r['document']['result'].get('manifest_sha256')==result['manifest_sha256']]
+                if len(intents) != 1: _fail('Runtime abandonment has no exact original capture intent.')
+                if any(r['family']=='project_operation'
+                       and r['document']['operation']=='runtime.capture'
+                       and r['document']['request_key']==result['capture_key']
+                       and r['document']['result'].get('project_id')==result['project_id']
+                       for r in records):
+                    _fail('Completed runtime capture cannot be abandoned.')
+            return True
         complete = operation == 'runtime.capture'
         fields = RESULT_FIELDS | ({'runtime_ref'} if complete else set())
         if type(result) is not dict or set(result) != fields:
@@ -138,9 +170,59 @@ class ProjectRuntime:
             intent = receipts.get(_intent_key(key)); complete = receipts.get(key)
             if intent is not None and intent['operation'] != 'runtime.capture_intent': intent = None
             if complete is not None and complete['operation'] != 'runtime.capture': complete = None
+            abandoned = next((r['result'] for r in receipts.values() if r['operation']=='runtime.abandon'
+                              and r['result']['capture_key']==key), None)
+            if abandoned is not None:
+                return dict(state='abandoned',intent=copy.deepcopy(intent['result']) if intent else None,
+                            result=None,abandonment=copy.deepcopy(abandoned))
             return dict(state='captured' if complete else 'intent_recorded' if intent else 'absent',
                         intent=copy.deepcopy(intent['result']) if intent else None,
                         result=copy.deepcopy(complete['result']) if complete else None)
+
+    def recover_capture(self, config_request, expected_inventory_sha256, expected_checkpoint, key, *, reserve_bytes=DEFAULT_RESERVE):
+        """Explicitly restore one original local copy before its exact retry."""
+        body = _body(config_request, expected_inventory_sha256, reserve_bytes)
+        body_sha = _intent_input(body)
+        self._authorize('runtime_snapshots.create')
+        self.execution.prepare_runtime_reconciliation(key, body_sha, expected_inventory_sha256, expected_checkpoint)
+        return self.capture(config_request, expected_inventory_sha256, self.session.snapshot['checkpoint'], key,
+                            reserve_bytes=reserve_bytes)
+
+    def abandon(self, capture_key, reason, expected_checkpoint, key):
+        """Preserve partial bytes and acknowledge one stopped local copy."""
+        _key(capture_key); _key(key); _sha(expected_checkpoint)
+        if key == capture_key or type(reason) is not str or not reason.strip() or len(reason) > 1000:
+            _fail('Use a separate abandonment key and a retained reason.')
+        actor = self._authorize('runtime.capture_abandon')
+        body = dict(capture_key=capture_key, reason=reason, actor_id=actor.actor_id)
+        marker = self.execution.runtime_pending(capture_key)
+        if marker is None:
+            # Pure receipt replay cannot clear a local writer or run anything.
+            def forbidden(): _fail('No original local runtime copy exists to abandon.', 'unavailable', 409)
+            return self.session.mutate('runtime.abandon', capture_key, body, expected_checkpoint, key,
+                                       forbidden, lambda *args: forbidden(), scope='admin')
+        with self.execution.runtime_reconciliation(capture_key, marker['input_sha256'],
+                marker['manifest_sha256'], expected_checkpoint) as guard:
+            receipts = operation_records(self.session.snapshot['records'])
+            intent = receipts.get(_intent_key(capture_key))
+            if (intent is None or intent['operation']!='runtime.capture_intent'
+                    or intent['input_sha256']!=marker['input_sha256']
+                    or intent['result']['project_id']!=self.session.project_id
+                    or intent['result']['manifest_sha256']!=marker['manifest_sha256']):
+                _fail('Runtime intent differs from its exact original local writer.', 'conflict', 409)
+            if capture_key in receipts:
+                _fail('Capture completed; reconcile its acknowledgement with the exact capture request.', 'conflict', 409)
+            observed = self.session.snapshot['checkpoint']
+            def invoke():
+                current = self._authorize('runtime.capture_abandon')
+                if current.actor_id != actor.actor_id: _fail('Runtime abandonment caller changed.', 'conflict', 409)
+                return dict(format='project_runtime_capture_abandon_v1',project_id=self.session.project_id,
+                    capture_key=capture_key,input_sha256=marker['input_sha256'],manifest_sha256=marker['manifest_sha256'],
+                    actor_id=actor.actor_id,reason=reason,observed_checkpoint=observed,observed_at=timestamp())
+            result = self.session.mutate('runtime.abandon', capture_key, body, observed, key, invoke,
+                                         lambda value,before:dict(records=[],result=value),scope='admin')
+            guard.confirmed()
+            return result
 
     def _barrier(self, descriptor):
         # Native creation fsyncs all staged files before its atomic rename. This
@@ -163,10 +245,16 @@ class ProjectRuntime:
         """
         _key(key); _sha(expected_checkpoint)
         body = _body(config_request, expected_inventory_sha256, reserve_bytes)
-        body_sha = hashlib.sha256(agent_api.encoded(body)).hexdigest()
+        body_sha = _intent_input(body)
         intent = None
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self._authorize('runtime_snapshots.create'); self.session.check()
+            receipts = operation_records(self.session.snapshot['records'])
+            if any(r['operation']=='runtime.abandon' and r['result']['capture_key']==key for r in receipts.values()):
+                _fail('This capture was abandoned; use a fresh key for a new measurement.', 'conflict', 409)
+            if (_intent_key(key) in receipts and key not in receipts
+                    and self.execution.runtime_pending(key) is None):
+                _fail('This incomplete capture intent is inert history; use a fresh key for a new capture.', 'unavailable', 409)
             try:
                 with self.execution.runtime_effect(key, body_sha, expected_inventory_sha256) as guard:
                     receipts = operation_records(self.session.snapshot['records'])

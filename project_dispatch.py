@@ -35,7 +35,7 @@ _EXECUTION_ACTIONS = frozenset(('execution_health', 'execution_preflight_externa
     'execution_producer_start', 'execution_generation_resume', 'execution_grounded_review',
     'execution_producer_decide', 'execution_producer_cancel', 'execution_producer_health',
     'execution_study_prepare_package','execution_study_prepare_verifier','execution_study_abandon_preparation','execution_study_reconcile_preparation'))
-_RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status'))
+_RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon'))
 _M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
     _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS)
@@ -337,6 +337,7 @@ def _runtime(projection, action, a):
             packages=[dict(name=name,version=version) for name,version in sorted(manifest['packages'].items())],
             files=_page(manifest['files'],a))
     if action=='runtime_status':return projection.runtime.status(a['capture_key'])
+    if action=='runtime_abandon':return projection.runtime.abandon(a['capture_key'],a['reason'],a['expected_checkpoint'],a['request_key'])
     if action=='runtime_capture':
         options={'reserve_bytes':a['reserve_bytes']} if 'reserve_bytes' in a else {}
         return projection.runtime.capture({'source':a['source']},a['expected_inventory_sha256'],

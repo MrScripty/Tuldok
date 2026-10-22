@@ -70,6 +70,13 @@
         <label><input id="project-runtime-confirm" type="checkbox">I reviewed this source and exact inventory digest and want to copy its bytes into this installation's local cache.</label>
         <button id="project-runtime-capture" type="submit" disabled>Capture reviewed runtime</button>
       </fieldset></form><p id="project-runtime-pending" role="status"></p>
+      <button id="project-runtime-retry" type="button" disabled>Retry exact pending capture</button>
+      <form id="project-runtime-abandon-form"><fieldset id="project-runtime-abandon-fields" disabled><legend>Abandon this installation's stopped partial capture</legend>
+        <p>This requires its original current local custody marker. The decision preserves every partial file, retained intent and scientific fact; imported history does not authorize it.</p>
+        <label>Original capture request key<input id="project-runtime-abandon-key" maxlength="128" required></label>
+        <label>Reason<textarea id="project-runtime-abandon-reason" maxlength="1000" rows="3" required></textarea></label>
+        <button id="project-runtime-abandon" type="submit">Abandon stopped partial runtime capture</button>
+      </fieldset></form>
       <form id="project-runtime-status-form"><fieldset id="project-runtime-status-fields" disabled><legend>Inspect retained capture facts</legend>
         <label>Capture request key<input id="project-runtime-status-key" maxlength="128" required></label><button type="submit">Inspect retained capture outcome</button>
       </fieldset></form><p>This outcome is historical. “Captured” does not establish that a current local runtime is present or ready. Reopening a project does not capture or provision it.</p><pre id="project-runtime-status"></pre>

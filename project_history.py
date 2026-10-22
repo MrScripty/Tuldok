@@ -30,12 +30,16 @@ FAMILY_FORMATS = {
     'study_history': 'project_study_history_v1',
     'trial_history': 'project_trial_history_v1',
     'run_history': 'project_run_history_v1',
+    'run_observation': 'project_run_observation_v1',
     'candidate_history': 'project_candidate_history_v1',
 }
 MAX_HISTORY_BYTES = 40 * 1024**2
 MAX_HISTORY_RECORDS = 100_000
 NAME = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$')
 SHA = re.compile(r'^[a-f0-9]{64}$')
+RUN_OBSERVATION_IDENTITY = ('dataset_id','id','request_key','request_sha256','graph_sha256','graph_document_sha256',
+    'material_sha256','release_id','release_sha256','release_bytes','admission_id','approval_id',
+    'approval_material_sha256','actor_id','parent_run_id','attempt','created_at','execution_kind','result_kind')
 
 OPERATIONS = frozenset(('studies.create','studies.save','studies.prepare_trial','studies.record_lineage',
     'studies.branch_trial','studies.prepare_branch','studies.select_candidate','studies.prepare_package',
@@ -240,17 +244,38 @@ def payload_set_sha256(origin_catalog_id,run_id,payloads):
 
 
 def validate_disclosure_fact(value):
-    _shape(value,('format','origin_catalog_id','run_id','payload_set_sha256','population','reason','actor_id','occurred_at'),
+    fields=('format','origin_catalog_id','run_id','payload_set_sha256','population','reason','actor_id','occurred_at')
+    if type(value) is dict and value.get('format')=='project_disclosure_v2':
+        fields+=('observation_sha256',)
+    _shape(value,fields,
            'historical disclosure observation')
-    if value['format']!='project_disclosure_v1' or value['population']!='all':
+    if value['format'] not in ('project_disclosure_v1','project_disclosure_v2') or value['population']!='all':
         _invalid('Unsupported historical disclosure observation.','unsupported')
     for key in ('origin_catalog_id','run_id','actor_id'):identifier(value[key],key)
     _sha(value['payload_set_sha256']);text(value['reason'],'Disclosure reason',1000)
+    if value['format']=='project_disclosure_v2':_sha(value['observation_sha256'])
     text(value['occurred_at'],'Disclosure observation time',80)
     return copy.deepcopy(value)
 
 
+def _observation_document(record):
+    _shape(record,('family','id','document'),'Run observation envelope')
+    doc=checked_json(record['document'],MAX_HISTORY_BYTES)
+    _shape(doc,('format','origin_catalog_id','run_id','sha256','observation'),'Run observation')
+    if record['family']!='run_observation' or doc['format']!=FAMILY_FORMATS['run_observation']:
+        _invalid('Unsupported Run observation.','unsupported')
+    identifier(doc['origin_catalog_id']);identifier(doc['run_id']);_sha(doc['sha256'])
+    from project_store import _encode as canonical
+    if (record['id']!=doc['sha256'] or hashlib.sha256(canonical(doc['observation'])).hexdigest()!=doc['sha256']
+            or doc['observation'].get('origin_catalog_id')!=doc['origin_catalog_id']
+            or doc['observation'].get('run',{}).get('id')!=doc['run_id']):
+        _invalid('Retained Run observation identity differs.')
+    return doc
+
+
 def declarations(record):
+    if record['family']=='run_observation':
+        return declarations({'family':'run_history','document':record['document']['observation']})
     if record['family']!='run_history':return []
     values={}
     edges=list(record['document']['payloads'])
@@ -266,7 +291,7 @@ def declarations(record):
 
 class HistoryFacts:
     def __init__(self):
-        self.studies={};self.trials={};self.runs={};self.candidates={};self.policies={};self.reservations={}
+        self.studies={};self.trials={};self.runs={};self.candidates={};self.policies={};self.reservations={};self.observations={}
 
     def trial_ref(self, value):
         _shape(value,('catalog_id','trial_id','material_sha256'),'historical Trial reference')
@@ -275,6 +300,81 @@ class HistoryFacts:
         trial=self.trials[key]['trial']
         if value['material_sha256']!=trial['material']['sha256']:_invalid('Historical Trial material differs.')
         return trial
+
+
+def _validate_run_document(doc, *, facts, declarations, materials):
+    """Shared exact scientific Run decoder for current and retained observations."""
+    _shape(doc,('format','origin_catalog_id','run','admission_proof','payloads','publication'),'Run history')
+    if doc['format']!=FAMILY_FORMATS['run_history']:_invalid('Unsupported observed Run format.','unsupported')
+    origin=doc['origin_catalog_id'];identity=doc['run']['id']
+    identifier(origin);identifier(identity)
+    run=project_run_projection(doc['run'],imported=True)
+    if run.get('dataset_id')!=origin:_invalid('Historical Run origin differs.')
+    edges=_payloads(doc['payloads'])
+    for edge in edges.values():
+        declaration=declarations.get(edge['blob']['sha256'])
+        if declaration!={'format':'project_artifact_v1',**edge['blob']}:
+            _invalid('Historical artifact declaration is missing or contradictory.','unavailable')
+    for item in run.get('artifacts',[]):
+        edge=edges.get(item.get('name'))
+        if edge is None or edge['blob']!={key:item[key] for key in ('sha256','bytes')}:
+            _invalid('Run artifact closure differs.','unavailable')
+    if run.get('execution_kind')=='external_recipe':
+        for name,item in run['material']['captures'].items():
+            edge=edges.get(name)
+            if edge is None or edge['blob']!={key:item[key] for key in ('sha256','bytes')}:
+                _invalid('Historical execution capture closure is missing or differs.','unavailable')
+        descriptor=run['material'].get('torch_runtime',run['material'].get('cpu_snapshot'))
+        if descriptor is not None:
+            sha=digest(descriptor)
+            if materials is None:_invalid('Historical runtime decoder is unavailable.','unavailable')
+            materials.runtime({'kind':'runtime','catalog_id':origin,'id':sha,'sha256':sha})
+        if run['state']=='completed':
+            receipt=edges.get('custody-receipt.json')
+            if receipt is None or receipt['blob']['sha256']!=run['custody_receipt_sha256']:
+                _invalid('Historical custody receipt declaration is missing or differs.','unavailable')
+            if 'artifact-manifest.json' not in edges:
+                _invalid('Historical artifact manifest declaration is missing.','unavailable')
+    else:
+        release=edges.get('release.zip')
+        if release is None or release['blob']!={'sha256':run['release_sha256'],'bytes':run['release_bytes']}:
+            _invalid('Historical frozen input Release declaration is missing or differs.','unavailable')
+    reservation=facts.reservations.get((origin,identity));association=None;composition=None
+    if reservation is not None:
+        trial=facts.trials.get((origin,reservation['trial_id']))
+        if trial is None:_invalid('Reservation Trial is missing.','unavailable')
+        association={key:reservation[key] for key in ('study_id','trial_id','actor_id','request_sha256','material_sha256')}
+        composition=materials.recipe(trial['trial']['material'])
+    elif run.get('approval_material_sha256') is not None:
+        sha=run['approval_material_sha256']
+        composition=materials.recipe({'kind':'recipe_material','catalog_id':origin,'id':sha,'sha256':sha})
+    approval=_approval(doc['admission_proof'],run)
+    # This validates the stored context/spec binding. Exact static context
+    # is rederived from retained source bytes on explicit evidence use.
+    validate_retained_run(run,catalog_id=origin,run_id=identity,request_key=run['request_key'],
+        request_sha256=run['request_sha256'],association=association,approval=approval,composition=composition,
+        extension_context=run.get('extension_context'))
+    parent=run.get('parent_run_id')
+    if parent is not None and (origin,parent) not in facts.runs:_invalid('Retry parent Run is missing.','unavailable')
+    if run.get('execution_kind')=='external_recipe':
+        for item in run['material']['inputs'].values():
+            if item.get('kind')=='run_artifact':
+                source=item['source'];producer=facts.runs.get((source['catalog_id'],source['run_id']))
+                if producer is None:_invalid('Producer Run closure is missing.','unavailable')
+                match=[edge for edge in producer['payloads'] if edge['name']==source['artifact_name']]
+                if len(match)!=1 or match[0]['blob']!={'sha256':source['measured_sha256'],'bytes':source['artifact_bytes']}:
+                    _invalid('Producer Run input byte identity differs.')
+    publication=doc['publication']
+    if publication is not None:
+        _shape(publication,('continuation','source','result'),'publication history')
+        from run_publication import validate_continuation
+        historical=dict(run,publication_continuation=publication['continuation'])
+        validate_continuation(historical)
+        for key in ('source','result'):
+            if publication[key] is not None:
+                _shape(publication[key],('sha256','bytes'),'publication byte reference')
+                if declarations.get(publication[key]['sha256'])!={'format':'project_artifact_v1',**publication[key]}:
+                    _invalid('Historical publication byte declaration is missing.','unavailable')
 
 
 def _decode_records(records, *, materials=None, artifacts=None):
@@ -296,6 +396,12 @@ def _decode_records(records, *, materials=None, artifacts=None):
         doc=checked_json(record['document'],MAX_HISTORY_BYTES)
         if doc.get('format')!=FAMILY_FORMATS[family]:_invalid('Unsupported historical format.','unsupported')
         origin=doc.get('origin_catalog_id');identifier(origin,'Origin catalog')
+        if family=='run_observation':
+            doc=_observation_document(record)
+            key=(origin,doc['run_id'],doc['sha256'])
+            if key in facts.observations:_invalid('Duplicate retained Run observation.')
+            facts.observations[key]=doc
+            continue
         if family=='study_history':
             _shape(doc,('format','origin_catalog_id','study','memberships','policies','reservations','operations',
                         'revisions','audit','revision_history_complete'),'Study history')
@@ -369,74 +475,15 @@ def _decode_records(records, *, materials=None, artifacts=None):
             if record is None:_invalid('Historical ancestor is missing.','unavailable')
             return (record['lineage']['intent']['parent'] or {}).get('trial_id') if record['lineage'] else None
         validate_retained_ancestry(identity,parent,parent_of=parent_of)
-    for (origin,identity),doc in facts.runs.items():
-        run=project_run_projection(doc['run'],imported=True)
-        if run.get('dataset_id')!=origin:_invalid('Historical Run origin differs.')
-        edges=_payloads(doc['payloads'])
-        for edge in edges.values():
-            declaration=declarations.get(edge['blob']['sha256'])
-            if declaration!={'format':'project_artifact_v1',**edge['blob']}:
-                _invalid('Historical artifact declaration is missing or contradictory.','unavailable')
-        for item in run.get('artifacts',[]):
-            edge=edges.get(item.get('name'))
-            if edge is None or edge['blob']!={key:item[key] for key in ('sha256','bytes')}:
-                _invalid('Run artifact closure differs.','unavailable')
-        if run.get('execution_kind')=='external_recipe':
-            for name,item in run['material']['captures'].items():
-                edge=edges.get(name)
-                if edge is None or edge['blob']!={key:item[key] for key in ('sha256','bytes')}:
-                    _invalid('Historical execution capture closure is missing or differs.','unavailable')
-            descriptor=run['material'].get('torch_runtime',run['material'].get('cpu_snapshot'))
-            if descriptor is not None:
-                sha=digest(descriptor)
-                if materials is None:_invalid('Historical runtime decoder is unavailable.','unavailable')
-                materials.runtime({'kind':'runtime','catalog_id':origin,'id':sha,'sha256':sha})
-            if run['state']=='completed':
-                receipt=edges.get('custody-receipt.json')
-                if receipt is None or receipt['blob']['sha256']!=run['custody_receipt_sha256']:
-                    _invalid('Historical custody receipt declaration is missing or differs.','unavailable')
-                if 'artifact-manifest.json' not in edges:
-                    _invalid('Historical artifact manifest declaration is missing.','unavailable')
-        else:
-            release=edges.get('release.zip')
-            if release is None or release['blob']!={'sha256':run['release_sha256'],'bytes':run['release_bytes']}:
-                _invalid('Historical frozen input Release declaration is missing or differs.','unavailable')
-        reservation=facts.reservations.get((origin,identity));association=None;composition=None
-        if reservation is not None:
-            trial=facts.trials.get((origin,reservation['trial_id']))
-            if trial is None:_invalid('Reservation Trial is missing.','unavailable')
-            association={key:reservation[key] for key in ('study_id','trial_id','actor_id','request_sha256','material_sha256')}
-            composition=materials.recipe(trial['trial']['material'])
-        elif run.get('approval_material_sha256') is not None:
-            sha=run['approval_material_sha256']
-            composition=materials.recipe({'kind':'recipe_material','catalog_id':origin,'id':sha,'sha256':sha})
-        approval=_approval(doc['admission_proof'],run)
-        # This validates the stored context/spec binding. Exact static context
-        # is rederived from retained source bytes on explicit evidence use.
-        validate_retained_run(run,catalog_id=origin,run_id=identity,request_key=run['request_key'],
-            request_sha256=run['request_sha256'],association=association,approval=approval,composition=composition,
-            extension_context=run.get('extension_context'))
-        parent=run.get('parent_run_id')
-        if parent is not None and (origin,parent) not in facts.runs:_invalid('Retry parent Run is missing.','unavailable')
-        if run.get('execution_kind')=='external_recipe':
-            for item in run['material']['inputs'].values():
-                if item.get('kind')=='run_artifact':
-                    source=item['source'];producer=facts.runs.get((source['catalog_id'],source['run_id']))
-                    if producer is None:_invalid('Producer Run closure is missing.','unavailable')
-                    match=[edge for edge in producer['payloads'] if edge['name']==source['artifact_name']]
-                    if len(match)!=1 or match[0]['blob']!={'sha256':source['measured_sha256'],'bytes':source['artifact_bytes']}:
-                        _invalid('Producer Run input byte identity differs.')
-        publication=doc['publication']
-        if publication is not None:
-            _shape(publication,('continuation','source','result'),'publication history')
-            from run_publication import validate_continuation
-            historical=dict(run,publication_continuation=publication['continuation'])
-            validate_continuation(historical)
-            for key in ('source','result'):
-                if publication[key] is not None:
-                    _shape(publication[key],('sha256','bytes'),'publication byte reference')
-                    if declarations.get(publication[key]['sha256'])!={'format':'project_artifact_v1',**publication[key]}:
-                        _invalid('Historical publication byte declaration is missing.','unavailable')
+    for doc in facts.runs.values():
+        _validate_run_document(doc,facts=facts,declarations=declarations,materials=materials)
+    for (origin,identity,sha),saved in facts.observations.items():
+        doc=saved['observation'];current=facts.runs.get((origin,identity))
+        if current is None:_invalid('Disclosure Run observation has no historical Run.','unavailable')
+        for field in RUN_OBSERVATION_IDENTITY:
+            if doc['run'].get(field)!=current['run'].get(field):
+                _invalid('Disclosure Run observation immutable identity differs.')
+        _validate_run_document(doc,facts=facts,declarations=declarations,materials=materials)
     def visit_run(key,path):
         if key in path:_invalid('Cyclic historical Run ancestry or producer inputs.')
         if len(path)>=64:_invalid('Historical Run ancestry exceeds its bound.','unsupported')
@@ -546,6 +593,23 @@ def _bind_operation_result(operation,result,records):
         return matches[0]
     if operation=='history.disclose':
         doc=document('run_history',result['origin_catalog_id'],result['run_id'])
+        if result['format']=='project_disclosure_v2':
+            matches=[item for item in records if item.get('family')=='run_observation'
+                     and item.get('id')==result['observation_sha256']]
+            if len(matches)!=1:_invalid('Disclosure has no unique retained Run observation.')
+            saved=_observation_document(matches[0])
+            if (saved['origin_catalog_id']!=result['origin_catalog_id'] or saved['run_id']!=result['run_id']
+                    or saved['sha256']!=result['observation_sha256']):
+                _invalid('Disclosure Run observation identity differs.')
+            observation=saved['observation']
+            for field in RUN_OBSERVATION_IDENTITY:
+                if observation['run'].get(field)!=doc['run'].get(field):
+                    _invalid('Disclosure Run observation immutable identity differs.')
+            declarations={item['id']:item['document'] for item in records if item.get('family')=='project_artifact'}
+            for edge in _payloads(observation['payloads']).values():
+                if declarations.get(edge['blob']['sha256'])!={'format':'project_artifact_v1',**edge['blob']}:
+                    _invalid('Disclosure observation artifact declaration is missing or contradictory.','unavailable')
+            doc=observation
         if result['payload_set_sha256']!=payload_set_sha256(doc['origin_catalog_id'],doc['run']['id'],doc['payloads']):
             _invalid('Disclosure observation does not identify the retained Run payload set.')
     elif operation in ('studies.create','studies.save'):
@@ -773,14 +837,21 @@ class ProjectHistory:
         authority=self.access.require('expose-holdout','history.disclose',run_id)
         actor_id=authority.actor_id
         effective=dict(body,actor_id=actor_id)
+        captured=[]
         def invoke():
             current=self.access.require('expose-holdout','history.disclose',run_id)
             if current.actor_id!=actor_id:_invalid('Disclosure caller changed.','conflict')
             doc=self._record(self._facts().runs,run_id,body['origin_catalog_id'])
-            return validate_disclosure_fact({'format':'project_disclosure_v1','origin_catalog_id':body['origin_catalog_id'],
+            from project_store import _encode as canonical
+            sha=hashlib.sha256(canonical(doc)).hexdigest()
+            captured.append({'family':'run_observation','id':sha,'document':{
+                'format':FAMILY_FORMATS['run_observation'],'origin_catalog_id':body['origin_catalog_id'],
+                'run_id':run_id,'sha256':sha,'observation':copy.deepcopy(doc)}})
+            return validate_disclosure_fact({'format':'project_disclosure_v2','origin_catalog_id':body['origin_catalog_id'],
                 'run_id':run_id,'payload_set_sha256':payload_set_sha256(doc['origin_catalog_id'],run_id,doc['payloads']),
-                'population':'all','reason':body['reason'],'actor_id':actor_id,'occurred_at':timestamp()})
-        def capture(result,before_records):return {'records':[],'result':result}
+                'population':'all','reason':body['reason'],'actor_id':actor_id,'occurred_at':timestamp(),
+                'observation_sha256':sha})
+        def capture(result,before_records):return {'records':captured,'result':result}
         return self.session.mutate('history.disclose',run_id,effective,expected_checkpoint,key,invoke,capture,scope='expose-holdout')
 
     def dependencies(self,run_id,*,origin_catalog_id=None,offset=0,limit=100):
@@ -865,6 +936,17 @@ class ProjectHistory:
         facts=self._facts();doc=self._record(facts.runs,run_id,origin_catalog_id)
         self._transitive(facts,doc)
         return self._read(doc,name,maximum_bytes)
+
+    def authorize_material_inputs(self,material):
+        """Bind retained producer receipts under present disclosure authority."""
+        from recipe_contract import validate_material
+        material=validate_material(copy.deepcopy(material))
+        for name,item in material['inputs'].items():
+            if item.get('kind')!='run_artifact':continue
+            source=item['source']
+            _raw,actual=self.capture_artifact(source['run_id'],source['artifact_name'],source['measured_sha256'],
+                max_bytes=material['recipe']['inputs'][name]['max_bytes'],origin_catalog_id=source['catalog_id'])
+            if actual!=source:_invalid('Retained producer proof differs from the captured input receipt.','unavailable')
 
     def capture_artifact(self,run_id,name,expected_sha256,*,max_bytes=MAX_ARTIFACT_BYTES,origin_catalog_id=None):
         """Capture an exact completed input without live recovery or admissions."""

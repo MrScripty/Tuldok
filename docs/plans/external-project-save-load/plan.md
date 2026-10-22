@@ -4,7 +4,7 @@
 
 **Current phase:** M3 — explicit execution, durable lifecycle facts and local custody.
 
-**Next slice:** Finish the explicit cold Study material-cache path and candidate/runtime publication, then qualify approved-agent execution and their public surfaces. Three original-host crash cases and M4 client/browser checks have passed on separately fixed subjects; they do not accept unfinished M3/M5 work. Evidence is retained in [M3 integration evidence](reports/m3-implementation.md) and [M4 integration evidence](reports/m4-implementation.md).
+**Next slice:** Complete the finite built-in/native execution adapter: current explicit probe/material preparation, native Run admission, child custody, payload capture and original-host recovery. The public runtime recovery, retained disclosure snapshots and M3 Chromium path now have scoped passing evidence. Real Study, candidate, original-host crash, M4 client/browser and M5 client/browser gates also passed on separately identified subjects; the approved-agent HTTP case still needs its corrected cold-denial tail in CI. Freeze the complete candidate for independent review and exact-head CI after the native gate. Evidence is retained in [M3](reports/m3-implementation.md), [M4](reports/m4-implementation.md) and [M5](reports/m5-implementation.md). These component results do not accept the complete feature.
 
 **Acceptance status:** `pending`
 
@@ -333,13 +333,34 @@ The concrete M3 composition adds `project_execution.py`, `project_study_executio
 
 The finite runtime/custody composition also admits `project_custody.py` and `project_runtime.py`, plus their focused tests. The private original-host index is outside portable content and records exact physical-root/projection bindings and unresolved outcomes; a changed canonical UUID at the same physical root cannot hide it. Explicit runtime capture accepts only current operator-configured source aliases, commits an inert intent before copying bytes, and never probes or launches captured binaries on Open.
 
+Disclosure observations use an additive `project_disclosure_v2` fact bound to a
+finite `run_observation` / `project_run_observation_v1` canonical text record.
+That record preserves the exact Run document and payload inventory observed at
+the decision. Its content hash is its identity, so later Run output or publication
+cannot rewrite the earlier scientific observation. Existing v1 observations keep
+their original validation; neither version reconstructs a current disclosure grant.
+
+The native completion slice admits fixed `project_native_process.py`,
+`native_process_bootstrap.py`, `project_native_execution.py` and, where needed,
+`project_native_preparation.py`, with their focused tests. Existing native
+Pipeline/Runs/Study owners retain policy and scientific meaning. Every probe,
+training worker and verifier has an explicit current-owner intent and canonical
+ACK before GO through the existing custodian. A native immutable job template
+keeps its original bytes; the owned bootstrap creates a separately measured
+effective job with the actual helper parent. The helper child arms and rechecks
+parent-death protection before exec, closing the helper-death race before
+bootstrap starts. Missing full descendant drainage remains unknown. Explicit
+preparation happens outside the short admission SQL transaction; a one-use
+current in-process validation context supplies that transaction without running
+another probe inside it. Imported records cannot create that context.
+
 **Gate / risk-based tests:** T5/T6/T7 plus one explicit tiny generic script Run through existing custodian, fixture outputs and fresh historical read. Kill at canonical admission/pre-GO and terminal publication windows; no duplicate dispatch, no imported request/grant reactivation, no false cessation. Real process/PG and public busy/unknown states required, including Open/New/reload refusal during active generation/proposal work and delayed old-generation request rejection. Exercise candidate preparation and runtime capture writer fences/publication without installing or launching runtime binaries. No Rheon/GPU/model-quality campaign is needed for this custody claim.
 
 **Rollback / replan:** close new admission, retain canonical intent/artifacts and unresolved local custody; disable project execution while read-only history remains usable. No rollback to an older binary over new facts and no abandoned worker ownership. Replan if an effectful writer cannot be fenced or local runtime identity cannot establish safe continuation/cessation.
 
 ### M4 — Independent Save As, relocation and Git revision changes
 
-**Status:** `Planned`
+**Status:** `Active` — public lifecycle and cold client/browser component gates passed; acceptance depends on completed M3 custody and final integrated review/CI.
 
 **Goal / production outcome:** user forks a complete idle project into an independent directory, moves/rebinds it, or switches Git revisions without corruption, mistaken identity or lost work.
 
@@ -355,7 +376,7 @@ The concrete M4 composition admits `project_fork.py`, `project_fork_composition.
 
 ### M5 — Explicit mixed-catalog extraction and final acceptance
 
-**Status:** `Planned`
+**Status:** `Active` — collector/controller and real SDK/CLI/MCP/Chromium component gates passed; a reviewed producer-input closure correction and full integrated acceptance remain pending.
 
 **Goal / production outcome:** an owner can preview and explicitly extract a selected legacy project into a proven portable directory while retaining the original; all A claims are closed for the admitted supported product scope.
 
@@ -371,7 +392,7 @@ The concrete M5 composition admits `project_extraction.py`, `project_transfer_co
 
 ## Blockers
 
-No missing user decision blocks product implementation. M1 and M2 are accepted at their recorded scope; M3 is active and M4/M5 remain pending. User-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium remain available for dependent checks. Individual results and unrun later-milestone claims remain distinct in implementation evidence.
+No missing user decision blocks product implementation. M1 and M2 are accepted at their recorded scope; M3–M5 integration and final acceptance remain pending. User-data migration and local lab inspection remain forbidden. Disposable PostgreSQL 17 and Chromium remain available for dependent checks. Individual results and unrun later-milestone claims remain distinct in implementation evidence.
 
 The initial draft-PR creation was denied by automatic approval review under the earlier planning-only restriction. The user explicitly approved the exact retry at 18:31 UTC; the lead first verified no existing PR, then retried once. [Draft PR #119](https://github.com/MrScripty/Tuldok/pull/119) was confirmed open/draft at `af276565fae9c08c1084d37d8937ba5d97599f17`, targeting unchanged main. No bypass or merge occurred. M2–M5 remain implementation/acceptance work, and exact-head CI is separately observed.
 

@@ -45,6 +45,7 @@ SUPPORTED_FORMATS = {
     'study_history': 'project_study_history_v1',
     'trial_history': 'project_trial_history_v1',
     'run_history': 'project_run_history_v1',
+    'run_observation': 'project_run_observation_v1',
     'candidate_history': 'project_candidate_history_v1',
     'project_artifact': 'project_artifact_v1',
     'project_operation': 'project_operation_v1',

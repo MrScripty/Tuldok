@@ -184,4 +184,28 @@
 
 ## Retained resources
 
+### Local recovery qualification checkpoint
+
+After the executor reconnected, actual shell and repository reads confirmed the
+worktree and WIP commit `ee43d849640d4d15977285a4e691549c3a052a2c` survived.
+Main was rechecked remotely as `133d53c0e2985a6559ba9cebd7d4a9f530051f06` and
+Coding-Standards as `5bce3110fc64d61ff8b4f79468184bd6295855d5`; both are unchanged.
+The feature remote remains at M2 `c22e9d02c87938514a7a1c9b3b0532158008ca0d`.
+
+The following local checkpoint preserves the subsequently qualified external
+runtime recovery, immutable disclosure snapshots, exact native-candidate wrapper
+reconciliation, transitive extraction closure and real public/browser fixtures.
+Detailed performed/failed/unrun distinctions remain in M3–M5 reports. Independent
+review cleared those specific repairs and workflow isolation. No final frozen-head
+review or CI acceptance is inferred, and no duplicate full-suite campaign ran.
+
+Review also identified unfinished built-in material probes and native Runs as a
+real full-scope gap. Their early fences remain. The lead admitted a finite native
+completion slice under the existing authorization, with disjoint process,
+execution/custody, preparation and public adapter owners. The native foundation
+is excluded from this checkpoint until its own tests/review; there is no claim
+that a new flag makes the external-script subset satisfy the full plan. No lab
+was inspected, no user migration ran and no publication/merge was performed at
+this checkpoint.
+
 Planning worktree `/workspace/Tuldok-project-save-load-plan` and private branch `plan/external-project-save-load-20261022` are **retained-protected** for the user's review. The user owns integration/disposition; no synchronization or cleanup occurs without follow-up. The local final commit is the retained branch head (reported in the final response and resolvable with `git rev-parse plan/external-project-save-load-20261022`); its full SHA is not embedded into its own commit contents. Commit disposition is `retained`, reachable from this named local branch. The original checkout is outside this task's cleanup scope. `/workspace/Coding-Standards-readonly` remains an unchanged reference checkout, not an application worktree or deliverable.

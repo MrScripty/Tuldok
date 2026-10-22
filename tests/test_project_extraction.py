@@ -408,6 +408,156 @@ class LegacyCapture(unittest.TestCase):
         self.assertFalse(any(value['family'] == 'project_file' for value in captured['records']))
         self.assertEqual((self.project_root / 'scripts' / 'neutral.py').read_bytes(), raw)
 
+    def author_run_artifact_closure(self, *, foreign=False):
+        """Author strict historical custody facts, never prepare or execute a Run."""
+        import recipe_contract as contract
+        import recipe_process
+        from pipeline import Pipelines, digest, execution_digest
+        from runs import artifact_capture_source, validate_external_artifact_inventory, validate_retained_run
+        from test_recipe_contract import definition
+
+        script = b'raise AssertionError("historical fixture must never execute")\n'
+        input_raw = b'Unique original fixture input\n'
+        output_raw = b'{"retained":"unique upstream observation"}\n'
+        recipe = definition(script)
+        recipe_raw = json.dumps(recipe).encode()
+        (self.project_root / 'main.py').write_bytes(script)
+        (self.project_root / 'data.bin').write_bytes(input_raw)
+        (self.project_root / 'recipe.json').write_bytes(recipe_raw)
+        self.project_id = uuid.uuid4().hex
+        self.manifest.update(id=self.project_id, data=[dict(id='sample', label='Original input', path='data.bin')],
+            recipes=[dict(id='neutral', label='Historical recipe', path='recipe.json')])
+        self.manifest_raw = (json.dumps(self.manifest, ensure_ascii=False, indent=3) + '\n\n').encode()
+        (self.project_root / 'run-source.json').write_bytes(self.manifest_raw)
+        self.projects.register_snapshot(dict(root='fixture', manifest_path='run-source.json'))
+        self.selection['project_snapshot'] = dict(id=self.project_id, manifest_sha256=hashlib.sha256(self.manifest_raw).hexdigest())
+        self.dataset.projects = self.projects
+        pipelines = Pipelines(self.dataset)
+        body = dict(name='Historical upstream graph', project_id=self.project_id, recipe_id='neutral',
+            expected_sha256=hashlib.sha256(recipe_raw).hexdigest(),
+            inputs={'sample': dict(reference_id='sample', expected_sha256=hashlib.sha256(input_raw).hexdigest())})
+        producer_graph = pipelines.create_external(body)
+        retained = {'runtime.bin': b'Inert original runtime observation'}
+        retained.update({'host-' + name: ('# Original historical host ' + name + '\n').encode() for name in contract.HOST_NAMES})
+        for name, raw in retained.items(): (self.project_root / name).write_bytes(raw)
+        runtime_files = {'/usr/bin/python3.12': dict(bytes=len(retained['runtime.bin']), sha256=hashlib.sha256(retained['runtime.bin']).hexdigest())}
+        runtime = dict(profile='system_python', executable='/usr/bin/python3.12',
+            executable_sha256=runtime_files['/usr/bin/python3.12']['sha256'], trusted_install_owner_uid=0,
+            files=runtime_files, closure_sha256=digest(runtime_files), assumption=contract.TRUST, flags=['-I', '-S', '-B'])
+        project = dict(project_id=self.project_id, manifest_sha256=self.selection['project_snapshot']['manifest_sha256'],
+            reference_id='neutral', path='recipe.json', measured_sha256=hashlib.sha256(recipe_raw).hexdigest())
+
+        def authored(graph, receipt, input_bytes, *, completed):
+            captured = {'source/main.py': script, 'input/sample': input_bytes}
+            material = dict(schema_version=1, catalog_id=self.db.dataset_id, project=project,
+                graph_execution_sha256=execution_digest(graph), recipe=recipe, parameters={'count': 1}, inputs={'sample': receipt},
+                captures={name: dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()) for name, raw in captured.items()},
+                runtime=runtime, host_files={name: hashlib.sha256(retained['host-' + name]).hexdigest() for name in contract.HOST_NAMES},
+                permissions=dict(filesystem='trusted-local', network='not_isolated'), environment={'LANG': 'C.UTF-8'}, resources=recipe['resources'])
+            identity, request = uuid.uuid4().hex, uuid.uuid4().hex
+            request_sha = hashlib.sha256(request.encode()).hexdigest()
+            spec = dict(contract.spec_for_material(material, Path('/historical/workspace-runs') / ('.external-' + identity)),
+                attempt_id=identity, request_sha256=request_sha)
+            run = dict(schema_version=1, mode='real', execution_kind='external_recipe', result_kind='external_recipe',
+                id=identity, dataset_id=self.db.dataset_id, request_key=request, request_sha256=request_sha,
+                actor_id=self.actor, admission_id=uuid.uuid4().hex, approval_id=None,
+                state='completed' if completed else 'cancelled', created_at='2026-10-22T00:00:00+00:00', started_at=None,
+                finished_at='2026-10-22T00:00:01+00:00', graph=graph, graph_revision=1,
+                graph_sha256=execution_digest(graph), graph_document_sha256=digest(graph), material=material,
+                material_sha256=digest(material), spec=spec, outputs=recipe['outputs'], parameters=material['parameters'],
+                attempt=1, parent_run_id=None, events=[], artifacts=[], metrics=None, error=None,
+                custody_phase='prepared', custody_identity=None, custody_receipt_sha256=None, quality_claim=False,
+                progress=dict(stage='completed' if completed else 'cancelled', completed=None, total=None), node_attempts=[])
+            folder = self.db.path / 'workspace-runs' / ('.external-' + identity)
+            for name, raw in captured.items():
+                path = folder / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(raw)
+            proof = None
+            if completed:
+                custody = dict(attempt_id=identity, request_sha256=request_sha,
+                    spec_sha256=hashlib.sha256(recipe_process.encoded(spec)).hexdigest(),
+                    helper=dict(pid=12345, start_ticks='1', boot_id='00000000-0000-0000-0000-000000000000'))
+                proof = recipe_process.encoded(dict(schema_version=1, **custody, go_received=True, spawn_closed=True,
+                    drained=True, echild=True, outcome='completed', reason='Authored historical custody fixture only', leader_returncode=0,
+                    streams={name: dict(bytes=0, sha256=hashlib.sha256(b'').hexdigest()) for name in ('stdout', 'stderr')}))
+                run.update(custody_phase='drained', custody_identity=custody, custody_receipt_sha256=hashlib.sha256(proof).hexdigest(),
+                    artifacts=[dict(name='result.json', role='result', bytes=len(output_raw), sha256=hashlib.sha256(output_raw).hexdigest(), media_type='application/octet-stream')])
+                published = self.db.path / 'workspace-runs' / identity; published.mkdir()
+                manifest = recipe_process.encoded(dict(schema_version=1, run_id=identity, material_sha256=run['material_sha256'],
+                    request_sha256=request_sha, custody_receipt_sha256=run['custody_receipt_sha256'], artifacts=run['artifacts']))
+                (published / 'result.json').write_bytes(output_raw)
+                (published / 'custody-receipt.json').write_bytes(proof)
+                (published / 'artifact-manifest.json').write_bytes(manifest)
+                validate_external_artifact_inventory(run, proof, manifest)
+            validate_retained_run(run, catalog_id=self.db.dataset_id, run_id=identity, request_key=request, request_sha256=request_sha)
+            return run, proof
+
+        with patch('recipe_contract.runtime_identity', side_effect=AssertionError('No live runtime probing')), \
+             patch('subprocess.Popen', side_effect=AssertionError('No scientific execution')):
+            producer, proof = authored(producer_graph, dict(project, reference_id='sample', path='data.bin',
+                measured_sha256=hashlib.sha256(input_raw).hexdigest()), input_raw, completed=True)
+            source = artifact_capture_source(producer, producer['artifacts'][0], output_raw, proof)
+            consumer_body = copy.deepcopy(body)
+            consumer_body.update(name='Selected downstream graph', inputs={'sample': dict(kind='run_artifact',
+                run_id=producer['id'], artifact_name='result.json', expected_sha256=hashlib.sha256(output_raw).hexdigest())})
+            middle_graph = pipelines.create_external(consumer_body)
+            middle, middle_proof = authored(middle_graph, dict(kind='run_artifact', source=source), output_raw, completed=True)
+            source = artifact_capture_source(middle, middle['artifacts'][0], output_raw, middle_proof)
+            consumer_body['inputs']['sample']['run_id'] = middle['id']
+            consumer_graph = pipelines.create_external(consumer_body)
+            consumer, _ = authored(consumer_graph, dict(kind='run_artifact', source=source), output_raw, completed=False)
+        if foreign:
+            consumer['material']['inputs']['sample']['source']['catalog_id'] = 'f' * 32
+            consumer['material_sha256'] = digest(consumer['material'])
+        with self.db.lock, self.db.transaction():
+            for run in (producer, middle, consumer):
+                self.db.execute('INSERT INTO workspace_runs VALUES(%s,%s,%s,%s)',
+                    (run['id'], run['request_key'], run['request_sha256'], json.dumps(run)))
+        return producer, middle, consumer, retained, output_raw
+
+    def test_selected_run_automatically_captures_exact_upstream_run_artifact_closure(self):
+        from project_history import decode_records, ProjectHistory
+        from project_material import ProjectMaterial
+        producer, middle, consumer, retained, original = self.author_run_artifact_closure()
+        before = self.files(); source = self.view()
+        for name, raw in retained.items(): source.bind_payload(hashlib.sha256(raw).hexdigest(), len(raw), 'fixture', name)
+        captured = self.capture(source, {'runs': [consumer['id']]})
+        self.assertEqual(captured['blockers'], [], captured['blockers'])
+        facts = decode_records(captured['records'], materials=ProjectMaterial(SimpleNamespace(
+            snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check=lambda: None)))
+        self.assertEqual(set(facts.runs), {(self.db.dataset_id, run['id']) for run in (producer, middle, consumer)})
+        for downstream, upstream in ((consumer, middle), (middle, producer)):
+            self.assertIn(dict(source=dict(family='run_history', id=self.db.dataset_id + '.' + downstream['id']),
+                target=dict(family='run_history', id=self.db.dataset_id + '.' + upstream['id']), reason='exact producer Run input'), captured['dependencies'])
+        self.assertEqual(source.artifacts.read_blob(producer['artifacts'][0]), original)
+        self.assertEqual(facts.runs[(self.db.dataset_id, consumer['id'])]['run']['material']['inputs']['sample']['source'],
+            consumer['material']['inputs']['sample']['source'])
+        # A fresh inert owner reader reconstructs the exact upstream custody
+        # receipt from retained facts/private captured bytes, never source paths.
+        session = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=copy.deepcopy(captured['records'])),
+            access=self.access, artifacts=source.artifacts, check=lambda: None)
+        history = ProjectHistory(session, authorize_disclosure=lambda run, population:
+            self.access.require('expose-holdout', 'runs.expose_test', run['id']))
+        with patch.object(source, 'read_catalog', side_effect=AssertionError('No original catalog reread')), \
+             patch.object(source, 'read_root', side_effect=AssertionError('No original root reread')):
+            raw, receipt = history.capture_artifact(middle['id'], 'result.json', hashlib.sha256(original).hexdigest(),
+                max_bytes=1024, origin_catalog_id=self.db.dataset_id)
+        self.assertEqual(raw, original)
+        self.assertEqual(receipt, consumer['material']['inputs']['sample']['source'])
+        self.assertEqual(self.files(), before)
+
+    def test_foreign_run_artifact_input_is_explicitly_unsupported_without_local_identity_fallback(self):
+        producer, middle, consumer, retained, _ = self.author_run_artifact_closure(foreign=True)
+        before = self.files(); source = self.view()
+        for name, raw in retained.items(): source.bind_payload(hashlib.sha256(raw).hexdigest(), len(raw), 'fixture', name)
+        captured = self.capture(source, {'runs': [consumer['id']]})
+        self.assertEqual([(row['family'], row['id'], row['code']) for row in captured['blockers']],
+            [('run_history', self.db.dataset_id + '.' + consumer['id'], 'unsupported_origin')])
+        self.assertFalse(any(row['family'] == 'run_history' and row['id'] in
+            {self.db.dataset_id + '.' + run['id'] for run in (producer, middle)} for row in captured['records']))
+        self.assertFalse(any(edge['source'] == dict(family='run_history', id=self.db.dataset_id + '.' + consumer['id'])
+            and edge['target']['family'] == 'run_history' for edge in captured['dependencies']))
+        self.assertEqual(self.files(), before)
+
 
 if __name__ == '__main__':
     unittest.main()

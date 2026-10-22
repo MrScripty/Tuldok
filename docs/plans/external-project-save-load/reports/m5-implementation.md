@@ -35,9 +35,47 @@ Collector SHA256:
 Five closed public contracts, a separate owner SDK client, named CLI commands,
 and explicit `--project-transfer-owner` MCP mode are implemented. Owner modes
 never fall back to agent/catalog authority or retag an old credential. The
-combined actual SDK/CLI/MCP transfer workflow has been authored but is **unrun**.
-The named transfer UI has twelve controlled scenarios passing and syntax checks;
-its actual Chromium/cold/viewport acceptance is **unrun**. These controlled checks
-do not substitute for the required real gates. See the
+combined actual SDK/CLI/MCP transfer workflow subsequently **passed**, one
+selected/no skips in 30.703 seconds. All 2,448 files matched immutable manifest
+SHA256 `7030f8e03dc27c646257172b8105a589964b63e48763228de49842adc1ec2a52`
+before/after. The first attempt lacked the already approved optional MCP
+environment and performed no extraction; the corrected environment used the
+same source. Receipt:
+`/workspace/scratch/tuldok-save-load-qa/artifacts/m5-clients/test_owner_handoff_and_single_extraction_through_sdk_cli_and_real_mcp-763658d3d142499ca1c48db9feb52040.json`.
+
+The named transfer UI has twelve controlled scenarios passing. Its actual
+Chromium acceptance subsequently passed four workflow checks, with eight
+screenshots at 390/1440, no JavaScript exceptions and only expected 401/409
+responses. A separate cold role could not CONNECT to the source database;
+source hashes remained unchanged and the project script stayed inert.
+Immutable manifest SHA256:
+`16f53e463fcedf3388ebe4a28682d79391fe5c7d9f8df5a958227d5dc72b3876`.
+Receipt SHA256:
+`24885555bf4f8cebfb9c8e0f53ab4421e8450ad2e337f407aa86fceaa1f88292` at
+`/workspace/scratch/tuldok-save-load-qa/artifacts/project-transfer/run-z1Ffak/receipt.json`.
+
+The initial actual CLI startup exposed duplicate Python module identities:
+`__main__.Dataset` differed from `app.Dataset`, so the exact-type source owner
+check refused startup. Registering the executing module under its canonical
+name before `main()` fixes real startup without weakening the owner check.
+A later browser fixture had a missing JSON clone helper; its failure and the
+startup failure remain retained. The successful derived source includes those
+specific corrections; it does not retroactively pass their earlier subjects.
+These results remain component evidence pending full integration/review/CI.
+
+Independent review found that the Run-artifact dependency discriminator was read
+from the nested source instead of the input item. The fixed collector queues
+same-origin upstream Runs and reports foreign origins as explicit blockers.
+Two targeted PostgreSQL cases passed in 0.717 seconds: selecting a consumer
+captured a three-Run dependency chain and exact payload bytes, and a foreign
+source could not fall back to a matching local ID. A fresh inert historical
+reader consumed the captured producer receipt with source reads disabled.
+This is an authored historical fixture, not a claim of scientific execution.
+Re-reviewed collector SHA256:
+`26081ee6730979e846ecb8ffaea18ac29d41210893995c7a2284ed0fe49d0f4a`;
+tests SHA256:
+`45193fbbc023061cd8dd91c22277f41ad626809e0c7ade81c99a8d9c2443b1ad`.
+
+See the
 [runbook](../../../runbooks/external-project-extraction.md) for the explicit
 source/control credential handoff and source-preservation boundary.

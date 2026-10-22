@@ -607,8 +607,11 @@ class _Capture:
         if external:
             for item in run['material']['inputs'].values() if isinstance(run['material'].get('inputs'), dict) else []:
                 source = item.get('source', {})
-                if source.get('kind') == 'run_artifact' and source.get('catalog_id') == self.origin:
-                    self.need('run_history', source['run_id'], key, 'exact producer Run input')
+                if item.get('kind') == 'run_artifact':
+                    if source.get('catalog_id') != self.origin:
+                        self.issue(key, 'unsupported_origin', 'Run artifact input crosses a source catalog not supplied by this read capability.')
+                    else:
+                        self.need('run_history', source['run_id'], key, 'exact producer Run input')
         publication = None
         if run.get('publication_continuation') is not None:
             publication = dict(continuation=copy.deepcopy(run['publication_continuation']), source=None, result=None)

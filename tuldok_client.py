@@ -640,6 +640,9 @@ class ProjectFilesClient:
     def execution_study_reconcile_preparation(self, **arguments):
         return self._call('execution_study_reconcile_preparation',arguments)
 
+    def runtime_abandon(self, **arguments):
+        return self._call('runtime_abandon',arguments)
+
     def runtime_sources(self, **arguments):
         return self._call('runtime_sources',arguments)
 

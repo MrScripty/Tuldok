@@ -41,10 +41,10 @@ def frozen_subject():
         parent_manifest_sha256=value['parent_manifest_sha256'], files=current)
 
 
-@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL')
+@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL') and SDK_AVAILABLE,
+                     'Requires disposable PostgreSQL and the approved optional MCP dependencies')
 class ProjectTransferClientsHTTP(unittest.TestCase):
     def setUp(self):
-        self.assertTrue(SDK_AVAILABLE, 'Qualification requires the approved optional MCP dependencies')
         self.subject = frozen_subject()
         self.started, self.performed = time.monotonic(), []
         self.pins = {name: api.contract(name)['sha256'] for name in sorted(api.PROJECT_TRANSFER_OPERATIONS)}

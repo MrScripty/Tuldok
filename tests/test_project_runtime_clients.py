@@ -10,7 +10,7 @@ import project_dispatch
 from tuldok_client import ProjectFilesClient
 from test_project_files_m4_clients import ready,bound,READ,WRITE,PROJECT,ACTOR,CP,NEXT,KEY,STAMP
 
-ACTIONS=('runtime_sources','runtime_inspect','runtime_capture','runtime_status')
+ACTIONS=('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon')
 
 
 def inspection():
@@ -80,6 +80,26 @@ class RuntimeClients(unittest.TestCase):
                        {'result':dict(summary(True),file_count=2)},{'local_ready':True}):
             raw._request.return_value=dict(status=200,result=bound(dict(value,**change)))
             with self.assertRaises(api.AgentAPIError):sdk.runtime_status(**READ,capture_key=KEY)
+
+    def test_abandonment_is_exact_current_intent_and_status_keeps_positive_shape(self):
+        abandoned=dict(format='project_runtime_capture_abandon_v1',project_id=PROJECT,capture_key=KEY,
+            input_sha256=NEXT,manifest_sha256=CP,actor_id=ACTOR,reason='Source disappeared; preserve partial science',
+            observed_checkpoint=CP,observed_at=STAMP)
+        raw=client(abandoned);sdk=ProjectFilesClient(raw)
+        sdk.runtime_abandon(**dict(WRITE,request_key='new-abandon-key'),capture_key=KEY,reason=abandoned['reason'])
+        for change in ({'capture_key':'other-key'},{'reason':'different'},{'project_id':ACTOR}):
+            raw._request.return_value=dict(status=200,result=bound(dict(abandoned,**change)))
+            with self.assertRaises(api.AgentAPIError):sdk.runtime_abandon(**dict(WRITE,request_key='new-abandon-key'),capture_key=KEY,reason=abandoned['reason'])
+        value=dict(state='abandoned',intent=summary(),result=None,abandonment=abandoned)
+        raw._request.return_value=dict(status=200,result=bound(value));sdk.runtime_status(**READ,capture_key=KEY)
+        for change in ({'intent':None},{'result':summary(True)},{'abandonment':dict(abandoned,manifest_sha256=NEXT)}):
+            raw._request.return_value=dict(status=200,result=bound(dict(value,**change)))
+            with self.assertRaises(api.AgentAPIError):sdk.runtime_status(**READ,capture_key=KEY)
+        for positive in (dict(state='absent',intent=None,result=None),dict(state='intent_recorded',intent=summary(),result=None),dict(state='captured',intent=summary(),result=summary(True))):
+            raw._request.return_value=dict(status=200,result=bound(positive));sdk.runtime_status(**READ,capture_key=KEY)
+        owner=Mock();projection=SimpleNamespace(session=SimpleNamespace(access=SimpleNamespace(require=Mock())),runtime=owner)
+        project_dispatch.dispatch(projection,'project_files.runtime_abandon',dict(WRITE,request_key='new-abandon-key',capture_key=KEY,reason=abandoned['reason']))
+        owner.abandon.assert_called_once_with(KEY,abandoned['reason'],CP,'new-abandon-key')
 
     def test_dispatch_preserves_alias_only_owner_request_and_bounded_native_projection(self):
         runtime=Mock();current=inspection();runtime.inspect.return_value={

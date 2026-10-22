@@ -1233,6 +1233,18 @@ def authorize_transitive_inputs(runs, run, *, seen=None):
 def authorize_material_inputs(runs,material,*,seen=None):
     """Reauthorize an exact retained input material without inventing a Run."""
     from workbench import WorkbenchError
+    # Project producers remain inert observations. Resolve their exact input
+    # proof through the fixed history owner, never through Runs._load recovery
+    # rows or a general historical fallback on the live Run owner.
+    from project_history import ProjectHistory
+    if isinstance(runs,ProjectHistory):
+        return runs.authorize_material_inputs(material)
+    from project_execution import ProjectExecution
+    execution=getattr(runs,'project_execution',None)
+    if isinstance(execution,ProjectExecution):
+        if execution._runs is not runs or not isinstance(execution.projection.history,ProjectHistory):
+            raise WorkbenchError('Current project Run input owner differs.','unavailable',409)
+        return execution.projection.history.authorize_material_inputs(material)
     seen=set() if seen is None else seen
     for item in material['inputs'].values():
         if item.get('kind') != 'run_artifact':

@@ -44,6 +44,14 @@ def _intent_key(operation,key):
     return 'candidate-'+digest(dict(key=key,operation=operation))+'-intent'
 
 
+def _preparation_body(intent,key):
+    body=dict(request_key=key,revision=intent['study_revision'],candidate_id=intent['candidate']['id'],
+        root=intent['root'],directory=intent['directory'],runtime_snapshot_sha256=intent['runtime_snapshot_sha256'])
+    if 'package_run_id' in intent:
+        body.update(package_run_id=intent['package_run_id'],package_sha256=intent['package_sha256'])
+    return body
+
+
 def _preparation_reference(records,study_id,key):
     receipts=operation_records(records)
     matches=[(operation,receipts[_intent_key(operation,key)]) for operation in PREPARATIONS
@@ -52,7 +60,25 @@ def _preparation_reference(records,study_id,key):
     operation,receipt=matches[0]
     if receipt['operation']!=operation+'_intent' or receipt['result']['study_id']!=study_id:
         _invalid('Preparation intent belongs to another operation or Study.','conflict')
-    return operation,receipt['result'],receipts.get(key)
+    intent=receipt['result'];complete=receipts.get(key)
+    if complete is None:
+        # The native final Trial transaction publishes its exact scientific
+        # receipt before the outer transport acknowledgement. That fact closes
+        # preparation even when the later wrapper receipt was never published.
+        native_sha=digest(dict(study_id=study_id,body=_preparation_body(intent,key)))
+        native=[]
+        for record in records:
+            if record['family']!='study_history':continue
+            doc=record['document']
+            if doc['origin_catalog_id']!=intent['origin_catalog_id'] or doc['study']['id']!=study_id:continue
+            native.extend(value for value in doc['operations'] if value['actor_id']==intent['actor_id']
+                and value['operation_id']==PREPARATIONS[operation] and value['request_key']==key)
+        if len(native)>1:_invalid('Preparation has duplicate native completion facts.')
+        if native:
+            if native[0]['request_sha256']!=native_sha:_invalid('Native preparation completion differs from its exact intent.','conflict')
+            validate_operation_result(operation,native[0]['result'],records)
+            complete=dict(operation=operation,result=copy.deepcopy(native[0]['result']),native_receipt=True)
+    return operation,intent,complete
 
 
 def _validate_abandon(result,records):
@@ -636,8 +662,14 @@ class ProjectStudyExecution:
                 if complete is None:_invalid('No final preparation exists; explicitly abandon the stopped partial writer.','unavailable')
                 if complete['operation']!=operation:_invalid('Preparation key has another operation.','conflict')
                 validate_operation_result(operation,complete['result'],self.session.snapshot['records'])
+                if complete.get('native_receipt'):
+                    effective=_preparation_body(intent,body['preparation_key'])
+                    effective.pop('request_key');effective['actor_id']=intent['actor_id']
+                    result=self._mutate(operation,study_id,effective,self.session.snapshot['checkpoint'],body['preparation_key'],
+                        lambda:copy.deepcopy(complete['result']),'cancel')
+                else:result=copy.deepcopy(complete['result'])
                 guard.confirmed()
-                return copy.deepcopy(complete['result'])
+                return result
 
     def abandon_preparation(self,study_id,body,expected_checkpoint,key):
         """Record a stopped writer decision; preserve every byte and phase fact."""

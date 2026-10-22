@@ -184,3 +184,60 @@ apply. The already-running candidate recovery process was inspected first and
 found successful; it was not rerun. Public runtime recovery/abandonment, public
 package recovery wiring, remaining transport/UI gates, full independent review
 and exact-head CI remain pending at this unaccepted recovery checkpoint.
+
+## Qualified recovery and retained observations
+
+Four actual PostgreSQL/HTTP runtime recovery cases passed in 13.729 seconds,
+with all owned source hashes unchanged. They cover a real reserve failure after
+durable intent and abandonment after its source disappears; final SQL deferred
+COMMIT failure followed by exact-key recovery without recopying; original-host
+physical projection recovery without configured aliases/source; stale binding
+and checkpoint refusal; and foreign-clone intent remaining inert. Neither Runs
+nor child-process construction was permitted in this offline capture fixture.
+Log: `/workspace/scratch/tuldok-save-load-qa/m3-runtime-recovery-http-first.log`.
+Four affected runtime identity/replay compatibility cases also passed in 2.410
+seconds; that selection did not repeat the HTTP campaign.
+
+The named Chromium runtime workflow passed four groups on immutable derived
+manifest `d008a0a729812f1d2af8436d317a0dbe6d799d76598937812b9c75d746e399ba`.
+All 2,449 copied source hashes matched before/after. The sole product delta in
+that isolated copy enabled M3 for qualification; the shared feature flag stayed
+false. It exercised paged Inspect, an actual high-reserve 409 after durable
+intent, explicit abandonment with reason/key, a fresh capture, and Git cold Open
+with source/config/cache absent. App audit-hook installation was asserted and
+no child-execution attempt occurred. The cold role lacked source CONNECT.
+At 390/1440 viewports document widths were 375/1425, with no overflow or runtime
+errors and exactly one expected 409. Receipt:
+`/workspace/scratch/tuldok-save-load-qa/artifacts/project-files-m3/run-aQAOCI/receipt.json`,
+SHA256 `9c83fcacc68a10d5168933755f90aa46b8e3bddf15fe002a95850fb2a124ebc1`.
+
+Retained producer input authorization passed its actual PostgreSQL/native-writer
+case in 191.000 seconds. The selected candidate remains authored fixture data;
+there was no scientific training/process claim. Original producer receipts,
+current disclosure and scientific closure were validated, with source writes
+and exact original-journal recovery. Log `m3-retained-producer-consumer-corrected.log`
+has SHA256 `f9d03b1c89b05fb25dc9e0f8ed483c3c36d99918b02f943f73169e2b8e3b5390`.
+The prior attempt reached those phases but failed a fixture message assertion;
+that failed 231.061-second log remains retained separately.
+
+The candidate terminal-before-wrapper window has its own focused actual
+PostgreSQL gate: one case passed in 107.490 seconds. Complete native preparation
+could not be abandoned, and exact proof reconstructed only its missing wrapper
+acknowledgement without rerunning the writer. Log
+`m3-native-wrapper-ack-recovery.log` has SHA256
+`6381d125182d6d833b6ff0da5d7fd4b7876b600e808a6a61e7da3bde559ed4eb`.
+
+Two thirteen-case focused PostgreSQL/codec selections passed for immutable
+disclosure snapshots and affected history/Study behavior, followed by one
+targeted forged-foreign-artifact snapshot negative. Snapshot facts remain plain
+canonical text, survive later same-name payload replacement, retain old bytes as
+unique and restore no disclosure grant. The additional negative passed in 0.320
+seconds; log `m3-disclosure-foreign-artifact.log` has SHA256
+`0185f43bbf13daaa69b7f058eddc24fa76d3c93005b0aca435414301f69d3f89`.
+Independent source re-review cleared these snapshot and acknowledgement repairs.
+
+Full M3 acceptance is still blocked by the explicitly fenced built-in probe and
+native Run execution paths. Independent review confirmed that the external-script
+subset cannot replace the reviewed current-family scope. A finite native child,
+admission, payload and recovery slice is being implemented under the existing
+authorization; no flag or documentation change waives its required real gates.

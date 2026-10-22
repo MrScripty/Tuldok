@@ -75,14 +75,15 @@ def artifact_plan(records):
         # host module bytes remain unique regardless of a weaker edge label.
         from project_history import declarations as run_declarations
         for record in records:
-            if record['family'] != 'run_history': continue
-            doc = record['document']
+            if record['family'] not in ('run_history', 'run_observation'): continue
+            doc = (record['document']['observation'] if record['family'] == 'run_observation'
+                   else record['document'])
             by_sha = {edge['blob']['sha256']:edge['name'] for edge in doc['payloads']}
             publication = doc['publication']
             if publication is not None:
                 for name in ('source','result'):
                     if publication[name] is not None: by_sha[publication[name]['sha256']] = 'publication.'+name
-            for declaration in run_declarations(record):
+            for declaration in run_declarations(dict(family='run_history', id=record['id'], document=doc)):
                 blob = declaration['document']
                 mark(blob['sha256'],record,'run_payload',by_sha[blob['sha256']],blob['bytes'])
             run = doc['run']

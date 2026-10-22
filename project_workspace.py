@@ -33,8 +33,11 @@ PROJECT_ACTIONS = ('new', 'open', 'save', 'close', 'query', 'get', 'import_text'
 M2_ENABLED = True
 M3_ENABLED = False
 M4_ENABLED = True
-_DRAINING_OPERATIONS = frozenset(('project_files.execution_producer_cancel',
-    'project_files.execution_study_stop', 'project_files.execution_reconcile_current'))
+_RECOVERY_OPERATIONS = frozenset(('project_files.execution_reconcile_current',
+    'project_files.runtime_capture', 'project_files.runtime_abandon',
+    'project_files.execution_study_abandon_preparation', 'project_files.execution_study_reconcile_preparation'))
+_DRAINING_OPERATIONS = _RECOVERY_OPERATIONS | frozenset(('project_files.execution_producer_cancel',
+    'project_files.execution_study_stop'))
 DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
 
 
@@ -552,33 +555,58 @@ class ProjectWorkspace:
                     raise WorkbenchError('This project capability is not yet available.', 'unavailable', 409)
                 operation = agent_api.operation(name)
                 for scope in operation['scopes']:
-                    self.access.require(scope, name, owner_only=name == 'project_files.execution_reconcile_current')
-                self._bound(arguments, check_checkpoint=name == 'project_files.execution_reconcile_current',
-                            allow_recovery=name == 'project_files.execution_reconcile_current')
+                    self.access.require(scope, name, owner_only=name in _RECOVERY_OPERATIONS)
+                recovery_operation = name in _RECOVERY_OPERATIONS
+                if recovery_operation and self._projection is not None and not self._projection.session.available:
+                    self._recovery_required('projection_unavailable', arguments.get('request_key'))
+                self._bound(arguments, check_checkpoint=recovery_operation and name != 'project_files.runtime_capture',
+                            allow_recovery=recovery_operation)
                 projection = self._projection
+                recovering = self._recovery is not None or not projection.session.available
             from project_dispatch import dispatch
             try:
-                if name == 'project_files.execution_reconcile_current' and projection.pending_original:
+                incoming = projection
+                if recovery_operation and projection.pending_original:
                     if len(projection.pending_original) != 1:
                         raise WorkbenchError('More than one original local custody binding needs explicit review.',
                                              'local_custody_unavailable', 409)
                     binding = projection.pending_original[0]
-                    if binding['project_id'] != self._store.snapshot()['project_id']:
+                    if binding['project_id'] != projection.session.project_id:
                         raise WorkbenchError('Restore the original project identity before reconciling this physical folder custody.',
                                              'local_custody_unavailable', 409)
                     if self._retained_recovery is None:
                         self._retained_recovery = self._retained_projection_for(self._store, binding['projection_id'])
-                    retained = self._retained_recovery
-                    value = retained.execution.reconcile_original(expected_checkpoint=self._store.snapshot()['checkpoint'])
-                    projection.close()
-                    projection = self._projection = retained
-                    self._text = retained.text
-                    self._retained_recovery = None
-                    # This repairs the same selected directory/project under
-                    # its pinned workspace generation. Checkpoint CAS fences
-                    # older science requests; this is not an Open/switch.
+                    incoming = self._retained_recovery
+                    if incoming.db.projection_id != binding['projection_id']:
+                        raise WorkbenchError('The retained physical recovery owner changed.', 'local_custody_unavailable', 409)
+                    recovering = True
+                if incoming is not projection and name == 'project_files.execution_reconcile_current':
+                    value = incoming.execution.reconcile_original(expected_checkpoint=incoming.session.snapshot['checkpoint'])
                 else:
-                    value = dispatch(projection, name, arguments)
+                    internal = arguments
+                    if recovery_operation and recovering and name != 'project_files.execution_reconcile_current':
+                        # Public CAS above uses the last acknowledged workspace
+                        # view. Only this qualified local owner sees its exact
+                        # selected/attempted checkpoint for finite recovery.
+                        internal = dict(arguments, expected_checkpoint=incoming.session.snapshot['checkpoint'])
+                    if name == 'project_files.runtime_capture' and recovering:
+                        options = {'reserve_bytes': internal['reserve_bytes']} if 'reserve_bytes' in internal else {}
+                        value = incoming.runtime.recover_capture({'source': internal['source']},
+                            internal['expected_inventory_sha256'], internal['expected_checkpoint'],
+                            internal['request_key'], **options)
+                    else:
+                        value = dispatch(incoming, name, internal)
+                if recovery_operation:
+                    if not incoming.session.available or incoming.custody is not None and incoming.custody.has_pending:
+                        raise WorkbenchError('Original writer custody remains unresolved.', 'outcome_unknown', 409)
+                    if incoming is not projection:
+                        incoming.execution.assert_quiescent()
+                        projection.close()
+                        projection = self._projection = incoming
+                        self._text = incoming.text
+                        self._retained_recovery = None
+                        # Physical cache repair retains this same selected
+                        # project and workspace generation; it is not Open.
             except BaseException as error:
                 if getattr(error, 'code', None) in ('unknown', 'outcome_unknown', 'projection_unavailable'):
                     self._recovery_required('projection_unavailable', arguments.get('request_key'))
@@ -586,7 +614,7 @@ class ProjectWorkspace:
             with self.access.lock, projection.session.lock, projection.db.lock:
                 snapshot = self._store.snapshot()
                 self._last_project = {key: snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
-                if name == 'project_files.execution_reconcile_current':
+                if name in _RECOVERY_OPERATIONS:
                     self._recovery = None
                 result = dict(binding=self._binding, project_id=snapshot['project_id'],
                               checkpoint=snapshot['checkpoint'], value=value)

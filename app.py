@@ -1418,4 +1418,9 @@ def main():
 
 
 if __name__ == '__main__':
+    # Trusted controller capabilities use exact app-owned class identities.
+    # Executing this file must not create a second imported app module with
+    # distinct Dataset/guard classes during the explicit extraction workflow.
+    import sys
+    sys.modules['app'] = sys.modules[__name__]
     main()

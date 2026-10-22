@@ -1,9 +1,10 @@
 # External project files
 
 The [external project plan](../plans/external-project-save-load/plan.md) owns current
-milestone acceptance. This contract covers text, retained scientific history,
-artifacts and non-executing metadata operations. Live execution, independent
-Save As and mixed-catalog extraction require their later lifecycle milestones.
+milestone acceptance. This contract covers the external-directory format and
+its finite owner operations. Execution/recovery, independent Save As and
+extraction have separate acceptance evidence; an unavailable capability must
+refuse before effects. An in-progress draft is not final feature acceptance.
 The [authority decision](../decisions/external-project-authority.md) explains the
 canonical boundary.
 
@@ -35,7 +36,10 @@ Each inventory entry identifies a rooted immutable file
 `.tuldok/records/<family>/<record-id>/<sha256>.json`, its format, namespace,
 byte count and SHA256. Original `workbench_text_v1` preserves original source, current
 Workbench record, every annotation revision, non-secret audit facts and operation
-receipts. Canonical JSON is UTF-8, sorted keys, two-space indentation, LF ending,
+receipts. New operation receipts use `project_operation_v2`, whose identity
+includes the current project UUID. Old v1 receipts remain exact historical
+facts; a fork cannot reactivate their request authority. Canonical JSON is
+UTF-8, sorted keys, two-space indentation, LF ending,
 finite bounded values, and no duplicate keys. The namespace equals the logical
 project UUID. Historical domain catalog IDs, record identities and hash inputs
 remain exact within those envelopes. No generic recursive ID rewriting is permitted.
@@ -57,8 +61,9 @@ further use until explicit recovery. No cleanup deletes published history.
 Save verifies/fsyncs the full selected closure and returns a durability barrier.
 A no-op Save leaves canonical bytes unchanged. Close drains synchronous project
 requests, performs the barrier, releases the projection and file lock, and rotates
-the binding. Worker-capable domains stay unavailable until execution ownership
-is integrated. Open/New replacement
+the binding. Active or unknown local Run, producer, runtime-copy and package
+writers block Close, replacement and fork. A drained thread alone does not prove
+that an external provider has ceased. Open/New replacement
 validates an incoming inert projection before releasing healthy current custody.
 
 The generated `.gitignore` excludes `/artifacts/`, `/.tuldok-local/`, `/.venv/`,
@@ -113,8 +118,40 @@ Owner-only artifact resolution selects an existing file relative to a configured
 root. It verifies and durably copies the exact declared bytes. The receipt is a
 past resolution observation; `artifact_status` reports current availability.
 No network fetch, runtime installation, dependency activation or regeneration
-is performed. Built-in recipe preparation returns unavailable before a native
-runtime probe while that execution lifecycle remains fenced.
+is performed. Built-in recipe preparation remains unavailable before a native
+runtime probe; retained native materials and historical evidence stay readable.
+
+## Explicit execution and recovery
+
+Generic project scripts own domain integrations. Current external-script Run and
+Study approval/admission use current local policy and grants. Admission and GO
+intent are canonical before worker acknowledgement or GO. Measured terminal
+evidence, spent budget and lineage remain project facts. Imported history supplies
+no approval, admission epoch, cancellation right or resumable process. Producer
+requests and candidate preparation follow the same intent-before-effects rule.
+
+An optional current operator binding selects runtime sources:
+
+```sh
+python app.py --data /private/tuldok-control \
+  --project-files-root research=/home/me/research \
+  --project-runtime-source cpu=/private/cpu-runtime.json
+```
+
+The configuration uses the existing runtime-snapshot configuration schema.
+`runtime_sources` lists aliases. Explicit Inspect measures that selected source;
+Capture requires the exact inspected inventory and a stable request key, records
+an intent, and copies bytes without launching them. Status distinguishes absent,
+intent recorded, captured and abandoned. A cold Open has no configured alias or
+cache merely because a historical descriptor contains a path.
+
+Recovery preserves the last acknowledged binding/checkpoint. Generic Run/producer
+reconciliation requires exact original local custody and proof of drain. Runtime
+retry and package reconciliation additionally require the exact original physical
+writer journal and canonical intent; imported intent alone is insufficient.
+Explicit abandonment records the owner reason with a separate key and retains
+partial bytes and scientific facts. A completed package is reconciled rather than
+silently rewritten. Recovery never sends GO or executes project code.
 
 The status endpoint is available before any project is open. It reports current
 binding, local root aliases, project identity/checkpoint when selected, and
@@ -131,10 +168,12 @@ mixes that historical result with newer revisions. The UI exposes explicit contr
 to load more records and older history.
 
 Status may report `recovery_required`, its last acknowledged project identity,
-and the selected root/directory to reopen. In that state only explicit Open of
-the selected directory is admitted, guarded by the current binding and last
-checkpoint. Successful recovery validates current canonical bytes, builds a fresh
-inert SQL projection, and rotates the binding. A failed recovery keeps the prior
+and the selected root/directory to reopen. Explicit Open of the selected
+directory is guarded by the current binding and last checkpoint. Ordinary
+recovery validates canonical bytes, builds a fresh inert SQL projection and
+rotates the binding. If original local custody remains, the named execution/file
+recovery action must settle it first. That same-selection recovery preserves the
+binding so its reply remains correlated with the caller. A failed recovery keeps the prior
 custody and the recovery action available. A creation that committed but could not
 be selected reports `selected:false` with the destination identity and request
 receipt. Exact New retry reconciles that receipt without overwriting a different
@@ -148,5 +187,28 @@ reopens the selected directory and reconstructs the projection without scripts.
 
 When changing Git revisions, close the project first. Open revalidates the complete
 checkpoint; edits to canonical immutable files, unresolved conflict text and
-inconsistent inventory fail. Automatic semantic merge, editable script adoption
-and independent Save As are M4 capabilities and remain unavailable until admitted.
+inconsistent inventory fail. A changed checkout fences an already-open projection;
+explicit reload reconstructs it without scripts. Git conflict resolution is manual.
+
+## Working files and independent Save As
+
+Adopt explicitly captures the exact UTF-8 bytes of a selected script or note,
+including its history and measured hash. Merely editing a working file does not
+replace an immutable scientific capture. Open never executes, repairs or restores
+working files. Save As refuses an adopted file that is missing or changed until
+the owner explicitly adopts the intended version.
+
+Save As publishes into a new absent directory, creates a new logical project and
+editable identities, retains original hashed envelopes and records origin maps.
+It copies required unique payloads and materializes captured working files only
+into that new destination. Historical catalog IDs and material hashes remain
+exact; unresolved bound drafts become explicit re-selection intents. Known
+regenerable runtime binaries may remain missing with an explicit inventory;
+missing unique evidence blocks a complete fork. Source bytes are unchanged.
+Publication followed by selection failure reports `committed:true, selected:false`;
+retry the exact request to select the already-published destination.
+
+The [extraction runbook](../runbooks/external-project-extraction.md) covers explicit
+legacy selection, stopped backup, independent control credentials and the five
+transfer operations. A whole-catalog backup is private recovery custody, not this
+portable project format.

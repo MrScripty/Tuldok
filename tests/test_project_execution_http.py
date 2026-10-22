@@ -139,7 +139,7 @@ class ApprovedAgentExecutionHTTP(unittest.TestCase):
         with patch.object(recipe_process.Handle, 'go', go), patch.object(Runs, '_execute', execute):
             yield
 
-    def deny_without_dispatch(self, operation, token, expected_statuses, **body):
+    def deny_without_dispatch(self, operation, token, expected_statuses, *, expected_code=None, **body):
         projection = self.projection
         before = projection.session.snapshot
         with projection.db.lock:
@@ -149,6 +149,7 @@ class ApprovedAgentExecutionHTTP(unittest.TestCase):
              patch('recipe_process.Handle.go', side_effect=AssertionError('Denied HTTP request sent GO')):
             status, response = self.transport(operation, self.arguments(operation, **body), token=token)
         self.assertIn(status, expected_statuses, response)
+        if expected_code is not None:self.assertEqual(response.get('code'), expected_code, response)
         self.assertEqual(projection.session.snapshot, before, response)
         with projection.db.lock:
             for table, count in counts.items():
@@ -246,12 +247,12 @@ class ApprovedAgentExecutionHTTP(unittest.TestCase):
             self.assertEqual(self.projection.db.execute('SELECT count(*) FROM ' + table).fetchone()[0], 0, table)
         self.assertIsNone(self.projection.execution._runs)
         self.call('source_register', root='fixture', manifest_path='project.json')
-        self.deny_without_dispatch('execution_submit_external', self.approved['token'], (403, 409), **body)
+        self.deny_without_dispatch('execution_submit_external', self.approved['token'], (404,), expected_code='unavailable', **body)
         view = self.call('study', study_id=opened['id'], origin_catalog_id=self.state()['project']['project_id'])['study']
         continued = self.call('execution_study_continue', study_id=opened['id'], revision=view['revision'],
                               admission_epoch=view['admission_epoch'])
         cold_body = dict(study_body, revision=continued['revision'], admission_epoch=continued['admission_epoch'])
-        self.deny_without_dispatch('execution_study_admit', self.approved['token'], (403, 409), **cold_body)
+        self.deny_without_dispatch('execution_study_admit', self.approved['token'], (404,), expected_code='unavailable', **cold_body)
         self.assertEqual(self.go_observations[-1]['run_id'], attempt['run_id'])
         self.action('save'); self.action('close')
 

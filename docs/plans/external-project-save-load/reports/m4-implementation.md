@@ -52,3 +52,10 @@ about later runtime/candidate/extraction edits.
 corrections for the allocator signature, physical-root custody fencing, recovery
 binding correlation, legacy receipt reactivation, and historical disclosure
 reading. Wider final acceptance/review and exact-head CI remain separate gates.
+
+The additional negotiated text-contract case passed in 8.957 seconds, one
+selected/no skips, on immutable recovery-commit subject `ee43d849` (manifest
+SHA256 `23fbbb9fb3316c525bb2d0f69d736adb240c55058ef518bb32711ed9aa305158`).
+Old get/annotate v1 refused fork provenance before mutation; v2 retained exact
+origin and history. Receipt:
+`/workspace/scratch/tuldok-save-load-qa/artifacts/m4-clients/test_fork_text_v1_refuses_before_mutation_and_v2_retains_exact_origin-4d510b8319a848088f08e298d053e391.json`.

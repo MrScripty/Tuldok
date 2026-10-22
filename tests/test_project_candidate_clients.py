@@ -44,9 +44,9 @@ class CandidateClients(unittest.TestCase):
             raw._request.return_value=dict(status=200,result=bound(dict(prepared(),**{field:bad})))
             with self.assertRaises(api.AgentAPIError):sdk.execution_study_prepare_package(**args)
         raw._request.return_value=dict(status=200,result=bound(abandonment()))
-        sdk.execution_study_abandon_preparation(**WRITE,study_id=STUDY,preparation_key=KEY,reason=abandonment()['reason'])
+        sdk.execution_study_abandon_preparation(**dict(WRITE,request_key='new-abandon-key'),study_id=STUDY,preparation_key=KEY,reason=abandonment()['reason'])
         raw._request.return_value=dict(status=200,result=bound(dict(abandonment(),reason='different')))
-        with self.assertRaises(api.AgentAPIError):sdk.execution_study_abandon_preparation(**WRITE,study_id=STUDY,preparation_key=KEY,reason=abandonment()['reason'])
+        with self.assertRaises(api.AgentAPIError):sdk.execution_study_abandon_preparation(**dict(WRITE,request_key='new-abandon-key'),study_id=STUDY,preparation_key=KEY,reason=abandonment()['reason'])
     def test_dispatch_exact_local_owner_and_reconciliation_has_no_second_key(self):
         owner=Mock();projection=SimpleNamespace(session=SimpleNamespace(access=SimpleNamespace(require=Mock())),execution=SimpleNamespace(study_execution=owner))
         args=dict(WRITE,study_id=STUDY,revision=1,candidate_id=CANDIDATE,root='fixture',directory='package',runtime_snapshot_sha256=CP)
