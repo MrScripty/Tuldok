@@ -29,8 +29,16 @@ _HISTORY_ACTIONS = frozenset(('studies', 'study', 'study_create', 'study_save', 
     'retained_analysis', 'retained_analysis_export', 'policies', 'policy', 'dependencies',
     'publication_result', 'package_state', 'expose_holdout', 'run_document_segment'))
 _OTHER_ACTIONS = frozenset(('artifacts', 'artifact_status', 'artifact_resolve', 'producers', 'producer', 'source_register', 'source_references'))
+_EXECUTION_ACTIONS = frozenset(('execution_health', 'execution_preflight_external', 'execution_approve_external',
+    'execution_submit_external', 'execution_cancel', 'execution_study_continue', 'execution_study_approve',
+    'execution_study_admit', 'execution_study_stop', 'execution_reconcile_current',
+    'execution_producer_start', 'execution_generation_resume', 'execution_grounded_review',
+    'execution_producer_decide', 'execution_producer_cancel', 'execution_producer_health',
+    'execution_study_prepare_package','execution_study_prepare_verifier','execution_study_abandon_preparation','execution_study_reconcile_preparation'))
+_RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status'))
+_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
-    _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS)
+    _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS)
 
 
 def _body(arguments, *omit):
@@ -278,11 +286,107 @@ def _history(projection, action, a):
     raise AssertionError('Closed historical dispatch is incomplete.')
 
 
+def _execution(projection, action, a):
+    execution = projection.execution
+    if execution is None:
+        raise WorkbenchError('Current execution is unavailable for this project.', 'unavailable', 409)
+    if action == 'execution_health': return execution.health(offset=a.get('offset', 0), limit=a.get('limit', 40))
+    if action == 'execution_preflight_external': return execution.preflight_external(a['graph_id'], a['revision'])
+    if action == 'execution_reconcile_current': return execution.reconcile_current()
+    if action == 'execution_producer_health':
+        if execution.producer_execution is None:
+            raise WorkbenchError('Current producer execution is unavailable.', 'unavailable', 409)
+        return execution.producer_execution.status(offset=a.get('offset', 0), limit=a.get('limit', 40))
+    if action=='execution_study_reconcile_preparation':
+        if execution.study_execution is None:raise WorkbenchError('Current Study execution is unavailable.','unavailable',409)
+        return execution.study_execution.reconcile_preparation(a['study_id'],_body(a,'study_id'),a['expected_checkpoint'])
+    cp, key = a['expected_checkpoint'], a['request_key']
+    if action == 'execution_producer_start' or action in ('execution_generation_resume', 'execution_grounded_review', 'execution_producer_decide', 'execution_producer_cancel'):
+        producers = execution.producer_execution
+        if producers is None:
+            raise WorkbenchError('Current producer execution is unavailable.', 'unavailable', 409)
+        if action == 'execution_producer_start': return producers.start(a['family'], a['document'], cp, key)
+        if action == 'execution_generation_resume': return producers.resume_generation(a['producer_id'], cp, key)
+        if action == 'execution_grounded_review': return producers.review_grounded(a['producer_id'], a['document'], cp, key)
+        if action == 'execution_producer_decide': return producers.decide(a['family'], a['producer_id'], a['document'], cp, key)
+        return producers.cancel(a['family'], a['producer_id'], cp, key)
+    if action == 'execution_approve_external': return execution.approve_external(_body(a), cp, key)
+    if action == 'execution_submit_external': return execution.submit_external(_body(a), cp, key)
+    if action == 'execution_cancel': return execution.cancel_run(a['run_id'], cp, key)
+    studies = execution.study_execution
+    if studies is None:
+        raise WorkbenchError('Current Study execution is unavailable.', 'unavailable', 409)
+    if action=='execution_study_prepare_package':return studies.prepare_package(a['study_id'],_body(a,'study_id'),cp,key)
+    if action=='execution_study_prepare_verifier':return studies.prepare_verifier(a['study_id'],_body(a,'study_id'),cp,key)
+    if action=='execution_study_abandon_preparation':return studies.abandon_preparation(a['study_id'],_body(a,'study_id'),cp,key)
+    if action == 'execution_study_continue': return studies.continue_study(a['study_id'], _body(a, 'study_id'), cp, key)
+    if action == 'execution_study_approve': return studies.approve(a['study_id'], _body(a, 'study_id'), cp, key)
+    if action == 'execution_study_admit': return studies.admit(a['study_id'], _body(a, 'study_id'), cp, key)
+    if action == 'execution_study_stop': return studies.stop(a['study_id'], _body(a, 'study_id'), cp, key)
+    raise AssertionError('Closed execution dispatch is incomplete.')
+
+
+def _runtime(projection, action, a):
+    if action=='runtime_sources':
+        return _page([dict(source=alias) for alias in projection.runtime_sources()['sources']],a)
+    if action=='runtime_inspect':
+        value=projection.runtime.inspect({'source':a['source']});manifest=value['manifest']
+        return dict(format='project_runtime_inspection_v1',source=a['source'],
+            **{field:copy.deepcopy(value[field]) for field in ('inventory_sha256','file_count','total_bytes','manifest_bytes','free_bytes')},
+            profile=manifest['profile'],python_version=manifest['python_version'],launch=copy.deepcopy(manifest['launch']),
+            packages=[dict(name=name,version=version) for name,version in sorted(manifest['packages'].items())],
+            files=_page(manifest['files'],a))
+    if action=='runtime_status':return projection.runtime.status(a['capture_key'])
+    if action=='runtime_capture':
+        options={'reserve_bytes':a['reserve_bytes']} if 'reserve_bytes' in a else {}
+        return projection.runtime.capture({'source':a['source']},a['expected_inventory_sha256'],
+            a['expected_checkpoint'],a['request_key'],**options)
+    raise AssertionError('Closed runtime dispatch is incomplete.')
+
+
+def _m4(projection,action,a):
+    session=projection.session
+    if action=='file_adopt':
+        return projection.files.adopt(_body(a),a['expected_checkpoint'],a['request_key'])
+    with session.access.lock,session.lock,session.db.lock:
+        session.access.require('inspect','project_files.'+action);snapshot=session.check()
+        if action=='files_inspect':return _page(projection.files.inspect()['items'],a)
+        if action=='file_get':return projection.files.read(a['file_id'],a.get('revision'))
+        if action=='file_history':
+            values=projection.files.history(a['file_id'])
+            return dict(id=a['file_id'],**_page([{k:v[k] for k in ('revision','sha256','bytes','adopted_at','actor_id')} for v in values],a))
+        if action in ('material_intents','material_intent'):
+            intents=projection.materials.intents()
+            if action=='material_intent':
+                result=next((item for item in intents if item['family']==a['family'] and item['current']['id']==a['definition_id']),None)
+                if result is None:raise WorkbenchError('Unresolved material intent is unavailable.','unavailable',404)
+                return result
+            return _page([dict(family=item['family'],id=item['id'],catalog_id=item['current']['catalog_id'],
+                definition_id=item['current']['id'],name=item['current']['name'],revision=item['current']['revision'],
+                required_reselection=item['current']['required_reselection'],fork_origin=item['fork_origin']) for item in intents],a)
+        if action=='material_intent_capabilities':
+            value=projection.materials.intent_capabilities()
+            items=[dict(item,requires_reselection=[]) for item in value['editable']]
+            items.extend(dict(family=item['family'],id=item['id'],requires_reselection=item['fields']) for item in value['requires_reselection'])
+            return _page(sorted(items,key=lambda item:(item['family'],item['id'])),a)
+        if action=='fork_info':
+            from project_fork import decode_fork
+            overlay=decode_fork(snapshot['records'],project_id=snapshot['project_id'])
+            return dict(source=overlay['source'] if overlay else None,project_id=snapshot['project_id'],
+                mapping=_page(overlay['mapping'] if overlay else [],a),archived_count=len(overlay['archived']) if overlay else 0,
+                copied_count=len(overlay['artifacts']['copied']) if overlay else 0,
+                missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']) if overlay else 0)
+    raise AssertionError('Closed M4 dispatch is incomplete.')
+
+
 def dispatch(projection, name, arguments):
     if name not in SUPPORTED_OPERATIONS:
         raise WorkbenchError('Unsupported external-project operation.', 'unsupported', 409)
     action = name.split('.')[1]
     projection.session.access.require('inspect', name)
+    if action in _RUNTIME_ACTIONS:return _runtime(projection,action,arguments)
+    if action in _M4_ACTIONS:return _m4(projection,action,arguments)
+    if action in _EXECUTION_ACTIONS: return _execution(projection, action, arguments)
     if action in _DATA_ACTIONS: return _data(projection, action, arguments)
     if action in _MATERIAL_ACTIONS: return _material(projection, action, arguments)
     if action in _HISTORY_ACTIONS: return _history(projection, action, arguments)

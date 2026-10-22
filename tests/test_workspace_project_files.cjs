@@ -233,5 +233,30 @@ function mount(initial=[reply(state()),reply(records())],capabilityValue=capabil
     await h.submit('project-scientific-form');assert.equal(h.nodes.get('project-files-error').textContent,'');const imported=JSON.parse(h.requests.at(-2).options.body);
     assert.equal(imported.reference_id,'unpinned');assert.equal(imported.expected_sha256,N);assert.equal(imported.expected_checkpoint,N);
   }
+  // Current material review, local grant and durable admission are separate
+  // named actions. Reconciliation has no fabricated receipt key.
+  {
+    const h=mount();await tick();const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    assert.equal(h.requests.length,2,'Opening status never starts execution');
+    h.answers.push(reply(boundValue({format:'project_execution_health_v1',active_run_ids:[],active_count:0,offset:0,limit:40,local_owner_active:false,available:true,drain_required:false})));await h.click('project-execution-health');assert.match(h.nodes.get('project-execution-summary').textContent,/0 current/);
+    h.answers.push(reply(boundValue({items:[{id:R,name:'Explicit recipe',revision:3,recipe:'external_recipe'}],total:1,offset:0,limit:40})));await h.click('project-execution-graphs');
+    h.answers.push(reply(boundValue({graph_revision:3,material_sha256:N,material:{runtime:'current observed runtime'}})));await h.submit('project-execution-preflight-form');assert.equal(h.nodes.get('project-execution-submit-fields').disabled,true);
+    h.input('project-execution-consumer',P);await h.submit('project-execution-approval-form');assert.match(h.nodes.get('project-files-error').textContent,/Explicitly approve/);
+    const grant={id:R,catalog_id:P,approver_actor_id:P,approver_credential_id:null,consumer_actor_id:P,material_sha256:N,created_at:1,expires_at:3601,revoked_at:null};
+    h.nodes.get('project-execution-confirm').checked=true;h.answers.push(reply(boundValue({format:'project_current_execution_approval_v1',current_local:true,grant},N)));await h.submit('project-execution-approval-form');assert.equal(h.nodes.get('project-files-error').textContent,'');assert.equal(h.nodes.get('project-execution-submit-fields').disabled,false);assert.equal(h.nodes.get('project-files-dirty').textContent,'No unsubmitted edits.');
+    const approval=JSON.parse(h.requests.at(-1).options.body);assert.equal(approval.expected_checkpoint,C);assert.equal(approval.expected_digest,N);assert.equal(approval.consumer_actor_id,P);
+    h.answers.push(reply(boundValue({format:'project_run_admission_v1',origin_catalog_id:P,run_id:R,request_sha256:N},C)));await h.submit('project-execution-submit-form');assert.match(h.nodes.get('project-files-status').textContent,/durable intent/);assert.equal(h.nodes.get('project-execution-submit-fields').disabled,true);assert.equal(JSON.parse(h.requests.at(-1).options.body).approval_id,R);
+    h.answers.push(reply(boundValue({format:'project_run_admission_v1',origin_catalog_id:P,run_id:R,request_sha256:N},N)));await h.submit('project-execution-cancel-form');assert.match(h.nodes.get('project-files-status').textContent,/intent saved/);
+    h.answers.push(reply(boundValue({format:'project_execution_reconciliation_v1',origin_catalog_id:P,run_ids:[R],available:true},C)));await h.click('project-execution-reconcile');const reconciled=JSON.parse(h.requests.at(-1).options.body);assert.deepEqual(Object.keys(reconciled).sort(),['binding','expected_checkpoint']);assert.equal(reconciled.expected_checkpoint,N);assert.match(h.nodes.get('project-files-status').textContent,/reconciled and drained/);
+  }
+  // A typed model request uses the saved source revisions and an explicit
+  // endpoint. A missing acknowledgement preserves its authored request.
+  {
+    const h=mount();await tick();const boundValue=(value,checkpoint=C)=>({binding:B,project_id:P,checkpoint,value});
+    const source={...record(),source_available:true};h.answers.push(reply(boundValue({items:[source],total:1,offset:0,limit:40,analysis:{},criteria:{}})));await h.click('project-explore-load');h.answers.push(reply(boundValue(source)));await h.nodes.get('project-explore-list').querySelectorAll('button')[0].onclick();await tick();
+    h.nodes.get('project-producer-task').value='text_proposal_history';h.answers.push(reply(boundValue(source)));await h.click('project-producer-source-load');
+    h.input('project-producer-url','http://127.0.0.1:12345');h.input('project-producer-model','exact-current-model');h.input('project-producer-instruction','Classify the exact frozen source');h.input('project-producer-labels','accepted\nrejected');h.nodes.get('project-producer-transport').value='typed';h.nodes.get('project-producer-confirm').checked=true;
+    h.answers.push(new Response('{broken',{status:200}));await h.submit('project-producer-start-form');const sent=JSON.parse(h.requests.at(-1).options.body);assert.equal(sent.family,'text_proposal_history');assert.equal(sent.document.source_id,R);assert.equal(sent.document.revision,1);assert.equal(sent.document.seed,null);assert.equal(sent.document.protocol,'pumas_typed_v1');assert.deepEqual(sent.document.labels,['accepted','rejected']);assert.match(h.nodes.get('project-files-error').textContent,/Acknowledgement unavailable/);assert.equal(h.nodes.get('project-producer-instruction').value,'Classify the exact frozen source');assert.equal(h.nodes.get('project-files-close').disabled,true);
+  }
   console.log('PASS project-files controller: checkpoint requests, submit/history projection, dirty preservation, superseded replies, typed errors, unknown acknowledgements');
 })().catch(error=>{console.error(error);process.exitCode=1;});

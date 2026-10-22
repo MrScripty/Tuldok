@@ -126,6 +126,45 @@ class CustodyTests(unittest.TestCase):
         wrong=dict(handle.expected_identity,request_sha256='b'*64)
         with self.assertRaises(custody.ProcessError):custody.load_receipt(handle.directory/'receipt.json',wrong)
 
+    def test_ready_owner_ack_wait_is_separate_from_preparation_and_child_wall(self):
+        spec=self.spec();handle=self.start(spec)
+        deadline=time.monotonic()+custody.READY_SECONDS+.2
+        while time.monotonic()<deadline:
+            handle.poll()
+            self.assertFalse(handle.terminal);self.assertFalse(handle.lost)
+            self.assertFalse((self.output/'result.txt').exists())
+            time.sleep(.025)
+        self.assertFalse(handle.sent_go)
+        self.assertEqual(handle.spec['wall_seconds'],spec['wall_seconds'])
+        handle.go(handle.ready);receipt=self.finish(handle)
+        self.assertEqual(receipt['outcome'],'completed');self.assertTrue(receipt['go_received'])
+        self.assertEqual((self.output/'result.txt').read_bytes(),self.input.read_bytes())
+
+    def test_expired_helper_owner_wait_drains_without_go_and_late_send_is_typed(self):
+        # A private shortened policy exercises actual sealed-helper expiry;
+        # production SOURCE/policy and the admitted child wall stay unchanged.
+        short=custody.SOURCE.replace(b'GO_WAIT_SECONDS = 60',b'GO_WAIT_SECONDS = 0.15',1)
+        self.assertNotEqual(short,custody.SOURCE)
+        with patch.object(custody,'SOURCE',short):handle=self.start(self.spec())
+        handle.process.wait(timeout=5)
+        with self.assertRaises(custody.ProcessError) as error:handle.go(handle.ready)
+        self.assertEqual(error.exception.code,'unavailable');self.assertFalse(handle.sent_go)
+        receipt=self.finish(handle)
+        self.assertTrue(receipt['drained']);self.assertFalse(receipt['go_received'])
+        self.assertEqual(receipt['reason'],'ready_timeout');self.assertIsNone(receipt['leader_returncode'])
+        self.assertFalse((self.output/'result.txt').exists())
+
+    def test_parent_owner_wait_expiry_closes_control_without_sending_go(self):
+        handle=self.start(self.spec())
+        with patch.object(custody.time,'monotonic',return_value=handle.go_deadline), \
+             self.assertRaises(custody.ProcessError) as error:
+            handle.go(handle.ready)
+        self.assertEqual(error.exception.code,'unavailable');self.assertFalse(handle.sent_go)
+        receipt=self.finish(handle)
+        self.assertTrue(receipt['drained']);self.assertFalse(receipt['go_received'])
+        self.assertEqual(receipt['reason'],'controller_lost')
+        self.assertFalse((self.output/'result.txt').exists())
+
     def test_native_policy_absence_is_closed_and_receipt_is_pure(self):
         spec=self.spec(); spec['native_loader_policy']='glibc_x86_64_no_preload_v1'
         self.assertEqual(custody.validate_spec(spec),spec)

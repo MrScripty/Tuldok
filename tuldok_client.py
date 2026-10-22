@@ -17,7 +17,7 @@ import tempfile
 import threading
 import time
 
-from agent_api import (AgentAPIError, AgentClient, contract, encoded, validate_arguments,
+from agent_api import (ProjectTransferOwnerClient, AgentAPIError, AgentClient, contract, encoded, validate_arguments,
                        verify_artifact, verify_publication_artifact, validate_artifact_segments,
                        validate_segment, validate_publication_segment)
 
@@ -153,6 +153,38 @@ def _verified_local(path, item):
             raise AgentAPIError('Resumed artifact differs from its exact whole hash.', 'artifact_mismatch', 409)
     finally:
         os.close(fd)
+
+
+class ProjectTransferClient:
+    """Five explicit extraction actions with independently configured owner access.
+
+    Stop ends the source client's authority. Obtain current-control credentials
+    separately and construct a new client before stopped preview or extraction.
+    """
+    def __init__(self,client):self.client=client
+
+    @classmethod
+    def from_config(cls,path):return cls(ProjectTransferOwnerClient.from_config(path))
+
+    def _call(self,action,arguments):
+        name='project_transfer.'+action
+        validate_arguments(name,arguments)
+        return _invoke(self.client,name,arguments)
+
+    def status(self):return self._call('status',{})
+
+    def preview(self,selection,*,binding):return self._call('preview',dict(binding=binding,selection=selection))
+
+    def report_page(self,*,binding,report_sha256,section,offset=0,limit=40):
+        return self._call('report_page',dict(binding=binding,report_sha256=report_sha256,section=section,offset=offset,limit=limit))
+
+    def stop(self,*,binding,report_sha256,backup_root,backup_directory,destination_root,directory):
+        return self._call('stop',dict(binding=binding,report_sha256=report_sha256,backup_root=backup_root,
+            backup_directory=backup_directory,destination_root=destination_root,directory=directory))
+
+    def extract(self,*,binding,report_sha256,destination_root,directory,name,request_key):
+        return self._call('extract',dict(binding=binding,report_sha256=report_sha256,destination_root=destination_root,
+            directory=directory,name=name,request_key=request_key))
 
 
 class ProjectFilesClient:
@@ -546,6 +578,108 @@ class ProjectFilesClient:
 
     def graph_create_external(self, **arguments):
         return self._call('graph_create_external', arguments)
+
+    def execution_health(self, **arguments):
+        return self._call('execution_health', arguments)
+
+    def execution_preflight_external(self, **arguments):
+        return self._call('execution_preflight_external', arguments)
+
+    def execution_approve_external(self, **arguments):
+        return self._call('execution_approve_external', arguments)
+
+    def execution_submit_external(self, **arguments):
+        return self._call('execution_submit_external', arguments)
+
+    def execution_cancel(self, **arguments):
+        return self._call('execution_cancel', arguments)
+
+    def execution_study_continue(self, **arguments):
+        return self._call('execution_study_continue', arguments)
+
+    def execution_study_approve(self, **arguments):
+        return self._call('execution_study_approve', arguments)
+
+    def execution_study_admit(self, **arguments):
+        return self._call('execution_study_admit', arguments)
+
+    def execution_study_stop(self, **arguments):
+        return self._call('execution_study_stop', arguments)
+
+    def execution_reconcile_current(self, **arguments):
+        return self._call('execution_reconcile_current', arguments)
+
+    def execution_producer_start(self, **arguments):
+        return self._call('execution_producer_start', arguments)
+
+    def execution_generation_resume(self, **arguments):
+        return self._call('execution_generation_resume', arguments)
+
+    def execution_grounded_review(self, **arguments):
+        return self._call('execution_grounded_review', arguments)
+
+    def execution_producer_decide(self, **arguments):
+        return self._call('execution_producer_decide', arguments)
+
+    def execution_producer_cancel(self, **arguments):
+        return self._call('execution_producer_cancel', arguments)
+
+
+    def execution_producer_health(self, **arguments):
+        return self._call('execution_producer_health', arguments)
+
+    def execution_study_prepare_package(self, **arguments):
+        return self._call('execution_study_prepare_package',arguments)
+
+    def execution_study_prepare_verifier(self, **arguments):
+        return self._call('execution_study_prepare_verifier',arguments)
+
+    def execution_study_abandon_preparation(self, **arguments):
+        return self._call('execution_study_abandon_preparation',arguments)
+
+    def execution_study_reconcile_preparation(self, **arguments):
+        return self._call('execution_study_reconcile_preparation',arguments)
+
+    def runtime_sources(self, **arguments):
+        return self._call('runtime_sources',arguments)
+
+    def runtime_inspect(self, **arguments):
+        return self._call('runtime_inspect',arguments)
+
+    def runtime_capture(self, **arguments):
+        return self._call('runtime_capture',arguments)
+
+    def runtime_status(self, **arguments):
+        return self._call('runtime_status',arguments)
+
+    def save_as(self, *, root, directory, name, binding, expected_checkpoint, request_key):
+        """Create and select an independent fork; never retry a mutation implicitly."""
+        return self._call('save_as',dict(root=root,directory=directory,name=name,binding=binding,
+            expected_checkpoint=expected_checkpoint,request_key=request_key))
+
+    def files_inspect(self, **arguments):
+        return self._call('files_inspect',arguments)
+
+    def file_get(self, **arguments):
+        return self._call('file_get',arguments)
+
+    def file_history(self, **arguments):
+        return self._call('file_history',arguments)
+
+    def file_adopt(self, **arguments):
+        return self._call('file_adopt',arguments)
+
+    def material_intents(self, **arguments):
+        return self._call('material_intents',arguments)
+
+    def material_intent(self, **arguments):
+        return self._call('material_intent',arguments)
+
+    def material_intent_capabilities(self, **arguments):
+        return self._call('material_intent_capabilities',arguments)
+
+    def fork_info(self, **arguments):
+        return self._call('fork_info',arguments)
 
 
 class WorkflowClient:

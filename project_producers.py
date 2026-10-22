@@ -419,7 +419,7 @@ def decode_records(records, *, artifacts=None):
             continue
         shape(envelope, {'family', 'id', 'document'}, name='producer envelope')
         doc = envelope['document']
-        shape(doc, {'format', 'origin_catalog_id', 'ordinal', 'job', 'payloads', 'observation_integrity'} | ({'entries'} if family == 'generation_history' else set()), name='producer document')
+        shape(doc, {'format', 'origin_catalog_id', 'ordinal', 'job', 'payloads', 'observation_integrity'} | ({'entries'} if family == 'generation_history' else set()), {'prompt_batches'} if family == 'generation_history' else (), name='producer document')
         if doc['format'] != FAMILIES[family]:
             fail('Unsupported producer document format.', 'unsupported', 422)
         identity(doc['origin_catalog_id']); _job(family, doc['job'])
@@ -442,11 +442,12 @@ def decode_records(records, *, artifacts=None):
         if family == 'caption_proposal_history' and 'input_image' not in doc['payloads']:
             fail('Prepared producer input declaration is missing.')
         if family == 'generation_history':
+            _prompt_batches(doc,declarations)
             if type(doc['entries']) is not list or len(doc['entries']) > doc['job']['config']['count']:
                 fail('Invalid generation queue closure.')
             ordinals, identities, storage_orders = set(), set(), set()
             for value in doc['entries']:
-                shape(value, {'entry', 'history', 'payloads', 'observation_integrity', 'storage_order'}, name='generation entry history')
+                shape(value, {'entry', 'history', 'payloads', 'observation_integrity', 'storage_order'}, {'history_payloads'}, name='generation entry history')
                 integer(value['storage_order'], 1, 2**63-1)
                 if value['storage_order'] in storage_orders:
                     fail('Duplicate historical generation storage ordering.')
@@ -460,10 +461,15 @@ def decode_records(records, *, artifacts=None):
                     fail('Duplicate generation queue entry.')
                 ordinals.add(ordinal); identities.add(entry_id)
                 _payloads(value['payloads'], declarations, {'attempt_request', 'result_request'})
-                for field, role in (('attempt_evidence', 'attempt_request'), ('metadata', 'result_request')):
-                    evidence = value['entry'].get(field, {})
-                    if evidence.get('canonical_request_sha256') is not None and role not in value['payloads']:
-                        fail('Generation request declaration is missing.')
+                histories=value.get('history_payloads',[value['payloads'] for _ in value['history']])
+                if type(histories) is not list or len(histories)!=len(value['history']) or histories[-1]!=value['payloads']:
+                    fail('Generation evidence history differs from its observations.')
+                for entry,mapping in zip(value['history'],histories):
+                    _payloads(mapping,declarations,{'attempt_request','result_request'})
+                    for field,role in (('attempt_evidence','attempt_request'),('metadata','result_request')):
+                        sha=entry.get(field,{}).get('canonical_request_sha256')
+                        if sha is not None and (role not in mapping or mapping[role]['artifact']['sha256']!=sha):
+                            fail('Generation request declaration is missing or differs.')
             if sorted(ordinals) != list(range(len(ordinals))):
                 fail('Generation queue ordinals have a gap.')
             if doc['job']['completed'] != sum(value['entry']['status'] in ('completed', 'deleted') for value in doc['entries']):
@@ -516,21 +522,20 @@ def _verify_payloads(family, doc, declarations, artifacts):
             _response_values(raw)
             job['raw_response_base64'] = base64.b64encode(raw).decode('ascii')
     if family == 'generation_history':
+        _verify_prompt_batches(doc,declarations,artifacts)
         for wrapper in doc['entries']:
-            entry = wrapper['entry']
-            for field, role in (('attempt_evidence', 'attempt_request'), ('metadata', 'result_request')):
-                if role not in wrapper['payloads']:
-                    continue
-                raw = _read(wrapper['payloads'][role], declarations, artifacts, 32*1024*1024)
-                if raw is None:
-                    continue
-                evidence = copy.deepcopy(entry.get(field, {}))
-                evidence['canonical_request'] = pumas.strict_json(raw)
-                _safe(evidence)
-                try:
-                    synthetic.validate_retained_attempt(job, entry, evidence)
-                except (ValueError, TypeError, KeyError):
-                    fail('Generation request differs from its retained entry intent.')
+            histories=wrapper.get('history_payloads',[wrapper['payloads'] for _ in wrapper['history']])
+            for entry,mapping in zip(wrapper['history'],histories):
+                for field,role in (('attempt_evidence','attempt_request'),('metadata','result_request')):
+                    if role not in mapping:continue
+                    raw=_read(mapping[role],declarations,artifacts,32*1024*1024)
+                    if raw is None:continue
+                    evidence=copy.deepcopy(entry.get(field,{}))
+                    evidence['canonical_request']=pumas.strict_json(raw)
+                    _safe(evidence)
+                    try:synthetic.validate_retained_attempt(job,entry,evidence)
+                    except (ValueError,TypeError,KeyError):fail('Generation request differs from its retained entry intent.')
+
     else:
         module = {'grounded_history': grounded_candidates, 'caption_proposal_history': caption_proposals,
                   'text_proposal_history': text_classification_proposals}[family]
@@ -629,11 +634,21 @@ class ProjectProducers:
             for value in entries[entries_offset:entries_offset+entries_limit]:
                 item = copy.deepcopy(value)
                 item['payloads'] = self._payload_status(item['payloads'], declarations)
+                if 'history_payloads' in item:item['history_payloads']=[self._payload_status(value,declarations) for value in item['history_payloads']]
                 size = len(encode(item).encode())
                 if used + size > 8*1024*1024:
                     break
                 page.append(item); used += size
             next_offset = entries_offset + len(page)
+            batches=[]
+            for value in doc.get('prompt_batches',[])[entries_offset:entries_offset+entries_limit]:
+                item=copy.deepcopy(value)
+                item['payloads']=self._payload_status(item['payloads'],declarations)
+                if len(encode(batches+[item]).encode())>8*1024*1024:break
+                batches.append(item)
+            next_batch=entries_offset+len(batches)
+            result['prompt_batches']=dict(items=batches,total=len(doc.get('prompt_batches',[])),offset=entries_offset,limit=entries_limit,
+                                          next_offset=next_batch if next_batch<len(doc.get('prompt_batches',[])) else None)
             result['entries'] = dict(items=page, total=len(entries), offset=entries_offset, limit=entries_limit,
                                     next_offset=next_offset if next_offset < len(entries) else None)
             return result
@@ -676,10 +691,40 @@ class ProjectProducers:
                     storage_orders.add(value['storage_order'])
                     self.session.db.execute('INSERT INTO generation_entries(id,job_id,ordinal,data,storage_order) VALUES(%s,%s,%s,%s,%s)',
                         (entry['id'], entry['job_id'], entry['ordinal'], encode(entry), value['storage_order']))
+            maximum=self.session.db.execute('SELECT COALESCE(max(storage_order),0) FROM generation_entries').fetchone()[0]
+            self.session.db.execute('SELECT setval(pg_get_serial_sequence(%s,%s),%s,%s)',('generation_entries','storage_order',max(1,maximum),maximum>0))
         self._records = records
         all_declarations = _declarations(snapshot['records'])
         referenced = _referenced_artifacts(records)
         self._artifacts = {sha: all_declarations[sha] for sha in referenced}
+        return self
+
+    def refresh(self, snapshot):
+        """Refresh canonical science after proven current custody drainage.
+
+        This never creates producer jobs/admissions, deletes a local job table,
+        or turns a retained endpoint/identity into current execution authority.
+        """
+        records=decode_records(snapshot['records'],artifacts=self.session.artifacts)
+        seen=set();orders=set()
+        for envelope in records:
+            if envelope['family']=='generation_history':
+                for value in envelope['document']['entries']:
+                    if value['entry']['id'] in seen or value['storage_order'] in orders:
+                        fail('Ambiguous generation entry identity across origins.','unsupported',422)
+                    seen.add(value['entry']['id']);orders.add(value['storage_order'])
+        with self.session.db.transaction():
+            for envelope in records:
+                if envelope['family']!='generation_history':continue
+                for value in envelope['document']['entries']:
+                    entry=value['entry']
+                    self.session.db.execute('INSERT INTO generation_entries(id,job_id,ordinal,data,storage_order) VALUES(%s,%s,%s,%s,%s) ON CONFLICT(id) DO UPDATE SET job_id=excluded.job_id,ordinal=excluded.ordinal,data=excluded.data,storage_order=excluded.storage_order',
+                        (entry['id'],entry['job_id'],entry['ordinal'],encode(entry),value['storage_order']))
+            maximum=self.session.db.execute('SELECT COALESCE(max(storage_order),0) FROM generation_entries').fetchone()[0]
+            self.session.db.execute('SELECT setval(pg_get_serial_sequence(%s,%s),%s,%s)',('generation_entries','storage_order',max(1,maximum),maximum>0))
+        self._records=records
+        declarations=_declarations(snapshot['records'])
+        self._artifacts={sha:declarations[sha] for sha in _referenced_artifacts(records)}
         return self
 
     def capture(self):
@@ -693,6 +738,7 @@ class ProjectProducers:
                     current = copy.deepcopy(by_id.pop(value['entry']['id']))
                     if current != value['entry']:
                         value['history'].append(current)
+                        if 'history_payloads' in value:value['history_payloads'].append(copy.deepcopy(value['payloads']))
                     value['entry'] = current
         if by_id:
             fail('Unclassified generation entries appeared in the project projection.')
@@ -706,7 +752,8 @@ def _summary(family, document):
     return dict(family=family, origin_catalog_id=document['origin_catalog_id'], id=job['id'],
                 format=document['format'], ordinal=document['ordinal'], status=job['status'],
                 revision=job.get('revision'), created_at=job.get('created_at'), updated_at=job.get('updated_at'),
-                entry_count=len(document.get('entries', [])), candidate_count=len(job.get('candidates', [])))
+                entry_count=len(document.get('entries', [])), candidate_count=len(job.get('candidates', [])),
+                prompt_batch_count=len(document.get('prompt_batches',[])))
 
 
 def _observation_integrity(value):
@@ -726,16 +773,104 @@ def _entry_integrity(entry):
 
 def _entry_history(value, job):
     history = value['history']
-    if type(history) is not list or not 1 <= len(history) <= 2 or history[-1] != value['entry']:
+    if type(history) is not list or not 1 <= len(history) <= 100_000 or history[-1] != value['entry']:
         fail('Invalid generation observation history.')
     for entry in history:
         _entry(entry, job)
         if any(entry[k] != history[0][k] for k in ('id', 'job_id', 'ordinal', 'prompt', 'model', 'width', 'height', 'requested_seed')):
             fail('Generation history rewrites its immutable producer intent.')
-    if len(history) == 2:
-        expected = dict(history[0], status='deleted', sample_id=None, deleted_at=history[1].get('deleted_at'))
-        if history[0]['status'] != 'completed' or history[1] != expected:
-            fail('Unsupported generation history transition.')
+    for previous, current in zip(history, history[1:]):
+        if previous['status'] == 'deleted':
+            fail('Deleted generation history cannot resume.')
+        if current['status'] == 'deleted':
+            expected = dict(previous, status='deleted', sample_id=None, deleted_at=current.get('deleted_at'))
+            if previous['status'] != 'completed' or current != expected:
+                fail('Unsupported generation deletion transition.')
+        elif previous['status'] == 'completed':
+            fail('Completed generation history cannot be rewritten.')
+
+
+def _prompt_batches(doc, declarations):
+    values=doc.get('prompt_batches',[])
+    if type(values) is not list or len(values)>10000:
+        fail('Generation prompt batch observations exceed their bound.')
+    if values and doc['job']['config']['strategy']!='varied':
+        fail('Repeat generation cannot import variation observations.')
+    seen=set();last_offset=0
+    for wrapper in values:
+        shape(wrapper,{'batch','payloads'},name='prompt batch observation')
+        batch=wrapper['batch']
+        shape(batch,{'id','offset','count','status','error','request_sha256','response_sha256','prompts'},name='prompt batch')
+        identity(batch['id']);digest(batch['request_sha256'])
+        if batch['id'] in seen:fail('Prompt batch identity repeats.')
+        seen.add(batch['id'])
+        integer(batch['offset'],0,doc['job']['config']['count']-1)
+        integer(batch['count'],1,min(synthetic.BATCH_SIZE,doc['job']['config']['count']-batch['offset']))
+        if batch['offset']<last_offset:fail('Prompt batch ordering moves backwards.')
+        last_offset=batch['offset']
+        if batch['status'] not in ('requesting','completed','failed'):fail('Unsupported prompt batch lifecycle.')
+        text_value(batch['error'],'Prompt batch error',800,empty=True)
+        if batch['status']=='requesting':
+            if batch['prompts'] is not None or batch['response_sha256'] is not None or batch['error']:
+                fail('Unreceived prompt batch contains a claimed result.')
+        else:
+            digest(batch['response_sha256'])
+            if batch['status']=='completed':
+                if (batch['error'] or type(batch['prompts']) is not list or len(batch['prompts'])!=batch['count']
+                        or any(type(p) is not str or not p.strip() or len(p)>4000 or p!=p.strip() for p in batch['prompts'])):
+                    fail('Prompt batch result shape differs.')
+            elif batch['prompts'] is not None or not batch['error']:
+                fail('Failed prompt batch claims valid prompts.')
+        _safe(batch)
+        roles={'canonical_request'} | ({'raw_response'} if batch['response_sha256'] is not None else set())
+        if set(wrapper['payloads'])!=roles:fail('Prompt batch exact payload declarations differ.')
+        _payloads(wrapper['payloads'],declarations,roles)
+        for role,field in (('canonical_request','request_sha256'),('raw_response','response_sha256')):
+            if role in wrapper['payloads'] and wrapper['payloads'][role]['artifact']['sha256']!=batch[field]:
+                fail('Prompt batch payload digest differs.')
+
+
+def _verify_prompt_batches(doc,declarations,artifacts):
+    entries=[v['entry'] for v in doc['entries']]
+    expected=None;available=True
+    for wrapper in doc.get('prompt_batches',[]):
+        batch=wrapper['batch']
+        request=_read(wrapper['payloads']['canonical_request'],declarations,artifacts,32*1024*1024)
+        response=(_read(wrapper['payloads']['raw_response'],declarations,artifacts,256*1024)
+                  if 'raw_response' in wrapper['payloads'] else None)
+        if response is not None:_response_values(response)
+        if request is None:
+            available=False;continue
+        parsed=caption_proposals.strict_json(request);_safe(parsed)
+        try:synthetic.validate_retained_prompt_batch(doc['job']['config'],batch,parsed,response)
+        except (ValueError,KeyError,TypeError,IndexError):fail('Retained prompt batch wire differs from its queue intent.')
+        if expected is None:expected=[v['prompt'] for v in entries[:batch['offset']]]
+        if available and batch['offset']!=len(expected):fail('Prompt batch offset differs from retained unique results.')
+        if available and json.loads(parsed['messages'][1]['content'])['recent_prompts_to_avoid']!=expected[-synthetic.BATCH_SIZE:]:
+            fail('Prompt batch context differs from preceding retained queue prompts.')
+        if batch['status']=='completed' and available:
+            seen={' '.join(value.casefold().split()) for value in expected}
+            for prompt in batch['prompts']:
+                key=' '.join(prompt.casefold().split())
+                if key not in seen:expected.append(prompt);seen.add(key)
+    if available and expected is not None and [v['prompt'] for v in entries]!=expected[:len(entries)]:
+        fail('Saved generation prompts differ from exact variation results.')
+
+
+def _capture_prompt_batches(owner,job,batches):
+    result=[]
+    for original in batches:
+        batch=copy.deepcopy(original)
+        request=batch.pop('canonical_request')
+        raw=batch.pop('raw_response_base64')
+        synthetic.validate_retained_prompt_batch(job['config'],batch,request,_bytes(raw,256*1024) if raw is not None else None)
+        _safe(request)
+        payloads={'canonical_request':_publish(owner,encode(request).encode(),'canonical_request')}
+        if raw is not None:
+            data=_bytes(raw,256*1024);_response_values(data)
+            payloads['raw_response']=_publish(owner,data,'raw_response','application/octet-stream')
+        result.append(dict(batch=batch,payloads=payloads))
+    return result
 
 
 def _referenced_artifacts(records):
@@ -743,8 +878,10 @@ def _referenced_artifacts(records):
     for envelope in records:
         doc = envelope['document']
         mappings = [doc['payloads']]
+        mappings.extend(value['payloads'] for value in doc.get('prompt_batches',[]))
         if envelope['family'] == 'generation_history':
             mappings.extend(value['payloads'] for value in doc['entries'])
+            mappings.extend(mapping for value in doc['entries'] for mapping in value.get('history_payloads',[]))
         result.update(edge['artifact']['sha256'] for mapping in mappings for edge in mapping.values())
     return result
 
@@ -830,6 +967,7 @@ def _capture_entry(owner, entry, storage_order):
 
 def _capture_job(owner, family, original, ordinal, entries):
     job = copy.deepcopy(original)
+    prompt_batches = job.pop('prompt_batches',None) if family == 'generation_history' else None
     # These are the complete classified local fields, not a denylist fallback.
     # All remaining source fields must satisfy the owned closed codec below.
     for key in LOCAL_JOB_FIELDS:
@@ -866,6 +1004,8 @@ def _capture_job(owner, family, original, ordinal, entries):
     payloads = _capture_payloads(owner, family, job)
     document = dict(format=FAMILIES[family], origin_catalog_id=owner._origin, ordinal=ordinal,
                     job=job, payloads=payloads, observation_integrity=_observation_integrity(job))
+    if prompt_batches is not None:
+        document['prompt_batches'] = _capture_prompt_batches(owner,job,prompt_batches)
     if family == 'generation_history':
         document['entries'] = [_capture_entry(owner, entry, storage_order) for entry, storage_order in entries if entry['job_id'] == job['id']]
     return dict(family=family, id=owner._origin+'.'+job['id'], document=document)
@@ -1051,9 +1191,8 @@ def validate_record_origin(origin, record, records):
 
 
 def validate_operation_result(operation, target, result, records):
-    # M2 has no producer execution/apply/continuation operation. Data owns the
-    # sole allowed deletion result and composes our changed retained entry facts.
-    return False
+    from project_producer_execution import validate_operation_result as validate_action
+    return validate_action(operation, target, result, records)
 
 
 def _composed(current, upserts):

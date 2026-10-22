@@ -38,7 +38,78 @@
       </div>
       <p id="project-files-dirty" class="help" aria-live="polite">No unsubmitted edits.</p>
     </section>
-    <p class="scope">Authored edits are saved to the project before acknowledgement. Historical materials and artifacts remain inspectable when payloads are missing. Execution, Save As and migration remain unavailable.</p>
+    <section class="project-history-panel" aria-labelledby="project-candidate-preparation-title">
+      <h2 id="project-candidate-preparation-title">Prepare a Candidate package or verifier</h2>
+      <p>Choose a current Study, Candidate and captured CPU runtime. Preparation saves an inert Trial and exact sources; approval and Run admission remain separate actions.</p>
+      <form id="project-candidate-prepare-form"><fieldset id="project-candidate-prepare-fields" disabled><legend>Explicit Candidate preparation</legend>
+        <label>Study ID<input id="project-candidate-study" maxlength="32" pattern="[a-f0-9]{32}" required></label><label>Current Study revision<input id="project-candidate-revision" type="number" min="1" value="1" required></label>
+        <label>Candidate ID<input id="project-candidate-id" maxlength="32" pattern="[a-f0-9]{32}" required></label>
+        <label>Preparation<select id="project-candidate-kind"><option value="package">Candidate package</option><option value="verifier">Fresh verifier</option></select></label>
+        <label>Configured publication root<select id="project-candidate-root" required></select></label><label>New package directory<input id="project-candidate-directory" maxlength="120" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,119}" required></label>
+        <label>Captured CPU runtime manifest SHA256<input id="project-candidate-runtime" maxlength="64" pattern="[a-f0-9]{64}" required></label>
+        <div id="project-candidate-verifier-fields" hidden><label>Completed package Run ID<input id="project-candidate-package-run" maxlength="32" pattern="[a-f0-9]{32}"></label><label>Exact package SHA256<input id="project-candidate-package-sha" maxlength="64" pattern="[a-f0-9]{64}"></label></div>
+        <button id="project-candidate-prepare" type="submit">Prepare saved Trial without launching</button>
+      </fieldset></form><p id="project-candidate-preparation-status" role="status"></p><pre id="project-candidate-preparation-result"></pre>
+      <form id="project-candidate-recovery-form"><fieldset id="project-candidate-recovery-fields" disabled><legend>Resolve this installation's pending preparation</legend>
+        <p>These actions require the original current local custody marker. Imported intent or completion history does not authorize reconciliation. Neither action deletes staging files or starts a Run.</p>
+        <label>Study ID<input id="project-candidate-recovery-study" maxlength="32" pattern="[a-f0-9]{32}" required></label><label>Original preparation request key<input id="project-candidate-recovery-key" maxlength="128" required></label>
+        <button id="project-candidate-reconcile" type="button">Reconcile acknowledged preparation</button>
+        <label>Reason to abandon a stopped partial preparation<textarea id="project-candidate-abandon-reason" maxlength="1000" rows="3"></textarea></label>
+        <button id="project-candidate-abandon" type="button">Abandon stopped partial preparation</button>
+      </fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-runtime-title">
+      <h2 id="project-runtime-title">Capture a current CPU runtime</h2>
+      <p>An operator configures the source aliases on this installation. Inspect the selected source, review its exact inventory, then explicitly capture it. These controls copy bytes without executing Python, installing packages or granting permission to run a project.</p>
+      <button id="project-runtime-sources" type="button">Load configured runtime sources</button><button id="project-runtime-sources-more" type="button" hidden>More configured sources</button>
+      <label>Current local source<select id="project-runtime-source"></select></label>
+      <button id="project-runtime-inspect" type="button" disabled>Inspect selected runtime inventory</button><button id="project-runtime-files-more" type="button" hidden>More inventory files</button>
+      <p id="project-runtime-summary" role="status"></p><pre id="project-runtime-layout"></pre><ul id="project-runtime-files" class="project-fact-list"></ul>
+      <form id="project-runtime-capture-form"><fieldset id="project-runtime-capture-fields" disabled><legend>Capture reviewed inventory</legend>
+        <label>Free disk reserve after capture (bytes)<input id="project-runtime-reserve" type="number" min="0" max="9007199254740991" value="6442450944" required></label>
+        <label><input id="project-runtime-confirm" type="checkbox">I reviewed this source and exact inventory digest and want to copy its bytes into this installation's local cache.</label>
+        <button id="project-runtime-capture" type="submit" disabled>Capture reviewed runtime</button>
+      </fieldset></form><p id="project-runtime-pending" role="status"></p>
+      <form id="project-runtime-status-form"><fieldset id="project-runtime-status-fields" disabled><legend>Inspect retained capture facts</legend>
+        <label>Capture request key<input id="project-runtime-status-key" maxlength="128" required></label><button type="submit">Inspect retained capture outcome</button>
+      </fieldset></form><p>This outcome is historical. “Captured” does not establish that a current local runtime is present or ready. Reopening a project does not capture or provision it.</p><pre id="project-runtime-status"></pre>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-save-as-title">
+      <h2 id="project-save-as-title">Save As an independent project</h2>
+      <p>Use a new directory. Historical results keep their original identities; editable definitions receive new identities. Changed working files and unresolved current work must be resolved first.</p>
+      <form id="project-save-as-form"><fieldset id="project-save-as-fields" disabled>
+        <legend>Fork destination</legend><label>Local root<select id="project-save-as-root" required></select></label>
+        <label>New relative directory<input id="project-save-as-directory" maxlength="512" required></label>
+        <label>New project name<input id="project-save-as-name" maxlength="200" required></label>
+        <button id="project-files-save-as" type="submit">Save As independent project</button>
+      </fieldset></form><p id="project-save-as-summary" role="status"></p>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-working-title">
+      <h2 id="project-working-title">Scripts and notes</h2>
+      <p>Inspect files already adopted into this project, or explicitly adopt exact current UTF-8 bytes. Captured scripts are displayed as text and never run by these controls.</p>
+      <div class="actions"><button id="project-working-load" type="button">Inspect working files</button><button id="project-working-more" type="button" hidden>More working files</button></div>
+      <ul id="project-working-list" class="project-fact-list"></ul>
+      <form id="project-working-adopt-form"><fieldset id="project-working-adopt-fields" disabled><legend>Adopt current file bytes</legend>
+        <label>Kind<select id="project-working-kind"><option value="script">Script</option><option value="note">Note</option></select></label>
+        <label>Relative project path<input id="project-working-path" maxlength="512" placeholder="scripts/example.py" required></label>
+        <label>Expected adopted revision (0 for a new file)<input id="project-working-revision" type="number" min="0" value="0" required></label>
+        <label>Expected current SHA256<input id="project-working-sha" maxlength="64" pattern="[a-f0-9]{64}" required></label>
+        <label>Optional matching local file to calculate the SHA256<input id="project-working-local" type="file"></label>
+        <p class="help">This picker calculates a digest in your browser. Adoption reads the existing file at the relative project path; it does not upload or replace it.</p>
+        <button type="submit">Adopt reviewed bytes</button></fieldset></form>
+      <h3 id="project-working-heading" tabindex="-1">Select a captured file revision</h3>
+      <p id="project-working-summary"></p><label>Captured UTF-8 text<textarea id="project-working-text" rows="12" readonly></textarea></label>
+      <button id="project-working-history" type="button" disabled>Load captured revision history</button>
+      <ul id="project-working-history-list" class="project-fact-list"></ul><button id="project-working-history-more" type="button" hidden>More captured revisions</button>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-fork-title">
+      <h2 id="project-fork-title">Fork origins and bindings</h2>
+      <div class="actions"><button id="project-fork-load" type="button">Inspect fork mappings</button><button id="project-fork-more" type="button" hidden>More mappings</button><button id="project-intents-load" type="button">Inspect bindings needing reselection</button><button id="project-intents-more" type="button" hidden>More binding intents</button><button id="project-intent-capabilities" type="button">Inspect current definition readiness</button><button id="project-intent-capabilities-more" type="button" hidden>More definition readiness</button></div>
+      <p id="project-fork-summary"></p><ul id="project-fork-list" class="project-fact-list"></ul><ul id="project-intents-list" class="project-fact-list"></ul>
+      <h3 id="project-intent-title" tabindex="-1">Select an unresolved binding</h3><p>Review its original parameters and binding fields below. Recreate a current definition with the named model or graph controls; this history never rebinds or grants execution.</p>
+      <pre id="project-intent-detail"></pre>
+    </section>
+    <p class="scope">Authored edits are saved to the project before acknowledgement. Historical materials and artifacts remain inspectable when payloads are missing. Execution requires explicit current local permission through available controls. Independent Save As and explicit working-file adoption are available when their negotiated controls are enabled. Migration remains unavailable.</p>
     <div class="workspace-grid">
       <section aria-labelledby="text-import-title">
         <h2 id="text-import-title">Author text</h2>
@@ -143,7 +214,7 @@
     </section>
     <section class="project-history-panel" aria-labelledby="project-study-create-title">
       <h2 id="project-study-create-title">Plan a Study</h2>
-      <p>Save scientific selection criteria and finite budget metadata. Run admission and execution remain unavailable.</p>
+      <p>Save scientific selection criteria and finite budget metadata. Continue and admit prepared Trials explicitly through current Study execution controls when available.</p>
       <form id="project-study-create-form"><fieldset id="project-study-create-fields" disabled><legend>New Study</legend>
         <label>Name<input id="project-study-create-name" maxlength="120" required></label>
         <label>Metric definition SHA256<input id="project-study-metric" pattern="[a-f0-9]{64}" maxlength="64" required aria-describedby="project-study-metric-help"></label>
@@ -165,6 +236,56 @@
         <label>Declared data<select id="project-scientific-reference" required></select></label><button id="project-source-references-more" type="button" hidden>Load more declared data references</button><label>Name<input id="project-scientific-name" maxlength="200" required></label>
         <label>Protected groups<input id="project-scientific-groups" value="project" required></label><label>Rights / permission note<input id="project-scientific-rights" value="unknown" maxlength="1000" required></label><button type="submit">Import exact scientific data</button>
       </fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-execution-title">
+      <h2 id="project-execution-title">Current local execution</h2>
+      <p>Review the exact current recipe before granting permission. Approvals apply to this installation and actor. Saved historical admissions and approvals never restart execution when a project is opened.</p>
+      <div class="actions"><button id="project-execution-health" type="button">Refresh current custody</button><button id="project-execution-health-more" type="button" hidden>Next active Runs</button><button id="project-execution-reconcile" type="button">Reconcile and drain current custody</button><button id="project-execution-graphs" type="button">Load external recipe graphs</button></div>
+      <p id="project-execution-summary" aria-live="polite"></p><div id="project-execution-facts" class="project-facts"></div>
+      <form id="project-execution-preflight-form"><fieldset id="project-execution-preflight-fields" disabled><legend>Review current recipe</legend>
+        <label>Saved external graph<select id="project-execution-graph" required></select></label><button id="project-execution-graphs-more" type="button" hidden>Load more external graphs</button><button type="submit">Inspect exact execution material</button>
+      </fieldset></form>
+      <form id="project-execution-approval-form"><fieldset id="project-execution-approval-fields" disabled><legend>Approve reviewed material locally</legend>
+        <label>Execution actor ID<input id="project-execution-consumer" maxlength="32" pattern="[a-f0-9]{32}" required></label>
+        <label>Approval lifetime in seconds<input id="project-execution-ttl" type="number" min="60" max="3600" value="600" required></label>
+        <label class="check-row"><input id="project-execution-confirm" type="checkbox" required>I approve running this reviewed material on this installation.</label>
+        <button type="submit">Grant current local approval</button>
+      </fieldset></form>
+      <form id="project-execution-submit-form"><fieldset id="project-execution-submit-fields" disabled><legend>Start explicitly approved execution</legend><p id="project-execution-grant" class="help">No current local approval selected.</p><button type="submit">Start approved Run</button></fieldset></form>
+      <form id="project-execution-cancel-form"><fieldset id="project-execution-cancel-fields" disabled><legend>Cancel a current local Run</legend><label>Current Run ID<input id="project-execution-run-id" maxlength="32" pattern="[a-f0-9]{32}" required></label><button type="submit">Request cancellation</button></fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-study-execution-title">
+      <h2 id="project-study-execution-title">Current Study execution</h2>
+      <p>Select a Study in the scientific history view, then load its current epoch and prepared Trials. Closing an epoch saves cancellation intent; it does not prove that its child processes have ceased.</p>
+      <button id="project-study-execution-load" type="button">Load selected Study and Trials</button><p id="project-study-execution-summary" aria-live="polite"></p>
+      <form id="project-study-continue-form"><fieldset id="project-study-continue-fields" disabled><legend>Open a current epoch</legend><button type="submit">Open Study epoch</button></fieldset></form>
+      <label>Prepared Trial<select id="project-study-execution-trial"></select></label><button id="project-study-trials-more" type="button" hidden>Load more prepared Trials</button>
+      <form id="project-study-approval-form"><fieldset id="project-study-approval-fields" disabled><legend>Approve this Trial locally</legend><label>Execution actor ID<input id="project-study-consumer" maxlength="32" pattern="[a-f0-9]{32}" required></label><button type="submit">Review and approve exact Trial material</button></fieldset></form>
+      <form id="project-study-admit-form"><fieldset id="project-study-admit-fields" disabled><legend>Admit a Trial under the current budget</legend><button type="submit">Admit approved Trial Run</button></fieldset></form>
+      <form id="project-study-stop-form"><fieldset id="project-study-stop-fields" disabled><legend>Close the current epoch</legend><button type="submit">Close epoch and request cancellation</button></fieldset></form>
+    </section>
+    <section class="project-history-panel" aria-labelledby="project-producer-execution-title">
+      <h2 id="project-producer-execution-title">Current model producers</h2>
+      <p>These actions contact the model endpoint you choose now. Captured requests and results remain historical facts; opening them never contacts a model or resumes a queue.</p>
+      <div class="actions"><button id="project-producer-health" type="button">Refresh current producer custody</button><button id="project-producer-health-more" type="button" hidden>Next current producers</button></div><p id="project-producer-health-summary"></p>
+      <form id="project-producer-start-form"><fieldset id="project-producer-start-fields" disabled><legend>Start an explicit model request</legend>
+        <label>Task<select id="project-producer-task"><option value="caption_proposal_history">Propose an image caption</option><option value="text_proposal_history">Propose a text class</option><option value="grounded_history">Generate grounded text candidates</option><option value="generation_history">Generate images</option></select></label>
+        <button id="project-producer-source-load" type="button">Use selected saved data as source</button><p id="project-producer-source-summary">Select an image or text record in saved data first.</p>
+        <label>Current model endpoint<input id="project-producer-url" type="url" maxlength="2048" placeholder="http://127.0.0.1:8080" required></label>
+        <label>Exact served model<input id="project-producer-model" maxlength="256" required></label>
+        <label>Transport<select id="project-producer-transport"><option value="compatible">Compatible API</option><option value="typed">Typed Pumas</option></select></label><label>Typed profile (optional)<input id="project-producer-profile" maxlength="128"></label>
+        <label>Guidance or image prompt<textarea id="project-producer-instruction" maxlength="4000" required></textarea></label>
+        <label>Seed<input id="project-producer-seed" type="number" min="0" max="4294967295" value="1" required></label>
+        <div id="project-producer-label-fields" hidden><label>Exact class labels, one per line<textarea id="project-producer-labels" maxlength="2500"></textarea></label></div>
+        <div id="project-producer-count-fields" hidden><label>Requested count<input id="project-producer-count" type="number" min="1" max="10000" value="1"></label></div>
+        <div id="project-producer-generation-fields" hidden><label>Recording session ID<input id="project-producer-session" maxlength="120"></label><label>Width<input id="project-producer-width" type="number" min="1" value="1280"></label><label>Height<input id="project-producer-height" type="number" min="1" value="720"></label><label>Prompt strategy<select id="project-producer-strategy"><option value="repeat">Repeat exact prompt</option><option value="varied">Generate varied prompts</option></select></label><label>Variation model endpoint<input id="project-producer-prompt-url" type="url" maxlength="2048"></label><label>Variation model<input id="project-producer-prompt-model" maxlength="256"></label></div>
+        <label class="check-row"><input id="project-producer-confirm" type="checkbox" required>I authorize this current model request and its captured inputs.</label><button type="submit">Start model request</button>
+      </fieldset></form>
+      <button id="project-producer-current-load" type="button">Load selected producer for current actions</button><p id="project-producer-current-summary"></p>
+      <form id="project-producer-resume-form"><fieldset id="project-producer-resume-fields" disabled><legend>Continue a current image queue</legend><button type="submit">Resume local image queue</button></fieldset></form>
+      <form id="project-producer-decision-form"><fieldset id="project-producer-decision-fields" disabled><legend>Review a caption or class proposal</legend><label>Decision<select id="project-producer-decision"><option value="reject">Reject proposal</option><option value="apply_draft">Apply as a draft annotation</option></select></label><button type="submit">Save proposal decision</button></fieldset></form>
+      <form id="project-producer-review-form"><fieldset id="project-producer-review-fields" disabled><legend>Review a grounded candidate</legend><label>Candidate<select id="project-producer-candidate"></select></label><label>Decision<select id="project-producer-review-decision"><option value="reject">Reject candidate</option><option value="admit_draft">Admit candidate as draft data</option></select></label><label>Review note<input id="project-producer-note" maxlength="1000" required></label><button type="submit">Save candidate review</button></fieldset></form>
+      <form id="project-producer-cancel-form"><fieldset id="project-producer-cancel-fields" disabled><legend>Cancel this current local producer</legend><button type="submit">Request cancellation and drain</button></fieldset></form>
     </section>
   </main>
 </body>

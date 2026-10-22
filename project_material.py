@@ -190,7 +190,8 @@ def decode_records(records):
         _closed(envelope, ('family', 'id', 'document'), 'material envelope')
         family, doc = envelope['family'], envelope['document']
         if family in EDITABLE:
-            _closed(doc, ('format', 'origin_catalog_id', 'current', 'revisions', 'audit'), 'definition history')
+            _closed(doc, ('format', 'origin_catalog_id', 'current', 'revisions', 'audit') +
+                    (('fork_origin',) if 'fork_origin' in doc else ()), 'definition history')
         else:
             _closed(doc, ('format', 'origin_catalog_id', 'value', 'artifacts','audit'), 'immutable material')
         if doc['format'] != FAMILIES[family]:
@@ -198,14 +199,23 @@ def decode_records(records):
         catalog_id = _catalog(doc['origin_catalog_id'])
         if family in EDITABLE:
             revisions = doc['revisions']
-            if type(revisions) is not list or not revisions or type(doc['audit']) is not list or len(doc['audit']) != len(revisions):
+            forked = 'fork_origin' in doc
+            if (type(revisions) is not list or not revisions or type(doc['audit']) is not list or
+                    len(doc['audit']) != len(revisions) - int(forked)):
                 raise WorkbenchError('Definition history must retain its observed revisions and audit.')
             previous = None
-            for value, audit in zip(revisions, doc['audit'], strict=True):
-                value = _definition(family, value, catalog_id)
+            for index, value in enumerate(revisions):
+                from project_material_fork import is_intent, decode_intent
+                if is_intent(value):
+                    if not forked or index != 0 or len(revisions) != 1:
+                        raise WorkbenchError('Unresolved fork intents cannot acquire owner revisions.')
+                    value = decode_intent(value, family, catalog_id)
+                else:
+                    value = _definition(family, value, catalog_id)
                 if previous and (value['id'] != previous['id'] or value['revision'] != previous['revision'] + 1):
                     raise WorkbenchError('Definition history identity or revision changed.')
-                _definition_audit(family,value,audit,catalog_id)
+                if not forked or index:
+                    _definition_audit(family, value, doc['audit'][index - int(forked)], catalog_id)
                 previous = value
             if doc['current'] != revisions[-1]:
                 raise WorkbenchError('Definition current value differs from its history.')
@@ -245,6 +255,8 @@ def decode_records(records):
         if envelope['id'] != expected or (family, expected) in result:
             raise WorkbenchError('Retained material locator differs or repeats.')
         result[(family, expected)] = copy.deepcopy(doc)
+    from project_material_fork import validate_records
+    validate_records(records)
     return result
 
 
@@ -311,6 +323,36 @@ class ProjectMaterial:
     def _documents(self):
         self.session.check()
         return decode_records(self.session.snapshot['records'])
+
+    @_boundary
+    def intents(self):
+        """Inspect unresolved active definitions; they confer no execution binding."""
+        if self.owner_access:
+            self.session.access.require('inspect', 'project_material.intents')
+        from project_fork import active_records
+        from project_material_fork import is_intent
+        documents = self._documents()
+        active = {(r['family'], r['id']) for r in active_records(
+            self.session.snapshot['records'], project_id=self.session.snapshot['project_id'])}
+        return [dict(family=family, id=locator, current=copy.deepcopy(doc['current']),
+                     fork_origin=copy.deepcopy(doc['fork_origin']))
+                for (family, locator), doc in sorted(documents.items())
+                if (family, locator) in active and family in EDITABLE and is_intent(doc['current'])]
+
+    @_boundary
+    def intent_capabilities(self):
+        intents = self.intents()
+        unresolved = {(r['family'],r['id']) for r in intents}
+        from project_fork import active_records
+        active = active_records(self.session.snapshot['records'], project_id=self.session.snapshot['project_id'])
+        return dict(requires_reselection=[dict(family=r['family'],id=r['id'],fields=r['current']['required_reselection']) for r in intents],
+                    editable=[dict(family=r['family'],id=r['id']) for r in active
+                              if r['family'] in EDITABLE and (r['family'],r['id']) not in unresolved])
+
+    def _require_resolved(self, family, identity):
+        for intent in self.intents():
+            if intent['family'] == family and intent['current']['id'] == identity:
+                raise WorkbenchError('Fork intent requires explicit binding reselection.', 'requires_reselection', 409)
 
     @_boundary
     def _value(self, family, ref):
@@ -394,7 +436,15 @@ class ProjectMaterial:
         revisions.append(copy.deepcopy(value));audits.extend(facts)
         record = dict(family=family, id=key, document=dict(format=FAMILIES[family], origin_catalog_id=catalog_id,
                       current=copy.deepcopy(value), revisions=revisions, audit=audits))
-        decode_records([record]); return record
+        if prior and 'fork_origin' in prior:
+            from project_material_fork import is_intent
+            if is_intent(prior['current']):
+                raise WorkbenchError('Fork intent requires explicit binding reselection.', 'requires_reselection', 409)
+            record['document']['fork_origin'] = copy.deepcopy(prior['fork_origin'])
+            decode_records([r for r in before_records if (r['family'],r['id']) != (family,key)] + [record])
+        else:
+            decode_records([record])
+        return record
 
     def _capture_material(self, family, value, root):
         catalog_id = value['ref']['catalog_id']
@@ -534,11 +584,15 @@ class ProjectMaterial:
     def restore(self):
         """Rebuild only current-namespace SQL values, without mutable owners."""
         documents=self._documents();catalog_id=self.session.db.dataset_id
+        from project_fork import active_records
+        from project_material_fork import is_intent
+        active={(r['family'],r['id']) for r in active_records(self.session.snapshot['records'],project_id=catalog_id)}
         with self.session.db.transaction():
             for table in ('model_definition_drafts','workspace_graphs','workspace_recipe_drafts','model_materials','workspace_recipe_materials'):
                 self.session.db.execute('DELETE FROM '+table)
-            for (family,_),doc in documents.items():
-                if doc['origin_catalog_id']!=catalog_id:continue
+            for (family,locator),doc in documents.items():
+                if (family,locator) not in active or doc['origin_catalog_id']!=catalog_id:continue
+                if family in EDITABLE and is_intent(doc['current']):continue
                 if family in EDITABLE:
                     value=doc['current']
                     table={'model_definition':'model_definition_drafts','pipeline_graph':'workspace_graphs','recipe_definition':'workspace_recipe_drafts'}[family]
@@ -549,6 +603,55 @@ class ProjectMaterial:
                 elif family=='recipe_material':
                     value=doc['value'];material=value['material']
                     self.session.db.execute('INSERT INTO workspace_recipe_materials VALUES(%s,%s,%s,%s)',(value['ref']['sha256'],material['recipe_id'],material['recipe_revision'],encode(value)))
+
+    def reconcile_projection(self):
+        """Restore selected canonical material facts without deleting local custody.
+
+        The caller holds projection/session/access guards and has drained custody.
+        Immutable SQL conflicts fence recovery instead of replacing hash identity.
+        """
+        documents = self._documents()
+        catalog_id = self.session.db.dataset_id
+        from project_fork import active_records
+        from project_material_fork import is_intent
+        active = {(r['family'], r['id']) for r in active_records(
+            self.session.snapshot['records'], project_id=catalog_id)}
+        with self.session.db.transaction():
+            for (family, locator), doc in documents.items():
+                if (family, locator) not in active or doc['origin_catalog_id'] != catalog_id:
+                    continue
+                if family in EDITABLE:
+                    value = doc['current']
+                    if is_intent(value): continue
+                    table = {'model_definition':'model_definition_drafts', 'pipeline_graph':'workspace_graphs',
+                             'recipe_definition':'workspace_recipe_drafts'}[family]
+                    self.session.db.execute('INSERT INTO '+table+'(id,revision,document) VALUES(%s,%s,%s) '
+                        'ON CONFLICT(id) DO UPDATE SET revision=EXCLUDED.revision,document=EXCLUDED.document',
+                        (value['id'], value['revision'], encode(value)))
+                elif family in ('model_material', 'recipe_material'):
+                    value = doc['value']; ref = value['ref']
+                    table = 'model_materials' if family == 'model_material' else 'workspace_recipe_materials'
+                    if family == 'model_material':
+                        rows = self.session.db.execute('SELECT id,revision,sha256,document FROM model_materials '
+                            'WHERE sha256=%s OR (id=%s AND revision=%s)',
+                            (ref['sha256'],ref['id'],ref['revision'])).fetchall()
+                        consistent = len(rows) == 1 and tuple(rows[0][:3]) == (ref['id'],ref['revision'],ref['sha256']) and retained_json(rows[0][3]) == value
+                    else:
+                        rows = self.session.db.execute('SELECT recipe_id,recipe_revision,document FROM workspace_recipe_materials '
+                            'WHERE sha256=%s', (ref['sha256'],)).fetchall()
+                        consistent = len(rows) == 1 and tuple(rows[0][:2]) == (value['material']['recipe_id'],value['material']['recipe_revision']) and retained_json(rows[0][2]) == value
+                    if rows:
+                        if not consistent:
+                            raise WorkbenchError('Immutable projection material differs from its canonical hash.',
+                                                 'projection_unavailable', 503)
+                        continue
+                    if family == 'model_material':
+                        self.session.db.execute('INSERT INTO model_materials(id,revision,sha256,document) VALUES(%s,%s,%s,%s)',
+                            (ref['id'], ref['revision'], ref['sha256'], encode(value)))
+                    else:
+                        material = value['material']
+                        self.session.db.execute('INSERT INTO workspace_recipe_materials(sha256,recipe_id,recipe_revision,document) '
+                            'VALUES(%s,%s,%s,%s)', (ref['sha256'],material['recipe_id'],material['recipe_revision'],encode(value)))
 
     def materialize_projection(self,ref,root):
         """Explicit preparation may recreate a disposable owner byte cache.
@@ -591,6 +694,7 @@ class ProjectMaterial:
             if staging.exists():shutil.rmtree(staging)
 
     def prepare_recipe(self,owner,graph_id,revision,model_ref,expected_checkpoint,key,*,builtin=False,reconcile_capture=False,runtime_manifest=None):
+        self._require_resolved('pipeline_graph', graph_id)
         operation='recipes.prepare_builtin_material' if builtin else 'recipes.prepare_external_material'
         self.session.access.require('edit',operation,graph_id,owner_only=reconcile_capture and not builtin)
         if builtin:
@@ -619,6 +723,7 @@ class ProjectMaterial:
         return self.session.mutate(operation, target, body, expected_checkpoint, key, invoke, capture)
 
     def publish_model(self, owner, model_id, body, expected_checkpoint, key):
+        self._require_resolved('model_definition', model_id)
         self.session.access.require('edit', 'models.publish', model_id, owner_only=body.get('reconcile_capture', False))
         def capture(result, before):
             record=self.capture_model_material(result,owner.path)

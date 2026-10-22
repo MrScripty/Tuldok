@@ -3,3 +3,10 @@
 .project-history-panel{margin-top:1.5rem}.project-fact-list{list-style:none;padding:0;max-height:42rem;overflow:auto}.project-fact-list>li{padding:.65rem 0;border-bottom:1px solid #dce4de}.project-fact-list button{width:100%;text-align:left}.project-facts{overflow-wrap:anywhere}.project-facts dl{margin:.4rem 0 .8rem;border-left:2px solid #dce4de;padding-left:.7rem}.project-facts dt{font-weight:600;text-transform:capitalize}.project-facts dd{margin:0 0 .6rem;white-space:pre-wrap;max-height:18rem;overflow:auto}.project-facts details{margin:.5rem 0}.project-facts summary{cursor:pointer;font-weight:600}.project-history-panel form{margin:1rem 0}.project-history-panel legend{padding-top:.5rem}
 /* History rows share the detail viewer's hash wrapping and intrinsic width. */
 #project-detail-history-list{overflow-wrap:anywhere}
+.check-row{display:flex;gap:.6rem;align-items:flex-start}.check-row input{width:auto;flex:none;margin-top:.35rem}
+
+#project-working-summary,#project-save-as-summary,#project-fork-summary,#project-working-list,#project-working-history-list,#project-fork-list,#project-intents-list,#project-intent-detail{overflow-wrap:anywhere;min-width:0}#project-intent-detail{white-space:pre-wrap;max-height:32rem;overflow:auto}#project-working-text{white-space:pre;overflow:auto}
+
+#project-runtime-files,#project-runtime-summary,#project-runtime-pending,#project-runtime-layout,#project-runtime-status{overflow-wrap:anywhere;min-width:0}#project-runtime-layout,#project-runtime-status{white-space:pre-wrap;max-height:32rem;overflow:auto}
+
+#project-candidate-preparation-result,#project-candidate-preparation-status{overflow-wrap:anywhere;min-width:0}#project-candidate-preparation-result{white-space:pre-wrap;max-height:32rem;overflow:auto}

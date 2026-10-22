@@ -162,6 +162,26 @@
   surrogate lab remains uninspected and unmigrated. There is no environment
   or missing-user-decision blocker.
 
+## 2026-10-22 — Unaccepted integration recovery checkpoint
+
+- A temporary executor disconnect was verified through failed process creation
+  and a pending patch read. Actual subsequent shell and repository status reads
+  succeeded; existing work was intact. Workers checked uncertain original test
+  processes before retrying. The native candidate recovery case had completed
+  successfully, so no duplicate was launched.
+- The lead is preserving the current disjoint M3–M5 product, tests and evidence
+  in a local WIP commit. This is recoverable integration work, not milestone
+  acceptance or a request to merge. The remote draft remains at accepted M2
+  `c22e9d02c87938514a7a1c9b3b0532158008ca0d` until a later intentional push.
+- [M3](reports/m3-implementation.md), [M4](reports/m4-implementation.md) and
+  [M5](reports/m5-implementation.md) evidence distinguish actual passes, failed
+  cases, controlled fixtures and unrun gates. [M2 CI diagnosis](reports/m2-ci-repair.md)
+  retains the terminal failure and targeted browser-fixture repair; no CI rerun
+  or duplicate full-suite campaign was started.
+- The original main/standards revisions remain unchanged. No user data or lab
+  was inspected or migrated, no Coding-Standards file changed, and nothing was
+  merged or deleted. Current phase/next action remain solely in the plan.
+
 ## Retained resources
 
 Planning worktree `/workspace/Tuldok-project-save-load-plan` and private branch `plan/external-project-save-load-20261022` are **retained-protected** for the user's review. The user owns integration/disposition; no synchronization or cleanup occurs without follow-up. The local final commit is the retained branch head (reported in the final response and resolvable with `git rev-parse plan/external-project-save-load-20261022`); its full SHA is not embedded into its own commit contents. Commit disposition is `retained`, reachable from this named local branch. The original checkout is outside this task's cleanup scope. `/workspace/Coding-Standards-readonly` remains an unchanged reference checkout, not an application worktree or deliverable.

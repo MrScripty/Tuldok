@@ -76,9 +76,9 @@ def validate_retained_attempt(job, entry, evidence):
     return request
 
 
-def prompt_batch(config, offset, count, previous):
-    """Bound context independently of dataset size; uniqueness is checked locally."""
-    payload = {
+def prompt_payload(config, offset, count, previous, variation_key):
+    """Pure bounded prompt request policy, shared by live capture and decoding."""
+    return {
         'model': config['prompt_model'], 'stream': False, 'max_tokens': 6000,
         'response_format': {'type': 'json_object'},
         'messages': [
@@ -91,13 +91,54 @@ def prompt_batch(config, offset, count, previous):
             {'role': 'user', 'content': json.dumps({
                 'brief': config['prompt'], 'total_images': config['count'],
                 'first_image_number': offset + 1, 'number_of_prompts': count,
-                'batch_variation_key': uuid.uuid4().hex,
+                'batch_variation_key': variation_key,
                 'recent_prompts_to_avoid': previous[-BATCH_SIZE:],
             })},
         ],
     }
+
+
+def decode_prompt_batch(data, count):
+    try:
+        choice = json.loads(data)['choices'][0]
+        if choice.get('finish_reason') != 'stop':
+            raise ValueError()
+        prompts = json.loads(choice['message']['content'])['prompts']
+        if not isinstance(prompts, list) or len(prompts) != count or any(
+                not isinstance(p, str) or not p.strip() or len(p) > 4000 for p in prompts):
+            raise ValueError()
+        return [p.strip() for p in prompts]
+    except (ValueError, KeyError, IndexError, TypeError):
+        raise ValueError('Prompt model must return the requested number of complete JSON prompts. Try a smaller brief or a model with more output capacity.') from None
+
+
+
+def validate_retained_prompt_batch(config, batch, request, raw=None):
+    """Bind exact retained variation wire to its queue, without HTTP authority."""
+    brief = json.loads(request['messages'][1]['content'])
+    previous = brief['recent_prompts_to_avoid']
+    if (type(previous) is not list or len(previous)>BATCH_SIZE
+            or any(type(p) is not str or not p.strip() or len(p)>4000 for p in previous)):
+        raise ValueError('Invalid retained prompt context.')
+    if request != prompt_payload(config,batch['offset'],batch['count'],previous,batch['id']):
+        raise ValueError('Retained prompt request differs from its queue intent.')
+    if raw is not None:
+        try:decoded=decode_prompt_batch(raw,batch['count'])
+        except ValueError:
+            if batch['status']!='failed':raise
+        else:
+            if batch['status']!='completed' or decoded!=batch['prompts']:
+                raise ValueError('Retained prompt result differs from its exact wire.')
+
+
+def prompt_batch(config, offset, count, previous, *, cancel_event=None,
+                 on_request=None, on_response=None):
+    """Bound context independently of dataset size; publish before HTTP/entries."""
+    payload = prompt_payload(config,offset,count,previous,uuid.uuid4().hex)
+    if on_request is not None:on_request(payload)
+
     with ai_http.request(config['prompt_url'], '/v1/chat/completions', payload,
-                         timeout=180, label='Pumas prompt model') as (response, transport, deadline):
+                         timeout=180, label='Pumas prompt model', cancel_event=cancel_event) as (response, transport, deadline):
         data = bytearray()
         while not response.isclosed():
             transport.settimeout(max(.001, deadline - time.monotonic()))
@@ -110,16 +151,12 @@ def prompt_batch(config, offset, count, previous):
             if len(data) > 256 * 1024:
                 raise ValueError('Prompt model returned an oversized response.')
     try:
-        choice = json.loads(data)['choices'][0]
-        if choice.get('finish_reason') != 'stop':
-            raise ValueError()
-        prompts = json.loads(choice['message']['content'])['prompts']
-        if not isinstance(prompts, list) or len(prompts) != count or any(
-                not isinstance(p, str) or not p.strip() or len(p) > 4000 for p in prompts):
-            raise ValueError()
-        return [p.strip() for p in prompts]
-    except (ValueError, KeyError, IndexError, TypeError):
-        raise ValueError('Prompt model must return the requested number of complete JSON prompts. Try a smaller brief or a model with more output capacity.') from None
+        prompts=decode_prompt_batch(data,count)
+    except ValueError as error:
+        if on_response is not None:on_response(payload,bytes(data),None,str(error))
+        raise
+    if on_response is not None:on_response(payload,bytes(data),prompts,'')
+    return prompts
 
 
 def validate(body):
@@ -183,12 +220,20 @@ class Jobs:
     def _save(self, job):
         self.db.execute('INSERT INTO generation_jobs (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], json.dumps(job)))
 
+        execution = getattr(self.dataset, 'project_execution', None)
+        if execution is not None:
+            execution.mark_generation(job['id'])
+
     def _entries(self, job_id):
         return [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_entries WHERE job_id=%s ORDER BY ordinal', (job_id,))]
 
     def _entry(self, entry):
         self.db.execute('INSERT INTO generation_entries (id, job_id, ordinal, data) VALUES (%s,%s,%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
                         (entry['id'], entry['job_id'], entry['ordinal'], json.dumps(entry)))
+
+        execution = getattr(self.dataset, 'project_execution', None)
+        if execution is not None:
+            execution.mark_generation(entry['job_id'])
 
     def _normalize_saved(self, job):
         entries = self._entries(job['id'])
@@ -217,7 +262,7 @@ class Jobs:
 
         self.db.on_rollback(restore_progress)
         entry.update(status='completed', sample_id=sample_id, metadata=metadata)
-        if pumas.typed(job['config']): entry['provider_outcome'] = 'result_received'
+        if pumas.typed(job['config']) or getattr(self.dataset,'project_execution',None) is not None: entry['provider_outcome'] = 'result_received'
         self._entry(entry)
         job['completed'] += 1
         self._save(job)
@@ -229,20 +274,25 @@ class Jobs:
 
     @authorized('execute', 'synthetic.start', owner_only=True)
     def start(self, body):
-        # Validate everything before starting billable work or persisting a job.
-        from app import metadata
-        config, meta = validate(body), metadata(body)
         with self.lock:
             if self.db.in_transaction:
                 raise ValueError('Generation dispatch requires its own committed transaction.')
             with self.db.transaction():
-                self._idle()
-                job = dict(id=uuid.uuid4().hex, config=config, meta=meta, status='preparing', error='', completed=0)
-                self._admit(job, 'synthetic.start')
-                self._save(job)
-            # Dispatch only after durable admission, including a successful commit.
-            self._launch(job)
+                job, launch = self._prepare_start(body)
+            if launch:
+                self._launch(job)
         return job
+
+    def _prepare_start(self, body):
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer preparation requires an owned transaction.')
+        from app import metadata
+        config, meta = validate(body), metadata(body)
+        self._idle()
+        job = dict(id=uuid.uuid4().hex, config=config, meta=meta, status='preparing', error='', completed=0)
+        self._admit(job, 'synthetic.start')
+        self._save(job)
+        return job, True
 
     def _idle(self):
         if not self.runtime_owner:
@@ -258,18 +308,25 @@ class Jobs:
             if self.db.in_transaction:
                 raise ValueError('Generation dispatch requires its own committed transaction.')
             with self.db.transaction():
-                self._idle()
-                job = next((j for j in self._jobs() if j['id'] == job_id), None)
-                if not job or job['status'] == 'completed':
-                    raise ValueError('Choose an unfinished generation job.')
-                job = self._normalize_saved(job)
-                if pumas.typed(job['config']) and any(e.get('provider_outcome') == 'unknown' for e in self._entries(job_id)):
-                    raise ValueError('An image attempt has an unknown provider outcome. Inspect it; this queue cannot replay it.')
-                job.update(status='preparing', error='')
-                self._admit(job, 'synthetic.resume')
-                self._save(job)
-            self._launch(job)
+                job, launch = self._prepare_resume(job_id)
+            if launch:
+                self._launch(job)
         return job
+
+    def _prepare_resume(self, job_id):
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer preparation requires an owned transaction.')
+        self._idle()
+        job = next((j for j in self._jobs() if j['id'] == job_id), None)
+        if not job or job['status'] == 'completed':
+            raise ValueError('Choose an unfinished generation job.')
+        job = self._normalize_saved(job)
+        if (pumas.typed(job['config']) or getattr(self.dataset,'project_execution',None) is not None) and any(e.get('provider_outcome') == 'unknown' for e in self._entries(job_id)):
+            raise ValueError('An image attempt has an unknown provider outcome. Inspect it; this queue cannot replay it.')
+        job.update(status='preparing', error='')
+        self._admit(job, 'synthetic.resume')
+        self._save(job)
+        return job, True
 
     @staticmethod
     def _request_digest(job):
@@ -296,18 +353,35 @@ class Jobs:
     @authorized('cancel', 'synthetic.cancel')
     def cancel(self, job_id):
         with self.lock, self.db.transaction():
-            if not self.runtime_owner:
-                raise ValueError('Generation workers belong to another open application. Cancel in that application.')
-            job = next((j for j in self._jobs() if j['id'] == job_id), None)
-            if not job or job['status'] not in ACTIVE:
-                return {'cancelled': False}
-            self.stop.set()
-            job['status'] = 'stopping'
-            self._save(job)
-            self.access.audit('synthetic.cancel', job_id)
-            if self.request_id:
-                self.dataset.image_requests.cancel(self.request_id)
-        return {'cancelled': True}
+            result, pending = self._prepare_cancel(job_id)
+            if pending is not None and self._signal_cancel(pending):
+                self._cancel_transport(pending)
+            return result
+
+    def _prepare_cancel(self, job_id):
+        """Persist intent only; project dispatch signals after canonical ACK."""
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer cancellation preparation requires an owned transaction.')
+        if not self.runtime_owner:
+            raise ValueError('Generation workers belong to another open application. Cancel in that application.')
+        job = next((j for j in self._jobs() if j['id'] == job_id), None)
+        if not job or job['status'] not in ACTIVE:
+            return {'cancelled': False}, None
+        pending = (self.worker, job_id, self.request_id)
+        job['status'] = 'stopping'
+        self._save(job)
+        self.access.audit('synthetic.cancel', job_id)
+        return {'cancelled': True}, pending
+
+    def _signal_cancel(self, pending):
+        if self.worker is not pending[0]:
+            return False
+        self.stop.set()
+        return True
+
+    def _cancel_transport(self, pending):
+        if pending[2]:
+            self.dataset.image_requests.cancel(pending[2])
 
     def close(self):
         self.stop.set()
@@ -342,7 +416,28 @@ class Jobs:
                 while len(entries) < config['count']:
                     self._check()
                     count = min(BATCH_SIZE, config['count'] - len(entries))
-                    prompts = prompt_batch(config, len(entries), count, [e['prompt'] for e in entries[-BATCH_SIZE:]])
+                    def retain_request(payload):
+                        if getattr(self.dataset,'project_execution',None) is None:return
+                        brief=json.loads(payload['messages'][1]['content'])
+                        batch=dict(id=brief['batch_variation_key'],offset=len(entries),count=count,status='requesting',error='',
+                                   request_sha256=hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest(),
+                                   response_sha256=None,prompts=None,canonical_request=payload,raw_response_base64=None)
+                        with self.lock,self.db.transaction():
+                            job.setdefault('prompt_batches',[]).append(batch)
+                            self._save(job)
+                    def retain_response(payload,raw,prompts,error):
+                        if getattr(self.dataset,'project_execution',None) is None:return
+                        import base64
+                        with self.lock,self.db.transaction():
+                            batch=job['prompt_batches'][-1]
+                            batch.update(status='failed' if error else 'completed',error=error,prompts=prompts,
+                                         raw_response_base64=base64.b64encode(raw).decode('ascii'),response_sha256=hashlib.sha256(raw).hexdigest())
+                            self._save(job)
+                    if getattr(self.dataset,'project_execution',None) is None:
+                        prompts = prompt_batch(config,len(entries),count,[e['prompt'] for e in entries[-BATCH_SIZE:]])
+                    else:
+                        prompts = prompt_batch(config,len(entries),count,[e['prompt'] for e in entries[-BATCH_SIZE:]],
+                                               cancel_event=self.stop,on_request=retain_request,on_response=retain_response)
                     self._check()
                     added = []
                     for prompt in prompts:
@@ -373,7 +468,7 @@ class Jobs:
                 entry.update(status='generating', error='')
                 with self.lock, self.db.transaction():
                     self.request_id = uuid.uuid4().hex
-                    if pumas.typed(config):
+                    if pumas.typed(config) or getattr(self.dataset,'project_execution',None) is not None:
                         entry.update(request_id=self.request_id, provider_outcome='unknown')
                     self._entry(entry)
                 body = {key: config[key] for key in ('server_url', 'model', 'width', 'height')}

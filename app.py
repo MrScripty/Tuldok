@@ -1,5 +1,6 @@
 """Tuldok: local image capture and corner-label dataset workspace."""
 import argparse
+from contextlib import contextmanager
 import psycopg
 import ai
 import ai_codex
@@ -49,6 +50,7 @@ from project_store import ProjectStoreError
 from image_sources import ImageSources, Conflict, now, metadata, validate_annotation, CORNERS, VISIBILITY, SPLITS
 import tempfile
 import threading
+import time
 import uuid
 import zipfile
 from datetime import datetime, timezone
@@ -64,6 +66,15 @@ MAX_BODY = 40 * 1024 * 1024
 
 class Dataset(ImageSources):
     def __init__(self, path, *, dsn=None, project_roots=None):
+        self._close_lock = threading.RLock()
+        self._closed = False
+        self._extraction_condition = threading.Condition()
+        self._extraction_requests = {}
+        self._extraction_stopping = False
+        self._extraction_binding = uuid.uuid4().hex
+        self._extraction_guard = None
+        self._extraction_closer = None
+        self._extraction_close_error = None
         self.path = Path(path).resolve()
         self.path.mkdir(parents=True, exist_ok=True)
         (self.path / 'images').mkdir(exist_ok=True)
@@ -99,14 +110,87 @@ class Dataset(ImageSources):
             raise
 
     def close(self):
-        with self.access._reconcile():
-            self.runs.close()
-            self.text_classification_proposals.close()
-            self.caption_proposals.close()
-            self.grounded.close()
-            self.generation_jobs.close()
-            self.projects.close()
-            self.db.close()
+        with self._close_lock:
+            if self._closed:
+                return
+            with self.access._reconcile():
+                self.runs.close()
+                self.text_classification_proposals.close()
+                self.caption_proposals.close()
+                self.grounded.close()
+                self.generation_jobs.close()
+                self.projects.close()
+                self.db.close()
+                self._closed = True
+
+    def close_for_project_extraction(self, *, deadline):
+        """Bound this explicit stop without treating a timeout as cessation."""
+        guard = self._extraction_guard
+        if guard is None:
+            raise workbench.WorkbenchError('A drained original controller is required.', 'source_busy', 409)
+        guard.require(self)
+        if type(deadline) not in (int, float) or not math.isfinite(deadline):
+            raise workbench.WorkbenchError('An exact stop deadline is required.')
+        with self._extraction_condition:
+            if self._extraction_closer is None:
+                def close_owned():
+                    try:
+                        self.close()
+                    except BaseException as error:
+                        self._extraction_close_error = error
+                self._extraction_closer = threading.Thread(
+                    target=close_owned, name='tuldok-legacy-extraction-close', daemon=True)
+                try:
+                    self._extraction_closer.start()
+                except BaseException as error:
+                    self._extraction_close_error = error
+                    raise workbench.WorkbenchError('Owned legacy closure could not start; source remains fenced.', 'unknown', 503) from error
+            closer = self._extraction_closer
+        closer.join(max(0, deadline - time.monotonic()))
+        if closer.is_alive():
+            raise workbench.WorkbenchError('Owned legacy workers have not drained; source remains fenced.', 'source_busy', 409)
+        if self._extraction_close_error is not None:
+            raise workbench.WorkbenchError('Owned legacy closure failed; source remains fenced.', 'unknown', 503) from self._extraction_close_error
+        if not self._closed:
+            raise workbench.WorkbenchError('Owned legacy closure is unconfirmed; source remains fenced.', 'unknown', 503)
+        guard.require(self)
+
+    @contextmanager
+    def _project_request(self):
+        """Fence new legacy handlers before an explicit extraction stop."""
+        identity = threading.get_ident()
+        with self._extraction_condition:
+            if self._extraction_stopping:
+                raise workbench.WorkbenchError('This catalog is stopped for project extraction.', 'source_stopping', 409)
+            self._extraction_requests[identity] = self._extraction_requests.get(identity, 0) + 1
+        try:
+            yield
+        finally:
+            with self._extraction_condition:
+                self._extraction_requests[identity] -= 1
+                if not self._extraction_requests[identity]:
+                    del self._extraction_requests[identity]
+                self._extraction_condition.notify_all()
+
+    def stop_for_project_extraction(self, backup_parent_fd, backup_directory, external_roots=None):
+        """Explicit owner action; ordinary preview/Open never enters this path."""
+        deadline = time.monotonic() + 60
+        identity = threading.get_ident()
+        with self._extraction_condition:
+            if self._extraction_stopping:
+                raise workbench.WorkbenchError('Catalog extraction stop already has an owner.', 'source_stopping', 409)
+            self.access.require('admin', 'project_transfer.stop_source', owner_only=True)
+            self._extraction_stopping = True
+            guard = _LegacyExtractionGuard(self, self._extraction_binding, identity)
+            self._extraction_guard = guard
+            while any(thread != identity and count for thread, count in self._extraction_requests.items()):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise workbench.WorkbenchError('Existing requests have not drained; catalog remains fenced.', 'source_busy', 409)
+                self._extraction_condition.wait(min(.1, remaining))
+        from project_transfer import stop_source
+        return stop_source(self, backup_parent_fd=backup_parent_fd, backup_directory=backup_directory,
+                           external_roots=external_roots, controller_guard=guard)
 
 
     @authorized('execute', 'dataset.suggest', owner_only=True)
@@ -164,23 +248,113 @@ class Dataset(ImageSources):
             raise
 
 
-def make_handler(dataset, observer=None):
+class _LegacyExtractionGuard:
+    """An in-process controller proof, never a transport or project record."""
+    def __init__(self, dataset, binding, owner_thread):
+        self.dataset, self.binding, self.owner_thread = dataset, binding, owner_thread
+
+    def require(self, dataset):
+        with dataset._extraction_condition:
+            if (dataset is not self.dataset or dataset._extraction_guard is not self
+                    or dataset._extraction_binding != self.binding or not dataset._extraction_stopping
+                    or threading.get_ident() != self.owner_thread
+                    or any(thread != self.owner_thread and count for thread, count in dataset._extraction_requests.items())):
+                raise workbench.WorkbenchError('Extraction requires the drained original catalog controller.', 'source_busy', 409)
+
+
+def make_handler(dataset, observer=None, *, transfer_controller=None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
 
         def _observe_request(self, handler):
+            self._handoff_stopped_source()
             name, version = (agent_api.observation_operation(self.command, self.path, self.headers)
                              if observer is not None else (None, None))
             self._observation_operation, self._observation_version = name, version
             self._observation = observe_begin(observer, self.command, name, selected_version=version)
             self._observation_finished = False
+            self._contract_selection = None
             try:
+                if (urlsplit(self.path).path == '/api/workspace/project-transfer'
+                        or urlsplit(self.path).path.startswith('/api/workspace/project-transfer/')):
+                    return self._handle_project_transfer()
+                if isinstance(dataset, Dataset):
+                    try:
+                        with dataset._project_request():
+                            return handler()
+                    except workbench.WorkbenchError as error:
+                        return self.reply({'error': str(error), 'code': error.code}, error.status)
                 return handler()
             finally:
                 if not self._observation_finished:
                     observe_stage(observer, self._observation, 'terminal', outcome='unknown', delivery='incomplete')
                     self._observation_finished = True
+
+        def _handoff_stopped_source(self):
+            nonlocal dataset
+            if transfer_controller is None or transfer_controller.phase == 'source_live':
+                return
+            source = transfer_controller.dataset
+            # A failed stop may still have old handlers draining. Keep their
+            # original Dataset closure until the source's request gate proves
+            # them absent; new ordinary requests remain fenced meanwhile.
+            with source._extraction_condition:
+                if source._extraction_stopping and not any(source._extraction_requests.values()):
+                    dataset = transfer_controller.control_workspace
+
+        def _handle_project_transfer(self):
+            """One explicit source-to-control authority transition, never Open."""
+            nonlocal dataset
+            routes = {('GET', '/api/workspace/project-transfer'): 'status',
+                ('POST', '/api/workspace/project-transfer/preview'): 'preview',
+                ('GET', '/api/workspace/project-transfer/report'): 'report_page',
+                ('POST', '/api/workspace/project-transfer/stop'): 'stop',
+                ('POST', '/api/workspace/project-transfer/extract'): 'extract'}
+            try:
+                if transfer_controller is None:
+                    raise workbench.WorkbenchError('Configure an explicit existing legacy extraction controller first.', 'unavailable', 409)
+                action = routes.get((self.command, urlsplit(self.path).path))
+                if action is None:
+                    raise workbench.WorkbenchError('Unknown extraction operation.', 'unsupported', 404)
+                name = 'project_transfer.' + action
+                token, bearer = self._credential()
+                authority = transfer_controller.access
+                with authority.bind(token):
+                    self._same_origin(self.command == 'POST' and not bearer)
+                    selected = self._select_contract()
+                    agent_api.require_selection(selected, name)
+                    body = None
+                    if self.command == 'POST':
+                        if self.headers.get_content_type() != 'application/json':
+                            raise agent_api.AgentAPIError('Send a bounded JSON request.', 'invalid', 400)
+                        length = int(self.headers.get('Content-Length', '0'))
+                        if not 0 < length <= agent_api.REQUEST_LIMIT:
+                            raise agent_api.AgentAPIError('Extraction request exceeds its bound.', 'too_large', 413)
+                        raw = self.rfile.read(length)
+                        observe_request_bytes(observer, self._observation, len(raw))
+                        body = agent_api.decode(raw)
+                    arguments = agent_api.validate_selected(selected, self.command, self.path, body)
+                    self._observe_dispatch(body)
+                    try:
+                        if action == 'status': value = transfer_controller.status()
+                        elif action == 'preview': value = transfer_controller.preview(**arguments)
+                        elif action == 'report_page': value = transfer_controller.report_page(**arguments)
+                        elif action == 'stop': value = transfer_controller.stop(**arguments)
+                        else: value = transfer_controller.extract(**arguments)
+                    finally:
+                        self._handoff_stopped_source()
+                    return self.reply(value)
+            except (workbench.WorkbenchError, ProjectStoreError, agent_api.AgentAPIError, access.AccessError) as error:
+                result = {'error': str(error), 'code': error.code}
+                if hasattr(error, 'receipt'):
+                    result['receipt'] = error.receipt
+                return self.reply(result, error.status)
+            except (CommitOutcomeUnknown, psycopg.Error):
+                return self.reply({'error': 'Extraction outcome requires explicit inspection.', 'code': 'storage'}, 503)
+            except OSError:
+                return self.reply({'error': 'Extraction storage outcome requires explicit status inspection; retained staging was not removed.',
+                                   'code': 'storage'}, 503)
 
         def _observe_dispatch(self, body=None):
             observe_selection(observer, getattr(self, '_observation', None),
@@ -476,6 +650,9 @@ def make_handler(dataset, observer=None):
                         for operation in capabilities['operations']:
                             if operation['id'].startswith('project_files.'):
                                 operation['availability'] = 'unavailable'
+                            if operation['id'].startswith('project_transfer.'):
+                                operation['availability'] = ('available' if transfer_controller is not None
+                                                             else 'unavailable')
                     return self.reply(capabilities)
                 if path == '/api/workspace/context' and getattr(dataset, 'project_files_mode', False):
                     # Bootstrap identifies the installation that owns this
@@ -487,7 +664,8 @@ def make_handler(dataset, observer=None):
                         raise workbench.WorkbenchError('Start explicit project-file mode to use this capability.', 'unavailable', 409)
                     from project_workspace import http_arguments
                     name, arguments = http_arguments('GET', self.path)
-                    return self.reply(dataset.dispatch(name, arguments))
+                    return self.reply(dataset.dispatch(name, arguments,
+                        selected_version=self._contract_selection[1] if self._contract_selection else None))
                 if getattr(dataset, 'project_files_mode', False) and path.startswith('/api/'):
                     raise workbench.WorkbenchError('This domain is unavailable until its canonical project publication is implemented.',
                                                   'unavailable', 409)
@@ -709,6 +887,9 @@ def make_handler(dataset, observer=None):
                     '/project-files': ('project-files.html', 'text/html'),
                     '/project-files.js': ('project-files.js', 'text/javascript'),
                     '/project-files.css': ('project-files.css', 'text/css'),
+                    '/project-transfer': ('project-transfer.html', 'text/html'),
+                    '/project-transfer.js': ('project-transfer.js', 'text/javascript'),
+                    '/project-transfer.css': ('project-transfer.css', 'text/css'),
                     '/auth.js': ('auth.js', 'text/javascript'),
                     '/auth.css': ('auth.css', 'text/css'),
                     '/workspace-project-activity.js': ('workspace-project-activity.js', 'text/javascript'),
@@ -805,7 +986,8 @@ def make_handler(dataset, observer=None):
                         raise workbench.WorkbenchError('Start explicit project-file mode to use this capability.', 'unavailable', 409)
                     from project_workspace import http_arguments
                     name, body = http_arguments('POST', self.path, body)
-                    return self.reply(dataset.dispatch(name, body))
+                    return self.reply(dataset.dispatch(name, body,
+                        selected_version=self._contract_selection[1] if self._contract_selection else None))
                 if getattr(dataset, 'project_files_mode', False):
                     raise workbench.WorkbenchError('This domain is unavailable until its canonical project publication is implemented.',
                                                   'unavailable', 409)
@@ -1163,6 +1345,12 @@ def main():
                         help='Allow read-only project inspection beneath a local directory; repeat for multiple roots.')
     parser.add_argument('--project-files-root', action='append', default=[], metavar='ALIAS=PATH',
                         help='Use inert external text-project mode beneath explicit local roots; other domain writes are unavailable.')
+    parser.add_argument('--project-runtime-source', action='append', default=[], metavar='ALIAS=CONFIG_FILE',
+                        help='Allow explicit offline CPU runtime capture from an operator-owned local configuration; never capture on Open.')
+    parser.add_argument('--project-transfer-control', type=Path,
+                        help='Enable explicit stopped extraction from this existing legacy controller into a separate local authority host.')
+    parser.add_argument('--project-transfer-root', action='append', default=[], metavar='ALIAS=PATH',
+                        help='Configure backup and destination roots for explicit legacy extraction; requires --project-transfer-control.')
     args = parser.parse_args()
     roots = {}
     for binding in args.project_root:
@@ -1170,9 +1358,10 @@ def main():
         if not separator or not location or alias in roots:
             parser.error('Each project root needs a unique ALIAS=PATH.')
         roots[alias] = location
+    transfer_controller = control_workspace = None
     try:
         if args.project_files_root:
-            if roots:
+            if roots or args.project_transfer_control or args.project_transfer_root:
                 parser.error('Choose project-file mode or legacy snapshot inspection roots, not both.')
             file_roots = {}
             for binding in args.project_files_root:
@@ -1181,13 +1370,37 @@ def main():
                     parser.error('Each project-file root needs a unique ALIAS=PATH.')
                 file_roots[alias] = location
             from project_workspace import ProjectWorkspace
-            dataset = ProjectWorkspace(args.data, file_roots)
+            runtime_sources = {}
+            from recipe_process import read_regular, decode
+            for binding in args.project_runtime_source:
+                alias, separator, location = binding.partition('=')
+                if not separator or not location or alias in runtime_sources:
+                    parser.error('Each runtime source needs a unique ALIAS=CONFIG_FILE.')
+                runtime_sources[alias] = decode(read_regular(Path(location).expanduser(), 65536))
+            dataset = ProjectWorkspace(args.data, file_roots, runtime_sources=runtime_sources)
         else:
+            if args.project_runtime_source:
+                parser.error('Project runtime sources require external project-file mode.')
             dataset = Dataset(args.data, project_roots=roots)
+            if args.project_transfer_control:
+                transfer_roots = {}
+                for binding in args.project_transfer_root:
+                    alias, separator, location = binding.partition('=')
+                    if not separator or not location or alias in transfer_roots:
+                        parser.error('Each extraction root needs a unique ALIAS=PATH.')
+                    transfer_roots[alias] = location
+                from project_workspace import ProjectWorkspace
+                from project_transfer_controller import ProjectTransferController
+                control_workspace = ProjectWorkspace(args.project_transfer_control, transfer_roots)
+                transfer_controller = ProjectTransferController(dataset, control_workspace)
+                control_workspace.transfer_controller = transfer_controller
+            elif args.project_transfer_root:
+                parser.error('Extraction roots require --project-transfer-control.')
     except (StorageError, workbench.WorkbenchError) as error:
         parser.exit(2, str(error) + "\n")
     observer = configured_interface(args, 'http')
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset, observer))
+    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset, observer,
+                                                                  transfer_controller=transfer_controller))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)
     try:
         server.serve_forever()
@@ -1195,6 +1408,10 @@ def main():
         pass
     finally:
         server.server_close()
+        if transfer_controller is not None:
+            transfer_controller.close()
+        if control_workspace is not None:
+            control_workspace.close()
         dataset.close()
         if observer is not None:
             observe_close(observer)

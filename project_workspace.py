@@ -18,6 +18,7 @@ import agent_api
 from metadata import Metadata
 from project_store import ProjectStore, ProjectStoreError
 from project_projection import ProjectProjection
+from project_custody import ProjectCustody
 from workbench import WorkbenchError
 
 
@@ -30,6 +31,10 @@ PROJECT_ACTIONS = ('new', 'open', 'save', 'close', 'query', 'get', 'import_text'
 # Set only after the complete finite dispatcher is integrated. A capability is
 # a promise that the route reaches canonical publication, not an API wishlist.
 M2_ENABLED = True
+M3_ENABLED = False
+M4_ENABLED = True
+_DRAINING_OPERATIONS = frozenset(('project_files.execution_producer_cancel',
+    'project_files.execution_study_stop', 'project_files.execution_reconcile_current'))
 DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
 
 
@@ -45,7 +50,7 @@ def _digest(value):
 def http_arguments(method, target, body=None):
     """Use the fixed operation contracts for identical HTTP and SDK routing."""
     names = ['project_files.status', *('project_files.' + action for action in PROJECT_ACTIONS)]
-    names.extend(sorted(agent_api.PROJECT_FILES_M2))
+    names.extend(sorted(agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | agent_api.PROJECT_FILES_M4))
     operations = {name: agent_api.operation(name) for name in names}
     # A literal import route wins over a record-id placeholder. Contract
     # validation still rejects an unexpected path/body/query representation.
@@ -60,12 +65,22 @@ def http_arguments(method, target, body=None):
 class ProjectWorkspace:
     project_files_mode = True
 
-    def __init__(self, control_path, roots, *, dsn=None):
+    def __init__(self, control_path, roots, *, dsn=None, runtime_sources=None):
+        from runtime_snapshots import configuration
+        configured = {}
+        for alias, config in (runtime_sources or {}).items():
+            if (type(alias) is not str or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', alias)
+                    or len(configured) >= 100):
+                raise WorkbenchError('Configure at most 100 named current runtime sources.')
+            configured[alias] = copy.deepcopy(configuration(config))
         self.path = Path(control_path).resolve()
         self.db = Metadata(self.path, dsn=dsn)
         self.lock = self.db.lock
         self.access = Access(self.db, self.path)
+        self.custody = ProjectCustody(self.path, self.db.dataset_id)
+        self._retained_recovery = None
         self._dsn = dsn
+        self._runtime_sources = configured
         self._mutex = threading.RLock()
         self._roots = {}
         self._store = self._text = self._projection = None
@@ -104,9 +119,11 @@ class ProjectWorkspace:
             try:
                 snapshot = self._store.snapshot()
             except ProjectStoreError as error:
-                if error.code not in ('unknown', 'outcome_unknown'):
+                if error.code not in ('unknown', 'outcome_unknown', 'stale', 'stale_project',
+                                       'invalid', 'unsupported', 'unavailable'):
                     raise
-                self._recovery_required('unknown_publication')
+                self._recovery_required('unknown_publication' if error.code in ('unknown', 'outcome_unknown')
+                                        else 'projection_unavailable')
             else:
                 if self._text is not None and not self._text.available:
                     self._recovery_required('projection_unavailable')
@@ -128,9 +145,17 @@ class ProjectWorkspace:
             return self._state()
 
     def capabilities(self):
-        value = agent_api.capabilities(self.db.dataset_id)
+        value = agent_api.capabilities(self.db.dataset_id, profile='project')
         for operation in value['operations']:
+            if operation['id'].startswith('project_transfer.'):
+                operation['availability'] = ('available' if getattr(self, 'transfer_controller', None)
+                                             is not None else 'unavailable')
+                continue
             if operation['id'] in agent_api.PROJECT_FILES_M2 and not M2_ENABLED:
+                operation['availability'] = 'unavailable'
+            if operation['id'] in agent_api.PROJECT_FILES_M3 and not M3_ENABLED:
+                operation['availability'] = 'unavailable'
+            if operation['id'] in agent_api.PROJECT_FILES_M4 and not M4_ENABLED:
                 operation['availability'] = 'unavailable'
             if not operation['id'].startswith('project_files.') and operation['id'] not in ('context.get', 'identity.get'):
                 operation['availability'] = 'unavailable'
@@ -177,7 +202,12 @@ class ProjectWorkspace:
         projection = Metadata(path, dsn=self._dsn, dataset_id=snapshot['project_id'], projection_id=identity)
         try:
             owner = ProjectProjection(store, projection, self.access,
-                                      {alias: value[0] for alias, value in self._roots.items()})
+                                      {alias: value[0] for alias, value in self._roots.items()},
+                                      custody=self.custody.for_projection(store, identity),
+                                      runtime_sources=self._runtime_sources)
+            owner.pending_original = self.custody.pending(store)
+            if owner.pending_original:
+                owner.session.available = False
             return owner, owner.text
         except BaseException:
             projection.close()
@@ -185,8 +215,24 @@ class ProjectWorkspace:
             # no authoritative bytes or an uncertain outcome is deleted.
             raise
 
+    def _retained_projection_for(self, store, projection_id):
+        if type(projection_id) is not str or not re.fullmatch('[a-f0-9]{32}', projection_id):
+            raise WorkbenchError('Invalid original local projection identity.', 'unavailable', 409)
+        db = Metadata(self.path / '.project-projections' / projection_id, dsn=self._dsn,
+                      create=False, dataset_id=store.snapshot()['project_id'], projection_id=projection_id)
+        try:
+            return ProjectProjection(store, db, self.access,
+                {alias: value[0] for alias, value in self._roots.items()},
+                custody=self.custody.for_projection(store, projection_id), restore=False,
+                runtime_sources=self._runtime_sources)
+        except BaseException:
+            db.close()
+            raise
+
     def _detach(self):
-        """M1 owns no worker-capable domains; all requests drain under _mutex."""
+        """Release only a project whose current local effects have drained."""
+        if self._projection is not None:
+            self._projection.execution.assert_quiescent()
         if self._store is not None:
             # Prove pending project publications and their full closure first.
             self._store.save(self._store.snapshot()['checkpoint'])
@@ -202,6 +248,13 @@ class ProjectWorkspace:
         self._bound(arguments, allow_recovery=True)
         if (arguments['root'], arguments['directory']) != self._selection:
             raise WorkbenchError('Recover the current project before switching destinations.', 'projection_unavailable', 503)
+        if self._projection is not None and self._projection.pending_original:
+            raise WorkbenchError('Explicitly reconcile original-host custody before reopening this project.',
+                                 'projection_unavailable', 503)
+        if self._projection is not None and self._projection.execution.has_local_custody:
+            # Retain actual local custody until the explicit execution recovery
+            # boundary proves cessation; imported history can never do so.
+            self._projection.execution.assert_quiescent()
         root_path, root_fd = self._root(*self._selection)
         # Keep the old projection and generation until a fresh inert projection
         # is ready. Releasing the uncertain writer lock is necessary to reread it.
@@ -243,6 +296,8 @@ class ProjectWorkspace:
         selection = (arguments['root'], arguments['directory'])
         if action == 'open' and selection == self._selection:
             return self._state()
+        if self._projection is not None:
+            self._projection.execution.assert_quiescent()
         # Validate and construct the incoming inert projection before releasing
         # the existing binding. An invalid Open cannot strand current custody.
         store = None
@@ -314,7 +369,67 @@ class ProjectWorkspace:
                     record=public_record(record), history=[public_record(item) for item in page],
                     next_history_before_revision=page[-1]['revision'] if len(history) > len(page) else None)
 
-    def dispatch(self, name, arguments):
+    def _save_as(self, arguments):
+        """Publish a new independent project, then select a fresh inert cache."""
+        from functools import partial
+        from project_fork import publish_fork
+        from project_fork_composition import build_candidate
+        from workbench import timestamp
+        self._bound(arguments)
+        source = self._projection
+        source.execution.assert_quiescent()
+        source.files.require_clean()
+        self._store.save(arguments['expected_checkpoint'])
+        root_path, root_fd = self._root(arguments['root'], arguments['directory'])
+        published = None
+        incoming = projection = None
+        try:
+            published = publish_fork(self._store, source.artifacts, root_fd, arguments['directory'],
+                root_path=root_path, name=arguments['name'],
+                expected_checkpoint=arguments['expected_checkpoint'], request_key=arguments['request_key'],
+                quiescent=True, build_candidate=partial(build_candidate, created_at=timestamp(),
+                    id_factory=lambda _family, _source_id, _revision: uuid.uuid4().hex),
+                validate_candidate=lambda records, identity: source.validate_records(records, project_id=identity))
+            # A filesystem editor can act outside the workspace lock. Leave the
+            # complete fork unselected if its source working files changed.
+            source.files.require_clean()
+            incoming = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path)
+            projection, text = self._projection_for(incoming)
+            snapshot, overlay = published['snapshot'], published['fork']
+            self._detach()
+            self._store, self._projection, self._text = incoming, projection, text
+            self._selection = arguments['root'], arguments['directory']
+            self._last_project = {key: snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
+            self._recovery = None
+            self._binding = uuid.uuid4().hex
+            summary = dict(source_project_id=overlay['source']['project_id'],
+                source_checkpoint=overlay['source']['checkpoint'], project_id=snapshot['project_id'],
+                checkpoint=snapshot['checkpoint'], root=arguments['root'], directory=arguments['directory'],
+                request_key=arguments['request_key'], reconciled=published['reconciled'],
+                mapping_count=len(overlay['mapping']), copied_count=len(overlay['artifacts']['copied']),
+                missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']))
+            return dict(state=self._state(), fork=summary)
+        except BaseException as error:
+            if projection is not None and projection is not self._projection:
+                projection.close()
+            if incoming is not None and incoming is not self._store:
+                incoming.close()
+            receipt = getattr(error, 'receipt', None)
+            if published is not None:
+                snapshot = published['snapshot']
+                receipt = dict(committed=True, selected=False, project_id=snapshot['project_id'],
+                    checkpoint=snapshot['checkpoint'], request_key=arguments['request_key'],
+                    root=arguments['root'], directory=arguments['directory'])
+            elif receipt is not None:
+                receipt = dict(receipt, root=arguments['root'])
+            if receipt is not None:
+                failure = WorkbenchError('Independent project was published but could not be selected; retry this exact Save As.',
+                                         'project_selection_unavailable', 503)
+                failure.receipt = receipt
+                raise failure from error
+            raise
+
+    def dispatch(self, name, arguments, *, selected_version=None):
         """Pin workspace -> current host authority -> projection through return.
 
         An old request cannot observe a new Dataset alias. Revocation cannot
@@ -323,14 +438,29 @@ class ProjectWorkspace:
         agent_api.validate_arguments(name, arguments)
         if not name.startswith('project_files.'):
             raise WorkbenchError('This domain is unavailable in external text-project mode.', 'unavailable', 409)
+        if name in _DRAINING_OPERATIONS:
+            return self._dispatch_draining(name, arguments)
         action = name.removeprefix('project_files.')
         with self._mutex, self.access.lock:
             self._ensure_open()
             operation = agent_api.operation(name)
             for scope in operation['scopes']:
-                self.access.require(scope, name, owner_only=action in ('new', 'open', 'save', 'close'))
-            if name in agent_api.PROJECT_FILES_M2:
-                if not M2_ENABLED:
+                if scope == 'execute' and action in ('execution_submit_external', 'execution_study_admit'):
+                    self.access.require_external_submission()
+                else:
+                    self.access.require(scope, name, owner_only=action in ('new', 'open', 'save', 'save_as', 'close'))
+            if selected_version == 1 and action in ('get', 'annotate'):
+                self._bound(arguments, check_checkpoint=action == 'get')
+                record = self._projection.data._require_record(arguments['record_id'])
+                if record['document']['current']['provenance'].get('method') != 'import':
+                    raise WorkbenchError('This retained text provenance requires project text contract version 2.',
+                                         'unsupported', 409)
+            if name in agent_api.PROJECT_FILES_M4 and not M4_ENABLED:
+                raise WorkbenchError('This project capability is not yet available.', 'unavailable', 409)
+            if name in (agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | agent_api.PROJECT_FILES_M4) - {'project_files.save_as'}:
+                if ((name in agent_api.PROJECT_FILES_M2 and not M2_ENABLED)
+                        or (name in agent_api.PROJECT_FILES_M3 and not M3_ENABLED)
+                        or (name in agent_api.PROJECT_FILES_M4 and not M4_ENABLED)):
                     raise WorkbenchError('This project capability is not yet available.', 'unavailable', 409)
                 self._bound(arguments, check_checkpoint=not operation['side_effects'])
                 from project_dispatch import dispatch
@@ -355,7 +485,8 @@ class ProjectWorkspace:
                 if prior is not None:
                     if prior[0] != signature:
                         raise WorkbenchError('Request key already has different input.', 'conflict', 409)
-                    if prior[1] != self._state():
+                    prior_state = prior[1]['state'] if action == 'save_as' else prior[1]
+                    if prior_state != self._state():
                         raise WorkbenchError('This lifecycle receipt belongs to an obsolete workspace state.', 'stale_project', 409)
                     result = copy.deepcopy(prior[1])
                 else:
@@ -366,6 +497,8 @@ class ProjectWorkspace:
                             self._bound(arguments)
                             self._store.save(arguments['expected_checkpoint'])
                             result = self._state()
+                        elif action == 'save_as':
+                            result = self._save_as(arguments)
                         elif action == 'close':
                             self._bound(arguments)
                             self._detach()
@@ -398,11 +531,11 @@ class ProjectWorkspace:
                             raise WorkbenchError('Unsupported project-file operation.', 'unsupported', 400)
                     except BaseException as error:
                         code = getattr(error, 'code', None)
-                        if code in ('unknown', 'outcome_unknown', 'projection_unavailable'):
+                        if action != 'save_as' and code in ('unknown', 'outcome_unknown', 'projection_unavailable'):
                             reason = 'unknown_publication' if code in ('unknown', 'outcome_unknown') else 'projection_unavailable'
                             self._recovery_required(reason, arguments.get('request_key'))
                         raise
-                    if arguments.get('request_key') and action in ('new', 'open', 'save', 'close'):
+                    if arguments.get('request_key') and action in ('new', 'open', 'save', 'save_as', 'close'):
                         self._receipts[key] = (signature, copy.deepcopy(result))
             if len(agent_api.encoded(result)) > agent_api.RESPONSE_LIMIT:
                 raise WorkbenchError('This project result exceeds the synchronous response bound; canonical work is retained.',
@@ -410,13 +543,66 @@ class ProjectWorkspace:
             agent_api.validate_output(name, {'status': 200, 'result': result})
             return result
 
+    def _dispatch_draining(self, name, arguments):
+        """Keep workspace selection pinned while descendants drain without SQL locks."""
+        with self._mutex:
+            with self.access.lock:
+                self._ensure_open()
+                if not M3_ENABLED:
+                    raise WorkbenchError('This project capability is not yet available.', 'unavailable', 409)
+                operation = agent_api.operation(name)
+                for scope in operation['scopes']:
+                    self.access.require(scope, name, owner_only=name == 'project_files.execution_reconcile_current')
+                self._bound(arguments, check_checkpoint=name == 'project_files.execution_reconcile_current',
+                            allow_recovery=name == 'project_files.execution_reconcile_current')
+                projection = self._projection
+            from project_dispatch import dispatch
+            try:
+                if name == 'project_files.execution_reconcile_current' and projection.pending_original:
+                    if len(projection.pending_original) != 1:
+                        raise WorkbenchError('More than one original local custody binding needs explicit review.',
+                                             'local_custody_unavailable', 409)
+                    binding = projection.pending_original[0]
+                    if binding['project_id'] != self._store.snapshot()['project_id']:
+                        raise WorkbenchError('Restore the original project identity before reconciling this physical folder custody.',
+                                             'local_custody_unavailable', 409)
+                    if self._retained_recovery is None:
+                        self._retained_recovery = self._retained_projection_for(self._store, binding['projection_id'])
+                    retained = self._retained_recovery
+                    value = retained.execution.reconcile_original(expected_checkpoint=self._store.snapshot()['checkpoint'])
+                    projection.close()
+                    projection = self._projection = retained
+                    self._text = retained.text
+                    self._retained_recovery = None
+                    # This repairs the same selected directory/project under
+                    # its pinned workspace generation. Checkpoint CAS fences
+                    # older science requests; this is not an Open/switch.
+                else:
+                    value = dispatch(projection, name, arguments)
+            except BaseException as error:
+                if getattr(error, 'code', None) in ('unknown', 'outcome_unknown', 'projection_unavailable'):
+                    self._recovery_required('projection_unavailable', arguments.get('request_key'))
+                raise
+            with self.access.lock, projection.session.lock, projection.db.lock:
+                snapshot = self._store.snapshot()
+                self._last_project = {key: snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
+                if name == 'project_files.execution_reconcile_current':
+                    self._recovery = None
+                result = dict(binding=self._binding, project_id=snapshot['project_id'],
+                              checkpoint=snapshot['checkpoint'], value=value)
+                if len(agent_api.encoded(result)) > agent_api.RESPONSE_LIMIT:
+                    raise WorkbenchError('Project drainage result exceeds its response bound.', 'too_large', 413)
+                agent_api.validate_output(name, {'status': 200, 'result': result})
+                return result
+
     def close(self):
         with self._mutex:
             if self._closed:
                 return
             # Shutdown always releases handles, including a stale/unknown store;
-            # no worker domains exist and no canonical recovery is attempted.
+            # actual local workers drain before any database handle is closed.
             if self._projection is not None:
+                self._projection.execution.shutdown()
                 self._projection.close()
             if self._store is not None:
                 self._store.close()

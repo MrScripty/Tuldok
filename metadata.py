@@ -245,6 +245,8 @@ class Metadata:
         pending = self.path / '.tuldok-initializing.json'
         self._rollback = []
         self._commit = []
+        self._project_before_commit = None
+        self._project_outcome = None
         self._runtime_claims = {}
         if initial_file_modes is not None and (os.path.lexists(manifest) or
                 ('.metadata-init.lock' in initial_file_modes and os.path.lexists(pending))):
@@ -419,40 +421,66 @@ class Metadata:
             self._rollback.append(callbacks)
             committed = []
             self._commit.append(committed)
+            outermost = len(self._rollback) == 1
             body_failed = False
             try:
-                with self.connection.transaction(force_rollback=force_rollback):
-                    try:
-                        yield self
-                    except BaseException:
-                        body_failed = True
-                        raise
+                try:
+                    with self.connection.transaction(force_rollback=force_rollback):
+                        try:
+                            yield self
+                            if outermost and not force_rollback and self._project_before_commit is not None:
+                                self._project_before_commit()
+                        except BaseException:
+                            body_failed = True
+                            raise
+                finally:
+                    # Outcome hooks and wakes observe the completed SQL scope.
+                    # In particular an on_commit wake must not re-enroll itself
+                    # into the callback list that is currently being drained.
+                    self._rollback.pop()
+                    self._commit.pop()
             except BaseException as error:
-                # A server-confirmed constraint/serialization failure at COMMIT
-                # rolls back. A lost COMMIT response does not prove rollback.
                 confirmed_failure = getattr(error, 'sqlstate', '') or ''
                 if body_failed or force_rollback or confirmed_failure[:2] in ('23', '40'):
+                    if outermost and self._project_outcome is not None:
+                        self._project_outcome('rolled_back')
                     for callback in reversed(callbacks):
                         callback()
                     raise
-                # psycopg3.3.6 marks its enum COMMITTED before sending COMMIT.
-                # Only normal scope completion proves acknowledged commit; the
-                # enum cannot authorize cleanup/publication or a worker wake.
+                # A lost COMMIT response never authorizes cleanup or a wake.
+                if outermost and self._project_outcome is not None:
+                    self._project_outcome('unknown')
                 raise CommitOutcomeUnknown(
                     'PostgreSQL commit acknowledgement was lost. Files were retained; reopen and inspect the saved result before retrying.') from error
             else:
                 if force_rollback:
+                    if outermost and self._project_outcome is not None:
+                        self._project_outcome('rolled_back')
                     for callback in reversed(callbacks):
                         callback()
-                elif len(self._rollback) > 1:
-                    self._rollback[-2].extend(callbacks)
-                    self._commit[-2].extend(committed)
+                elif not outermost:
+                    self._rollback[-1].extend(callbacks)
+                    self._commit[-1].extend(committed)
                 else:
+                    if self._project_outcome is not None:
+                        self._project_outcome('committed')
                     for callback in committed:
                         callback()
-            finally:
-                self._rollback.pop()
-                self._commit.pop()
+
+    def set_project_hooks(self, before_commit, outcome):
+        """Install one fixed project durability owner, before any worker starts.
+
+        Hooks belong to this physical projection, never to the process or an
+        imported catalog. They run only at the outer transaction boundary.
+        """
+        with self.lock:
+            if self.in_transaction:
+                raise RuntimeError('Project hooks cannot change during a transaction.')
+            if not callable(before_commit) or not callable(outcome):
+                raise TypeError('Project transaction hooks must be callable.')
+            if self._project_before_commit is not None:
+                raise RuntimeError('Project transaction hooks already have an owner.')
+            self._project_before_commit, self._project_outcome = before_commit, outcome
 
     @property
     def in_transaction(self):

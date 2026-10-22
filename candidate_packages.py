@@ -1196,17 +1196,18 @@ def canonical_a_closure(candidate, artifact_bytes, sources, runtime, published_m
     return manifest, blobs
 
 
-def _canonical_capture_evidence(dataset, composition_ref, policy):
+def _canonical_capture_evidence(dataset, composition_ref, policy, *, read_blob=None):
     """Use an authorized verified composition, then its hash-bound owned blobs."""
     from model_definitions import read_owned_blob
     value = dataset.pipelines.recipe_material(composition_ref, verify=True)
     material = value['material']; directory = dataset.pipelines.material_path
-    snapshot_raw = read_owned_blob(directory, composition_ref['sha256'], material['recipe_document'], 2*1024**2)
+    reader = (lambda item, maximum: read_owned_blob(directory, composition_ref['sha256'], item, maximum)) if read_blob is None else lambda item, maximum: read_blob(composition_ref,item,maximum)
+    snapshot_raw = reader(material['recipe_document'], 2*1024**2)
     snapshot = decode(snapshot_raw)
     paths = [item['blob'] for item in snapshot['capture_paths']
              if item['path'] == 'input/' + policy['canonical']['provenance']['input']]
     require(len(paths) == 1 and paths[0] in material['captures'], 'Canonical captured provenance is unavailable.')
-    provenance_raw = read_owned_blob(directory, composition_ref['sha256'], paths[0], 65536)
+    provenance_raw = reader(paths[0], 65536)
     return {'composition': encoded(material), 'execution_snapshot': snapshot_raw, 'canonical_provenance': provenance_raw}
 
 
@@ -1376,7 +1377,7 @@ def _prefix_project_references(destination, prefix, prepared):
     path.chmod(0o400)
 
 
-def _prepare_operation(experiments, study_id, body, kind):
+def _prepare_operation(experiments, study_id, body, kind, *, publication=None):
     """Owner composition, atomic metadata, and existing exact study preparation."""
     from metadata import CommitOutcomeUnknown
     from model_definitions import checked_json
@@ -1411,7 +1412,10 @@ def _prepare_operation(experiments, study_id, body, kind):
     try:
         destination = Path('/proc/self/fd') / str(root_fd) / body['directory']
         require(not destination.exists(), 'Preparation directory exists without this exact operation receipt.', 'unavailable')
-        snapshot = RuntimeSnapshots(dataset.db, access, dataset.path).get(body['runtime_snapshot_sha256'])
+        snapshot = (RuntimeSnapshots(dataset.db, access, dataset.path).get(body['runtime_snapshot_sha256'])
+                    if publication is None else publication.runtime_snapshot)
+        require(snapshot['catalog_id']==dataset.db.dataset_id and snapshot['manifest_sha256']==body['runtime_snapshot_sha256'],
+                'Current runtime differs from candidate preparation.', 'unavailable')
         if kind == 'package':
             run = dataset.runs._load(candidate['run_id'])
             scientific = dataset.runs._extension(run)
@@ -1439,12 +1443,14 @@ def _prepare_operation(experiments, study_id, body, kind):
             published = {'material': model['material'], **{key: dataset.models.read_blob(model['ref'], model['material'][key]) for key in ('specification', 'preprocessing_policy', 'output_policy')}}
             if scientific:
                 policy = decode(artifacts['execution-context.json'])['static']['policy']
-                captured = (_canonical_capture_evidence(dataset, source_trial['material'], policy)
+                captured = (_canonical_capture_evidence(dataset, source_trial['material'], policy,
+                    read_blob=None if publication is None else publication.read_recipe_blob)
                             if policy.get('format') == 'extension_field_policy_v2' else None)
                 manifest, blobs = scalar_a_closure(candidate, artifacts, sources, runtime_contract(snapshot), published,
                                                   canonical_capture=captured)
             else:
                 manifest, blobs = classifier_closure(candidate, artifacts, images, sources, runtime_contract(snapshot), published)
+            if publication is not None:publication.before_write()
             prepared = prepare_project(destination, manifest, blobs,
                 snapshot_sha256=snapshot['manifest_sha256'] if scientific and policy.get('format') == 'extension_field_policy_v2' else None)
         else:
@@ -1453,6 +1459,7 @@ def _prepare_operation(experiments, study_id, body, kind):
             require(manifest['candidate'] == candidate['ref'], 'Package belongs to another candidate.')
             require(decode(files[manifest['runtime']['contract']['name']])['snapshot'] == snapshot,
                     'Verifier runtime differs from package.', 'unsupported')
+            if publication is not None:publication.before_write()
             prepared = prepare_verifier_project(destination, {'kind': 'run_artifact', 'run_id': body['package_run_id'],
                 'artifact_name': 'package.zip', 'expected_sha256': body['package_sha256']}, snapshot['manifest_sha256'])
         publication_owned = False
@@ -1482,7 +1489,8 @@ def _prepare_operation(experiments, study_id, body, kind):
             def publish(trial):
                 nonlocal publication_owned, published_result
                 publication_owned = True
-                experiments.db.on_rollback(lambda: shutil.rmtree(destination, ignore_errors=True))
+                if publication is None:
+                    experiments.db.on_rollback(lambda: shutil.rmtree(destination, ignore_errors=True))
                 access.require('edit', operation, study_id, owner_only=True)
                 prior = experiments._receipt(context.actor_id, operation, body['request_key'], identity)
                 if prior:
@@ -1508,7 +1516,7 @@ def _prepare_operation(experiments, study_id, body, kind):
         except CommitOutcomeUnknown:
             raise
         except BaseException:
-            if not publication_owned:
+            if not publication_owned and publication is None:
                 shutil.rmtree(destination, ignore_errors=True)
             raise
 

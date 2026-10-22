@@ -83,6 +83,32 @@ def legacy_run(origin=ORIGIN):
 
 
 class HistoryCodecTests(unittest.TestCase):
+    def test_fork_preserves_archived_disclosure_observation_without_current_permission(self):
+        from project_fork import _digest,_input
+        from project_session import operation_records
+        fact=dict(format='project_disclosure_v1',origin_catalog_id=ORIGIN,run_id='7'*32,payload_set_sha256='a'*64,population='all',
+            reason='Original explicit disclosure observation',actor_id='8'*32,occurred_at='2026-10-22T00:00:00+00:00')
+        key='original-disclosure'
+        receipt=dict(format='project_operation_v2',project_id=ORIGIN,operation='history.disclose',
+            target=fact['run_id'],request_key=key,input_sha256='b'*64,result=fact)
+        original=dict(family='project_operation',id=ORIGIN+'.'+hashlib.sha256(key.encode()).hexdigest(),document=receipt)
+        source=dict(project_id=ORIGIN,checkpoint='c'*64)
+        fork=dict(format='project_fork_v1',source=source,destination_project_id=OTHER,
+            request_key='fork-disclosure',request_sha256=_digest(_input(source,'copy','Copy','fork-disclosure')),
+            directory='copy',name='Copy',mapping=[],archived=[dict(family=original['family'],id=original['id'])],
+            artifacts=dict(copied=[],missing_regenerable=[]))
+        records=[original,dict(family='project_fork',id=OTHER,document=fork)]
+        calls=[]
+        session=SimpleNamespace(snapshot=dict(records=records,project_id=OTHER),artifacts=None,
+            access=SimpleNamespace(require=lambda *args,**kwargs:calls.append(args)))
+        history=ProjectHistory(session,materials=Materials())
+        self.assertEqual(operation_records(records),{})
+        self.assertEqual(history.disclosure_facts(fact['run_id'],origin_catalog_id=ORIGIN),[fact])
+        self.assertEqual(history.disclosure_facts(fact['run_id'],origin_catalog_id=OTHER),[])
+        self.assertEqual(calls[0],('inspect','runs.get',fact['run_id']))
+        with self.assertRaisesRegex(WorkbenchError,'Current explicit disclosure'):
+            history._disclose(legacy_run(),'test')
+
     def test_cross_study_parent_baseline_and_origin_namespace_remain_exact(self):
         parent_id='9'*32;child_id='a'*32
         parent_ref={'catalog_id':ORIGIN,'trial_id':parent_id,'material_sha256':MATERIAL}

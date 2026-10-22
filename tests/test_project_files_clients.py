@@ -65,7 +65,7 @@ def client(reply, *, owner=False):
         if path == '/api/workspace/context':
             return {'status': 200, 'result': {'dataset_id': CATALOG}}
         if path == '/api/agent/capabilities':
-            return {'status': 200, 'result': api.capabilities(CATALOG)}
+            return {'status': 200, 'result': api.capabilities(CATALOG,profile='project')}
         return copy.deepcopy(reply)
     value._request = Mock(side_effect=request)
     return value
@@ -75,7 +75,7 @@ class M2Contracts(unittest.TestCase):
     def test_fixed_consumers_cover_all_m2_operations_and_preserve_m1(self):
         sdk = ProjectFilesClient(Mock())
         cli = project_cli.parser()
-        for name in api.PROJECT_FILES_M2:
+        for name in api.PROJECT_FILES_M2 | api.PROJECT_FILES_M3:
             action = name.split('.')[1]
             self.assertTrue(callable(getattr(sdk, action)), name)
             parsed = cli.parse_args(['--config', '/not-read', 'file-' + action.replace('_', '-'), '--arguments', '/not-read'])
@@ -174,14 +174,66 @@ class M2Contracts(unittest.TestCase):
         source = (ROOT / 'static/project-files.js').read_text()
         routes = json.loads(re.search(r'/\* PROJECT_FILES_ROUTES_START \*/\s*(.*?)\s*/\* PROJECT_FILES_ROUTES_END \*/', source, re.S)[1])
         expected = {name: {'method': api.operation(name)['method'], 'path': api.operation(name)['path'],
-                          'mutation': api.operation(name)['side_effects']} for name in api.PROJECT_FILES_M2}
+                          'mutation': api.operation(name)['side_effects']} for name in api.PROJECT_FILES_M2 | api.PROJECT_FILES_M3 | api.PROJECT_FILES_M4}
         self.assertEqual(routes, expected)
+
+
+class M3Contracts(unittest.TestCase):
+    def test_current_custody_pages_refuse_uncorrelated_or_duplicate_ids(self):
+        arguments = dict(binding=BINDING, checkpoint=CHECKPOINT, offset=0, limit=2)
+        value = dict(format='project_execution_health_v1', active_run_ids=[PROJECT, RECORD],
+            active_count=2, offset=0, limit=2, local_owner_active=True, available=True, drain_required=True)
+        result = dict(binding=BINDING, project_id=PROJECT, checkpoint=CHECKPOINT, value=value)
+        raw = client({'status': 200, 'result': result})
+        self.assertEqual(ProjectFilesClient(raw).execution_health(**arguments), result)
+        for change in ({'active_run_ids': [RECORD, PROJECT]}, {'active_run_ids': [PROJECT, PROJECT]},
+                       {'offset': 1}, {'active_count': 1}, {'drain_required': 'true'}):
+            raw._request = Mock(return_value={'status': 200, 'result': dict(result, value=dict(value, **change))})
+            with self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(raw).execution_health(**arguments)
+
+    def test_local_grants_are_bound_to_material_project_and_consumer(self):
+        arguments = dict(bound(), graph_id=RECORD, graph_revision=1, expected_digest=OTHER, consumer_actor_id=RECORD)
+        grant = dict(id=RECORD, catalog_id=PROJECT, approver_actor_id=PROJECT, approver_credential_id=None,
+            consumer_actor_id=RECORD, material_sha256=OTHER, created_at=1, expires_at=600, revoked_at=None)
+        value = dict(format='project_current_execution_approval_v1', current_local=True, grant=grant)
+        result = dict(binding=BINDING, project_id=PROJECT, checkpoint=CHECKPOINT, value=value)
+        raw = client({'status': 200, 'result': result}, owner=True)
+        self.assertEqual(ProjectFilesClient(raw).execution_approve_external(**arguments), result)
+        for change in ({'catalog_id': RECORD}, {'material_sha256': CHECKPOINT}, {'consumer_actor_id': PROJECT},
+                       {'expires_at': 1}, {'revoked_at': 2}):
+            raw._request = Mock(return_value={'status': 200, 'result': dict(result, value=dict(value, grant=dict(grant, **change)))})
+            with self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(raw).execution_approve_external(**arguments)
+
+    def test_producer_acknowledgement_cannot_claim_another_action_or_identity(self):
+        arguments = dict(bound(), producer_id=RECORD, family='caption_proposal_history')
+        value = dict(format='project_producer_action_v1', family=arguments['family'], origin_catalog_id=PROJECT,
+            producer_id=RECORD, action='cancel')
+        result = dict(binding=BINDING, project_id=PROJECT, checkpoint=CHECKPOINT, value=value)
+        raw = client({'status': 200, 'result': result})
+        self.assertEqual(ProjectFilesClient(raw).execution_producer_cancel(**arguments), result)
+        for change in ({'origin_catalog_id': RECORD}, {'producer_id': PROJECT}, {'action': 'resume'},
+                       {'family': 'generation_history'}):
+            raw._request = Mock(return_value={'status': 200, 'result': dict(result, value=dict(value, **change))})
+            with self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(raw).execution_producer_cancel(**arguments)
+
+    def test_reconciliation_has_no_receipt_replay_or_request_key(self):
+        arguments = dict(binding=BINDING, expected_checkpoint=CHECKPOINT)
+        contract = api.contract('project_files.execution_reconcile_current')
+        self.assertEqual((contract['retry'], contract['authority'], contract['effects']), ('never', 'owner', 'mutation'))
+        _, _, body = api.project_request('project_files.execution_reconcile_current', arguments)
+        self.assertEqual(body, arguments)
+        with self.assertRaises(api.AgentAPIError):
+            api.project_request('project_files.execution_reconcile_current', dict(arguments, request_key=KEY))
+        self.assertLess(len(api.encoded(api.capabilities(CATALOG,profile='project'))), api.CAPABILITIES_LIMIT)
 
 
 class Contracts(unittest.TestCase):
     def test_additive_negotiation_preserves_installed_legacy_and_mcp_contracts(self):
         self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)
-        selected = api.negotiate(api.capabilities(CATALOG), CATALOG)
+        selected = api.negotiate(api.capabilities(CATALOG,profile='project'), CATALOG)
         for action in ['status', *ACTIONS]:
             name = 'project_files.' + action
             self.assertEqual(selected[name], 1)
@@ -190,7 +242,7 @@ class Contracts(unittest.TestCase):
             definition, = api.tool_definitions({name: 1})
             self.assertEqual(definition['name'], name.replace('.', '_'))
             self.assertEqual(definition['inputSchema'], api.operation(name)['inputSchema'])
-            self.assertEqual(definition['outputSchema'], api.operation(name)['outputSchema'])
+            self.assertEqual(definition['outputSchema'], api.operation(name,1)['outputSchema'])
 
     def test_browser_contract_pins_are_current_registry_output(self):
         source = (ROOT / 'static/project-files.js').read_text()

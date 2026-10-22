@@ -49,6 +49,8 @@ SUPPORTED_FORMATS = {
     'project_artifact': 'project_artifact_v1',
     'project_operation': 'project_operation_v1',
     'project_fork': 'project_fork_v1',
+    'project_file': 'project_file_v1',
+    'project_extraction': 'project_extraction_v1',
     'generation_history': 'project_generation_history_v1',
     'grounded_history': 'project_grounded_history_v1',
     'caption_proposal_history': 'project_caption_proposal_history_v1',
@@ -152,7 +154,7 @@ def _domain_format(value, family):
     match = DOMAIN_FORMAT.fullmatch(value) if type(value) is str else None
     if not match:
         _fail('Domain document requires a versioned format.')
-    if value != SUPPORTED_FORMATS[family]:
+    if value != SUPPORTED_FORMATS[family] and not (family == 'project_operation' and value == 'project_operation_v2'):
         _fail('Unsupported domain document format.', 'unsupported', 422)
 
 
@@ -770,6 +772,23 @@ class ProjectStore:
             except OSError as exc:
                 _io_error(exc, 'save project checkpoint')
             return snapshot
+
+    def recover_checkpoint(self):
+        """Explicitly re-read and sync this retained physical writer binding.
+
+        Execution callers must first fence dispatch and drain actual local
+        custody. This method resolves only filesystem publication uncertainty;
+        it does not select a SQL outcome or authorize any work to resume.
+        """
+        with self._mutex:
+            self._unknown = False
+            try:
+                manifest, records = self._load()
+                self._manifest = manifest
+                return self.save(self._snapshot(manifest, records)['checkpoint'])
+            except BaseException:
+                self._unknown = True
+                raise
 
     def close(self):
         with self._mutex:

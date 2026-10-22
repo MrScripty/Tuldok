@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Extract a legacy project · Tuldok</title><link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/auth.css"><link rel="stylesheet" href="/project-transfer.css">
+  <script defer src="/auth.js"></script><script defer src="/project-transfer.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#transfer-main">Skip to extraction</a>
+<main id="transfer-main">
+  <header><p class="eyebrow">Tuldok / legacy catalog</p><h1>Extract an independent project</h1>
+    <p>Choose one registered project and the global records that belong with it. Review required dependencies before explicitly stopping the source and publishing a new project directory.</p>
+    <p>Preview reads the source. Extraction preserves its verified post-stop baseline. Scripts stay inert; these controls do not run computations or restore old permissions.</p>
+  </header>
+  <p id="transfer-status" role="status" aria-live="polite">Reading extraction status…</p>
+  <p id="transfer-error" role="alert" tabindex="-1" hidden></p>
+  <section aria-labelledby="transfer-context-title">
+    <h2 id="transfer-context-title">Current controller</h2><p id="transfer-context">Sign in to inspect this controller.</p>
+    <button id="transfer-refresh" type="button">Refresh controller status</button>
+    <p id="transfer-fence" class="notice" hidden></p>
+  </section>
+  <section aria-labelledby="selection-title">
+    <h2 id="selection-title">1. Choose the project and source facts</h2>
+    <form id="transfer-preview-form"><fieldset id="selection-fields" disabled><legend>Explicit source selection</legend>
+      <div class="grid"><label>Registered project ID<input id="snapshot-id" maxlength="32" pattern="[a-f0-9]{32}" required></label>
+      <label>Exact registered manifest SHA256<input id="snapshot-sha" maxlength="64" pattern="[a-f0-9]{64}" required></label></div>
+      <p class="help">Global data, Studies and Runs are not assigned to a project by their names or location. Enter the exact IDs you choose; review additional dependencies and unassigned facts in the report.</p>
+      <div class="grid"><label>Source family<select id="selection-family"></select></label>
+      <label>IDs, one per line or separated by commas<textarea id="selection-ids" rows="3" maxlength="660000"></textarea></label></div>
+      <button id="selection-add" type="button">Add these source IDs</button>
+      <details><summary>Add producer observations or working files</summary>
+        <div class="grid"><label>Producer kind<select id="producer-kind"><option value="generation">Image generation</option><option value="grounded">Grounded text</option><option value="caption">Caption proposals</option><option value="text_proposal">Text classification proposals</option></select></label>
+        <label>Producer job ID<input id="producer-id" maxlength="32"></label></div><button id="producer-add" type="button">Add producer observation</button>
+        <div class="grid"><label>Working file kind<select id="working-kind"><option value="script">Script</option><option value="note">Note</option></select></label>
+        <label>Exact relative project path<input id="working-path" maxlength="512" placeholder="scripts/example.py"></label></div><button id="working-add" type="button">Add working file</button>
+        <p class="help">Selected working files become new UTF-8 adoptions attributed to this extraction. No earlier adoption is invented and no script is executed.</p>
+      </details>
+      <details><summary>Explicit ownership decisions</summary>
+        <div class="grid"><label>Known report family<select id="decision-family"></select></label><label>Exact report ID<input id="decision-id" maxlength="128"></label>
+        <label>Decision<select id="decision-include"><option value="include">Include</option><option value="exclude">Exclude</option></select></label><label>Reason<input id="decision-reason" maxlength="1000"></label></div>
+        <button id="decision-add" type="button">Add ownership decision</button><p class="help">A required dependency cannot be excluded while claiming a complete extraction.</p>
+      </details>
+      <details><summary>Load a prepared selection document</summary>
+        <label>Closed project selection file<input id="selection-file" type="file" accept="application/json,.json"></label>
+        <p class="help">This imports only the named project snapshot, finite source families and ownership decisions. It does not accept commands, credentials or execution options. Review its summary before preview.</p>
+      </details>
+      <h3>Selection summary</h3><ul id="selection-summary" class="facts"></ul><button id="selection-clear" type="button">Clear selected source facts</button>
+      <p id="selection-dirty" class="help" aria-live="polite">No selection has been previewed.</p>
+      <button id="transfer-preview" type="submit">Preview this selection</button>
+    </fieldset></form>
+  </section>
+  <section aria-labelledby="report-title">
+    <h2 id="report-title" tabindex="-1">2. Review dependency closure</h2><p id="report-summary">Preview a selection to see its report.</p>
+    <div class="grid"><label>Report section<select id="report-section"><option value="blockers">Blockers</option><option value="required">Required dependencies</option><option value="unassigned">Unassigned source facts</option><option value="included">Included source facts</option><option value="excluded">Explicit exclusions</option><option value="warnings">Warnings</option><option value="artifacts">Artifact availability</option><option value="working_files">Working file observations</option></select></label>
+      <div class="actions"><button id="report-load" type="button" disabled>Load report section</button><button id="report-previous" type="button" disabled>Previous 40</button><button id="report-next" type="button" disabled>Next 40</button></div></div>
+    <p id="report-page-status" role="status"></p><ul id="report-items" class="facts"></ul>
+    <label class="check"><input id="report-reviewed" type="checkbox" disabled>I reviewed the required closure, unassigned facts, blockers, warnings and artifact availability for this exact report.</label>
+  </section>
+  <section aria-labelledby="stop-title">
+    <h2 id="stop-title">3. Stop the source and capture its backup</h2>
+    <p>Stopping fences new source requests and drains the existing owners. A failed or unknown stop keeps the source fenced and cannot authorize extraction. Keep the private backup separate from the destination.</p>
+    <form id="transfer-stop-form"><fieldset id="stop-fields" disabled><legend>Explicit stop destinations</legend>
+      <div class="grid"><label>Backup root<select id="backup-root"></select></label><label>New backup directory name<input id="backup-directory" maxlength="200" required></label>
+      <label>Destination root<select id="destination-root"></select></label><label>New project directory name<input id="destination-directory" maxlength="200" required></label></div>
+      <label class="check"><input id="stop-confirm" type="checkbox">Stop this source and create the verified backup at the reviewed location. I have resolved all source blockers apart from the need to stop.</label>
+      <button id="transfer-stop" type="submit" disabled>Stop source and make verified backup</button>
+    </fieldset></form>
+  </section>
+  <section id="control-signin-panel" aria-labelledby="control-title" hidden>
+    <h2 id="control-title" tabindex="-1">4. Sign in to the separate control workspace</h2>
+    <p>The source session cannot authorize this workspace. Use a new private login code for the control catalog shown below. This page does not copy or reuse the source credential.</p>
+    <p id="control-signin-status" role="status"></p><button id="control-signin" type="button">Sign in to the control workspace</button>
+    <p>After signing in, refresh controller status and explicitly preview the stopped-source selection again.</p>
+  </section>
+  <section aria-labelledby="extract-title">
+    <h2 id="extract-title">5. Publish the reviewed project</h2>
+    <form id="transfer-extract-form"><fieldset id="extract-fields" disabled><legend>Independent destination</legend>
+      <p id="extract-destination">No stopped destination is confirmed.</p>
+      <label>New project name<input id="destination-name" maxlength="200" required></label>
+      <label>Extraction request key<input id="extraction-key" maxlength="128" required></label><p class="help">Keep this exact key and destination when reconciling an uncertain outcome. Refreshing status never retries publication.</p>
+      <label class="check"><input id="extract-confirm" type="checkbox">Publish this complete reviewed selection into the confirmed new directory. Opening the resulting project will remain inert.</label>
+      <button id="transfer-extract" type="submit" disabled>Extract reviewed project</button>
+    </fieldset></form>
+    <button id="transfer-reconcile" type="button" hidden disabled>Reconcile the exact extraction request</button>
+    <h3 id="outcome-title" tabindex="-1">Retained outcome</h3><p id="transfer-receipt">No extraction has been acknowledged.</p><p id="transfer-pending" class="notice" hidden></p>
+    <a id="project-files-link" href="/project-files" hidden>Inspect the project file workspace</a>
+    <p id="selection-outcome"></p>
+  </section>
+</main>
+</body></html>

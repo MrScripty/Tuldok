@@ -134,7 +134,7 @@ class TextClassificationProposals:
             for row in self.db.execute('SELECT data FROM text_classification_proposals').fetchall():
                 job = json.loads(row[0])
                 if job['status'] in ACTIVE:
-                    if pumas.typed(job['config']): job['provider_outcome'] = 'unknown'
+                    if pumas.typed(job['config']) or getattr(self.workbench.dataset,'project_execution',None) is not None: job['provider_outcome'] = 'unknown'
                     job.update(status='interrupted', error='Server stopped; inspect this attempt. No automatic inference retry.')
                     self._save(job)
                     self.access.audit('text_classification.reconcile', job['id'], {'status': job['status']})
@@ -144,6 +144,10 @@ class TextClassificationProposals:
         job['revision'] = (json.loads(previous[0])['revision'] if previous else 0) + 1
         job['updated_at'] = timestamp()
         self.db.execute('INSERT INTO text_classification_proposals (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode_retained(job)))
+
+        execution = getattr(self.workbench.dataset, 'project_execution', None)
+        if execution is not None:
+            execution.mark_text_proposal(job['id'])
 
     def _get(self, job_id):
         if not isinstance(job_id, str) or not IDENTIFIER.fullmatch(job_id):
@@ -200,6 +204,18 @@ class TextClassificationProposals:
 
     @authorized('execute', 'text_classification.start', owner_only=True)
     def start(self, body):
+        with self.lock:
+            if self.db.in_transaction:
+                raise WorkbenchError('Classification dispatch requires its own committed transaction.', 'conflict', 409)
+            with self.db.transaction():
+                job, launch = self._prepare_start(body)
+            if launch:
+                self._launch(job)
+            return job
+
+    def _prepare_start(self, body):
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer preparation requires an owned transaction.')
         fields = {'request_id', 'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'seed', 'labels'}
         if not isinstance(body, dict) or set(body) not in (fields, fields | {'protocol', 'profile'}):
             raise WorkbenchError('Supply only classification request identity, exact text revisions, model, guidance, labels and seed.')
@@ -223,47 +239,45 @@ class TextClassificationProposals:
         if not mode and (type(config['seed']) is not int or not 0 <= config['seed'] <= 2**32 - 1):
             raise WorkbenchError('Seed must be a nonnegative 32-bit integer.')
         intent_hash = hashlib.sha256(encode(body).encode()).hexdigest()
-        with self.lock:
-            if self.db.in_transaction:
-                raise WorkbenchError('Classification dispatch requires its own committed transaction.', 'conflict', 409)
+        previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=%s', (request_id,)).fetchone()
+        if previous:
+            job = json.loads(previous[0])
+            if job['intent_sha256'] != intent_hash:
+                raise WorkbenchError('Classification request ID already belongs to a different request.', 'conflict', 409)
+            return job, False
+        if not self.runtime_owner:
+            raise WorkbenchError('Classification workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
+        if self.closed or (self.worker is not None and self.worker.is_alive()):
+            raise WorkbenchError('A classification request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
+        source = self._source(body)
+        job = {'schema_version': 1, 'id': request_id, 'revision': 0, 'status': 'preparing', 'error': '',
+               'created_at': timestamp(), 'intent_sha256': intent_hash, 'source': source, 'config': config,
+               'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION,
+               'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
+               'labels_sha256': hashlib.sha256(encode(config['labels']).encode()).hexdigest(),
+               'source_text_sha256': hashlib.sha256(source['text'].encode()).hexdigest(),
+               'annotation': None, 'raw_response_base64': None, 'response_sha256': None,
+               'verification': 'Exact offered label or abstention shape only; semantic correctness requires human review.',
+               'application': None}
+        job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
+        job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
+        job['admission_id'] = self.access.admit_job('text_classification', job['id'], job['request_digest'],
+            {'text_classification.finish': [job['id']]})
+        self.access.audit('text_classification.start', job['id'], {'request_digest': job['request_digest']})
+        self._save(job)
+        return job, True
+
+    def _launch(self, job):
+        self.stop.clear()
+        self.active_id = job['id']
+        self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
+        try:
+            self.worker.start()
+        except RuntimeError:
+            self.worker, self.active_id = None, None
             with self.db.transaction():
-                previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=%s', (request_id,)).fetchone()
-                if previous:
-                    job = json.loads(previous[0])
-                    if job['intent_sha256'] != intent_hash:
-                        raise WorkbenchError('Classification request ID already belongs to a different request.', 'conflict', 409)
-                    return job
-                if not self.runtime_owner:
-                    raise WorkbenchError('Classification workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
-                if self.closed or (self.worker is not None and self.worker.is_alive()):
-                    raise WorkbenchError('A classification request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
-                source = self._source(body)
-                job = {'schema_version': 1, 'id': request_id, 'revision': 0, 'status': 'preparing', 'error': '',
-                       'created_at': timestamp(), 'intent_sha256': intent_hash, 'source': source, 'config': config,
-                       'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION,
-                       'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
-                       'labels_sha256': hashlib.sha256(encode(config['labels']).encode()).hexdigest(),
-                       'source_text_sha256': hashlib.sha256(source['text'].encode()).hexdigest(),
-                       'annotation': None, 'raw_response_base64': None, 'response_sha256': None,
-                       'verification': 'Exact offered label or abstention shape only; semantic correctness requires human review.',
-                       'application': None}
-                job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
-                job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
-                job['admission_id'] = self.access.admit_job('text_classification', job['id'], job['request_digest'],
-                    {'text_classification.finish': [job['id']]})
-                self.access.audit('text_classification.start', job['id'], {'request_digest': job['request_digest']})
+                job.update(status='failed', error='Could not start the classification worker; no inference ran. Start a new request explicitly.')
                 self._save(job)
-            self.stop.clear()
-            self.active_id = job['id']
-            self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
-            try:
-                self.worker.start()
-            except RuntimeError:
-                self.worker, self.active_id = None, None
-                with self.db.transaction():
-                    job.update(status='failed', error='Could not start the classification worker; no inference ran. Start a new request explicitly.')
-                    self._save(job)
-            return job
 
     def _run(self, job_id):
         with self.lock:
@@ -296,10 +310,10 @@ class TextClassificationProposals:
                 if self.stop.is_set():
                     raise WorkbenchError('Classification request cancelled.', 'cancelled')
                 job.update(status='generating', catalog_qualification=models['qualification'])
-                if pumas.typed(job['config']): job['provider_outcome'] = 'unknown'
+                if pumas.typed(job['config']) or getattr(self.workbench.dataset,'project_execution',None) is not None: job['provider_outcome'] = 'unknown'
                 self._save(job)
             data = complete(job, self.stop)
-            if pumas.typed(job['config']): job['provider_outcome'] = 'result_received'
+            if pumas.typed(job['config']) or getattr(self.workbench.dataset,'project_execution',None) is not None: job['provider_outcome'] = 'result_received'
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
             job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
             annotation, reported = decode(data, job['config']['labels'], job['id'] if pumas.typed(job['config']) else None)
@@ -327,14 +341,30 @@ class TextClassificationProposals:
         if not isinstance(body, dict) or set(body) != {'job_id'}:
             raise WorkbenchError('Supply only the classification request ID.')
         with self.lock, self.db.transaction():
-            job = self._get(body['job_id'])
-            if job['id'] != self.active_id or job['status'] not in ACTIVE:
-                return {'cancelled': False, 'job': job}
-            self.stop.set()
-            job.update(status='stopping', error='Cancellation requested; late output cannot be applied.')
-            self._save(job)
-            self.access.audit('text_classification.cancel', job['id'])
-            return {'cancelled': True, 'job': job}
+            result, pending = self._prepare_cancel(body['job_id'])
+            if pending is not None:
+                self._signal_cancel(pending)
+            return result
+
+    def _prepare_cancel(self, job_id):
+        """Persist intent only; project dispatch signals after canonical ACK."""
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer cancellation preparation requires an owned transaction.')
+        job = self._get(job_id)
+        if job['id'] != self.active_id or job['status'] not in ACTIVE:
+            return {'cancelled': False, 'job': job}, None
+        pending = (self.worker, job_id)
+        job.update(status='stopping', error='Cancellation requested; late output cannot be applied.')
+        self._save(job)
+        self.access.audit('text_classification.cancel', job['id'])
+        return {'cancelled': True, 'job': job}, pending
+
+    def _signal_cancel(self, pending):
+        # A retained worker object is local custody, never a saved PID or ID.
+        if self.worker is not pending[0]:
+            return False
+        self.stop.set()
+        return True
 
     @authorized('edit', 'text_classification.decide')
     def decide(self, job_id, body):

@@ -29,18 +29,69 @@ class Authority:
 
 def projection():
     access = Authority()
-    session = SimpleNamespace(access=access, snapshot={'project_id': PROJECT, 'records': []})
+    session = SimpleNamespace(access=access, check=Mock(), snapshot={'project_id': PROJECT, 'records': []})
     return SimpleNamespace(session=session, data=Mock(), materials=Mock(), history=Mock(),
         context=SimpleNamespace(models=Mock(), pipelines=Mock()), artifacts=Mock(),
-        producers=Mock(), source_adapter=Mock(), runtime_manifest=Mock(), disclose=Mock(), resolve_artifact=Mock())
+        producers=Mock(), source_adapter=Mock(), runtime_manifest=Mock(), disclose=Mock(), resolve_artifact=Mock(), execution=SimpleNamespace(study_execution=Mock(), producer_execution=Mock(), health=Mock(), preflight_external=Mock(), approve_external=Mock(), submit_external=Mock(), cancel_run=Mock(), reconcile_current=Mock()))
 
 
 class Dispatch(unittest.TestCase):
     def test_supported_operations_match_the_finite_public_contract(self):
-        self.assertEqual(SUPPORTED_OPERATIONS, agent_api.PROJECT_FILES_M2)
+        self.assertEqual(SUPPORTED_OPERATIONS, agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | (agent_api.PROJECT_FILES_M4 - {'project_files.save_as'}))
         with self.assertRaises(WorkbenchError) as failure:
             dispatch(object(), 'project_files.runs_execute', {})
         self.assertEqual(failure.exception.code, 'unsupported')
+
+    def test_current_execution_dispatch_is_finite_and_returns_native_values(self):
+        selected = projection()
+        selected.execution.preflight_external.return_value = {'material_sha256': SHA}
+        arguments = dict(READ, graph_id=RECORD, revision=3)
+        agent_api.validate_arguments('project_files.execution_preflight_external', arguments)
+        self.assertEqual(dispatch(selected, 'project_files.execution_preflight_external', arguments), {'material_sha256': SHA})
+        selected.execution.preflight_external.assert_called_once_with(RECORD, 3)
+        arguments = dict(BOUND, family='text_proposal_history', producer_id=RECORD,
+                         document={'revision': 2, 'decision': 'apply_draft', 'labels': ['stable']})
+        agent_api.validate_arguments('project_files.execution_producer_decide', arguments)
+        dispatch(selected, 'project_files.execution_producer_decide', arguments)
+        selected.execution.producer_execution.decide.assert_called_once_with('text_proposal_history', RECORD,
+            arguments['document'], CHECKPOINT, BOUND['request_key'])
+        arguments = dict(binding=READ['binding'], expected_checkpoint=CHECKPOINT)
+        agent_api.validate_arguments('project_files.execution_reconcile_current', arguments)
+        dispatch(selected, 'project_files.execution_reconcile_current', arguments)
+        selected.execution.reconcile_current.assert_called_once_with()
+        self.assertEqual(agent_api.contract('project_files.execution_reconcile_current')['retry'], 'never')
+        with self.assertRaises(agent_api.AgentAPIError):
+            agent_api.validate_arguments('project_files.execution_reconcile_current', dict(arguments, request_key='invented'))
+
+    def test_missing_current_adapters_refuse_before_any_effect(self):
+        selected = projection()
+        selected.execution.study_execution = None
+        with self.assertRaises(WorkbenchError) as failure:
+            dispatch(selected, 'project_files.execution_study_stop', dict(BOUND, study_id=RECORD, revision=2))
+        self.assertEqual((failure.exception.code, failure.exception.status), ('unavailable', 409))
+        selected.execution.producer_execution = None
+        with self.assertRaises(WorkbenchError) as failure:
+            dispatch(selected, 'project_files.execution_producer_cancel', dict(BOUND, family='grounded_history', producer_id=RECORD))
+        self.assertEqual(failure.exception.code, 'unavailable')
+        selected.execution = None
+        with self.assertRaises(WorkbenchError) as failure:
+            dispatch(selected, 'project_files.execution_health', READ)
+        self.assertEqual(failure.exception.code, 'unavailable')
+
+    def test_native_producer_grammars_refuse_wrong_family_documents(self):
+        base = dict(BOUND, family='caption_proposal_history', document=dict(request_id=RECORD,
+            source_id=PROJECT, revision=2, source_revision=1, server_url='http://127.0.0.1:12345',
+            model='current-model', instruction='Describe the captured image', seed=1))
+        agent_api.validate_arguments('project_files.execution_producer_start', base)
+        typed = copy.deepcopy(base); typed['document'].update(protocol='pumas_typed_v1', profile=None, seed=None)
+        agent_api.validate_arguments('project_files.execution_producer_start', typed)
+        for change in ({'family': 'generation_history'}, {'family': 'arbitrary_callable'},
+                       {'document': dict(base['document'], credential='not-accepted')}):
+            with self.assertRaises(agent_api.AgentAPIError):
+                agent_api.validate_arguments('project_files.execution_producer_start', dict(base, **change))
+        with self.assertRaises(agent_api.AgentAPIError):
+            agent_api.validate_arguments('project_files.execution_submit_external', dict(BOUND,
+                graph_id=RECORD, graph_revision=1, expected_digest=SHA, request_key='short'))
 
     def test_metadata_calls_preserve_native_body_and_canonical_arguments(self):
         selected = projection()

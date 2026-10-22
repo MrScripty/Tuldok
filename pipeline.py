@@ -1225,13 +1225,14 @@ class Pipelines:
             model['material'][key]['bytes'] for key in ('specification','preprocessing_policy','output_policy'))
         import recipe_process
         # The same measured runtime facets select the custody owner's readiness
-        # and post-GO verification budgets in the final execution specification.
+        # and post-GO verification budgets. New admissions also reserve the
+        # custodian's separate finite wait for acknowledged owner GO intent.
         ready=recipe_process.preparation_seconds(preflight['material'])
         verification=recipe_process.verification_seconds(preflight['material'])
         output_bytes=preflight['material']['resources']['max_output_bytes']
         custody_bytes=2*recipe_process.STREAM_LIMIT+2*16384+256*1024
         envelope={'attempt_slots':1,'admitted_wall_seconds':preflight['material']['resources']['wall_seconds']+
-                  ready+2+verification+15,
+                  ready+2+recipe_process.GO_WAIT_SECONDS+verification+15,
                   'retained_bytes':capture_bytes+model_bytes+output_bytes+custody_bytes,
                   'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+custody_bytes}
         if evidence:

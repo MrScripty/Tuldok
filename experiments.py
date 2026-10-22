@@ -228,6 +228,19 @@ class Experiments:
         from experiment_lineage import TrialLineage
         self.lineage=TrialLineage(self)
 
+    def _project(self):
+        return getattr(self.dataset,'project_study_execution',None)
+
+    def _mark(self,study_id):
+        adapter=self._project()
+        execution=getattr(self.dataset,'project_execution',None)
+        if execution is not None:execution.mark_study(study_id)
+        elif adapter is not None:adapter.mark_study(study_id)
+
+    def _run_fact(self,run_id):
+        adapter=self._project()
+        return adapter.run_fact(run_id) if adapter is not None else self.dataset.runs._load(run_id)
+
     def _study(self,study_id):
         identifier(study_id)
         row=self.db.execute('SELECT revision,admission_epoch,document FROM model_studies WHERE id=%s',(study_id,)).fetchone()
@@ -248,6 +261,7 @@ class Experiments:
         self.db.execute('UPDATE model_studies SET revision=%s,admission_epoch=%s,document=%s WHERE id=%s',
                         (value['revision'],value['admission_epoch'],encode(value),value['id']))
         self.access.audit(action,value['id'],dict(details or {},revision=value['revision'],epoch=value['admission_epoch']))
+        self._mark(value['id'])
         return value
 
     def _expected(self,value,body):
@@ -282,6 +296,7 @@ class Experiments:
             self.db.execute('INSERT INTO model_studies VALUES(%s,%s,%s,%s)',(study_id,1,0,encode(value)))
             self.db.execute('INSERT INTO model_study_memberships VALUES(%s,%s,%s)',(study_id,1,encode({'trial_ids':[]})))
             self.access.audit('studies.create',study_id,{'policy_sha256':policy_sha,'limits':limits})
+            self._mark(study_id)
         return value
 
     @authorized('inspect','studies.trial')
@@ -349,19 +364,31 @@ class Experiments:
     def _save_receipt(self,actor,operation,key,sha,value):
         value=checked_json(value,MAX_STUDY_DOCUMENT)
         self.db.execute('INSERT INTO model_operation_receipts VALUES(%s,%s,%s,%s,%s)',(actor,operation,key,sha,encode(value)))
+        adapter=self._project()
+        if adapter is not None:adapter.mark_operation(operation,value)
 
     def _reservation(self,row):
         value=retained_json(row['document'])
         for key in ('id','study_id','actor_id','request_key','request_sha256','trial_id','run_id'):
             if value.get(key)!=row[key]:raise WorkbenchError('Reservation identity differs.','unavailable',409)
         trial=self.trial(value['trial_id'])
+        adapter=self._project()
+        composition=(adapter.materials.recipe(trial['material']) if adapter is not None
+                     else self.dataset.pipelines.recipe_material(trial['material']))
         return validate_retained_reservation(value,trial=trial,
-            composition=self.dataset.pipelines.recipe_material(trial['material']),
-            run=self.dataset.runs._load(value['run_id']))
+            composition=composition,
+            run=self._run_fact(value['run_id']))
 
-    def _reservations(self,study_id):
+    def _local_reservations(self,study_id):
         return [self._reservation(row) for row in self.db.execute(
             'SELECT * FROM model_attempt_reservations WHERE study_id=%s ORDER BY id',(study_id,))]
+
+    def _reservations(self,study_id):
+        local=self._local_reservations(study_id);adapter=self._project()
+        if adapter is None:return local
+        values={value['run_id']:value for value in adapter.historical_reservations(study_id)}
+        values.update((value['run_id'],value) for value in local)
+        return sorted(values.values(),key=lambda value:value['id'])
 
     def _totals(self,reservations):
         return reservation_totals(reservations)
@@ -405,7 +432,10 @@ class Experiments:
     def _children_ceased(self,reservations):
         """Use owned Run custody; no PID signalling or optimistic terminal inference."""
         unknown=False;active=False
+        adapter=self._project()
+        local_ids=None if adapter is None else adapter.local_run_ids()
         for reservation in reservations:
+            if local_ids is not None and reservation['run_id'] not in local_ids:continue
             run=self.dataset.runs._load(reservation['run_id'])
             if run['state']=='unknown':unknown=True
             elif run['state'] in ACTIVE:active=True
@@ -431,13 +461,15 @@ class Experiments:
             if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
             reservations=self._reservations(study_id);ceased,unknown=self._children_ceased(reservations)
-            if (study['open'] or study['admission_epoch']!=body['admission_epoch'] or not ceased or unknown or
-                    any(item['state']=='unknown' for item in reservations)):
+            adapter=self._project()
+            already_open=study['open'] and (adapter is None or adapter.epoch_current(study))
+            if (already_open or study['admission_epoch']!=body['admission_epoch'] or not ceased or unknown):
                 raise WorkbenchError('Study cannot open before known child cessation and exact epoch.','unavailable',409)
             totals=self._totals(reservations)
             if any(totals[key]>=study['limits'][key] for key in DIMENSIONS):
                 raise WorkbenchError('Study has no remaining budget.','unavailable',409)
-            if self.dataset.runs._external_blocked:raise WorkbenchError('Run custody is unknown.','unavailable',409)
+            blocked=(adapter.external_blocked() if adapter is not None else self.dataset.runs._external_blocked)
+            if blocked:raise WorkbenchError('Run custody is unknown.','unavailable',409)
             study.update(open=True,state='open',admission_epoch=natural(study['admission_epoch']+1,'Admission epoch'))
             value=self._write(study,'studies.continue')
             self._save_receipt(actor,'studies.continue',body['request_key'],sha,value)
@@ -461,8 +493,11 @@ class Experiments:
         with self.lock,self.db.transaction():
             self.access.require('approve-execution','studies.approve',study_id,owner_only=True)
             grant=self.access.grant_execution(trial['material']['sha256'],body['consumer_actor_id'],body.get('ttl_seconds',600))
-            self.access.audit('studies.approve',study_id,{'trial_id':trial['id'],'material_sha256':trial['material']['sha256'],
-                                                       'approval_id':grant['id']})
+            details={'trial_id':trial['id'],'material_sha256':trial['material']['sha256'],'approval_id':grant['id']}
+            if self._project() is not None:
+                details.update({key:grant[key] for key in ('consumer_actor_id','created_at','expires_at')})
+            self.access.audit('studies.approve',study_id,details)
+            self._mark(study_id)
         return grant
 
     @authorized('inspect','studies.admit')
@@ -502,17 +537,19 @@ class Experiments:
                 if receipt:
                     self.db.on_commit(lambda:shutil.rmtree(staging,ignore_errors=True));return receipt
                 study=self._study(study_id);self._expected(study,body)
+                adapter=self._project()
+                if adapter is not None:adapter.require_current_epoch(study)
                 if not study['open'] or study['admission_epoch']!=body['admission_epoch']:
                     raise WorkbenchError('Study admission epoch is closed.','stale',409)
                 reservations=self._reservations(study_id);ceased,unknown=self._children_ceased(reservations)
-                if not ceased or unknown or any(item['state']=='unknown' for item in reservations):
+                if not ceased or unknown:
                     raise WorkbenchError('Study already has an active or unknown child.','unavailable',409)
                 totals=self._totals(reservations)
                 if any(natural(totals[key]+envelope[key],'Requested total')>study['limits'][key] for key in DIMENSIONS):
                     raise WorkbenchError('Finite study budget is exhausted.','unavailable',409)
                 parent=None
                 if body.get('parent_run_id') is not None:
-                    identifier(body['parent_run_id']);parent=self.dataset.runs._load(body['parent_run_id'])
+                    identifier(body['parent_run_id']);parent=self._run_fact(body['parent_run_id'])
                     if not any(item['run_id']==parent['id'] and item['trial_id']==trial['id'] for item in reservations):
                         raise WorkbenchError('Retry parent does not belong to this trial.')
                     if parent['state'] not in ('failed','cancelled','interrupted'):
@@ -551,17 +588,19 @@ class Experiments:
     def _admission_receipt(self,study_id,actor,key,sha):
         row=self.db.execute('SELECT * FROM model_attempt_reservations WHERE study_id=%s AND request_key=%s',
                             (study_id,key)).fetchone()
-        if row is None:return None
+        if row is None:
+            adapter=self._project()
+            if adapter is not None:adapter.reject_historical_request(study_id,actor,key,sha)
+            return None
         if row['actor_id']!=actor or row['request_sha256']!=sha:
             raise WorkbenchError('Admission key is bound to different actor/inputs.','conflict',409)
         reservation=self._reservation(row)
         return {'reservation':reservation,'run':self.dataset.runs.get(reservation['run_id'])}
 
-    @authorized('inspect','studies.reconcile')
-    def reconcile(self,study_id):
-        """Explicit accounting reconciliation; never wake or replay a Run."""
+    def _reconcile_local(self,study_id):
+        """Observe only this runtime's reservation rows; never replay history."""
         with self.lock,self.db.transaction():
-            study=self._study(study_id);reservations=self._reservations(study_id);changed=False
+            study=self._study(study_id);reservations=self._local_reservations(study_id);changed=False
             for value in reservations:
                 run=self.dataset.runs._load(value['run_id'])
                 state='unknown' if run['state']=='unknown' else 'running' if run['state'] in ACTIVE else 'settled'
@@ -582,8 +621,12 @@ class Experiments:
             if changed:self._write(study,'studies.reconcile')
         return self.get(study_id)
 
-    @authorized('cancel','studies.stop')
-    def stop(self,study_id,body):
+    @authorized('inspect','studies.reconcile')
+    def reconcile(self,study_id):
+        return self._reconcile_local(study_id)
+
+    def _close_admission(self,study_id,body):
+        """Close one exact epoch, retaining the original bounded stop receipt."""
         closed(body,('request_key','revision'));request_key(body['request_key'])
         actor=self.access._context().actor_id;sha=digest({'study_id':study_id,'body':body})
         with self.lock,self.db.transaction():
@@ -595,12 +638,18 @@ class Experiments:
                              stop_receipt_id=uuid.uuid4().hex)
                 self._write(study,'studies.stop')
                 pending=[]
-                for item in self._reservations(study_id):
+                for item in self._local_reservations(study_id):
                     if not self._ceased(self.dataset.runs._load(item['run_id'])):pending.append(item['run_id'])
                 receipt={'study_id':study_id,'stop_receipt_id':study['stop_receipt_id'],'admission_epoch':study['admission_epoch'],
                          'run_ids':pending}
                 self._save_receipt(actor,'studies.stop',body['request_key'],sha,receipt)
-        # Epoch closure has acknowledged commit before any child cancellation.
+        return receipt
+
+    @authorized('cancel','studies.stop')
+    def stop(self,study_id,body):
+        receipt=self._close_admission(study_id,body)
+        # A legacy standalone owner commits its epoch before signalling. The
+        # project adapter publishes this same closure before its cancel phase.
         for run_id in receipt['run_ids']:self.dataset.runs.cancel(run_id)
         return {'receipt':receipt,'status':self.reconcile(study_id)}
 
@@ -676,6 +725,8 @@ class Experiments:
     @authorized('inspect','studies.candidate')
     def candidate(self,candidate_id):
         identifier(candidate_id)
+        adapter=self._project()
+        if adapter is not None:return adapter.candidate(candidate_id)
         with self.lock:
             row=self.db.execute('SELECT * FROM model_candidates WHERE id=%s',(candidate_id,)).fetchone()
             if row is None:raise WorkbenchError('Candidate not found.','not_found',404)

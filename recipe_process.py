@@ -21,6 +21,9 @@ import time
 import threading
 
 READY_SECONDS = 10
+# READY starts a separate, finite owner durability phase. Neither a slow
+# canonical acknowledgement nor this budget authorizes a recipe without GO.
+GO_WAIT_SECONDS = 60
 GRACE_SECONDS = 3
 CLEANUP_SECONDS = 10
 STREAM_LIMIT = 1024 * 1024
@@ -680,6 +683,7 @@ class Handle:
     def __init__(self, process, channel, spec, directory):
         self.process, self.channel, self.spec, self.directory = process, channel, spec, directory
         self.ready = None
+        self.go_deadline = None
         self.verifying = False
         self.sent_go = self.terminal = self.lost = self.sent_cancel = False
         self.started = time.monotonic()
@@ -719,6 +723,7 @@ class Handle:
                 if self.ready is not None or not valid_identity(event['helper']) or event['helper'] != identity(self.process.pid):
                     self.cancel('protocol_error'); raise ProcessError('Invalid custodian READY identity.')
                 self.ready = event['helper']
+                self.go_deadline = time.monotonic() + GO_WAIT_SECONDS
             elif kind == 'verifying':
                 if not self.sent_go or self.verifying or 'torch_runtime' not in self.spec:
                     self.cancel('protocol_error'); raise ProcessError('Invalid runtime verification observation.')
@@ -739,9 +744,16 @@ class Handle:
         return events
 
     def go(self, expected_ready_identity):
-        if self.ready is None or expected_ready_identity != self.ready or self.sent_go or self.terminal or self.channel is None:
+        if self.ready is None or expected_ready_identity != self.ready or self.sent_go or self.sent_cancel or self.terminal or self.lost or self.channel is None:
             raise ProcessError('GO requires the exact READY identity once.')
-        _packet(self.channel, {'type':'go','attempt_id':self.spec['attempt_id'],'request_sha256':self.spec['request_sha256'],'helper':self.ready})
+        if self.go_deadline is None or time.monotonic() >= self.go_deadline:
+            self.close_control(wait=False)
+            raise ProcessError('Custodian GO acknowledgement deadline exceeded.', 'unavailable')
+        try:
+            _packet(self.channel, {'type':'go','attempt_id':self.spec['attempt_id'],'request_sha256':self.spec['request_sha256'],'helper':self.ready})
+        except OSError as error:
+            self.close_control(wait=False)
+            raise ProcessError('Custodian control was lost before GO acknowledgement.', 'unavailable') from error
         self.sent_go = True
 
     def cancel(self, reason='cancelled'):
@@ -1072,8 +1084,12 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
         # responsive; recheck it cancellably at GO, before any recipe fork.
         verify_captures(spec, include_cpu=False, include_torch=False)
         timing.finish(preparation_span)
-        wait_span=timing.begin('go_wait','owner_go');timing_write()
-        _packet(channel,dict(common,type='ready',helper=who))
+        if time.monotonic()>=deadline:
+            stop('ready_timeout')
+        else:
+            wait_span=timing.begin('go_wait','owner_go');timing_write()
+            deadline=time.monotonic()+GO_WAIT_SECONDS
+            _packet(channel,dict(common,type='ready',helper=who))
         while True:
             now=time.monotonic()
             if stopping is None and now>=deadline:stop('wall_timeout' if go else 'ready_timeout')
@@ -1108,6 +1124,8 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                     if type(message) is dict and set(message)=={'type','reason'} and message['type']=='cancel' and message['reason'] in ('cancelled','shutdown','protocol_error'):
                         stop(message['reason']);continue
                     expected={'type':'go','attempt_id':spec['attempt_id'],'request_sha256':spec['request_sha256'],'helper':who}
+                    if not go_received and time.monotonic()>=deadline:
+                        stop('ready_timeout');continue
                     if message!=expected or go_received or stopping is not None:stop('protocol_error');continue
                     # GO authorizes verification, then recipe creation. Receipt
                     # truth must retain that command even when hashing stops

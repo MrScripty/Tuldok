@@ -120,7 +120,8 @@ class TrialLineage:
         row = self.db.execute('SELECT parent_trial_id,baseline_trial_id,document FROM model_trial_lineage '
                               'WHERE trial_id=%s', (trial_id,)).fetchone()
         if row is None:
-            return None
+            adapter=self.studies._project()
+            return adapter.lineage_fact(trial_id) if adapter is not None else None
         from model_definitions import retained_json
         value = retained_json(row['document'], INTENT_LIMIT + 4096)
         value = validate_retained_lineage(value, trial=self.studies.trial(trial_id), resolve=self._ref)
@@ -156,6 +157,7 @@ class TrialLineage:
                          (intent['baseline'] or {}).get('trial_id'), encode(value)))
         self.access.audit('studies.lineage.record', child,
                           {'material_sha256': trial['material']['sha256'], 'intent_sha256': digest(intent)})
+        self.studies._mark(trial['study_id'])
         return value
 
     @authorized('edit', 'studies.record_lineage')

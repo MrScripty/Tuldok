@@ -29,6 +29,8 @@ jobs:
       TULDOK_PROJECT_FILES_COLD_DATABASE_URL: postgresql://tuldok_project_cold:isolated-cold-fixture@127.0.0.1:5432/tuldok_project_cold
       TULDOK_QA_OUTPUT_ROOT: build/qa/external-project
       TULDOK_M2_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_M4_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_OWNER_MCP_MANIFEST: build/qa/external-project/product-manifest.json
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the exact authored fixture used by canonical Release qualification
@@ -69,6 +71,7 @@ jobs:
           paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
           paths = sorted(p for p in paths if p and ((p.endswith('.py') and '/' not in p) or p.startswith(('static/', 'extension_schemas/', 'tuldok_extension_sdk/'))))
           subject = {'baseline': subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip(),
+                     'qualification_copy': str(pathlib.Path.cwd()), 'parent_manifest_sha256': None,
                      'files': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}}
           target = pathlib.Path(os.environ['TULDOK_M2_FREEZE_MANIFEST'])
           target.parent.mkdir(parents=True, exist_ok=True)

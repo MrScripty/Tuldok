@@ -343,10 +343,11 @@ def artifact_capture_source(run, item, raw, proof_raw):
 
 
 class Runs:
-    def __init__(self, dataset, pipelines):
+    def __init__(self, dataset, pipelines, *, recover=True):
         self.dataset, self.pipelines = dataset, pipelines
         self.access = dataset.access
         self.db, self.lock = dataset.db, dataset.lock
+        self.project_execution = getattr(dataset, 'project_execution', None)
         self.path = dataset.path / 'workspace-runs'
         self.path.mkdir(exist_ok=True)
         self._wake, self._stop = threading.Event(), threading.Event()
@@ -363,9 +364,11 @@ class Runs:
         self._phase_book = phase_timings.Book()
         from run_capacity import Capacity
         self._capacity = Capacity.configured()
+        if self.project_execution is not None:
+            self.project_execution.attach_runs(self)
         with self.lock:
             self.runtime_owner = self.db.claim_runtime('workspace_runs')
-            if self.runtime_owner:
+            if self.runtime_owner and recover:
                 self._recover()
         from run_coordinator import Coordinator
         self._coordinator = Coordinator(self)
@@ -546,6 +549,8 @@ class Runs:
         else:
             evidence['release_sha256'] = run['release_sha256']
         self.access.audit(action, run['id'], evidence)
+        if self.project_execution is not None:
+            self.project_execution.mark_run(run['id'])
 
     @staticmethod
     def _external(run):
@@ -798,10 +803,18 @@ class Runs:
             raise
         if receipt:
             return self._reconcile_receipt(receipt)
-        self._wake_external(run_id)
+        # A project adapter may own a surrounding canonical publication TX.
+        # Only its acknowledged outer COMMIT can make this queue dispatchable.
+        if self.db.in_transaction:
+            self.db.on_commit(lambda: self._wake_external(run_id))
+        else:
+            self._wake_external(run_id)
         return self._public(run)
 
     def _wake_external(self, run_id):
+        if self.db.in_transaction:
+            self.db.on_commit(lambda: self._wake_external(run_id))
+            return
         with self.lock:
             self._confirmed_external.add(run_id)
         self._start()
@@ -930,12 +943,116 @@ class Runs:
                         (run_id, key, request_hash, encode(run)))
         self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
                           'approved_material_sha256':approved_sha,'approval_id': grant_id, 'request_sha256': request_hash})
+        if self.project_execution is not None:
+            self.project_execution.mark_run(run_id)
         if wake_on_commit:
             self.db.on_commit(lambda: self._wake_external(run_id))
         return run
 
     def _external_directory(self, run):
         return self.path / ('.external-' + run['id'])
+
+    def _capture_project_payloads(self, run, artifacts):
+        """Publish fixed current-local Run files before its SQL acknowledgement.
+
+        The existing rooted Projects reader owns all path walking. Nothing in an
+        imported Run creates this reader or selects its current local directory.
+        Artifact custody makes its own verified immutable copy of each FD.
+        """
+        from projects import Projects
+        if self.project_execution is None or not self.db.in_transaction:
+            raise RuntimeError('Project Run capture requires its current execution transaction.')
+        selected = []
+        if self._external(run):
+            for name, item in run['material']['captures'].items():
+                selected.append((name, '.external-' + run['id'] + '/' + name, item,
+                                 'captured_input' if name.startswith('input/') else 'execution_source', 'unknown'))
+        else:
+            # Native inputs use the same previously frozen, owner-verified Release.
+            # Its path is current-local authority, never imported/restored history.
+            raise WorkbenchError('Native Run project capture awaits its qualified execution adapter.', 'unsupported', 409)
+        for item in run['artifacts']:
+            selected.append((item['name'], run['id'] + '/' + item['name'], item,
+                             item.get('role', 'output'), item.get('split', 'unknown')))
+        if run['state'] == 'completed':
+            for name, limit in (('custody-receipt.json', 16384), ('artifact-manifest.json', 65536)):
+                raw = self._read_regular(self.path / run['id'] / name, limit)
+                selected.append((name, run['id'] + '/' + name,
+                    dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)), 'custody_proof', 'unknown'))
+        elif run.get('custody_identity') is not None and run.get('custody_phase') == 'drained':
+            raw = self._read_regular(self._external_directory(run) / 'custody/receipt.json', 16384)
+            import recipe_process
+            receipt = recipe_process.validate_receipt(raw, run['custody_identity'])
+            if not receipt['drained']:
+                raise WorkbenchError('Current custodian drainage is unconfirmed.', 'unknown', 409)
+            selected.append(('custody-receipt.json', '.external-' + run['id'] + '/custody/receipt.json',
+                             dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)), 'custody_proof', 'unknown'))
+        if run.get('publication_source') is not None:
+            raw = self._read_regular(self._external_directory(run) / 'publication-source-v1.json', MAX_PUBLICATION_SOURCE_BYTES)
+            if hashlib.sha256(raw).hexdigest() != run['publication_source']['sha256']:
+                raise WorkbenchError('Current publication proof changed.', 'stale', 409)
+            selected.append(('publication-source-v1.json', '.external-' + run['id'] + '/publication-source-v1.json',
+                             dict(sha256=run['publication_source']['sha256'],bytes=len(raw)), 'publication_proof', 'unknown'))
+        edges = self._capture_project_host_sources(run, artifacts)
+        reader = Projects(self.dataset, {'current_runs': self.path})
+        try:
+            for name, relative, item, role, population in selected:
+                declaration = dict(format='project_artifact_v1', sha256=item['sha256'], bytes=item['bytes'])
+                with reader._file('current_runs', relative) as (descriptor, info):
+                    artifacts.publish_fd(descriptor, declaration)
+                edges.append(dict(name=name, blob={key:declaration[key] for key in ('sha256','bytes')},
+                                  population=population, role=role, preservation='unique',
+                                  required_for=['scientific_inspection','execution_proof']))
+        finally:
+            reader.close()
+        return edges
+
+    def _capture_project_host_sources(self, run, artifacts):
+        """Retain the qualified host once, then use only its immutable bytes.
+
+        An older Run without these edges stays unavailable: current source files
+        cannot supply retrospective evidence for a historical host identity.
+        """
+        import recipe_contract
+        from projects import Projects
+        maximum = 4 * 1024 * 1024
+        records = self.project_execution.session.snapshot['records']
+        prior = next((record['document'] for record in records
+                      if record['family'] == 'run_history'
+                      and record['document']['origin_catalog_id'] == run['dataset_id']
+                      and record['document']['run']['id'] == run['id']), None)
+        expected = run['material']['host_files']
+        if prior is not None:
+            edges = []
+            for name, sha in sorted(expected.items()):
+                edge = next((edge for edge in prior['payloads'] if edge['name'] == 'host/' + name), None)
+                if (edge is None or edge['blob']['sha256'] != sha or edge['role'] != 'host_source'
+                        or edge['preservation'] != 'unique'
+                        or edge['required_for'] != ['historical_host_source']):
+                    raise WorkbenchError('Retained Run host source is unavailable.', 'unavailable', 409)
+                with artifacts.open_verified(dict(format='project_artifact_v1', **edge['blob']),
+                                             maximum_bytes=maximum):
+                    pass
+                edges.append(copy.deepcopy(edge))
+            return edges
+        if (run['state'] != 'queued' or run['custody_phase'] != 'prepared'
+                or run.get('custody_identity') is not None):
+            raise WorkbenchError('Only a newly admitted current Run can capture its host source.', 'unavailable', 409)
+        if recipe_contract.recipe_host_identity(run['material']['recipe']) != expected:
+            raise WorkbenchError('Current execution host differs from its admitted identity.', 'stale', 409)
+        reader = Projects(self.dataset, {'current_host': Path(recipe_contract.__file__).resolve().parent})
+        edges = []
+        try:
+            for name, sha in sorted(expected.items()):
+                with reader._file('current_host', name) as (descriptor, info):
+                    declaration = dict(format='project_artifact_v1', sha256=sha, bytes=info.st_size)
+                    artifacts.publish_fd(descriptor, declaration, maximum_bytes=maximum)
+                edges.append(dict(name='host/' + name, blob={key:declaration[key] for key in ('sha256','bytes')},
+                                  population='unknown', role='host_source', preservation='unique',
+                                  required_for=['historical_host_source']))
+        finally:
+            reader.close()
+        return edges
 
     def _external_drain_receipt(self, run):
         import recipe_process
@@ -1291,7 +1408,10 @@ class Runs:
                 self._save(run)
             if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
+            if self.project_execution is not None:self.project_execution.before_launch(run_id)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
+            if self.project_execution is not None:
+                self.project_execution.register_custody(run_id, handle)
             clock.finish(launch_span)
             preparation_seconds = recipe_process.preparation_seconds(run['spec'])
             ready_deadline = time.monotonic() + preparation_seconds + 2
@@ -1301,6 +1421,7 @@ class Runs:
             while not terminal:
                 for event in handle.poll():
                     if event['type'] == 'ready':
+                        custody_deadline = time.monotonic() + recipe_process.GO_WAIT_SECONDS + recipe_process.CLEANUP_SECONDS + 5
                         with self.lock, self.db.transaction():
                             run = self._load(run_id)
                             run['custody_identity'] = copy.deepcopy(handle.expected_identity)
@@ -1659,6 +1780,8 @@ class Runs:
                     'Real CPU attempt admitted. Training starts from scratch; no model download.')
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
+        if self.project_execution is not None:
+            self.project_execution.mark_run(run_id)
         return run
 
     @authorized('execute', 'runs.retry', owner_only=True)
@@ -1703,6 +1826,9 @@ class Runs:
         return self._public(run)
 
     def _start(self):
+        if self.db.in_transaction:
+            self.db.on_commit(self._start)
+            return
         with self._thread_lock:
             if self._closed or self._stop.is_set():
                 return
@@ -1817,6 +1943,7 @@ class Runs:
 
     def _run_attempt(self, admitted, cpus, claim):
         affinity = os.sched_getaffinity(0)
+        if self.project_execution is not None:self.project_execution.attempt_started(admitted['id'])
         try:
             # Linux affinity belongs to this executor thread. Children inherit it;
             # other attempts and the HTTP/coordinator threads remain independent.
@@ -1855,6 +1982,7 @@ class Runs:
                 self._coordinator.fault('attempt_reconciliation_storage')
         finally:
             os.sched_setaffinity(0, affinity)
+            if self.project_execution is not None:self.project_execution.attempt_finished(admitted['id'])
             self._wake.set()
 
     def _execute(self, run_id):

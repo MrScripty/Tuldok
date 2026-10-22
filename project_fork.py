@@ -24,7 +24,7 @@ FORMAT = 'project_fork_v1'
 # formerly active values/receipts become inactive through the fork overlay.
 ARCHIVE_FAMILIES = frozenset(('workbench_text', 'workbench_record', 'workbench_response',
     'workbench_preference', 'saved_selection', 'saved_search', 'model_definition',
-    'pipeline_graph', 'recipe_definition', 'project_operation', FAMILY))
+    'pipeline_graph', 'recipe_definition', 'project_file', 'project_operation', FAMILY))
 ID = re.compile(r'^[a-f0-9]{32}$')
 SHA = re.compile(r'^[a-f0-9]{64}$')
 
@@ -378,6 +378,11 @@ def publish_fork(source_store, source_artifacts, trusted_root_fd, relative, *, r
                 value = declarations[identity]
                 with source_artifacts.open_verified(value, maximum_bytes=value['bytes']) as source_fd:
                     artifacts.publish_fd(source_fd, value, maximum_bytes=value['bytes'])
+            # Ordinary authored files are explicitly adopted text. Only a new
+            # task-owned fork stage materializes them; Open never calls this.
+            from project_files import materialize_captured
+            with staged.root_directory() as destination_root:
+                materialize_captured(records, destination_id, destination_root)
             _source_current(source_store, source)
             validate_candidate(copy.deepcopy(records), destination_id)
             committed = staged.commit(records, staged.snapshot()['checkpoint'], request_key, digest)

@@ -20,7 +20,7 @@ from experiment_lineage import (INTENT_LIMIT, validate_retained_ancestry,
     validate_retained_intent, validate_retained_lineage)
 from model_definitions import checked_json, natural, reference, text
 from pipeline import closed, digest, identifier, model_aware_graph, source_content_hash
-from project_session import operation_records
+from project_session import operation_documents, operation_records
 from projects import relative_path
 from runs import (ACTIVE, TERMINAL, TEST_FILES, MAX_ARTIFACT_BYTES, validate_retained_run,
                   project_run_projection, public_run_projection, artifact_capture_source, validate_external_artifact_inventory)
@@ -94,7 +94,15 @@ def _audit(facts):
         elif action=='studies.prepare_trial':
             if keys not in ({'trial_id'},{'trial_id','revision','epoch'}):_invalid('Unclassified Trial preparation audit.')
         elif action=='studies.admit':closed(details,('run_id','reservation_id','request_sha256','revision','epoch'))
-        elif action=='studies.approve':closed(details,('trial_id','material_sha256','approval_id'))
+        elif action=='studies.approve':
+            if keys not in ({'trial_id','material_sha256','approval_id'},
+                    {'trial_id','material_sha256','approval_id','consumer_actor_id','created_at','expires_at'}):
+                _invalid('Unclassified Study approval audit.')
+            if 'created_at' in details:
+                from access import MAX_APPROVAL_TTL
+                if (type(details['created_at']) is not int or type(details['expires_at']) is not int or
+                        not details['created_at']<details['expires_at']<=details['created_at']+MAX_APPROVAL_TTL):
+                    _invalid('Invalid historical Study approval lifetime.')
         elif action=='studies.select_candidate':
             if keys not in ({'study_id','run_id','checkpoint_sha256'},{'study_id','run_id','checkpoint_sha256','decision'}):
                 _invalid('Unclassified candidate selection audit.')
@@ -114,7 +122,7 @@ def _audit(facts):
         for key,value in details.items():
             if key.endswith('_sha256') and value is not None:_sha(value)
             elif key.endswith('_id') and value is not None:identifier(value,key)
-            elif key in ('revision','epoch'):natural(value,key,1 if key=='revision' else 0)
+            elif key in ('revision','epoch','created_at','expires_at'):natural(value,key,1 if key=='revision' else 0)
             elif key=='state' and value not in set(ACTIVE)|set(TERMINAL)|{'open','stopping','stopped'}:_invalid('Invalid historical state audit.')
             elif key=='custody_phase' and value not in ('prepared','barrier_ready','go_intent','drained'):_invalid('Invalid custody audit.')
             elif key=='reason':text(value,'Disclosure reason',1000)
@@ -753,7 +761,7 @@ class ProjectHistory:
     def disclosure_facts(self,run_id,*,origin_catalog_id=None):
         self._authorize('runs.get',run_id);origin=self._origin(origin_catalog_id)
         result=[]
-        for operation in operation_records(self.session.snapshot['records']).values():
+        for operation in operation_documents(self.session.snapshot['records']):
             if operation['operation']!='history.disclose':continue
             value=validate_disclosure_fact(operation['result'])
             if value['origin_catalog_id']==origin and value['run_id']==run_id:result.append(value)
@@ -957,6 +965,14 @@ class ProjectHistory:
             prepared['records']=records
             return result
         def capture(result,before_records):
+            adapter=getattr(self,'study_execution',None)
+            if adapter is not None:
+                # Authoring rows are a disposable projection of THIS pending
+                # canonical change. Update them inside the same SQL boundary so
+                # a background local Run cannot later publish stale Study intent.
+                merged={(item['family'],item['id']):item for item in before_records}
+                merged.update(((item['family'],item['id']),item) for item in prepared['records'])
+                adapter.refresh_authoring(list(merged.values()))
             return {'records':prepared['records'],'result':result}
         self.access.require('edit',operation,target,owner_only=operation in ('studies.create','studies.save'))
         return self.session.mutate(operation,target,body,expected_checkpoint,key,invoke,capture)

@@ -191,6 +191,90 @@ class ProjectDataTests(unittest.TestCase):
             self.data.import_text(dict(text='Hello 😀 cafe\u0301\r\n',name='Authored text',groups=['fixture'],rights='Owned fixture'),'0'*64,'op-1')
         self.assertNotIn(agent['token'],json.dumps(self.store.snapshot()))
 
+    def test_current_job_data_access_requires_exact_local_admission_and_canonical_window(self):
+        runtime=Access(self.db,self.db.path)
+        self.session.runtime_access=runtime
+        owner=self.access.identity()
+        self.assertEqual(self.data._authority.identity()['actor_id'],owner['actor_id'])
+        # Trusted execution creates a local admission; it is never reconstructed
+        # from any project record. These rows belong only to this private fixture.
+        admission,job=uuid.uuid4().hex,uuid.uuid4().hex
+        actor=self.access.require('edit','fixture.job-data')
+        self.db.execute('INSERT INTO access_admissions VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            (admission,self.db.dataset_id,actor.actor_id,actor.credential_id,'synthetic',job,'a'*64,
+             json.dumps({'dataset.add_generated':[job],'workbench.import_asset':[None]}),0))
+        before=self.store.snapshot()
+        with runtime._job('synthetic',job,admission,'a'*64):
+            self.assertEqual(self.data._authority.identity()['mode'],'job')
+            self.assertEqual(self.data._authority.require_job('synthetic',job,admission,'a'*64).job_id,job)
+            with self.assertRaises(WorkbenchError):
+                self.data.workbench.import_asset(dict(kind='text',text='Unpublished direct job source',groups=['fixture'],rights='Owned'))
+            self.data._authority.facts=[]
+            try:
+                self.assertEqual(self.data._authority.require('edit','dataset.add_generated',job).job_id,job)
+                with self.assertRaises(AccessError):self.data._authority.require('edit','dataset.add_generated','wrong-job')
+                with self.assertRaises(AccessError):self.data._authority.require_job('synthetic','wrong-job',admission,'a'*64)
+                with self.assertRaises(AccessError):self.data._authority.require('approve-review','dataset.add_generated',job,owner_only=True)
+                self.db.execute('DELETE FROM access_admissions WHERE id=%s',(admission,))
+                with self.assertRaises(AccessError):self.data._authority.identity()
+                with self.assertRaises(AccessError):self.data._authority.require('edit','dataset.add_generated',job)
+            finally:self.data._authority.facts=None
+        self.assertEqual(self.store.snapshot(),before)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM workbench_records').fetchone()[0],0)
+
+    def test_foreign_job_context_and_missing_runtime_bridge_never_assume_host_owner(self):
+        local=Access(self.db,self.db.path)
+        actor=self.access.require('edit','fixture.job-data')
+        admission,job=uuid.uuid4().hex,uuid.uuid4().hex
+        def insert(db):
+            db.execute('INSERT INTO access_admissions VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                (admission,db.dataset_id,actor.actor_id,actor.credential_id,'synthetic',job,'a'*64,
+                 json.dumps({'workbench.import_asset':[None]}),0))
+        insert(self.db)
+        with local._job('synthetic',job,admission,'a'*64):
+            with self.assertRaises(AccessError):self.data._authority.identity()
+            self.data._authority.facts=[]
+            try:
+                with self.assertRaises(AccessError):self.data.workbench.import_asset(dict(kind='text',text='Missing runtime bridge',groups=['fixture'],rights='Owned'))
+            finally:self.data._authority.facts=None
+        foreign_db=self.metadata('foreign-job');foreign=Access(foreign_db,foreign_db.path);insert(foreign_db)
+        self.session.runtime_access=local
+        with foreign._job('synthetic',job,admission,'a'*64):
+            self.data._authority.facts=[]
+            try:
+                with self.assertRaises(AccessError):self.data._authority.identity()
+                with self.assertRaises(AccessError):self.data.workbench.import_asset(dict(kind='text',text='Foreign continuation',groups=['fixture'],rights='Owned'))
+            finally:self.data._authority.facts=None
+        insert(self.host)
+        with self.access._job('synthetic',job,admission,'a'*64):
+            self.data._authority.facts=[]
+            try:
+                with self.assertRaises(AccessError):self.data.workbench.import_asset(dict(kind='text',text='Host catalog job is foreign here',groups=['fixture'],rights='Owned'))
+            finally:self.data._authority.facts=None
+        self.assertEqual(self.db.execute('SELECT count(*) FROM workbench_records').fetchone()[0],0)
+        self.assertEqual(self.data._authority.identity()['actor_id'],actor.actor_id)
+
+    def test_runtime_capture_window_requires_outer_transaction_and_closes_at_outcome(self):
+        self.session.runtime_access=Access(self.db,self.db.path)
+        with self.assertRaises(WorkbenchError),self.data.runtime_mutation('data.runtime_grounded_text','window'):
+            self.fail('An outer SQL transaction is required')
+        before=self.session.snapshot['records']
+        with self.db.transaction(force_rollback=True):
+            with self.data.runtime_mutation('data.runtime_grounded_text','window'):
+                row=self.data.workbench.import_asset(dict(kind='text',text='Transaction-scoped authored capture',groups=['fixture'],rights='Owned'))
+            # The window remains available to the actual before-COMMIT hook.
+            records=self.data.capture_runtime_changes(before,operation='data.runtime_grounded_text',key='window')
+            self.assertEqual(records[0]['id'],row['id'])
+            self.assertEqual(records[0]['document']['events'][0]['operation'],'data.runtime_grounded_text')
+            self.assertEqual(self.data.capture_runtime_changes(before,operation='data.runtime_grounded_text',key='window'),records)
+            with self.assertRaises(WorkbenchError):self.data.workbench.import_asset(dict(kind='text',text='No write after capture',groups=['fixture'],rights='Owned'))
+        self.assertIsNone(self.data._authority.facts)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM workbench_records').fetchone()[0],0)
+        self.assertEqual(self.session.snapshot['records'],before)
+        with self.db.transaction():
+            with self.assertRaises(WorkbenchError),self.data.runtime_mutation('unsupported-window','bad'):
+                self.fail('Only finite owner windows are admitted')
+
     def test_bad_closed_shapes_and_broken_capture_refuse_before_restore_sql(self):
         row=self.text()
         snapshot=self.store.snapshot();bad=copy.deepcopy(snapshot)

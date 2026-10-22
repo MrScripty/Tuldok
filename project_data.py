@@ -6,6 +6,7 @@ replacement inventory or an independent commit. Existing domain owners admit
 mutations and immutable artifact storage owns exact source bytes.
 """
 import copy
+from contextlib import contextmanager
 from datetime import datetime
 import hashlib
 import json
@@ -99,7 +100,7 @@ def _events(events):
         fail('Data events must be a list.')
     for event in events:
         closed(event, {'operation', 'request_key', 'record_revision', 'source_revision', 'deleted', 'occurred_at', 'snapshot'}, 'data event')
-        if type(event['operation']) is not str or event['operation'] not in DATA_OPERATIONS or type(event['deleted']) is not bool:
+        if type(event['operation']) is not str or event['operation'] not in DATA_OPERATIONS|RUNTIME_DATA_OPERATIONS or type(event['deleted']) is not bool:
             fail('Invalid data lifecycle event.')
         text_value(event['request_key'], 'Operation key', 128)
         natural(event['record_revision'])
@@ -390,7 +391,11 @@ def _audit_bindings(family,record_id,doc):
     """Audit hashes describe exact owner snapshots, never free-standing claims."""
     for fact in doc.get('audit',[]):
         action,details=fact['action'],fact['details']
-        if fact['target']!=record_id:fail('Data audit target differs from its owning record.')
+        if action=='dataset.add_generated' and family=='workbench_record':
+            origin=doc['origin']
+            if origin.get('method')!='model_generated' or fact['target']!=origin['generation']['job_id']:
+                fail('Generated source audit differs from its exact producer job.')
+        elif fact['target']!=record_id:fail('Data audit target differs from its owning record.')
         expected=None
         if family=='workbench_record':
             states=[doc['current'],*doc['history'],*(e['snapshot'] for e in doc['events'])]
@@ -401,7 +406,7 @@ def _audit_bindings(family,record_id,doc):
                 expected=dict(revision=state['revision'],source_revision=state['source_revision'],content_sha256=digest(state))
                 if action in ('workbench.save','workbench.approve_review','workbench.verify','workbench.correct_rights_note'):
                     expected.update(before_revision=state['revision']-1,before_source_revision=state['source_revision'])
-            elif action=='dataset.add':
+            elif action in ('dataset.add','dataset.add_generated'):
                 source=doc['source']
                 if source['kind']!='image':fail('Image audit is attached to another modality.')
                 expected=dict(sample_id=record_id,revision=1,source_sha256=source['revisions'][0]['sha256'])
@@ -711,8 +716,10 @@ DATA_ACTIONS = {
     'workbench.correct_rights_note', 'workbench.preserve_deleted_source', 'workbench.save_response', 'workbench.approve_response',
     'preferences.save', 'preferences.delete', 'saved_selections.create', 'saved_selections.rename', 'saved_selections.delete',
     'saved_searches.create', 'saved_searches.rename', 'saved_searches.delete', 'immutable_assets.admit',
-    'audio_assets.admit', 'scientific_fields.admit', 'dataset.add', 'dataset.save', 'dataset.delete', 'dataset_releases.create',
+    'audio_assets.admit', 'scientific_fields.admit', 'dataset.add', 'dataset.add_generated', 'dataset.save', 'dataset.delete', 'dataset_releases.create',
 }
+RUNTIME_DATA_OPERATIONS = frozenset(('data.runtime_generated_image','data.runtime_grounded_text',
+                                   'data.runtime_caption','data.runtime_text_classification'))
 DATA_OPERATIONS = {
     'data.import_text', 'data.import_image', 'data.import_bundle', 'data.import_audio', 'data.import_scientific',
     'data.annotate', 'data.correct_rights_note', 'data.save_image_source', 'data.delete_image_source',
@@ -837,21 +844,48 @@ def validate_operation_result(operation,result,records=None):
 
 
 class _DataAccess:
-    def __init__(self, host):
-        self.host, self.facts = host, None
+    def __init__(self, session):
+        self.session, self.host, self.facts = session, session.access, None
+    def _selected(self):
+        from access import current_context, AccessError
+        context=current_context()
+        if context is not None and context.mode=='job':
+            if context.catalog_id!=self.session.db.dataset_id:
+                raise AccessError('Current job authority belongs to another project.')
+            runtime=getattr(self.session,'runtime_access',None)
+            if runtime is None or runtime.catalog_id!=self.session.db.dataset_id:
+                raise AccessError('Current local job authority is unavailable.')
+            return runtime
+        return self.host
+    def _context(self):
+        # Merely observing a context never authenticates it. A local job must
+        # still prove its exact local admission before returning any identity.
+        from access import current_context
+        authority=self._selected()
+        if authority is self.host:
+            authority.identity()
+            return current_context()
+        context=current_context()
+        return authority.require_job(context.kind,context.job_id,context.admission_id,context.request_digest)
     def require(self, *args, **kwargs):
-        if args and args[0]!='inspect' and self.facts is None:
-            fail('Project data writes require the canonical session.', 'unavailable', 409)
-        return self.host.require(*args, **kwargs)
+        if args and args[0]!='inspect':
+            window=getattr(self.session,'_data_runtime_window',None)
+            if self.facts is None or window and (not self.session.db.in_transaction or window['records'] is not None):
+                fail('Project data writes require an uncaptured canonical transaction.', 'unavailable', 409)
+        return self._selected().require(*args, **kwargs)
+    def require_job(self, *args, **kwargs):
+        return self._selected().require_job(*args, **kwargs)
     def identity(self):
-        return self.host.identity()
+        self._context()
+        return self._selected().identity()
     def denial(self, *args, **kwargs):
-        return self.host.denial(*args, **kwargs)
+        return self._selected().denial(*args, **kwargs)
     def audit(self, action, target=None, details=None, result='success'):
-        if self.facts is None or action not in DATA_ACTIONS or result != 'success':
+        window=getattr(self.session,'_data_runtime_window',None)
+        if self.facts is None or window and window['records'] is not None or action not in DATA_ACTIONS or result != 'success':
             fail('Data effect is outside its canonical mutation.', 'unavailable', 409)
         scope='freeze' if action=='dataset_releases.create' else 'approve-review' if action=='dataset.save' else 'edit'
-        actor = self.host.require(scope, action, target)
+        actor = self._selected().require(scope, action, target)
         self.facts.append(dict(action=action, target=target, details=copy.deepcopy(details or {}), result=result,
                                actor_id=actor.actor_id, occurred_at=timestamp()))
 
@@ -859,7 +893,7 @@ class _DataAccess:
 class ProjectData:
     def __init__(self, session, image_sources=None, generation_entries=None):
         self.session, self.db, self.access, self.artifacts = session, session.db, session.access, session.artifacts
-        self._authority = _DataAccess(self.access)
+        self._authority = _DataAccess(session)
         self.context = SimpleNamespace(db=self.db, lock=self.db.lock, access=self._authority, path=self.db.path,
                                       project_sources={}, project_asset=self._asset, project_availability=self._available)
         self.workbench = Workbench(self.context)
@@ -875,11 +909,72 @@ class ProjectData:
         self.selections, self.searches = SavedSelections(self.workbench), SavedSearches(self.workbench)
         self.releases = Releases(self.workbench)
         self._declarations = {}
+        self._runtime_window = None
         self._sync_sources()
+
+    @contextmanager
+    def runtime_mutation(self, operation, key):
+        """Open one trusted owner window inside an already owned SQL TX.
+
+        The execution hook captures and publishes before outer COMMIT. This
+        method neither owns that transaction nor calls Session.mutate.
+        """
+        if operation not in RUNTIME_DATA_OPERATIONS or type(key) is not str or not 1<=len(key)<=128:
+            fail('Unsupported runtime data mutation.')
+        if not self.db.in_transaction or getattr(self.session,'runtime_access',None) is None:
+            fail('Runtime data capture requires current execution and its outer transaction.','unavailable',409)
+        if self._runtime_window is not None or self._authority.facts is not None:
+            fail('A data mutation window is already active.','conflict',409)
+        from access import current_context
+        context=current_context()
+        if context is not None and context.mode=='job':
+            self._authority._context()
+            if operation!='data.runtime_generated_image' or context.kind!='synthetic':
+                fail('This admitted job cannot own the requested data mutation.','unavailable',409)
+            self._authority._selected().require('edit','dataset.add_generated',context.job_id)
+        else:
+            self.access.require('edit',operation)
+        window=dict(operation=operation,key=key,before=None,records=None)
+        self._runtime_window=window
+        self.session._data_runtime_window=window
+        self._authority.facts=[];self._pending_artifacts={};self._request_body={}
+        def finish():
+            if self._runtime_window is window:self.finish_runtime_mutation()
+        self.db.on_commit(finish);self.db.on_rollback(finish)
+        try:
+            yield self
+        except BaseException:
+            finish()
+            raise
+
+    def finish_runtime_mutation(self):
+        """Execution outcome owner also calls this after unknown SQL outcome."""
+        self._runtime_window=None
+        self.session._data_runtime_window=False
+        self._authority.facts=None
+        self._pending_artifacts={}
+        self._sync_sources()
+
+    def capture_runtime_changes(self, before_records, *, operation, key):
+        window=self._runtime_window
+        if (not self.db.in_transaction or window is None or operation!=window['operation'] or key!=window['key']):
+            fail('Runtime data capture is outside its exact owned transaction.','unavailable',409)
+        if window['records'] is not None:
+            if before_records!=window['before']:fail('Runtime data capture checkpoint changed.','conflict',409)
+            return copy.deepcopy(window['records'])
+        if operation=='data.runtime_generated_image':
+            for fact in self._authority.facts:
+                if fact['action']=='dataset.add_generated':
+                    self.workbench._sync_images(identity(fact['details'].get('sample_id')))
+        captured=self._capture(None,before_records,operation,key)['records']
+        window['before']=copy.deepcopy(before_records);window['records']=copy.deepcopy(captured)
+        return captured
 
     def _sync_sources(self):
         records = self.session.snapshot['records']
-        self.context.project_sources = {r['id']: copy.deepcopy(r['document']['source']) for r in records if r['family'] == 'workbench_record'}
+        from project_fork import active_records
+        active = active_records(records, project_id=self.session.project_id)
+        self.context.project_sources = {r['id']: copy.deepcopy(r['document']['source']) for r in active if r['family'] == 'workbench_record'}
         self._declarations = {r['id']: r['document'] for r in records if r['family'] == 'project_artifact'}
 
     def _available(self, record_id):
@@ -910,7 +1005,9 @@ class ProjectData:
                     media_type=media_type, kind=kind, role=role, preservation='unique', required_for=['inspect', 'release'])
 
     def _require_record(self, record_id, *, extended=False):
-        for item in self.session.snapshot['records']:
+        from project_fork import active_records
+        snapshot = self.session.snapshot
+        for item in active_records(snapshot['records'], project_id=snapshot['project_id']):
             if item['id'] == record_id and item['family'] in ('workbench_record', 'workbench_text'):
                 if extended and item['family'] == 'workbench_text':
                     fail('This operation requires an explicitly converted data record.', 'unsupported', 409)
@@ -951,6 +1048,8 @@ class ProjectData:
     def _legacy_replay(self, operation, target, body, key):
         """Retain M1 request meaning after the shared M2 session cutover."""
         records = self.session.snapshot['records']
+        from project_fork import active_records
+        records = active_records(records, project_id=self.session.project_id)
         if any(r['family']=='project_operation' and r['document']['request_key']==key for r in records):
             return None
         if operation not in ('data.import_text','data.annotate'):
@@ -1183,7 +1282,8 @@ class ProjectData:
                     changed.append(dict(family=family, id=record_id, document=dict(format=FAMILIES[family], current=current, history=history, audit=audit)))
         for family, table, owner in (('saved_selection', 'saved_selections', self.selections), ('saved_search', 'saved_searches', self.searches)):
             live = {r[0] for r in self.db.execute('SELECT id FROM ' + table)}
-            all_ids = live | {r['id'] for r in before_records if r['family'] == family}
+            from project_fork import active_records
+            all_ids = live | {r['id'] for r in active_records(before_records, project_id=self.session.project_id) if r['family'] == family}
             for record_id in all_ids:
                 old = before.get((family, record_id))
                 current = owner._get(record_id) if record_id in live else copy.deepcopy(old['document']['current'])
@@ -1233,13 +1333,17 @@ class ProjectData:
         # Validate present source bytes through the existing semantic owners
         # before touching any selected SQL row. Missing bytes retain metadata.
         self._verify_sources(owned)
+        from project_fork import active_records
+        active = active_records(snapshot['records'], project_id=self.session.project_id)
+        identities = {(r['family'], r['id']) for r in active}
+        owned = [r for r in owned if (r['family'], r['id']) in identities]
         with self.db.lock, self.db.transaction():
             for table in ('workbench_history', 'workbench_rights_notes', 'workbench_target_proposals', 'workbench_responses', 'workbench_response_history',
                           'workbench_preferences', 'workbench_preference_history', 'saved_selections', 'saved_searches', 'workbench_deleted_sources',
                           'workbench_sequence_assets', 'workbench_mesh_assets', 'workbench_pointcloud_assets', 'workbench_volume_assets', 'samples', 'workbench_records', 'workspace_exposures'):
                 self.db.execute('DELETE FROM ' + table)
             asset_docs = [r for r in owned if r['family'] == 'workbench_record']
-            for legacy in (r for r in snapshot['records'] if r['family'] == 'workbench_text'):
+            for legacy in (r for r in active if r['family'] == 'workbench_text'):
                 doc = legacy['document']
                 asset_docs.append(dict(family='workbench_record', id=legacy['id'], document=dict(current=doc['current'], history=doc['history'],
                     origin=doc['current']['provenance'], source=dict(kind='text', original_text=doc['original_text']))))
@@ -1318,7 +1422,11 @@ class ProjectData:
                     payloads.append(self.artifacts.read_blob({k:declaration[k] for k in ('sha256','bytes')},maximum_bytes=40*1024*1024))
                 validate_project_source(*payloads,source['revisions'][-1],row['pixel_hash'])
             else:
-                raw=self._asset(envelope['id'],kind)
+                # Historical source verification uses its exact envelope;
+                # only current editable records populate the runtime resolver.
+                declaration=self._declarations[source['asset']['artifact']['sha256']]
+                raw=self.artifacts.read_blob({k:declaration[k] for k in ('sha256','bytes')},
+                                             maximum_bytes=40*1024*1024)
                 self.workbench.immutable_owners[kind].validate_project_source(raw,source['metadata']) if kind in ('sequence','mesh','pointcloud','volume') else None
                 if kind == 'audio':
                     from audio_assets import parse_wav

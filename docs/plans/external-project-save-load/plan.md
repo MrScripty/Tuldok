@@ -4,7 +4,7 @@
 
 **Current phase:** M3 — explicit execution, durable lifecycle facts and local custody.
 
-**Next slice:** Add the current-authority bridge, ordered projection locks and canonical transaction hooks, then qualify one actual generic Run before admitting Study and producer writers.
+**Next slice:** Finish the explicit cold Study material-cache path and candidate/runtime publication, then qualify approved-agent execution and their public surfaces. Three original-host crash cases and M4 client/browser checks have passed on separately fixed subjects; they do not accept unfinished M3/M5 work. Evidence is retained in [M3 integration evidence](reports/m3-implementation.md) and [M4 integration evidence](reports/m4-implementation.md).
 
 **Acceptance status:** `pending`
 
@@ -329,6 +329,10 @@ M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data 
 
 **Dependencies / tasks:** M2; enumerate every effectful project writer and ensure it shares project ownership/publication fencing. Canonical admission intent precedes GO while current approval/lease remains local. Publish terminal custody and measured artifacts through the canonical boundary; disposable progress cannot acquire scientific authority. Close/fork/extraction require explicit stop/drain and proof of all relevant descendant effects ending; unknown cases fence. Keep original-host recovery separate from inert imported history and preserve spent budget facts.
 
+The concrete M3 composition adds `project_execution.py`, `project_study_execution.py`, `project_producer_execution.py` and `project_locks.py`, with focused tests bearing those names. Its shared durability boundary also changes `project_session.py`, `project_projection.py`, `project_workspace.py`, `project_data.py`, `project_material.py`, `project_producers.py`, `experiment_lineage.py` and their existing focused tests. These are fixed domain adapters and an ordered lock facade, rather than a generic persistence registry. A per-projection outer-transaction hook captures named science before SQL commit; the selected canonical checkpoint fences SQL rollback or uncertain acknowledgement before any worker wake. Completed SQL scopes are removed before commit callbacks run. The existing owner retains current local credentials, grants, admissions and custody; imported operation facts never reconstruct them. Construction and health inspection remain inert.
+
+The finite runtime/custody composition also admits `project_custody.py` and `project_runtime.py`, plus their focused tests. The private original-host index is outside portable content and records exact physical-root/projection bindings and unresolved outcomes; a changed canonical UUID at the same physical root cannot hide it. Explicit runtime capture accepts only current operator-configured source aliases, commits an inert intent before copying bytes, and never probes or launches captured binaries on Open.
+
 **Gate / risk-based tests:** T5/T6/T7 plus one explicit tiny generic script Run through existing custodian, fixture outputs and fresh historical read. Kill at canonical admission/pre-GO and terminal publication windows; no duplicate dispatch, no imported request/grant reactivation, no false cessation. Real process/PG and public busy/unknown states required, including Open/New/reload refusal during active generation/proposal work and delayed old-generation request rejection. Exercise candidate preparation and runtime capture writer fences/publication without installing or launching runtime binaries. No Rheon/GPU/model-quality campaign is needed for this custody claim.
 
 **Rollback / replan:** close new admission, retain canonical intent/artifacts and unresolved local custody; disable project execution while read-only history remains usable. No rollback to an older binary over new facts and no abandoned worker ownership. Replan if an effectful writer cannot be fenced or local runtime identity cannot establish safe continuation/cessation.
@@ -340,6 +344,8 @@ M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data 
 **Goal / production outcome:** user forks a complete idle project into an independent directory, moves/rebinds it, or switches Git revisions without corruption, mistaken identity or lost work.
 
 **Allowed write set:** `project_store.py`, `project_history.py`; new `project_transfer.py`; `metadata.py`, `projects.py`, `app.py`, `pipeline.py`, `model_definitions.py`, `experiment_lineage.py`, `experiments.py`; Client/UI, Project docs and Project evidence; `docs/contracts/experiment-lineage.md`.
+
+The concrete M4 composition admits `project_fork.py`, `project_fork_composition.py`, `project_data_fork.py`, `project_material_fork.py` and `project_files.py`, their fixed owner integrations, and focused tests. These finite constructors retain original hashed envelopes and derive new editable values; they do not recursively rewrite IDs. `project_operation_v2` namespaces new receipts by project UUID while preserving exact v1 history. Working-file adoption records exact UTF-8 bytes and prior revisions; Save As refuses changed/unadopted files and materializes captured versions only into a new task-owned destination.
 
 **Dependencies / tasks:** M2+M3 lifecycle; implement new destination publication, new project/editable IDs and explicit origins, inert inherited history and artifact copy completeness. Rebind physical root with new inode without changing canonical identity. Add strict stale binding/checkout/manual-merge validation, explicit editable-file adoption and Close-gated reload; separate physical runtime namespaces for same-UUID clones. No generic recursive ID rewriting or semantic merge machinery.
 
@@ -354,6 +360,8 @@ M1 `workbench_text_v1` remains supported without automatic upgrade. New M2 data 
 **Goal / production outcome:** an owner can preview and explicitly extract a selected legacy project into a proven portable directory while retaining the original; all A claims are closed for the admitted supported product scope.
 
 **Allowed write set:** `project_transfer.py`, `project_history.py`, `project_store.py`, `app.py`; Client/UI, Project docs and Project evidence; `backup_metadata.py` only if a demonstrated shared safe-copy helper change is necessary, never to redefine backup format; `tests/test_workspace_metadata.py`, `tests/test_metadata_migration.py`, `tests/test_metadata_transactions.py`; new `docs/runbooks/external-project-extraction.md`; `.github/workflows/tests.yml` only to register actual focused gates with nonzero discovery.
+
+The concrete M5 composition admits `project_extraction.py`, `project_transfer_controller.py` and their focused tests. The collector uses existing fixed domain owners over a pinned read-only source; the controller retains an opaque in-process stopped-source capability and requires separate current destination-host authority after the source closes. Neither JSON, a PID nor a `quiesced` flag establishes that capability.
 
 **Dependencies / tasks:** M1–M4; implement report-first closure/ambiguity and supported-source checks, stopped backup + external payload inventory preconditions, deterministic extraction receipt/mapping and cold verification. Public surfaces must share selection/completeness/outcome meaning. Complete documentation/capability advertisement only for actually accepted families and operations. Review current affected main/standards and exact material candidate once; reconcile justified findings before acceptance.
 
