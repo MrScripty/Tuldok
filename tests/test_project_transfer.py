@@ -79,6 +79,23 @@ class ProjectTransferTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):
             with self.dataset._project_request():pass
         with self.assertRaises(WorkbenchError):self.dataset.stop_for_project_extraction(self.parent_fd,'retry-backup')
+
+    def test_live_preview_reports_domain_refusal_before_source_stop(self):
+        from project_projection import ProjectProjection
+        record=self.text();self.selection['roots']['records']=[record['id']]
+        before=tree_manifest(self.dataset.path)
+        # Controlled downstream domain refusal: callers must see it while the
+        # source is still live, without stopping just to discover the failure.
+        with preview_source(self.dataset) as source,patch.object(ProjectProjection,'validate_records',
+                side_effect=WorkbenchError('Selected retained composition is incompatible.','invalid',409)):
+            report=ProjectTransfer(source).preview(self.selection)
+        self.assertFalse(report['can_extract'])
+        self.assertIn(dict(family='closure',id=self.dataset.db.dataset_id,code='invalid',
+            detail='Selected retained composition is incompatible.'),report['blockers'])
+        self.assertTrue(any(row['code']=='cessation_proof_unavailable' for row in report['blockers']))
+        self.assertFalse(self.dataset._extraction_stopping)
+        self.assertFalse(self.dataset._closed)
+        self.assertEqual(tree_manifest(self.dataset.path),before)
     def test_json_bool_and_fake_controller_guards_never_stop(self):
         for guard in (True,{},SimpleNamespace(require=lambda _:None)):
             with self.assertRaises(WorkbenchError) as caught:
