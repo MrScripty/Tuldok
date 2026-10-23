@@ -78,7 +78,8 @@ def reference(value, kind, catalog_id):
 
 
 def blob(raw, name, media_type='application/json'):
-    return {'name':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),'media_type':media_type}
+    from capture_payloads import payload_digest
+    return {'name':name,'sha256':payload_digest(raw),'bytes':len(raw),'media_type':media_type}
 
 
 def blob_identity(value):
@@ -109,7 +110,7 @@ def owned_inventory(root, material_sha256, names):
         if root_fd is not None:os.close(root_fd)
 
 
-def read_owned_blob(root, material_sha256, item, maximum, *, with_identity=False):
+def read_owned_blob(root, material_sha256, item, maximum, *, with_identity=False, stream=False):
     """Read a flat owner inventory without following links or trusting row sizes."""
     closed(item, ('name','sha256','bytes','media_type'))
     natural(item['bytes'],'Blob bytes',0,maximum)
@@ -126,6 +127,23 @@ def read_owned_blob(root, material_sha256, item, maximum, *, with_identity=False
             before=os.fstat(source.fileno())
             if not stat.S_ISREG(before.st_mode) or before.st_size!=item['bytes'] or before.st_nlink!=1:
                 raise WorkbenchError('Retained blob is not an owned bounded regular file.','unavailable',409)
+            if stream:
+                from capture_payloads import FilePayload
+                def guard():
+                    parent = os.open(root, os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+                    selected = None
+                    try:
+                        selected = os.open(material_sha256, os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW, dir_fd=parent)
+                        leaf = blob_identity(os.stat(item['name'], dir_fd=selected, follow_symlinks=False))
+                        if leaf != blob_identity(before):
+                            raise WorkbenchError('Retained blob path changed.', 'unavailable', 409)
+                        directory_id = lambda info: (info.st_dev,info.st_ino,info.st_mode,info.st_uid,info.st_gid)
+                        return (directory_id(os.fstat(parent)), directory_id(os.fstat(selected)), leaf)
+                    finally:
+                        if selected is not None: os.close(selected)
+                        os.close(parent)
+                raw=FilePayload(source.fileno(), maximum, expected_sha256=item['sha256'], guard=guard)
+                return (raw,blob_identity(before)) if with_identity else raw
             raw=source.read(item['bytes']+1);after=os.fstat(source.fileno())
             if blob_identity(before)!=blob_identity(after) or len(raw)!=item['bytes'] or hashlib.sha256(raw).hexdigest()!=item['sha256']:
                 raise WorkbenchError('Retained blob identity differs.','unavailable',409)

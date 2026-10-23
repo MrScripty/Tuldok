@@ -166,16 +166,37 @@ TORCH_READY_SECONDS = 60
 TORCH_VERIFY_SECONDS = 60
 
 
+def capture_policy(spec):
+    policy = spec.get('capture_policy', spec.get('recipe', {}).get('capture_policy'))
+    if 'capture_policy' not in spec and 'capture_policy' not in spec.get('recipe', {}):
+        return None
+    expected = {'format', 'max_input_file_bytes', 'max_input_bytes', 'max_capture_bytes'}
+    if (type(policy) is not dict or set(policy) != expected
+            or policy['format'] != 'streamed_project_inputs_v1'
+            or any(type(policy[n]) is not int for n in expected - {'format'})
+            or not 1 <= policy['max_input_file_bytes'] <= policy['max_input_bytes'] <= policy['max_capture_bytes'] <= 2**53-1):
+        raise ProcessError('Invalid streamed capture budget.')
+    return policy
+
+
+def streamed_verification_seconds(spec, minimum):
+    policy = capture_policy(spec)
+    if policy is None:
+        return minimum
+    # Record conservative disk-I/O allowance separately from training wall time.
+    return minimum + (policy['max_capture_bytes'] + 64*1024**2 - 1) // (64*1024**2)
+
+
 def preparation_seconds(spec):
     """Custody readiness budget; independent of the recipe's child wall time."""
     if 'torch_runtime' in spec:
-        return TORCH_READY_SECONDS
+        return streamed_verification_seconds(spec, TORCH_READY_SECONDS)
     return CPU_READY_SECONDS if 'cpu_snapshot' in spec else READY_SECONDS
 
 
 def verification_seconds(spec):
     if 'torch_runtime' in spec:
-        return TORCH_VERIFY_SECONDS
+        return streamed_verification_seconds(spec, TORCH_VERIFY_SECONDS)
     return CPU_READY_SECONDS if 'cpu_snapshot' in spec else 0
 
 
@@ -434,7 +455,7 @@ def _validate_spec(value, *, current):
     if type(value) is not dict or type(value.get('schema_version')) is not int or value['schema_version'] not in (1,2):
         raise ProcessError('Unsupported custody spec.')
     if value['schema_version']==2:keys.add('model_evidence_context')
-    if set(value)-{'native_loader_policy','cpu_snapshot','torch_runtime','resource_profile'}!=keys:
+    if set(value)-{'native_loader_policy','cpu_snapshot','torch_runtime','resource_profile','capture_policy'}!=keys:
         raise ProcessError('Unsupported custody spec.')
     if not isinstance(value['attempt_id'], str) or not ID.fullmatch(value['attempt_id']):
         raise ProcessError('Invalid attempt identity.')
@@ -463,6 +484,9 @@ def _validate_spec(value, *, current):
     runtime = value['runtime_files']
     if type(runtime) is not list or len(runtime)>10000:
         raise ProcessError('Invalid runtime inventory.')
+    policy = capture_policy(value)
+    if policy is not None and ('torch_runtime' not in value or value['schema_version'] != 1):
+        raise ProcessError('Streamed inputs require managed Torch opaque execution.')
     files = value['captured_files']
     if type(files) is not list or len(files) > 128:
         raise ProcessError('Invalid captured file inventory.')
@@ -473,7 +497,9 @@ def _validate_spec(value, *, current):
         if item['path'] in seen or type(item['sha256']) is not str or not HASH.fullmatch(item['sha256']):
             raise ProcessError('Duplicate capture or invalid hash.')
         seen.add(item['path'])
-        if type(item['bytes']) is not int or not 0 <= item['bytes'] <= CAPTURE_FILE_LIMIT:
+        item_limit = (policy['max_input_file_bytes'] if policy is not None and item in files
+                      and Path(item['path']).parent == Path(value['cwd'])/'input' else CAPTURE_FILE_LIMIT)
+        if type(item['bytes']) is not int or not 0 <= item['bytes'] <= item_limit:
             raise ProcessError('Invalid captured file size.')
     if 'cpu_snapshot' in value:
         descriptor = validate_cpu_snapshot_descriptor(value['cpu_snapshot'])
@@ -518,7 +544,7 @@ def _validate_spec(value, *, current):
     capture_limit = 64 * 1024 * 1024
     if 'cpu_snapshot' in value or 'torch_runtime' in value:
         # The complete descriptor/bootstrap contract above qualifies this profile.
-        capture_limit = 320 * 1024 * 1024
+        capture_limit = policy['max_capture_bytes'] if policy else 320 * 1024 * 1024
         input_root = Path(value['cwd']) / 'input'
         input_bytes = 0
         for item in files:
@@ -526,10 +552,10 @@ def _validate_spec(value, *, current):
             if relative is None or len(relative.parts) < 2 or relative.parts[0] not in ('source', 'input', 'native-policy', 'runtime-bootstrap'):
                 raise ProcessError('CPU capture must use its contained source/input/runtime layout.')
             if relative.parts[0] == 'input':
-                if Path(item['path']).parent != input_root or item['bytes'] > 40 * 1024 * 1024:
+                if Path(item['path']).parent != input_root or item['bytes'] > (policy['max_input_file_bytes'] if policy else 40 * 1024 * 1024):
                     raise ProcessError('CPU input must be a bounded named input file.')
                 input_bytes += item['bytes']
-        if input_bytes > 256 * 1024 * 1024:
+        if input_bytes > (policy['max_input_bytes'] if policy else 256 * 1024 * 1024):
             raise ProcessError('CPU input aggregate exceeds its byte bound.')
     if sum(item['bytes'] for item in files) > capture_limit or sum(item['bytes'] for item in runtime) > 512 * 1024 * 1024:
         raise ProcessError('Runtime/source closure exceeds its byte bound.')
@@ -613,6 +639,48 @@ def verify_model_context(spec):
             if handle is not None:os.close(handle)
 
 
+def verify_streamed_capture(item, *, checkpoint=None):
+    """Hash without materializing a large captured file, retaining path custody."""
+    descriptors = []
+    before_dirs = []
+    directory = os.open('/', os.O_RDONLY|os.O_DIRECTORY)
+    descriptors.append(directory)
+    parts = Path(item['path']).parts[1:]
+    directory_identity = lambda x: (x.st_dev, x.st_ino, x.st_mode, x.st_uid, x.st_gid)
+    file_identity = lambda x: (x.st_dev, x.st_ino, x.st_mode, x.st_uid, x.st_gid,
+                               x.st_nlink, x.st_size, x.st_mtime_ns, x.st_ctime_ns)
+    try:
+        for part in parts[:-1]:
+            child = os.open(part, os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW, dir_fd=directory)
+            before_dirs.append((directory, part, directory_identity(os.fstat(child))))
+            descriptors.append(child)
+            directory = child
+        descriptor = os.open(parts[-1], os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK, dir_fd=directory)
+        descriptors.append(descriptor)
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_size != item['bytes']:
+            raise ProcessError('Captured input size or type changed.', 'stale')
+        measured = hashlib.sha256()
+        size = 0
+        while size < item['bytes']:
+            if checkpoint is not None: checkpoint()
+            chunk = os.read(descriptor, min(1024*1024, item['bytes'] - size))
+            if not chunk: raise ProcessError('Captured input truncated.', 'stale')
+            measured.update(chunk)
+            size += len(chunk)
+        if (file_identity(before) != file_identity(os.fstat(descriptor))
+                or file_identity(before) != file_identity(os.stat(parts[-1], dir_fd=directory, follow_symlinks=False))
+                or measured.hexdigest() != item['sha256']):
+            raise ProcessError('Captured input/source identity changed.', 'stale')
+        for parent, name, expected in before_dirs:
+            if directory_identity(os.stat(name, dir_fd=parent, follow_symlinks=False)) != expected:
+                raise ProcessError('Captured parent path changed.', 'stale')
+    except OSError as error:
+        raise ProcessError('Captured input path unavailable.', 'stale') from error
+    finally:
+        for descriptor in reversed(descriptors): os.close(descriptor)
+
+
 def verify_captures(spec, *, checkpoint=None, include_cpu=True, include_torch=True,
                     on_torch_inventory=None):
     verify_model_context(spec)
@@ -622,9 +690,12 @@ def verify_captures(spec, *, checkpoint=None, include_cpu=True, include_torch=Tr
         verify_native_loader_policy(spec['trusted_install_owner_uid'])
     for item in spec['captured_files']+spec['runtime_files']:
         if checkpoint is not None: checkpoint()
-        raw = read_regular(item['path'], item['bytes'])
-        if len(raw) != item['bytes'] or digest(raw) != item['sha256']:
-            raise ProcessError('Captured input/source identity changed.', 'stale')
+        if 'capture_policy' in spec:
+            verify_streamed_capture(item, checkpoint=checkpoint)
+        else:
+            raw = read_regular(item['path'], item['bytes'])
+            if len(raw) != item['bytes'] or digest(raw) != item['sha256']:
+                raise ProcessError('Captured input/source identity changed.', 'stale')
     if 'torch_runtime' in spec:
         owner = _torch_owner()
         try:
