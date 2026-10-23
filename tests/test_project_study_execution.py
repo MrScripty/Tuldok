@@ -18,7 +18,7 @@ import uuid
 from access import Access
 from auth_helpers import ExplicitOwnerFixture
 from experiments import Experiments, validate_retained_reservation
-from metadata import Metadata, connection_info
+from metadata import Metadata, connection_info, CATALOG_LOCAL_TIMEOUT
 from project_history import capture_run, declarations
 from project_projection import ProjectProjection
 from project_session import operation_records
@@ -345,6 +345,9 @@ class ProjectStudyCustodyTests(unittest.TestCase):
     def test_cold_study_spent_budget_lineage_and_approval_remain_inert_while_fresh_attempt_is_current(self):
         from project_projection import ProjectProjection
         study_id,trial_value,composition,envelope,lineage=self.prepare_study()
+        # Keep this case within its declared custody budget plus the two
+        # bounded catalog waits for terminal publication and observation.
+        drain_timeout=envelope['admitted_wall_seconds']+2*CATALOG_LOCAL_TIMEOUT
         adapter=self.projection.study_execution
         value=adapter.studies._study(study_id)
         opened=adapter.continue_study(study_id,dict(revision=value['revision'],admission_epoch=value['admission_epoch']),
@@ -361,7 +364,7 @@ class ProjectStudyCustodyTests(unittest.TestCase):
         request=dict(revision=opened['revision'],admission_epoch=opened['admission_epoch'],trial_id=trial_value['id'],
                      approval_id=approval['grant']['id'])
         admitted=adapter.admit(study_id,request,self.checkpoint(),'study-current-attempt')
-        first=self.await_drained(admitted['run_id'])
+        first=self.await_drained(admitted['run_id'],timeout=drain_timeout)
         self.assertEqual(first['state'],'completed')
         saved=self.projection.history.study(study_id)
         self.assertEqual(saved['charged'],envelope)
@@ -423,7 +426,7 @@ class ProjectStudyCustodyTests(unittest.TestCase):
         self.assertIsNone(self.db.execute('SELECT id FROM access_execution_grants WHERE id=%s',(old_grant,)).fetchone())
         second=adapter.admit(study_id,dict(revision=continued['revision'],admission_epoch=continued['admission_epoch'],
             trial_id=trial_value['id'],approval_id=current['grant']['id']),self.checkpoint(),'study-fresh-attempt')
-        result=self.await_drained(second['run_id']);self.assertEqual(result['state'],'completed')
+        result=self.await_drained(second['run_id'],timeout=drain_timeout);self.assertEqual(result['state'],'completed')
         self.assertNotEqual(second['run_id'],old_run)
         self.assertEqual(self.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],1)
         self.assertEqual(self.db.execute('SELECT count(*) FROM model_attempt_reservations').fetchone()[0],1)

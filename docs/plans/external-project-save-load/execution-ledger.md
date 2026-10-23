@@ -267,3 +267,36 @@ the timed-out attempt's actual Open outcome explicitly unobserved. Independent
 review cleared the exact eight-file repair subject and preserved all authority,
 legacy and crash assertions. One changed candidate is prepared for CI; no
 passing local full suite or final browser acceptance is claimed.
+
+## 2026-10-23 — Changed-candidate CI isolates the remaining Study wait
+
+Reviewed repair commit `591eb24de3ae9ccd219d0fc12bda6c34663a13d5` was pushed
+once. Its lifecycle `39884356869` ran 2,332 tests in 3,288.197 seconds with one
+failure, zero errors and 107 optional/intentional skips. All eight earlier
+failures cleared. Native 3/3, native public 1/1 and note-deletion public 1/1
+passed without skips; the other three workflows passed. Later browsers were
+skipped and remain unaccepted. [Study wait diagnosis](reports/ci-591eb24-study-wait.md)
+preserves the exact checkout/tree and last observed Run, whose final outcome
+and later accounting were not observed at the failing assertion.
+
+The remaining cold-Study case used a 30-second fixture wait below its existing
+97-second admission. Independent source review cleared a case-only finite
+217-second bound, including terminal publication/observation allowance. Only
+that failed real-PG case is selected locally; shared timeouts, production,
+historical charges and all final assertions stay intact. No broad local suite,
+native fit or same-head CI rerun is requested.
+
+The earlier narrow PR-status correction succeeded at 01:39 after the parent
+supplied newer explicit current-implementation authority. After the next
+terminal CI failure, a new attempt to correct that paragraph was again rejected
+by automatic approval review applying the historical planning-only restriction.
+That write stopped; approval for one bounded retry was requested. Local repair
+continues independently, with no alternate publication route or bypass.
+
+The exact cold-Study case then passed in 121.259 seconds: both generic Runs
+completed and all original settlement, spend, lineage, fresh authority and cold
+historical denial assertions passed. All 122 source/fixture hashes stayed
+unchanged. Independent released-source/evidence review is clear. The former CI
+Run's final outcome remains unobserved; this scoped pass is not final CI or
+browser acceptance. The next candidate changes one fixture and its plan/evidence
+records, with no product or workflow change.

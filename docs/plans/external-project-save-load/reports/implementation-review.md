@@ -93,3 +93,20 @@ No unresolved source finding remains in this repair subject. See [CI repair
 evidence](ci-5704965-repair.md) for exact results. Final exact-candidate CI and
 later browser gates remain required; this review does not grant runtime
 acceptance or merge.
+
+## 2026-10-23 — Cold-Study fixture deadline follow-up
+
+Changed-candidate CI `591eb24` cleared the previous eight failures and retained
+one 30-second wait expiry in the cold-Study case. Independent read-only review
+confirmed the real 97-second admission and cleared the case-only 217-second
+publication/observation wait, test file SHA256
+`183f8a3e8e15231e4ea3584b309be18318befe82cac158eb42a0f52e1a89a33c`.
+Only two explicit waits in that case change; shared helper and product policy
+remain exact. The selected real case passed in 121.259 seconds with zero skips
+and all 122 subject hashes unchanged. All original completed/drained,
+spent/settled, lineage and historical/current authority assertions passed.
+
+Rereview inspected the actual receipt and exact released source; no finding
+remains. [Study wait evidence](ci-591eb24-study-wait.md) retains the failed CI
+Run's unobserved final outcome, scoped new pass and pending exact-head/browser
+gates. No broad local suite, native fit, reviewer test or source edit ran.
