@@ -96,8 +96,11 @@ def _json_value(value, depth=0):
     if type(value) is float and math.isfinite(value):
         return
     if type(value) is str:
-        if any(0xD800 <= ord(c) <= 0xDFFF for c in value):
-            _fail('Project JSON contains an invalid Unicode surrogate.')
+        if not value.isascii():
+            try:
+                value.encode('utf-8')
+            except UnicodeEncodeError:
+                _fail('Project JSON contains an invalid Unicode surrogate.')
         return
     if type(value) is list:
         for item in value:
