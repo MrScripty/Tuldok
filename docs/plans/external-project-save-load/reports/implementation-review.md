@@ -110,3 +110,24 @@ Rereview inspected the actual receipt and exact released source; no finding
 remains. [Study wait evidence](ci-591eb24-study-wait.md) retains the failed CI
 Run's unobserved final outcome, scoped new pass and pending exact-head/browser
 gates. No broad local suite, native fit, reviewer test or source edit ran.
+
+
+## 2026-10-23 — Browser handler compatibility follow-up
+
+Candidate `3ac3351` passed full discovery and all project acceptance browsers,
+then failed before classification HTTP readiness at an old fixture wrapper.
+Independent read-only source review cleared explicit keyword-only
+`transfer_controller=None` forwarding in the classification fixture SHA256
+`ec24aee7f1b26ca31724489c05d6bde975213596e1613f5f5c21b2410dbf7ee8`
+and the identical source-found Pumas fixture SHA256
+`0c7244000a2d33d27f457bcc9b49ab17f71916a2345df7c548ceca366671f1e3`.
+All instrumentation and browser assertions remain unchanged; no generic keyword
+swallowing or product/workflow change is admitted.
+
+Both complete real PostgreSQL/Chromium browser procedures subsequently passed
+once in synthetic-HTTP mode, with zero application runtime exceptions and all
+912 source/test hashes stable. The exact evidence and final documentation are
+rereviewed before candidate commit. [Handler fixture evidence](ci-3ac3351-handler-fixtures.md)
+preserves the actual startup failure, source-found later incompatibility and
+unrun remaining CI gates. No additional reviewer tests, broad suite or native
+fit is required. Changed-candidate exact-head CI remains necessary for acceptance.

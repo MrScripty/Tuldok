@@ -300,3 +300,35 @@ unchanged. Independent released-source/evidence review is clear. The former CI
 Run's final outcome remains unobserved; this scoped pass is not final CI or
 browser acceptance. The next candidate changes one fixture and its plan/evidence
 records, with no product or workflow change.
+
+
+## 2026-10-23 — Full discovery and project browsers pass; handler fixtures repaired
+
+Candidate `3ac3351a741cf5e6ef4712e3577f3fc0d3a3f3e5` lifecycle
+`39893561852` passed full discovery: 2,332 cases, zero failures/errors,
+107 optional/intentional skips. Native domain 3/3, native public 1/1 and
+note-deletion public 1/1 passed without skips, as did all six project browsers
+and observation browser 72. The three other workflows passed. Step 152 then
+failed before classification HTTP readiness because the instrumented fixture
+handler omitted the production `transfer_controller` keyword. Later steps
+153–180 were skipped; complete acceptance remains pending.
+
+The sole other current handler replacement, the later Pumas fixture, had the
+same incompatibility in source; CI had not reached it. Both wrappers now mirror
+and forward the explicit keyword without changing instrumentation or assertions.
+Independent source review cleared both files before one complete actual Chromium
+run of each. Both passed once, with no application runtime exceptions and all
+912 recorded source/test hashes stable. These synthetic-HTTP checks required no
+native gateway/model fit. [Handler fixture evidence](reports/ci-3ac3351-handler-fixtures.md)
+retains exact checkout, counts, failure, hashes and skipped gates. No product,
+workflow, timeout or test-selection change was made; no same-head CI rerun or
+broad local campaign was used.
+
+The previously denied narrow PR-status paragraph correction was explicitly
+approved by the user at 04:33 UTC. After reading current PR/CI state, the lead
+retried that known-unexecuted write once at 04:35; it succeeded, and a separate
+read verified its body with all other text unchanged. The PR remained draft and
+unmerged. This approval did not waive acceptance gates. The original denied
+artifact retrieval remains stopped; newer uploaded manifests remain uninspected.
+Main and Coding-Standards were rechecked unchanged. No user lab or unrelated
+branch was accessed or changed.
