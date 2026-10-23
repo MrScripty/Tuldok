@@ -80,7 +80,12 @@ class ManagedModelWorkflowTests(unittest.TestCase):
         identity = recipe_contract.digest(descriptor)
         self.assertEqual(composition['material']['runtime']['sha256'], identity)
         self.assertNotEqual(identity, recipe_contract.digest(preflight['runtime']))
-        expected = self.recipe['resources']['wall_seconds'] + recipe_process.TORCH_READY_SECONDS + 2 + recipe_process.TORCH_VERIFY_SECONDS + 15
+        self.assertEqual(recipe_process.preparation_seconds(preflight['material']), recipe_process.TORCH_READY_SECONDS)
+        self.assertEqual(recipe_process.verification_seconds(preflight['material']), recipe_process.TORCH_VERIFY_SECONDS)
+        # READY preparation, acknowledged-owner GO waiting, and post-GO runtime
+        # verification are separate bounded phases in the actual custodian.
+        expected = (self.recipe['resources']['wall_seconds'] + recipe_process.TORCH_READY_SECONDS + 2
+                    + recipe_process.GO_WAIT_SECONDS + recipe_process.TORCH_VERIFY_SECONDS + 15)
         self.assertEqual(composition['material']['resource_envelope']['admitted_wall_seconds'], expected)
         self.assertEqual(composition['material']['model'], self.published['ref'])
         self.assertEqual(self.dataset.runs.list(), [])

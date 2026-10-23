@@ -70,3 +70,26 @@ and plan SHA256 `d5bcbb141b82aaba11de1c64dac05a101e391ac9c10cacb87f7b90d8932d4c1
 match the finite native/deletion owners and truthful Verifying/conditional CI
 status. The reviewer performed read-only inspection, no tests or edits. This
 clears the commit/publication review gate, not runtime acceptance or merge.
+
+## 2026-10-23 — Failed-CI fixture repair review
+
+Independent read-only review examined all eight failed CI cases against actual
+production boundaries. The repaired eight-test-file subject is SHA256
+`9472f124392cf9e2c6cb36cadcd2ddf76ae33f2c279619e5222976b93b0b1688`,
+computed from compact sorted UTF-8 JSON mapping relative paths to SHA256 with
+no trailing newline. No production file changed. Review cleared the finite
+graph fixture, READY-to-GO budget term, exact legacy pins and explicit fallback,
+well-formed negative receipt and actual child SIGKILL path. The HTTP fixture
+preserves the real Dataset type, rejects its construction, and distinguishes
+restored authoring metadata from absent current epochs and live authority.
+Its scoped 75-second client bound permits the existing catalog-local wait and
+reply allowance while all other fixtures keep their 15-second default.
+
+All eight failed cases have targeted passing results; the separate clean-child
+import control and final HTTP receipt were inspected. Earlier full-suite and
+HTTP failures remain recorded, with the timed-out Open outcome explicitly
+unobserved. A documentation evidence-path typo was corrected during review.
+No unresolved source finding remains in this repair subject. See [CI repair
+evidence](ci-5704965-repair.md) for exact results. Final exact-candidate CI and
+later browser gates remain required; this review does not grant runtime
+acceptance or merge.

@@ -229,6 +229,8 @@ class RuntimeCaptureTests(unittest.TestCase):
         script=r'''
 import json,os,signal,sys
 from pathlib import Path
+root=Path(sys.argv[2])
+sys.path[:0]=[str(root),str(root/'tests')]
 from test_project_runtime import RuntimeCaptureTests
 case=RuntimeCaptureTests('test_actual_capture_retains_intent_manifest_and_all_declarations_without_running_binaries')
 case.setUp();f=case.fixture;observed=case.observed();create=case.runtime.owner.create
@@ -243,7 +245,8 @@ def stop(*args,**kwargs):
 case.runtime.owner.create=stop
 case.capture(observed)
 '''
-        completed=subprocess.run([sys.executable,'-c',script,str(report)],cwd=Path(__file__).resolve().parents[1],timeout=20,capture_output=True,text=True)
+        root=Path(__file__).resolve().parents[1]
+        completed=subprocess.run([sys.executable,'-c',script,str(report),str(root)],cwd=root,timeout=20,capture_output=True,text=True)
         self.assertEqual(completed.returncode,-9,completed.stderr)
         facts=json.loads(report.read_text());self.fixture.schemas.extend(facts['schemas'])
         self.addCleanup(shutil.rmtree,facts['path'],True)

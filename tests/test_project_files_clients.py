@@ -234,16 +234,25 @@ class M3Contracts(unittest.TestCase):
 class Contracts(unittest.TestCase):
     def test_additive_negotiation_preserves_installed_legacy_and_mcp_contracts(self):
         self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)
-        selected = api.negotiate(api.capabilities(CATALOG,profile='project'), CATALOG)
+        remote = api.capabilities(CATALOG,profile='project')
+        selected = api.negotiate(remote, CATALOG)
+        legacy_remote = copy.deepcopy(remote)
+        for operation in legacy_remote['operations']:
+            operation['contracts'] = [contract for contract in operation['contracts'] if contract['version'] == 1]
+        legacy_selected = api.negotiate(legacy_remote, CATALOG)
         for action in ['status', *ACTIONS]:
             name = 'project_files.' + action
-            self.assertEqual(selected[name], 1)
-            contract = api.contract(name)
-            self.assertEqual(contract['retry'], 'read' if action in ('status', 'query', 'get') else 'receipt')
-            definition, = api.tool_definitions({name: 1})
-            self.assertEqual(definition['name'], name.replace('.', '_'))
-            self.assertEqual(definition['inputSchema'], api.operation(name)['inputSchema'])
-            self.assertEqual(definition['outputSchema'], api.operation(name,1)['outputSchema'])
+            expected_version = 2 if action in ('get', 'annotate') else 1
+            self.assertEqual(selected[name], expected_version)
+            self.assertEqual(legacy_selected[name], 1)
+            # New clients select additive results; installed v1 MCP schemas stay exact.
+            for version in sorted({1, expected_version}):
+                contract = api.contract(name, version)
+                self.assertEqual(contract['retry'], 'read' if action in ('status', 'query', 'get') else 'receipt')
+                definition, = api.tool_definitions({name: version})
+                self.assertEqual(definition['name'], name.replace('.', '_'))
+                self.assertEqual(definition['inputSchema'], api.operation(name, version)['inputSchema'])
+                self.assertEqual(definition['outputSchema'], api.operation(name, version)['outputSchema'])
 
     def test_browser_contract_pins_are_current_registry_output(self):
         source = (ROOT / 'static/project-files.js').read_text()
@@ -446,7 +455,7 @@ class Consumers(unittest.TestCase):
             raw = client({'status': 200, 'result': result()})
             status, value = self.cli(raw, ['file-get', '--arguments', str(path)])
             self.assertEqual(status, 0, value)
-            self.assertEqual(raw._request.call_args.kwargs['selection'], ('project_files.get', 1))
+            self.assertEqual(raw._request.call_args.kwargs['selection'], ('project_files.get', 2))
         raw = client({'status': 200, 'result': state(False)})
         self.assertEqual(self.cli(raw, ['file-status']), (0, state(False)))
 

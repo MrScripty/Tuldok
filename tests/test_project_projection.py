@@ -14,7 +14,7 @@ from psycopg import sql
 
 from auth_helpers import ExplicitOwnerFixture
 from metadata import connection_info
-from project_session import OPERATION_FORMAT
+from project_session import OPERATION_FORMAT, operation_documents
 from project_workspace import ProjectWorkspace, http_arguments
 from workbench import WorkbenchError
 
@@ -106,11 +106,16 @@ class ProjectProjectionTests(unittest.TestCase):
         p = self.host._projection
         before = p.store.snapshot()
         key = 'forged-unknown'
-        record = dict(family='project_operation', id=hashlib.sha256(key.encode()).hexdigest(), document=dict(
-            format=OPERATION_FORMAT, operation='unowned.operation', target=None, request_key=key,
+        project_id = before['project_id']
+        record = dict(family='project_operation', id=project_id + '.' + hashlib.sha256(key.encode()).hexdigest(), document=dict(
+            format=OPERATION_FORMAT, project_id=project_id, operation='unowned.operation', target=None, request_key=key,
             input_sha256='b'*64, result={'token': 'must-not-import'}))
-        with self.owner.bound(self.host), self.assertRaises(WorkbenchError) as caught:
+        self.assertEqual(operation_documents([record]), [record['document']])
+        with self.owner.bound(self.host), \
+                patch.object(p.session, 'mutate', side_effect=AssertionError('Unknown receipt invoked a mutation')) as mutate, \
+                self.assertRaises(WorkbenchError) as caught:
             p.validate_records([*before['records'], record])
+        mutate.assert_not_called()
         self.assertEqual(caught.exception.code, 'unsupported')
         self.assertEqual(p.store.snapshot(), before)
         self.assertEqual(p.db.execute('SELECT COUNT(*) FROM workbench_records').fetchone()[0], 0)

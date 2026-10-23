@@ -16,6 +16,7 @@ import uuid
 
 import psycopg
 
+from metadata import CATALOG_LOCAL_TIMEOUT
 from pipeline import digest
 import test_project_files_http as m1
 import test_project_files_m2_http as m2
@@ -59,6 +60,8 @@ def neutral_source(root):
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'),'Requires disposable real local PostgreSQL')
 class ProjectFilesMaterialHTTP(unittest.TestCase):
+    # One catalog-local wait plus the existing transport/reply allowance.
+    request_timeout_seconds=CATALOG_LOCAL_TIMEOUT+15
     # Use the actual M2 transport/setup helpers without inheriting unrelated
     # acceptance methods or constructing the legacy execution Dataset fixture.
     cleanup_owned=m2.ProjectFilesM2HTTP.cleanup_owned
@@ -86,12 +89,20 @@ class ProjectFilesMaterialHTTP(unittest.TestCase):
             'fixture':'Existing authored ExternalCase source/input; no execution, runtime provisioning or scientific qualification.'},indent=2)+'\n')
         self.assertEqual(current,self.material_subject,'Material/public host source changed during actual HTTP proof')
 
-    def assert_no_live_authority(self):
+    def assert_no_live_authority(self,*,studies=0,trials=0):
         projection=self.workspace._projection
         for table in ('workspace_projects','workspace_runs','access_actors','access_credentials','access_admissions',
-                      'access_execution_grants','access_execution_consumptions','model_studies','model_trials',
+                      'access_execution_grants','access_execution_consumptions',
                       'model_attempt_reservations','model_operation_receipts'):
             self.assertEqual(projection.db.execute('SELECT count(*) FROM '+table).fetchone()[0],0,table)
+        # Canonical authoring intent is reconstructed without importing current
+        # epochs, Run rows, grants, reservations, or native request receipts.
+        self.assertEqual(projection.db.execute('SELECT count(*) FROM model_studies').fetchone()[0],studies)
+        self.assertEqual(projection.db.execute('SELECT count(*) FROM model_trials').fetchone()[0],trials)
+        self.assertEqual(projection.study_execution._epochs,{})
+        self.assertIsNone(projection.execution._runs)
+        for row in projection.db.execute('SELECT document FROM model_studies'):
+            self.assertFalse(projection.study_execution.epoch_current(json.loads(row['document'])))
 
     def closure(self,ref):
         with self.owner.bound(self.workspace):
@@ -101,7 +112,7 @@ class ProjectFilesMaterialHTTP(unittest.TestCase):
         manifest,manifest_raw,definition_raw,source,exact_input=neutral_source(self.external)
         cold_dsn=os.environ.get('TULDOK_PROJECT_FILES_COLD_DATABASE_URL')
         self.assertTrue(cold_dsn,'Cold proof requires its separately authorized disposable role/database')
-        with patch('app.Dataset',side_effect=AssertionError('New/Open cannot construct a legacy Dataset')), \
+        with patch('app.Dataset.__init__',side_effect=AssertionError('New/Open cannot construct a legacy Dataset')) as legacy_dataset, \
              patch('runs.Runs',side_effect=AssertionError('New/Open cannot construct a live Runs owner')) as live_runs, \
              patch('subprocess.Popen',side_effect=AssertionError('Neutral preparation must not execute or probe')) as processes:
             self.create();logical=self.state()['project']['project_id']
@@ -164,7 +175,9 @@ class ProjectFilesMaterialHTTP(unittest.TestCase):
             self.select_host(self.path/'cold-material-control',{'fixture':cold_root},cold_dsn)
             self.action('open',root='fixture',directory='clone')
             self.assertEqual(self.state()['project'],expected_state['project'])
-            self.assert_no_live_authority()
+            self.assert_no_live_authority(studies=1,trials=1)
+            self.assertEqual(self.workspace._projection.db.execute('SELECT id FROM model_studies').fetchone()[0],study['id'])
+            self.assertEqual(self.workspace._projection.db.execute('SELECT id FROM model_trials').fetchone()[0],trial['id'])
             self.assertEqual(self.call('model_get',model_id=draft['id']),draft)
             self.assertEqual(self.call('model_material',ref=model['ref'],verify=True),model)
             self.assertEqual(self.call('graph_get',graph_id=graph['id']),graph)
@@ -176,9 +189,9 @@ class ProjectFilesMaterialHTTP(unittest.TestCase):
             snapshotref={key:registered[key] for key in ('origin_catalog_id','project_id','manifest_sha256')}
             status,error=self.transport('source_references',self.arguments('source_references',**snapshotref))
             self.assertEqual(status,409,error)
-            self.assert_no_live_authority();self.action('save')
+            self.assert_no_live_authority(studies=1,trials=1);self.action('save')
             self.assertEqual(m1.canonical_bytes(clone),portable)
-            processes.assert_not_called();live_runs.assert_not_called()
+            processes.assert_not_called();live_runs.assert_not_called();legacy_dataset.assert_not_called()
 
 
 if __name__=='__main__':unittest.main()

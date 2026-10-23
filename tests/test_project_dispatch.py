@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import Mock
 
 import agent_api
+from pipeline import decode_graph
 from project_dispatch import SUPPORTED_OPERATIONS, dispatch
 from project_material import ProjectMaterial
 from workbench import WorkbenchError
@@ -223,7 +224,18 @@ class Dispatch(unittest.TestCase):
         selected.data.import_bundle.assert_called_once_with('sequence', prepared,
             {'files': files, 'groups': ['fixture'], 'rights': 'Authored'}, CHECKPOINT, BOUND['request_key'])
         ref = {'kind': 'model', 'catalog_id': PROJECT, 'id': RECORD, 'revision': 1, 'sha256': SHA}
+        selected.context.pipelines.get.return_value = decode_graph({
+            'schema_version': 1, 'mode': 'real', 'recipe': 'external_recipe', 'recipe_version': 1,
+            'id': RECORD, 'revision': 1, 'name': 'External preparation fixture', 'layout': {},
+            'nodes': [
+                {'id': 'input', 'type': 'input', 'definition_version': 1, 'parameters': {
+                    'project_id': ORIGIN, 'recipe_id': 'neutral', 'expected_sha256': SHA, 'inputs': {}}},
+                {'id': 'execute', 'type': 'execute', 'definition_version': 1, 'parameters': {}},
+                {'id': 'output', 'type': 'output', 'definition_version': 1, 'parameters': {}}],
+            'edges': [{'from': 'input', 'output': 'data', 'to': 'execute', 'input': 'data'},
+                      {'from': 'execute', 'output': 'artifacts', 'to': 'output', 'input': 'artifacts'}]})
         dispatch(selected, 'project_files.recipe_prepare', dict(BOUND, graph_id=RECORD, revision=1, model=ref))
+        selected.context.pipelines.get.assert_called_once_with(RECORD)
         selected.materials.prepare_recipe.assert_called_once_with(selected.context.pipelines, RECORD, 1, ref,
             CHECKPOINT, BOUND['request_key'], builtin=False, reconcile_capture=False, runtime_manifest=selected.runtime_manifest)
 

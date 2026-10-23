@@ -237,3 +237,33 @@ Main and Coding-Standards were rechecked unchanged at
 M2 CI's actual failed browser step and repaired fixture remain recorded; no final
 CI success is inferred. Local lab/user-data migration, Standards edits, unrelated
 branches, merge and branch cleanup remain outside this checkpoint's actions.
+
+## 2026-10-23 — Complete candidate CI and bounded fixture repair
+
+Published candidate `5704965d1a441946aacf3548e0b9f57dc4312d35` received one
+CI campaign. Lifecycle `39874125909` passed native domain 3/3, native public
+1/1 and note-deletion public 1/1 without skips, then failed full discovery
+(2,332 tests, six failures/two errors). Later browser checks were skipped.
+The other three workflows passed. Main and Standards remain at their recorded
+revisions; no merge or branch deletion occurred.
+
+Independent triage identified stale test fixtures/expectations. Disjoint owners
+repair only affected tests and their HTTP helper, with a read-only reviewer;
+failed attempts, exact subjects and targeted outcomes are retained in
+[CI diagnosis](reports/ci-5704965-repair.md). Production code and policies remain
+unchanged. No identical broad local campaign, repeated fit or same-head rerun
+is used to hide the failed result. Complete acceptance remains pending.
+
+The artifact ZIP's first local retrieval was denied by proxy HTTP 403 and
+stopped without retry; its manifest remains uninspected. A later attempt to
+update only PR 119's CI-status paragraph was separately rejected by automatic
+approval review applying the historical planning-only restriction. That write
+stopped and new approval was requested; it is not retried through another route.
+Read-only diagnosis and local fixture repair continued independently.
+
+All eight failed cases subsequently acquired targeted passing evidence. The
+HTTP-only corrected fixture passed after two retained fixture failures, with
+the timed-out attempt's actual Open outcome explicitly unobserved. Independent
+review cleared the exact eight-file repair subject and preserved all authority,
+legacy and crash assertions. One changed candidate is prepared for CI; no
+passing local full suite or final browser acceptance is claimed.

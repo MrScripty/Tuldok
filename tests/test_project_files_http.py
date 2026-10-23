@@ -115,7 +115,7 @@ class ProjectFilesHTTP(unittest.TestCase):
                           data=None if body is None else json.dumps(body, ensure_ascii=False).encode(),
                           headers=headers, method=method)
         try:
-            response = urlopen(request, timeout=15)
+            response = urlopen(request, timeout=getattr(self, 'request_timeout_seconds', 15))
         except HTTPError as error:
             response = error
         with response:

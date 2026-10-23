@@ -32,7 +32,11 @@ class ForkTextContracts(unittest.TestCase):
                 with self.assertRaises(api.AgentAPIError):api.validate_output(name,invalid,2)
         source=(Path(__file__).resolve().parents[1]/'static/project-files.js').read_text()
         versions=json.loads(re.search(r'PROJECT_FILES_VERSIONS_START \*/\s*(.*?)\s*/\* PROJECT_FILES_VERSIONS_END',source,re.S)[1])
-        self.assertEqual(versions,{name:{str(v):api.contract(name,v)['sha256'] for v in (1,2)} for name in expected})
+        health = 'project_files.execution_health'
+        self.assertEqual(api.contract(health,1)['sha256'],
+            'c3b1d0017f5a49cf69c3a4c5c33e1d3db9846404d12627563d97ef40de7404a5')
+        self.assertEqual(versions,{name:{str(v):api.contract(name,v)['sha256'] for v in (1,2)}
+                                  for name in (*expected, health)})
 
     def test_sdk_selects_v2_and_falls_back_to_exact_v1_without_falsifying_provenance(self):
         value=fork_result();raw=client({'status':200,'result':value});sdk=ProjectFilesClient(raw)

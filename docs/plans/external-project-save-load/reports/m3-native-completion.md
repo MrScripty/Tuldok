@@ -415,3 +415,20 @@ native/note transport cases: 5 selected, 0 executed, 0 skips, no database calls
 or child launches, M3 enabled. Syntax parsing of all 39 changed Python files,
 Node syntax checks for the changed page and new browser fixtures, and
 `git diff --check` passed. These are supporting checks, not runtime acceptance.
+
+## 2026-10-23 — First complete candidate CI outcome
+
+At feature head `5704965d1a441946aacf3548e0b9f57dc4312d35`, lifecycle run
+`39874125909` passed all three complete native domain cases in 525.522 seconds,
+including the Study's original final SQL assertions, without skips. Native
+SDK/CLI/MCP (one case, 22.140 seconds) and note-deletion/cold-fork transports
+(one case, 10.541 seconds) also passed without skips. This closes those named
+case gaps on that exact product subject; it does not turn the earlier local
+ERROR/FAIL attempts into passes.
+
+Full discovery subsequently failed with six failures and two errors in stale
+test fixtures. Later Chromium gates were skipped. The three other workflows
+succeeded; complete-feature acceptance remains pending. Exact checkout/tree
+identity, failed-case diagnosis and narrowly scoped repairs are preserved in
+[the CI report](ci-5704965-repair.md). Production code is unchanged during those
+repairs; no native fit or broad suite has been repeated locally.
