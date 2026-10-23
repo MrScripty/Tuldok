@@ -80,6 +80,18 @@ class ProjectTransferTests(unittest.TestCase):
             with self.dataset._project_request():pass
         with self.assertRaises(WorkbenchError):self.dataset.stop_for_project_extraction(self.parent_fd,'retry-backup')
 
+    def test_native_stop_backup_deduplicates_copies_without_linking_originals(self):
+        original=[self.dataset.path/name for name in ('duplicate-a.bin','duplicate-b.bin')]
+        for path in original:path.write_bytes(b'Exact original payload' * 1000)
+        before=[(p.stat().st_ino,p.stat().st_ctime_ns,p.stat().st_nlink) for p in original]
+        source=self.stop()
+        copied=[self.root/'verified-backup/catalog'/p.name for p in original]
+        self.assertEqual(copied[0].stat().st_ino,copied[1].stat().st_ino)
+        self.assertTrue(all(p.stat().st_ino!=c.stat().st_ino for p,c in zip(original,copied)))
+        self.assertEqual(before,[(p.stat().st_ino,p.stat().st_ctime_ns,p.stat().st_nlink) for p in original])
+        self.assertEqual(tree_manifest(self.root/'verified-backup/catalog'),source.backup_receipt['files'])
+        _assert_unchanged(source)
+
     def test_live_preview_reports_domain_refusal_before_source_stop(self):
         from project_projection import ProjectProjection
         record=self.text();self.selection['roots']['records']=[record['id']]

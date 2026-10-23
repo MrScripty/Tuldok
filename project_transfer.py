@@ -297,7 +297,7 @@ def _verified_backup(source,parent_fd,directory):
     path=Path('/proc/self/fd')/str(parent_fd)/stage
     tables,sequences,fingerprint=_snapshot(source)
     before=tree_manifest(source.root_path)
-    copy_tree(source.root_path,path/'catalog',before)
+    copy_tree(source.root_path,path/'catalog',before,deduplicate=True)
     metadata=dict(format_version=1,schema_version=source.db.schema_version,dataset_id=source.db.dataset_id,tables=tables,sequences=sequences)
     from backup_metadata import write_json,file_hash
     write_json(path/'metadata.json',metadata)

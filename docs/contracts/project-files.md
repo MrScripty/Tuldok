@@ -37,6 +37,17 @@ the index size before staging immutable records. This format is unchanged;
 older installations with the former 16 MiB index limit cannot open larger
 checkpoints and must be upgraded before consuming them.
 
+Verified stopped-source backups and ordinary catalog backups share identical
+file contents only inside their fresh private backup tree, and only when byte
+count, SHA256 and POSIX permission mode all match. The first copy has an
+independent inode; no original source file is hard-linked into the backup.
+Both source and copied content are verified before a duplicate link is made,
+and the complete tree/hash/mode checks still run before backup publication.
+The existing backup format remains a complete ordinary-file tree. Restore
+copies every path into an independent file, preserving bytes and modes without
+introducing writable aliases into the restored catalog. Backup trees are
+immutable custody and must not be edited as working catalogs.
+
 Each inventory entry identifies a rooted immutable file
 `.tuldok/records/<family>/<record-id>/<sha256>.json`, its format, namespace,
 byte count and SHA256. Original `workbench_text_v1` preserves original source, current

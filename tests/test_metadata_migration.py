@@ -423,6 +423,8 @@ class PostgreSQLTransfers(unittest.TestCase):
 
     def test_complete_backup_restore_preserves_identity_metadata_artifacts_and_retries(self):
         fixture(self.root / 'source', all_tables=True)
+        for name in ('duplicate-a.bin', 'duplicate-b.bin'):
+            (self.root / 'source' / name).write_bytes(b'Identical captured payload\x00\xff')
         self.migrate()
         before = tree_manifest(self.root / 'dest')
         metadata = Metadata(self.root / 'dest', create=False)
@@ -431,6 +433,11 @@ class PostgreSQLTransfers(unittest.TestCase):
         sequences = read_sequences(metadata)
         metadata.close()
         receipt = backup_catalog(self.root / 'dest', self.root / 'pg-backup', quiesced=True)
+        compact = self.root / 'pg-backup/catalog'
+        self.assertEqual((compact/'duplicate-a.bin').stat().st_ino,
+                         (compact/'duplicate-b.bin').stat().st_ino)
+        self.assertNotEqual((compact/'duplicate-a.bin').stat().st_ino,
+                            (self.root/'dest/duplicate-a.bin').stat().st_ino)
         metadata = Metadata(self.root / 'dest', create=False)
         try:
             # Existing catalogs are not valid restore destinations, even with the same identity.
@@ -448,6 +455,10 @@ class PostgreSQLTransfers(unittest.TestCase):
         finally:
             restored.close()
         self.assertEqual(tree_manifest(self.root / 'restored', ('.restore-receipt-' + digest(receipt) + '.json',)), before)
+        self.assertNotEqual((self.root/'restored/duplicate-a.bin').stat().st_ino,
+                            (self.root/'restored/duplicate-b.bin').stat().st_ino)
+        self.assertTrue(all((self.root/'restored'/name).stat().st_nlink==1
+                            for name in ('duplicate-a.bin','duplicate-b.bin')))
         self.assertEqual(restore_catalog(self.root / 'pg-backup', self.root / 'restored'), result)
         self.assertEqual(tree_manifest(self.root / 'dest'), before)
         # Tampering any artifact makes the complete backup unusable, before writes.
