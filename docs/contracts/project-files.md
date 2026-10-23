@@ -31,6 +31,11 @@ checkpoint: project UUID, display name, membership roots, sorted record inventor
 request receipts and a SHA256 checkpoint. Its digest covers canonical bytes of
 the document with `checkpoint` omitted. The store supports only its declared
 format and family; malformed and future versions fail before projection writes.
+The canonical checkpoint index is limited to 64 MiB, separately from the
+100,000-record, 40 MiB-per-record and 256 MiB-total-record limits. Commit checks
+the index size before staging immutable records. This format is unchanged;
+older installations with the former 16 MiB index limit cannot open larger
+checkpoints and must be upgraded before consuming them.
 
 Each inventory entry identifies a rooted immutable file
 `.tuldok/records/<family>/<record-id>/<sha256>.json`, its format, namespace,

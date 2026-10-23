@@ -272,6 +272,34 @@ except ProjectStoreError as exc:
             self.assert_code('unsupported', self.store.commit, [value], checkpoint, 'bad', body('bad'))
         self.assert_code('invalid', self.store.commit, [record(), record()], checkpoint, 'bad', body('bad'))
 
+    def test_large_checkpoint_index_publishes_and_cold_opens(self):
+        # The migrated lab's small record declarations produced a 17.99 MB
+        # index, even though individual records and their total were in bounds.
+        # Valid receipts exercise the same index publication/read boundary
+        # without tens of thousands of fsyncs in a focused regression fixture.
+        manifest = self.manifest()
+        manifest['receipts'].extend(
+            dict(request_key='operation.' + str(index).zfill(100),
+                 request_sha256=body(index), records_sha256=sha(canonical([])))
+            for index in range(52_000))
+        manifest.pop('checkpoint')
+        manifest['checkpoint'] = sha(canonical(manifest))
+        self.assertGreater(len(canonical(manifest)), 16 * 1024 * 1024)
+        self.store._publish(manifest)
+        reopened = self.reopen()
+        self.assertEqual(reopened['checkpoint'], manifest['checkpoint'])
+        self.assertEqual(reopened['records'], [])
+        self.assertEqual(self.manifest()['receipts'], manifest['receipts'])
+
+    def test_oversized_checkpoint_refuses_before_staging_record_files(self):
+        before = self.bytes_tree()
+        # The existing checkpoint fits, but a new record's index would not.
+        maximum = len((self.root / '.tuldok/project.json').read_bytes()) + 10
+        with patch.object(store_module, 'MAX_MANIFEST_BYTES', maximum):
+            error = self.assert_code('invalid', self.commit)
+        self.assertEqual(str(error), 'Project checkpoint exceeds its byte limit.')
+        self.assertEqual(self.bytes_tree(), before)
+
     def test_future_record_format_rejected_on_open(self):
         self.commit()
         self.store.close()
