@@ -1,0 +1,102 @@
+{
+  "actual_adapters": {
+    "agent_owner_lifecycle_and_human_review_denied": true,
+    "draft_edit_and_historical_note": true,
+    "initialize_deadline_seconds": 20,
+    "initialize_seconds": 10.954900544999873,
+    "material_start_end_match": true,
+    "official_mcp_stdio_to_real_http": true,
+    "ordinary_agent_sdk": true,
+    "owner_cli_subprocess": true,
+    "owner_sdk": true,
+    "revocation_401_without_canonical_effect": true,
+    "successful": true
+  },
+  "baseline": "133d53c0e2985a6559ba9cebd7d4a9f530051f06",
+  "blockers": [],
+  "browser": {
+    "actual_git_clone": true,
+    "cold_source_database_connect": false,
+    "evidence": "browser-project-files-r2.log",
+    "history_count": 3,
+    "http_errors": [],
+    "inert_sentinel": true,
+    "no_op_canonical_sha_unchanged": true,
+    "receipt": "artifacts/project-files/run-y9XvAA/receipt.json",
+    "retained_corpus_note_ui_pager": true,
+    "runtime_errors": [],
+    "screenshots": [
+      "authored-1440.jpg",
+      "authored-390.jpg",
+      "cold-open-1440.jpg",
+      "cold-open-390.jpg",
+      "cold-history-390.jpg"
+    ],
+    "successful": true
+  },
+  "changed_http_claims": {
+    "evidence": [
+      "http-project-files-r2.log",
+      "http-r2-receipt.json",
+      "http-project-files-adapter-final.log",
+      "http-adapter-final-receipt.json"
+    ],
+    "note": "First selected campaign: deferred SQL receipt/recovery, cold history and stale-binding methods passed; real-adapter method failed20sMCPinitialization. Only failed real-adapter method rerun after scoped startup fix:1/1 passed, no skips, source SHA stable.",
+    "passed_claims": [
+      "test_project_files_http.ProjectFilesHTTP.test_real_deferred_sql_failure_returns_committed_receipt_and_explicit_recovery",
+      "test_project_files_http.ProjectFilesHTTP.test_real_owner_sdk_cli_and_agent_sdk_mcp_share_authenticated_project",
+      "test_project_files_http.ProjectFilesHTTP.test_cold_copy_reconstructs_exact_identity_values_and_history_without_credentials",
+      "test_project_files_http.ProjectFilesHTTP.test_old_binding_and_stale_checkpoint_reject_without_canonical_effect"
+    ],
+    "selected_count": 4
+  },
+  "cleanup": {
+    "postgres_service": "left running for team",
+    "stop_command": "/workspace/scratch/tuldok-save-load-qa/cleanup.sh",
+    "test_owned_processes_profiles_roots_and_schemas": "cleaned"
+  },
+  "environment": "environment-qualification.json",
+  "files_owned": [
+    "tests/test_project_files_http.py",
+    "tests/browser_project_files.cjs"
+  ],
+  "material_sha256": {
+    "agent_api.py": "5eed592dac37231c0ad3114e7793b4dfdfa27ffeb1d10d63778e78bb106cc4b0",
+    "app.py": "e26c8774ca963e908ee54574d4b44e2f83ba11e8694d33a630c80e543216d1dd",
+    "mcp_stdio.py": "a37cf211ded719242499a90772ccf377c2ba52a895621c1ed618c37ed065deeb",
+    "metadata.py": "bc807e1da0c2fdae6104623f54745f622998851d5dc9eead8281ed9f9aa443ce",
+    "project_cli.py": "ba6a23fc544257f79fbc24851275c07e53765ce301a4a2c0e7141deb1a6bd37a",
+    "project_store.py": "a81cb46d3e4987a6ce444fc5da57a17a0fed74ddf388e30e45b62a90fc497bf1",
+    "project_text.py": "adf90ee6e53b8dc1e8b68287269e907a4da1112704489db4eee1efddf0b65e5b",
+    "project_workspace.py": "2b0dbace8e2840e4f60997985ac7f52618c0fe15ed32cf6ca548c3832e9b8c54",
+    "static/project-files.css": "fdb0b78765d1944d07676578ddf222f8f1dcdba06c8777b14bd011f5b8e7979d",
+    "static/project-files.html": "dc6df837d33dda085d84ddd5c6e38664e0de6101e992ce5ff7693f3ba6cc5d5f",
+    "static/project-files.js": "5bb198e00191c1b39b74998b0c54c14129aa7470f8dba1bd71819cab81c2874b",
+    "tests/browser_project_files.cjs": "1a1263fd2f0a4cb502579265c59144d3f377c21424631b278e4428e9c641ab3c",
+    "tests/test_project_files_clients.py": "292147c966d0f325ae5dfc059fee668c7f47eb02f71b676423df1107dd3925e2",
+    "tests/test_project_files_http.py": "2f8c6b6f1f90e674aa26cdc4d23e4f0682951e69499835e60d14d6a3183d0121",
+    "tests/test_project_store.py": "5215f59384c2cfd1b9fa0f73fcb77c3f1395313a8611f9978444079ea02cbf47",
+    "tests/test_project_text.py": "f841dd669339d96d6ff66a3f9efbf30161697b6d27186b29c78c9d16f7b26e70",
+    "tests/test_project_workspace.py": "093594028a5475c8876d62dca46a6188d4133b2195303f2329f7e464d2385c49",
+    "tests/test_workspace_project_files.cjs": "6d5c3c2751bbac40198d987287ce32c6c85319f71aaad3eaf91b4273d599ab7c",
+    "tuldok_client.py": "d7981b9b4f84f1195bb3ff837923d99c9845f660c20bbc31e856f41a101e559a"
+  },
+  "mcp_startup_diagnosis": {
+    "evidence": "mcp-isolated-startup.json",
+    "fix_scope": "Lead removed only repeated registry validation from serve; bootstrap and per-call validation retained",
+    "fixed_initialize_seconds": 10.954900544999873,
+    "prior_child_cpu_seconds": 20.263033,
+    "prior_isolated_initialize_seconds": 20.430954294000003
+  },
+  "plan_commit": "2c9c9b098c9f1c4c2557c58818574ebdbc1e7d41",
+  "product_files_modified_by_this_worker": false,
+  "publication_performed": false,
+  "raw_evidence_root": "/workspace/scratch/tuldok-save-load-qa",
+  "scope": "M1 disposable-environment and real integration QA only; no lab/scientific execution or later-family acceptance claim",
+  "standards": "5bce3110fc64d61ff8b4f79468184bd6295855d5",
+  "status": "pass",
+  "unchanged_http_claims": {
+    "authorization_inert_control": "Prior scoped lead run passed; reused unchanged",
+    "legacy_mutation_unavailability": "http-project-files-fourth.log; reused unchanged"
+  }
+}

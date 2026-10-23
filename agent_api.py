@@ -6,6 +6,7 @@ argument validation, never by the application discovery route.
 import base64
 import binascii
 import copy
+from collections import OrderedDict
 from contextlib import contextmanager
 import hashlib
 import http.client
@@ -37,14 +38,15 @@ ARTIFACT = {'type': 'string', 'pattern': '^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$',
 
 class AgentAPIError(Exception):
     """Safe transport error: never contains a credential or remote traceback."""
-    def __init__(self, message, code='invalid', status=400, *, preflight_report=None):
+    def __init__(self, message, code='invalid', status=400, *, preflight_report=None, receipt=None):
         super().__init__(message)
         self.code, self.status = code, status
         self.preflight_report = copy.deepcopy(preflight_report)
+        self.receipt = copy.deepcopy(receipt)
 
 
-def encoded(value):
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+def encoded(value, *, ensure_ascii=True):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=ensure_ascii,
                       allow_nan=False).encode('utf-8')
 
 
@@ -727,10 +729,659 @@ model_operation('runs.compare_scientific_evidence', 'POST', '/api/workspace/scie
      'point':obj({'field_id':REF, **{axis:integer(0,127) for axis in 'xyz'}})},
     output=JSON_OBJECT, description='Read exact retained validation field-point diagnostics and scalar compatibility; no scientific criterion or compute is invented.')
 
+# External file projects have independent lifecycle and text-only contracts.
+# Keep these additive operations outside the installed legacy registry projection.
+_PROJECT_FILES_ACTIONS = ['new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate']
+_PROJECT_FILES_GROUPS = dict(GROUPS, uniqueItems=True)
+_PROJECT_FILES_PARENTS = dict(array(text(120), 30), uniqueItems=True)
+_PROJECT_FILES_PROVENANCE = obj({'method': const('import'), 'rights': text(1000),
+    'normalization': const('NFC; LF newlines')})
+_PROJECT_FILES_RECORD_FIELDS = {
+    'id': ID, 'kind': const('text'), 'name': text(200), 'text': text(200000),
+    'groups': _PROJECT_FILES_GROUPS, 'parents': _PROJECT_FILES_PARENTS,
+    'provenance': _PROJECT_FILES_PROVENANCE, 'review': {'enum': ['draft', 'human_reviewed']},
+    'revision': SAFE_POS, 'source_revision': const(1),
+    'created_at': text(80), 'updated_at': text(80)}
+_PROJECT_FILES_TASKS = ('text_classification', 'text_entities', 'text_corpus')
+PROJECT_FILES_RECORD = {'oneOf': [obj(dict(_PROJECT_FILES_RECORD_FIELDS,
+    task=const(task), annotation={'oneOf': [{'type': 'null'}, ANNOTATIONS[task]]}))
+    for task in _PROJECT_FILES_TASKS]}
+PROJECT_FILES_SUMMARY = obj({key: _PROJECT_FILES_RECORD_FIELDS[key] for key in
+    ('id', 'kind', 'name', 'review', 'revision', 'source_revision', 'created_at', 'updated_at')} |
+    {'task': {'enum': list(_PROJECT_FILES_TASKS)}})
+_PROJECT_FILES_PROJECT = obj({'project_id': ID, 'name': text(200), 'checkpoint': SHA})
+_PROJECT_FILES_RECOVERY = obj({'action': const('open'), 'root': text(160), 'directory': text(512),
+    'reason': {'enum': ['unknown_publication', 'projection_unavailable']},
+    'request_key': {'oneOf': [KEY, {'type': 'null'}]}})
+PROJECT_FILES_RECEIPT = {'oneOf': [
+    obj({'committed': const(True), 'selected': const(True), 'project_id': ID,
+         'checkpoint': SHA, 'request_key': KEY}),
+    obj({'committed': const(True), 'selected': const(False), 'project_id': ID,
+         'checkpoint': SHA, 'request_key': KEY, 'root': text(160), 'directory': text(512)})]}
+_PROJECT_FILES_STATE_FIELDS = {'format': const('project_files_state_v1'), 'binding': ID,
+    'roots': dict(array(text(160), 100), uniqueItems=True),
+    'available_actions': dict(array({'enum': _PROJECT_FILES_ACTIONS}, 8), uniqueItems=True)}
+PROJECT_FILES_STATE = {'oneOf': [
+    obj(dict(_PROJECT_FILES_STATE_FIELDS, state=const('no_project_open'), project={'type': 'null'})),
+    obj(dict(_PROJECT_FILES_STATE_FIELDS, state=const('open'),
+        project=_PROJECT_FILES_PROJECT)),
+    obj(dict(_PROJECT_FILES_STATE_FIELDS, state=const('recovery_required'),
+        project=_PROJECT_FILES_PROJECT, recovery=_PROJECT_FILES_RECOVERY,
+        available_actions=const(['open'])))]}
+_PROJECT_FILES_BOUND_RESULT = {'binding': ID, 'project_id': ID, 'checkpoint': SHA}
+PROJECT_FILES_RECORD_RESULT = obj(dict(_PROJECT_FILES_BOUND_RESULT, record=PROJECT_FILES_RECORD,
+    history=array(PROJECT_FILES_RECORD, 4),
+    next_history_before_revision={'oneOf': [SAFE_POS, {'type': 'null'}]}))
+_PROJECT_FILES_MUTATION = {'binding': ID, 'expected_checkpoint': SHA, 'request_key': KEY}
+model_operation('project_files.status', 'GET', '/api/workspace/project-files', output=PROJECT_FILES_STATE)
+for _action in ('new', 'open'):
+    _fields = dict(_PROJECT_FILES_MUTATION, expected_checkpoint={'oneOf': [SHA, {'type': 'null'}]},
+        root=text(160), directory=text(512))
+    if _action == 'new':
+        _fields['name'] = text(200)
+    model_operation('project_files.' + _action, 'POST', '/api/workspace/project-files/' + _action,
+        _fields, output=PROJECT_FILES_STATE, scopes=('inspect', 'edit'), mutation=True,
+        description='Explicit file project ' + _action + '; requires the current process binding and checkpoint. Never executes project code.')
+for _action in ('save', 'close'):
+    model_operation('project_files.' + _action, 'POST', '/api/workspace/project-files/' + _action,
+        _PROJECT_FILES_MUTATION, output=PROJECT_FILES_STATE, scopes=('inspect', 'edit'), mutation=True)
+model_operation('project_files.query', 'GET', '/api/workspace/project-files/records',
+    {'binding': ID, 'checkpoint': SHA, 'after_id': ID, 'limit': integer(1, 100)},
+    required=['binding', 'checkpoint'], query=('binding', 'checkpoint', 'after_id', 'limit'),
+    output=obj(dict(_PROJECT_FILES_BOUND_RESULT, items=array(PROJECT_FILES_SUMMARY, 100),
+        next_after_id={'oneOf': [ID, {'type': 'null'}]})))
+model_operation('project_files.get', 'GET', '/api/workspace/project-files/records/{record_id}',
+    {'record_id': ID, 'binding': ID, 'checkpoint': SHA, 'before_revision': SAFE_POS,
+     'history_limit': integer(1, 4)}, required=['record_id', 'binding', 'checkpoint'],
+    query=('binding', 'checkpoint', 'before_revision', 'history_limit'), output=PROJECT_FILES_RECORD_RESULT)
+model_operation('project_files.import_text', 'POST', '/api/workspace/project-files/import-text',
+    dict(_PROJECT_FILES_MUTATION, asset=obj({'text': text(200000), 'name': text(200),
+        'groups': _PROJECT_FILES_GROUPS, 'parents': _PROJECT_FILES_PARENTS, 'rights': text(1000)},
+        required=['text', 'groups'])), output=PROJECT_FILES_RECORD_RESULT,
+    scopes=('inspect', 'edit'), mutation=True)
+model_operation('project_files.annotate', 'POST', '/api/workspace/project-files/records/{record_id}',
+    dict(_PROJECT_FILES_MUTATION, record_id=ID, annotation={'oneOf': [obj({
+        'revision': SAFE_POS, 'source_revision': const(1), 'task': const(task),
+        'annotation': ANNOTATIONS[task], 'groups': _PROJECT_FILES_GROUPS,
+        'review': {'enum': ['draft', 'human_reviewed']}}) for task in _PROJECT_FILES_TASKS]}),
+    output=PROJECT_FILES_RECORD_RESULT, scopes=('inspect', 'edit'), mutation=True,
+    description='Save ordinary human text annotation or review at the exact checkpoint. Human review additionally requires the existing owner approve-review authority.')
+_PROJECT_FILES_RECEIPT_IDS = frozenset('project_files.' + action
+    for action in ('new', 'open', 'save', 'close', 'import_text', 'annotate'))
+_MODEL_RECEIPT_IDS.update(_PROJECT_FILES_RECEIPT_IDS)
+_OWNER_OPERATION_IDS.update('project_files.' + action for action in ('new', 'open', 'save', 'close'))
+for _op in _OPERATIONS:
+    if _op['operation_id'].startswith('project_files.'):
+        _op['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt'] = PROJECT_FILES_RECEIPT
+
+# M2 operations are fixed domain projections. Domain owners validate versioned
+# documents; the public boundary owns selection, bounds and outcome correlation.
+PROJECT_FILES_M2 = set()
+PROJECT_FILES_M3 = set()
+PROJECT_FILES_M4 = set()
+_PROJECT_FILES_PAGE_INPUT = {'offset': integer(0, 1000000), 'limit': integer(1, 40)}
+_PROJECT_FILES_PAGE = obj({'items': array(JSON_OBJECT, 40), 'offset': integer(0, 1000000),
+    'total': integer(0, 1000000), 'limit': integer(1, 40)})
+_PROJECT_FILES_READ = {'binding': ID, 'checkpoint': SHA}
+_PROJECT_FILES_ORIGIN = {'origin_catalog_id': ID}
+
+
+def _project_file_operation(action, method, suffix, fields=None, *, required=None,
+                            output=JSON_OBJECT, mutation=False, owner=False, scopes=None,
+                            domain=None, page=False, milestone=2, receipt=True):
+    fields = copy.deepcopy(fields or {})
+    needed = list(fields) if required is None else list(required)
+    if domain is not None:
+        original = next(op for op in _OPERATIONS if op['operation_id'] == domain)
+        fields.update(copy.deepcopy(original['inputSchema'].get('properties', {})))
+        needed += original['inputSchema'].get('required', [])
+    bound = (_PROJECT_FILES_MUTATION if receipt else {"binding": ID, "expected_checkpoint": SHA}) if mutation else _PROJECT_FILES_READ
+    fields.update(bound)
+    needed = list(dict.fromkeys(needed + list(bound)))
+    if action == 'data_query':
+        fields['limit'] = integer(1, 40)
+    if page:
+        fields.update(copy.deepcopy(_PROJECT_FILES_PAGE_INPUT))
+        output = copy.deepcopy(_PROJECT_FILES_PAGE)
+        if action in ('data_history', 'data_response_history', 'data_preference_history'):
+            fields['limit'] = integer(1, 4)
+            output['properties']['items']['maxItems'] = 4
+            output['properties']['limit'] = integer(1, 4)
+    name = 'project_files.' + action
+    model_operation(name, method, '/api/workspace/project-files' + suffix,
+        fields, needed, output=obj(dict(_PROJECT_FILES_BOUND_RESULT, value=output)),
+        query=tuple(key for key in fields if '{' + key + '}' not in suffix) if method == 'GET' else (),
+        scopes=scopes or (('inspect', 'edit') if mutation else ('inspect',)), mutation=mutation,
+        description=action.replace('_', ' ') + '; exact selected project checkpoint, existing domain authorization and validation.' + (' Historical content never grants current execution permission.' if milestone == 3 else ' No execution.'))
+    if domain is not None:
+        _OPERATIONS[-1]['binary_fields'] = copy.deepcopy(original['binary_fields'])
+    {2:PROJECT_FILES_M2,3:PROJECT_FILES_M3,4:PROJECT_FILES_M4}[milestone].add(name)
+    if mutation and receipt:
+        _MODEL_RECEIPT_IDS.add(name)
+    if owner:
+        _OWNER_OPERATION_IDS.add(name)
+    _OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt'] = PROJECT_FILES_RECEIPT
+
+
+_project_file_operation('definitions', 'GET', '/definitions')
+
+# Actual data and its authored histories. Inline source imports retain the
+# existing decoded-byte bound; compound sources use their existing parsers.
+_project_file_operation('data_query', 'GET', '/data', domain='data.query')
+_project_file_operation('data_get', 'GET', '/data/{record_id}', {'record_id': ID})
+_project_file_operation('data_availability', 'GET', '/data/{record_id}/availability', {'record_id': ID})
+for _action, _suffix in [('data_history', 'history'), ('data_responses', 'responses'),
+        ('data_response_history', 'response-history'), ('data_preferences', 'preferences'),
+        ('data_preference_history', 'preference-history')]:
+    _project_file_operation(_action, 'GET', '/data/{record_id}/' + _suffix, {'record_id': ID}, page=True)
+for _kind in ('text', 'image', 'audio', 'mesh', 'pointcloud', 'volume', 'sequence'):
+    _project_file_operation('data_import_' + _kind, 'POST', '/data/import-' + _kind,
+        domain='data.import_' + _kind, mutation=True)
+_project_file_operation('source_register', 'POST', '/sources/register',
+    {'root': text(160), 'manifest_path': text(512)}, mutation=True, owner=True)
+_project_file_operation('data_import_scientific', 'POST', '/data/import-scientific', {
+    'snapshot': obj({'origin_catalog_id': ID, 'project_id': ID, 'manifest_sha256': SHA}),
+    'reference_id': REF, 'expected_sha256': SHA,
+    'document': obj(OPTIONAL_META, required=['groups'])}, mutation=True)
+_project_file_operation('data_annotate', 'POST', '/data/{record_id}', {
+    'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
+    'task': {'enum': list(ANNOTATIONS)}, 'annotation': JSON_OBJECT,
+    'groups': _PROJECT_FILES_GROUPS, 'review': {'enum': ['draft', 'human_reviewed']}}, mutation=True)
+_project_file_operation('data_rights', 'POST', '/data/{record_id}/rights', {
+    'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
+    'note': text(1000, True)}, mutation=True)
+for _action, _suffix in [('data_source_save', '/source'), ('data_source_delete', '/source/delete')]:
+    _project_file_operation(_action, 'POST', '/data/{record_id}' + _suffix,
+        {'record_id': ID, 'document': JSON_OBJECT}, mutation=True,
+        scopes=('inspect', 'edit', 'approve-review') if _action == 'data_source_save' else ('inspect', 'edit'))
+_project_file_operation('data_response_save', 'POST', '/responses', {
+    'document': obj({'id': ID, 'prompt_id': ID, 'revision': SAFE_NAT,
+        'parent_revision': SAFE_POS, 'source_revision': SAFE_POS, 'completion': text(200000),
+        'review': {'enum': ['draft', 'human_reviewed']}})}, mutation=True)
+for _action, _suffix in [('data_preference_save', ''), ('data_preference_delete', '/delete')]:
+    _project_file_operation(_action, 'POST', '/preferences' + _suffix,
+        {'document': JSON_OBJECT}, mutation=True)
+for _singular, _plural, _key in [('selection', 'selections', 'selection_id'), ('search', 'searches', 'search_id')]:
+    _project_file_operation(_plural, 'GET', '/' + _plural, page=True)
+    if _singular == 'selection':
+        _project_file_operation('selection_get', 'GET', '/selections/{selection_id}', {'selection_id': ID})
+    _project_file_operation(_singular + '_create', 'POST', '/' + _plural,
+        {'document': JSON_OBJECT}, mutation=True)
+    for _verb in ('rename', 'delete'):
+        _project_file_operation(_singular + '_' + _verb, 'POST', '/' + _plural + '/{' + _key + '}' + ('/delete' if _verb == 'delete' else ''),
+            {_key: ID, 'revision': SAFE_POS, **({'name': text(120)} if _verb == 'rename' else {})}, mutation=True)
+for _action in ('preview', 'freeze'):
+    _project_file_operation('release_' + _action, 'POST', '/releases/' + _action,
+        domain='releases.' + _action, mutation=_action == 'freeze',
+        scopes=('inspect', 'freeze') if _action == 'freeze' else ('inspect',))
+
+# Current metadata uses the same Model/Pipeline validators, with canonical
+# publication wrapped by the project session. Runtime capture remains absent.
+for _plural, _key, _domain in [('models', 'model_id', 'models'), ('graphs', 'graph_id', 'graphs')]:
+    _project_file_operation(_plural, 'GET', '/' + _plural, page=True)
+    for _verb in ('get', 'create', 'save'):
+        _project_file_operation(('model_' if _plural == 'models' else 'graph_') + _verb,
+            'GET' if _verb == 'get' else 'POST', '/' + _plural + ('/{' + _key + '}' if _verb != 'create' else ''),
+            domain=_domain + '.' + _verb, mutation=_verb != 'get')
+_project_file_operation('graph_create_external', 'POST', '/graphs/external',
+    domain='graphs.create_external', mutation=True)
+_project_file_operation('graph_clone', 'POST', '/graphs/{graph_id}/clone', domain='graphs.clone', mutation=True)
+_project_file_operation('model_publish', 'POST', '/models/{model_id}/publish', domain='models.publish', mutation=True)
+_project_file_operation('recipes', 'GET', '/recipes', page=True)
+for _verb in ('get', 'create', 'save'):
+    _project_file_operation('recipe_' + _verb, 'GET' if _verb == 'get' else 'POST',
+        '/recipes' + ('/{recipe_id}' if _verb != 'create' else ''), domain='recipes.' + _verb,
+        mutation=_verb != 'get')
+_project_file_operation('recipe_prepare', 'POST', '/recipes/{graph_id}/prepare', {
+    'graph_id': ID, 'revision': SAFE_POS, 'model': MODEL_REF,
+    'builtin': {'type': 'boolean'}, 'reconcile_capture': {'type': 'boolean'}},
+    required=['graph_id', 'revision', 'model'], mutation=True)
+for _kind, _ref in [('model', MODEL_REF), ('recipe', MATERIAL_REF), ('runtime', material_ref('runtime'))]:
+    _project_file_operation(_kind + '_material', 'POST', '/materials/' + _kind,
+        {'ref': _ref, 'verify': {'type': 'boolean'}}, required=['ref'])
+_project_file_operation('snapshot', 'POST', '/materials/snapshot', {
+    'project_id': ID, 'manifest_sha256': SHA, 'origin_catalog_id': ID, 'verify': {'type': 'boolean'}},
+    required=['project_id', 'manifest_sha256', 'origin_catalog_id'])
+
+# Imported origin identity is an explicit selector, never a current grant.
+for _action, _suffix, _key in [('study', 'studies', 'study_id'), ('trial', 'trials', 'trial_id'),
+        ('run', 'runs', 'run_id'), ('candidate', 'candidates', 'candidate_id')]:
+    _project_file_operation(_action, 'GET', '/' + _suffix + '/{' + _key + '}',
+        {_key: ID, **_PROJECT_FILES_ORIGIN, **({'verify': {'type': 'boolean'}} if _action == 'candidate' else {})},
+        required=[_key, 'origin_catalog_id'])
+# Study reservations are independently bounded while charge totals remain complete.
+_study_operation = next(op for op in _OPERATIONS if op['operation_id'] == 'project_files.study')
+_study_operation['inputSchema']['properties'].update(_PROJECT_FILES_PAGE_INPUT | {'revision': SAFE_POS})
+_study_operation['query'].extend(['offset', 'limit', 'revision'])
+_run_operation = next(op for op in _OPERATIONS if op['operation_id'] == 'project_files.run')
+_run_operation['inputSchema']['properties'].update(_PROJECT_FILES_PAGE_INPUT)
+_run_operation['query'].extend(['offset', 'limit'])
+_PROJECT_RUN_DOCUMENT_SEGMENT = obj({'format': const('project_run_document_segment_v1'),
+    'origin_catalog_id': ID, 'run_id': ID, 'sha256': SHA, 'bytes': SAFE_NAT,
+    'offset': SAFE_NAT, 'limit': integer(1, 262144),
+    'base64': {'type': 'string', 'maxLength': 349528, 'pattern': '^[A-Za-z0-9+/]*={0,2}$'},
+    'next_offset': {'oneOf': [SAFE_NAT, {'type': 'null'}]}})
+_project_file_operation('run_document_segment', 'GET', '/runs/{run_id}/document-segment',
+    {'run_id': ID, 'origin_catalog_id': ID, 'expected_sha256': SHA,
+     'offset': SAFE_NAT, 'limit': integer(1, 262144)},
+    required=['run_id', 'origin_catalog_id', 'expected_sha256', 'offset', 'limit'],
+    output=_PROJECT_RUN_DOCUMENT_SEGMENT)
+_project_file_operation('source_references', 'GET', '/sources/{project_id}/references',
+    {'origin_catalog_id': ID, 'project_id': ID, 'manifest_sha256': SHA}, page=True)
+_project_file_operation('publication_result', 'GET', '/runs/{run_id}/publication-result',
+    {'run_id': ID, **_PROJECT_FILES_ORIGIN})
+_project_file_operation('package_state', 'GET', '/candidates/{candidate_id}/package-state',
+    {'candidate_id': ID, **_PROJECT_FILES_ORIGIN})
+_project_file_operation('dependencies', 'GET', '/runs/{run_id}/dependencies',
+    {'run_id': ID, **_PROJECT_FILES_ORIGIN, **_PROJECT_FILES_PAGE_INPUT},
+    required=['run_id', 'origin_catalog_id'])
+for _action in ('studies', 'runs', 'lineage', 'policies', 'artifacts', 'materials'):
+    _project_file_operation(_action, 'GET', '/' + _action, _PROJECT_FILES_ORIGIN,
+        required=[] if _action in ('studies', 'runs', 'artifacts', 'materials') else ['origin_catalog_id'], page=True)
+# Intrinsic artifact identities span all origins in the selected project.
+_artifacts_operation = next(op for op in _OPERATIONS if op['operation_id'] == 'project_files.artifacts')
+_artifacts_operation['inputSchema']['properties'].pop('origin_catalog_id')
+_artifacts_operation['query'].remove('origin_catalog_id')
+_project_file_operation('policy', 'POST', '/policies/get', {'ref': POLICY_REF})
+for _verb in ('create', 'save'):
+    _project_file_operation('study_' + _verb, 'POST', '/studies' + ('/{study_id}' if _verb == 'save' else ''),
+        domain='studies.' + _verb, mutation=True, owner=True)
+_project_file_operation('trial_prepare', 'POST', '/studies/{study_id}/trials', {
+    'study_id': ID, 'revision': SAFE_POS, 'material': MATERIAL_REF, 'replicate': SAFE_NAT}, mutation=True)
+_project_file_operation('lineage_record', 'POST', '/lineage', {'trial': _LINEAGE_REF, 'intent': _LINEAGE_INTENT}, mutation=True)
+_project_file_operation('candidate_select', 'POST', '/studies/{study_id}/candidates',
+    domain='studies.select_candidate', mutation=True)
+_project_file_operation('evidence', 'POST', '/runs/{run_id}/evidence', {
+    'run_id': ID, **_PROJECT_FILES_ORIGIN, 'selectors': JSON_OBJECT},
+    required=['run_id', 'origin_catalog_id'], output=_EVIDENCE_RESULT)
+for _action, _suffix in [('retained_analysis', ''), ('retained_analysis_export', '/export')]:
+    _project_file_operation(_action, 'POST', '/runs/{run_id}/analysis' + _suffix,
+        {**_retained_request['properties'], **_PROJECT_FILES_ORIGIN},
+        required=[*_retained_request['required'], 'origin_catalog_id'], output=_retained_result)
+_project_file_operation('artifact_status', 'POST', '/artifacts/status', {'sha256': SHA})
+_project_file_operation('artifact_resolve', 'POST', '/artifacts/resolve',
+    {'sha256': SHA, 'root': text(160), 'path': text(512)}, mutation=True, owner=True,
+    output=obj({'format': const('project_artifact_resolution_v1'), 'sha256': SHA, 'bytes': SAFE_NAT,
+                'actor_id': ID, 'observed_at': text(80)}))
+_project_file_operation('expose_holdout', 'POST', '/runs/{run_id}/disclose',
+    {'run_id': ID, **_PROJECT_FILES_ORIGIN, 'reason': text(500)}, mutation=True,
+    scopes=('inspect', 'expose-holdout'))
+_PROJECT_FILES_PRODUCER_FAMILY = {'enum': ['generation_history', 'grounded_history', 'caption_proposal_history', 'text_proposal_history']}
+_project_file_operation('producers', 'GET', '/producers',
+    {'family': _PROJECT_FILES_PRODUCER_FAMILY, **_PROJECT_FILES_ORIGIN}, required=['family'], page=True)
+_project_file_operation('producer', 'GET', '/producers/{origin_catalog_id}/{producer_id}',
+    {'family': _PROJECT_FILES_PRODUCER_FAMILY, 'origin_catalog_id': ID, 'producer_id': ID,
+     'entries_offset': integer(0, 1000000), 'entries_limit': integer(1, 40)},
+    required=['family', 'origin_catalog_id', 'producer_id'])
+PROJECT_FILES_M2 = frozenset(PROJECT_FILES_M2)
+_PROJECT_FILES_RECEIPT_IDS = _PROJECT_FILES_RECEIPT_IDS | frozenset(
+    name for name in PROJECT_FILES_M2 if next(op for op in _OPERATIONS if op['operation_id'] == name)['side_effects'])
+
+# Explicit current-local execution is separate from imported history.
+_PROJECT_CURRENT_GRANT = obj({'id': ID, 'catalog_id': ID, 'approver_actor_id': ID,
+    'approver_credential_id': {'oneOf': [ID, {'type': 'null'}]}, 'consumer_actor_id': ID,
+    'material_sha256': SHA, 'created_at': SAFE_NAT, 'expires_at': SAFE_NAT,
+    'revoked_at': {'oneOf': [SAFE_NAT, {'type': 'null'}]}})
+PROJECT_CURRENT_APPROVAL = obj({'format': const('project_current_execution_approval_v1'),
+    'current_local': const(True), 'grant': _PROJECT_CURRENT_GRANT})
+PROJECT_RUN_ADMISSION = obj({'format': const('project_run_admission_v1'),
+    'origin_catalog_id': ID, 'run_id': ID, 'request_sha256': SHA})
+_PROJECT_EXECUTION_HEALTH = obj({'format': const('project_execution_health_v1'),
+    'active_run_ids': array(ID, 40), 'active_count': SAFE_NAT, 'offset': SAFE_NAT,
+    'limit': integer(1, 40), 'local_owner_active': {'type': 'boolean'}, 'available': {'type': 'boolean'},
+    'drain_required': {'type': 'boolean'}})
+_project_file_operation('execution_health', 'GET', '/execution', _PROJECT_FILES_PAGE_INPUT,
+    required=[], output=_PROJECT_EXECUTION_HEALTH, milestone=3)
+_project_file_operation('execution_preflight_external', 'POST', '/execution/preflight',
+    {'graph_id': ID, 'revision': SAFE_POS}, milestone=3)
+_project_file_operation('execution_approve_external', 'POST', '/execution/approvals',
+    {'graph_id': ID, 'graph_revision': SAFE_POS, 'expected_digest': SHA,
+     'consumer_actor_id': ID, 'ttl_seconds': integer(60, 3600)},
+    required=['graph_id', 'graph_revision', 'expected_digest', 'consumer_actor_id'],
+    output=PROJECT_CURRENT_APPROVAL, mutation=True, owner=True,
+    scopes=('inspect', 'approve-execution'), milestone=3)
+_project_file_operation('execution_submit_external', 'POST', '/execution/runs',
+    {'graph_id': ID, 'graph_revision': SAFE_POS, 'expected_digest': SHA, 'approval_id': ID},
+    required=['graph_id', 'graph_revision', 'expected_digest'], output=PROJECT_RUN_ADMISSION,
+    mutation=True, scopes=('inspect', 'execute'), milestone=3)
+_OPERATIONS[-1]['inputSchema']['properties']['request_key'] = copy.deepcopy(next(op for op in _OPERATIONS if op['operation_id'] == 'runs.submit_external')['inputSchema']['properties']['request_key'])
+_project_file_operation('execution_cancel', 'POST', '/execution/runs/{run_id}/cancel',
+    {'run_id': ID}, output=PROJECT_RUN_ADMISSION, mutation=True,
+    scopes=('inspect', 'cancel'), milestone=3)
+_project_file_operation('execution_study_continue', 'POST', '/execution/studies/{study_id}/continue',
+    {'study_id': ID, 'revision': SAFE_POS, 'admission_epoch': SAFE_NAT}, output=_STUDY,
+    mutation=True, owner=True, scopes=('inspect', 'execute'), milestone=3)
+_project_file_operation('execution_study_approve', 'POST', '/execution/studies/{study_id}/approvals',
+    {'study_id': ID, 'trial_id': ID, 'expected_material_sha256': SHA, 'consumer_actor_id': ID,
+     'ttl_seconds': integer(60, 3600)},
+    required=['study_id', 'trial_id', 'expected_material_sha256', 'consumer_actor_id'],
+    output=PROJECT_CURRENT_APPROVAL, mutation=True, owner=True,
+    scopes=('inspect', 'approve-execution'), milestone=3)
+_project_file_operation('execution_study_admit', 'POST', '/execution/studies/{study_id}/runs',
+    {'study_id': ID, 'revision': SAFE_POS, 'admission_epoch': SAFE_NAT, 'trial_id': ID,
+     'approval_id': ID, 'parent_run_id': ID},
+    required=['study_id', 'revision', 'admission_epoch', 'trial_id'],
+    output=obj({'format': const('project_study_admission_v1'), 'origin_catalog_id': ID,
+        'study_id': ID, 'trial_id': ID, 'run_id': ID, 'reservation': _RESERVATION}),
+    mutation=True, scopes=('inspect', 'execute'), milestone=3)
+_project_file_operation('execution_study_stop', 'POST', '/execution/studies/{study_id}/stop',
+    {'study_id': ID, 'revision': SAFE_POS},
+    output=obj({'format': const('project_study_stop_v1'), 'origin_catalog_id': ID,
+        'study_id': ID, 'receipt': obj({'study_id': ID, 'stop_receipt_id': ID,
+            'admission_epoch': SAFE_NAT, 'run_ids': array(ID, 100000)}),
+        'study_revision': SAFE_POS, 'state': {'enum': ['draft', 'open', 'stopping', 'stopped', 'unknown']},
+        'open': {'type': 'boolean'}}), mutation=True, scopes=('inspect', 'cancel'), milestone=3)
+_project_file_operation('execution_reconcile_current', 'POST', '/execution/reconcile-current',
+    output=obj({'format': const('project_execution_reconciliation_v1'), 'origin_catalog_id': ID,
+        'run_ids': array(ID, 100000), 'available': {'type': 'boolean'}}),
+    mutation=True, receipt=False, owner=True, scopes=('inspect', 'cancel'), milestone=3)
+
+# Finite native producer grammars. Each closed document remains validated by
+# its domain owner; no operation name or callable can be supplied by a client.
+_PROJECT_PRODUCER_MODE = {'protocol': const('pumas_typed_v1'),
+    'profile': {'oneOf': [{'type': 'null'}, {'type': 'string', 'maxLength': 128, 'pattern': '^[A-Za-z0-9_.-]*$'}]}}
+_PROJECT_PRODUCER_SOURCE = {'source_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
+    'server_url': text(2048), 'model': text(256), 'instruction': text(2000),
+    'seed': {'oneOf': [integer(0, 4294967295), {'type': 'null'}]}}
+_PROJECT_PRODUCER_LABELS = array(text(80), 30, 1)
+_PROJECT_PRODUCER_START_DOCUMENTS = {
+    'generation_history': obj({'server_url': text(2048), 'model': text(256), 'prompt': text(4000),
+        'count': integer(1, 10000), 'strategy': {'enum': ['varied', 'repeat']}, 'session_id': text(120),
+        'width': SAFE_POS, 'height': SAFE_POS, 'seed': integer(0, 4294967295),
+        'prompt_url': text(2048), 'prompt_model': text(256), 'book_id': text(120, True),
+        'split': {'enum': ['unassigned', 'train', 'validation', 'test']}, **_PROJECT_PRODUCER_MODE},
+        required=['server_url', 'model', 'prompt', 'count', 'strategy', 'session_id']),
+    'grounded_history': obj(dict(_PROJECT_PRODUCER_SOURCE, count=integer(1, 10), **_PROJECT_PRODUCER_MODE),
+        required=[*_PROJECT_PRODUCER_SOURCE, 'count']),
+    'caption_proposal_history': obj(dict(_PROJECT_PRODUCER_SOURCE, request_id=ID, **_PROJECT_PRODUCER_MODE),
+        required=[*_PROJECT_PRODUCER_SOURCE, 'request_id']),
+    'text_proposal_history': obj(dict(_PROJECT_PRODUCER_SOURCE, request_id=ID,
+        labels=_PROJECT_PRODUCER_LABELS, **_PROJECT_PRODUCER_MODE),
+        required=[*_PROJECT_PRODUCER_SOURCE, 'request_id', 'labels'])}
+for _document in _PROJECT_PRODUCER_START_DOCUMENTS.values():
+    _document['dependentRequired'] = {'protocol': ['profile'], 'profile': ['protocol']}
+_PROJECT_PRODUCER_ACTION = obj({'format': const('project_producer_action_v1'),
+    'family': _PROJECT_FILES_PRODUCER_FAMILY, 'origin_catalog_id': ID, 'producer_id': ID,
+    'action': {'enum': ['start', 'resume', 'review', 'decide', 'cancel']}})
+_project_file_operation('execution_producer_start', 'POST', '/execution/producers',
+    {'family': _PROJECT_FILES_PRODUCER_FAMILY, 'document': JSON_OBJECT},
+    output=_PROJECT_PRODUCER_ACTION, mutation=True, owner=True, scopes=('inspect', 'execute'), milestone=3)
+_OPERATIONS[-1]['inputSchema']['allOf'] = [
+    {'if': {'properties': {'family': const(family)}},
+     'then': {'properties': {'document': document}}}
+    for family, document in _PROJECT_PRODUCER_START_DOCUMENTS.items()]
+_project_file_operation('execution_generation_resume', 'POST', '/execution/generation/{producer_id}/resume',
+    {'producer_id': ID}, output=_PROJECT_PRODUCER_ACTION, mutation=True, owner=True,
+    scopes=('inspect', 'execute'), milestone=3)
+_project_file_operation('execution_grounded_review', 'POST', '/execution/grounded/{producer_id}/review',
+    {'producer_id': ID, 'document': obj({'revision': SAFE_POS, 'candidate_id': ID,
+        'decision': {'enum': ['reject', 'admit_draft']}, 'note': text(1000)})},
+    output=_PROJECT_PRODUCER_ACTION, mutation=True, scopes=('inspect', 'edit'), milestone=3)
+_project_file_operation('execution_producer_decide', 'POST', '/execution/producers/{producer_id}/decide',
+    {'family': {'enum': ['caption_proposal_history', 'text_proposal_history']}, 'producer_id': ID,
+     'document': obj({'revision': SAFE_POS, 'decision': {'enum': ['reject', 'apply_draft']},
+        'labels': _PROJECT_PRODUCER_LABELS}, required=['revision', 'decision'])},
+    output=_PROJECT_PRODUCER_ACTION, mutation=True, scopes=('inspect', 'edit'), milestone=3)
+_project_file_operation('execution_producer_cancel', 'POST', '/execution/producers/{producer_id}/cancel',
+    {'family': _PROJECT_FILES_PRODUCER_FAMILY, 'producer_id': ID}, output=_PROJECT_PRODUCER_ACTION,
+    mutation=True, scopes=('inspect', 'cancel'), milestone=3)
+_project_file_operation('execution_producer_health', 'GET', '/execution/producers/health',
+    _PROJECT_FILES_PAGE_INPUT, required=[],
+    output=obj({'format': const('project_producer_health_v1'),
+        'items': array(obj({'family': _PROJECT_FILES_PRODUCER_FAMILY, 'producer_id': ID,
+            'status': text(120), 'provider_outcome': {'oneOf': [{'type': 'null'}, text(120)]},
+            'worker_alive': {'type': 'boolean'}}), 40),
+        'total': SAFE_NAT, 'offset': SAFE_NAT, 'limit': integer(1, 40), 'fenced': {'type': 'boolean'}}), milestone=3)
+# Fixed current-host CPU capture projections. Bounds mirror runtime_snapshots
+# and recipe_process; native inventories stay canonical, never transport grants.
+_PROJECT_RUNTIME_SOURCE = {'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$'}
+_PROJECT_RUNTIME_FILE = obj({'path':text(1024),'bytes':integer(0,512*1024*1024),
+    'sha256':SHA,'mode':{'enum':[0o400,0o500]},'kind':{'enum':['data','elf']}})
+_PROJECT_RUNTIME_LAUNCH = obj({**{field:text(1024) for field in ('python','loader','home','stdlib','dynload','packages')},
+    'library_dirs':dict(array(text(1024),32,1),uniqueItems=True)})
+_PROJECT_RUNTIME_REF = obj({'kind':const('runtime'),'catalog_id':ID,'id':SHA,'sha256':SHA})
+_PROJECT_RUNTIME_SUMMARY = {'project_id':ID,'manifest_sha256':SHA,'file_count':integer(1,40000),
+    'total_bytes':integer(0,2*1024*1024*1024),'actor_id':ID,'observed_at':text(80),'request_key':KEY}
+_PROJECT_RUNTIME_INTENT = obj(dict(_PROJECT_RUNTIME_SUMMARY,format=const('project_runtime_capture_intent_v1')))
+_PROJECT_RUNTIME_CAPTURE = obj(dict(_PROJECT_RUNTIME_SUMMARY,format=const('project_runtime_capture_v1'),runtime_ref=_PROJECT_RUNTIME_REF))
+_project_file_operation('runtime_sources','GET','/runtime/sources',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(obj({'source':_PROJECT_RUNTIME_SOURCE}),40))),
+    owner=True,scopes=('inspect','admin'),milestone=3)
+_project_file_operation('runtime_inspect','GET','/runtime/inspect',{'source':_PROJECT_RUNTIME_SOURCE,**_PROJECT_FILES_PAGE_INPUT},required=['source'],
+    output=obj({'format':const('project_runtime_inspection_v1'),'source':_PROJECT_RUNTIME_SOURCE,'inventory_sha256':SHA,
+        'profile':const('captured_cpu_python_v1'),'python_version':const('3.12'),'file_count':integer(1,40000),
+        'total_bytes':integer(1,2*1024*1024*1024),'manifest_bytes':integer(1,16*1024*1024),'free_bytes':SAFE_NAT,
+        'packages':array(obj({'name':text(128),'version':text(128)}),256,2),'launch':_PROJECT_RUNTIME_LAUNCH,
+        'files':obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(_PROJECT_RUNTIME_FILE,40)))}),
+    owner=True,scopes=('inspect','admin'),milestone=3)
+_project_file_operation('runtime_capture','POST','/runtime/capture',{'source':_PROJECT_RUNTIME_SOURCE,
+    'expected_inventory_sha256':SHA,'reserve_bytes':SAFE_NAT},required=['source','expected_inventory_sha256'],
+    output=_PROJECT_RUNTIME_CAPTURE,mutation=True,owner=True,scopes=('inspect','admin'),milestone=3)
+_project_file_operation('runtime_status','GET','/runtime/status',{'capture_key':KEY},
+    output=obj({'state':{'enum':['absent','intent_recorded','captured']},
+        'intent':{'oneOf':[{'type':'null'},_PROJECT_RUNTIME_INTENT]},
+        'result':{'oneOf':[{'type':'null'},_PROJECT_RUNTIME_CAPTURE]}}),milestone=3)
+# Current Candidate package preparation is distinct from approval/admission.
+_PROJECT_PREPARATION_KEY={'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$'}
+_PROJECT_PREPARATION_NAME={'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$'}
+for _kind,_suffix in (('package','packages'),('verifier','verifiers')):
+    _result=dict(_PACKAGE_PREPARED_FIELDS)
+    if _kind=='verifier':_result.update(package_run_id=ID,package_sha256=SHA)
+    _project_file_operation('execution_study_prepare_'+_kind,'POST','/execution/studies/{study_id}/'+_suffix,
+        domain='studies.prepare_'+_kind,output=obj(_result),mutation=True,owner=True,scopes=('inspect','edit'),milestone=3)
+    _OPERATIONS[-1]['inputSchema']['properties']['directory']=_PROJECT_PREPARATION_NAME
+_PROJECT_PREPARATION_ABANDON=obj({'format':const('project_candidate_preparation_abandon_v1'),
+    'origin_catalog_id':ID,'study_id':ID,'preparation_key':_PROJECT_PREPARATION_KEY,
+    'preparation_operation':{'enum':['study_execution.prepare_package','study_execution.prepare_verifier']},
+    'input_sha256':SHA,'candidate':material_ref('candidate'),'actor_id':ID,'reason':text(1000),
+    'observed_checkpoint':SHA,'occurred_at':text(80),'state':const('abandoned')})
+_project_file_operation('execution_study_abandon_preparation','POST','/execution/studies/{study_id}/preparations/abandon',
+    {'study_id':ID,'preparation_key':_PROJECT_PREPARATION_KEY,'reason':text(1000)},
+    output=_PROJECT_PREPARATION_ABANDON,mutation=True,owner=True,scopes=('inspect','cancel'),milestone=3)
+_PROJECT_PREPARATION_COMPLETED={'oneOf':[obj(_PACKAGE_PREPARED_FIELDS),obj(dict(_PACKAGE_PREPARED_FIELDS,package_run_id=ID,package_sha256=SHA))]}
+_project_file_operation('execution_study_reconcile_preparation','POST','/execution/studies/{study_id}/preparations/reconcile',
+    {'study_id':ID,'preparation_key':_PROJECT_PREPARATION_KEY},output=_PROJECT_PREPARATION_COMPLETED,
+    mutation=True,owner=True,scopes=('inspect','cancel'),milestone=3,receipt=False)
+# Explicitly abandon only a current local stopped copy, retaining its science.
+_PROJECT_RUNTIME_ABANDON=obj({'format':const('project_runtime_capture_abandon_v1'),'project_id':ID,
+    'capture_key':KEY,'input_sha256':SHA,'manifest_sha256':SHA,'actor_id':ID,'reason':text(1000),
+    'observed_checkpoint':SHA,'observed_at':text(80)})
+_project_file_operation('runtime_abandon','POST','/runtime/abandon',{'capture_key':KEY,'reason':text(1000)},
+    output=_PROJECT_RUNTIME_ABANDON,mutation=True,owner=True,scopes=('inspect','admin'),milestone=3)
+_runtime_status=next(op for op in _OPERATIONS if op['operation_id']=='project_files.runtime_status')
+_runtime_status_value=_runtime_status['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']
+_runtime_status['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']={'oneOf':[
+    copy.deepcopy(_runtime_status_value),obj({'state':const('abandoned'),'intent':_PROJECT_RUNTIME_INTENT,
+        'result':const(None),'abandonment':_PROJECT_RUNTIME_ABANDON})]}
+# Explicit current native probes and Runs. Current operator runtime is selected
+# by the native owner; no imported descriptor or serialized probe is authority.
+_PROJECT_NATIVE_PHASE = obj({'format':const('project_native_phase_v1'),'origin_catalog_id':ID,
+    'phase_id':ID,'phase':{'enum':['probe','train','verify']},'run_id':{'oneOf':[const(None),ID]},
+    'state':{'enum':['prepared','ready','go_intent','completed','failed','unknown']},
+    'spec_sha256':SHA,'receipt_sha256':{'oneOf':[const(None),SHA]}})
+_project_file_operation('native_preflight','POST','/execution/native/preflight',
+    {'graph_id':ID,'revision':SAFE_POS},mutation=True,owner=True,scopes=('inspect','execute'),milestone=3)
+_project_file_operation('native_submit','POST','/execution/native/runs',
+    {'graph_id':ID,'graph_revision':SAFE_POS,'validation_token':SHA},output=PROJECT_RUN_ADMISSION,
+    mutation=True,owner=True,scopes=('inspect','execute'),milestone=3)
+_project_file_operation('native_retry','POST','/execution/native/runs/{run_id}/retry',
+    {'run_id':ID},output=PROJECT_RUN_ADMISSION,mutation=True,owner=True,scopes=('inspect','execute'),milestone=3)
+_project_file_operation('native_reconcile','POST','/execution/native/phases/{phase_id}/reconcile',
+    {'phase_id':ID},output=_PROJECT_NATIVE_PHASE,mutation=True,owner=True,
+    scopes=('inspect','cancel'),milestone=3,receipt=False)
+PROJECT_FILES_M3 = frozenset(PROJECT_FILES_M3)
+_PROJECT_FILES_RECEIPT_IDS |= frozenset(name for name in PROJECT_FILES_M3
+    if next(op for op in _OPERATIONS if op['operation_id'] == name)['side_effects'] and name not in ('project_files.execution_reconcile_current','project_files.execution_study_reconcile_preparation','project_files.native_reconcile'))
+
+# M4 adds independent Save As and explicit inert working-file adoption without
+# changing the frozen lifecycle state/actions or earlier per-operation pins.
+_PROJECT_FILE_KIND={'enum':['script','note']}
+_PROJECT_FILE_VERSION_META={'revision':SAFE_POS,'sha256':SHA,'bytes':integer(0,1048576),
+    'adopted_at':text(80),'actor_id':ID}
+_PROJECT_FILE_DELETED_META={'revision':integer(2,9007199254740991),'deleted':const(True),'sha256':{'type':'null'},
+    'bytes':const(0),'adopted_at':text(80),'actor_id':ID}
+_PROJECT_FILE_RESULT=obj({'id':SHA,'project_id':ID,'kind':_PROJECT_FILE_KIND,'path':text(512),
+    'revision':SAFE_POS,'sha256':SHA,'bytes':integer(0,1048576),'adopted_at':text(80),'changed':{'type':'boolean'}})
+_PROJECT_FORK_RESULT=obj({'source_project_id':ID,'source_checkpoint':SHA,'project_id':ID,'checkpoint':SHA,
+    'root':text(160),'directory':text(512),'request_key':KEY,'reconciled':{'type':'boolean'},
+    'mapping_count':SAFE_NAT,'copied_count':SAFE_NAT,'missing_regenerable_count':SAFE_NAT})
+model_operation('project_files.save_as','POST','/api/workspace/project-files/save-as',
+    dict(_PROJECT_FILES_MUTATION,root=text(160),directory=text(512),name=text(200)),
+    output=obj({'state':PROJECT_FILES_STATE,'fork':_PROJECT_FORK_RESULT}),
+    scopes=('inspect','edit'),mutation=True,description='Create an independent idle project fork at an explicit configured local destination; retain inert origins and exact copy completeness.')
+_OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=PROJECT_FILES_RECEIPT
+PROJECT_FILES_M4.add('project_files.save_as');_OWNER_OPERATION_IDS.add('project_files.save_as');_MODEL_RECEIPT_IDS.add('project_files.save_as')
+_PROJECT_FILE_INSPECTION=obj({'id':SHA,'kind':_PROJECT_FILE_KIND,'path':text(512),'revision':SAFE_POS,
+    'expected_sha256':{'oneOf':[SHA,{'type':'null'}]},'expected_bytes':integer(0,1048576),
+    'observed_sha256':{'oneOf':[SHA,{'type':'null'}]},'observed_bytes':{'oneOf':[integer(0,1048576),{'type':'null'}]},
+    'state':{'enum':['unchanged','changed','missing','invalid','deleted']},
+    'reason':{'oneOf':[{'type':'null'},{'enum':['missing','unsafe_path','too_large','invalid_utf8','unreadable','unstable']}]}})
+_project_file_operation('files_inspect','GET','/files',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(_PROJECT_FILE_INSPECTION,40))),milestone=4)
+_project_file_operation('file_get','GET','/files/{file_id}',{'file_id':SHA,'revision':SAFE_POS},required=['file_id'],
+    output=obj({'id':SHA,'project_id':ID,'kind':_PROJECT_FILE_KIND,'path':text(512),
+        'version':{'oneOf':[obj(dict(_PROJECT_FILE_VERSION_META,text=text(1048576,empty=True))),
+            obj(dict(_PROJECT_FILE_DELETED_META,text={'type':'null'}))]}}),milestone=4)
+_project_file_operation('file_history','GET','/files/{file_id}/history',{'file_id':SHA,**_PROJECT_FILES_PAGE_INPUT},required=['file_id'],
+    output=obj(dict(_PROJECT_FILES_PAGE['properties'],id=SHA,items=array({'oneOf':[obj(_PROJECT_FILE_VERSION_META),obj(_PROJECT_FILE_DELETED_META)]},40))),milestone=4)
+_project_file_operation('file_adopt','POST','/files/adopt',{'kind':_PROJECT_FILE_KIND,'path':text(512),
+    'expected_revision':SAFE_NAT,'expected_sha256':SHA},output=_PROJECT_FILE_RESULT,mutation=True,milestone=4)
+_project_file_operation('file_adopt_deletion','POST','/files/adopt-deletion',{'path':text(512),
+    'expected_revision':SAFE_POS,'expected_sha256':SHA},output=obj(dict(_PROJECT_FILE_RESULT['properties'],
+    kind=const('note'),revision=integer(2,9007199254740991),deleted=const(True),sha256={'type':'null'},bytes=const(0),changed=const(True))),
+    mutation=True,milestone=4)
+_PROJECT_INTENT_FAMILY={'enum':['model_definition','pipeline_graph','recipe_definition']}
+_PROJECT_INTENT_FIELDS={'enum':['task','specification','source_selector','preprocessing_policy','output_policy',
+    'recipe_source','inputs','runtime','release','nodes','data','evaluation_profile','model','trainer']}
+_PROJECT_INTENT_RESELECT=dict(array(_PROJECT_INTENT_FIELDS,14),uniqueItems=True)
+_PROJECT_FORK_ORIGIN=obj({'project_id':ID,'checkpoint':SHA,'family':_PROJECT_INTENT_FAMILY,
+    'id':text(512),'revision':SAFE_POS,'created_at':text(80)})
+_PROJECT_INTENT_CURRENT=obj({'format':const('project_material_fork_intent_v1'),'catalog_id':ID,'id':ID,
+    'revision':const(1),'name':text(200),'definition_family':_PROJECT_INTENT_FAMILY,
+    'definition':JSON_OBJECT,'required_reselection':_PROJECT_INTENT_RESELECT})
+_project_file_operation('material_intents','GET','/material-intents',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(obj({'family':_PROJECT_INTENT_FAMILY,
+        'id':text(65),'catalog_id':ID,'definition_id':ID,'name':text(200),'revision':const(1),
+        'required_reselection':_PROJECT_INTENT_RESELECT,'fork_origin':_PROJECT_FORK_ORIGIN}),40))),milestone=4)
+_project_file_operation('material_intent','GET','/material-intents/{family}/{definition_id}',
+    {'family':_PROJECT_INTENT_FAMILY,'definition_id':ID},output=obj({'family':_PROJECT_INTENT_FAMILY,
+    'id':text(65),'current':_PROJECT_INTENT_CURRENT,'fork_origin':_PROJECT_FORK_ORIGIN}),milestone=4)
+_project_file_operation('material_intent_capabilities','GET','/material-intents/capabilities',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(obj({'family':_PROJECT_INTENT_FAMILY,
+        'id':text(65),'requires_reselection':_PROJECT_INTENT_RESELECT}),40))),milestone=4)
+_PROJECT_FORK_MAPPING=obj({'family':text(80),'source_id':text(512),'source_revision':{'oneOf':[SAFE_POS,{'type':'null'}]},'destination_id':text(512)})
+_project_file_operation('fork_info','GET','/fork',_PROJECT_FILES_PAGE_INPUT,required=[],output=obj({
+    'source':{'oneOf':[{'type':'null'},obj({'project_id':ID,'checkpoint':SHA})]},'project_id':ID,
+    'mapping':obj(dict(_PROJECT_FILES_PAGE['properties'],items=array(_PROJECT_FORK_MAPPING,40))),
+    'archived_count':SAFE_NAT,'copied_count':SAFE_NAT,'missing_regenerable_count':SAFE_NAT}),milestone=4)
+PROJECT_FILES_M4=frozenset(PROJECT_FILES_M4)
+_PROJECT_FILES_RECEIPT_IDS |= frozenset(name for name in PROJECT_FILES_M4 if next(op for op in _OPERATIONS if op['operation_id']==name)['side_effects'])
+
+# M5 is a separate current-owner controller, never a project-open authority.
+PROJECT_TRANSFER_OPERATIONS=frozenset('project_transfer.'+action for action in ('status','preview','report_page','stop','extract'))
+_PROJECT_TRANSFER_KEY={'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$'}
+_PROJECT_TRANSFER_ALIAS={'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$'}
+_PROJECT_TRANSFER_DIRECTORY={'type':'string','minLength':1,'maxLength':200,'pattern':r'^[^/\\\x00-\x1f]+$','not':{'enum':['.','..']}}
+_PROJECT_TRANSFER_ROOTS={
+    'records':ID,'responses':ID,'preferences':ID,'selections':ID,'searches':ID,'graphs':ID,
+    'recipe_drafts':ID,'model_definitions':ID,'studies':ID,'runs':ID,'releases':SHA,'exposures':ID,
+    'model_materials':SHA,'recipe_materials':SHA,'runtime_materials':SHA}
+_PROJECT_TRANSFER_FAMILIES=['workbench_record','workbench_response','workbench_preference','saved_selection','saved_search',
+    'pipeline_graph','recipe_definition','model_definition','study_history','run_history','dataset_release','dataset_exposure',
+    'model_material','recipe_material','runtime_material','trial_history','candidate_history','project_snapshot',
+    'generation_history','grounded_history','caption_proposal_history','text_proposal_history','project_artifact','project_file']
+_PROJECT_TRANSFER_SECTION={'enum':['included','required','unassigned','excluded','blockers','warnings','artifacts','working_files']}
+_PROJECT_TRANSFER_LOCATOR={'family':{'enum':_PROJECT_TRANSFER_FAMILIES},'id':text(128)}
+_PROJECT_TRANSFER_SELECTION=obj({'project_snapshot':obj({'id':ID,'manifest_sha256':SHA}),
+    'roots':obj({**{name:dict(array(schema,10000),uniqueItems=True) for name,schema in _PROJECT_TRANSFER_ROOTS.items()},
+        'producer_jobs':dict(array(obj({'kind':{'enum':['generation','grounded','caption','text_proposal']},'id':ID}),10000),uniqueItems=True),
+        'working_files':dict(array(obj({'kind':{'enum':['script','note']},'path':text(512)}),1000),uniqueItems=True)},required=[]),
+    'decisions':array(obj(dict(_PROJECT_TRANSFER_LOCATOR,include={'type':'boolean'},reason=text(1000))),10000)})
+_PROJECT_TRANSFER_SOURCE=obj({'catalog_id':ID,'schema_version':const(10),'catalog_signature':SHA,
+    'snapshot_sha256':SHA,'backup_receipt_sha256':{'oneOf':[SHA,{'type':'null'}]},'external_inventory_sha256':SHA})
+_PROJECT_TRANSFER_COUNTS=obj({name:SAFE_NAT for name in _PROJECT_TRANSFER_SECTION['enum']})
+_PROJECT_TRANSFER_REPORT=obj({'report_sha256':SHA,'selection_sha256':SHA,'source':_PROJECT_TRANSFER_SOURCE,
+    'can_extract':{'type':'boolean'},'counts':_PROJECT_TRANSFER_COUNTS})
+_PROJECT_TRANSFER_RECEIPT=obj({'format':const('project_transfer_receipt_v1'),'committed':const(True),
+    'project_id':ID,'checkpoint':SHA,'request_key':_PROJECT_TRANSFER_KEY,'input_sha256':SHA,'report_sha256':SHA,
+    'source':_PROJECT_TRANSFER_SOURCE,'artifacts':obj({'copied_count':SAFE_NAT,'missing_regenerable_count':SAFE_NAT}),
+    'verification':obj({'checkpoint':SHA,'active_data_records':SAFE_NAT}),'replayed':{'type':'boolean'}})
+_PROJECT_TRANSFER_PARTIAL=obj({'committed':const(True),'selected':const(False),'project_id':ID,'checkpoint':SHA,
+    'request_key':_PROJECT_TRANSFER_KEY,'directory':_PROJECT_TRANSFER_DIRECTORY})
+_PROJECT_TRANSFER_FAILURE=obj({'action':{'enum':['stop','extract']},'code':text(120),'detail':text(1000,empty=True),
+    'staging_directory':text(200)},required=['action','code','detail'])
+PROJECT_TRANSFER_STATE=obj({'format':const('project_transfer_state_v1'),'binding':ID,
+    'phase':{'enum':['source_live','source_stopped','source_fenced']},'source_catalog_id':ID,'control_catalog_id':ID,
+    'roots':dict(array(_PROJECT_TRANSFER_ALIAS,100),uniqueItems=True),
+    'available_actions':dict(array({'enum':['status','preview','report_page','stop','extract']},5,1),uniqueItems=True),
+    'report':{'oneOf':[{'type':'null'},_PROJECT_TRANSFER_REPORT]},
+    'backup':{'oneOf':[{'type':'null'},obj({'root':_PROJECT_TRANSFER_ALIAS,'directory':_PROJECT_TRANSFER_DIRECTORY,'receipt_sha256':SHA})]},
+    'destination':{'oneOf':[{'type':'null'},obj({'root':_PROJECT_TRANSFER_ALIAS,'directory':_PROJECT_TRANSFER_DIRECTORY})]},
+    'failure':{'oneOf':[{'type':'null'},_PROJECT_TRANSFER_FAILURE]},
+    'last_receipt':{'oneOf':[{'type':'null'},_PROJECT_TRANSFER_RECEIPT,_PROJECT_TRANSFER_PARTIAL]}})
+_PROJECT_TRANSFER_ITEMS={
+    'included':obj(dict(_PROJECT_TRANSFER_LOCATOR,revision={'oneOf':[SAFE_POS,{'type':'null'}]})),
+    'unassigned':obj(dict(_PROJECT_TRANSFER_LOCATOR,revision={'oneOf':[SAFE_POS,{'type':'null'}]})),
+    'required':obj(_PROJECT_TRANSFER_LOCATOR),'excluded':obj(_PROJECT_TRANSFER_LOCATOR),
+    'blockers':obj({'family':{'enum':_PROJECT_TRANSFER_FAMILIES+['source','closure']},'id':text(128),'code':text(120),'detail':text(1000,empty=True)}),
+    'warnings':obj({'family':{'enum':_PROJECT_TRANSFER_FAMILIES+['source','closure']},'id':text(128),'code':text(120),'detail':text(1000,empty=True)}),
+    'artifacts':obj({'sha256':SHA,'bytes':integer(0,2**63-1),'preservation':{'enum':['unique','regenerable']},'state':{'enum':['verified','missing','corrupt']}}),
+    'working_files':obj({'kind':{'enum':['script','note']},'path':text(512),'sha256':SHA,'bytes':integer(0,1048576)})}
+_PROJECT_TRANSFER_PAGE=obj({'format':const('project_transfer_report_page_v1'),'binding':ID,'report_sha256':SHA,
+    'section':_PROJECT_TRANSFER_SECTION,'items':array({'oneOf':list(_PROJECT_TRANSFER_ITEMS.values())},40),
+    'offset':integer(0,1000000),'limit':integer(1,40),'total':SAFE_NAT})
+# Some sections share item schemas; section-specific validation below selects one.
+_PROJECT_TRANSFER_PAGE['properties']['items']['items']={}
+_PROJECT_TRANSFER_PAGE['allOf']=[{'if':{'properties':{'section':const(section)}},'then':{'properties':{'items':array(schema,40)}}}
+    for section,schema in _PROJECT_TRANSFER_ITEMS.items()]
+_PROJECT_TRANSFER_RESULT=obj({'format':const('project_transfer_extraction_result_v1'),'binding':ID,
+    'receipt':_PROJECT_TRANSFER_RECEIPT,'selection':obj({'selected':{'type':'boolean'},
+        'state':{'oneOf':[{'type':'null'},PROJECT_FILES_STATE]},
+        'error':{'oneOf':[{'type':'null'},obj({'code':text(120),'detail':text(1000,empty=True)})]}})})
+for _action,_method,_suffix,_fields,_needed,_output,_mutation in (
+    ('status','GET','',{},[],PROJECT_TRANSFER_STATE,False),
+    ('preview','POST','/preview',{'binding':ID,'selection':_PROJECT_TRANSFER_SELECTION},None,PROJECT_TRANSFER_STATE,True),
+    ('report_page','GET','/report',{'binding':ID,'report_sha256':SHA,'section':_PROJECT_TRANSFER_SECTION,
+        'offset':integer(0,1000000),'limit':integer(1,40)},['binding','report_sha256','section'],_PROJECT_TRANSFER_PAGE,False),
+    ('stop','POST','/stop',{'binding':ID,'report_sha256':SHA,'backup_root':_PROJECT_TRANSFER_ALIAS,
+        'backup_directory':_PROJECT_TRANSFER_DIRECTORY,'destination_root':_PROJECT_TRANSFER_ALIAS,'directory':_PROJECT_TRANSFER_DIRECTORY},None,PROJECT_TRANSFER_STATE,True),
+    ('extract','POST','/extract',{'binding':ID,'report_sha256':SHA,'destination_root':_PROJECT_TRANSFER_ALIAS,
+        'directory':_PROJECT_TRANSFER_DIRECTORY,'name':text(200),'request_key':_PROJECT_TRANSFER_KEY},None,_PROJECT_TRANSFER_RESULT,True)):
+    _name='project_transfer.'+_action
+    model_operation(_name,_method,'/api/workspace/project-transfer'+_suffix,_fields,_needed,
+        output=_output,scopes=('inspect','admin'),mutation=_mutation,query=tuple(_fields) if _method=='GET' else (),
+        description='Explicit current-owner legacy extraction '+_action.replace('_',' ')+'. Source and control authority remain separate; no execution or credential transfer.')
+    _OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=_PROJECT_TRANSFER_PARTIAL
+    _OWNER_OPERATION_IDS.add(_name)
+_MODEL_RECEIPT_IDS.add('project_transfer.extract')
+
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# v1 remains the closed Run-only current custody view. v2 additionally exposes
+# bounded original local native phases; imported history never populates it.
+_native_health=copy.deepcopy(_CONTRACTS['project_files.execution_health'][1])
+_native_health_value=_native_health['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']
+_native_health_value['properties']['native_phases']=obj({'items':array(_PROJECT_NATIVE_PHASE,40),
+    'total':SAFE_NAT,'offset':SAFE_NAT,'limit':integer(1,40)})
+_native_health_value['required'].append('native_phases')
+_CONTRACTS['project_files.execution_health'][2]=_native_health
+
+# Fork-origin text requires an additive result contract; import-only v1 remains
+# exact. Both record and each historical revision retain the actual origin.
+_PROJECT_FILES_FORK_PROVENANCE=obj({'method':const('project_fork'),'rights':text(1000),
+    'origin':obj({'project_id':ID,'checkpoint':SHA,'family':{'enum':['workbench_text','workbench_record']},
+        'id':ID,'revision':SAFE_POS,'source_revision':SAFE_POS})})
+for _name in ('project_files.get','project_files.annotate'):
+    _fork_text=copy.deepcopy(_CONTRACTS[_name][1])
+    _fork_text['description']+=' Version 2 retains exact independent-fork provenance.'
+    _result=_fork_text['outputSchema']['oneOf'][0]['properties']['result']['properties']
+    for _record_schema in (_result['record'],_result['history']['items']):
+        for _variant in _record_schema['oneOf']:
+            _variant['properties']['provenance']={'oneOf':[copy.deepcopy(_PROJECT_FILES_PROVENANCE),copy.deepcopy(_PROJECT_FILES_FORK_PROVENANCE)]}
+    _CONTRACTS[_name][2]=_fork_text
+
 # Activity changes the closed output schema, so installed snapshot v1 contracts
 # retain their exact identity and wire projection.
 for _name in ('project_snapshots.get','project_snapshots.open'):
@@ -958,6 +1609,19 @@ _publication_status_output['properties']['continuation_request'] = {'oneOf': [{'
     obj({'actor_id': ID, 'request_key': KEY, 'request_sha256': SHA})]}
 _publication_status_output['required'].append('continuation_request')
 _CONTRACTS['runs.publication_status'][2] = _publication_status_request
+# Project mode is an additive consumer of the current fixed graph grammars.
+# Copy only inputs after the domain versions have been composed; installed
+# legacy graph contracts and all project binding/outcome fields retain owners.
+for _project_name, _domain_name in (
+        ('project_files.graph_create', 'graphs.create'),
+        ('project_files.graph_create_external', 'graphs.create_external'),
+        ('project_files.graph_save', 'graphs.save')):
+    _current_graph_input = copy.deepcopy(_CONTRACTS[_domain_name][max(_CONTRACTS[_domain_name])]['inputSchema'])
+    _current_graph_input['properties'].update(copy.deepcopy(_PROJECT_FILES_MUTATION))
+    _current_graph_input['required'] = list(dict.fromkeys(
+        _current_graph_input['required'] + list(_PROJECT_FILES_MUTATION)))
+    _CONTRACTS[_project_name][1]['inputSchema'] = _current_graph_input
+
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
@@ -1001,23 +1665,29 @@ def contract(name, version=1):
               'authority': 'owner' if name in _OWNER_OPERATION_IDS else 'agent', 'effects': 'mutation' if op['side_effects'] else 'read',
               'retry': retry, 'bounds': {'request_bytes': REQUEST_LIMIT, 'response_bytes': RESPONSE_LIMIT,
                                        'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT}}
+    if name in PROJECT_TRANSFER_OPERATIONS:public['bounds']['response_bytes']=REQUEST_LIMIT
     identity = dict(public, id=name, method=op['method'], path=op['path'], query=op['query'],
                     injected=op['injected'], binary_fields=op['binary_fields'], mcp_name=op['mcp_name'])
     public['sha256'] = hashlib.sha256(encoded(identity)).hexdigest()
     return public
 
 
-def capabilities(catalog_id):
+def capabilities(catalog_id, profile='catalog'):
     if type(catalog_id) is not str or not re.fullmatch('[a-f0-9]{32}', catalog_id):
         raise AgentAPIError('Invalid capability catalog identity.', 'registry_invalid', 503)
     if len(_CONTRACTS) > MAX_OPERATIONS:
         raise AgentAPIError('Operation registry exceeds its capability bound.', 'registry_invalid', 503)
+    if profile not in ('catalog','project'):
+        raise AgentAPIError('Unsupported capability profile.','registry_invalid',503)
     operations = []
     for name, versions in _CONTRACTS.items():
+        if (profile=='catalog' and name.startswith('project_files.')
+                or profile=='project' and not name.startswith(('project_files.','project_transfer.')) and name not in ('context.get','identity.get')):
+            continue
         if not 1 <= len(versions) <= MAX_CONTRACTS:
             raise AgentAPIError('Contract version count exceeds its bound.', 'registry_invalid', 503)
         operations.append({'id': name, 'contracts': [contract(name, version) for version in sorted(versions)],
-                           'availability': 'available'})
+                           'availability': 'unavailable' if name in PROJECT_TRANSFER_OPERATIONS else 'available'})
     value = {'format': 'agent_capabilities_v1', 'envelope_version': 1, 'catalog_id': catalog_id,
              'operations': operations, 'limits': {'request_bytes': REQUEST_LIMIT,
                   'response_bytes': RESPONSE_LIMIT, 'max_operations': MAX_OPERATIONS}}
@@ -1155,7 +1825,7 @@ def validate_selected(selection, method, target, body):
     arguments.update({key: unquote(value) for key, value in zip(fields, match.groups())})
     properties = op['inputSchema'].get('properties', {})
     for key, value in pairs:
-        if properties.get(key, {}).get('type') in ('integer', 'number'):
+        if properties.get(key, {}).get('type') in ('integer', 'number', 'boolean'):
             try:
                 value = decode(value)
             except AgentAPIError:
@@ -1189,11 +1859,38 @@ def operation(name, version=None):
     return copy.deepcopy(versions[max(versions) if version is None else version])
 
 
-def _finite(value, depth=0):
+def _native_validation_result_ok(value, revision):
+    """Check the finite public truth fields without interpreting native runtime data.
+
+    The native owner validates its scientific release/runtime observation. This
+    transport check prevents contradictory success and coercion into an ACK.
+    """
+    fields={'status','valid','errors','validation_token','graph_revision','execution_sha256','release','runtime'}
+    def sha(raw):
+        return type(raw) is str and re.fullmatch('[a-f0-9]{64}',raw) is not None
+    if (type(value) is not dict or not fields.issubset(value) or set(value)-fields-{'selection_policy'}
+            or type(value['graph_revision']) is not int or value['graph_revision']!=revision
+            or type(value['valid']) is not bool or type(value['status']) is not str
+            or not value['status'].strip() or len(value['status'])>120
+            or not sha(value['execution_sha256']) or type(value['errors']) is not list or len(value['errors'])>100
+            or any(type(value[field]) is not dict and value[field] is not None for field in ('release','runtime'))):
+        return False
+    errors=value['errors']
+    if any(type(error) is not dict or set(error)!={'path','message','code'}
+            or any(type(part) is not str or len(part)>2000 for part in error.values()) for error in errors):
+        return False
+    if value['valid']:
+        return (value['status']=='valid' and not errors and sha(value['validation_token'])
+                and value['release'] is not None and value['runtime'] is not None
+                and value['runtime'].get('available') is True)
+    return bool(errors) and value['status']==errors[0]['code'] and value['validation_token'] is None
+
+
+def _finite(value, depth=0, *, nul_path=None, _path=()):
     if depth > DEPTH_LIMIT:
         raise AgentAPIError('JSON nesting exceeds the transport bound.')
     if isinstance(value, str):
-        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in value) or '\x00' in value:
+        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in value) or ('\x00' in value and _path != nul_path):
             raise AgentAPIError('Text contains an invalid code point.')
     elif isinstance(value, float) and not math.isfinite(value):
         raise AgentAPIError('JSON numbers must be finite.')
@@ -1201,15 +1898,16 @@ def _finite(value, depth=0):
         for key, child in value.items():
             if type(key) is not str:
                 raise AgentAPIError('JSON object keys must be strings.')
-            _finite(key, depth+1); _finite(child, depth+1)
+            _finite(key, depth+1)
+            _finite(child, depth+1, nul_path=nul_path, _path=_path+(key,))
     elif isinstance(value, list):
-        for child in value:
-            _finite(child, depth+1)
+        for index, child in enumerate(value):
+            _finite(child, depth+1, nul_path=nul_path, _path=_path+(index,))
     elif value is not None and type(value) not in (bool, int, float):
         raise AgentAPIError('Unsupported JSON value.')
 
 
-def decode(raw):
+def decode(raw, *, nul_path=None):
     def pairs(items):
         result = {}
         for key, value in items:
@@ -1219,13 +1917,48 @@ def decode(raw):
         return result
     try:
         value = json.loads(raw, object_pairs_hook=pairs, parse_constant=lambda _value: (_ for _ in ()).throw(ValueError()))
-        _finite(value)
+        _finite(value, nul_path=nul_path)
         return value
     except (ValueError, UnicodeError, RecursionError):
         raise AgentAPIError('Invalid bounded JSON.') from None
 
 
+# Compiled validators contain only schema data, never requests or credentials.
+# Bound both the exact source bytes retained and entry count; cache keys also
+# isolate validators from later mutation of a caller's schema dictionary.
+_SCHEMA_CACHE_LIMIT_BYTES = 8 * 1024 * 1024
+_SCHEMA_CACHE_LIMIT_ENTRIES = 1024
+_SCHEMA_CACHE = OrderedDict()
+_SCHEMA_CACHE_BYTES = 0
+_SCHEMA_CACHE_LOCK = threading.Lock()
+
+
 def _validator(schema):
+    global _SCHEMA_CACHE_BYTES
+    raw = encoded(schema)
+    with _SCHEMA_CACHE_LOCK:
+        validator = _SCHEMA_CACHE.get(raw)
+        if validator is not None:
+            _SCHEMA_CACHE.move_to_end(raw)
+            return validator
+    validator = _compile_validator(json.loads(raw))
+    if len(raw) > _SCHEMA_CACHE_LIMIT_BYTES:
+        return validator
+    with _SCHEMA_CACHE_LOCK:
+        existing = _SCHEMA_CACHE.get(raw)
+        if existing is not None:
+            _SCHEMA_CACHE.move_to_end(raw)
+            return existing
+        while _SCHEMA_CACHE and (_SCHEMA_CACHE_BYTES + len(raw) > _SCHEMA_CACHE_LIMIT_BYTES
+                                 or len(_SCHEMA_CACHE) >= _SCHEMA_CACHE_LIMIT_ENTRIES):
+            previous, _ = _SCHEMA_CACHE.popitem(last=False)
+            _SCHEMA_CACHE_BYTES -= len(previous)
+        _SCHEMA_CACHE[raw] = validator
+        _SCHEMA_CACHE_BYTES += len(raw)
+    return validator
+
+
+def _compile_validator(schema):
     try:
         from jsonschema import Draft202012Validator
         from jsonschema.exceptions import SchemaError
@@ -1262,10 +1995,55 @@ def validate_registry(*, checkpoint=None):
 
 
 def validate_output(name, envelope, version=None):
-    _finite(envelope)
     op = operation(name, version)
+    # A captured UTF-8 file is an exact inert byte witness, including NUL. This
+    # exception never admits NUL in input, metadata, error or other operation.
+    nul_path = ('result','value','version','text') if (op['operation_id']=='project_files.file_get'
+        and type(envelope) is dict and type(envelope.get('status')) is int and envelope['status']<400) else None
+    _finite(envelope, nul_path=nul_path)
     if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if op['operation_id'] in PROJECT_TRANSFER_OPERATIONS and envelope['status']<400:
+        value=envelope['result']
+        if op['operation_id'] in ('project_transfer.status','project_transfer.preview','project_transfer.stop'):
+            phase,report=value['phase'],value['report']
+            actions=['status']
+            if phase in ('source_live','source_stopped'):actions+=['preview','report_page']
+            if phase=='source_live' and report is not None:actions.append('stop')
+            if phase=='source_stopped' and report is not None:actions.append('extract')
+            if (value['source_catalog_id']==value['control_catalog_id'] or value['roots']!=sorted(set(value['roots']))
+                    or value['available_actions']!=actions
+                    or phase=='source_stopped' and (value['backup'] is None or value['destination'] is None)
+                    or phase=='source_fenced' and report is not None
+                    or report is not None and (report['source']['catalog_id']!=value['source_catalog_id']
+                        or report['can_extract']!=(report['counts']['blockers']==0)
+                        or phase=='source_live' and report['can_extract']
+                        or phase=='source_stopped' and report['source']['backup_receipt_sha256']!=value['backup']['receipt_sha256'])):
+                raise AgentAPIError('Extraction state differs from its source, phase or stopped backup.','transport',502)
+        if op['operation_id']=='project_transfer.extract':
+            receipt,selection=value['receipt'],value['selection']
+            if (receipt['project_id']==receipt['source']['catalog_id'] or receipt['verification']['checkpoint']!=receipt['checkpoint']
+                    or selection['selected'] and (selection['error'] is not None or selection['state'] is None
+                        or selection['state']['state']!='open' or selection['state']['project']['project_id']!=receipt['project_id']
+                        or selection['state']['project']['checkpoint']!=receipt['checkpoint'])
+                    or not selection['selected'] and selection['error'] is None):
+                raise AgentAPIError('Extraction receipt differs from its independent project or selected state.','transport',502)
+    if op['operation_id'].startswith('project_files.') and envelope['status'] < 400:
+        value = envelope['result']
+        if 'record' in value:
+            record, history = value['record'], value['history']
+            revisions = [item['revision'] for item in history]
+            cursor = value['next_history_before_revision']
+            if (any(item['id'] != record['id'] or item['revision'] > record['revision'] for item in history)
+                    or revisions != sorted(set(revisions), reverse=True)
+                    or cursor is not None and (not history or cursor != history[-1]['revision'])):
+                raise AgentAPIError('Project annotation history differs from its record.', 'transport', 502)
+        if 'items' in value:
+            identities = [item['id'] for item in value['items']]
+            cursor = value['next_after_id']
+            if (identities != sorted(set(identities))
+                    or cursor is not None and (not identities or cursor != identities[-1])):
+                raise AgentAPIError('Project record page identity or continuation differs.', 'transport', 502)
     if op['operation_id'] == 'runs.artifact_segments' and envelope['status'] < 400:
         validate_artifact_segments(envelope['result'])
     if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and envelope['status'] < 400:
@@ -1411,7 +2189,7 @@ def validate_output(name, envelope, version=None):
 def validate_arguments(name, arguments, version=None):
     op = operation(name, version)
     _finite(arguments)
-    if len(encoded(arguments)) > REQUEST_LIMIT:
+    if len(encoded(arguments, ensure_ascii=not op['operation_id'].startswith('project_files.'))) > REQUEST_LIMIT:
         raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
     if (op['operation_id'] == 'data.import_sequence' and type(arguments) is dict
             and type(arguments.get('files')) is dict
@@ -1449,7 +2227,8 @@ def project_request(name, arguments, version=None):
     path = op['path']
     for key in segments:
         path = path.replace('{'+key+'}', quote(arguments[key], safe=''))
-    query = {key: arguments[key] for key in op['query'] if key in arguments}
+    query = {key: ('true' if arguments[key] else 'false') if type(arguments[key]) is bool else arguments[key]
+             for key in op['query'] if key in arguments}
     if query:
         path += '?' + urlencode(query)
     body = {key: value for key, value in arguments.items() if key not in segments and key not in op['query']}
@@ -1581,7 +2360,7 @@ class AgentClient:
         timer.daemon = True
         timer.start()
         try:
-            raw = encoded(body) if body is not None else None
+            raw = encoded(body, ensure_ascii=not (selection is not None and selection[0].startswith('project_files.'))) if body is not None else None
             if raw is not None and len(raw) > REQUEST_LIMIT:
                 raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
             headers = {'Authorization': 'Bearer '+self._token, 'Accept': 'application/json', 'Accept-Encoding': 'identity', 'Connection': 'close'}
@@ -1611,7 +2390,8 @@ class AgentClient:
                     or response.getheader('Content-Type', '').split(';')[0].strip() != 'application/json'):
                 raise AgentAPIError('HTTP response framing or content type is unsupported.', 'transport', 502)
             length = int(lengths[0])
-            if length > (CAPABILITIES_LIMIT if path == '/api/agent/capabilities' else RESPONSE_LIMIT):
+            receive_limit=CAPABILITIES_LIMIT if path=='/api/agent/capabilities' or selection is not None and selection[0] in PROJECT_TRANSFER_OPERATIONS else RESPONSE_LIMIT
+            if length > receive_limit:
                 raise AgentAPIError('HTTP response exceeds the agent receive bound.', 'response_too_large', 413)
             data = bytearray()
             while len(data) < length:
@@ -1627,7 +2407,9 @@ class AgentClient:
                 data.extend(chunk)
             if time.monotonic() > deadline:
                 raise TimeoutError()
-            value = decode(data)
+            nul_path = ('value','version','text') if (selection is not None
+                and selection[0]=='project_files.file_get' and response.status<400) else None
+            value = decode(data, nul_path=nul_path)
             self._check_read_budget()
             if response.status >= 400:
                 if not isinstance(value, dict) or not isinstance(value.get('error'), str):
@@ -1640,7 +2422,20 @@ class AgentClient:
                 report = value['preflight_report'] if has_report else None
                 if has_report and self._token in json.dumps(report, ensure_ascii=False):
                     raise AgentAPIError('Preflight report contains credential material.', 'transport', 502)
+                receipt = None
+                if selection is not None and selection[0].startswith('project_files.') and 'receipt' in value:
+                    receipt = value['receipt']
+                    if (next(_validator(PROJECT_FILES_RECEIPT).iter_errors(receipt), None) is not None
+                            or self._token in json.dumps(receipt, ensure_ascii=False)):
+                        raise AgentAPIError('Malformed project outcome receipt.', 'transport', 502)
+                if selection is not None and selection[0] in PROJECT_TRANSFER_OPERATIONS and 'receipt' in value:
+                    receipt=value['receipt']
+                    if (next(_validator(_PROJECT_TRANSFER_PARTIAL).iter_errors(receipt),None) is not None
+                            or self._token in json.dumps(receipt,ensure_ascii=False)):
+                        raise AgentAPIError('Malformed extraction outcome receipt.','transport',502)
                 value = {'code': code, 'error': value['error'].replace(self._token, '[redacted]')[:1000]}
+                if receipt is not None:
+                    value['receipt'] = copy.deepcopy(receipt)
                 if has_report:
                     value['preflight_report'] = report
             return {'status': response.status, 'result': value}
@@ -1746,6 +2541,234 @@ class AgentClient:
         envelope = self._request(method, path, body, selection=selection)
         result = validate_output(name, envelope, version)
         self._check_read_budget()
+        if op['operation_id'] in PROJECT_TRANSFER_OPERATIONS:
+            value=result['result'];action=op['operation_id'].split('.')[1]
+            if result['status']>=400:
+                if value.get('receipt') is not None and value['receipt']['request_key']!=arguments.get('request_key'):
+                    raise AgentAPIError('Extraction outcome belongs to a different request.','transport',502)
+            elif action in ('status','preview','stop'):
+                if action=='stop':
+                    if (value['source_catalog_id']!=self.catalog_id or value['phase']!='source_stopped'
+                            or value['binding']==arguments['binding'] or value['report'] is not None
+                            or value['backup']['root']!=arguments['backup_root'] or value['backup']['directory']!=arguments['backup_directory']
+                            or value['destination']!={'root':arguments['destination_root'],'directory':arguments['directory']}):
+                        raise AgentAPIError('Stopped-source result differs from the explicit backup or destination.','transport',502)
+                else:
+                    current=value['source_catalog_id'] if value['phase']=='source_live' else value['control_catalog_id']
+                    if current!=self.catalog_id or action=='preview' and (value['binding']!=arguments['binding'] or value['report'] is None):
+                        raise AgentAPIError('Extraction state belongs to another current host or process binding.','transport',502)
+            elif action=='report_page':
+                offset,limit=arguments.get('offset',0),arguments.get('limit',40)
+                if (any(value[field]!=arguments[field] for field in ('binding','report_sha256','section'))
+                        or value['offset']!=offset or value['limit']!=limit
+                        or len(value['items'])!=min(limit,max(0,value['total']-offset))):
+                    raise AgentAPIError('Extraction report page differs from its reviewed report or continuation.','transport',502)
+            elif (value['binding']!=arguments['binding'] or value['receipt']['request_key']!=arguments['request_key']
+                    or value['receipt']['report_sha256']!=arguments['report_sha256']):
+                raise AgentAPIError('Extraction receipt belongs to another controller report or request.','transport',502)
+        if op['operation_id']=='project_files.save_as' and result['status']<400:
+            value=result['result'];fork=value['fork'];state=value['state']
+            if (state['state']!='open' or state['project']['project_id']!=fork['project_id']
+                    or state['project']['checkpoint']!=fork['checkpoint'] or state['project']['name']!=arguments['name'] or state['binding']==arguments['binding']
+                    or fork['project_id']==fork['source_project_id']
+                    or fork['source_checkpoint']!=arguments['expected_checkpoint']
+                    or any(fork[field]!=arguments[field] for field in ('root','directory','request_key'))):
+                raise AgentAPIError('Save As result differs from its source, destination or selected state.','transport',502)
+        elif op['operation_id'] in PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4:
+            value = result['result']
+            if result['status'] >= 400:
+                receipt = value.get('receipt')
+                if receipt is not None and receipt['request_key'] != arguments.get('request_key'):
+                    raise AgentAPIError('Project receipt belongs to a different request.', 'transport', 502)
+            else:
+                if value['binding'] != arguments['binding']:
+                    raise AgentAPIError('Project response belongs to a different session binding.', 'transport', 502)
+                if not op['side_effects'] and value['checkpoint'] != arguments['checkpoint']:
+                    raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
+                page = value['value']
+                action=op['operation_id'].removeprefix('project_files.')
+                if action in ('file_get','file_adopt','file_adopt_deletion'):
+                    kind,path=page['kind'],page['path']
+                    expected_id=hashlib.sha256((value['project_id']+'\0'+kind+'\0'+path).encode()).hexdigest()
+                    if page['id']!=expected_id or page['project_id']!=value['project_id']:
+                        raise AgentAPIError('Working file belongs to a different project or path.','transport',502)
+                    if action=='file_get':
+                        version=page['version'];deleted=version.get('deleted') is True
+                        raw=None if deleted else version['text'].encode('utf-8')
+                        if (deleted and kind!='note' or page['id']!=arguments['file_id'] or arguments.get('revision',version['revision'])!=version['revision']
+                                or not deleted and (len(raw)!=version['bytes'] or len(raw)>1048576 or hashlib.sha256(raw).hexdigest()!=version['sha256'])):
+                            raise AgentAPIError('Captured working file differs from its exact revision or bytes.','transport',502)
+                    elif action=='file_adopt_deletion':
+                        if (kind!='note' or path!=arguments['path'] or page['revision']!=arguments['expected_revision']+1):
+                            raise AgentAPIError('Note deletion differs from the reviewed path or revision.','transport',502)
+                    elif (kind!=arguments['kind'] or path!=arguments['path'] or page['sha256']!=arguments['expected_sha256']
+                            or page['revision']!=arguments['expected_revision']+int(page['changed'])):
+                        raise AgentAPIError('Working-file adoption differs from the reviewed current bytes.','transport',502)
+                if action=='file_history' and page['id']!=arguments['file_id']:
+                    raise AgentAPIError('Working-file history belongs to another file.','transport',502)
+                if action=='files_inspect':
+                    for item in page['items']:
+                        identity=hashlib.sha256((value['project_id']+'\0'+item['kind']+'\0'+item['path']).encode()).hexdigest()
+                        if (item['id']!=identity or item['state']=='unchanged' and (item['observed_sha256']!=item['expected_sha256']
+                                or item['observed_bytes']!=item['expected_bytes'] or item['reason'] is not None)
+                                or item['expected_sha256'] is None and (item['kind']!='note' or item['expected_bytes']!=0 or item['state'] in ('unchanged','missing'))
+                                or item['state']=='deleted' and (item['expected_sha256'] is not None or item['observed_sha256'] is not None or item['observed_bytes'] is not None or item['reason'] is not None)):
+                            raise AgentAPIError('Working-file observation differs from its selected identity or declared bytes.','transport',502)
+                if action=='material_intents':
+                    for item in page['items']:
+                        if (item['catalog_id']!=value['project_id'] or item['id']!=value['project_id']+'.'+item['definition_id']
+                                or item['fork_origin']['family']!=item['family']):
+                            raise AgentAPIError('Material intent summary belongs to another definition.','transport',502)
+                if action=='material_intent_capabilities' and any(not item['id'].startswith(value['project_id']+'.')
+                        or not re.fullmatch('[a-f0-9]{32}',item['id'][33:]) for item in page['items']):
+                    raise AgentAPIError('Material readiness belongs to another selected project.','transport',502)
+                if action=='material_intent' and (page['family']!=arguments['family'] or page['current']['id']!=arguments['definition_id']
+                        or page['current']['definition_family']!=arguments['family'] or page['fork_origin']['family']!=arguments['family']
+                        or page['current']['catalog_id']!=value['project_id'] or page['id']!=value['project_id']+'.'+arguments['definition_id']):
+                    raise AgentAPIError('Material intent belongs to a different definition.','transport',502)
+                if action=='fork_info':
+                    if page['project_id']!=value['project_id']:
+                        raise AgentAPIError('Fork mapping belongs to a different selected project.','transport',502)
+                    mapping=page['mapping'];offset=arguments.get('offset',0);limit=arguments.get('limit',40)
+                    if (mapping['offset']!=offset or mapping['limit']!=limit
+                            or len(mapping['items'])!=min(limit,max(0,mapping['total']-offset))):
+                        raise AgentAPIError('Fork mapping differs from its requested continuation.','transport',502)
+                if isinstance(page, dict) and {'items', 'offset', 'limit', 'total'} <= page.keys():
+                    requested = arguments.get('limit', 1 if op['operation_id'] in ('project_files.data_history', 'project_files.data_response_history', 'project_files.data_preference_history') else 40)
+                    if (page['offset'] != arguments.get('offset', 0) or page['limit'] != requested
+                            or len(page['items']) > requested or (len(page['items']) > 0 and page['total'] < page['offset'] + len(page['items']))
+                            or len(page['items']) != min(requested, max(0, page['total'] - page['offset']))):
+                        raise AgentAPIError('Project page differs from its requested continuation.', 'transport', 502)
+                if 'origin_catalog_id' in arguments and isinstance(page, dict) and 'origin_catalog_id' in page:
+                    if page['origin_catalog_id'] != arguments['origin_catalog_id']:
+                        raise AgentAPIError('Historical response belongs to a different origin.', 'transport', 502)
+                action = op['operation_id'].split('.')[1]
+                if action == 'execution_health':
+                    requested = arguments.get('limit', 40)
+                    if (page['offset'] != arguments.get('offset', 0) or page['limit'] != requested
+                            or page['active_run_ids'] != sorted(set(page['active_run_ids']))
+                            or len(page['active_run_ids']) != min(requested, max(0, page['active_count'] - page['offset']))):
+                        raise AgentAPIError('Current custody page differs from its requested continuation.', 'transport', 502)
+                    if version>=2:
+                        phases=page['native_phases'];identities=[item['phase_id'] for item in phases['items']]
+                        if (phases['offset']!=arguments.get('offset',0) or phases['limit']!=requested
+                                or len(phases['items'])!=min(requested,max(0,phases['total']-phases['offset']))
+                                or identities!=sorted(set(identities))
+                                or any(item['origin_catalog_id']!=value['project_id'] for item in phases['items'])):
+                            raise AgentAPIError('Current native phase page differs from its selected project or continuation.','transport',502)
+                if action in ('execution_study_prepare_package','execution_study_prepare_verifier','execution_study_reconcile_preparation'):
+                    if (page['trial']['study_id']!=arguments['study_id'] or page['trial']['material']['catalog_id']!=value['project_id']
+                            or page['model']['catalog_id']!=value['project_id']
+                            or action!='execution_study_reconcile_preparation' and (page['candidate_id']!=arguments['candidate_id']
+                                or page['runtime_snapshot_sha256']!=arguments['runtime_snapshot_sha256'])
+                            or action=='execution_study_prepare_verifier' and any(page[field]!=arguments[field] for field in ('package_run_id','package_sha256'))):
+                        raise AgentAPIError('Candidate preparation belongs to a different Study, Candidate or reviewed runtime.','transport',502)
+                if action=='execution_study_abandon_preparation' and (page['origin_catalog_id']!=value['project_id']
+                        or page['study_id']!=arguments['study_id'] or page['preparation_key']!=arguments['preparation_key']
+                        or page['reason']!=arguments['reason'] or page['candidate']['catalog_id']!=value['project_id']):
+                    raise AgentAPIError('Preparation abandonment differs from its current exact intent and reason.','transport',502)
+                if action=='runtime_inspect':
+                    inventory=page['files'];offset=arguments.get('offset',0);limit=arguments.get('limit',40)
+                    if (page['source']!=arguments['source'] or inventory['offset']!=offset or inventory['limit']!=limit
+                            or inventory['total']!=page['file_count']
+                            or len(inventory['items'])!=min(limit,max(0,inventory['total']-offset))
+                            or [item['path'] for item in inventory['items']]!=sorted(set(item['path'] for item in inventory['items']))
+                            or [item['name'] for item in page['packages']]!=sorted(set(item['name'] for item in page['packages']))):
+                        raise AgentAPIError('Runtime inventory differs from its configured source or continuation.','transport',502)
+                if action=='runtime_capture':
+                    ref=page['runtime_ref']
+                    if (page['project_id']!=value['project_id'] or page['manifest_sha256']!=arguments['expected_inventory_sha256']
+                            or page['request_key']!=arguments['request_key'] or ref['catalog_id']!=value['project_id'] or ref['id']!=ref['sha256']):
+                        raise AgentAPIError('Runtime capture differs from its exact reviewed inventory or request.','transport',502)
+                if action=='runtime_abandon' and (page['project_id']!=value['project_id']
+                        or page['capture_key']!=arguments['capture_key'] or page['reason']!=arguments['reason']):
+                    raise AgentAPIError('Runtime abandonment differs from its current exact capture and reason.','transport',502)
+                if action=='runtime_status':
+                    intent,complete=page['intent'],page['result']
+                    abandonment=page.get('abandonment')
+                    expected='abandoned' if abandonment is not None else 'captured' if complete is not None else 'intent_recorded' if intent is not None else 'absent'
+                    if (page['state']!=expected or complete is not None and intent is None
+                            or abandonment is not None and (intent is None or complete is not None
+                                or abandonment['project_id']!=value['project_id'] or abandonment['capture_key']!=arguments['capture_key']
+                                or abandonment['manifest_sha256']!=intent['manifest_sha256'])
+                            or any(item['project_id']!=value['project_id'] or item['request_key']!=arguments['capture_key']
+                                   for item in (intent,complete) if item is not None)
+                            or complete is not None and (any(intent[field]!=complete[field] for field in
+                                ('project_id','manifest_sha256','file_count','total_bytes','request_key'))
+                                or complete['runtime_ref']['catalog_id']!=value['project_id']
+                                or complete['runtime_ref']['id']!=complete['runtime_ref']['sha256'])):
+                        raise AgentAPIError('Runtime status differs from its retained capture request.','transport',502)
+                if action=='native_preflight' and not _native_validation_result_ok(page,arguments['revision']):
+                    raise AgentAPIError('Native validation differs from the saved graph revision or result.','transport',502)
+                if action=='native_reconcile' and (page['origin_catalog_id']!=value['project_id'] or page['phase_id']!=arguments['phase_id']):
+                    raise AgentAPIError('Native phase observation differs from the selected current phase.','transport',502)
+                if action in ('native_submit','native_retry') and (page['origin_catalog_id']!=value['project_id']
+                        or action=='native_retry' and page['run_id']==arguments['run_id']):
+                    raise AgentAPIError('Native admission differs from the selected project.','transport',502)
+                if action in ('execution_approve_external', 'execution_study_approve'):
+                    grant = page['grant']
+                    expected = arguments['expected_digest'] if action == 'execution_approve_external' else arguments['expected_material_sha256']
+                    if (grant['catalog_id'] != value['project_id'] or grant['material_sha256'] != expected
+                            or grant['consumer_actor_id'] != arguments['consumer_actor_id']
+                            or grant['revoked_at'] is not None or grant['expires_at'] <= grant['created_at']):
+                        raise AgentAPIError('Current local approval differs from its reviewed material or actor.', 'transport', 502)
+                if action in ('execution_submit_external', 'execution_cancel', 'execution_reconcile_current',
+                              'execution_study_admit', 'execution_study_stop') or action.startswith('execution_producer_') or action in ('execution_generation_resume', 'execution_grounded_review'):
+                    if 'origin_catalog_id' in page and page['origin_catalog_id'] != value['project_id']:
+                        raise AgentAPIError('Current execution acknowledgement belongs to another project.', 'transport', 502)
+                if action == 'execution_cancel' and page['run_id'] != arguments['run_id']:
+                    raise AgentAPIError('Cancellation acknowledgement belongs to another Run.', 'transport', 502)
+                if action == 'execution_study_continue' and page['id'] != arguments['study_id']:
+                    raise AgentAPIError('Study continuation belongs to another Study.', 'transport', 502)
+                if action in ('execution_study_admit', 'execution_study_stop') and page['study_id'] != arguments['study_id']:
+                    raise AgentAPIError('Study acknowledgement belongs to another Study.', 'transport', 502)
+                if action == 'execution_study_admit' and (page['trial_id'] != arguments['trial_id']
+                        or page['reservation']['trial_id'] != page['trial_id'] or page['reservation']['run_id'] != page['run_id']):
+                    raise AgentAPIError('Study admission differs from its selected Trial reservation.', 'transport', 502)
+                if action == 'execution_study_stop' and (page['receipt']['study_id'] != page['study_id']
+                        or len(page['receipt']['run_ids']) != len(set(page['receipt']['run_ids']))):
+                    raise AgentAPIError('Study epoch closure receipt is inconsistent.', 'transport', 502)
+                producer_actions = {'execution_producer_start': 'start', 'execution_generation_resume': 'resume',
+                    'execution_grounded_review': 'review', 'execution_producer_decide': 'decide', 'execution_producer_cancel': 'cancel'}
+                if action in producer_actions:
+                    family = arguments.get('family', 'generation_history' if action == 'execution_generation_resume' else 'grounded_history')
+                    if (page['family'] != family or page['action'] != producer_actions[action]
+                            or 'producer_id' in arguments and page['producer_id'] != arguments['producer_id']
+                            or action == 'execution_producer_start' and 'request_id' in arguments['document'] and page['producer_id'] != arguments['document']['request_id']):
+                        raise AgentAPIError('Producer acknowledgement differs from its exact current action.', 'transport', 502)
+                if op['operation_id'] == 'project_files.run_document_segment':
+                    try:
+                        segment = base64.b64decode(page['base64'], validate=True)
+                    except (ValueError, binascii.Error):
+                        raise AgentAPIError('Invalid retained Run document segment bytes.', 'transport', 502) from None
+                    end = arguments['offset'] + len(segment)
+                    if (page['origin_catalog_id'] != arguments['origin_catalog_id'] or page['run_id'] != arguments['run_id']
+                            or page['sha256'] != arguments['expected_sha256'] or page['offset'] != arguments['offset']
+                            or page['limit'] != arguments['limit'] or page['offset'] > page['bytes']
+                            or len(segment) != min(page['limit'], page['bytes'] - page['offset'])
+                            or page['next_offset'] != (end if end < page['bytes'] else None)):
+                        raise AgentAPIError('Retained Run document segment differs from its exact selection.', 'transport', 502)
+                target_key = {'data_get': 'record_id', 'model_get': 'model_id', 'graph_get': 'graph_id',
+                    'recipe_get': 'recipe_id', 'trial': 'trial_id'}.get(op['operation_id'].split('.')[1])
+                if target_key and page.get('id') != arguments[target_key]:
+                    raise AgentAPIError('Project response belongs to a different record.', 'transport', 502)
+        if op['operation_id'].startswith('project_files.') and result['status'] < 400:
+            value = result['result']; action = op['operation_id'].split('.')[1]
+            if action in ('query', 'get', 'import_text', 'annotate', 'save') and value['binding'] != arguments['binding']:
+                raise AgentAPIError('Project response belongs to a different session binding.', 'transport', 502)
+            if action in ('query', 'get') and value['checkpoint'] != arguments['checkpoint']:
+                raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
+            if action == 'query' and (len(value['items']) > arguments.get('limit', 40)
+                    or any(item['id'] <= arguments.get('after_id', '') for item in value['items'])):
+                raise AgentAPIError('Project record page differs from its requested continuation.', 'transport', 502)
+            if action in ('get', 'import_text', 'annotate'):
+                if (len(value['history']) > arguments.get('history_limit', 1)
+                        or 'before_revision' in arguments and any(item['revision'] >= arguments['before_revision'] for item in value['history'])):
+                    raise AgentAPIError('Project history page differs from its requested continuation.', 'transport', 502)
+            if action in ('get', 'annotate') and value['record']['id'] != arguments['record_id']:
+                raise AgentAPIError('Project response belongs to a different record.', 'transport', 502)
+            if action == 'save' and (value['state'] != 'open' or value['project']['checkpoint'] != arguments['expected_checkpoint']):
+                raise AgentAPIError('Project Save response differs from its selected checkpoint.', 'transport', 502)
         if op['operation_id'] in ('runs.coordinator_health', 'runs.recover_coordinator') and result['status'] < 400:
             value = result['result']; request = value['recovery_request']
             if value['catalog_id'] != self.catalog_id:
@@ -1854,6 +2877,61 @@ class AgentClient:
             report=result['result']['preflight_report']
             if report['recipe_material_ref'] != arguments['ref'] or report['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Preflight report does not match the requested material or catalog.', 'transport', 502)
+        return result
+
+
+class ProjectFilesOwnerClient(AgentClient):
+    """Explicit owner file-project access; no unrelated owner operations."""
+    OPERATIONS = frozenset('project_files.' + action for action in
+        ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate')) | PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4
+
+    def bootstrap(self):
+        result = self._bootstrap('owner')
+        self._selected = {name: version for name, version in self._selected.items() if name in self.OPERATIONS}
+        result['operations'] = sorted(self._selected)
+        return result
+
+    def call(self, name, arguments, **kwargs):
+        if name not in self.OPERATIONS:
+            raise AgentAPIError('Owner project client only supports explicit file-project operations.', 'operation_unsupported', 409)
+        return super().call(name, arguments, **kwargs)
+
+
+class ProjectTransferOwnerClient(AgentClient):
+    """Five current-owner extraction calls, with explicit authority handoff.
+
+    After a dispatched Stop, discard this client. Construct another instance
+    with the independently obtained current host credential and catalog ID.
+    """
+    OPERATIONS=PROJECT_TRANSFER_OPERATIONS
+
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self._handoff_required=False
+
+    def bootstrap(self):
+        if self._handoff_required:
+            raise AgentAPIError('Stop requires an independently authenticated current-host client.','authentication_handoff',409)
+        result=self._bootstrap('owner')
+        self._selected={name:version for name,version in self._selected.items() if name in self.OPERATIONS}
+        result['operations']=sorted(self._selected)
+        return result
+
+    def call(self,name,arguments,**kwargs):
+        if name not in self.OPERATIONS:
+            raise AgentAPIError('Transfer owner client only supports five explicit extraction operations.','operation_unsupported',409)
+        if self._handoff_required:
+            raise AgentAPIError('Discard the source client and authenticate the current host independently.','authentication_handoff',409)
+        try:
+            result=super().call(name,arguments,**kwargs)
+        except AgentAPIError as error:
+            if name=='project_transfer.stop' and (error.status>=500 or error.code in ('transport','unknown','outcome_unknown')):
+                self._handoff_required=True
+            raise
+        if name=='project_transfer.stop':
+            # Even a failed stop can rotate binding or close source authority.
+            # No response causes an automatic credential/catalog substitution.
+            self._handoff_required=True
         return result
 
 

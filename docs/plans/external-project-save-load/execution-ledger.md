@@ -1,0 +1,334 @@
+# Planning execution ledger
+
+## 2026-10-22 — Source verification and implementation proposal
+
+- Scope: documentation only under `docs/plans/external-project-save-load/`. No product implementation, application/catalog execution, local lab inspection, user-data migration, push, PR or merge.
+- Environment ready; original checkout clean at Tuldok `133d53c0e2985a6559ba9cebd7d4a9f530051f06`. Remote main read and fetch confirmed that exact baseline. Corrected a stale local tracking ref before authoring; isolated planning branch/worktree now has the verified base.
+- Read current Coding-Standards `5bce3110fc64d61ff8b4f79468184bd6295855d5`, applicable Core/Router/workflows/topics/profiles, and current plan template. No applicable AGENTS or checkout skills were present. No Standards Engine application MCP is available; direct guidance is not claimed as automated certification.
+- Verified registration/root identity, schema10 ownership, material/catalog hashing, Run proof/recovery dependencies, cross-Study lineage and whole-catalog backup limits. [Baseline report](reports/baseline-and-standards.md) pins sources and applied decisions.
+- Wrote one canonical implementation proposal with five production milestones and A1–A9/T1–T9 prospective claims/procedures. It preserves completed D1–D4 ownership, generic script integrations, inert Open, canonical text/SQL projection split and independently scoped history/fork identities.
+- Independent complete-plan review and documentation checks are recorded in [review](reports/independent-review.md) and [verification](reports/verification.md). Product acceptance stays pending; review/record additions do not imply runtime validation.
+- The independent reviewer requested three revisions: Close-gated/generation-bound project replacement; explicit adoption of current editable scripts/notes without rehashing immutable evidence; and concrete dispositions for Preferences, candidate preparation, runtime snapshots and extension closure. The author resolved them together, added their acceptance cases and finite write sets, and requested targeted re-review of the semantic changes. The original complete-review subject and final subject identities are retained in the review report. The structural check also required plain architecture-probe prefixes instead of bold prefixes; only markup changed for that repair.
+- Targeted re-review cleared those findings. A remaining nonblocking bootstrap detail was made explicit as authenticated `no_project_open` controller state, and the reviewer confirmed its closure against final plan SHA256 `d6d3832a494a44aebae15bed20748a6d5b90dfa98919d315a179abae02d60b4d`. Final independent review: clear, no unresolved findings. Documentation structure and links passed; exact scope and commands are in the verification record. No product acceptance claim changed status.
+
+## 2026-10-22 — Authorized M1 implementation and focused qualification
+
+- The user explicitly authorized implementation and GPT-6.1 Sol High workers,
+  including a dedicated feature branch/draft PR. The lead rechecked remote main
+  at `133d53c0e2985a6559ba9cebd7d4a9f530051f06` and standards main at
+  `5bce3110fc64d61ff8b4f79468184bd6295855d5`; both remain the reviewed baselines.
+  Implementation worktree `/workspace/Tuldok-project-save-load-impl`, branch
+  `feat/external-project-save-load-20261022`, starts from retained plan commit
+  `2c9c9b098c9f1c4c2557c58818574ebdbc1e7d41`. Original checkout and planning
+  branch remain untouched. No retired lead, unrelated qualification branch,
+  README PR or local surrogate lab was accessed.
+- Disjoint workers owned store, text domain, public adapters/UI, and real
+  environment/HTTP/browser tests; the lead owned workspace composition,
+  metadata/app integration and documentation. A separate reviewer inspected
+  actual code and standards. A follow-up workspace assignment transferred its
+  exclusive write ownership to the store worker to repair review findings.
+- M1 implements an opt-in external text mode with canonical checkpoint/record
+  publication, raw source and complete annotation history, fresh physical SQL
+  projections, New/Open/Save/Close, scoped draft editing and owner review. Legacy
+  domain routes and capabilities are fenced before effects. No non-text family,
+  execution, Save As or extraction is claimed implemented.
+- Qualified real PostgreSQL 17.11, Python 3.12.14, Node 24.19.0 and Chromium
+  151.0.7922.173 on Linux overlayfs using disposable synthetic fixtures. The cold
+  role/database is distinct and cannot CONNECT to the source database. Local
+  lock/fsync/rename observations do not claim destructive power-loss testing.
+- Store checks covered cold copy/move, strict malformed/future formats,
+  no-follow/hardlink/special-file rejection, separate-process writer exclusion,
+  exact retry, staged New/no-clobber publication, real process kills around the
+  checkpoint boundary, fsync failure/unknown outcome and inert script sentinels.
+  The existing 27-test selection and added ignore-file test passed on the
+  qualified filesystem; no unchanged full-suite repeat was required.
+- Text adapter's final 18-test real PostgreSQL run passed, including genuine
+  deferred SQL COMMIT rejection after canonical publication, projection rebuild,
+  original revision replay, exact committed receipt, ordinary agent draft/read
+  success, owner-only review refusal and current revocation serialization.
+  The affected legacy metadata transaction selection (15 tests) and three
+  Workbench regressions passed. These establish their named boundaries rather
+  than final feature acceptance.
+- Independent review requested explicit recoverable unknown outcomes, bounded
+  query/history delivery, original-revision replay history, created-but-unselected
+  New receipts, rejection of obsolete lifecycle replays, truthful legacy
+  capabilities and real-server SDK bootstrap. The coordinated fixes include
+  explicit current-project recovery and fsync barriers, summary/history pages,
+  exact typed transport receipts and host-only bootstrap context. Nine real-PG
+  workspace checks passed, then two targeted persistent-fsync checks passed
+  after the recovery barrier correction. Final shared review and changed-subject
+  HTTP/browser checks are the remaining M1 gate at this checkpoint.
+- Earlier real HTTP checks passed the four original methods across focused
+  corrections. The stable browser subject proved keyboard authoring, Git clone,
+  a fresh process/control catalog on the cold database, identical text/IDs/history,
+  unchanged no-op Save bytes and no script execution. Initial failed campaigns
+  exposed missing exact contract headers, incorrect static asset URLs, one
+  misplaced guard and test-only quoting/timing errors; each was corrected before
+  a scoped rerun. Those results are retained as dated evidence, not substituted
+  for the subsequently changed pagination/recovery subject.
+- Read-only M2 preparation enumerated all 43 schema tables and managed payload
+  owners. It found routine owner boundaries requiring shared retained-proof
+  validators and canonical artifact custody rather than a generic SQL exporter.
+  In particular, current Study Run readers require live grants, and current
+  artifact rollback callbacks may delete published files. No M2 implementation,
+  user migration or later-milestone acceptance is claimed by that inventory.
+- Final targeted source re-review cleared all M1 findings. Changed HTTP selected
+  four methods: three passed, and the real-adapter method initially failed its
+  20-second MCP initialization deadline. Diagnosis measured actual CPU-bound
+  startup and identified repeated registry validation in bootstrap and serve.
+  Removing only the redundant serve check was independently cleared; the
+  startup-order/failure test passed. Only that failed adapter method reran and
+  passed, with actual MCP initialization 10.955 seconds under the same deadline.
+  The revised browser subject passed historical-note pagination on a real cold
+  Git clone. Final client selection (16), affected Agent API selection (17), and
+  Node controller/syntax/diff checks passed. [M1 evidence](reports/m1-implementation.md)
+  and its concise QA receipt distinguish failed, repaired, reused and unrun scope.
+- The lead accepted M1's complete external text vertical and admitted M2 at the
+  owner boundaries identified by inspection. Finite data/material/history codecs,
+  intrinsic artifact declarations and one shared checkpoint transaction are
+  agreed. Additional source filenames retain those concrete concerns; extracting
+  image policy and retained evidence seams avoids a second interpreter. No
+  later milestone is claimed complete and no product branch is merge-ready.
+
+## 2026-10-22 — M2 integration candidate and remaining gates
+
+- Draft implementation [PR #119](https://github.com/MrScripty/Tuldok/pull/119)
+  was confirmed after the user's explicit retry approval. The lead first
+  checked that no PR existed, then retried the denied creation once. Its head
+  remains M1 `af276565fae9c08c1084d37d8937ba5d97599f17`; captured-CPU,
+  inert-extension and workspace-UI CI succeeded, while dataset lifecycle was
+  still running at the observation. No duplicate CI run or merge was started.
+- M2 fixed owners now compose data and histories, immutable material/runtime
+  declarations, Study/Trial/Run/lineage facts, producer history, exact artifacts,
+  explicit current source bindings, and 84 finite public operations. M1 routes
+  delegate to the complete data owner. PostgreSQL remains disposable; Open
+  constructs no Dataset, Jobs or live Runs owner and restores no credentials,
+  grants, admissions, or current external-root bindings.
+- Focused real PostgreSQL evidence includes Data 16 cases after acquisition
+  classification, material 32 cases plus targeted receipt/audit/probe guards,
+  history 17 targeted cases, producer 12 new cases and five affected owner
+  regressions, source lifecycle/import seven plus one bounded-read case,
+  complete projection three, rooted artifact supply one, and M1 workspace
+  cutover 11. Counts describe distinct scoped campaigns; their fixture limits
+  and targeted corrections are retained in scratch logs, not represented as
+  one full-feature acceptance run. Full M2 HTTP/browser acceptance is pending.
+- Independent source review collected three justified pre-enable findings:
+  built-in preparation could execute a probe; raw historical Run metadata
+  exposed protected frozen inputs; historical audit/operation/acquisition
+  variants admitted unclassified fields. Owners added a pre-probe gate, a
+  shared safe public projection plus current-disclosure-gated exact document
+  segments, and finite semantic classification. Targeted re-review is pending.
+  Exact producer provenance containing historically hash-bound inline request
+  values is preserved; no recursive stripping or invented original wire bytes
+  is used to make it appear portable.
+- Product source was frozen for real owner and interface gates at fingerprint
+  `27a3117411fd21f016a4305fdafde893deabb9165c623814deec628fc40a469a`
+  (226 product files, baseline `af276565`), recorded at
+  `/workspace/scratch/tuldok-save-load-qa/m2-product-freeze.json`. A prior broad
+  historical campaign ran while host source was changing and failed current
+  fingerprint checks; it is not acceptance evidence and was not repeated.
+  The frozen seven-case selection passed six; one test incorrectly assumed
+  a large historical document fit a single bounded segment. Only that test's
+  segment-assembly fixture is being corrected and rerun, with source unchanged.
+- Targeted final repairs and review cleared all justified findings. Final product
+  tested manifest file SHA256 is
+  `7a8969d58594b4dc6f9412c5a31c77b2a13f59b807ad013084bfc351cdfde8f4`,
+  with 226 source files. Required-real final gates passed: fresh external graph /
+  actual nonexecuting material preparation / Study+Trial / cold reconstruction
+  over HTTP (one selected/run, no skip), and focused cold-history Chromium at
+  390/1440. Earlier actual browser functional+cold gates passed while retaining
+  their responsive failure; the measured CSS repair has its own passing gate.
+  Three actual public HTTP cases including SDK/CLI/MCP and current authority
+  passed, as did the corrected composed-history case and new guards. Detailed
+  scoped results, failures, subject hashes and review are retained in
+  [M2 implementation evidence](reports/m2-implementation.md). M2 was accepted
+  only after these gates; this does not accept execution, Save As or extraction.
+  A staged whitespace check subsequently removed one redundant EOF newline in
+  `project_data.py`, with Python AST parity verified. Both tested and normalized
+  final source manifests are retained; the final file SHA256 is
+  `ef2dc94d76d73fc11a45bcb06cf32dc5399d84370ef2a94dfbf6db800cfa9937`.
+  Runtime evidence remains bound to its tested subject; no identical campaign
+  was repeated for this formatting-only delta.
+- CI now provisions the required isolated cold role/database and registers the
+  actual non-skipped MCP and Chromium gates. Independent workflow review is
+  clear. It has not yet run on the M2 commit; the PR synchronize event, rather
+  than the branch push filter alone, triggers it. Existing M1 full-suite CI
+  remains running without a failed step. Its last successful main baseline
+  needed about 53 minutes for the same full-suite step, so elapsed time alone
+  is not treated as a hang and no duplicate or cancellation was requested.
+- M3 execution/custody integration, M4 complete fork/relocation/Git workflow,
+  and M5 extraction remain unfinished. Pure fork storage/data constructors
+  have focused evidence but are not a completed public lifecycle. The local
+  surrogate lab remains uninspected and unmigrated. There is no environment
+  or missing-user-decision blocker.
+
+## 2026-10-22 — Unaccepted integration recovery checkpoint
+
+- A temporary executor disconnect was verified through failed process creation
+  and a pending patch read. Actual subsequent shell and repository status reads
+  succeeded; existing work was intact. Workers checked uncertain original test
+  processes before retrying. The native candidate recovery case had completed
+  successfully, so no duplicate was launched.
+- The lead is preserving the current disjoint M3–M5 product, tests and evidence
+  in a local WIP commit. This is recoverable integration work, not milestone
+  acceptance or a request to merge. The remote draft remains at accepted M2
+  `c22e9d02c87938514a7a1c9b3b0532158008ca0d` until a later intentional push.
+- [M3](reports/m3-implementation.md), [M4](reports/m4-implementation.md) and
+  [M5](reports/m5-implementation.md) evidence distinguish actual passes, failed
+  cases, controlled fixtures and unrun gates. [M2 CI diagnosis](reports/m2-ci-repair.md)
+  retains the terminal failure and targeted browser-fixture repair; no CI rerun
+  or duplicate full-suite campaign was started.
+- The original main/standards revisions remain unchanged. No user data or lab
+  was inspected or migrated, no Coding-Standards file changed, and nothing was
+  merged or deleted. Current phase/next action remain solely in the plan.
+
+## Retained resources
+
+### Local recovery qualification checkpoint
+
+After the executor reconnected, actual shell and repository reads confirmed the
+worktree and WIP commit `ee43d849640d4d15977285a4e691549c3a052a2c` survived.
+Main was rechecked remotely as `133d53c0e2985a6559ba9cebd7d4a9f530051f06` and
+Coding-Standards as `5bce3110fc64d61ff8b4f79468184bd6295855d5`; both are unchanged.
+The feature remote remains at M2 `c22e9d02c87938514a7a1c9b3b0532158008ca0d`.
+
+The following local checkpoint preserves the subsequently qualified external
+runtime recovery, immutable disclosure snapshots, exact native-candidate wrapper
+reconciliation, transitive extraction closure and real public/browser fixtures.
+Detailed performed/failed/unrun distinctions remain in M3–M5 reports. Independent
+review cleared those specific repairs and workflow isolation. No final frozen-head
+review or CI acceptance is inferred, and no duplicate full-suite campaign ran.
+
+Review also identified unfinished built-in material probes and native Runs as a
+real full-scope gap. Their early fences remain. The lead admitted a finite native
+completion slice under the existing authorization, with disjoint process,
+execution/custody, preparation and public adapter owners. The native foundation
+is excluded from this checkpoint until its own tests/review; there is no claim
+that a new flag makes the external-script subset satisfy the full plan. No lab
+was inspected, no user migration ran and no publication/merge was performed at
+this checkpoint.
+
+Planning worktree `/workspace/Tuldok-project-save-load-plan` and private branch `plan/external-project-save-load-20261022` are **retained-protected** for the user's review. The user owns integration/disposition; no synchronization or cleanup occurs without follow-up. The local final commit is the retained branch head (reported in the final response and resolvable with `git rev-parse plan/external-project-save-load-20261022`); its full SHA is not embedded into its own commit contents. Commit disposition is `retained`, reachable from this named local branch. The original checkout is outside this task's cleanup scope. `/workspace/Coding-Standards-readonly` remains an unchanged reference checkout, not an application worktree or deliverable.
+
+
+## 2026-10-22 — Complete native source and final integration qualification
+
+The integration lead retained `b252fb4a2a545a6968ee1eae981fc45a19ad43f0` before
+completing native subprocess/preparation/execution, note tombstones and original
+source extraction. Complete immutable-subject review found three medium issues;
+all have exact-source reviewed repairs and focused deciding evidence. Actual
+CPU science, independent fork/cold reconstruction and real public/browser
+controls are recorded in [native completion](reports/m3-native-completion.md)
+and [M4](reports/m4-implementation.md). Earlier ERROR/FAIL results remain distinct
+from corrected no-fit tails against the same measured Runs.
+
+The retained second Study Run completed after its test's arbitrary 180-second
+wait. Read-only proof verified both Runs and 79 artifacts; original-host final
+SQL counts were not reached. The finite fixture deadline now derives from the
+existing 990-second native budget plus 120 seconds of bounded catalog
+publication/observation. No repeated fit or full-suite campaign was run locally.
+CI preflight corrected explicit interpreter and QA-root portability and proved
+nonzero/no-skip selection without executing another campaign.
+
+Main and Coding-Standards were rechecked unchanged at
+`133d53c0e2985a6559ba9cebd7d4a9f530051f06` and
+`5bce3110fc64d61ff8b4f79468184bd6295855d5`. The reviewed plan commit
+`2c9c9b098c9f1c4c2557c58818574ebdbc1e7d41` and protected worktree remain intact.
+M2 CI's actual failed browser step and repaired fixture remain recorded; no final
+CI success is inferred. Local lab/user-data migration, Standards edits, unrelated
+branches, merge and branch cleanup remain outside this checkpoint's actions.
+
+## 2026-10-23 — Complete candidate CI and bounded fixture repair
+
+Published candidate `5704965d1a441946aacf3548e0b9f57dc4312d35` received one
+CI campaign. Lifecycle `39874125909` passed native domain 3/3, native public
+1/1 and note-deletion public 1/1 without skips, then failed full discovery
+(2,332 tests, six failures/two errors). Later browser checks were skipped.
+The other three workflows passed. Main and Standards remain at their recorded
+revisions; no merge or branch deletion occurred.
+
+Independent triage identified stale test fixtures/expectations. Disjoint owners
+repair only affected tests and their HTTP helper, with a read-only reviewer;
+failed attempts, exact subjects and targeted outcomes are retained in
+[CI diagnosis](reports/ci-5704965-repair.md). Production code and policies remain
+unchanged. No identical broad local campaign, repeated fit or same-head rerun
+is used to hide the failed result. Complete acceptance remains pending.
+
+The artifact ZIP's first local retrieval was denied by proxy HTTP 403 and
+stopped without retry; its manifest remains uninspected. A later attempt to
+update only PR 119's CI-status paragraph was separately rejected by automatic
+approval review applying the historical planning-only restriction. That write
+stopped and new approval was requested; it is not retried through another route.
+Read-only diagnosis and local fixture repair continued independently.
+
+All eight failed cases subsequently acquired targeted passing evidence. The
+HTTP-only corrected fixture passed after two retained fixture failures, with
+the timed-out attempt's actual Open outcome explicitly unobserved. Independent
+review cleared the exact eight-file repair subject and preserved all authority,
+legacy and crash assertions. One changed candidate is prepared for CI; no
+passing local full suite or final browser acceptance is claimed.
+
+## 2026-10-23 — Changed-candidate CI isolates the remaining Study wait
+
+Reviewed repair commit `591eb24de3ae9ccd219d0fc12bda6c34663a13d5` was pushed
+once. Its lifecycle `39884356869` ran 2,332 tests in 3,288.197 seconds with one
+failure, zero errors and 107 optional/intentional skips. All eight earlier
+failures cleared. Native 3/3, native public 1/1 and note-deletion public 1/1
+passed without skips; the other three workflows passed. Later browsers were
+skipped and remain unaccepted. [Study wait diagnosis](reports/ci-591eb24-study-wait.md)
+preserves the exact checkout/tree and last observed Run, whose final outcome
+and later accounting were not observed at the failing assertion.
+
+The remaining cold-Study case used a 30-second fixture wait below its existing
+97-second admission. Independent source review cleared a case-only finite
+217-second bound, including terminal publication/observation allowance. Only
+that failed real-PG case is selected locally; shared timeouts, production,
+historical charges and all final assertions stay intact. No broad local suite,
+native fit or same-head CI rerun is requested.
+
+The earlier narrow PR-status correction succeeded at 01:39 after the parent
+supplied newer explicit current-implementation authority. After the next
+terminal CI failure, a new attempt to correct that paragraph was again rejected
+by automatic approval review applying the historical planning-only restriction.
+That write stopped; approval for one bounded retry was requested. Local repair
+continues independently, with no alternate publication route or bypass.
+
+The exact cold-Study case then passed in 121.259 seconds: both generic Runs
+completed and all original settlement, spend, lineage, fresh authority and cold
+historical denial assertions passed. All 122 source/fixture hashes stayed
+unchanged. Independent released-source/evidence review is clear. The former CI
+Run's final outcome remains unobserved; this scoped pass is not final CI or
+browser acceptance. The next candidate changes one fixture and its plan/evidence
+records, with no product or workflow change.
+
+
+## 2026-10-23 — Full discovery and project browsers pass; handler fixtures repaired
+
+Candidate `3ac3351a741cf5e6ef4712e3577f3fc0d3a3f3e5` lifecycle
+`39893561852` passed full discovery: 2,332 cases, zero failures/errors,
+107 optional/intentional skips. Native domain 3/3, native public 1/1 and
+note-deletion public 1/1 passed without skips, as did all six project browsers
+and observation browser 72. The three other workflows passed. Step 152 then
+failed before classification HTTP readiness because the instrumented fixture
+handler omitted the production `transfer_controller` keyword. Later steps
+153–180 were skipped; complete acceptance remains pending.
+
+The sole other current handler replacement, the later Pumas fixture, had the
+same incompatibility in source; CI had not reached it. Both wrappers now mirror
+and forward the explicit keyword without changing instrumentation or assertions.
+Independent source review cleared both files before one complete actual Chromium
+run of each. Both passed once, with no application runtime exceptions and all
+912 recorded source/test hashes stable. These synthetic-HTTP checks required no
+native gateway/model fit. [Handler fixture evidence](reports/ci-3ac3351-handler-fixtures.md)
+retains exact checkout, counts, failure, hashes and skipped gates. No product,
+workflow, timeout or test-selection change was made; no same-head CI rerun or
+broad local campaign was used.
+
+The previously denied narrow PR-status paragraph correction was explicitly
+approved by the user at 04:33 UTC. After reading current PR/CI state, the lead
+retried that known-unexecuted write once at 04:35; it succeeded, and a separate
+read verified its body with all other text unchanged. The PR remained draft and
+unmerged. This approval did not waive acceptance gates. The original denied
+artifact retrieval remains stopped; newer uploaded manifests remain uninspected.
+Main and Coding-Standards were rechecked unchanged. No user lab or unrelated
+branch was accessed or changed.

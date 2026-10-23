@@ -10,6 +10,7 @@ Start with the [root README](../README.md) for installation and the Data → Pip
 - [Agent operations and MCP](contracts/agent-operations.md)
 - [Optional MCP observations and privacy](contracts/mcp-observer.md)
 - [Project manifests and read-only inspection](contracts/projects.md)
+- [External text project files and current milestone limits](contracts/project-files.md)
 - [Project command line](contracts/project-cli.md)
 
 ## Pipelines and execution

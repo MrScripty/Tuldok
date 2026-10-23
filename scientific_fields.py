@@ -280,7 +280,11 @@ def validate_source(method, source, raw):
     Run evidence establishes internal custody relationships. It does not prove
     historical database authority or reproduce the full approved material.
     """
-    digest = hashlib.sha256(raw).hexdigest()
+    return validate_source_declaration(method,source,hashlib.sha256(raw).hexdigest(),len(raw))
+
+
+def validate_source_declaration(method,source,digest,size):
+    """Retained custody declarations do not require or grant live authority."""
     if method == 'project_data_import':
         exact(source, ('project_id', 'manifest_sha256', 'reference_id', 'path', 'measured_sha256'), 'Project source')
         if type(source['project_id']) is not str or not re.fullmatch('[a-f0-9]{32}', source['project_id']):
@@ -293,7 +297,7 @@ def validate_source(method, source, raw):
     elif method == 'run_artifact_import':
         import recipe_process
         try:
-            recipe_process.validate_artifact_source(source, digest, len(raw))
+            recipe_process.validate_artifact_source(source, digest, size)
         except recipe_process.ProcessError as error:
             invalid(str(error), error.code, 409 if error.code == 'conflict' else 400)
     else:
@@ -301,6 +305,15 @@ def validate_source(method, source, raw):
     if source['measured_sha256'] != digest:
         invalid('Captured bytes differ from their source receipt.', 'conflict', 409)
     return dict(source)
+
+
+def validate_project_metadata(value):
+    exact(value,('schema_version','format','manifest','frame_count','field_count','source_bytes','first_observed_state_sha256','protected_groups','scope'),'Retained field metadata')
+    if type(value['schema_version']) is not int or value['schema_version']!=1 or value['format']!=FORMAT:invalid('Unsupported retained field metadata.','unsupported')
+    manifest_contract(value['manifest'])
+    if type(value['frame_count']) is not int or value['frame_count']!=len(value['manifest']['frames']) or type(value['field_count']) is not int or value['field_count']!=len(value['manifest']['fields']):invalid('Retained field counts differ.')
+    if type(value['source_bytes']) is not int or not 1<=value['source_bytes']<=BUNDLE_LIMIT or type(value['first_observed_state_sha256']) is not str or not HASH.fullmatch(value['first_observed_state_sha256']):invalid('Invalid retained field byte/state identity.')
+    if strings(value['protected_groups'],'Field groups')!=value['protected_groups'] or len(value['protected_groups'])!=3 or value['scope']!=SCOPE:invalid('Retained field group/scope differs.')
 
 
 class ScientificAssets:
@@ -352,6 +365,9 @@ class ScientificAssets:
     def _capture(self, record_id):
         if type(record_id) is not str or not re.fullmatch('[a-f0-9]{32}', record_id):
             invalid('Invalid scientific record identity.')
+        resolver = getattr(self.workbench.dataset, 'project_asset', None)
+        if resolver is not None and record_id in self.workbench.dataset.project_sources:
+            return resolver(record_id, 'field_sequence')
         try:
             path = self.path / record_id / 'source.zip'
             if path.is_symlink() or path.parent.is_symlink():

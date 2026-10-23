@@ -13,6 +13,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import threading
 import time
@@ -190,12 +191,15 @@ class CatalogLock:
 
 class Metadata:
     def __init__(self, path, dsn=None, *, create=True, dataset_id=None,
-                 schema_version=SCHEMA_VERSION, initial_file_modes=None):
+                 schema_version=SCHEMA_VERSION, initial_file_modes=None, projection_id=None):
         # Version selection belongs to offline transfer/upgrade tools. Runtime
         # callers omit it and require the current schema, never auto-upgrade.
         if schema_version is not None and (type(schema_version) is not int or
                                            schema_version not in SUPPORTED_SCHEMA_VERSIONS):
             raise StorageError('Unsupported PostgreSQL catalog version.')
+        if projection_id is not None and (type(projection_id) is not str or
+                not re.fullmatch('[a-f0-9]{32}', projection_id)):
+            raise StorageError('Invalid local project projection identity.')
         path = Path(path).resolve()
         if create:
             path.mkdir(parents=True, exist_ok=True)
@@ -229,10 +233,11 @@ class Metadata:
                     os.fsync(guard.fileno())
             fcntl.flock(guard, fcntl.LOCK_EX)
             self._initialize(path, dsn, create=create, dataset_id=dataset_id,
-                             schema_version=schema_version, initial_file_modes=initial_file_modes)
+                             schema_version=schema_version, initial_file_modes=initial_file_modes,
+                             projection_id=projection_id)
 
     def _initialize(self, path, dsn=None, *, create=True, dataset_id=None,
-                    schema_version=SCHEMA_VERSION, initial_file_modes=None):
+                    schema_version=SCHEMA_VERSION, initial_file_modes=None, projection_id=None):
         self.path = Path(path).resolve()
         self.schema_version = SCHEMA_VERSION if schema_version is None else schema_version
         self.dsn = connection_info(dsn)
@@ -240,6 +245,8 @@ class Metadata:
         pending = self.path / '.tuldok-initializing.json'
         self._rollback = []
         self._commit = []
+        self._project_before_commit = None
+        self._project_outcome = None
         self._runtime_claims = {}
         if initial_file_modes is not None and (os.path.lexists(manifest) or
                 ('.metadata-init.lock' in initial_file_modes and os.path.lexists(pending))):
@@ -248,7 +255,9 @@ class Metadata:
             try:
                 value = json.loads(manifest.read_text())
                 identity = value['dataset_id']
-                if value != {'version': 1, 'dataset_id': identity} or uuid.UUID(hex=identity).hex != identity:
+                expected = {'version': 1, 'dataset_id': identity} if projection_id is None else {
+                    'version': 2, 'dataset_id': identity, 'projection_id': projection_id}
+                if value != expected or uuid.UUID(hex=identity).hex != identity:
                     raise ValueError()
                 if dataset_id is not None and dataset_id != identity:
                     raise ValueError()
@@ -263,7 +272,11 @@ class Metadata:
                 try:
                     reservation = json.loads(pending.read_text())
                     identity = reservation['dataset_id']
-                    if reservation != {'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash(self.schema_version)}:
+                    expected = {'version': 1, 'dataset_id': identity,
+                                'definition_sha256': definition_hash(self.schema_version)}
+                    if projection_id is not None:
+                        expected.update(version=2, projection_id=projection_id)
+                    if reservation != expected:
                         raise ValueError()
                     if dataset_id is not None and identity != dataset_id:
                         raise ValueError()
@@ -274,7 +287,12 @@ class Metadata:
             if not isinstance(identity, str) or uuid.UUID(hex=identity).hex != identity:
                 raise StorageError('Invalid dataset identity.')
         self.dataset_id = identity
-        self.schema = 'catalog_' + identity
+        # Portable logical identity participates in domain hashes. A project
+        # checkout's disposable physical projection must never alias another
+        # checkout or machine merely because it has the same project UUID.
+        self.projection_id = projection_id
+        self.schema = ('catalog_' + identity if projection_id is None else
+                       'projection_' + projection_id)
         self._lock_key = _key(self.schema)
         try:
             self.connection = psycopg.connect(self.dsn, autocommit=True, row_factory=row_factory)
@@ -292,7 +310,11 @@ class Metadata:
                     raise StorageError('Destination catalog already exists; refuse adopting it without its dataset manifest.')
                 if not manifest.exists() and not pending.exists():
                     with pending.open('x') as handle:
-                        json.dump({'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash(self.schema_version)}, handle)
+                        reservation = {'version': 1, 'dataset_id': identity,
+                                       'definition_sha256': definition_hash(self.schema_version)}
+                        if projection_id is not None:
+                            reservation.update(version=2, projection_id=projection_id)
+                        json.dump(reservation, handle)
                         handle.flush()
                         os.fsync(handle.fileno())
                     _sync_directory(self.path)
@@ -328,9 +350,13 @@ class Metadata:
                            for table in self.tables):
                         raise StorageError('Interrupted catalog initialization contains unexpected application rows.')
                     if initial_file_modes is None:
-                        _publish_manifest(manifest, {'version': 1, 'dataset_id': identity})
+                        value = {'version': 1, 'dataset_id': identity} if projection_id is None else {
+                            'version': 2, 'dataset_id': identity, 'projection_id': projection_id}
+                        _publish_manifest(manifest, value)
                     else:
-                        _publish_manifest(manifest, {'version': 1, 'dataset_id': identity},
+                        value = {'version': 1, 'dataset_id': identity} if projection_id is None else {
+                            'version': 2, 'dataset_id': identity, 'projection_id': projection_id}
+                        _publish_manifest(manifest, value,
                                           initial_mode=initial_file_modes[MANIFEST])
                 if pending.exists():
                     pending.unlink()
@@ -395,40 +421,66 @@ class Metadata:
             self._rollback.append(callbacks)
             committed = []
             self._commit.append(committed)
+            outermost = len(self._rollback) == 1
             body_failed = False
             try:
-                with self.connection.transaction(force_rollback=force_rollback):
-                    try:
-                        yield self
-                    except BaseException:
-                        body_failed = True
-                        raise
+                try:
+                    with self.connection.transaction(force_rollback=force_rollback):
+                        try:
+                            yield self
+                            if outermost and not force_rollback and self._project_before_commit is not None:
+                                self._project_before_commit()
+                        except BaseException:
+                            body_failed = True
+                            raise
+                finally:
+                    # Outcome hooks and wakes observe the completed SQL scope.
+                    # In particular an on_commit wake must not re-enroll itself
+                    # into the callback list that is currently being drained.
+                    self._rollback.pop()
+                    self._commit.pop()
             except BaseException as error:
-                # A server-confirmed constraint/serialization failure at COMMIT
-                # rolls back. A lost COMMIT response does not prove rollback.
                 confirmed_failure = getattr(error, 'sqlstate', '') or ''
                 if body_failed or force_rollback or confirmed_failure[:2] in ('23', '40'):
+                    if outermost and self._project_outcome is not None:
+                        self._project_outcome('rolled_back')
                     for callback in reversed(callbacks):
                         callback()
                     raise
-                # psycopg3.3.6 marks its enum COMMITTED before sending COMMIT.
-                # Only normal scope completion proves acknowledged commit; the
-                # enum cannot authorize cleanup/publication or a worker wake.
+                # A lost COMMIT response never authorizes cleanup or a wake.
+                if outermost and self._project_outcome is not None:
+                    self._project_outcome('unknown')
                 raise CommitOutcomeUnknown(
                     'PostgreSQL commit acknowledgement was lost. Files were retained; reopen and inspect the saved result before retrying.') from error
             else:
                 if force_rollback:
+                    if outermost and self._project_outcome is not None:
+                        self._project_outcome('rolled_back')
                     for callback in reversed(callbacks):
                         callback()
-                elif len(self._rollback) > 1:
-                    self._rollback[-2].extend(callbacks)
-                    self._commit[-2].extend(committed)
+                elif not outermost:
+                    self._rollback[-1].extend(callbacks)
+                    self._commit[-1].extend(committed)
                 else:
+                    if self._project_outcome is not None:
+                        self._project_outcome('committed')
                     for callback in committed:
                         callback()
-            finally:
-                self._rollback.pop()
-                self._commit.pop()
+
+    def set_project_hooks(self, before_commit, outcome):
+        """Install one fixed project durability owner, before any worker starts.
+
+        Hooks belong to this physical projection, never to the process or an
+        imported catalog. They run only at the outer transaction boundary.
+        """
+        with self.lock:
+            if self.in_transaction:
+                raise RuntimeError('Project hooks cannot change during a transaction.')
+            if not callable(before_commit) or not callable(outcome):
+                raise TypeError('Project transaction hooks must be callable.')
+            if self._project_before_commit is not None:
+                raise RuntimeError('Project transaction hooks already have an owner.')
+            self._project_before_commit, self._project_outcome = before_commit, outcome
 
     @property
     def in_transaction(self):

@@ -12,8 +12,8 @@ import sys
 import signal
 import threading
 
-from agent_api import (AgentAPIError, AgentClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
-                       validate_arguments, verify_artifact, verify_publication_artifact)
+from agent_api import (AgentAPIError, AgentClient, ProjectFilesOwnerClient, ProjectTransferOwnerClient, PublicationOwnerClient, CoordinatorOwnerClient, REQUEST_LIMIT, decode,
+                       validate_arguments, verify_artifact, verify_publication_artifact, PROJECT_FILES_M2, PROJECT_FILES_M3, PROJECT_FILES_M4)
 from tuldok_client import WorkflowClient, download
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
@@ -43,7 +43,7 @@ def invoke(client, operation, arguments, *, observer=None, observation=None):
     if envelope['status'] >= 400:
         error = envelope['result']
         raise AgentAPIError(error['error'], error['code'], envelope['status'],
-                            preflight_report=error.get('preflight_report'))
+                            preflight_report=error.get('preflight_report'), receipt=error.get('receipt'))
     return envelope
 
 
@@ -51,8 +51,48 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument('--config', type=Path, required=True,
                         help='Private existing AgentClient endpoint/catalog/token-file configuration')
+    result.add_argument('--owner-project-files', action='store_true',
+                        help='Use an existing owner credential, restricted to file-* commands')
     add_interface_options(result)
     commands = result.add_subparsers(dest='command', required=True)
+    commands.add_parser('file-status', help='Inspect the active external file project and process binding')
+    for action in ('new', 'open', 'save', 'close', 'save-as'):
+        command = commands.add_parser('file-' + action, help='Explicit external project ' + action)
+        command.add_argument('--binding', required=True)
+        command.add_argument('--expected-checkpoint', required=True,
+                             help='Exact SHA256; use null only when no project is open for New/Open')
+        command.add_argument('--request-key', required=True)
+        if action in ('new', 'open', 'save-as'):
+            command.add_argument('--root', required=True)
+            command.add_argument('--directory', required=True)
+        if action in ('new','save-as'):
+            command.add_argument('--name', required=True)
+    for action in ('query', 'get', 'import-text', 'annotate'):
+        command = commands.add_parser('file-' + action, help='Checkpoint-bound project text ' + action)
+        command.add_argument('--arguments', type=Path, required=True,
+                             help='Exact project_files operation JSON arguments including binding/checkpoint')
+    for operation in sorted((PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4)-{'project_files.save_as'}):
+        action = operation.split('.')[1].replace('_', '-')
+        command = commands.add_parser('file-' + action, help='Checkpoint-bound project ' + action)
+        command.add_argument('--arguments', type=Path, required=True,
+                             help='Exact selected project operation arguments')
+    transfer=commands.add_parser('project-transfer',help='Explicit owner extraction; Stop requires new current-host credentials')
+    actions=transfer.add_subparsers(dest='transfer_action',required=True)
+    actions.add_parser('status',help='Inspect current source/control phase and controller binding')
+    for action in ('preview','report-page','stop','extract'):
+        command=actions.add_parser(action,help='Explicit extraction '+action)
+        command.add_argument('--binding',required=True)
+        if action=='preview':command.add_argument('--selection',type=Path,required=True,help='Closed native ownership selection JSON file; no credentials or cessation proof')
+        else:command.add_argument('--report-sha256',required=True)
+        if action=='report-page':
+            command.add_argument('--section',required=True,choices=('included','required','unassigned','excluded','blockers','warnings','artifacts','working_files'))
+            command.add_argument('--offset',type=int,default=0);command.add_argument('--limit',type=int,default=40)
+        if action=='stop':
+            command.add_argument('--backup-root',required=True);command.add_argument('--backup-directory',required=True)
+        if action in ('stop','extract'):
+            command.add_argument('--destination-root',required=True);command.add_argument('--directory',required=True)
+        if action=='extract':
+            command.add_argument('--name',required=True);command.add_argument('--request-key',required=True)
     opening = commands.add_parser('open', help='Register/inspect a project without executing its code')
     opening.add_argument('--root', required=True)
     opening.add_argument('--manifest', required=True)
@@ -251,8 +291,13 @@ def main(argv=None, *, observer=None):
     try:
         status, http_status = 200, None
         client_type = PublicationOwnerClient if args.command in ('recover-publication', 'cancel-publication') else AgentClient
+        if args.command=='project-transfer':client_type=ProjectTransferOwnerClient
         if args.command == 'recover-coordinator':
             client_type = CoordinatorOwnerClient
+        if args.owner_project_files:
+            if not args.command.startswith('file-'):
+                raise AgentAPIError('--owner-project-files is restricted to file-* commands.', 'configuration')
+            client_type = ProjectFilesOwnerClient
         client = client_type.from_config(args.config)
         if args.command in WORKFLOW_COMMANDS:
             result, success = workflow_command(client, args)
@@ -271,7 +316,30 @@ def main(argv=None, *, observer=None):
                 observe_stage(observer, observation, phase)
             result = download(client, run_id, args.name, args.expected_sha256, args.out, result_ref=ref)
         else:
-            if args.command == 'call':
+            if args.command=='project-transfer':
+                action=args.transfer_action.replace('-','_');operation='project_transfer.'+action;arguments={}
+                if action!='status':arguments['binding']=args.binding
+                if action=='preview':arguments['selection']=read_arguments(args.selection)
+                if action in ('report_page','stop','extract'):arguments['report_sha256']=args.report_sha256
+                if action=='report_page':arguments.update(section=args.section,offset=args.offset,limit=args.limit)
+                if action=='stop':arguments.update(backup_root=args.backup_root,backup_directory=args.backup_directory)
+                if action in ('stop','extract'):arguments.update(destination_root=args.destination_root,directory=args.directory)
+                if action=='extract':arguments.update(name=args.name,request_key=args.request_key)
+            elif args.command == 'file-status':
+                operation, arguments = 'project_files.status', {}
+            elif args.command.startswith('file-'):
+                action = args.command[5:].replace('-', '_')
+                operation = 'project_files.' + action
+                if action in ('new', 'open', 'save', 'close', 'save_as'):
+                    arguments = dict(binding=args.binding, request_key=args.request_key,
+                        expected_checkpoint=None if args.expected_checkpoint == 'null' else args.expected_checkpoint)
+                    if action in ('new', 'open', 'save_as'):
+                        arguments.update(root=args.root, directory=args.directory)
+                    if action in ('new','save_as'):
+                        arguments['name'] = args.name
+                else:
+                    arguments = read_arguments(args.arguments)
+            elif args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
             elif args.command == 'phase-timings':
                 operation, arguments = 'runs.phase_timings', {'run_id': args.run_id}
@@ -328,6 +396,8 @@ def main(argv=None, *, observer=None):
         result = {'code': error.code, 'error': str(error), 'status': error.status}
         if error.preflight_report is not None:
             result['preflight_report'] = error.preflight_report
+        if error.receipt is not None:
+            result['receipt'] = error.receipt
         _write_output(sys.stderr, result,
                       observer, observation, status=error.status, failed=True, observed_outcome=(
                           'transport-error' if error.code in ('transport', 'response_too_large') else

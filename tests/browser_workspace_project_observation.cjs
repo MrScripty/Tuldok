@@ -17,15 +17,25 @@ const html=`<!doctype html><title>Project observation regression</title><body>
 <dialog id="project-import-dialog"><button id="project-import-close"></button><form id="project-import-form"></form><button id="project-import-submit"></button></dialog>
 <dialog id="project-open-dialog"><button id="project-open-close"></button><button id="project-roots-refresh"></button><form id="project-open-form"></form><select id="project-root"></select><button id="project-open-submit"></button><p id="project-open-status"></p><input id="project-manifest"></dialog><button id="open-project"></button>
 <script>window.workspaceEscape=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');window.TuldokAuth={identity:()=>({kind:'owner',actor_id:'fixture-owner',credential_id:'fixture-session'}),fetch:(...args)=>fetch(...args)};</script>
-<script src="/workspace-service.js"></script><script src="/workspace-external.js"></script><script src="/workspace-project-activity.js"></script><script src="/workspace-projects.js"></script>
+<script src="/workspace-service.js"></script><script src="/workspace-external.js"></script><script src="/workspace-project-activity.js"></script>
+<script>
+// Record the acknowledgment after the real callback has updated references and fences.
+window.appliedProjectObservation={sequence:0,json:null};
+const projectActivity=window.WorkspaceProjectActivity;
+window.WorkspaceProjectActivity=options=>projectActivity({...options,onDetail(next){options.onDetail(next);window.appliedProjectObservation={sequence:window.appliedProjectObservation.sequence+1,json:JSON.stringify(next)};}});
+</script><script src="/workspace-projects.js"></script>
 <script>window.projectUI=WorkspaceProjects({select:document.getElementById('source'),roots:Object.fromEntries(['data','pipeline','runs'].map(name=>[name,document.getElementById(name)])),announce(){},switchSource(){},contextChanged(){},openCatalogRecord(){},openExternalGraph(){},openExternalRun(){}});window.showProject=view=>projectUI.show(document.getElementById('source').value,view);</script>`;
 let snapshotReads=0,recipeReads=0,ordinaryReads=0,holdRecipe=0,heldRecipe=null,holdEvidence=false,heldEvidence=null,mutations=0;
+let holdSnapshot=false,heldSnapshot=null,appliedObservations=0;
 function reply(response,value){response.setHeader('Content-Type','application/json');response.end(JSON.stringify(value));}
 const server=http.createServer((request,response)=>{
   if(request.method!=='GET'){mutations++;response.writeHead(405);response.end();return;}
   if(request.url==='/'){response.setHeader('Content-Type','text/html');response.end(html);return;}
   if(['/workspace-service.js','/workspace-external.js','/workspace-project-activity.js','/workspace-projects.js'].includes(request.url)){response.setHeader('Content-Type','text/javascript');response.end(fs.readFileSync(path.join(root,'static',request.url.slice(1))));return;}
-  if(request.url==='/api/workspace/project-snapshots/'+id){snapshotReads++;reply(response,observation);return;}
+  if(request.url==='/api/workspace/project-snapshots/'+id){
+    snapshotReads++;const json=JSON.stringify(observation),respond=()=>reply(response,JSON.parse(json));
+    if(holdSnapshot){holdSnapshot=false;heldSnapshot={json,respond};}else respond();return;
+  }
   if(request.url.startsWith('/api/workspace/projects/'+id+'/recipes/')){
     recipeHeaders.push(request.headers['tuldok-operation-contract']);
     if(recipeHeaders.at(-1)!==recipeContract){response.statusCode=409;reply(response,{error:'Expected current recipe inspection contract',code:'unsupported'});return;}
@@ -58,7 +68,17 @@ function check(name,value){checks.push({name,passed:value});if(!value)failures.p
   evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   async function activate(selector){await evaluate(`document.querySelector(${JSON.stringify(selector)}).focus()`);for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})});}
   const text=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)})?.textContent`);
-  async function observe(next){const before=snapshotReads;observation=next;await until(()=>snapshotReads>before,'Project did not poll');await pause(50);}
+  async function observe(next){
+    assert.equal(heldSnapshot,null);holdSnapshot=true;observation=next;const expected=JSON.stringify(next);
+    // Request arrival is deliberately separated from response application. Even
+    // unchanged observations must pass through another real onDetail callback.
+    await until(()=>heldSnapshot,'Project did not poll the requested observation');
+    assert.equal(heldSnapshot.json,expected,'Poll response identifies another observation');
+    const before=await evaluate('window.appliedProjectObservation.sequence');
+    const pending=heldSnapshot;heldSnapshot=null;pending.respond();
+    await until(()=>evaluate(`window.appliedProjectObservation.sequence>${before}&&window.appliedProjectObservation.json===${JSON.stringify(expected)}`),'Project did not apply the exact polled observation');
+    appliedObservations++;
+  }
   await send('Runtime.enable');await send('Page.navigate',{url:base});await until(()=>evaluate('typeof showProject==="function"'));
   await evaluate('showProject("runs")');await until(()=>evaluate('!!document.querySelector("[data-project-evidence]")'));
   await activate('[data-project-evidence]');await until(()=>text('#runs .project-evidence-output pre'));
@@ -115,6 +135,6 @@ function check(name,value){checks.push({name,passed:value});if(!value)failures.p
   await activate('#external-create-close');await evaluate('document.getElementById("source").value="catalog";showProject("pipeline")');
   check('Every current bound and ordinary recipe inspection uses the exact version 4 pin',recipeHeaders.length>2&&recipeHeaders.every(value=>value===recipeContract));
   assert.equal(mutations,0,'Observation regression must not submit any mutation');assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({scope:'Actual JavaScript/Chromium lifecycle and focus with synthetic observations; no catalog, execution or scientific qualification',browser:(await send('Browser.getVersion')).product,checks,mutations},null,2));
+  console.log(JSON.stringify({scope:'Actual JavaScript/Chromium lifecycle and focus with synthetic observations; no catalog, execution or scientific qualification',browser:(await send('Browser.getVersion')).product,snapshotReads,appliedObservations,checks,mutations},null,2));
   assert.deepEqual(failures,[],'Project observation regressions');
-})().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{heldRecipe?.();heldEvidence?.();ws?.close();browser?.kill('SIGTERM');await new Promise(resolve=>server.close(resolve));});
+})().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{heldSnapshot?.respond();heldRecipe?.();heldEvidence?.();ws?.close();browser?.kill('SIGTERM');await new Promise(resolve=>server.close(resolve));});

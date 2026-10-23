@@ -3,12 +3,33 @@ from access import authorized
 from contextlib import contextmanager, nullcontext
 import hashlib
 import json
+import math
 import os
 import uuid
 
 from workbench import WorkbenchError, encode, strings, text_value, timestamp
 
 MAX_SELECTED_ASSET_BYTES = 40 * 1024 * 1024
+
+
+def validate_project_metadata_fields(value, fields, maximum):
+    """Common transport checks; selected asset owners supply native semantics."""
+    if type(value) is not dict or set(value) != set(fields) | {'bundle_bytes'}:
+        raise WorkbenchError('Unexpected retained immutable metadata fields.')
+    if type(value['bundle_bytes']) is not int or not 0 < value['bundle_bytes'] <= maximum:
+        raise WorkbenchError('Invalid retained immutable byte count.')
+    if strings(value['protected_groups'],'Immutable groups') != value['protected_groups'] or len(value['protected_groups']) != 2:
+        raise WorkbenchError('Invalid retained immutable protected groups.')
+    text_value(value['scope'],'Immutable source scope',1000)
+
+
+def validate_project_bounds(value):
+    if type(value) is not dict or set(value) != {'min','max'}:
+        raise WorkbenchError('Invalid retained spatial bounds.')
+    if any(type(value[k]) is not list or len(value[k]) != 3 or any(type(n) not in (int,float) or not math.isfinite(n) for n in value[k]) for k in ('min','max')):
+        raise WorkbenchError('Spatial bounds require finite XYZ.')
+    if any(a>b for a,b in zip(value['min'],value['max'])):
+        raise WorkbenchError('Spatial bounds are reversed.')
 
 
 def check_selection(records):
@@ -115,11 +136,20 @@ class ImmutableAssets:
 
     @authorized('inspect', 'immutable_assets.metadata')
     def metadata(self, record_id):
+        source = getattr(self.workbench.dataset, 'project_sources', {}).get(record_id)
+        if source is not None and source['kind'] == self.kind:
+            return dict(source['metadata'])
         row = self.workbench.db.execute(f'SELECT metadata_json,bundle_bytes FROM {self.table} WHERE id=%s', (record_id,)).fetchone()
         return None if row is None else dict(json.loads(row[0]), bundle_bytes=row[1])
 
     @authorized('inspect', 'immutable_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
+        resolver = getattr(self.workbench.dataset, 'project_asset', None)
+        if resolver is not None and record['id'] in self.workbench.dataset.project_sources:
+            bundle = resolver(record['id'], self.kind)
+            if not 0 < len(bundle) <= self.maximum or hashlib.sha256(bundle).hexdigest() != record['content_hash']:
+                raise WorkbenchError('Project asset identity differs.', 'invalid', 409)
+            return bundle, 'application/zip'
         row = self.workbench.db.execute(f'SELECT bundle,bundle_bytes FROM {self.table} WHERE id=%s', (record['id'],)).fetchone()
         if row is None:
             raise WorkbenchError(f'{self.kind.title()} source unavailable.', 'unavailable', 404)

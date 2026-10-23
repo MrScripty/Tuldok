@@ -3,6 +3,7 @@ from access import authorized
 import base64
 import hashlib
 import io
+import re
 import struct
 import uuid
 import wave
@@ -92,6 +93,19 @@ def validate_annotation(value, record):
     return {'segments': result}
 
 
+def validate_project_metadata(value):
+    """The declared PCM frame contract, without requiring source availability."""
+    fields={'schema_version','encoding','sample_rate_hz','channels','frame_count','duration_seconds','source_bytes','pcm_sha256','protected_groups'}
+    if type(value) is not dict or set(value)!=fields:
+        invalid('unexpected retained audio metadata fields.')
+    if type(value['schema_version']) is not int or value['schema_version']!=1 or value['encoding']!='pcm_s16le':invalid('unsupported retained audio encoding.')
+    rate,channels,frames=value['sample_rate_hz'],value['channels'],value['frame_count']
+    if type(rate) is not int or not 8000<=rate<=96000 or type(channels) is not int or channels not in (1,2) or type(frames) is not int or not 1<=frames<=rate*MAX_DURATION_SECONDS:invalid('invalid retained PCM frame contract.')
+    if type(value['duration_seconds']) not in (int,float) or value['duration_seconds']!=frames/rate or type(value['source_bytes']) is not int or not 44<=value['source_bytes']<=MAX_WAV_BYTES:invalid('invalid retained PCM duration/byte count.')
+    if type(value['pcm_sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',value['pcm_sha256']):invalid('invalid retained PCM digest.')
+    if strings(value['protected_groups'],'Audio groups')!=value['protected_groups'] or len(value['protected_groups'])!=2:invalid('invalid retained audio groups.')
+
+
 class AudioAssets:
     def __init__(self, workbench):
         self.access = workbench.access
@@ -145,14 +159,19 @@ class AudioAssets:
         meta = provenance.get('audio')
         if not isinstance(meta, dict) or meta.get('schema_version') != 1:
             invalid('stored source metadata is unavailable.', 'unavailable', 409)
-        return dict(meta), (self.path / record_id / 'source.wav').is_file()
+        available = getattr(self.workbench.dataset, 'project_availability', None)
+        return dict(meta), available(record_id) if available else (self.path / record_id / 'source.wav').is_file()
 
     @authorized('inspect', 'audio_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         path = self.path / record['id'] / 'source.wav'
         try:
-            with path.open('rb') as source:
-                raw = source.read(MAX_WAV_BYTES + 1)
+            resolver = getattr(self.workbench.dataset, 'project_asset', None)
+            if resolver is not None and record['id'] in self.workbench.dataset.project_sources:
+                raw = resolver(record['id'], 'audio')
+            else:
+                with path.open('rb') as source:
+                    raw = source.read(MAX_WAV_BYTES + 1)
         except OSError:
             invalid('original WAV is unavailable. Restore it from the catalog backup.', 'unavailable', 404)
         if hashlib.sha256(raw).hexdigest() != record['content_hash']:

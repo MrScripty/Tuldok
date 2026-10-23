@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import math
+import re
 import struct
 import zipfile
 
@@ -113,15 +114,24 @@ def _affine(value, shape):
 def manifest(raw, source, volume):
     if type(raw) is not bytes or not 0 < len(raw) <= MANIFEST_LIMIT:
         invalid('sidecar exceeds its byte bound.')
-    value = parse_json(raw)
+    value = manifest_declaration(parse_json(raw))
+    if value['volume_bytes'] != len(source) or value['volume_sha256'] != hashlib.sha256(source).hexdigest():
+        invalid('source length or SHA256 mismatch.')
+    if value['shape'] != volume['shape']:
+        invalid('sidecar shape/dtype/order differs from source.')
+    return value
+
+
+def manifest_declaration(value):
+    """Declared volume structure remains inspectable without voxel bytes."""
     _exact(value, ('format', 'volume_file', 'volume_bytes', 'volume_sha256', 'shape', 'dtype', 'order',
                    'value_semantics', 'units', 'affine', 'provenance'), 'sidecar')
     if value['format'] != 'tuldok_volume_v1' or value['volume_file'] != 'volume.npy':
         invalid('unsupported sidecar version or filename.')
-    if type(value['volume_bytes']) is not int or value['volume_bytes'] != len(source) or value['volume_sha256'] != hashlib.sha256(source).hexdigest():
+    if type(value['volume_bytes']) is not int or not 0 < value['volume_bytes'] <= NPY_LIMIT or type(value['volume_sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',value['volume_sha256']):
         invalid('source length or SHA256 mismatch.')
     shape = value['shape']
-    if type(shape) is not list or any(type(n) is not int for n in shape) or shape != volume['shape'] or value['dtype'] != 'uint8' or value['order'] != 'C':
+    if type(shape) is not list or len(shape)!=3 or any(type(n) is not int or not 1<=n<=DIMENSION_LIMIT for n in shape) or math.prod(shape)>VOXEL_LIMIT or value['dtype'] != 'uint8' or value['order'] != 'C':
         invalid('sidecar shape/dtype/order differs from source.')
     text_value(value['value_semantics'], 'Value semantics', 1000)
     if value['units'] not in ('m', 'cm', 'mm'):

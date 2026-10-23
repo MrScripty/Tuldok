@@ -42,6 +42,18 @@ MAX_PUBLICATION_SOURCE_BYTES = 48 * 1024
 _DOWNLOAD_PERMIT = threading.BoundedSemaphore(1)
 
 
+def native_payload_names(run):
+    """The native owner inventory, shared with retained phase evidence readers."""
+    if adapter_for_graph(run['graph']) is release_validation:return release_validation.PAYLOADS
+    if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+        import model_evidence
+        return model_evidence.payload_names(run['parameters']['epochs'])
+    if model_aware_graph(run['graph']):
+        from one_fit_evidence import payload_names
+        return payload_names()
+    return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
+
+
 def process_identity(pid):
     """Linux start ticks plus boot ID distinguish an owned PID from PID reuse."""
     try:
@@ -79,11 +91,278 @@ def _sync(path):
         os.close(descriptor)
 
 
+# These are local continuation mechanisms, not scientific observations. Exact
+# specifications and helper identities inside receipts remain historical proof.
+LOCAL_RUN_FIELDS = frozenset(('worker','supervisor','python','worker_command',
+    'process_phase','release_path','publication_continuation'))
+RUN_FIELDS = frozenset(('schema_version','mode','execution_kind','result_kind','id','dataset_id',
+    'request_key','request_sha256','actor_id','admission_id','approval_id','state','created_at','started_at',
+    'finished_at','graph','graph_revision','graph_sha256','graph_document_sha256','material','material_sha256',
+    'spec','outputs','parameters','attempt','parent_run_id','events','artifacts','metrics','error',
+    'custody_phase','custody_identity','custody_receipt_sha256','quality_claim','progress','node_attempts',
+    '_phase_timings','extension_context','approval_material_sha256','execution_resources','publication_source',
+    'publication_fault','release_id','release_sha256','release_bytes','source_records','prior_test_exposure',
+    'adapter','runtime','exposure_events','execution_test_exposure','evidence_context','validation_summary'))
+
+def project_run_projection(run, *, imported=False):
+    """Closed portable Run observation; local continuation is never imported."""
+    from model_definitions import checked_json,natural,text
+    from pipeline import decode_graph
+    run=checked_json(run,40*1024**2)
+    unknown=set(run)-RUN_FIELDS-(frozenset() if imported else LOCAL_RUN_FIELDS)
+    if unknown:
+        raise WorkbenchError('Run contains unclassified retained fields: '+','.join(sorted(unknown)),'unsupported',409)
+    required={'schema_version','mode','id','dataset_id','request_key','request_sha256','state','created_at','started_at',
+        'finished_at','graph','graph_revision','graph_sha256','graph_document_sha256','parameters','attempt','parent_run_id',
+        'events','artifacts','metrics','error','quality_claim','progress','node_attempts','admission_id'}
+    external=run.get('execution_kind')=='external_recipe'
+    required.update(('execution_kind','result_kind','material','material_sha256','spec','outputs','actor_id','approval_id',
+        'custody_phase','custody_identity','custody_receipt_sha256') if external else
+        ('release_id','release_sha256','release_bytes','source_records','prior_test_exposure','adapter','runtime','exposure_events'))
+    if not required<=set(run):
+        raise WorkbenchError('Historical Run is missing retained observation fields.','invalid',409)
+    identifier(run['dataset_id'],'Run origin');identifier(run['admission_id'],'Historical admission')
+    if type(run['request_key']) is not str or not REQUEST_KEY.fullmatch(run['request_key']):
+        raise WorkbenchError('Invalid historical request identity.')
+    if type(run['request_sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',run['request_sha256']):
+        raise WorkbenchError('Invalid historical request digest.')
+    graph=decode_graph(run['graph'])
+    if run['graph_revision']!=graph['revision']:
+        raise WorkbenchError('Historical Run graph revision differs.')
+    natural(run['attempt'],'Attempt',1)
+    if run['parent_run_id'] is not None:identifier(run['parent_run_id'],'Retry parent Run')
+    for key in ('created_at','started_at','finished_at'):
+        if run[key] is not None:text(run[key],'Run observation time',80)
+    for key in ('events','artifacts','node_attempts'):
+        if type(run[key]) is not list or len(run[key])>100000:
+            raise WorkbenchError('Historical Run observations exceed their bound.')
+    if type(run['quality_claim']) is not bool or type(run['parameters']) is not dict or type(run['progress']) is not dict:
+        raise WorkbenchError('Historical Run observations differ.')
+    if 'execution_test_exposure' in run:
+        from pipeline import decode_exposures
+        decode_exposures(run['execution_test_exposure'])
+    if run['metrics'] is not None and type(run['metrics']) is not dict:
+        raise WorkbenchError('Historical Run metrics differ.')
+    seen=set()
+    for item in run['artifacts']:
+        closed(item,('name','sha256','bytes','media_type'),('role','split'))
+        if (type(item['name']) is not str or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]{0,119}',item['name']) or
+                item['name'] in seen or type(item['sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',item['sha256'])):
+            raise WorkbenchError('Historical Run artifact identity differs.')
+        seen.add(item['name']);natural(item['bytes'],'Artifact bytes');text(item['media_type'],'Artifact media type',120)
+    return {key:copy.deepcopy(item) for key,item in run.items() if key in RUN_FIELDS}
+
+
+def validate_approved_composition(value, sha, graph, execution_material_sha256, *, catalog_id):
+    if value is None:
+        raise WorkbenchError('Approved composed material is unavailable.','unavailable',409)
+    closed(value,('ref','material'));material=value['material']
+    if (digest(material)!=sha or value['ref']!={'kind':'recipe_material','catalog_id':catalog_id,'id':sha,'sha256':sha} or
+            material.get('format')!='recipe_material_v1' or material.get('catalog_id')!=catalog_id or
+            material.get('recipe_id')!=graph['id'] or material.get('recipe_revision')!=graph['revision'] or
+            material.get('executable_sha256')!=execution_material_sha256):
+        raise WorkbenchError('Approved composed material differs from execution.','unavailable',409)
+    return value
+
+
+def validate_retained_run(run, *, catalog_id, run_id, request_key, request_sha256,
+                          association=None, approval=None, composition=None, extension_context=None):
+    """Saved scientific and custody proof shared with inert project history.
+
+    The caller resolves origin facts. This function reads no SQL, host path,
+    credentials, process state or runtime lease and grants no authority.
+    """
+    identifier(run_id, 'Run ID')
+    try:
+        if (type(run['schema_version']) is not int or run['schema_version'] != 1 or run['id'] != run_id or run['dataset_id'] != catalog_id
+                or run['mode'] != 'real' or run['state'] not in (*ACTIVE, *TERMINAL)
+                or run['request_key'] != request_key or run['request_sha256'] != request_sha256
+                or digest(run['graph']) != run['graph_document_sha256']
+                or execution_digest(run['graph']) != run['graph_sha256']
+                or (run.get('execution_kind') != 'external_recipe' and run['adapter'] != adapter_identity_for_graph(run['graph']))):
+            raise ValueError('Invalid retained run identity.')
+        if run.get('execution_kind') == 'external_recipe':
+            import recipe_contract
+            import recipe_process
+            # Absolute execution paths are historical evidence, not restore
+            # destinations. Never rewrite a spec bound by a custody receipt.
+            declared = run['spec']['cwd']
+            if (type(declared) is not str or not Path(declared).is_absolute()
+                    or '..' in Path(declared).parts or str(Path(declared)) != declared
+                    or Path(declared).name != '.external-' + run['id']
+                    or Path(declared).parent.name != 'workspace-runs'):
+                raise ValueError('Invalid retained external staging location.')
+            admitted_context=extension_context
+            recipe_contract.validate_spec(run['material'], run['spec'], declared,context=admitted_context)
+            if (run['graph'].get('recipe') != 'external_recipe'
+                    or run['material']['catalog_id'] != catalog_id
+                    or digest(run['material']) != run['material_sha256']
+                    or run['material']['graph_execution_sha256'] != run['graph_sha256']
+                    or run['outputs'] != run['material']['recipe']['outputs']
+                    or run['spec']['attempt_id'] != run['id']
+                    or run['spec']['request_sha256'] != run['request_sha256']
+                    or run['custody_phase'] not in ('prepared', 'barrier_ready', 'go_intent', 'drained')):
+                raise ValueError('Invalid external execution identity.')
+            identity = run.get('custody_identity')
+            if 'publication_fault' in run or 'publication_continuation' in run:
+                import run_publication
+                run_publication.validate_continuation(run)
+            if 'publication_source' in run:
+                source = run['publication_source']
+                if (type(source) is not dict or set(source) != {'kind', 'schema_version', 'catalog_id', 'run_id', 'sha256'}
+                        or source['kind'] != 'external_publication_source' or type(source['schema_version']) is not int
+                        or source['schema_version'] != 1 or source['catalog_id'] != run['dataset_id']
+                        or source['run_id'] != run['id'] or type(source['sha256']) is not str
+                        or not re.fullmatch('[a-f0-9]{64}', source['sha256'])):
+                    raise ValueError('Invalid retained publication source reference.')
+            if identity is not None and (identity.get('attempt_id') != run['id']
+                    or identity.get('request_sha256') != run['request_sha256']
+                    or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
+                raise ValueError('Invalid external custodian identity.')
+            # A retained Study association owns this requirement: removing
+            # the JSON marker must not downgrade its Run to legacy custody.
+            if association is not None or 'approval_material_sha256' in run:
+                approved=run.get('approval_material_sha256')
+                if type(approved) is not str or not re.fullmatch('[a-f0-9]{64}',approved):
+                    raise ValueError('Invalid composed approval identity.')
+                grant=approval
+                if (grant is None or grant['material_sha256']!=approved or grant['consumer_actor_id']!=run['actor_id'] or
+                        grant['catalog_id']!=catalog_id or grant['run_id']!=run['id'] or
+                        grant['admission_id']!=run['admission_id'] or grant['request_sha256']!=run['request_sha256']):
+                    raise ValueError('Composed approval differs from its retained consumption.')
+                if (association is None or association['material_sha256']!=approved or association['actor_id']!=run['actor_id'] or
+                        association['request_sha256']!=run['request_sha256']):
+                    raise ValueError('Composed approval differs from its retained study association.')
+                validate_approved_composition(composition,approved,run['graph'],run['material_sha256'],catalog_id=catalog_id)
+        elif 'execution_kind' in run:
+            raise ValueError('Unknown execution kind.')
+        if model_aware_graph(run['graph']):
+            owner = model_contract(run['graph'])
+            context=run['evidence_context']
+            if (context['adapter_sha256']!=run['runtime']['adapter_definition_sha256']
+                    or context['model_definition']!=owner.model_definition(run['parameters'])
+                    or context['profile']!=owner.profile(catalog_id,context['model_sha256'],run['parameters'],
+                        sum(row['split']=='validation' for row in run['source_records']))):
+                raise ValueError('Retained classifier evidence context differs.')
+            if association is not None:
+                if (run.get('actor_id')!=association['actor_id'] or run.get('approval_material_sha256')!=association['material_sha256']
+                        or context['material_sha256']!=association['material_sha256'] or run['request_sha256']!=association['request_sha256']):
+                    raise ValueError('Built-in Study association differs from its authoritative receipt.')
+                validate_approved_composition(composition,association['material_sha256'],run['graph'],run['graph_sha256'],catalog_id=catalog_id)
+            elif run.get('approval_material_sha256') is not None:
+                raise ValueError('Unexpected built-in Study marker.')
+        return run
+    except (ValueError, KeyError, TypeError):
+        raise WorkbenchError('Stored run envelope is invalid; refusing to guess execution state.', 'unavailable', 409) from None
+
+
+def public_run_projection(run):
+    """Common public fields; callers supply current input disclosure checks."""
+    if run.get('execution_kind') == 'external_recipe':
+        keys = ('schema_version', 'mode', 'id', 'dataset_id', 'request_key', 'state', 'created_at',
+                'started_at', 'finished_at', 'graph', 'graph_revision', 'graph_sha256', 'parameters',
+                'attempt', 'parent_run_id', 'events', 'error', 'progress', 'node_attempts',
+                'quality_claim', 'execution_kind', 'result_kind', 'material', 'material_sha256',
+                'approval_id', 'actor_id', 'custody_phase')
+        return {key: copy.deepcopy(run[key]) for key in keys}
+    hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
+              'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context', '_phase_timings'}
+    return {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
+
+
+def decode_diagnostic_json(raw):
+    """Exact duplicate-free finite JSON used by live and inert custody readers."""
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError('Duplicate diagnostic field.')
+            result[key] = value
+        return result
+    return json.loads(raw, object_pairs_hook=pairs,
+                      parse_constant=lambda value: (_ for _ in ()).throw(ValueError('Nonfinite diagnostic.')))
+
+
+def validate_external_artifact_inventory(run, receipt_raw, manifest_raw):
+    """Check retained output contract, custody and manifest without filesystem IO."""
+    import recipe_contract
+    import recipe_process
+    if run['state'] != 'completed':
+        raise ValueError('Only completed Runs publish artifacts.')
+    definition = recipe_contract.decode_definition(encode(run['material']['recipe']).encode())
+    allowed = {item['path']: item for item in definition['outputs']}
+    seen, total = set(), 0
+    for item in run['artifacts']:
+        if (set(item) != {'name', 'role', 'bytes', 'sha256', 'media_type'}
+                or item['name'] not in allowed or item['name'] in seen):
+            raise ValueError('Invalid artifact inventory.')
+        rule = allowed[item['name']]
+        if (item['role'] != rule['role'] or type(item['bytes']) is not int
+                or not 0 <= item['bytes'] <= rule['max_bytes']
+                or item['media_type'] != 'application/octet-stream'
+                or not isinstance(item['sha256'], str) or not re.fullmatch('[a-f0-9]{64}', item['sha256'])):
+            raise ValueError('Artifact differs from its approved contract.')
+        seen.add(item['name'])
+        total += item['bytes']
+    if (any(rule['required'] and name not in seen for name, rule in allowed.items())
+            or total > definition['resources']['max_output_bytes']):
+        raise ValueError('Incomplete or excessive artifact inventory.')
+    if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
+        raise ValueError('Custody receipt changed.')
+    receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
+    if not receipt['drained'] or receipt['outcome'] != 'completed':
+        raise ValueError('Custody did not complete.')
+    manifest = decode_diagnostic_json(manifest_raw)
+    expected = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
+                'request_sha256': run['request_sha256'], 'custody_receipt_sha256': run['custody_receipt_sha256'],
+                'artifacts': run['artifacts']}
+    if manifest != expected:
+        raise ValueError('Artifact manifest changed.')
+    return run['artifacts']
+
+
+def artifact_capture_source(run, item, raw, proof_raw):
+    """Derive the exact retained input receipt shared by live and inert readers."""
+    import recipe_process
+    if run['state'] != 'completed':
+        raise WorkbenchError('Only completed Runs provide artifact inputs.', 'unavailable', 409)
+    if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
+        raise WorkbenchError('Captured artifact differs from the Run inventory.', 'conflict', 409)
+    if run.get('execution_kind') == 'external_recipe':
+        if hashlib.sha256(proof_raw).hexdigest() != run['custody_receipt_sha256']:
+            raise WorkbenchError('Custody receipt changed during capture.', 'conflict', 409)
+        source = {'schema_version': 1, 'catalog_id': run['dataset_id'], 'run_id': run['id'],
+            'attempt_id': run['spec']['attempt_id'], 'request_sha256': run['request_sha256'],
+            'material_sha256': run['material_sha256'], 'artifact_name': item['name'], 'artifact_role': item['role'],
+            'artifact_bytes': item['bytes'], 'measured_sha256': item['sha256'],
+            'custody_receipt_sha256': run['custody_receipt_sha256'],
+            'custody_identity': copy.deepcopy(run['custody_identity']),
+            'custody_receipt_base64': base64.b64encode(proof_raw).decode('ascii')}
+    else:
+        if run.get('graph', {}).get('recipe') != 'image_classification_model_v2' or item['name'] == 'release.zip':
+            raise WorkbenchError('Capture requires qualified classifier evidence or an external Run.', 'unsupported', 409)
+        context = run['evidence_context']
+        source = {'schema_version': 2, 'kind': 'builtin_classifier_publication_v1',
+            'catalog_id': run['dataset_id'], 'run_id': run['id'], 'request_sha256': run['request_sha256'],
+            'material_sha256': context['material_sha256'], 'graph_sha256': run['graph_sha256'],
+            'release_sha256': run['release_sha256'], 'adapter_sha256': context['adapter_sha256'],
+            'artifact_name': item['name'], 'artifact_role': 'model_evidence', 'artifact_bytes': len(raw),
+            'measured_sha256': hashlib.sha256(raw).hexdigest(),
+            'artifact_manifest_sha256': hashlib.sha256(proof_raw).hexdigest(),
+            'artifact_manifest_base64': base64.b64encode(proof_raw).decode('ascii'),
+            'population': 'test' if item['name'] in TEST_FILES else 'validation' if item.get('split') == 'validation' else 'train'}
+    try:
+        return recipe_process.validate_artifact_source(source, item['sha256'], len(raw))
+    except recipe_process.ProcessError as error:
+        raise WorkbenchError('Retained artifact publication source differs.', 'unavailable', 409) from error
+
+
 class Runs:
-    def __init__(self, dataset, pipelines):
+    def __init__(self, dataset, pipelines, *, recover=True):
         self.dataset, self.pipelines = dataset, pipelines
         self.access = dataset.access
         self.db, self.lock = dataset.db, dataset.lock
+        self.project_execution = getattr(dataset, 'project_execution', None)
         self.path = dataset.path / 'workspace-runs'
         self.path.mkdir(exist_ok=True)
         self._wake, self._stop = threading.Event(), threading.Event()
@@ -100,9 +379,11 @@ class Runs:
         self._phase_book = phase_timings.Book()
         from run_capacity import Capacity
         self._capacity = Capacity.configured()
+        if self.project_execution is not None:
+            self.project_execution.attach_runs(self)
         with self.lock:
             self.runtime_owner = self.db.claim_runtime('workspace_runs')
-            if self.runtime_owner:
+            if self.runtime_owner and recover:
                 self._recover()
         from run_coordinator import Coordinator
         self._coordinator = Coordinator(self)
@@ -159,92 +440,23 @@ class Runs:
             raise WorkbenchError('Run not found.', 'unavailable', 404)
         try:
             run = json.loads(row['document'])
-            if (run['schema_version'] != 1 or run['id'] != run_id or run['dataset_id'] != self.db.dataset_id
-                    or run['mode'] != 'real' or run['state'] not in (*ACTIVE, *TERMINAL)
-                    or run['request_key'] != row['request_key'] or run['request_sha256'] != row['request_sha256']
-                    or digest(run['graph']) != run['graph_document_sha256']
-                    or execution_digest(run['graph']) != run['graph_sha256']
-                    or (not self._external(run) and run['adapter'] != adapter_identity_for_graph(run['graph']))):
-                raise ValueError('Invalid retained run identity.')
-            if self._external(run):
-                import recipe_contract
-                import recipe_process
-                # Absolute execution paths are historical evidence, not restore
-                # destinations. Never rewrite a spec bound by a custody receipt.
-                declared = run['spec']['cwd']
-                if (type(declared) is not str or not Path(declared).is_absolute()
-                        or '..' in Path(declared).parts or str(Path(declared)) != declared
-                        or Path(declared).name != '.external-' + run['id']
-                        or Path(declared).parent.name != 'workspace-runs'):
-                    raise ValueError('Invalid retained external staging location.')
-                admitted_context=self._extension_context(run) if self._extension(run) else None
-                recipe_contract.validate_spec(run['material'], run['spec'], declared,context=admitted_context)
-                if (run['graph'].get('recipe') != 'external_recipe'
-                        or run['material']['catalog_id'] != self.db.dataset_id
-                        or digest(run['material']) != run['material_sha256']
-                        or run['material']['graph_execution_sha256'] != run['graph_sha256']
-                        or run['outputs'] != run['material']['recipe']['outputs']
-                        or run['spec']['attempt_id'] != run['id']
-                        or run['spec']['request_sha256'] != run['request_sha256']
-                        or run['custody_phase'] not in ('prepared', 'barrier_ready', 'go_intent', 'drained')):
-                    raise ValueError('Invalid external execution identity.')
-                identity = run.get('custody_identity')
-                if 'publication_fault' in run or 'publication_continuation' in run:
-                    import run_publication
-                    run_publication.validate_continuation(run)
-                if 'publication_source' in run:
-                    source = run['publication_source']
-                    if (type(source) is not dict or set(source) != {'kind', 'schema_version', 'catalog_id', 'run_id', 'sha256'}
-                            or source['kind'] != 'external_publication_source' or type(source['schema_version']) is not int
-                            or source['schema_version'] != 1 or source['catalog_id'] != run['dataset_id']
-                            or source['run_id'] != run['id'] or type(source['sha256']) is not str
-                            or not re.fullmatch('[a-f0-9]{64}', source['sha256'])):
-                        raise ValueError('Invalid retained publication source reference.')
-                if identity is not None and (identity.get('attempt_id') != run['id']
-                        or identity.get('request_sha256') != run['request_sha256']
-                        or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
-                    raise ValueError('Invalid external custodian identity.')
-                association=self.db.execute('SELECT t.material_sha256,r.actor_id,r.request_sha256 FROM model_attempt_reservations r '
-                                            'JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',
-                                            (run['id'],)).fetchone()
-                # A retained Study association owns this requirement: removing
-                # the JSON marker must not downgrade its Run to legacy custody.
-                if association is not None or 'approval_material_sha256' in run:
-                    approved=run.get('approval_material_sha256')
-                    if type(approved) is not str or not re.fullmatch('[a-f0-9]{64}',approved):
-                        raise ValueError('Invalid composed approval identity.')
-                    grant=self.db.execute('SELECT g.material_sha256,g.consumer_actor_id,g.catalog_id,'
-                                          'c.run_id,c.admission_id,c.request_sha256 FROM access_execution_grants g '
-                                          'JOIN access_execution_consumptions c ON c.grant_id=g.id WHERE g.id=%s',
-                                          (run['approval_id'],)).fetchone()
-                    if (grant is None or grant['material_sha256']!=approved or grant['consumer_actor_id']!=run['actor_id'] or
-                            grant['catalog_id']!=self.db.dataset_id or grant['run_id']!=run['id'] or
-                            grant['admission_id']!=run['admission_id'] or grant['request_sha256']!=run['request_sha256']):
-                        raise ValueError('Composed approval differs from its retained consumption.')
-                    if (association is None or association['material_sha256']!=approved or association['actor_id']!=run['actor_id'] or
-                            association['request_sha256']!=run['request_sha256']):
-                        raise ValueError('Composed approval differs from its retained study association.')
-                    self._approved_composition(approved,run['graph'],run['material_sha256'])
-            elif 'execution_kind' in run:
-                raise ValueError('Unknown execution kind.')
-            if model_aware_graph(run['graph']):
-                owner = model_contract(run['graph'])
-                context=run['evidence_context']
-                if (context['adapter_sha256']!=run['runtime']['adapter_definition_sha256']
-                        or context['model_definition']!=owner.model_definition(run['parameters'])
-                        or context['profile']!=owner.profile(self.db.dataset_id,context['model_sha256'],run['parameters'],
-                            sum(row['split']=='validation' for row in run['source_records']))):
-                    raise ValueError('Retained classifier evidence context differs.')
-                association=self.db.execute('SELECT r.study_id,r.trial_id,r.actor_id,r.request_sha256,t.material_sha256 '
-                    'FROM model_attempt_reservations r JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',(run_id,)).fetchone()
-                if association is not None:
-                    if (run.get('actor_id')!=association['actor_id'] or run.get('approval_material_sha256')!=association['material_sha256']
-                            or context['material_sha256']!=association['material_sha256'] or run['request_sha256']!=association['request_sha256']):
-                        raise ValueError('Built-in Study association differs from its authoritative receipt.')
-                    self._approved_composition(association['material_sha256'],run['graph'],run['graph_sha256'])
-                elif run.get('approval_material_sha256') is not None:
-                    raise ValueError('Unexpected built-in Study marker.')
-            return run
+            association=self.db.execute('SELECT r.study_id,r.trial_id,r.actor_id,r.request_sha256,t.material_sha256 '
+                'FROM model_attempt_reservations r JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',
+                (run_id,)).fetchone()
+            approval=composition=context=None
+            if self._external(run) and (association is not None or 'approval_material_sha256' in run):
+                approval=self.db.execute('SELECT g.material_sha256,g.consumer_actor_id,g.catalog_id,'
+                    'c.run_id,c.admission_id,c.request_sha256 FROM access_execution_grants g '
+                    'JOIN access_execution_consumptions c ON c.grant_id=g.id WHERE g.id=%s',
+                    (run['approval_id'],)).fetchone()
+            if association is not None or 'approval_material_sha256' in run:
+                sha=run.get('approval_material_sha256')
+                material_sha=run['material_sha256'] if self._external(run) else run['graph_sha256']
+                composition=self._approved_composition(sha,run['graph'],material_sha)
+            if self._extension(run):context=self._extension_context(run)
+            return validate_retained_run(run,catalog_id=self.db.dataset_id,run_id=run_id,
+                request_key=row['request_key'],request_sha256=row['request_sha256'],
+                association=association,approval=approval,composition=composition,extension_context=context)
         except (ValueError, KeyError, TypeError):
             raise WorkbenchError('Stored run envelope is invalid; refusing to guess execution state.', 'unavailable', 409) from None
 
@@ -352,6 +564,8 @@ class Runs:
         else:
             evidence['release_sha256'] = run['release_sha256']
         self.access.audit(action, run['id'], evidence)
+        if self.project_execution is not None:
+            self.project_execution.mark_run(run['id'])
 
     @staticmethod
     def _external(run):
@@ -423,12 +637,7 @@ class Runs:
         if self._external(run):
             from candidate_packages import authorize_transitive_inputs
             authorize_transitive_inputs(self,run)
-            keys = ('schema_version', 'mode', 'id', 'dataset_id', 'request_key', 'state', 'created_at',
-                    'started_at', 'finished_at', 'graph', 'graph_revision', 'graph_sha256', 'parameters',
-                    'attempt', 'parent_run_id', 'events', 'error', 'progress', 'node_attempts',
-                    'quality_claim', 'execution_kind', 'result_kind', 'material', 'material_sha256',
-                    'approval_id', 'actor_id', 'custody_phase')
-            result = {key: copy.deepcopy(run[key]) for key in keys}
+            result = public_run_projection(run)
             if 'execution_resources' in run:
                 result['execution_resources'] = copy.deepcopy(run['execution_resources'])
             if 'approval_material_sha256' in run:result['approval_material_sha256']=run['approval_material_sha256']
@@ -437,9 +646,7 @@ class Runs:
             result['artifacts'] = [dict(item, locked=False,
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
-        hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context', '_phase_timings'}
-        result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
+        result = public_run_projection(run)
         association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
         if association is not None or run['graph'].get('recipe')==image_training.MODEL_RECIPE:
             result['study_membership']=dict(association) if association is not None else None
@@ -611,10 +818,18 @@ class Runs:
             raise
         if receipt:
             return self._reconcile_receipt(receipt)
-        self._wake_external(run_id)
+        # A project adapter may own a surrounding canonical publication TX.
+        # Only its acknowledged outer COMMIT can make this queue dispatchable.
+        if self.db.in_transaction:
+            self.db.on_commit(lambda: self._wake_external(run_id))
+        else:
+            self._wake_external(run_id)
         return self._public(run)
 
     def _wake_external(self, run_id):
+        if self.db.in_transaction:
+            self.db.on_commit(lambda: self._wake_external(run_id))
+            return
         with self.lock:
             self._confirmed_external.add(run_id)
         self._start()
@@ -623,13 +838,8 @@ class Runs:
         from model_definitions import retained_json
         row=self.db.execute('SELECT document FROM workspace_recipe_materials WHERE sha256=%s',(sha,)).fetchone()
         if row is None:raise WorkbenchError('Approved composed material is unavailable.','unavailable',409)
-        value=retained_json(row[0]);closed(value,('ref','material'));material=value['material']
-        if (digest(material)!=sha or value['ref']!={'kind':'recipe_material','catalog_id':self.db.dataset_id,'id':sha,'sha256':sha} or
-                material.get('format')!='recipe_material_v1' or material.get('catalog_id')!=self.db.dataset_id or
-                material.get('recipe_id')!=graph['id'] or material.get('recipe_revision')!=graph['revision'] or
-                material.get('executable_sha256')!=execution_material_sha256):
-            raise WorkbenchError('Approved composed material differs from execution.','unavailable',409)
-        return value
+        return validate_approved_composition(retained_json(row[0]),sha,graph,execution_material_sha256,
+                                             catalog_id=self.db.dataset_id)
 
     @staticmethod
     def _extension(run):
@@ -748,12 +958,118 @@ class Runs:
                         (run_id, key, request_hash, encode(run)))
         self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
                           'approved_material_sha256':approved_sha,'approval_id': grant_id, 'request_sha256': request_hash})
+        if self.project_execution is not None:
+            self.project_execution.mark_run(run_id)
         if wake_on_commit:
             self.db.on_commit(lambda: self._wake_external(run_id))
         return run
 
     def _external_directory(self, run):
         return self.path / ('.external-' + run['id'])
+
+    def _capture_project_payloads(self, run, artifacts):
+        """Publish fixed current-local Run files before its SQL acknowledgement.
+
+        The existing rooted Projects reader owns all path walking. Nothing in an
+        imported Run creates this reader or selects its current local directory.
+        Artifact custody makes its own verified immutable copy of each FD.
+        """
+        from projects import Projects
+        if self.project_execution is None or not self.db.in_transaction:
+            raise RuntimeError('Project Run capture requires its current execution transaction.')
+        selected = []
+        edges = []
+        if self._external(run):
+            for name, item in run['material']['captures'].items():
+                selected.append((name, '.external-' + run['id'] + '/' + name, item,
+                                 'captured_input' if name.startswith('input/') else 'execution_source', 'unknown'))
+        else:
+            edges = self.project_execution.native.capture_run_payloads(run, artifacts)
+        for item in run['artifacts']:
+            selected.append((item['name'], run['id'] + '/' + item['name'], item,
+                             item.get('role', 'output'), item.get('split') or 'unknown'))
+        if run['state'] == 'completed':
+            proofs = (('custody-receipt.json', 16384), ('artifact-manifest.json', 65536)) if self._external(run) else (
+                ('artifact-manifest.json', 65536),)
+            for name, limit in proofs:
+                if name in {item['name'] for item in run['artifacts']}:continue
+                raw = self._read_regular(self.path / run['id'] / name, limit)
+                selected.append((name, run['id'] + '/' + name,
+                    dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)), 'custody_proof', 'unknown'))
+        elif run.get('custody_identity') is not None and run.get('custody_phase') == 'drained':
+            raw = self._read_regular(self._external_directory(run) / 'custody/receipt.json', 16384)
+            import recipe_process
+            receipt = recipe_process.validate_receipt(raw, run['custody_identity'])
+            if not receipt['drained']:
+                raise WorkbenchError('Current custodian drainage is unconfirmed.', 'unknown', 409)
+            selected.append(('custody-receipt.json', '.external-' + run['id'] + '/custody/receipt.json',
+                             dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw)), 'custody_proof', 'unknown'))
+        if run.get('publication_source') is not None:
+            raw = self._read_regular(self._external_directory(run) / 'publication-source-v1.json', MAX_PUBLICATION_SOURCE_BYTES)
+            if hashlib.sha256(raw).hexdigest() != run['publication_source']['sha256']:
+                raise WorkbenchError('Current publication proof changed.', 'stale', 409)
+            selected.append(('publication-source-v1.json', '.external-' + run['id'] + '/publication-source-v1.json',
+                             dict(sha256=run['publication_source']['sha256'],bytes=len(raw)), 'publication_proof', 'unknown'))
+        if self._external(run):edges.extend(self._capture_project_host_sources(run, artifacts))
+        reader = Projects(self.dataset, {'current_runs': self.path})
+        try:
+            for name, relative, item, role, population in selected:
+                declaration = dict(format='project_artifact_v1', sha256=item['sha256'], bytes=item['bytes'])
+                with reader._file('current_runs', relative) as (descriptor, info):
+                    artifacts.publish_fd(descriptor, declaration)
+                edges.append(dict(name=name, blob={key:declaration[key] for key in ('sha256','bytes')},
+                                  population=population, role=role, preservation='unique',
+                                  required_for=['scientific_inspection','execution_proof']))
+        finally:
+            reader.close()
+        return edges
+
+    def _capture_project_host_sources(self, run, artifacts):
+        """Retain the qualified host once, then use only its immutable bytes.
+
+        An older Run without these edges stays unavailable: current source files
+        cannot supply retrospective evidence for a historical host identity.
+        """
+        import recipe_contract
+        from projects import Projects
+        maximum = 4 * 1024 * 1024
+        records = self.project_execution.session.snapshot['records']
+        prior = next((record['document'] for record in records
+                      if record['family'] == 'run_history'
+                      and record['document']['origin_catalog_id'] == run['dataset_id']
+                      and record['document']['run']['id'] == run['id']), None)
+        expected = run['material']['host_files']
+        if prior is not None:
+            edges = []
+            for name, sha in sorted(expected.items()):
+                edge = next((edge for edge in prior['payloads'] if edge['name'] == 'host/' + name), None)
+                if (edge is None or edge['blob']['sha256'] != sha or edge['role'] != 'host_source'
+                        or edge['preservation'] != 'unique'
+                        or edge['required_for'] != ['historical_host_source']):
+                    raise WorkbenchError('Retained Run host source is unavailable.', 'unavailable', 409)
+                with artifacts.open_verified(dict(format='project_artifact_v1', **edge['blob']),
+                                             maximum_bytes=maximum):
+                    pass
+                edges.append(copy.deepcopy(edge))
+            return edges
+        if (run['state'] != 'queued' or run['custody_phase'] != 'prepared'
+                or run.get('custody_identity') is not None):
+            raise WorkbenchError('Only a newly admitted current Run can capture its host source.', 'unavailable', 409)
+        if recipe_contract.recipe_host_identity(run['material']['recipe']) != expected:
+            raise WorkbenchError('Current execution host differs from its admitted identity.', 'stale', 409)
+        reader = Projects(self.dataset, {'current_host': Path(recipe_contract.__file__).resolve().parent})
+        edges = []
+        try:
+            for name, sha in sorted(expected.items()):
+                with reader._file('current_host', name) as (descriptor, info):
+                    declaration = dict(format='project_artifact_v1', sha256=sha, bytes=info.st_size)
+                    artifacts.publish_fd(descriptor, declaration, maximum_bytes=maximum)
+                edges.append(dict(name='host/' + name, blob={key:declaration[key] for key in ('sha256','bytes')},
+                                  population='unknown', role='host_source', preservation='unique',
+                                  required_for=['historical_host_source']))
+        finally:
+            reader.close()
+        return edges
 
     def _external_drain_receipt(self, run):
         import recipe_process
@@ -816,15 +1132,7 @@ class Runs:
 
     @staticmethod
     def _progress_json(raw):
-        def pairs(items):
-            result = {}
-            for key, value in items:
-                if key in result:
-                    raise ValueError('Duplicate diagnostic field.')
-                result[key] = value
-            return result
-        return json.loads(raw, object_pairs_hook=pairs,
-                          parse_constant=lambda value: (_ for _ in ()).throw(ValueError('Nonfinite diagnostic.')))
+        return decode_diagnostic_json(raw)
 
     @staticmethod
     def _progress_text(value, limit, empty=False):
@@ -1117,7 +1425,10 @@ class Runs:
                 self._save(run)
             if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
+            if self.project_execution is not None:self.project_execution.before_launch(run_id)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
+            if self.project_execution is not None:
+                self.project_execution.register_custody(run_id, handle)
             clock.finish(launch_span)
             preparation_seconds = recipe_process.preparation_seconds(run['spec'])
             ready_deadline = time.monotonic() + preparation_seconds + 2
@@ -1127,6 +1438,7 @@ class Runs:
             while not terminal:
                 for event in handle.poll():
                     if event['type'] == 'ready':
+                        custody_deadline = time.monotonic() + recipe_process.GO_WAIT_SECONDS + recipe_process.CLEANUP_SECONDS + 5
                         with self.lock, self.db.transaction():
                             run = self._load(run_id)
                             run['custody_identity'] = copy.deepcopy(handle.expected_identity)
@@ -1230,37 +1542,9 @@ class Runs:
                 raise ValueError('Only completed Runs publish artifacts.')
             if directory.is_symlink() or not directory.is_dir():
                 raise ValueError('Invalid artifact directory.')
-            definition = recipe_contract.decode_definition(encode(run['material']['recipe']).encode())
-            allowed = {item['path']: item for item in definition['outputs']}
-            seen, total = set(), 0
-            for item in run['artifacts']:
-                if (set(item) != {'name', 'role', 'bytes', 'sha256', 'media_type'}
-                        or item['name'] not in allowed or item['name'] in seen):
-                    raise ValueError('Invalid artifact inventory.')
-                rule = allowed[item['name']]
-                if (item['role'] != rule['role'] or type(item['bytes']) is not int
-                        or not 0 <= item['bytes'] <= rule['max_bytes']
-                        or item['media_type'] != 'application/octet-stream'
-                        or not isinstance(item['sha256'], str) or not re.fullmatch('[a-f0-9]{64}', item['sha256'])):
-                    raise ValueError('Artifact differs from its approved contract.')
-                seen.add(item['name'])
-                total += item['bytes']
-            if (any(rule['required'] and name not in seen for name, rule in allowed.items())
-                    or total > definition['resources']['max_output_bytes']):
-                raise ValueError('Incomplete or excessive artifact inventory.')
             receipt_raw, _, _ = self._diagnostic_read(descriptor, 'custody-receipt.json', 16384)
-            if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
-                raise ValueError('Custody receipt changed.')
-            receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
-            if not receipt['drained'] or receipt['outcome'] != 'completed':
-                raise ValueError('Custody did not complete.')
             manifest_raw, _, _ = self._diagnostic_read(descriptor, 'artifact-manifest.json', 65536)
-            manifest = self._progress_json(manifest_raw)
-            expected = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
-                        'request_sha256': run['request_sha256'], 'custody_receipt_sha256': run['custody_receipt_sha256'],
-                        'artifacts': run['artifacts']}
-            if manifest != expected:
-                raise ValueError('Artifact manifest changed.')
+            validate_external_artifact_inventory(run, receipt_raw, manifest_raw)
             if set(os.listdir(descriptor)) != {item['name'] for item in run['artifacts']} | {'artifact-manifest.json','custody-receipt.json'}:
                 raise ValueError('Published directory inventory differs.')
             for item in run['artifacts']:
@@ -1513,6 +1797,9 @@ class Runs:
                     'Real CPU attempt admitted. Training starts from scratch; no model download.')
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
+        if self.project_execution is not None:
+            self.project_execution.native.bind_run(run)
+            self.project_execution.mark_run(run_id)
         return run
 
     @authorized('execute', 'runs.retry', owner_only=True)
@@ -1557,6 +1844,9 @@ class Runs:
         return self._public(run)
 
     def _start(self):
+        if self.db.in_transaction:
+            self.db.on_commit(self._start)
+            return
         with self._thread_lock:
             if self._closed or self._stop.is_set():
                 return
@@ -1671,6 +1961,7 @@ class Runs:
 
     def _run_attempt(self, admitted, cpus, claim):
         affinity = os.sched_getaffinity(0)
+        if self.project_execution is not None:self.project_execution.attempt_started(admitted['id'])
         try:
             # Linux affinity belongs to this executor thread. Children inherit it;
             # other attempts and the HTTP/coordinator threads remain independent.
@@ -1709,6 +2000,7 @@ class Runs:
                 self._coordinator.fault('attempt_reconciliation_storage')
         finally:
             os.sched_setaffinity(0, affinity)
+            if self.project_execution is not None:self.project_execution.attempt_finished(admitted['id'])
             self._wake.set()
 
     def _execute(self, run_id):
@@ -1716,6 +2008,8 @@ class Runs:
             selected = self._load(run_id)
         if self._external(selected):
             return self._execute_external(run_id)
+        if self.project_execution is not None:
+            return self.project_execution.native.execute_run(run_id)
         process = owner = None
         with self.lock, self.db.transaction():
             run = self._load(run_id)
@@ -2046,15 +2340,7 @@ class Runs:
         return run['parameters']['epochs'] if adapter_for_graph(run['graph']) is image_training else 1
 
     def _payloads(self, run):
-        if self._validation_run(run):
-            return release_validation.PAYLOADS
-        if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
-            import model_evidence
-            return model_evidence.payload_names(run['parameters']['epochs'])
-        if model_aware_graph(run['graph']):
-            from one_fit_evidence import payload_names
-            return payload_names()
-        return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
+        return native_payload_names(run)
 
     def _reference_keys(self, run):
         adapter = adapter_for_graph(run['graph'])
@@ -2247,20 +2533,7 @@ class Runs:
                 raise WorkbenchError('Artifact differs from expected SHA256.', 'conflict', 409)
             raw, _media_type = self.artifact(run_id, name)
             manifest_raw = self._read_regular(self.path / run_id / 'artifact-manifest.json', 65536)
-            context = run['evidence_context']
-            source = {'schema_version': 2, 'kind': 'builtin_classifier_publication_v1',
-                'catalog_id': run['dataset_id'], 'run_id': run_id, 'request_sha256': run['request_sha256'],
-                'material_sha256': context['material_sha256'], 'graph_sha256': run['graph_sha256'],
-                'release_sha256': run['release_sha256'], 'adapter_sha256': context['adapter_sha256'],
-                'artifact_name': name, 'artifact_role': 'model_evidence', 'artifact_bytes': len(raw),
-                'measured_sha256': hashlib.sha256(raw).hexdigest(),
-                'artifact_manifest_sha256': hashlib.sha256(manifest_raw).hexdigest(),
-                'artifact_manifest_base64': base64.b64encode(manifest_raw).decode('ascii'),
-                'population': 'test' if name in TEST_FILES else 'validation' if item.get('split') == 'validation' else 'train'}
-            try:
-                recipe_process.validate_artifact_source(source, expected_sha256, len(raw))
-            except recipe_process.ProcessError as error:
-                raise WorkbenchError('Classifier publication source differs.', 'unavailable', 409) from error
+            source = artifact_capture_source(run, item, raw, manifest_raw)
             return raw, source
         if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
             raise WorkbenchError('Invalid artifact input byte bound.')
@@ -2273,20 +2546,7 @@ class Runs:
         receipt_raw = self._read_regular(self.path / run_id / 'custody-receipt.json', 16384)
         if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
             raise WorkbenchError('Custody receipt changed during capture.', 'conflict', 409)
-        try:
-            receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
-        except recipe_process.ProcessError as error:
-            raise WorkbenchError('Retained custody receipt cannot be verified.', 'unavailable', 409) from error
-        if not receipt['drained'] or receipt['outcome'] != 'completed':
-            raise WorkbenchError('Run custody did not complete.', 'unavailable', 409)
-        source = {'schema_version': 1, 'catalog_id': run['dataset_id'],
-                  'run_id': run['id'], 'attempt_id': run['spec']['attempt_id'],
-                  'request_sha256': run['request_sha256'], 'material_sha256': run['material_sha256'],
-                  'artifact_name': item['name'], 'artifact_role': item['role'],
-                  'artifact_bytes': item['bytes'], 'measured_sha256': item['sha256'],
-                  'custody_receipt_sha256': run['custody_receipt_sha256'],
-                  'custody_identity': copy.deepcopy(run['custody_identity']),
-                  'custody_receipt_base64': base64.b64encode(receipt_raw).decode('ascii')}
+        source = artifact_capture_source(run, item, raw, receipt_raw)
         return raw, source
 
     def artifact_segments(self, body, *, _cancelled=None, _delivery_guard=None):

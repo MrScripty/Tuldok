@@ -25,6 +25,67 @@ class _BranchReplay(Exception):
         self.result = result
 
 
+def validate_retained_intent(value, *, resolve):
+    """Shared intent policy; the caller supplies exact origin references."""
+    value = checked_json(value, INTENT_LIMIT)
+    closed(value, ('ancestry', 'parent', 'baseline', 'cohort', 'hypothesis', 'change_summary', 'target'))
+    if value['ancestry'] not in ('unknown', 'root', 'derived'):
+        raise WorkbenchError('Choose unknown, root or derived ancestry.')
+    if (value['ancestry'] == 'derived') != (value['parent'] is not None):
+        raise WorkbenchError('Derived ancestry requires one exact parent; other ancestry has no parent.')
+    for key in ('parent', 'baseline'):
+        if value[key] is not None:
+            resolve(value[key])
+    text(value['cohort'], 'Cohort', 120)
+    text(value['hypothesis'], 'Hypothesis', 2000)
+    text(value['change_summary'], 'Intended change', 2000)
+    target = value['target']
+    closed(target, ('metric_id', 'metric_definition_sha256', 'direction', 'threshold', 'acceptance'))
+    text(target['metric_id'], 'Target metric', 80)
+    if target['metric_definition_sha256'] is not None and (
+            not isinstance(target['metric_definition_sha256'], str) or
+            not SHA.fullmatch(target['metric_definition_sha256'])):
+        raise WorkbenchError('Target metric definition requires an exact SHA256 or explicit unknown.')
+    if target['direction'] not in ('minimize', 'maximize', 'target'):
+        raise WorkbenchError('Target direction is unsupported.')
+    if target['threshold'] is not None and (
+            type(target['threshold']) not in (int, float) or not math.isfinite(target['threshold']) or
+            abs(target['threshold']) > 2**53-1):
+        raise WorkbenchError('Target threshold must be a finite safe number or explicit unknown.')
+    text(target['acceptance'], 'Acceptance intent', 2000)
+    return value
+
+
+def validate_retained_lineage(value, *, trial, resolve):
+    value = checked_json(value, INTENT_LIMIT + 4096)
+    closed(value, ('format', 'trial', 'intent', 'actor_id', 'recorded_at', 'timing'))
+    if value['format'] != 'trial_lineage_v1' or value['trial']['trial_id'] != trial['id']:
+        raise WorkbenchError('Stored lineage identity differs.', 'unavailable', 409)
+    if resolve(value['trial']) != trial:
+        raise WorkbenchError('Stored lineage trial differs.', 'unavailable', 409)
+    intent = validate_retained_intent(value['intent'], resolve=resolve)
+    if value['timing'] not in ('before_admission', 'retrospective'):
+        raise WorkbenchError('Stored lineage relationships differ.', 'unavailable', 409)
+    identifier(value['actor_id'], 'Lineage author')
+    text(value['recorded_at'], 'Lineage recording time', 80)
+    for key in ('parent', 'baseline'):
+        if intent[key] is not None and intent[key]['trial_id'] == trial['id']:
+            raise WorkbenchError('A trial cannot derive from or compare against itself.', 'conflict', 409)
+    return value
+
+
+def validate_retained_ancestry(child, parent, *, parent_of):
+    seen = {child}
+    for _ in range(ANCESTOR_LIMIT):
+        if parent is None:
+            return
+        if parent in seen:
+            raise WorkbenchError('Derivation would contain a cycle.', 'conflict', 409)
+        seen.add(parent)
+        parent = parent_of(parent)
+    raise WorkbenchError('Ancestry exceeds the bounded inspection depth.', 'unsupported', 409)
+
+
 class TrialLineage:
     def __init__(self, studies):
         self.studies = studies
@@ -46,33 +107,7 @@ class TrialLineage:
                 'material_sha256': trial['material']['sha256']}
 
     def _intent(self, value):
-        value = checked_json(value, INTENT_LIMIT)
-        closed(value, ('ancestry', 'parent', 'baseline', 'cohort', 'hypothesis', 'change_summary', 'target'))
-        if value['ancestry'] not in ('unknown', 'root', 'derived'):
-            raise WorkbenchError('Choose unknown, root or derived ancestry.')
-        if (value['ancestry'] == 'derived') != (value['parent'] is not None):
-            raise WorkbenchError('Derived ancestry requires one exact parent; other ancestry has no parent.')
-        for key in ('parent', 'baseline'):
-            if value[key] is not None:
-                self._ref(value[key])
-        text(value['cohort'], 'Cohort', 120)
-        text(value['hypothesis'], 'Hypothesis', 2000)
-        text(value['change_summary'], 'Intended change', 2000)
-        target = value['target']
-        closed(target, ('metric_id', 'metric_definition_sha256', 'direction', 'threshold', 'acceptance'))
-        text(target['metric_id'], 'Target metric', 80)
-        if target['metric_definition_sha256'] is not None and (
-                not isinstance(target['metric_definition_sha256'], str) or
-                not SHA.fullmatch(target['metric_definition_sha256'])):
-            raise WorkbenchError('Target metric definition requires an exact SHA256 or explicit unknown.')
-        if target['direction'] not in ('minimize', 'maximize', 'target'):
-            raise WorkbenchError('Target direction is unsupported.')
-        if target['threshold'] is not None and (
-                type(target['threshold']) not in (int, float) or not math.isfinite(target['threshold']) or
-                abs(target['threshold']) > 2**53-1):
-            raise WorkbenchError('Target threshold must be a finite safe number or explicit unknown.')
-        text(target['acceptance'], 'Acceptance intent', 2000)
-        return value
+        return validate_retained_intent(value, resolve=self._ref)
 
     def _version(self):
         # Both populations are append-only through their owning APIs. Live Run
@@ -85,32 +120,23 @@ class TrialLineage:
         row = self.db.execute('SELECT parent_trial_id,baseline_trial_id,document FROM model_trial_lineage '
                               'WHERE trial_id=%s', (trial_id,)).fetchone()
         if row is None:
-            return None
+            adapter=self.studies._project()
+            return adapter.lineage_fact(trial_id) if adapter is not None else None
         from model_definitions import retained_json
         value = retained_json(row['document'], INTENT_LIMIT + 4096)
-        closed(value, ('format', 'trial', 'intent', 'actor_id', 'recorded_at', 'timing'))
-        if value['format'] != 'trial_lineage_v1' or value['trial']['trial_id'] != trial_id:
-            raise WorkbenchError('Stored lineage identity differs.', 'unavailable', 409)
-        self._ref(value['trial'])
-        intent = self._intent(value['intent'])
+        value = validate_retained_lineage(value, trial=self.studies.trial(trial_id), resolve=self._ref)
+        intent = value['intent']
         if (row['parent_trial_id'] != (intent['parent'] or {}).get('trial_id') or
-                row['baseline_trial_id'] != (intent['baseline'] or {}).get('trial_id') or
-                value['timing'] not in ('before_admission', 'retrospective')):
+                row['baseline_trial_id'] != (intent['baseline'] or {}).get('trial_id')):
             raise WorkbenchError('Stored lineage relationships differ.', 'unavailable', 409)
         return value
 
     def _acyclic(self, child, parent):
-        seen = {child}
-        for _ in range(ANCESTOR_LIMIT):
-            if parent is None:
-                return
-            if parent in seen:
-                raise WorkbenchError('Derivation would contain a cycle.', 'conflict', 409)
-            seen.add(parent)
+        def parent_of(trial_id):
             row = self.db.execute('SELECT parent_trial_id FROM model_trial_lineage WHERE trial_id=%s',
-                                  (parent,)).fetchone()
-            parent = row[0] if row is not None else None
-        raise WorkbenchError('Ancestry exceeds the bounded inspection depth.', 'unsupported', 409)
+                                  (trial_id,)).fetchone()
+            return row[0] if row is not None else None
+        return validate_retained_ancestry(child, parent, parent_of=parent_of)
 
     def _insert(self, trial, intent):
         intent = self._intent(intent)
@@ -131,6 +157,7 @@ class TrialLineage:
                          (intent['baseline'] or {}).get('trial_id'), encode(value)))
         self.access.audit('studies.lineage.record', child,
                           {'material_sha256': trial['material']['sha256'], 'intent_sha256': digest(intent)})
+        self.studies._mark(trial['study_id'])
         return value
 
     @authorized('edit', 'studies.record_lineage')

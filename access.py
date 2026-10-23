@@ -2,7 +2,7 @@
 import argparse
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import wraps
 import hashlib
 import json
@@ -22,6 +22,11 @@ MAX_TOKEN_TTL = 30 * 86400
 MAX_APPROVAL_TTL = 3600
 _CURRENT = ContextVar('tuldok_actor', default=None)
 HASH = re.compile(r'^[a-f0-9]{64}$')
+
+
+def current_context():
+    """Read the immutable caller context; this observation grants no authority."""
+    return _CURRENT.get()
 
 
 class AccessError(Exception):
@@ -79,11 +84,29 @@ def authorized(scope, action, owner_only=False, target=None):
 
 
 class Access:
-    def __init__(self, db, catalog_path):
+    def __init__(self, db, catalog_path, authority=None):
         self.db, self.catalog_path = db, Path(catalog_path)
         self.catalog_id, self.lock = db.dataset_id, db.lock
+        # Only current host credentials cross this bridge. Job admissions,
+        # execution grants and their consumption remain in this local projection.
+        if authority is not None and (not isinstance(authority, Access) or authority.authority is not None):
+            raise ValueError('A project bridge requires a direct host authority.')
+        self.authority = authority
+
+    def _host_authentication(self):
+        if self.authority is not None:
+            raise AccessError('Authenticate and administer credentials through the current host.', 'forbidden', 403)
+
+    def actor_exists(self, actor_id):
+        """Current host actor membership, never an imported scientific identity."""
+        if self.authority is not None:
+            return self.authority.actor_exists(actor_id)
+        with self.lock:
+            return self.db.execute('SELECT id FROM access_actors WHERE id=%s', (actor_id,)).fetchone() is not None
 
     def _credential(self, credential_id):
+        if self.authority is not None:
+            return self.authority._credential(credential_id)
         row = self.db.execute('''SELECT c.id,c.actor_id,c.kind AS credential_kind,c.scopes_json,c.expires_at,
             c.revoked,c.consumed,a.kind,a.label FROM access_credentials c
             JOIN access_actors a ON a.id=c.actor_id WHERE c.id=%s''', (credential_id,)).fetchone()
@@ -92,6 +115,7 @@ class Access:
         return dict(row)
 
     def _resolve(self, token, *, login=False):
+        self._host_authentication()
         if type(token) is not str or not 32 <= len(token) <= 256 or not token.isascii():
             raise AccessError('A valid credential is required.', 'unauthenticated', 401)
         row = self.db.execute('SELECT id,actor_id,kind,expires_at,revoked,consumed FROM access_credentials WHERE token_sha256=%s',
@@ -104,6 +128,7 @@ class Access:
 
     @contextmanager
     def bind(self, token):
+        self._host_authentication()
         try:
             with self.lock:
                 row = self._resolve(token)
@@ -121,6 +146,19 @@ class Access:
         context = _CURRENT.get()
         if context is None:
             raise AccessError('An explicit actor context is required.', 'unauthenticated', 401)
+        if self.authority is not None and self.catalog_id == self.authority.catalog_id:
+            raise AccessError('This project identity collides with the host authority. Save an independent project before execution.', 'unavailable', 409)
+        if self.authority is not None and context.mode not in ('credential','job','system'):
+            raise AccessError('Unsupported project actor context.')
+        if self.authority is not None and context.mode == 'credential':
+            if context.catalog_id != self.authority.catalog_id:
+                raise AccessError('Project execution requires a current host credential context.')
+            # Recheck both credential identity and liveness, including for APIs
+            # that use _context directly rather than require().
+            row = self.authority._credential(context.credential_id)
+            if row['actor_id'] != context.actor_id:
+                raise AccessError('Credential actor identity changed.')
+            return replace(context, catalog_id=self.catalog_id)
         if context.catalog_id != self.catalog_id:
             raise AccessError('Actor context belongs to another catalog.')
         return context
@@ -223,6 +261,7 @@ class Access:
         error.audited = True
 
     def _mint(self, actor_id, kind, scopes, ttl):
+        self._host_authentication()
         token = secrets.token_urlsafe(32)
         credential_id = uuid.uuid4().hex
         self.db.execute('INSERT INTO access_credentials VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
@@ -232,6 +271,7 @@ class Access:
 
     def _local_owner_token(self, *, initial=False, require_existing=False):
         """Explicit local administration only; never exposed by a transport route."""
+        self._host_authentication()
         with self.lock, self.db.transaction():
             owners = self.db.execute("SELECT id FROM access_actors WHERE kind='owner'").fetchall()
             if require_existing and not owners:
@@ -250,6 +290,7 @@ class Access:
             return token
 
     def exchange(self, token):
+        self._host_authentication()
         try:
             with self.lock, self.db.transaction():
                 row = self._resolve(token, login=True)
@@ -270,6 +311,7 @@ class Access:
 
     @authorized('admin', 'access.issue', owner_only=True)
     def issue(self, body):
+        self._host_authentication()
         if type(body) is not dict or set(body) - {'label', 'scopes', 'ttl_seconds'} or not {'label', 'scopes'} <= set(body):
             raise AccessError('Credential fields must be label, scopes and optional ttl_seconds.', 'invalid', 400)
         label = _text(body['label'], 'Label')
@@ -293,6 +335,7 @@ class Access:
 
     @authorized('admin', 'access.revoke', owner_only=True)
     def revoke(self, credential_id):
+        self._host_authentication()
         with self.lock, self.db.transaction():
             changed = self.db.execute('UPDATE access_credentials SET revoked=1 WHERE id=%s RETURNING id', (credential_id,)).fetchone()
             if changed is None:
@@ -302,6 +345,7 @@ class Access:
         return {'revoked': True, 'credential_id': credential_id}
 
     def logout(self):
+        self._host_authentication()
         context = self.require('inspect', 'access.logout')
         if context.mode != 'credential':
             raise AccessError('Only a credential session can log out.')
@@ -366,7 +410,7 @@ class Access:
             raise AccessError('Approval lifetime must be 60 through 3600 seconds.', 'invalid', 400)
         with self.lock, self.db.transaction():
             context = self.require('approve-execution', 'access.grant_execution', owner_only=True)
-            if self.db.execute('SELECT id FROM access_actors WHERE id=%s', (consumer_actor_id,)).fetchone() is None:
+            if not self.actor_exists(consumer_actor_id):
                 raise AccessError('Consuming actor does not belong to this catalog.', 'unavailable', 404)
             created = int(time.time())
             grant = dict(id=uuid.uuid4().hex, catalog_id=self.catalog_id,

@@ -3,6 +3,7 @@ from access import authorized
 import base64
 import io
 import json
+import re
 import zipfile
 
 from immutable_assets import ImmutableAssets
@@ -85,6 +86,32 @@ class SpatialAssets(ImmutableAssets):
             return prepared
         except (ValueError, zipfile.BadZipFile, KeyError, RuntimeError, UnicodeError):
             raise WorkbenchError('Spatial source or metadata changed outside Tuldok.', 'conflict', 409) from None
+
+    def validate_project_source(self, bundle, metadata):
+        self.validated({self.kind: metadata}, bundle)
+
+    @staticmethod
+    def validate_project_metadata(kind,value):
+        import math
+        from immutable_assets import validate_project_metadata_fields,validate_project_bounds
+        parser,_,_=profile(kind)
+        fields={'manifest','manifest_sha256','protected_groups','scope'}
+        fields|= {'properties','point_count','bounds','provided_normals','provided_colors'} if kind=='pointcloud' else {'source_sha256','shape','dtype','order','voxel_count','spacing_xyz'}
+        validate_project_metadata_fields(value,fields,parser.BUNDLE_LIMIT)
+        parser.manifest_declaration(value['manifest'])
+        if type(value['manifest_sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',value['manifest_sha256']):raise WorkbenchError('Invalid retained spatial manifest digest.')
+        if kind=='pointcloud':
+            validate_project_bounds(value['bounds'])
+            if type(value['point_count']) is not int or not 1<=value['point_count']<=parser.POINT_LIMIT:raise WorkbenchError('Invalid retained point count.')
+            properties=value['properties']
+            if type(properties) is not list or any(type(p) is not dict or set(p)!={'name','dtype'} for p in properties):raise WorkbenchError('Invalid retained point properties.')
+            names=[p['name'] for p in properties];xyz=['x','y','z'];normals=['nx','ny','nz'];colors=['red','green','blue']
+            if names not in (xyz,xyz+normals,xyz+colors,xyz+normals+colors):raise WorkbenchError('Invalid retained point property order.')
+            if any(p['dtype'] not in (('uchar',) if p['name'] in colors else ('float','double')) for p in properties):raise WorkbenchError('Invalid retained point property dtype.')
+            if type(value['provided_normals']) is not bool or type(value['provided_colors']) is not bool or value['provided_normals']!=('nx' in names) or value['provided_colors']!=('red' in names):raise WorkbenchError('Retained point flags differ.')
+        else:
+            manifest=value['manifest']
+            if value['shape']!=manifest['shape'] or value['source_sha256']!=manifest['volume_sha256'] or value['dtype']!='uint8' or value['order']!='C' or type(value['voxel_count']) is not int or value['voxel_count']!=math.prod(manifest['shape']) or value['spacing_xyz']!=parser._affine(manifest['affine'],manifest['shape']):raise WorkbenchError('Retained volume metadata differs.')
 
     @authorized('inspect', 'spatial_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):

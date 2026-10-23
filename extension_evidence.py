@@ -407,6 +407,20 @@ def read_regular(directory, filename, maximum):
 @boundary
 @retained_directory
 def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
+    # Preserve the directory interface's extra-file rejection; content-addressed
+    # readers instead expose only the exact authoritative Run inventory.
+    names={item['name'] for item in run['artifacts']}
+    for output in run['outputs']:
+        if output['path'] not in names:
+            try:os.stat(output['path'],dir_fd=directory,follow_symlinks=False)
+            except FileNotFoundError:continue
+            raise WorkbenchError('Unretained evidence output exists.','unavailable',409)
+    return verify_blobs(run,admitted_context,read_blob=lambda name,maximum:read_regular(directory,name,maximum),
+                        captured=captured,checkpoint=checkpoint)
+
+
+@boundary
+def verify_blobs(run, admitted_context, *, read_blob, captured=None, checkpoint=None):
     """Verify structural closure after custody. Caller rederives authoritative context.
 
     The returned private array bytes are only for the bounded query below; they
@@ -443,13 +457,10 @@ def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
     payloads={};total=0
     for filename,rule in outputs.items():
         guard()
-        try:raw=read_regular(directory,filename,min(rule['max_bytes'],limits['shard_bytes']))
-        except WorkbenchError:
-            if rule['required']:raise
-            try:os.stat(filename,dir_fd=directory,follow_symlinks=False)
-            except FileNotFoundError:pass
-            else:raise
+        if filename not in retained:
+            require(not rule['required'],'Required retained evidence is missing.','unavailable')
             continue
+        raw=read_blob(filename,min(rule['max_bytes'],limits['shard_bytes']))
         guard()
         item=retained.get(filename)
         require(item is not None and item['bytes']==len(raw) and item['sha256']==hashlib.sha256(raw).hexdigest(),

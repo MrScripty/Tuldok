@@ -269,6 +269,9 @@ class Workbench:
         result.pop('original_text')
         if result['corner_annotation']:
             result['corner_annotation'] = json.loads(result['corner_annotation'])
+        availability = getattr(self.dataset, 'project_availability', None)
+        if availability is not None and result['id'] in self.dataset.project_sources:
+            result['source_available'] = result['source_available'] and availability(result['id'])
         return result
 
     @authorized('inspect', 'workbench.get')

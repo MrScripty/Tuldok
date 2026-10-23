@@ -137,29 +137,116 @@ def read_owned_blob(root, material_sha256, item, maximum, *, with_identity=False
         if directory is not None:os.close(directory)
 
 
+def decode_model_draft(value, *, catalog_id):
+    value=checked_json(value)
+    closed(value,('format','id','revision','name','task','kind','specification','source_selector',
+                  'preprocessing_policy','output_policy'))
+    if value['format']!='model_draft_v1' or value['kind'] not in ('template','captured_source'):
+        raise WorkbenchError('Unsupported model definition.','unsupported',400)
+    identifier(value['id']);natural(value['revision'],'Model revision',1);text(value['name'],'Model name')
+    reference(value['task'],'task',catalog_id)
+    for key in ('specification','preprocessing_policy','output_policy'):
+        if type(value[key]) is not dict:raise WorkbenchError(key+' must be an object.')
+    if value['kind']=='captured_source':
+        selector=value['source_selector'];closed(selector,('project_id','recipe_id','expected_sha256'))
+        identifier(selector['project_id']);text(selector['recipe_id'],'Recipe ID',64)
+        if type(selector['expected_sha256']) is not str or not SHA.fullmatch(selector['expected_sha256']):
+            raise WorkbenchError('Source selector requires the exact declared recipe SHA256.')
+    elif value['source_selector'] is not None:
+        raise WorkbenchError('A template does not select external project source.')
+    return value
+
+
+
+def validate_model_blob(item):
+    closed(item,('name','sha256','bytes','media_type'))
+    natural(item['bytes'],'Blob bytes',0,MAX_SOURCE_BYTES);text(item['media_type'],'Media type',80)
+    if (type(item['name']) is not str or not re.fullmatch(
+            r'(?:source-\d{4}\.bin|specification\.json|preprocessing_policy\.json|output_policy\.json)',item['name']) or
+            type(item['sha256']) is not str or not SHA.fullmatch(item['sha256'])):
+        raise WorkbenchError('Invalid model blob identity.')
+
+
+
+def decode_model_material(value, *, catalog_id):
+    value=checked_json(value);closed(value,('ref','material'))
+    ref=reference(value['ref'],'model',catalog_id)
+    if digest(value['material'])!=ref['sha256']:
+        raise WorkbenchError('Published model identity differs.','unavailable',409)
+    material=value['material']
+    closed(material,('format','catalog_id','model_definition_id','model_definition_revision','task','kind',
+                     'entrypoint','source_selector','source_closure','specification','preprocessing_policy','output_policy'))
+    if (material['format']!='model_material_v1' or material['catalog_id']!=catalog_id or
+            material['model_definition_id']!=ref['id'] or material['model_definition_revision']!=ref['revision'] or
+            material['kind'] not in ('template','captured_source')):
+        raise WorkbenchError('Published model definition differs.','unavailable',409)
+    reference(material['task'],'task',catalog_id)
+    decode_model_draft({'format':'model_draft_v1','id':material['model_definition_id'],
+        'revision':material['model_definition_revision'],'name':'Retained model','task':material['task'],
+        'kind':material['kind'],'specification':{},'source_selector':material['source_selector'],
+        'preprocessing_policy':{},'output_policy':{}}, catalog_id=catalog_id)
+    from projects import relative_path
+    relative_path(material['entrypoint'])
+    if type(material['source_closure']) is not list or not 1<=len(material['source_closure'])<=MAX_SOURCE_FILES:
+        raise WorkbenchError('Published model source inventory is invalid.','unavailable',409)
+    paths=[];names=[]
+    for item in material['source_closure']:
+        closed(item,('import_path','blob'));relative_path(item['import_path']);paths.append(item['import_path'])
+        validate_model_blob(item['blob']);names.append(item['blob']['name'])
+    for key in ('specification','preprocessing_policy','output_policy'):
+        validate_model_blob(material[key]);names.append(material[key]['name'])
+        if material[key]['name']!=key+'.json':raise WorkbenchError('Model policy blob name differs.','unavailable',409)
+    if len(set(paths))!=len(paths) or len(set(names))!=len(names) or material['entrypoint'] not in paths:
+        raise WorkbenchError('Model source mapping differs.','unavailable',409)
+    if sum(item['blob']['bytes'] for item in material['source_closure'])>MAX_SOURCE_BYTES:
+        raise WorkbenchError('Published source closure exceeds its byte bound.','unavailable',409)
+    return value
+
+
+def verify_model_closure(value, *, read_blob):
+    """Read only declared immutable model blobs; never import captured source."""
+    value=decode_model_material(value,catalog_id=value['ref']['catalog_id'])
+    original=read_blob
+    def read_blob(item,maximum):
+        raw=original(item,maximum)
+        if type(raw) is not bytes or len(raw)>maximum or len(raw)!=item['bytes'] or hashlib.sha256(raw).hexdigest()!=item['sha256']:
+            raise WorkbenchError('Retained Model blob differs.','unavailable',409)
+        return raw
+    material=value['material']
+    for item in [*(material[key] for key in ('specification','preprocessing_policy','output_policy')),
+                 *(item['blob'] for item in material['source_closure'])]:
+        read_blob(item,MAX_SOURCE_BYTES)
+    if material['kind']!='captured_source':return None
+    import extension_bindings
+    import recipe_contract
+    material=value['material'];ref=value['ref']
+    sources={item['import_path']:read_blob(item['blob'],MAX_SOURCE_BYTES) for item in material['source_closure']}
+    matches=[raw for raw in sources.values() if hashlib.sha256(raw).hexdigest()==material['source_selector']['expected_sha256']]
+    if not matches:raise WorkbenchError('Retained model recipe is missing.','unavailable',409)
+    definition=recipe_contract.decode_definition(matches[0])
+    if recipe_contract.is_bound_evidence(definition):
+        raw=sources.get(extension_bindings.BINDING_PATH)
+        if raw is None:raise WorkbenchError('Retained model binding is missing.','unavailable',409)
+        binding=retained_json(raw.decode(),extension_bindings.BOUND_DOCUMENT_LIMIT)
+        inventory={item['path'] for item in binding['inventory']}
+        bound_sources={path:data for path,data in sources.items() if path in inventory or path==extension_bindings.BINDING_PATH}
+        recipe_contract.validate_bound_sources(definition,binding,bound_sources,
+            specification=retained_json(read_blob(material['specification'],MAX_SOURCE_BYTES).decode()),task=material['task'])
+        if material['entrypoint']!=definition['entrypoint']:
+            raise WorkbenchError('Retained Model entrypoint differs.','unavailable',409)
+        return binding
+    if extension_bindings.BINDING_PATH in sources:
+        raise WorkbenchError('Legacy model cannot retain an extension binding.','unavailable',409)
+
+
+
 class ModelDefinitions:
     def __init__(self,dataset):
         self.dataset=dataset;self.access=dataset.access;self.db=dataset.db;self.lock=dataset.lock
         self.path=dataset.path/'model-materials';self.path.mkdir(mode=0o700,exist_ok=True)
 
     def _draft(self,value):
-        value=checked_json(value)
-        closed(value,('format','id','revision','name','task','kind','specification','source_selector',
-                      'preprocessing_policy','output_policy'))
-        if value['format']!='model_draft_v1' or value['kind'] not in ('template','captured_source'):
-            raise WorkbenchError('Unsupported model definition.','unsupported',400)
-        identifier(value['id']);natural(value['revision'],'Model revision',1);text(value['name'],'Model name')
-        reference(value['task'],'task',self.db.dataset_id)
-        for key in ('specification','preprocessing_policy','output_policy'):
-            if type(value[key]) is not dict:raise WorkbenchError(key+' must be an object.')
-        if value['kind']=='captured_source':
-            selector=value['source_selector'];closed(selector,('project_id','recipe_id','expected_sha256'))
-            identifier(selector['project_id']);text(selector['recipe_id'],'Recipe ID',64)
-            if type(selector['expected_sha256']) is not str or not SHA.fullmatch(selector['expected_sha256']):
-                raise WorkbenchError('Source selector requires the exact declared recipe SHA256.')
-        elif value['source_selector'] is not None:
-            raise WorkbenchError('A template does not select external project source.')
-        return value
+        return decode_model_draft(value, catalog_id=self.db.dataset_id)
 
     def _get(self,model_id):
         identifier(model_id)
@@ -308,36 +395,9 @@ class ModelDefinitions:
             row=self.db.execute('SELECT document FROM model_materials WHERE id=%s AND revision=%s AND sha256=%s',
                                 (ref['id'],ref['revision'],ref['sha256'])).fetchone()
         if row is None:raise WorkbenchError('Published model material not found.','not_found',404)
-        value=checked_json(retained_json(row[0]));closed(value,('ref','material'))
-        if value['ref']!=ref or digest(value['material'])!=ref['sha256']:
-            raise WorkbenchError('Published model identity differs.','unavailable',409)
+        value=decode_model_material(retained_json(row[0]),catalog_id=self.db.dataset_id)
+        if value['ref']!=ref:raise WorkbenchError('Published model reference differs.','unavailable',409)
         material=value['material']
-        closed(material,('format','catalog_id','model_definition_id','model_definition_revision','task','kind',
-                         'entrypoint','source_selector','source_closure','specification','preprocessing_policy','output_policy'))
-        if (material['format']!='model_material_v1' or material['catalog_id']!=self.db.dataset_id or
-                material['model_definition_id']!=ref['id'] or material['model_definition_revision']!=ref['revision'] or
-                material['kind'] not in ('template','captured_source')):
-            raise WorkbenchError('Published model definition differs.','unavailable',409)
-        reference(material['task'],'task',self.db.dataset_id)
-        self._draft({'format':'model_draft_v1','id':material['model_definition_id'],
-            'revision':material['model_definition_revision'],'name':'Retained model','task':material['task'],
-            'kind':material['kind'],'specification':{},'source_selector':material['source_selector'],
-            'preprocessing_policy':{},'output_policy':{}})
-        from projects import relative_path
-        relative_path(material['entrypoint'])
-        if type(material['source_closure']) is not list or not 1<=len(material['source_closure'])<=MAX_SOURCE_FILES:
-            raise WorkbenchError('Published model source inventory is invalid.','unavailable',409)
-        paths=[];names=[]
-        for item in material['source_closure']:
-            closed(item,('import_path','blob'));relative_path(item['import_path']);paths.append(item['import_path'])
-            self._blob(item['blob']);names.append(item['blob']['name'])
-        for key in ('specification','preprocessing_policy','output_policy'):
-            self._blob(material[key]);names.append(material[key]['name'])
-            if material[key]['name']!=key+'.json':raise WorkbenchError('Model policy blob name differs.','unavailable',409)
-        if len(set(paths))!=len(paths) or len(set(names))!=len(names) or material['entrypoint'] not in paths:
-            raise WorkbenchError('Model source mapping differs.','unavailable',409)
-        if sum(item['blob']['bytes'] for item in material['source_closure'])>MAX_SOURCE_BYTES:
-            raise WorkbenchError('Published source closure exceeds its byte bound.','unavailable',409)
         if verify:
             for item in [*(value['material'][key] for key in ('specification','preprocessing_policy','output_policy')),
                          *(source['blob'] for source in value['material']['source_closure'])]:
@@ -347,35 +407,9 @@ class ModelDefinitions:
         return value
 
     def _validate_bound_sources(self, value):
-        import extension_bindings
-        import recipe_contract
-        material=value['material'];ref=value['ref']
-        sources={item['import_path']:self._read_blob(ref,item['blob']) for item in material['source_closure']}
-        matches=[raw for raw in sources.values() if hashlib.sha256(raw).hexdigest()==material['source_selector']['expected_sha256']]
-        if not matches:raise WorkbenchError('Retained model recipe is missing.','unavailable',409)
-        definition=recipe_contract.decode_definition(matches[0])
-        if recipe_contract.is_bound_evidence(definition):
-            raw=sources.get(extension_bindings.BINDING_PATH)
-            if raw is None:raise WorkbenchError('Retained model binding is missing.','unavailable',409)
-            binding=retained_json(raw.decode(),extension_bindings.BOUND_DOCUMENT_LIMIT)
-            inventory={item['path'] for item in binding['inventory']}
-            bound_sources={path:data for path,data in sources.items() if path in inventory or path==extension_bindings.BINDING_PATH}
-            recipe_contract.validate_bound_sources(definition,binding,bound_sources,
-                specification=retained_json(self._read_blob(ref,material['specification']).decode()),task=material['task'])
-            if material['entrypoint']!=definition['entrypoint']:
-                raise WorkbenchError('Retained Model entrypoint differs.','unavailable',409)
-            return binding
-        if extension_bindings.BINDING_PATH in sources:
-            raise WorkbenchError('Legacy model cannot retain an extension binding.','unavailable',409)
+        return verify_model_closure(value,read_blob=lambda item,maximum:self._read_blob(value['ref'],item))
 
-    @staticmethod
-    def _blob(item):
-        closed(item,('name','sha256','bytes','media_type'))
-        natural(item['bytes'],'Blob bytes',0,MAX_SOURCE_BYTES);text(item['media_type'],'Media type',80)
-        if (type(item['name']) is not str or not re.fullmatch(
-                r'(?:source-\d{4}\.bin|specification\.json|preprocessing_policy\.json|output_policy\.json)',item['name']) or
-                type(item['sha256']) is not str or not SHA.fullmatch(item['sha256'])):
-            raise WorkbenchError('Invalid model blob identity.')
+    _blob = staticmethod(validate_model_blob)
 
     @authorized('inspect','models.read_blob')
     def read_blob(self,ref,item):

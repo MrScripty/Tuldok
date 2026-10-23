@@ -98,8 +98,11 @@ def error_response(request_id, code, message):
             'error': {'code': code, 'message': message}}
 
 
-def tool_error(code, message, status=502):
-    return {'status': status, 'result': {'code': code, 'error': message}}
+def tool_error(code, message, status=502, *, receipt=None):
+    result = {'code': code, 'error': message}
+    if receipt is not None:
+        result['receipt'] = receipt
+    return {'status': status, 'result': result}
 
 
 def encode_response(value):
@@ -186,7 +189,7 @@ class Profile:
 
 
 async def serve(client, input_fd=0, output_fd=1, observer=None):
-    """Run the public SDK over bounded stdio; caller bootstraps AgentClient first."""
+    """Run the public SDK over bounded stdio; caller bootstraps its explicit profile."""
     import anyio
     from mcp import types
     from mcp.server.lowlevel import Server
@@ -194,7 +197,6 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
     from mcp.shared.message import SessionMessage
     import agent_api
 
-    agent_api.validate_registry()
     definitions = (client.tool_definitions() if hasattr(client, 'tool_definitions')
                    else agent_api.tool_definitions())
     selected = client.selected_contracts() if hasattr(client, 'selected_contracts') else {}
@@ -234,14 +236,19 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
         try:
             agent_api.validate_arguments(name, arguments, contract_version(name))
             observe('dispatch', pending_observation)
-            envelope = await anyio.to_thread.run_sync(client.call, name, arguments)
+            # The explicit owner clients admit canonical operation IDs only;
+            # MCP names are transport aliases, validated by the fixed profile.
+            dispatch_name = (agent_api.operation(name)['operation_id']
+                             if isinstance(client, (agent_api.ProjectFilesOwnerClient,
+                                                    agent_api.ProjectTransferOwnerClient)) else name)
+            envelope = await anyio.to_thread.run_sync(client.call, dispatch_name, arguments)
             pending_http_status = envelope.get('status') if isinstance(envelope, dict) else None
             agent_api.validate_output(name, envelope, contract_version(name))
             pending_outcome = ('permission-refusal' if envelope['status'] in (401, 403)
                                else 'domain-error' if envelope['status'] >= 400 else 'success')
         except agent_api.AgentAPIError as exc:
             # Owner supplies bounded, public API errors; no raw transport exception.
-            envelope = tool_error(exc.code, str(exc), exc.status)
+            envelope = tool_error(exc.code, str(exc), exc.status, receipt=exc.receipt)
             pending_outcome = ('transport-error' if exc.code in ('transport', 'response_too_large')
                                else 'registry-refusal' if exc.code == 'registry_mismatch'
                                else 'permission-refusal' if exc.status in (401, 403) else 'call-error')
@@ -403,7 +410,12 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', required=True, help='Private AgentClient JSON configuration file')
+    parser.add_argument('--config', required=True, help='Private SDK JSON configuration file')
+    owner_profile = parser.add_mutually_exclusive_group()
+    owner_profile.add_argument('--project-files-owner', action='store_true',
+                               help='Explicit current owner credential; expose only finite project-file operations')
+    owner_profile.add_argument('--project-transfer-owner', action='store_true',
+                               help='Explicit current host owner; expose only the five project-transfer operations')
     parser.add_argument('--observe-v2-database', help='Explicit operator opt-in to a fresh private v2 interface store')
     parser.add_argument('--observe-database', help='Opt in to operator-only SQLite in an existing private directory')
     parser.add_argument('--observe-max-calls')
@@ -416,7 +428,9 @@ def main(argv=None):
         import mcp  # noqa: F401 - explicit optional consumer boundary
         import jsonschema  # noqa: F401
         import agent_api
-        client = agent_api.AgentClient.from_config(args.config)
+        client_type = (agent_api.ProjectFilesOwnerClient if args.project_files_owner else
+                       agent_api.ProjectTransferOwnerClient if args.project_transfer_owner else agent_api.AgentClient)
+        client = client_type.from_config(args.config)
         client.bootstrap()
         if args.observe_database is not None or args.observe_v2_database is not None:
             try:

@@ -41,8 +41,8 @@ app.text_classification_proposals.TextClassificationProposals.start = instrument
 original_handler = app.make_handler
 
 
-def instrumented_handler(dataset, observer=None):
-    class Handler(original_handler(dataset, observer)):
+def instrumented_handler(dataset, observer=None, *, transfer_controller=None):
+    class Handler(original_handler(dataset, observer, transfer_controller=transfer_controller)):
         def _get(self):
             if self.path == '/api/test/classification-dispatch':
                 with admission_lock:

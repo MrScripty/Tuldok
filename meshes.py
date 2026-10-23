@@ -63,19 +63,26 @@ def exact(value, keys, name):
 def manifest(raw, geometry):
     if not 0 < len(raw) <= MANIFEST_LIMIT:
         invalid('sidecar byte cap exceeded.')
-    value = parse_json(raw)
+    value = manifest_declaration(parse_json(raw))
+    if value['geometry_bytes'] != len(geometry):
+        invalid('geometry filename or byte count mismatch.')
+    if hashlib.sha256(geometry).hexdigest() != value['geometry_sha256']:
+        invalid('geometry SHA256 mismatch.')
+    return value
+
+
+def manifest_declaration(value):
+    """Declared source semantics, independently of payload availability."""
     exact(value, ('format', 'geometry_file', 'geometry_bytes', 'geometry_sha256', 'units', 'coordinate_system', 'provenance'), 'sidecar')
     if type(value['format']) is not str:
         invalid('format must be a string.')
     if value['format'] != 'tuldok_mesh_v1':
         raise WorkbenchError('Unsupported static mesh sidecar version.', 'unsupported')
-    if value['geometry_file'] != 'mesh.ply' or type(value['geometry_bytes']) is not int or value['geometry_bytes'] != len(geometry):
+    if value['geometry_file'] != 'mesh.ply' or type(value['geometry_bytes']) is not int or not 0 < value['geometry_bytes'] <= PLY_LIMIT:
         invalid('geometry filename or byte count mismatch.')
     digest = value['geometry_sha256']
     if type(digest) is not str or not HASH.fullmatch(digest):
         invalid('geometry SHA256 must be lowercase hex.')
-    if hashlib.sha256(geometry).hexdigest() != digest:
-        invalid('geometry SHA256 mismatch.')
     if value['units'] not in ('m', 'cm', 'mm'):
         invalid('units must be m, cm or mm.')
     frame = value['coordinate_system']
@@ -268,6 +275,23 @@ class MeshAssets(ImmutableAssets):
             return prepared['geometry']
         except (WorkbenchError, zipfile.BadZipFile, KeyError, RuntimeError, UnicodeError) as error:
             raise WorkbenchError('Mesh source or metadata changed outside Tuldok.', 'conflict', 409) from error
+
+    def validate_project_source(self, bundle, metadata):
+        self.validated({'mesh': metadata}, bundle)
+
+
+    @staticmethod
+    def validate_project_metadata(value):
+        from immutable_assets import validate_project_metadata_fields, validate_project_bounds
+        validate_project_metadata_fields(value, {'manifest','manifest_sha256','properties','vertex_count','triangle_count','bounds','provided_normals','protected_groups','scope'}, BUNDLE_LIMIT)
+        manifest_declaration(value['manifest']); validate_project_bounds(value['bounds'])
+        if type(value['manifest_sha256']) is not str or not HASH.fullmatch(value['manifest_sha256']):invalid('invalid retained manifest SHA256.')
+        for key,maximum in (('vertex_count',VERTEX_LIMIT),('triangle_count',FACE_LIMIT)):
+            if type(value[key]) is not int or not 1<=value[key]<=maximum:invalid('invalid retained mesh count.')
+        properties=value['properties']
+        if type(properties) is not list or any(type(p) is not dict or set(p)!={'name','dtype'} or p['dtype'] not in ('float','double') for p in properties):invalid('invalid retained mesh properties.')
+        names=[p['name'] for p in properties]
+        if names not in (['x','y','z'],['x','y','z','nx','ny','nz']) or type(value['provided_normals']) is not bool or value['provided_normals']!=(len(names)==6):invalid('retained mesh normal declaration differs.')
 
     @authorized('inspect', 'meshes.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):

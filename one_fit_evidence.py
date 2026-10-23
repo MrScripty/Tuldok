@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 
 from image_training import TrainingError, _invalid, _write_json
-from model_evidence import read_binary, read_document
+from model_evidence import read_binary, read_document, decode_document
 from workbench import encode
 
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -205,7 +205,7 @@ def capture(directory, *, job, adapter, manifest, reference_keys, saved, inputs,
     return body
 
 
-def verify_directory(directory, *, job, adapter, manifest, reference_keys, expected_inputs, reconstruct=True):
+def verify_directory(directory, *, job, adapter, manifest, reference_keys, expected_inputs, reconstruct=True, read_blob=None):
     """Task-owned checks after custody; accepts no source paths from evidence.
 
     `manifest` and `expected_inputs` come from the selected frozen task reader,
@@ -213,10 +213,16 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
     exact output inventory/outer hashes and atomic publication.
     """
     context = validate_job_selection(job, adapter)
-    root = Path(directory)
+    root = Path(directory) if directory is not None else None
+    def reference_blob(name):
+        if read_blob is None:return _ref(root/name)
+        raw=read_blob(name,8*1024**2)
+        return dict(name=name,sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw),media_type='application/json')
+    def hash_blob(name):
+        return reference_blob(name)['sha256']
     def read(name):
         maximum = 1024**2 if name == 'model-evidence.json' else 8 * 1024**2
-        return read_document(root, name, maximum)
+        return read_document(root,name,maximum) if read_blob is None else decode_document(read_blob(name,maximum),name)
     evidence = read('model-evidence.json')
     _exact(evidence, ('format', 'schema_version', 'producer', 'task', 'model_sha256', 'data_sha256', 'profile_sha256', 'probe',
                      'metric_definitions', 'checkpoints', 'observations', 'field_index', 'coverage', 'inference'), 'Evidence manifest')
@@ -226,7 +232,7 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
             or evidence['data_sha256'] != job['release_sha256'] or evidence['profile_sha256'] != context['profile_sha256']):
         _invalid('One-fit evidence material differs from the admitted job.')
     def reference(ref, name):
-        if not _same(ref, _ref(root / name)):
+        if not _same(ref, reference_blob(name)):
             _invalid('One-fit evidence blob differs from retained bytes.')
         return read(name)
     index = reference(evidence['checkpoints'], 'checkpoints.json')
@@ -247,10 +253,10 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
             or type(evidence['inference']['fitted_transforms']) is not list or len(evidence['inference']['fitted_transforms']) != 1):
         _invalid('One-fit inference policy differs from admitted material.')
     fitted = reference(evidence['inference']['fitted_transforms'][0], 'fitted-transform.json')
-    if (type(entry['selected']) is not bool or entry != dict(checkpoint=entry['checkpoint'], model_sha256=context['model_sha256'], fitted_transform_sha256=digest_bytes(root / 'fitted-transform.json'),
+    if (type(entry['selected']) is not bool or entry != dict(checkpoint=entry['checkpoint'], model_sha256=context['model_sha256'], fitted_transform_sha256=hash_blob('fitted-transform.json'),
                       clocks=clocks, selected=True, state='retained')
             or not _same(checkpoint, dict(format='checkpoint_state_v1', run_id=job['run_id'], model_sha256=context['model_sha256'],
-                         weights=_ref(root / 'model.json'), fitted_transform_sha256=entry['fitted_transform_sha256'], clocks=clocks))):
+                         weights=reference_blob('model.json'), fitted_transform_sha256=entry['fitted_transform_sha256'], clocks=clocks))):
         _invalid('One-fit descriptor/index binding differs.')
     saved = read('model.json')
     if saved.get('adapter') != job['adapter'] or saved.get('source_identity') != {key: job[key] for key in ('dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256')}:
@@ -301,7 +307,7 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
     metrics = read('metrics.json')
     if not _same(metrics.get('clocks'), clocks) or 'history' in metrics or 'best_epoch' in metrics:
         _invalid('One-fit metrics cannot publish an artificial training curve.')
-    if not _same(evidence['observations'], [_ref(root / 'observations.json'), _ref(root / 'probes-fit-0001.json')]):
+    if not _same(evidence['observations'], [reference_blob('observations.json'), reference_blob('probes-fit-0001.json')]):
         _invalid('One-fit observations differ from retained bytes.')
     observations = read('observations.json')
     expected_observations = [dict(run_id=job['run_id'], checkpoint_sha256=entry['checkpoint']['sha256'], probe_sha256=evidence['probe']['sha256'],
@@ -343,7 +349,7 @@ def job_for_run(run, output_dir=None):
     context = run['evidence_context']
     owner = contract(run['adapter'])
     return dict(schema_version=2, dataset_id=run['dataset_id'], run_id=run['id'], graph_sha256=run['graph_sha256'],
-                release_id=run['release_id'], release_sha256=run['release_sha256'], release_path=run['release_path'],
+                release_id=run['release_id'], release_sha256=run['release_sha256'], release_path=run.get('release_path',run['release_id']),
                 output_dir=str(output_dir or run['id']), parameters=run['parameters'], parent_pid=1, adapter=run['adapter'],
                 evidence=dict(catalog_id=run['dataset_id'], material_sha256=context['material_sha256'], adapter_sha256=context['adapter_sha256'],
                     model_sha256=context['model_sha256'], task=owner.task_ref(run['dataset_id']), profile_sha256=digest(context['profile']),
@@ -351,20 +357,23 @@ def job_for_run(run, output_dir=None):
 
 
 def verify(directory, run, metrics):
+    return verify_blobs(run,metrics,read_blob=lambda name,maximum:read_binary(Path(directory)/name,maximum))
+
+
+def verify_blobs(run, metrics, *, read_blob):
     """Inert query/publication semantics; executable replay belongs to the worker."""
-    root = Path(directory)
+    def read(name):return decode_document(read_blob(name,8*1024**2),name)
     owner = contract(run['adapter'])
     records = run['source_records']
     manifest = dict(records=records, class_vocabulary=metrics['class_vocabulary'])
-    inputs = read_document(root, 'probe-inputs.json')['inputs']
+    inputs = read('probe-inputs.json')['inputs']
     if owner.task == 'text_classification':
         inputs = [row['text'] for row in records if row['split'] == 'validation']
     elif (type(inputs) is not list or len(inputs) != sum(row['split'] == 'validation' for row in records)
           or any(type(row) is not list or len(row) != 8 or any(type(value) not in (int, float) or not math.isfinite(value) for value in row) for row in inputs)):
         _invalid('Frozen audio probe measurements are invalid.')
-    body = verify_directory(directory, job=job_for_run(run, directory), adapter=owner.adapter.ADAPTER, manifest=manifest,
-                            reference_keys=owner.adapter.REFERENCE_KEYS, expected_inputs=inputs, reconstruct=False)
-    read = lambda name: read_document(root, name)
+    body = verify_directory(None, job=job_for_run(run), adapter=owner.adapter.ADAPTER, manifest=manifest,
+                            reference_keys=owner.adapter.REFERENCE_KEYS, expected_inputs=inputs, reconstruct=False,read_blob=read_blob)
     return dict(state='verified', manifest=body, checkpoint_index=read('checkpoints.json'), probe=read('probe.json'),
                 metric_definitions=read('metric-definitions.json'), observations=read('observations.json'),
                 model_definition=read('model-definition.json')), [read('checkpoint-fit-0001.json')], [read('probes-fit-0001.json')]

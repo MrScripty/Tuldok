@@ -17,7 +17,7 @@ import tempfile
 import threading
 import time
 
-from agent_api import (AgentAPIError, AgentClient, contract, encoded, validate_arguments,
+from agent_api import (ProjectTransferOwnerClient, AgentAPIError, AgentClient, contract, encoded, validate_arguments,
                        verify_artifact, verify_publication_artifact, validate_artifact_segments,
                        validate_segment, validate_publication_segment)
 
@@ -56,7 +56,7 @@ def _invoke(client, operation, arguments):
     if envelope['status'] >= 400:
         error = envelope['result']
         raise AgentAPIError(error['error'], error.get('code', 'http_error'), envelope['status'],
-                            preflight_report=error.get('preflight_report'))
+                            preflight_report=error.get('preflight_report'), receipt=error.get('receipt'))
     return envelope['result']
 
 
@@ -153,6 +153,552 @@ def _verified_local(path, item):
             raise AgentAPIError('Resumed artifact differs from its exact whole hash.', 'artifact_mismatch', 409)
     finally:
         os.close(fd)
+
+
+class ProjectTransferClient:
+    """Five explicit extraction actions with independently configured owner access.
+
+    Stop ends the source client's authority. Obtain current-control credentials
+    separately and construct a new client before stopped preview or extraction.
+    """
+    def __init__(self,client):self.client=client
+
+    @classmethod
+    def from_config(cls,path):return cls(ProjectTransferOwnerClient.from_config(path))
+
+    def _call(self,action,arguments):
+        name='project_transfer.'+action
+        validate_arguments(name,arguments)
+        return _invoke(self.client,name,arguments)
+
+    def status(self):return self._call('status',{})
+
+    def preview(self,selection,*,binding):return self._call('preview',dict(binding=binding,selection=selection))
+
+    def report_page(self,*,binding,report_sha256,section,offset=0,limit=40):
+        return self._call('report_page',dict(binding=binding,report_sha256=report_sha256,section=section,offset=offset,limit=limit))
+
+    def stop(self,*,binding,report_sha256,backup_root,backup_directory,destination_root,directory):
+        return self._call('stop',dict(binding=binding,report_sha256=report_sha256,backup_root=backup_root,
+            backup_directory=backup_directory,destination_root=destination_root,directory=directory))
+
+    def extract(self,*,binding,report_sha256,destination_root,directory,name,request_key):
+        return self._call('extract',dict(binding=binding,report_sha256=report_sha256,destination_root=destination_root,
+            directory=directory,name=name,request_key=request_key))
+
+
+class ProjectFilesClient:
+    """Thin, explicit checkpoint-bound file-project calls; never retries a mutation.
+
+    Retain each request_key until its outcome is known. Binding and checkpoint
+    come from status or the last acknowledged project response, never a local
+    project path or a logical project UUID.
+    """
+    def __init__(self, client):
+        self.client = client
+
+    @classmethod
+    def from_config(cls, path):
+        return cls(AgentClient.from_config(path))
+
+    def _call(self, action, arguments):
+        operation = 'project_files.' + action
+        validate_arguments(operation, arguments)
+        return _invoke(self.client, operation, arguments)
+
+    def status(self):
+        return self._call('status', {})
+
+    def new(self, *, root, directory, name, binding, expected_checkpoint, request_key):
+        return self._call('new', dict(root=root, directory=directory, name=name,
+            binding=binding, expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def open(self, *, root, directory, binding, expected_checkpoint, request_key):
+        return self._call('open', dict(root=root, directory=directory,
+            binding=binding, expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def save(self, *, binding, expected_checkpoint, request_key):
+        return self._call('save', dict(binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def close(self, *, binding, expected_checkpoint, request_key):
+        return self._call('close', dict(binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def query(self, *, binding, checkpoint, after_id=None, limit=None):
+        arguments = dict(binding=binding, checkpoint=checkpoint)
+        if after_id is not None:
+            arguments['after_id'] = after_id
+        if limit is not None:
+            arguments['limit'] = limit
+        return self._call('query', arguments)
+
+    def get(self, record_id, *, binding, checkpoint, before_revision=None, history_limit=None):
+        arguments = dict(record_id=record_id, binding=binding, checkpoint=checkpoint)
+        if before_revision is not None:
+            arguments['before_revision'] = before_revision
+        if history_limit is not None:
+            arguments['history_limit'] = history_limit
+        return self._call('get', arguments)
+
+    def import_text(self, asset, *, binding, expected_checkpoint, request_key):
+        return self._call('import_text', dict(asset=copy.deepcopy(asset), binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def annotate(self, record_id, annotation, *, binding, expected_checkpoint, request_key):
+        return self._call('annotate', dict(record_id=record_id,
+            annotation=copy.deepcopy(annotation), binding=binding,
+            expected_checkpoint=expected_checkpoint, request_key=request_key))
+
+    def artifact_status(self, **arguments):
+        """artifact status; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('artifact_status', arguments)
+
+    def artifacts(self, **arguments):
+        """artifacts; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('artifacts', arguments)
+
+    def candidate(self, **arguments):
+        """candidate; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('candidate', arguments)
+
+    def candidate_select(self, **arguments):
+        """candidate select; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('candidate_select', arguments)
+
+    def data_annotate(self, **arguments):
+        """data annotate; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_annotate', arguments)
+
+    def data_availability(self, **arguments):
+        """data availability; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_availability', arguments)
+
+    def data_get(self, **arguments):
+        """data get; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_get', arguments)
+
+    def data_history(self, **arguments):
+        """data history; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_history', arguments)
+
+    def data_import_audio(self, **arguments):
+        """data import audio; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_audio', arguments)
+
+    def data_import_image(self, **arguments):
+        """data import image; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_image', arguments)
+
+    def data_import_mesh(self, **arguments):
+        """data import mesh; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_mesh', arguments)
+
+    def data_import_pointcloud(self, **arguments):
+        """data import pointcloud; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_pointcloud', arguments)
+
+    def data_import_sequence(self, **arguments):
+        """data import sequence; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_sequence', arguments)
+
+    def data_import_text(self, **arguments):
+        """data import text; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_text', arguments)
+
+    def data_import_volume(self, **arguments):
+        """data import volume; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_import_volume', arguments)
+
+    def data_preference_delete(self, **arguments):
+        """data preference delete; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_preference_delete', arguments)
+
+    def data_preference_history(self, **arguments):
+        """data preference history; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_preference_history', arguments)
+
+    def data_preference_save(self, **arguments):
+        """data preference save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_preference_save', arguments)
+
+    def data_preferences(self, **arguments):
+        """data preferences; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_preferences', arguments)
+
+    def data_query(self, **arguments):
+        """data query; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_query', arguments)
+
+    def data_response_history(self, **arguments):
+        """data response history; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_response_history', arguments)
+
+    def data_response_save(self, **arguments):
+        """data response save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_response_save', arguments)
+
+    def data_responses(self, **arguments):
+        """data responses; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_responses', arguments)
+
+    def data_rights(self, **arguments):
+        """data rights; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_rights', arguments)
+
+    def data_source_delete(self, **arguments):
+        """data source delete; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_source_delete', arguments)
+
+    def data_source_save(self, **arguments):
+        """data source save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('data_source_save', arguments)
+
+    def evidence(self, **arguments):
+        """evidence; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('evidence', arguments)
+
+    def expose_holdout(self, **arguments):
+        """expose holdout; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('expose_holdout', arguments)
+
+    def graph_clone(self, **arguments):
+        """graph clone; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('graph_clone', arguments)
+
+    def graph_create(self, **arguments):
+        """graph create; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('graph_create', arguments)
+
+    def graph_get(self, **arguments):
+        """graph get; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('graph_get', arguments)
+
+    def graph_save(self, **arguments):
+        """graph save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('graph_save', arguments)
+
+    def graphs(self, **arguments):
+        """graphs; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('graphs', arguments)
+
+    def lineage(self, **arguments):
+        """lineage; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('lineage', arguments)
+
+    def lineage_record(self, **arguments):
+        """lineage record; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('lineage_record', arguments)
+
+    def model_create(self, **arguments):
+        """model create; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('model_create', arguments)
+
+    def model_get(self, **arguments):
+        """model get; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('model_get', arguments)
+
+    def model_material(self, **arguments):
+        """model material; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('model_material', arguments)
+
+    def model_publish(self, **arguments):
+        """model publish; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('model_publish', arguments)
+
+    def model_save(self, **arguments):
+        """model save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('model_save', arguments)
+
+    def models(self, **arguments):
+        """models; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('models', arguments)
+
+    def policies(self, **arguments):
+        """policies; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('policies', arguments)
+
+    def policy(self, **arguments):
+        """policy; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('policy', arguments)
+
+    def producer(self, **arguments):
+        """producer; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('producer', arguments)
+
+    def producers(self, **arguments):
+        """producers; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('producers', arguments)
+
+    def recipe_create(self, **arguments):
+        """recipe create; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('recipe_create', arguments)
+
+    def recipe_get(self, **arguments):
+        """recipe get; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('recipe_get', arguments)
+
+    def recipe_material(self, **arguments):
+        """recipe material; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('recipe_material', arguments)
+
+    def recipe_prepare(self, **arguments):
+        """recipe prepare; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('recipe_prepare', arguments)
+
+    def recipe_save(self, **arguments):
+        """recipe save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('recipe_save', arguments)
+
+    def recipes(self, **arguments):
+        """recipes; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('recipes', arguments)
+
+    def release_freeze(self, **arguments):
+        """release freeze; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('release_freeze', arguments)
+
+    def release_preview(self, **arguments):
+        """release preview; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('release_preview', arguments)
+
+    def retained_analysis(self, **arguments):
+        """retained analysis; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('retained_analysis', arguments)
+
+    def retained_analysis_export(self, **arguments):
+        """retained analysis export; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('retained_analysis_export', arguments)
+
+    def run(self, **arguments):
+        """run; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('run', arguments)
+
+    def runtime_material(self, **arguments):
+        """runtime material; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('runtime_material', arguments)
+
+    def search_create(self, **arguments):
+        """search create; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('search_create', arguments)
+
+    def search_delete(self, **arguments):
+        """search delete; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('search_delete', arguments)
+
+    def search_rename(self, **arguments):
+        """search rename; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('search_rename', arguments)
+
+    def searches(self, **arguments):
+        """searches; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('searches', arguments)
+
+    def selection_create(self, **arguments):
+        """selection create; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('selection_create', arguments)
+
+    def selection_delete(self, **arguments):
+        """selection delete; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('selection_delete', arguments)
+
+    def selection_get(self, **arguments):
+        """selection get; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('selection_get', arguments)
+
+    def selection_rename(self, **arguments):
+        """selection rename; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('selection_rename', arguments)
+
+    def selections(self, **arguments):
+        """selections; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('selections', arguments)
+
+    def snapshot(self, **arguments):
+        """snapshot; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('snapshot', arguments)
+
+    def studies(self, **arguments):
+        """studies; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('studies', arguments)
+
+    def study(self, **arguments):
+        """study; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('study', arguments)
+
+    def study_create(self, **arguments):
+        """study create; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('study_create', arguments)
+
+    def study_save(self, **arguments):
+        """study save; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('study_save', arguments)
+
+    def trial(self, **arguments):
+        """trial; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('trial', arguments)
+
+    def trial_prepare(self, **arguments):
+        """trial prepare; exact selected project checkpoint, existing domain validation, no execution."""
+        return self._call('trial_prepare', arguments)
+
+
+    def source_register(self, **arguments):
+        return self._call('source_register', arguments)
+
+    def data_import_scientific(self, **arguments):
+        return self._call('data_import_scientific', arguments)
+
+    def runs(self, **arguments):
+        return self._call('runs', arguments)
+
+    def materials(self, **arguments):
+        return self._call('materials', arguments)
+
+    def publication_result(self, **arguments):
+        return self._call('publication_result', arguments)
+
+    def package_state(self, **arguments):
+        return self._call('package_state', arguments)
+
+    def dependencies(self, **arguments):
+        return self._call('dependencies', arguments)
+
+    def definitions(self, **arguments):
+        return self._call('definitions', arguments)
+
+    def run_document_segment(self, **arguments):
+        return self._call('run_document_segment', arguments)
+
+    def source_references(self, **arguments):
+        return self._call('source_references', arguments)
+
+    def artifact_resolve(self, **arguments):
+        return self._call('artifact_resolve', arguments)
+
+    def graph_create_external(self, **arguments):
+        return self._call('graph_create_external', arguments)
+
+    def native_preflight(self, **arguments):
+        return self._call('native_preflight', arguments)
+
+    def native_submit(self, **arguments):
+        return self._call('native_submit', arguments)
+
+    def native_retry(self, **arguments):
+        return self._call('native_retry', arguments)
+
+    def native_reconcile(self, **arguments):
+        return self._call('native_reconcile', arguments)
+
+    def execution_health(self, **arguments):
+        return self._call('execution_health', arguments)
+
+    def execution_preflight_external(self, **arguments):
+        return self._call('execution_preflight_external', arguments)
+
+    def execution_approve_external(self, **arguments):
+        return self._call('execution_approve_external', arguments)
+
+    def execution_submit_external(self, **arguments):
+        return self._call('execution_submit_external', arguments)
+
+    def execution_cancel(self, **arguments):
+        return self._call('execution_cancel', arguments)
+
+    def execution_study_continue(self, **arguments):
+        return self._call('execution_study_continue', arguments)
+
+    def execution_study_approve(self, **arguments):
+        return self._call('execution_study_approve', arguments)
+
+    def execution_study_admit(self, **arguments):
+        return self._call('execution_study_admit', arguments)
+
+    def execution_study_stop(self, **arguments):
+        return self._call('execution_study_stop', arguments)
+
+    def execution_reconcile_current(self, **arguments):
+        return self._call('execution_reconcile_current', arguments)
+
+    def execution_producer_start(self, **arguments):
+        return self._call('execution_producer_start', arguments)
+
+    def execution_generation_resume(self, **arguments):
+        return self._call('execution_generation_resume', arguments)
+
+    def execution_grounded_review(self, **arguments):
+        return self._call('execution_grounded_review', arguments)
+
+    def execution_producer_decide(self, **arguments):
+        return self._call('execution_producer_decide', arguments)
+
+    def execution_producer_cancel(self, **arguments):
+        return self._call('execution_producer_cancel', arguments)
+
+
+    def execution_producer_health(self, **arguments):
+        return self._call('execution_producer_health', arguments)
+
+    def execution_study_prepare_package(self, **arguments):
+        return self._call('execution_study_prepare_package',arguments)
+
+    def execution_study_prepare_verifier(self, **arguments):
+        return self._call('execution_study_prepare_verifier',arguments)
+
+    def execution_study_abandon_preparation(self, **arguments):
+        return self._call('execution_study_abandon_preparation',arguments)
+
+    def execution_study_reconcile_preparation(self, **arguments):
+        return self._call('execution_study_reconcile_preparation',arguments)
+
+    def runtime_abandon(self, **arguments):
+        return self._call('runtime_abandon',arguments)
+
+    def runtime_sources(self, **arguments):
+        return self._call('runtime_sources',arguments)
+
+    def runtime_inspect(self, **arguments):
+        return self._call('runtime_inspect',arguments)
+
+    def runtime_capture(self, **arguments):
+        return self._call('runtime_capture',arguments)
+
+    def runtime_status(self, **arguments):
+        return self._call('runtime_status',arguments)
+
+    def save_as(self, *, root, directory, name, binding, expected_checkpoint, request_key):
+        """Create and select an independent fork; never retry a mutation implicitly."""
+        return self._call('save_as',dict(root=root,directory=directory,name=name,binding=binding,
+            expected_checkpoint=expected_checkpoint,request_key=request_key))
+
+    def files_inspect(self, **arguments):
+        return self._call('files_inspect',arguments)
+
+    def file_get(self, **arguments):
+        return self._call('file_get',arguments)
+
+    def file_history(self, **arguments):
+        return self._call('file_history',arguments)
+
+    def file_adopt(self, **arguments):
+        return self._call('file_adopt',arguments)
+
+    def file_adopt_deletion(self, **arguments):
+        """Retain an explicitly reviewed missing note as a deletion revision."""
+        return self._call('file_adopt_deletion',arguments)
+
+    def material_intents(self, **arguments):
+        return self._call('material_intents',arguments)
+
+    def material_intent(self, **arguments):
+        return self._call('material_intent',arguments)
+
+    def material_intent_capabilities(self, **arguments):
+        return self._call('material_intent_capabilities',arguments)
+
+    def fork_info(self, **arguments):
+        return self._call('fork_info',arguments)
 
 
 class WorkflowClient:

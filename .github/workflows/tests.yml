@@ -26,6 +26,15 @@ jobs:
       TULDOK_TRAINING_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
       TULDOK_NATIVE_READER_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
       TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
+      TULDOK_PROJECT_FILES_COLD_DATABASE_URL: postgresql://tuldok_project_cold:isolated-cold-fixture@127.0.0.1:5432/tuldok_project_cold
+      TULDOK_QA_OUTPUT_ROOT: build/qa/external-project
+      TULDOK_M2_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_M3_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_M4_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_OWNER_MCP_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_M5_CLIENTS_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_M5_UI_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
+      TULDOK_NATIVE_PUBLIC_FREEZE_MANIFEST: build/qa/external-project/product-manifest.json
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the exact authored fixture used by canonical Release qualification
@@ -47,6 +56,33 @@ jobs:
       - name: Install independent WAV consumer
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python -m pip install -r requirements.txt -r requirements-spatial-qualification.txt
+      - name: Prepare isolated external-project cold reconstruction and exact source subject
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          import psycopg
+          from psycopg import sql
+          source = os.environ['TULDOK_DATABASE_URL']
+          database = psycopg.conninfo.conninfo_to_dict(source)['dbname']
+          # This job owns the disposable service and these fixed fixture names.
+          with psycopg.connect(source, autocommit=True) as connection:
+              connection.execute("CREATE ROLE tuldok_project_cold LOGIN PASSWORD 'isolated-cold-fixture' NOSUPERUSER NOCREATEDB NOCREATEROLE")
+              connection.execute('CREATE DATABASE tuldok_project_cold OWNER tuldok_project_cold')
+              connection.execute(sql.SQL('REVOKE CONNECT ON DATABASE {} FROM PUBLIC').format(sql.Identifier(database)))
+          with psycopg.connect(os.environ['TULDOK_PROJECT_FILES_COLD_DATABASE_URL']) as connection:
+              current, allowed = connection.execute('SELECT current_database(),has_database_privilege(current_user,%s,\'CONNECT\')', (database,)).fetchone()
+              assert current != database and allowed is False
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          paths = sorted(p for p in paths if p and ((p.endswith('.py') and '/' not in p) or p.startswith(('static/', 'tests/', 'extension_schemas/', 'tuldok_extension_sdk/'))))
+          subject = {'baseline': subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip(),
+                     'qualification_copy': str(pathlib.Path.cwd()), 'parent_manifest_sha256': None,
+                     'files': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}}
+          target = pathlib.Path(os.environ['TULDOK_M2_FREEZE_MANIFEST'])
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(subject, sort_keys=True, separators=(',', ':')) + '\n')
+          print('External-project product files:', len(subject['files']))
+          assert subject['files']
+          PY
       - name: Verify field output preflight and unchanged admission state
         run: python -m unittest discover -s tests -p 'test_run_preflight*.py' -v
       - name: Verify same-attempt publication retention and recovery boundaries
@@ -75,6 +111,27 @@ jobs:
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py
+      - name: Verify actual native project Run fork Study custody and cold accounting
+        env:
+          PYTHONPATH: tests
+          TULDOK_NATIVE_PROJECT_GO: '1'
+          TULDOK_NATIVE_RETENTION_DIR: ${{ github.workspace }}/build/qa/external-project/native-retained
+        run: |
+          build/workspace-training/bin/python - <<'PY'
+          import os, sys, unittest
+          import numpy, sklearn, psycopg, torch
+          assert os.environ['TULDOK_TRAINING_PYTHON'] == sys.executable
+          names = [
+              'test_project_native_run.NativeRunSaveAsTests.test_one_actual_native_run_save_as_cold_role_and_metadata_only_git_clone',
+              'test_project_native_study.NativeStudyCustodyTests.test_actual_native_study_spent_budget_and_cold_history_require_fresh_admission',
+              'test_project_native_study.NativeStudyCustodyTests.test_native_study_admission_canonical_ack_then_sql_failure_never_starts_training',
+          ]
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromNames(names)
+          assert not loader.errors and suite.countTestCases() == len(names)
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == len(names) and not result.skipped else 1)
+          PY
       - name: Create isolated optional agent verification environment
         run: python -m venv build/workspace-agent
       - run: build/workspace-agent/bin/python -m pip install -r requirements.txt
@@ -88,7 +145,111 @@ jobs:
       - run: node --check static/experiment-lineage.js
       - run: node tests/test_experiment_lineage_controller.cjs
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py
+      - name: Verify real external-project SDK CLI MCP and current authority
+        env:
+          PYTHONPATH: tests
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_files_m2_http.ProjectFilesM2HTTP.test_real_sdk_cli_mcp_roles_lost_reply_and_stale_binding')
+          assert not loader.errors and suite.countTestCases() == 1
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == 1 and not result.skipped else 1)
+          PY
+      - name: Verify independent fork and extraction across actual owner transports
+        env:
+          PYTHONPATH: tests
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          names = [
+              'test_project_files_m4_clients_http.ProjectFilesM4ClientsHTTP.test_exact_file_revisions_save_as_and_current_role_through_sdk_cli_mcp',
+              'test_project_transfer_clients_http.ProjectTransferClientsHTTP.test_owner_handoff_and_single_extraction_through_sdk_cli_and_real_mcp',
+          ]
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromNames(names)
+          assert not loader.errors and suite.countTestCases() == len(names)
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == len(names) and not result.skipped else 1)
+          PY
+      - name: Verify finite owner MCP modes and denial boundaries
+        env:
+          PYTHONPATH: tests
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_files_owner_mcp')
+          selected = suite.countTestCases()
+          assert not loader.errors and selected > 0
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == selected and not result.skipped else 1)
+          PY
+      - name: Verify real native project SDK CLI MCP and zero-GO recovery
+        env:
+          PYTHONPATH: tests
+          TULDOK_NATIVE_PROJECT_GO: '1'
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_native_clients_http.NativePublicClientsHTTP.test_real_native_preflight_replay_zero_go_failure_and_original_phase_recovery')
+          assert not loader.errors and suite.countTestCases() == 1
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == 1 and not result.skipped else 1)
+          PY
+      - name: Verify explicit note deletion history and cold fork across owner transports
+        env:
+          PYTHONPATH: tests
+          TULDOK_NOTE_DELETION_GO: '1'
+        run: |
+          build/workspace-agent/bin/python - <<'PY'
+          import mcp, sys, unittest
+          loader = unittest.TestLoader()
+          suite = loader.loadTestsFromName('test_project_file_deletion_clients_http.NoteDeletionClientsHTTP.test_real_note_deletion_restore_history_and_cold_independent_fork')
+          assert not loader.errors and suite.countTestCases() == 1
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() and result.testsRun == 1 and not result.skipped else 1)
+          PY
       - run: python -m unittest discover -s tests
+      - name: Verify external-project authoring and cold reconstruction in Chromium
+        run: node tests/browser_project_files_m2.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Verify named independent fork and inert cold clone in Chromium
+        run: node tests/browser_project_files_m4.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Verify explicit runtime failure recovery and inert cold Open in Chromium
+        run: node tests/browser_project_files_m3.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Verify source stop and independent extraction handoff in Chromium
+        run: node tests/test_workspace_project_transfer.cjs --browser
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_M5_UI_BROWSER_GO: '1'
+      - name: Verify named native preflight and original-phase recovery in Chromium
+        run: node tests/browser_project_files_native.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_NATIVE_PROJECT_GO: '1'
+      - name: Verify explicit note deletion restore and inert cold fork in Chromium
+        run: node tests/browser_project_file_deletion.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_NOTE_DELETION_GO: '1'
+      - name: Verify external-project working file and recovery controls
+        run: |
+          node tests/test_workspace_project_files_m4.cjs
+          node tests/test_workspace_project_fork_text.cjs
+          node tests/test_workspace_project_runtime.cjs
+          node tests/test_workspace_project_candidate.cjs
+          node tests/test_workspace_project_transfer.cjs
+          node tests/test_workspace_project_native.cjs
+          node tests/test_workspace_project_native_validation.cjs
+          node tests/test_workspace_project_file_deletion.cjs
       - run: node --check static/auth.js
       - run: node tests/test_auth_helpers.cjs
       - run: node tests/test_auth_controller.cjs

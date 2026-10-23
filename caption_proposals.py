@@ -114,6 +114,31 @@ def decode(data, source, request_id=None):
         raise WorkbenchError('Model must return one complete, valid caption JSON; partial or invalid output was not applied.') from None
 
 
+def validate_retained_result(job):
+    """Pure byte/result checks shared by live completion and inert history."""
+    image = job.get('input_image_base64')
+    if image is not None:
+        raw_image = base64.b64decode(image, validate=True)
+        captured = job['input_image']
+        if (len(raw_image) > MAX_IMAGE or len(raw_image) != captured['bytes'] or
+                hashlib.sha256(raw_image).hexdigest() != captured['sha256']):
+            raise WorkbenchError('Retained prepared image identity differs.')
+        with Image.open(io.BytesIO(raw_image)) as raster:
+            if raster.format != 'JPEG' or list(raster.size) != captured['size']:
+                raise WorkbenchError('Retained prepared image geometry differs.')
+            raster.load()
+    encoded = job.get('raw_response_base64')
+    if encoded is None:
+        return
+    raw = base64.b64decode(encoded, validate=True)
+    if len(raw) > MAX_OUTPUT or hashlib.sha256(raw).hexdigest() != job['response_sha256']:
+        raise WorkbenchError('Retained caption response identity differs.')
+    if job['status'] in ('completed', 'applied', 'rejected'):
+        annotation, reported = decode(raw, job['source'], job['id'] if pumas.typed(job['config']) else None)
+        if annotation != job['annotation'] or reported != job.get('reported_model'):
+            raise WorkbenchError('Retained caption differs from the original response.')
+
+
 class CaptionProposals:
     def __init__(self, workbench):
         self.workbench = workbench
@@ -140,6 +165,10 @@ class CaptionProposals:
         job['revision'] = (json.loads(previous[0])['revision'] if previous else 0) + 1
         job['updated_at'] = timestamp()
         self.db.execute('INSERT INTO caption_proposals (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode_retained(job)))
+
+        execution = getattr(self.workbench.dataset, 'project_execution', None)
+        if execution is not None:
+            execution.mark_caption(job['id'])
 
     def _get(self, job_id):
         if not isinstance(job_id, str) or not IDENTIFIER.fullmatch(job_id):
@@ -202,6 +231,18 @@ class CaptionProposals:
 
     @authorized('execute', 'caption.start', owner_only=True)
     def start(self, body):
+        with self.lock:
+            if self.db.in_transaction:
+                raise WorkbenchError('Caption dispatch requires its own committed transaction.', 'conflict', 409)
+            with self.db.transaction():
+                job, launch = self._prepare_start(body)
+            if launch:
+                self._launch(job)
+            return job
+
+    def _prepare_start(self, body):
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer preparation requires an owned transaction.')
         fields = {'request_id', 'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'seed'}
         if not isinstance(body, dict) or not fields <= body.keys() or body.keys() - fields - {'protocol', 'profile'}:
             raise WorkbenchError('Supply only caption request identity, exact image revisions, model, guidance and seed.')
@@ -218,61 +259,59 @@ class CaptionProposals:
         elif type(config['seed']) is not int or not 0 <= config['seed'] <= 2**32 - 1:
             raise WorkbenchError('Seed must be a nonnegative 32-bit integer.')
         intent_hash = hashlib.sha256(encode(body).encode()).hexdigest()
-        with self.lock:
-            if self.db.in_transaction:
-                raise WorkbenchError('Caption dispatch requires its own committed transaction.', 'conflict', 409)
+        previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=%s', (request_id,)).fetchone()
+        if previous:
+            job = json.loads(previous[0])
+            if job['intent_sha256'] != intent_hash:
+                raise WorkbenchError('Caption request ID already belongs to a different request.', 'conflict', 409)
+            return job, False
+        if not self.runtime_owner:
+            raise WorkbenchError('Caption workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
+        if self.closed or (self.worker is not None and self.worker.is_alive()):
+            raise WorkbenchError('A caption request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
+        source, image_bytes = self._source(body, capture_image=True)
+        output = io.BytesIO()
+        # Decode the exact buffer whose hash established source identity.
+        with Image.open(io.BytesIO(image_bytes)) as image:
+            image = image.convert('RGB')
+            image.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+            size = list(image.size)
+            image.save(output, 'JPEG', quality=95)
+        data = output.getvalue()
+        if len(data) > MAX_IMAGE:
+            raise WorkbenchError('Prepared model image exceeds 2 MiB; no inference started.')
+        job = {'schema_version': 1, 'id': request_id, 'revision': 0, 'status': 'preparing', 'error': '',
+               'created_at': timestamp(), 'intent_sha256': intent_hash, 'source': source, 'config': config,
+               'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION,
+               'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
+               'input_image_base64': base64.b64encode(data).decode('ascii'),
+               'input_image': {'mime': 'image/jpeg', 'size': size, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
+                               'preparation': 'oriented canonical RGB; thumbnail max 1600; JPEG quality 95'},
+               'annotation': None, 'raw_response_base64': None, 'response_sha256': None,
+               'verification': 'Caption shape only. Vision compatibility and factual correctness are not established by the catalog; human review is required.',
+               'application': None}
+        job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
+        if pumas.typed(config):
+            job['provider_outcome'] = 'not_admitted'
+        job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
+        job['admission_id'] = self.access.admit_job('caption', job['id'], job['request_digest'],
+            {'caption.finish': [job['id']]})
+        self.access.audit('caption.start', job['id'], {'request_digest': job['request_digest']})
+        self._save(job)
+        return job, True
+
+    def _launch(self, job):
+        # Persistence has committed; this lock serializes startup and shutdown.
+        self.stop.clear()
+        self.active_id = job['id']
+        self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
+        try:
+            self.worker.start()
+        except RuntimeError:
+            self.worker, self.active_id = None, None
             with self.db.transaction():
-                previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=%s', (request_id,)).fetchone()
-                if previous:
-                    job = json.loads(previous[0])
-                    if job['intent_sha256'] != intent_hash:
-                        raise WorkbenchError('Caption request ID already belongs to a different request.', 'conflict', 409)
-                    return job
-                if not self.runtime_owner:
-                    raise WorkbenchError('Caption workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
-                if self.closed or (self.worker is not None and self.worker.is_alive()):
-                    raise WorkbenchError('A caption request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
-                source, image_bytes = self._source(body, capture_image=True)
-                output = io.BytesIO()
-                # Decode the exact buffer whose hash established source identity.
-                with Image.open(io.BytesIO(image_bytes)) as image:
-                    image = image.convert('RGB')
-                    image.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
-                    size = list(image.size)
-                    image.save(output, 'JPEG', quality=95)
-                data = output.getvalue()
-                if len(data) > MAX_IMAGE:
-                    raise WorkbenchError('Prepared model image exceeds 2 MiB; no inference started.')
-                job = {'schema_version': 1, 'id': request_id, 'revision': 0, 'status': 'preparing', 'error': '',
-                       'created_at': timestamp(), 'intent_sha256': intent_hash, 'source': source, 'config': config,
-                       'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION,
-                       'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
-                       'input_image_base64': base64.b64encode(data).decode('ascii'),
-                       'input_image': {'mime': 'image/jpeg', 'size': size, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
-                                       'preparation': 'oriented canonical RGB; thumbnail max 1600; JPEG quality 95'},
-                       'annotation': None, 'raw_response_base64': None, 'response_sha256': None,
-                       'verification': 'Caption shape only. Vision compatibility and factual correctness are not established by the catalog; human review is required.',
-                       'application': None}
-                job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
-                if pumas.typed(config):
-                    job['provider_outcome'] = 'not_admitted'
-                job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
-                job['admission_id'] = self.access.admit_job('caption', job['id'], job['request_digest'],
-                    {'caption.finish': [job['id']]})
-                self.access.audit('caption.start', job['id'], {'request_digest': job['request_digest']})
+                job.update(status='failed', error='Could not start the caption worker; no inference ran. Start a new request explicitly.')
                 self._save(job)
-            # Persistence has committed; this lock serializes startup and shutdown.
-            self.stop.clear()
-            self.active_id = job['id']
-            self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
-            try:
-                self.worker.start()
-            except RuntimeError:
-                self.worker, self.active_id = None, None
-                with self.db.transaction():
-                    job.update(status='failed', error='Could not start the caption worker; no inference ran. Start a new request explicitly.')
-                    self._save(job)
-            return job
 
     def _run(self, job_id):
         with self.lock:
@@ -305,12 +344,12 @@ class CaptionProposals:
                 if self.stop.is_set():
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
                 job.update(status='generating', catalog_qualification=models['qualification'])
-                if pumas.typed(job['config']):
+                if pumas.typed(job['config']) or getattr(self.workbench.dataset,'project_execution',None) is not None:
                     # Persist uncertainty before possible effects; restart never replays it.
                     job['provider_outcome'] = 'unknown'
                 self._save(job)
             data = complete(job, self.stop)
-            if pumas.typed(job['config']):
+            if pumas.typed(job['config']) or getattr(self.workbench.dataset,'project_execution',None) is not None:
                 job['provider_outcome'] = 'result_received'
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
             job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
@@ -320,6 +359,7 @@ class CaptionProposals:
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
                 self._source(dict(source_id=job['source']['id'], revision=job['source']['revision'], source_revision=job['source']['source_revision']))
                 job.update(status='completed', annotation=annotation, reported_model=reported)
+                validate_retained_result(job)
                 self._save(job)
                 self.access.audit('caption.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:
@@ -337,14 +377,30 @@ class CaptionProposals:
         if not isinstance(body, dict) or set(body) != {'job_id'}:
             raise WorkbenchError('Supply only the caption request ID.')
         with self.lock, self.db.transaction():
-            job = self._get(body['job_id'])
-            if job['id'] != self.active_id or job['status'] not in ACTIVE:
-                return {'cancelled': False, 'job': job}
-            self.stop.set()
-            job.update(status='stopping', error='Cancellation requested; late output cannot be applied.')
-            self._save(job)
-            self.access.audit('caption.cancel', job['id'])
-            return {'cancelled': True, 'job': job}
+            result, pending = self._prepare_cancel(body['job_id'])
+            if pending is not None:
+                self._signal_cancel(pending)
+            return result
+
+    def _prepare_cancel(self, job_id):
+        """Persist intent only; project dispatch signals after canonical ACK."""
+        if not self.db.in_transaction:
+            raise RuntimeError('Producer cancellation preparation requires an owned transaction.')
+        job = self._get(job_id)
+        if job['id'] != self.active_id or job['status'] not in ACTIVE:
+            return {'cancelled': False, 'job': job}, None
+        pending = (self.worker, job_id)
+        job.update(status='stopping', error='Cancellation requested; late output cannot be applied.')
+        self._save(job)
+        self.access.audit('caption.cancel', job['id'])
+        return {'cancelled': True, 'job': job}, pending
+
+    def _signal_cancel(self, pending):
+        # A retained worker object is local custody, never a saved PID or ID.
+        if self.worker is not pending[0]:
+            return False
+        self.stop.set()
+        return True
 
     @authorized('edit', 'caption.decide')
     def decide(self, job_id, body):

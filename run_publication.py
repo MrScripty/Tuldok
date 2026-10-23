@@ -120,15 +120,15 @@ def _result_ref(ref, run):
              'Recovered result reference differs.', 'stale')
 
 
-def _source(runs, run, ref):
-    _require(ref == run.get('publication_source'), 'Exact original publication source is required.', 'stale')
-    directory = runs._diagnostic_directory(runs._external_directory(run))
-    try:
-        raw, _, _ = runs._diagnostic_read(directory, 'publication-source-v1.json', MAX_DOCUMENT_BYTES)
-    finally:
-        os.close(directory)
+def validate_publication_source(raw, *, run):
+    """Exact historical compute proof; never a publication continuation."""
+    if type(raw) is not bytes or not 0 < len(raw) <= MAX_DOCUMENT_BYTES:
+        raise WorkbenchError('Publication source exceeds its byte bound.','invalid',409)
+    ref=run.get('publication_source')
+    _require(type(ref) is dict, 'Original publication source is unavailable.')
     _require(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Retained publication source changed.')
-    proof = runs._progress_json(raw)
+    from recipe_process import decode
+    proof = decode(raw)
     closed(proof, ('format', 'schema_version', 'catalog_id', 'run_id', 'request_sha256', 'material_sha256',
                    'graph_sha256', 'custody_receipt', 'inventory', 'inventory_sha256', 'evidence_semantics'))
     _require(proof['format'] == 'external_publication_source_v1' and type(proof['schema_version']) is int
@@ -156,6 +156,17 @@ def _source(runs, run, ref):
              and all(not rule['required'] or name in seen for name, rule in allowed.items()),
              'Original output inventory is incomplete or exceeds its bound.')
     return proof
+
+
+
+def _source(runs, run, ref):
+    _require(ref == run.get('publication_source'), 'Exact original publication source is required.', 'stale')
+    directory = runs._diagnostic_directory(runs._external_directory(run))
+    try:
+        raw, _, _ = runs._diagnostic_read(directory, 'publication-source-v1.json', MAX_DOCUMENT_BYTES)
+    finally:
+        os.close(directory)
+    return validate_publication_source(raw, run=run)
 
 
 def _copy(runs, directory, name, item, deadline, output=None):
@@ -472,6 +483,30 @@ def cancel(runs, body):
         return _status(run)
 
 
+def validate_publication_result(raw, *, run, source, ref, continuation):
+    """Validate a published historical result against its original compute proof."""
+    if type(raw) is not bytes or not 0 < len(raw) <= MAX_DOCUMENT_BYTES:
+        raise WorkbenchError('Publication result exceeds its byte bound.','invalid',409)
+    _result_ref(ref, run)
+    _require(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Recovered result content changed.')
+    from recipe_process import decode
+    value = decode(raw)
+    closed(value, ('format', 'schema_version', 'catalog_id', 'run_id', 'request_sha256', 'material_sha256',
+                   'source_ref', 'continuation_request_sha256', 'inventory_sha256', 'custody_receipt_sha256',
+                   'artifacts', 'original_run_state', 'original_fault'))
+    manifest = _manifest(run, source)
+    _require(value.get('format') == 'recovered_publication_result_v1'
+             and type(value.get('schema_version')) is int and value['schema_version'] == 1
+             and value['request_sha256'] == run['request_sha256']
+             and value['continuation_request_sha256'] == continuation['request_sha256']
+             and value['original_fault'] == run['publication_fault']
+             and value.get('artifacts') == manifest['artifacts'] and value.get('source_ref') == run['publication_source']
+             and value.get('original_run_state') == run['state']
+             and all(value.get(key) == ref[key] for key in ('catalog_id', 'run_id', 'material_sha256',
+                 'inventory_sha256', 'custody_receipt_sha256')), 'Recovered result identity differs.')
+    return value
+
+
 @_reader_boundary
 def result(runs, ref, *, deadline=None, checkpoint=None, _verify_payloads=True):
     deadline = time.monotonic() + WALL_SECONDS if deadline is None else deadline
@@ -500,21 +535,8 @@ def result(runs, ref, *, deadline=None, checkpoint=None, _verify_payloads=True):
         raw, _, _ = runs._diagnostic_read(directory, 'publication-result-v1.json', MAX_DOCUMENT_BYTES)
     finally:
         os.close(directory)
-    _require(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Recovered result content changed.')
-    value = runs._progress_json(raw)
-    closed(value, ('format', 'schema_version', 'catalog_id', 'run_id', 'request_sha256', 'material_sha256',
-                   'source_ref', 'continuation_request_sha256', 'inventory_sha256', 'custody_receipt_sha256',
-                   'artifacts', 'original_run_state', 'original_fault'))
+    value = validate_publication_result(raw, run=run, source=source, ref=ref, continuation=continuation)
     manifest = _manifest(run, source)
-    _require(value.get('format') == 'recovered_publication_result_v1'
-             and type(value.get('schema_version')) is int and value['schema_version'] == 1
-             and value['request_sha256'] == run['request_sha256']
-             and value['continuation_request_sha256'] == continuation['request_sha256']
-             and value['original_fault'] == run['publication_fault']
-             and value.get('artifacts') == manifest['artifacts'] and value.get('source_ref') == run['publication_source']
-             and value.get('original_run_state') == run['state']
-             and all(value.get(key) == ref[key] for key in ('catalog_id', 'run_id', 'material_sha256',
-                 'inventory_sha256', 'custody_receipt_sha256')), 'Recovered result identity differs.')
     destination = runs._diagnostic_directory(runs.path / run['id'])
     try:
         _require(set(os.listdir(destination)) == {item['name'] for item in value['artifacts']} |
