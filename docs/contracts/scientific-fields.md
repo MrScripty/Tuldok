@@ -158,3 +158,39 @@ and restart, rollback custody, changed/FIFO source refusal, and real HTTP
 project import and slice inspection. Native producer observations and independent
 NumPy qualification are recorded separately; these tests are not physics,
 training, or model acceptance.
+
+## Native external-project inspection
+
+`project_files.data_scientific/1` reads the same bounded numeric slice through
+the native project session. It requires the current `binding`, canonical
+`checkpoint`, `record_id` and exact `content_hash`; `frame`, `field`, `axis` and
+`index` retain the existing inspector's selection grammar. ProjectData checks
+current inspect authority, the project session and source identity before using
+ScientificAssets. The scientific owner verifies retained artifact bytes and
+metadata. Stale bindings/checkpoints, changed content, missing/corrupt artifacts
+and revoked credentials refuse; no source-path or cached-array fallback runs.
+The read changes no project records and grants no execution authority.
+
+The native project explorer mounts the same `ScientificFieldInspector` used by
+the workbench. That module owns slice validation, numeric probing, display-only
+grayscale rendering and cancellation. Each page supplies its authoritative
+selection predicate and slice reader; the workbench separately owns its source
+download and review-note editor. The native project reader uses negotiated
+project operations rather than the legacy workbench URLs. Native project
+annotation stays with its existing data-note owner.
+
+Changing the selected record, project/checkpoint or session clears the native
+view and aborts pending reads. A superseded reply cannot repaint it. Page teardown
+also aborts reads. Hidden or loading canvases do not display old pixels. Field
+units, producer stage, original clock and grid coordinates remain explicit;
+opening a scientific data record does not qualify its physical meaning or turn
+an authored diagnostic into an accepted model result.
+
+`test_project_sources` covers exact content and cold projection reads without
+the original source root. `test_project_files_m2_http` covers real selected
+transport, stale/refused reads and artifact corruption. The existing
+`browser_scientific_fields.cjs` exercises the shared module through the original
+workbench with its browser sandbox enabled. Lab qualification additionally
+inspects unchanged retained pressure fields through native project operations
+and independent relocated cold Open. Scalar Run comparisons and Experiment
+progression remain separately owned interfaces.

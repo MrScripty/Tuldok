@@ -34,7 +34,9 @@ RIGHTS = 'Owned synthetic source; corrected by M2 acceptance café 山.'
 SOURCE_FILES = ('app.py','agent_api.py','access.py','project_workspace.py','project_dispatch.py',
     'project_projection.py','project_data.py','project_sources.py','project_material.py',
     'project_history.py','project_producers.py','project_session.py','project_store.py',
-    'static/project-files.js','static/project-files.html','tuldok_client.py','project_cli.py','mcp_stdio.py')
+    'static/project-files.js','static/project-files.html','tuldok_client.py','project_cli.py','mcp_stdio.py',
+    'static/scientific-inspector.js','static/scientific-inspector.css','static/scientific-fields.js',
+    'static/workbench.html','static/workbench.css')
 
 
 def subject_hashes():
@@ -264,6 +266,35 @@ class ProjectFilesM2HTTP(unittest.TestCase):
         row=self.call('data_import_scientific',snapshot=reference,reference_id=item['id'],expected_sha256=item['observed_sha256'],
             document={'name':'Unpinned but explicitly measured source','groups':['m2-unpinned'],'rights':'Owned authored data'})
         self.assertEqual(row['source_sha256'],item['observed_sha256'])
+
+    def test_native_scientific_slice_refuses_stale_selection_and_changed_artifact(self):
+        self.create();_manifest,raw=authored_source(self.external)
+        registered=self.call('source_register',root='fixture',manifest_path='source-project.json')
+        snapshot={key:registered[key] for key in ('origin_catalog_id','project_id','manifest_sha256')}
+        row=self.call('data_import_scientific',snapshot=snapshot,reference_id='fields',
+            expected_sha256=hashlib.sha256(raw).hexdigest(),
+            document={'name':'Native slice source','groups':['m2-slice'],'rights':'Owned fixture'})
+        arguments=self.arguments('data_scientific',record_id=row['id'],content_hash=row['content_hash'],
+            frame=1,field='scalar',axis='z',index=2)
+        before=m1.canonical_bytes(self.external/'alpha')
+        status,value=self.transport('data_scientific',arguments)
+        self.assertEqual(status,200,value)
+        self.assertEqual(value['value']['values'][1][2],1212+2**-45)
+        for change in ({'checkpoint':'0'*64},{'binding':'0'*32},{'content_hash':'0'*64}):
+            status,error=self.transport('data_scientific',dict(arguments,**change))
+            self.assertEqual(status,409,error)
+        with self.owner.bound(self.workspace):
+            credential=self.workspace.access.issue({'label':'Revoked slice inspection','scopes':['inspect']})
+            self.workspace.access.revoke(credential['identity']['credential_id'])
+        self.assertEqual(self.transport('data_scientific',arguments,token=credential['token'])[0],401)
+        self.assertEqual(m1.canonical_bytes(self.external/'alpha'),before)
+        path=self.external/'alpha/artifacts/sha256'/row['content_hash']
+        self.assertEqual(path.read_bytes(),raw)
+        path.chmod(0o600) # Deliberate external corruption of this disposable fixture.
+        path.write_bytes(b'x'*len(raw))
+        self.assertNotEqual(self.transport('data_scientific',arguments)[0],200)
+        path.unlink()
+        self.assertNotEqual(self.transport('data_scientific',arguments)[0],200)
 
     @unittest.skipUnless(importlib.util.find_spec('mcp'),'Requires pinned real MCP optional dependencies')
     def test_real_sdk_cli_mcp_roles_lost_reply_and_stale_binding(self):

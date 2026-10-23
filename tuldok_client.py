@@ -278,6 +278,10 @@ class ProjectFilesClient:
         """data get; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('data_get', arguments)
 
+    def data_scientific(self, **arguments):
+        """Inspect an exact scientific field slice in the selected project."""
+        return self._call('data_scientific', arguments)
+
     def data_history(self, **arguments):
         """data history; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('data_history', arguments)

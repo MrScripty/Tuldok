@@ -7,7 +7,9 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/auth.css">
   <link rel="stylesheet" href="/project-files.css">
+  <link rel="stylesheet" href="/scientific-inspector.css">
   <script defer src="/auth.js"></script>
+  <script defer src="/scientific-inspector.js"></script>
   <script defer src="/project-files.js"></script>
 </head>
 <body>
@@ -173,6 +175,7 @@
         <div><ul id="project-explore-list" class="project-fact-list"></ul></div>
         <div>
           <h3 id="project-detail-title" tabindex="-1">Choose a saved record</h3>
+          <section id="scientific-inspection" hidden aria-label="Scientific field inspection"></section>
           <div id="project-detail-facts" class="project-facts"></div>
           <label id="project-disclosure-label" hidden>Reason for held-out disclosure<input id="project-disclosure-reason" maxlength="500"></label>
           <div class="actions"><button id="project-detail-history" type="button" hidden>Load saved revisions</button><button id="project-detail-availability" type="button" hidden>Check source availability</button><button id="project-run-evidence" type="button" hidden>Verify retained scientific evidence</button><button id="project-run-document" type="button" hidden>Download exact retained Run document</button><button id="project-run-disclose" type="button" hidden>Allow held-out disclosure on this installation</button></div>

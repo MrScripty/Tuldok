@@ -899,6 +899,8 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                     '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
                     '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
                     '/scientific-fields.js': ('scientific-fields.js', 'text/javascript'),
+                    '/scientific-inspector.js': ('scientific-inspector.js', 'text/javascript'),
+                    '/scientific-inspector.css': ('scientific-inspector.css', 'text/css'),
                     '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
                     '/audio-editor.css': ('audio-editor.css', 'text/css'),
                     '/meshes.css': ('meshes.css', 'text/css'),

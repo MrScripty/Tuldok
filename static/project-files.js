@@ -35,6 +35,7 @@
   "project_files.data_response_save": "fa5b92afe529520fe8206d629bd88085a68f4f9b399cd40dd05fd3948d3592f0",
   "project_files.data_responses": "3e0c009244cad04fca4356cf3647bfd2b42cfc0d6a2ac31bb8de25cdb3c60ec8",
   "project_files.data_rights": "ead16cca68b03533daa81bf06148e1918ce40dbc823ee060bd9908581f788653",
+  "project_files.data_scientific": "c954a680440fdb822a0f895f7e14b90e05dca82535478b1271dfb33cfbfdada9",
   "project_files.data_source_delete": "457618e618cca92a71b668ffb9f68b0db87e51c417c2e5f41dcde76d71a23985",
   "project_files.data_source_save": "0d50c45d445b2ce1014a696c3bc95965f0b548ded939f4a650f985f34e1ce849",
   "project_files.definitions": "3516fcf8764382780c7da699218a05ff1f811634656cc81722ef547f21159698",
@@ -165,623 +166,628 @@
 {
   "project_files.artifact_resolve": {
     "method": "POST",
-    "path": "/api/workspace/project-files/artifacts/resolve",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/artifacts/resolve"
   },
   "project_files.artifact_status": {
     "method": "POST",
-    "path": "/api/workspace/project-files/artifacts/status",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/artifacts/status"
   },
   "project_files.artifacts": {
     "method": "GET",
-    "path": "/api/workspace/project-files/artifacts",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/artifacts"
   },
   "project_files.candidate": {
     "method": "GET",
-    "path": "/api/workspace/project-files/candidates/{candidate_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/candidates/{candidate_id}"
   },
   "project_files.candidate_select": {
     "method": "POST",
-    "path": "/api/workspace/project-files/studies/{study_id}/candidates",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/studies/{study_id}/candidates"
   },
   "project_files.data_annotate": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/{record_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/{record_id}"
   },
   "project_files.data_availability": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}/availability",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/availability"
   },
   "project_files.data_get": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}"
   },
   "project_files.data_history": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}/history",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/history"
   },
   "project_files.data_import_audio": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-audio",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-audio"
   },
   "project_files.data_import_image": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-image",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-image"
   },
   "project_files.data_import_mesh": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-mesh",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-mesh"
   },
   "project_files.data_import_pointcloud": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-pointcloud",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-pointcloud"
   },
   "project_files.data_import_scientific": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-scientific",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-scientific"
   },
   "project_files.data_import_sequence": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-sequence",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-sequence"
   },
   "project_files.data_import_text": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-text",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-text"
   },
   "project_files.data_import_volume": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/import-volume",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/import-volume"
   },
   "project_files.data_preference_delete": {
     "method": "POST",
-    "path": "/api/workspace/project-files/preferences/delete",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/preferences/delete"
   },
   "project_files.data_preference_history": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}/preference-history",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/preference-history"
   },
   "project_files.data_preference_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/preferences",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/preferences"
   },
   "project_files.data_preferences": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}/preferences",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/preferences"
   },
   "project_files.data_query": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data"
   },
   "project_files.data_response_history": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}/response-history",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/response-history"
   },
   "project_files.data_response_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/responses",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/responses"
   },
   "project_files.data_responses": {
     "method": "GET",
-    "path": "/api/workspace/project-files/data/{record_id}/responses",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/responses"
   },
   "project_files.data_rights": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/{record_id}/rights",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/{record_id}/rights"
+  },
+  "project_files.data_scientific": {
+    "method": "GET",
+    "mutation": false,
+    "path": "/api/workspace/project-files/data/{record_id}/scientific"
   },
   "project_files.data_source_delete": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/{record_id}/source/delete",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/{record_id}/source/delete"
   },
   "project_files.data_source_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/data/{record_id}/source",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/data/{record_id}/source"
   },
   "project_files.definitions": {
     "method": "GET",
-    "path": "/api/workspace/project-files/definitions",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/definitions"
   },
   "project_files.dependencies": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runs/{run_id}/dependencies",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}/dependencies"
   },
   "project_files.evidence": {
     "method": "POST",
-    "path": "/api/workspace/project-files/runs/{run_id}/evidence",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}/evidence"
   },
   "project_files.execution_approve_external": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/approvals",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/approvals"
   },
   "project_files.execution_cancel": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/runs/{run_id}/cancel",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/runs/{run_id}/cancel"
   },
   "project_files.execution_generation_resume": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/generation/{producer_id}/resume",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/generation/{producer_id}/resume"
   },
   "project_files.execution_grounded_review": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/grounded/{producer_id}/review",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/grounded/{producer_id}/review"
   },
   "project_files.execution_health": {
     "method": "GET",
-    "path": "/api/workspace/project-files/execution",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/execution"
   },
   "project_files.execution_preflight_external": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/preflight",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/execution/preflight"
   },
   "project_files.execution_producer_cancel": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/producers/{producer_id}/cancel",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/producers/{producer_id}/cancel"
   },
   "project_files.execution_producer_decide": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/producers/{producer_id}/decide",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/producers/{producer_id}/decide"
   },
   "project_files.execution_producer_health": {
     "method": "GET",
-    "path": "/api/workspace/project-files/execution/producers/health",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/execution/producers/health"
   },
   "project_files.execution_producer_start": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/producers",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/producers"
   },
   "project_files.execution_reconcile_current": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/reconcile-current",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/reconcile-current"
   },
   "project_files.execution_study_abandon_preparation": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/preparations/abandon",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/preparations/abandon"
   },
   "project_files.execution_study_admit": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/runs",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/runs"
   },
   "project_files.execution_study_approve": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/approvals",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/approvals"
   },
   "project_files.execution_study_continue": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/continue",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/continue"
   },
   "project_files.execution_study_prepare_package": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/packages",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/packages"
   },
   "project_files.execution_study_prepare_verifier": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/verifiers",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/verifiers"
   },
   "project_files.execution_study_reconcile_preparation": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/preparations/reconcile",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/preparations/reconcile"
   },
   "project_files.execution_study_stop": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/studies/{study_id}/stop",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/studies/{study_id}/stop"
   },
   "project_files.execution_submit_external": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/runs",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/runs"
   },
   "project_files.expose_holdout": {
     "method": "POST",
-    "path": "/api/workspace/project-files/runs/{run_id}/disclose",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/runs/{run_id}/disclose"
   },
   "project_files.file_adopt": {
     "method": "POST",
-    "path": "/api/workspace/project-files/files/adopt",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/files/adopt"
   },
   "project_files.file_adopt_deletion": {
     "method": "POST",
-    "path": "/api/workspace/project-files/files/adopt-deletion",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/files/adopt-deletion"
   },
   "project_files.file_get": {
     "method": "GET",
-    "path": "/api/workspace/project-files/files/{file_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/files/{file_id}"
   },
   "project_files.file_history": {
     "method": "GET",
-    "path": "/api/workspace/project-files/files/{file_id}/history",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/files/{file_id}/history"
   },
   "project_files.files_inspect": {
     "method": "GET",
-    "path": "/api/workspace/project-files/files",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/files"
   },
   "project_files.fork_info": {
     "method": "GET",
-    "path": "/api/workspace/project-files/fork",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/fork"
   },
   "project_files.graph_clone": {
     "method": "POST",
-    "path": "/api/workspace/project-files/graphs/{graph_id}/clone",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/graphs/{graph_id}/clone"
   },
   "project_files.graph_create": {
     "method": "POST",
-    "path": "/api/workspace/project-files/graphs",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/graphs"
   },
   "project_files.graph_create_external": {
     "method": "POST",
-    "path": "/api/workspace/project-files/graphs/external",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/graphs/external"
   },
   "project_files.graph_get": {
     "method": "GET",
-    "path": "/api/workspace/project-files/graphs/{graph_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/graphs/{graph_id}"
   },
   "project_files.graph_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/graphs/{graph_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/graphs/{graph_id}"
   },
   "project_files.graphs": {
     "method": "GET",
-    "path": "/api/workspace/project-files/graphs",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/graphs"
   },
   "project_files.lineage": {
     "method": "GET",
-    "path": "/api/workspace/project-files/lineage",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/lineage"
   },
   "project_files.lineage_record": {
     "method": "POST",
-    "path": "/api/workspace/project-files/lineage",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/lineage"
   },
   "project_files.material_intent": {
     "method": "GET",
-    "path": "/api/workspace/project-files/material-intents/{family}/{definition_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/material-intents/{family}/{definition_id}"
   },
   "project_files.material_intent_capabilities": {
     "method": "GET",
-    "path": "/api/workspace/project-files/material-intents/capabilities",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/material-intents/capabilities"
   },
   "project_files.material_intents": {
     "method": "GET",
-    "path": "/api/workspace/project-files/material-intents",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/material-intents"
   },
   "project_files.materials": {
     "method": "GET",
-    "path": "/api/workspace/project-files/materials",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/materials"
   },
   "project_files.model_create": {
     "method": "POST",
-    "path": "/api/workspace/project-files/models",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/models"
   },
   "project_files.model_get": {
     "method": "GET",
-    "path": "/api/workspace/project-files/models/{model_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/models/{model_id}"
   },
   "project_files.model_material": {
     "method": "POST",
-    "path": "/api/workspace/project-files/materials/model",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/materials/model"
   },
   "project_files.model_publish": {
     "method": "POST",
-    "path": "/api/workspace/project-files/models/{model_id}/publish",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/models/{model_id}/publish"
   },
   "project_files.model_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/models/{model_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/models/{model_id}"
   },
   "project_files.models": {
     "method": "GET",
-    "path": "/api/workspace/project-files/models",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/models"
   },
   "project_files.native_preflight": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/native/preflight",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/native/preflight"
   },
   "project_files.native_reconcile": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/native/phases/{phase_id}/reconcile",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/native/phases/{phase_id}/reconcile"
   },
   "project_files.native_retry": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/native/runs/{run_id}/retry",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/native/runs/{run_id}/retry"
   },
   "project_files.native_submit": {
     "method": "POST",
-    "path": "/api/workspace/project-files/execution/native/runs",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/execution/native/runs"
   },
   "project_files.package_state": {
     "method": "GET",
-    "path": "/api/workspace/project-files/candidates/{candidate_id}/package-state",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/candidates/{candidate_id}/package-state"
   },
   "project_files.policies": {
     "method": "GET",
-    "path": "/api/workspace/project-files/policies",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/policies"
   },
   "project_files.policy": {
     "method": "POST",
-    "path": "/api/workspace/project-files/policies/get",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/policies/get"
   },
   "project_files.producer": {
     "method": "GET",
-    "path": "/api/workspace/project-files/producers/{origin_catalog_id}/{producer_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/producers/{origin_catalog_id}/{producer_id}"
   },
   "project_files.producers": {
     "method": "GET",
-    "path": "/api/workspace/project-files/producers",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/producers"
   },
   "project_files.publication_result": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runs/{run_id}/publication-result",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}/publication-result"
   },
   "project_files.recipe_create": {
     "method": "POST",
-    "path": "/api/workspace/project-files/recipes",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/recipes"
   },
   "project_files.recipe_get": {
     "method": "GET",
-    "path": "/api/workspace/project-files/recipes/{recipe_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/recipes/{recipe_id}"
   },
   "project_files.recipe_material": {
     "method": "POST",
-    "path": "/api/workspace/project-files/materials/recipe",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/materials/recipe"
   },
   "project_files.recipe_prepare": {
     "method": "POST",
-    "path": "/api/workspace/project-files/recipes/{graph_id}/prepare",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/recipes/{graph_id}/prepare"
   },
   "project_files.recipe_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/recipes/{recipe_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/recipes/{recipe_id}"
   },
   "project_files.recipes": {
     "method": "GET",
-    "path": "/api/workspace/project-files/recipes",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/recipes"
   },
   "project_files.release_freeze": {
     "method": "POST",
-    "path": "/api/workspace/project-files/releases/freeze",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/releases/freeze"
   },
   "project_files.release_preview": {
     "method": "POST",
-    "path": "/api/workspace/project-files/releases/preview",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/releases/preview"
   },
   "project_files.retained_analysis": {
     "method": "POST",
-    "path": "/api/workspace/project-files/runs/{run_id}/analysis",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}/analysis"
   },
   "project_files.retained_analysis_export": {
     "method": "POST",
-    "path": "/api/workspace/project-files/runs/{run_id}/analysis/export",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}/analysis/export"
   },
   "project_files.run": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runs/{run_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}"
   },
   "project_files.run_document_segment": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runs/{run_id}/document-segment",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs/{run_id}/document-segment"
   },
   "project_files.runs": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runs",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runs"
   },
   "project_files.runtime_abandon": {
     "method": "POST",
-    "path": "/api/workspace/project-files/runtime/abandon",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/runtime/abandon"
   },
   "project_files.runtime_capture": {
     "method": "POST",
-    "path": "/api/workspace/project-files/runtime/capture",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/runtime/capture"
   },
   "project_files.runtime_inspect": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runtime/inspect",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runtime/inspect"
   },
   "project_files.runtime_material": {
     "method": "POST",
-    "path": "/api/workspace/project-files/materials/runtime",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/materials/runtime"
   },
   "project_files.runtime_sources": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runtime/sources",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runtime/sources"
   },
   "project_files.runtime_status": {
     "method": "GET",
-    "path": "/api/workspace/project-files/runtime/status",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/runtime/status"
   },
   "project_files.save_as": {
     "method": "POST",
-    "path": "/api/workspace/project-files/save-as",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/save-as"
   },
   "project_files.search_create": {
     "method": "POST",
-    "path": "/api/workspace/project-files/searches",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/searches"
   },
   "project_files.search_delete": {
     "method": "POST",
-    "path": "/api/workspace/project-files/searches/{search_id}/delete",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/searches/{search_id}/delete"
   },
   "project_files.search_rename": {
     "method": "POST",
-    "path": "/api/workspace/project-files/searches/{search_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/searches/{search_id}"
   },
   "project_files.searches": {
     "method": "GET",
-    "path": "/api/workspace/project-files/searches",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/searches"
   },
   "project_files.selection_create": {
     "method": "POST",
-    "path": "/api/workspace/project-files/selections",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/selections"
   },
   "project_files.selection_delete": {
     "method": "POST",
-    "path": "/api/workspace/project-files/selections/{selection_id}/delete",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/selections/{selection_id}/delete"
   },
   "project_files.selection_get": {
     "method": "GET",
-    "path": "/api/workspace/project-files/selections/{selection_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/selections/{selection_id}"
   },
   "project_files.selection_rename": {
     "method": "POST",
-    "path": "/api/workspace/project-files/selections/{selection_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/selections/{selection_id}"
   },
   "project_files.selections": {
     "method": "GET",
-    "path": "/api/workspace/project-files/selections",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/selections"
   },
   "project_files.snapshot": {
     "method": "POST",
-    "path": "/api/workspace/project-files/materials/snapshot",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/materials/snapshot"
   },
   "project_files.source_references": {
     "method": "GET",
-    "path": "/api/workspace/project-files/sources/{project_id}/references",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/sources/{project_id}/references"
   },
   "project_files.source_register": {
     "method": "POST",
-    "path": "/api/workspace/project-files/sources/register",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/sources/register"
   },
   "project_files.studies": {
     "method": "GET",
-    "path": "/api/workspace/project-files/studies",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/studies"
   },
   "project_files.study": {
     "method": "GET",
-    "path": "/api/workspace/project-files/studies/{study_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/studies/{study_id}"
   },
   "project_files.study_create": {
     "method": "POST",
-    "path": "/api/workspace/project-files/studies",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/studies"
   },
   "project_files.study_save": {
     "method": "POST",
-    "path": "/api/workspace/project-files/studies/{study_id}",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/studies/{study_id}"
   },
   "project_files.trial": {
     "method": "GET",
-    "path": "/api/workspace/project-files/trials/{trial_id}",
-    "mutation": false
+    "mutation": false,
+    "path": "/api/workspace/project-files/trials/{trial_id}"
   },
   "project_files.trial_prepare": {
     "method": "POST",
-    "path": "/api/workspace/project-files/studies/{study_id}/trials",
-    "mutation": true
+    "mutation": true,
+    "path": "/api/workspace/project-files/studies/{study_id}/trials"
   }
 }
 /* PROJECT_FILES_ROUTES_END */;
@@ -801,6 +807,18 @@
   const m2HistoryActions=new Set(['data_history','data_response_history','data_preference_history']);
   const dirty=()=>importDirty||annotationDirty||m2Dirty;
   const checkpoint=()=>state?.project?.checkpoint??null;
+  let scientificEpoch=null;
+  const projectScientific=window.ScientificFieldInspector({
+    root:$('scientific-inspection'),
+    isCurrent:record=>scientificEpoch===epoch&&!blocked&&state?.state==='open'&&explored?.category==='data_query'&&explored.id===record.id&&explored.value.content_hash===record.content_hash&&explored.checkpoint===checkpoint(),
+    async readSlice(record,selection,signal){
+      const result=await m2Request('data_scientific',{record_id:record.id,content_hash:record.content_hash,...selection},epoch,{signal});
+      if(result===null)throw new DOMException('Project selection changed.','AbortError');
+      return result;
+    }
+  });
+  function clearScientific(){scientificEpoch=null;projectScientific.clear();}
+  window.addEventListener('pagehide',clearScientific);
   const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
   const str=(value,max,empty=false)=>typeof value==='string'&&Array.from(value).length<=max&&(empty||/\S/u.test(value));
   const id=value=>typeof value==='string'&&/^[a-f0-9]{32}$/.test(value);
@@ -1055,6 +1073,7 @@
   }
   const m2Allowed=action=>!busy&&!blocked&&state?.state==='open'&&selectedContracts.has('project_files.'+action);
   function m2Controls(){
+    if(blocked||state?.state!=='open'||scientificEpoch!==null&&(scientificEpoch!==epoch||explored?.checkpoint!==checkpoint()))clearScientific();
     const action=$('project-explore-kind').value;
     $('project-explore-load').disabled=!m2Allowed(action);
     $('project-explore-more').disabled=!m2Allowed(action);
@@ -1074,6 +1093,7 @@
     for(const button of $('project-explore-list').querySelectorAll('button'))button.disabled=busy||blocked;
   }
   function clearExploration(){
+    clearScientific();
     explored=null;exploreOffset=0;exploreTotal=0;historyOffset=0;historyTotal=0;
     $('project-explore-list').replaceChildren();$('project-detail-facts').replaceChildren();$('project-detail-history-list').replaceChildren();
     $('project-detail-title').textContent='Choose a saved record';$('project-explore-summary').textContent='';
@@ -1125,7 +1145,7 @@
       for(const item of page.items)if(!exact(item,['family','source_id','source_revision','destination_id'])||!safeText(item.family,80)||!safeText(item.source_id,512)||!(item.source_revision===null||positive(item.source_revision))||!safeText(item.destination_id,512))invalid();
     }
   }
-  async function m2Request(action,arguments_,ticket){
+  async function m2Request(action,arguments_,ticket,{signal}={}){
     const operation='project_files.'+action,definition=m2Operations[operation];
     if(!definition||!selectedContracts.has(operation))throw Error('This operation is unavailable for the selected project.');
     const binding=state.binding,cp=checkpoint(),project=state.project.project_id;
@@ -1133,7 +1153,7 @@
     let path=definition.path;
     for(const [name,value] of Object.entries(values))path=path.replace('{'+name+'}',encodeURIComponent(value));
     const remaining=Object.fromEntries(Object.entries(values).filter(([name])=>!definition.path.includes('{'+name+'}')));
-    const options={method:definition.method,cache:'no-store',headers:{'Tuldok-Operation-Contract':selectedHeader(operation)}};
+    const options={method:definition.method,cache:'no-store',signal,headers:{'Tuldok-Operation-Contract':selectedHeader(operation)}};
     if(definition.method==='GET')path+='?'+new URLSearchParams(remaining);
     else{
       if(definition.mutation&&!['execution_reconcile_current','execution_study_reconcile_preparation','native_reconcile'].includes(action)){
@@ -1160,7 +1180,7 @@
     }
     let response,value;
     try{response=await window.TuldokAuth.fetch(path,options);value=await response.json();}
-    catch(_){const failure=Error(definition.mutation?'Acknowledgement unavailable; this change may already be saved. Keep your edits and refresh project status.':'Saved history is unavailable. Refresh project status.');failure.code='transport';throw failure;}
+    catch(problem){if(problem.name==='AbortError')throw problem;const failure=Error(definition.mutation?'Acknowledgement unavailable; this change may already be saved. Keep your edits and refresh project status.':'Saved history is unavailable. Refresh project status.');failure.code='transport';throw failure;}
     if(ticket!==epoch)return null;
     if(!response.ok){
       const failure=Error(str(value?.error,1000)?value.error:'Unsupported project error response.');failure.code=value?.code??'transport';failure.status=response.status;
@@ -1224,6 +1244,7 @@
     if(category==='models')$('project-model-publish').hidden=false;
     if(entry.saveAction&&origin===state.project.project_id){$('project-metadata-form').hidden=false;$('project-metadata-name').value=entry.value.name??'';}
     if(category==='data_query'){
+      if(entry.value.kind==='field_sequence'){scientificEpoch=ticket;projectScientific.show(entry.value);}
       $('project-detail-history').hidden=false;$('project-detail-availability').hidden=false;$('project-rights-form').hidden=false;$('project-selection-form').hidden=false;
       $('project-rights-note').value=entry.value.provenance?.rights_note_correction?.note??entry.value.provenance?.rights??'unknown';
       const key=entry.value.task?.endsWith('_classification')?'label':entry.value.task==='image_caption'?'caption':entry.value.task==='text_corpus'||['sequence','mesh','pointcloud','volume','field_sequence'].includes(entry.value.kind)?'note':null;
@@ -1233,6 +1254,7 @@
     controls();$('project-detail-title').focus();
   }
   function clearExplorationDetail(){
+    clearScientific();
     explored=null;historyOffset=0;historyTotal=0;$('project-detail-facts').replaceChildren();$('project-detail-history-list').replaceChildren();
     for(const name of ['project-metadata-form','project-data-note-form','project-rights-form','project-selection-form','project-detail-history','project-detail-history-more','project-detail-availability','project-run-evidence','project-run-document','project-run-disclose','project-disclosure-label','project-model-publish','project-artifact-status','project-artifact-resolve-form'])$(name).hidden=true;
   }

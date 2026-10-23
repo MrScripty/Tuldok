@@ -72,6 +72,18 @@ def client(reply, *, owner=False):
 
 
 class M2Contracts(unittest.TestCase):
+    def test_scientific_slice_request_requires_project_checkpoint_and_exact_content(self):
+        arguments=dict(binding=BINDING,checkpoint=CHECKPOINT,record_id=RECORD,
+                       content_hash=OTHER,frame=1,field='pressure',axis='z',index=2)
+        method,path,body=api.project_request('project_files.data_scientific',arguments)
+        self.assertEqual(method,'GET');self.assertIsNone(body)
+        self.assertTrue(path.startswith('/api/workspace/project-files/data/'+RECORD+'/scientific?'))
+        for key in ('binding','checkpoint','record_id','content_hash'):
+            with self.subTest(missing=key),self.assertRaises(api.AgentAPIError):
+                api.validate_arguments('project_files.data_scientific',{k:v for k,v in arguments.items() if k!=key})
+        with self.assertRaises(api.AgentAPIError):
+            api.validate_arguments('project_files.data_scientific',dict(arguments,execute=True))
+
     def test_fixed_consumers_cover_all_m2_operations_and_preserve_m1(self):
         sdk = ProjectFilesClient(Mock())
         cli = project_cli.parser()

@@ -868,6 +868,8 @@ _project_file_operation('definitions', 'GET', '/definitions')
 # Actual data and its authored histories. Inline source imports retain the
 # existing decoded-byte bound; compound sources use their existing parsers.
 _project_file_operation('data_query', 'GET', '/data', domain='data.query')
+_project_file_operation('data_scientific', 'GET', '/data/{record_id}/scientific',
+    {'content_hash': SHA}, domain='data.scientific')
 _project_file_operation('data_get', 'GET', '/data/{record_id}', {'record_id': ID})
 _project_file_operation('data_availability', 'GET', '/data/{record_id}/availability', {'record_id': ID})
 for _action, _suffix in [('data_history', 'history'), ('data_responses', 'responses'),

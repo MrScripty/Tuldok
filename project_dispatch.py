@@ -12,7 +12,7 @@ from workbench import WorkbenchError
 
 
 _BOUND_FIELDS = frozenset(('binding', 'checkpoint', 'expected_checkpoint', 'request_key'))
-_DATA_ACTIONS = frozenset(('data_query', 'data_get', 'data_availability', 'data_history',
+_DATA_ACTIONS = frozenset(('data_query', 'data_get', 'data_scientific', 'data_availability', 'data_history',
     'data_responses', 'data_response_history', 'data_preferences', 'data_preference_history',
     'data_import_text', 'data_import_image', 'data_import_audio', 'data_import_mesh',
     'data_import_pointcloud', 'data_import_volume', 'data_import_sequence', 'data_import_scientific',
@@ -104,6 +104,8 @@ def _data(projection, action, a):
     data = projection.data
     if action == 'data_query': return data.query(_body(a))
     if action == 'data_get': return data.get(a['record_id'])
+    if action == 'data_scientific': return data.scientific(a['record_id'], a['content_hash'],
+        **{key: a[key] for key in ('frame', 'field', 'axis', 'index') if key in a})
     if action == 'data_availability': return data.availability(a['record_id'])
     if action == 'data_history': return _page(data.history(a['record_id']), a, default=1)
     if action == 'data_responses': return _page(data.responses(a['record_id'])['responses'], a)

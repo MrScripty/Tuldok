@@ -179,6 +179,30 @@ class SourceAdapterTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):adapter.import_scientific(forged,projection.session.snapshot['checkpoint'],'foreign-unbound')
         self.assertEqual(self.store.snapshot(),canonical)
 
+    def test_scientific_slice_read_pins_content_and_survives_cold_open_without_source_root(self):
+        body=self.import_body(self.register())
+        row=self.adapter.import_scientific(body,self.session.snapshot['checkpoint'],'slice-source')
+        before=self.store.snapshot()
+        expected=self.projection.data.scientific(row['id'],row['content_hash'],frame=1,field='scalar',axis='z',index=2)
+        self.assertEqual(expected['values'][1][2],1212+2**-45)
+        projection,_adapter=self.project('cold-slice-without-roots',{})
+        self.assertEqual(projection.data.scientific(row['id'],row['content_hash'],frame=1,field='scalar',axis='z',index=2),expected)
+        for changes in ({'frame':2},{'index':4},{'field':'absent'}):
+            selection=dict(frame=0,field='scalar',axis='z',index=0)
+            selection.update(changes)
+            with self.subTest(changes=changes),self.assertRaises(WorkbenchError):
+                projection.data.scientific(row['id'],row['content_hash'],**selection)
+        with self.assertRaises(WorkbenchError) as caught:
+            projection.data.scientific(row['id'],'0'*64)
+        self.assertEqual(caught.exception.code,'conflict')
+        token=self.access.issue(dict(label='Revoked inspection',scopes=['inspect']))
+        with self.access.bind(token['token']):
+            with self.access.bind(self.token):
+                self.access.revoke(token['identity']['credential_id'])
+            with self.assertRaises(AccessError):
+                projection.data.scientific(row['id'],row['content_hash'])
+        self.assertEqual(self.store.snapshot(),before)
+
     def test_deferred_sql_failure_retains_snapshot_receipt_and_explicit_cold_replay_rebinds(self):
         self.db.execute("CREATE FUNCTION fixture_refuse_source() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'controlled source SQL failure' USING ERRCODE='23514'; END; $$")
         self.db.execute('CREATE CONSTRAINT TRIGGER fixture_source_failure AFTER INSERT ON workspace_projects DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION fixture_refuse_source()')
