@@ -402,6 +402,24 @@ class ProjectFilesClient:
         """Read a bounded saved Trial graph without execution or metric disclosure."""
         return self._call('progression', arguments)
 
+    def measurement_import(self, **arguments):
+        return self._call('measurement_import', arguments)
+
+    def measurement_sources(self, **arguments):
+        return self._call('measurement_sources', arguments)
+
+    def measurement_metadata(self, **arguments):
+        return self._call('measurement_metadata', arguments)
+
+    def measurement_subjects(self, **arguments):
+        return self._call('measurement_subjects', arguments)
+
+    def measurement_query(self, **arguments):
+        return self._call('measurement_query', arguments)
+
+    def measurement_inspect(self, **arguments):
+        return self._call('measurement_inspect', arguments)
+
     def model_create(self, **arguments):
         """model create; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('model_create', arguments)

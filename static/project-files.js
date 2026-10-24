@@ -142,7 +142,13 @@
   "project_files.study_create": "8d2aac7c073a6a7b3ebb41227b5b466cf03606625404f93a59b325038a4ad7a1",
   "project_files.study_save": "5bf3fb814588fd7d9c35836e9d964a64481b3cc4169caf76cad6ce776ff0fe15",
   "project_files.trial": "79afa4bed6d0907f3d4116cc04cb784e94e5a24ab89725ec24f5d7bce70e869f",
-  "project_files.trial_prepare": "e1f6973536fd4c356c4a92fc674d6766f7df0d8a113b8ee71bb05d0adc40b04f"
+  "project_files.trial_prepare": "e1f6973536fd4c356c4a92fc674d6766f7df0d8a113b8ee71bb05d0adc40b04f",
+  "project_files.measurement_import": "c8e500396138fc60a31fc916c441bb95454f410231a6508609a7ebba5cd31f18",
+  "project_files.measurement_sources": "7805e9c5a6b2e2ab566ca134c18697116c89e08a1991b5192b0b5c152a34041d",
+  "project_files.measurement_metadata": "5a92ed5259f8876a3c5b8fd1886a9e0f44f0aea8e53d7f63902ac765ddac0de7",
+  "project_files.measurement_subjects": "37bd3f717c7158e34b9c221bfa1dbce79490b9d55248803d13dab2ea17b35ea5",
+  "project_files.measurement_query": "65b1456a6870dd6d4b7499669777a2c66157142ccc27cac1864a995664220e1c",
+  "project_files.measurement_inspect": "fcbe9846ca49c3da4713b54a3cb4a8237189d8eea5799f275d33992ef268914f"
 }
 /* PROJECT_FILES_CONTRACTS_END */;
   // Generated fixed operation routes from agent_api; remote schemas are never executed.
@@ -800,6 +806,36 @@
     "method": "POST",
     "path": "/api/workspace/project-files/studies/{study_id}/trials",
     "mutation": true
+  },
+  "project_files.measurement_import": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/measurements/import",
+    "mutation": true
+  },
+  "project_files.measurement_inspect": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}/observations/{observation_id}",
+    "mutation": false
+  },
+  "project_files.measurement_metadata": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}",
+    "mutation": false
+  },
+  "project_files.measurement_query": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}/query",
+    "mutation": false
+  },
+  "project_files.measurement_sources": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements",
+    "mutation": false
+  },
+  "project_files.measurement_subjects": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}/subjects",
+    "mutation": false
   }
 }
 /* PROJECT_FILES_ROUTES_END */;
