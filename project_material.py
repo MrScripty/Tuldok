@@ -329,7 +329,7 @@ def _retained_value(get_documents, family, ref):
 
 
 class MaterialSnapshot:
-    """Owned, validated material facts for one fixed candidate validation.
+    """Owned, validated material facts for one fixed checkpoint read.
 
     The decoder copies the selected documents. Neither input mutation nor a
     returned value can alter this view. It has no live Session, artifact reader,
@@ -361,6 +361,16 @@ class ProjectMaterial:
     def _documents(self):
         self.session.check()
         return decode_records(self.session.snapshot['records'])
+
+    def read_view(self, records):
+        """Own validated material facts from one guarded checkpoint read.
+
+        The history reader supplies its selected records. This view carries no
+        live publication, verification or execution capability; later reads
+        must select their own checkpoint and construct a new view.
+        """
+        self.session.check()
+        return MaterialSnapshot(records)
 
     @_boundary
     def intents(self):

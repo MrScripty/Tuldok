@@ -147,6 +147,21 @@ class MaterialCodecs(unittest.TestCase):
         with patch.object(self.session,'check',side_effect=AssertionError('Invalid reference accessed snapshot')):
             with self.assertRaises(WorkbenchError):self.material.runtime({'catalog_id':'invalid'})
 
+    def test_material_read_view_uses_supplied_records_without_resnapshotting(self):
+        environment={'python':'/unavailable/original/python','packages':{},'definition_files':{}}
+        sha=digest(environment);ref=dict(kind='runtime',catalog_id=self.catalog,id=sha,sha256=sha)
+        original=dict(ref=ref,descriptor=None,environment=environment,manifest=None)
+        records=[self.material.capture_runtime(original)]
+        self.assertEqual(self.session.snapshot['records'],[])
+        view=self.material.read_view(records)
+        self.assertEqual(view.runtime(ref),original)
+        self.assertEqual(self.session.snapshot['records'],[])
+
+    def test_material_read_view_rechecks_session_availability(self):
+        with patch.object(self.session,'check',side_effect=WorkbenchError('Stale checkpoint.','stale',409)):
+            with self.assertRaisesRegex(WorkbenchError,'Stale checkpoint'):
+                self.material.read_view([])
+
     def test_operation_result_requires_exact_retained_revision_or_material(self):
         first=definition(self.catalog);record=self.material.capture_definition('model_definition',first,[],action='models.create')
         changed=copy.deepcopy(first);changed.update(revision=2,name='Changed')

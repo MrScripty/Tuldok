@@ -738,7 +738,8 @@ class ProjectHistory:
 
     def _facts(self):
         self.session.check()
-        return decode_records(self.session.snapshot['records'],materials=self.materials,artifacts=self.artifacts)
+        records=self.session.snapshot['records']
+        return decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
 
     def _authorize(self,action,target=None):
         self.access.require('inspect',action,target)

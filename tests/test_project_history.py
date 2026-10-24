@@ -60,6 +60,8 @@ def trial(identity,study_id,origin=ORIGIN,parent=None,baseline=None):
 
 class Materials:
     """Only material lookup is substituted; history/lineage validators are real."""
+    def read_view(self, records):
+        return self
     def recipe(self,ref,*,verify=False):
         if ref!={'kind':'recipe_material','catalog_id':ORIGIN,'id':MATERIAL,'sha256':MATERIAL}:
             raise WorkbenchError('Unknown exact fixture material.','unavailable',409)
@@ -123,6 +125,23 @@ class HistoryCodecTests(unittest.TestCase):
         self.assertEqual(records,before)
         changed=copy.deepcopy(records);changed[-1]['document']['lineage']['intent']['baseline']['catalog_id']=OTHER
         with self.assertRaises(WorkbenchError):decode_records(changed,materials=Materials())
+
+    def test_history_read_uses_one_material_view_of_the_selected_records(self):
+        identity='9'*32
+        records=[study(trials=[identity]),trial(identity,'3'*32)]
+        observed=[]
+        class Provider:
+            def read_view(self, selected):
+                observed.append(selected)
+                return Materials()
+            def recipe(self, *args, **kwargs):
+                raise AssertionError('History reread the live material catalog')
+        session=SimpleNamespace(snapshot=dict(records=records,project_id=OTHER),
+            artifacts=None,access=SimpleNamespace(),check=lambda:None)
+        facts=ProjectHistory(session,materials=Provider())._facts()
+        self.assertEqual(len(observed),1)
+        self.assertIs(observed[0],records)
+        self.assertEqual(facts.trials[(ORIGIN,identity)]['trial'],records[1]['document']['trial'])
 
     def test_closure_omissions_cycles_and_history_completeness_are_rejected(self):
         parent_id='9'*32;child_id='a'*32
@@ -370,6 +389,7 @@ class ProjectHistoryPostgresTests(unittest.TestCase):
     def test_trial_and_cross_study_lineage_checkpoint_preserve_previous_revision(self):
         class OwnedMaterial:
             def __init__(self,origin):self.origin=origin
+            def read_view(self,records):return self
             def recipe(self,ref,*,verify=False):
                 self.ref=ref
                 if ref!={'kind':'recipe_material','catalog_id':self.origin,'id':MATERIAL,'sha256':MATERIAL}:
