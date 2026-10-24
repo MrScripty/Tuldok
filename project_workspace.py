@@ -5,6 +5,7 @@ are unavailable in this mode until their canonical publication is implemented.
 The installation catalog holds local credentials; it is never portable content.
 """
 import copy
+from contextlib import ExitStack
 import hashlib
 import json
 import os
@@ -377,6 +378,12 @@ class ProjectWorkspace:
                     next_history_before_revision=page[-1]['revision'] if len(history) > len(page) else None)
 
     def _save_as(self, arguments):
+        return self._publish_independent(arguments)
+
+    def _compose(self, arguments):
+        return self._publish_independent(arguments, composed=True)
+
+    def _publish_independent(self, arguments, *, composed=False):
         """Publish a new independent project, then select a fresh inert cache."""
         from functools import partial
         from project_fork import publish_fork
@@ -390,13 +397,35 @@ class ProjectWorkspace:
         self._store.save(arguments['expected_checkpoint'])
         published = None
         incoming = projection = None
+        retained = ExitStack()
         try:
-            published = publish_fork(self._store, source.artifacts, root_fd, arguments['directory'],
-                root_path=root_path, name=arguments['name'],
-                expected_checkpoint=arguments['expected_checkpoint'], request_key=arguments['request_key'],
-                quiescent=True, build_candidate=partial(build_candidate, created_at=timestamp(),
-                    id_factory=lambda _family, _source_id, _revision: uuid.uuid4().hex),
-                validate_candidate=lambda records, identity: source.validate_records(records, project_id=identity))
+            if composed:
+                from project_composition import publish_composition
+                from project_artifacts import ProjectArtifacts
+                others=[];identities={self._store.snapshot()['project_id']}
+                for selected in arguments['sources']:
+                    if selected['project_id'] in identities:
+                        raise WorkbenchError('Composition source identity repeats.','conflict',409)
+                    identities.add(selected['project_id'])
+                    directory,descriptor=self._root(selected['root'],selected['directory'])
+                    store=retained.enter_context(ProjectStore.open_at(descriptor,selected['directory'],root_path=directory))
+                    actual=store.snapshot()
+                    if actual['project_id']!=selected['project_id'] or actual['checkpoint']!=selected['checkpoint']:
+                        raise WorkbenchError('Selected composition source checkpoint differs.','stale_project',409)
+                    artifacts=retained.enter_context(ProjectArtifacts(store))
+                    others.append(dict(store=store,artifacts=artifacts,checkpoint=selected['checkpoint']))
+                published=publish_composition(self._store,source.artifacts,others,root_fd,arguments['directory'],
+                    root_path=root_path,name=arguments['name'],expected_checkpoint=arguments['expected_checkpoint'],
+                    request_key=arguments['request_key'],quiescent=True,created_at=timestamp(),
+                    id_factory=lambda *_:uuid.uuid4().hex,
+                    validate_candidate=lambda records,identity,artifacts:source.validate_records(records,project_id=identity,artifacts=artifacts))
+            else:
+                published = publish_fork(self._store, source.artifacts, root_fd, arguments['directory'],
+                    root_path=root_path, name=arguments['name'],
+                    expected_checkpoint=arguments['expected_checkpoint'], request_key=arguments['request_key'],
+                    quiescent=True, build_candidate=partial(build_candidate, created_at=timestamp(),
+                        id_factory=lambda _family, _source_id, _revision: uuid.uuid4().hex),
+                    validate_candidate=lambda records, identity: source.validate_records(records, project_id=identity))
             # A filesystem editor can act outside the workspace lock. Leave the
             # complete fork unselected if its source working files changed.
             source.files.require_clean()
@@ -415,7 +444,10 @@ class ProjectWorkspace:
                 request_key=arguments['request_key'], reconciled=published['reconciled'],
                 mapping_count=len(overlay['mapping']), copied_count=len(overlay['artifacts']['copied']),
                 missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']))
-            return dict(state=self._state(), fork=summary)
+            result=dict(state=self._state(), fork=summary)
+            if composed:
+                result['sources']=[{key:item[key] for key in ('project_id','checkpoint')} for item in published['composition']['sources']]
+            return result
         except BaseException as error:
             if projection is not None and projection is not self._projection:
                 projection.close()
@@ -430,11 +462,13 @@ class ProjectWorkspace:
             elif receipt is not None:
                 receipt = dict(receipt, root=arguments['root'])
             if receipt is not None:
-                failure = WorkbenchError('Independent project was published but could not be selected; retry this exact Save As.',
+                failure = WorkbenchError('Independent project was published but could not be selected; reconcile this exact request.',
                                          'project_selection_unavailable', 503)
                 failure.receipt = receipt
                 raise failure from error
             raise
+        finally:
+            retained.close()
 
     def dispatch(self, name, arguments, *, selected_version=None):
         """Pin workspace -> current host authority -> projection through return.
@@ -457,7 +491,7 @@ class ProjectWorkspace:
                 if scope == 'execute' and action in ('execution_submit_external', 'execution_study_admit'):
                     self.access.require_external_submission()
                 else:
-                    self.access.require(scope, name, owner_only=action in ('new', 'open', 'save', 'save_as', 'close'))
+                    self.access.require(scope, name, owner_only=action in ('new', 'open', 'save', 'save_as', 'compose', 'close'))
             if selected_version == 1 and action in ('get', 'annotate'):
                 self._bound(arguments, check_checkpoint=action == 'get')
                 record = self._projection.data._require_record(arguments['record_id'])
@@ -466,7 +500,7 @@ class ProjectWorkspace:
                                          'unsupported', 409)
             if name in agent_api.PROJECT_FILES_M4 and not M4_ENABLED:
                 raise WorkbenchError('This project capability is not yet available.', 'unavailable', 409)
-            if name in (agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | agent_api.PROJECT_FILES_M4) - {'project_files.save_as'}:
+            if name in (agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | agent_api.PROJECT_FILES_M4) - {'project_files.save_as','project_files.compose'}:
                 if ((name in agent_api.PROJECT_FILES_M2 and not M2_ENABLED)
                         or (name in agent_api.PROJECT_FILES_M3 and not M3_ENABLED)
                         or (name in agent_api.PROJECT_FILES_M4 and not M4_ENABLED)):
@@ -496,7 +530,7 @@ class ProjectWorkspace:
                 if prior is not None:
                     if prior[0] != signature:
                         raise WorkbenchError('Request key already has different input.', 'conflict', 409)
-                    prior_state = prior[1]['state'] if action == 'save_as' else prior[1]
+                    prior_state = prior[1]['state'] if action in ('save_as','compose') else prior[1]
                     if prior_state != self._state():
                         raise WorkbenchError('This lifecycle receipt belongs to an obsolete workspace state.', 'stale_project', 409)
                     result = copy.deepcopy(prior[1])
@@ -510,6 +544,8 @@ class ProjectWorkspace:
                             result = self._state()
                         elif action == 'save_as':
                             result = self._save_as(arguments)
+                        elif action == 'compose':
+                            result = self._compose(arguments)
                         elif action == 'close':
                             self._bound(arguments)
                             self._detach()
@@ -542,11 +578,11 @@ class ProjectWorkspace:
                             raise WorkbenchError('Unsupported project-file operation.', 'unsupported', 400)
                     except BaseException as error:
                         code = getattr(error, 'code', None)
-                        if action != 'save_as' and code in ('unknown', 'outcome_unknown', 'projection_unavailable'):
+                        if action not in ('save_as','compose') and code in ('unknown', 'outcome_unknown', 'projection_unavailable'):
                             reason = 'unknown_publication' if code in ('unknown', 'outcome_unknown') else 'projection_unavailable'
                             self._recovery_required(reason, arguments.get('request_key'))
                         raise
-                    if arguments.get('request_key') and action in ('new', 'open', 'save', 'save_as', 'close'):
+                    if arguments.get('request_key') and action in ('new', 'open', 'save', 'save_as', 'compose', 'close'):
                         self._receipts[key] = (signature, copy.deepcopy(result))
             if len(agent_api.encoded(result)) > agent_api.RESPONSE_LIMIT:
                 raise WorkbenchError('This project result exceeds the synchronous response bound; canonical work is retained.',

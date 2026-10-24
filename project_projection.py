@@ -126,9 +126,10 @@ class ProjectProjection:
     def execute(self, *args, **kwargs):
         return self.db.execute(*args, **kwargs)
 
-    def validate_records(self, records, *, project_id=None):
+    def validate_records(self, records, *, project_id=None, artifacts=None):
+        artifacts = self.artifacts if artifacts is None else artifacts
         project_id = self.project_id if project_id is None else project_id
-        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
+        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_composition', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
             MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
         identities = set()
         declarations = {}
@@ -145,20 +146,22 @@ class ProjectProjection:
         decode_data_records(records)
         from project_fork import decode_fork
         decode_fork(records, project_id=project_id)
+        from project_composition import decode_records as decode_compositions
+        decode_compositions(records, project_id=project_id)
         from project_transfer import decode_records as decode_extraction_records
         decode_extraction_records(records)
         operation_records(records, project_id=project_id)
         decode_file_records(records)
-        decode_native_records(records,artifacts=self.artifacts)
+        decode_native_records(records,artifacts=artifacts)
         materials = MaterialSnapshot(records)
         for blob in materials.artifact_blobs():
             if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
                 raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
         # Resolve every cross-owner reference against THIS candidate, rather
         # than a resolver that still sees the preceding committed checkpoint.
-        decode_producer_records(records, artifacts=self.artifacts)
-        decode_history_records(records, materials=materials, artifacts=self.artifacts)
-        decode_measurement_records(records, artifacts=self.artifacts)
+        decode_producer_records(records, artifacts=artifacts)
+        decode_history_records(records, materials=materials, artifacts=artifacts)
+        decode_measurement_records(records, artifacts=artifacts)
         for receipt in operation_documents(records):
             operation, result = receipt['operation'], receipt['result']
             if (validate_data_result(operation, result, records)

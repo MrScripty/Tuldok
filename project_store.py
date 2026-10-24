@@ -54,6 +54,7 @@ SUPPORTED_FORMATS = {
     'project_artifact': 'project_artifact_v1',
     'project_operation': 'project_operation_v1',
     'project_fork': 'project_fork_v1',
+    'project_composition': 'project_composition_v1',
     'project_file': 'project_file_v1',
     'project_extraction': 'project_extraction_v1',
     'generation_history': 'project_generation_history_v1',

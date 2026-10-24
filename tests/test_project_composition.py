@@ -16,6 +16,8 @@ def snapshot(identity, records):
 
 def approved_history():
     run=legacy_run();run['approval_id']='9'*32
+    run['release_id']=run['release_sha256']=hashlib.sha256(b'reference input').hexdigest()
+    run['release_bytes']=len(b'reference input')
     grant=dict(id=run['approval_id'],catalog_id=ORIGIN,approver_actor_id='a'*32,approver_credential_id='b'*32,
                consumer_actor_id='5'*32,material_sha256='f'*64,created_at=1,expires_at=100,revoked_at=None)
     consumption=dict(grant_id=grant['id'],run_id=run['id'],admission_id=run['admission_id'],

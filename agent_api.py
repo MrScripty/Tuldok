@@ -1329,6 +1329,17 @@ model_operation('project_files.save_as','POST','/api/workspace/project-files/sav
     scopes=('inspect','edit'),mutation=True,description='Create an independent idle project fork at an explicit configured local destination; retain inert origins and exact copy completeness.')
 _OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=PROJECT_FILES_RECEIPT
 PROJECT_FILES_M4.add('project_files.save_as');_OWNER_OPERATION_IDS.add('project_files.save_as');_MODEL_RECEIPT_IDS.add('project_files.save_as')
+# Composition is a new owner-only operation; existing Save As pins/state stay frozen.
+_PROJECT_COMPOSITION_SOURCE=obj({'root':text(160),'directory':text(512),'project_id':ID,'checkpoint':SHA})
+model_operation('project_files.compose','POST','/api/workspace/project-files/compose',
+    dict(_PROJECT_FILES_MUTATION,root=text(160),directory=text(512),name=text(200),
+         sources=array(_PROJECT_COMPOSITION_SOURCE,15,1)),
+    output=obj({'state':PROJECT_FILES_STATE,'fork':_PROJECT_FORK_RESULT,
+                'sources':array(obj({'project_id':ID,'checkpoint':SHA}),16,2)}),
+    scopes=('inspect','edit'),mutation=True,
+    description='Compose explicit retained project checkpoints with the current editable primary into one independent inert project.')
+_OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=PROJECT_FILES_RECEIPT
+PROJECT_FILES_M4.add('project_files.compose');_OWNER_OPERATION_IDS.add('project_files.compose');_MODEL_RECEIPT_IDS.add('project_files.compose')
 _PROJECT_FILE_INSPECTION=obj({'id':SHA,'kind':_PROJECT_FILE_KIND,'path':text(512),'revision':SAFE_POS,
     'expected_sha256':{'oneOf':[SHA,{'type':'null'}]},'expected_bytes':integer(0,1048576),
     'observed_sha256':{'oneOf':[SHA,{'type':'null'}]},'observed_bytes':{'oneOf':[integer(0,1048576),{'type':'null'}]},
@@ -2670,7 +2681,7 @@ class AgentClient:
             elif (value['binding']!=arguments['binding'] or value['receipt']['request_key']!=arguments['request_key']
                     or value['receipt']['report_sha256']!=arguments['report_sha256']):
                 raise AgentAPIError('Extraction receipt belongs to another controller report or request.','transport',502)
-        if op['operation_id']=='project_files.save_as' and result['status']<400:
+        if op['operation_id'] in ('project_files.save_as','project_files.compose') and result['status']<400:
             value=result['result'];fork=value['fork'];state=value['state']
             if (state['state']!='open' or state['project']['project_id']!=fork['project_id']
                     or state['project']['checkpoint']!=fork['checkpoint'] or state['project']['name']!=arguments['name'] or state['binding']==arguments['binding']
@@ -2678,6 +2689,11 @@ class AgentClient:
                     or fork['source_checkpoint']!=arguments['expected_checkpoint']
                     or any(fork[field]!=arguments[field] for field in ('root','directory','request_key'))):
                 raise AgentAPIError('Save As result differs from its source, destination or selected state.','transport',502)
+            if op['operation_id']=='project_files.compose':
+                expected=[dict(project_id=fork['source_project_id'],checkpoint=arguments['expected_checkpoint'])]
+                expected.extend({key:item[key] for key in ('project_id','checkpoint')} for item in arguments['sources'])
+                if value['sources']!=expected:
+                    raise AgentAPIError('Composition result differs from its exact ordered sources.','transport',502)
         elif op['operation_id'] in PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4:
             value = result['result']
             if result['status'] >= 400:
