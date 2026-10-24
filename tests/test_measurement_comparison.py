@@ -91,7 +91,7 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual(error.exception.code, 'conflict')
 
     def test_bounds_and_invalid_selections_never_return_partial_results(self):
-        for constant, maximum in [('MAX_COMPARISON_BYTES', 1), ('MAX_COMPARISON_SUBJECTS', 1), ('MAX_ROWS', 7)]:
+        for constant, maximum in [('MAX_COMPARISON_BYTES', 1), ('MAX_COMPARISON_SUBJECTS', 1), ('MAX_COMPARISON_ROWS', 7)]:
             with patch.object(owner, constant, maximum), self.assertRaises(WorkbenchError):
                 MeasurementComparison(self.inputs)
         with self.assertRaises(WorkbenchError): MeasurementComparison(self.inputs * 9)
@@ -100,6 +100,15 @@ class ComparisonTests(unittest.TestCase):
             with self.subTest(arguments=arguments), self.assertRaises(WorkbenchError):
                 self.comparison.read('error', **arguments)
         with self.assertRaises(WorkbenchError): self.comparison.read(filters={})
+
+    def test_packet_and_combined_observation_budgets_are_separate(self):
+        # Both real source tables have four observations. A packet limit of
+        # four still permits their complete eight-observation comparison.
+        with patch.object(owner,'MAX_ROWS',4),patch.object(owner,'MAX_COMPARISON_ROWS',8,create=True):
+            self.assertEqual(MeasurementComparison(self.inputs).read()['observation_count'],8)
+            with self.assertRaises(WorkbenchError):MeasurementTable(encode(fixture()))
+        with patch.object(owner,'MAX_COMPARISON_ROWS',7,create=True),self.assertRaises(WorkbenchError):
+            MeasurementComparison(self.inputs)
 
     def test_returned_metadata_and_query_values_have_no_mutable_owner_alias(self):
         expected = self.comparison.read('error')

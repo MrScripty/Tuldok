@@ -509,6 +509,10 @@ class ProjectWorkspace:
                 from project_dispatch import dispatch
                 try:
                     value = dispatch(self._projection, name, arguments)
+                    if (name=='project_files.measurement_compare'
+                            and value['value']['observation_count']>agent_api.measurement_comparison_row_limit(selected_version)):
+                        raise WorkbenchError('Comparison exceeds the selected API version observation budget. Select comparison contract version 2 for larger complete populations.',
+                                             'too_large',413)
                     if name == 'project_files.execution_health' and selected_version == 1:
                         value = {key: item for key, item in value.items() if key != 'native_phases'}
                 except BaseException as error:

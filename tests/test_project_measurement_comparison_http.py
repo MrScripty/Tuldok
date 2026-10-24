@@ -3,6 +3,10 @@ import hashlib
 import json
 import os
 import unittest
+from unittest.mock import patch
+
+import agent_api
+from workbench import WorkbenchError
 
 import test_project_files_http as m1
 import test_project_files_m2_http as m2
@@ -55,4 +59,15 @@ class ComparisonHTTP(unittest.TestCase):
         self.assertEqual(inspected['case']['dimensions']['cpm'],8)
         missing=self.call('measurement_compare',sources=sources,metric_id='latency')['value']['query']
         self.assertTrue(all(s['maximum'] is None for s in missing['summary']))
+        self.assertEqual(self.workspace._projection.session.snapshot,before)
+        # Exercise version-specific admission at the real workspace/SQL owner
+        # with small declared fixture budgets; no partial comparison escapes.
+        arguments=self.arguments('measurement_compare',sources=sources)
+        with self.owner.bound(self.workspace),patch.object(agent_api,'measurement_comparison_row_limit',
+                side_effect=lambda version:7 if version==1 else 8):
+            with self.assertRaises(WorkbenchError) as error:
+                self.workspace.dispatch('project_files.measurement_compare',arguments,selected_version=1)
+            self.assertEqual(error.exception.code,'too_large')
+            value=self.workspace.dispatch('project_files.measurement_compare',arguments,selected_version=2)
+            self.assertEqual(value['value']['value']['observation_count'],8)
         self.assertEqual(self.workspace._projection.session.snapshot,before)
