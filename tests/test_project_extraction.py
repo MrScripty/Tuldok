@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -20,12 +21,53 @@ from access import Access
 from metadata import Metadata
 from model_definitions import ModelDefinitions
 from project_data import decode_data_records
-from project_extraction import capture_legacy
+from project_extraction import _Capture, capture_legacy
 from project_material import decode_records as decode_material
-from project_transfer import ReadonlyCatalog, SourceView
+from project_transfer import CapturedArtifacts, ReadonlyCatalog, SourceView
 from projects import Projects
 from saved_searches import SavedSearches
 from workbench import Workbench, WorkbenchError
+
+
+class CaptureDiagnostics(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='tuldok-capture-diagnostics-')
+        self.addCleanup(temporary.cleanup)
+        # These constructors assign owner references only. This fixture never
+        # calls a data reader, SQL, a model runtime or the source capability.
+        self.source = SimpleNamespace(
+            db=SimpleNamespace(dataset_id='a' * 32, path=Path(temporary.name), lock=threading.RLock()),
+            snapshot=dict(project_id='a' * 32, records=[]), artifacts=CapturedArtifacts())
+        self.capture = _Capture(self.source)
+
+    def test_severity_parent_family_and_code_keep_distinct_diagnostics(self):
+        capture = self.capture
+        parent = 'run_history', 'b' * 32
+        capture.issue(parent, 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(parent, 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(parent, 'missing_source', 'Original source unavailable')
+        capture.issue(('study_history', parent[1]), 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(('run_history', 'c' * 32), 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(parent, 'unsupported', 'Original source unavailable', warning=True)
+        self.assertEqual(capture.warnings, [
+            dict(family='run_history', id=parent[1], code='missing_source', detail='Original source unavailable'),
+            dict(family='study_history', id=parent[1], code='missing_source', detail='Original source unavailable'),
+            dict(family='run_history', id='c' * 32, code='missing_source', detail='Original source unavailable'),
+            dict(family='run_history', id=parent[1], code='unsupported', detail='Original source unavailable')])
+        self.assertEqual(capture.blockers, [capture.warnings[0]])
+
+    def test_retained_detail_normalization_and_first_observation_order(self):
+        capture = self.capture
+        parent = 'run_history', 'b' * 32
+        prefix = 'λ' * 1000
+        capture.issue(parent, 'missing_source', prefix + 'first', warning=True)
+        capture.issue(parent, 'missing_source', prefix + 'second', warning=True)
+        capture.issue(parent, 'missing_source', 42, warning=True)
+        capture.issue(parent, 'missing_source', '42', warning=True)
+        self.assertEqual(capture.warnings, [
+            dict(family='run_history', id=parent[1], code='missing_source', detail=prefix),
+            dict(family='run_history', id=parent[1], code='missing_source', detail='42')])
+        self.assertEqual(capture.blockers, [])
 
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL')

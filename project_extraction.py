@@ -60,6 +60,8 @@ class _Capture:
         self.origin = data_codec.identity(self.db.dataset_id)
         self.records, self.inventory, self.dependencies = {}, {}, {}
         self.blockers, self.warnings, self.working_files = [], [], []
+        # Preserve emitted order without scanning prior runtime diagnostics.
+        self._issue_keys = {False: set(), True: set()}
         self.anchor = None
         self.queue, self.visited, self.queued = deque(), set(), set()
         self.snapshot_by_id = {}
@@ -121,10 +123,13 @@ class _Capture:
         return target
 
     def issue(self, key, code, detail, *, warning=False):
-        value = dict(family=key[0], id=key[1], code=code, detail=str(detail)[:1000])
-        destination = self.warnings if warning else self.blockers
-        if value not in destination:
-            destination.append(value)
+        detail = str(detail)[:1000]
+        identity = key[0], key[1], code, detail
+        seen = self._issue_keys[bool(warning)]
+        if identity not in seen:
+            seen.add(identity)
+            destination = self.warnings if warning else self.blockers
+            destination.append(dict(family=key[0], id=key[1], code=code, detail=detail))
 
     def add(self, record):
         key = record['family'], record['id']
