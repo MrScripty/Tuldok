@@ -224,6 +224,27 @@ class MaterialCodecs(unittest.TestCase):
         self.assertEqual(restored[-1],record)
         self.assertEqual(self.material.runtime(ref,verify=True),value)
 
+    def test_legacy_activity_path_is_retained_without_becoming_a_current_manifest(self):
+        from projects import manifest as current_manifest, decode_retained_snapshot
+        manifest = dict(schema_version=1, id='c'*32, name='Archived activity',
+                        data=[], recipes=[], evidence=[], requirements=[], activity_path='old/activity.json')
+        raw = (json.dumps(manifest, indent=3)+'\n\n').encode()
+        saved = dict(id=manifest['id'], name=manifest['name'], root='gone', root_identity=[1,2],
+                     manifest_path='original.json', manifest_sha256=hashlib.sha256(raw).hexdigest(), manifest=manifest)
+        with self.assertRaises(WorkbenchError): current_manifest(manifest)
+        with patch('subprocess.Popen', side_effect=AssertionError('Retained activity is inert')):
+            self.assertEqual(decode_retained_snapshot(saved),saved)
+            record=self.material.capture_snapshot(saved,raw,catalog_id=self.catalog)
+            self.session.snapshot=dict(self.session.snapshot,records=[*self.material.declarations(record),record])
+            self.assertEqual(self.material.snapshot_ref(manifest['id'],saved['manifest_sha256'],verify=True),saved)
+            documents=decode_records(self.session.snapshot['records'])
+            self.assertEqual(documents[('project_snapshot',self.catalog+'.'+saved['manifest_sha256'])]['value'],saved)
+        for bad_path in ('../escape.json','/absolute.json','a\\b.json',False):
+            bad=copy.deepcopy(saved);bad['manifest']['activity_path']=bad_path
+            with self.assertRaises(WorkbenchError): decode_retained_snapshot(bad)
+        bad=copy.deepcopy(saved);bad['manifest']['unknown_activity_field']='anything'
+        with self.assertRaises(WorkbenchError): decode_retained_snapshot(bad)
+
     def test_original_snapshot_manifest_whitespace_is_not_reserialized_for_identity(self):
         manifest=dict(schema_version=1,id='c'*32,name='Snapshot',data=[],recipes=[],evidence=[],requirements=[])
         import json

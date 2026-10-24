@@ -453,10 +453,10 @@ class ProjectMaterial:
         if len(candidates) != 1: raise WorkbenchError('Retained project snapshot is unavailable or ambiguous.', 'unavailable', 409)
         doc = candidates[0]
         if verify:
-            from projects import decode, manifest
+            from projects import decode, decode_retained_manifest
             edge = doc['artifacts'][0]['blob']
             raw = self.session.artifacts.read_blob(edge, maximum_bytes=64*1024)
-            if manifest(decode(raw)) != doc['value']['manifest']:
+            if decode_retained_manifest(decode(raw)) != doc['value']['manifest']:
                 raise WorkbenchError('Retained project manifest differs.', 'invalid', 400)
         return copy.deepcopy(doc['value'])
 
@@ -589,9 +589,9 @@ class ProjectMaterial:
 
     @_boundary
     def capture_snapshot(self, value, raw, *, catalog_id):
-        from projects import decode_retained_snapshot,decode,manifest
+        from projects import decode_retained_snapshot,decode,decode_retained_manifest
         value=decode_retained_snapshot(value);_catalog(catalog_id)
-        if type(raw) is not bytes or len(raw)>64*1024 or hashlib.sha256(raw).hexdigest()!=value['manifest_sha256'] or manifest(decode(raw))!=value['manifest']:
+        if type(raw) is not bytes or len(raw)>64*1024 or hashlib.sha256(raw).hexdigest()!=value['manifest_sha256'] or decode_retained_manifest(decode(raw))!=value['manifest']:
             raise WorkbenchError('Exact original project manifest bytes differ.')
         key=catalog_id+'.'+value['manifest_sha256']
         prior=decode_records(self.session.snapshot['records']).get(('project_snapshot',key))

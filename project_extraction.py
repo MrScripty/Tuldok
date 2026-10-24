@@ -18,7 +18,7 @@ import project_data as data_codec
 import project_material as material_codec
 import project_history as history_codec
 import project_producers as producer_codec
-from projects import decode_retained_snapshot, manifest, decode as decode_manifest, relative_path
+from projects import decode_retained_snapshot, decode_retained_manifest, decode as decode_manifest, relative_path
 from project_files import file_id, MAX_FILE_BYTES
 
 MAX_PAYLOAD = 40 * 1024 * 1024
@@ -387,7 +387,7 @@ class _Capture:
             if root is None or list(root[1]) != saved['root_identity']:
                 _missing('The retained registration has no matching current explicit source-root capability.')
             raw = self.source.read_root(saved['root'], saved['manifest_path'], 65536)
-        if hashlib.sha256(raw).hexdigest() != sha or manifest(decode_manifest(raw)) != saved['manifest']:
+        if hashlib.sha256(raw).hexdigest() != sha or decode_retained_manifest(decode_manifest(raw)) != saved['manifest']:
             raise WorkbenchError('Original registered manifest bytes differ.', 'corrupt_payload', 409)
         blob = self.raw(key, raw, 'project_manifest')
         record = dict(family='project_snapshot', id=key[1], document=dict(format=material_codec.FAMILIES['project_snapshot'],

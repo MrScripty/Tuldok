@@ -139,6 +139,24 @@ class LegacyCapture(unittest.TestCase):
                             'recovered', 'manifest.json')
         return path
 
+    def test_exact_legacy_activity_manifest_is_captured_without_reading_activity(self):
+        self.manifest['activity_path']='activity-must-remain-inert.json'
+        self.manifest_raw=(json.dumps(self.manifest,ensure_ascii=False,indent=3)+'\n\n').encode()
+        saved=json.loads(self.dataset.db.execute('SELECT document FROM workspace_projects WHERE id=%s',
+                                               (self.project_id,)).fetchone()[0])
+        saved['manifest']=copy.deepcopy(self.manifest)
+        saved['manifest_sha256']=hashlib.sha256(self.manifest_raw).hexdigest()
+        self.dataset.db.execute('UPDATE workspace_projects SET document=%s WHERE id=%s',
+                               (json.dumps(saved),self.project_id))
+        self.selection['project_snapshot']['manifest_sha256']=saved['manifest_sha256']
+        source=self.view();self.bind_manifest_copy(source)
+        fd,_=source.roots.pop('fixture');os.close(fd)
+        captured=self.capture(source,{})
+        self.assertEqual(captured['blockers'],[])
+        snapshot=next(row['document'] for row in captured['records'] if row['family']=='project_snapshot')
+        self.assertEqual(snapshot['value'],saved)
+        self.assertEqual(len(snapshot['artifacts']),1)
+
     def test_explicit_original_manifest_binding_keeps_history_without_old_root_authority(self):
         source = self.view()
         self.bind_manifest_copy(source)
