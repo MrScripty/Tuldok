@@ -880,6 +880,16 @@
     onContextFocusLost:()=>$('project-files-status').focus()
   });
   window.addEventListener('pagehide',()=>projectProgression.clear());
+  const projectMeasurements=window.ProjectMeasurements({
+    root:$('project-measurements'),
+    async read(action,args,signal){
+      if(!m2Allowed(action))throw Error('Measurement inspection is unavailable for the selected project.');
+      const value=await m2Request(action,args,epoch,{signal});
+      if(value===null)throw new DOMException('Project selection changed.','AbortError');
+      return value;
+    },onContextFocusLost:()=>$('project-files-status').focus()
+  });
+  window.addEventListener('pagehide',()=>projectMeasurements.clear());
   window.addEventListener('pagehide',clearScientific);
   const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
   const str=(value,max,empty=false)=>typeof value==='string'&&Array.from(value).length<=max&&(empty||/\S/u.test(value));
@@ -1137,6 +1147,8 @@
   function m2Controls(){
     projectProgression.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),
       project_id:state?.project?.project_id,enabled:m2Allowed('progression')&&m2Allowed('progression_origins')});
+    projectMeasurements.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),
+      enabled:['measurement_sources','measurement_metadata','measurement_subjects','measurement_query','measurement_inspect'].every(m2Allowed)});
     if(blocked||state?.state!=='open'||scientificEpoch!==null&&(scientificEpoch!==epoch||explored?.checkpoint!==checkpoint()))clearScientific();
     const action=$('project-explore-kind').value;
     $('project-explore-load').disabled=!m2Allowed(action);

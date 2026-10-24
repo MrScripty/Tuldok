@@ -9,10 +9,17 @@
   <link rel="stylesheet" href="/project-files.css">
   <link rel="stylesheet" href="/scientific-inspector.css">
   <link rel="stylesheet" href="/experiment-lineage.css">
+  <link rel="stylesheet" href="/project-measurements.css">
   <script defer src="/auth.js"></script>
   <script defer src="/scientific-inspector.js"></script>
   <script defer src="/experiment-graph.js"></script>
   <script defer src="/project-progression.js"></script>
+  <script defer src="/static/vendor/retained-analysis/vega.min.js"></script>
+  <script defer src="/static/vendor/retained-analysis/vega-lite.min.js"></script>
+  <script defer src="/static/vendor/retained-analysis/vega-embed.min.js"></script>
+  <script defer src="/static/vendor/retained-analysis/vega-interpreter.min.js"></script>
+  <script defer src="/static/retained-chart.js"></script>
+  <script defer src="/project-measurements.js"></script>
   <script defer src="/project-files.js"></script>
 </head>
 <body>
@@ -164,6 +171,7 @@
       </section>
     </div>
     <section id="project-progression" class="panel panel-pad lineage-panel" hidden aria-label="Experiment progression"></section>
+    <section id="project-measurements" class="project-history-panel" hidden aria-label="Retained measurements"></section>
     <section class="project-history-panel" aria-labelledby="project-explore-title">
       <h2 id="project-explore-title">Project data and scientific history</h2>
       <p>Inspect saved records, models, Studies, Runs and their exact artifact availability. Opening a project never starts computation or restores permission to disclose held-out data.</p>

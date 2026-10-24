@@ -37,6 +37,7 @@ function mount(initial=[reply(state()),reply(records())],capabilityValue=capabil
   // View modules have separate real-browser evidence; this fixture owns native record/control lifetimes.
   context.ScientificFieldInspector=()=>({clear(){},show(){}});
   context.ProjectExperimentProgression=()=>({setContext(){},clear(){}});
+  context.ProjectMeasurements=()=>({setContext(){},clear(){}});
   vm.createContext(context);vm.runInContext(source,context);
   return {nodes,requests,answers,events,discoveries,focused:()=>focused,
     input(id,value){const node=nodes.get(id);node.value=value;node.listeners.get('input')?.({target:node});},

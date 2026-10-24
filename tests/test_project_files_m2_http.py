@@ -38,6 +38,8 @@ SOURCE_FILES = ('app.py','agent_api.py','access.py','project_workspace.py','proj
     'static/scientific-inspector.js','static/scientific-inspector.css','static/scientific-fields.js',
     'static/workbench.html','static/workbench.css')
 SOURCE_FILES+=('project_measurements.py','retained_measurements.py','project_fork_composition.py')
+SOURCE_FILES+=('static/retained-chart.js','static/project-measurements.js','static/project-measurements.css',
+    'static/retained-measurement-maxima.vl.json')
 
 
 def subject_hashes():

@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-HTML = b'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Retained analysis renderer fixture</title><link rel="stylesheet" href="/tests/fixtures/retained-analysis-browser.css"><main><div id="analysis"></div></main><script src="/static/vendor/retained-analysis/vega.min.js"></script><script src="/static/vendor/retained-analysis/vega-lite.min.js"></script><script src="/static/vendor/retained-analysis/vega-embed.min.js"></script><script src="/static/vendor/retained-analysis/vega-interpreter.min.js"></script><script src="/static/retained-analysis.js"></script><script src="/tests/fixtures/retained-analysis-browser.js"></script></html>'''
+HTML = b'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Retained analysis renderer fixture</title><link rel="stylesheet" href="/tests/fixtures/retained-analysis-browser.css"><main><div id="analysis"></div></main><script src="/static/vendor/retained-analysis/vega.min.js"></script><script src="/static/vendor/retained-analysis/vega-lite.min.js"></script><script src="/static/vendor/retained-analysis/vega-embed.min.js"></script><script src="/static/vendor/retained-analysis/vega-interpreter.min.js"></script><script src="/static/retained-chart.js"></script><script src="/static/retained-analysis.js"></script><script src="/tests/fixtures/retained-analysis-browser.js"></script></html>'''
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -22,7 +22,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(HTML)
         elif self.path.startswith('/static/vendor/retained-analysis/') or self.path in (
-                '/static/retained-analysis.js', '/static/retained-checkpoint-curve.vl.json',
+                '/static/retained-chart.js', '/static/retained-analysis.js', '/static/retained-checkpoint-curve.vl.json',
                 '/tests/fixtures/retained-analysis-browser.js', '/tests/fixtures/retained-analysis-browser.css'):
             super().do_GET()
         else:
