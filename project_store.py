@@ -62,7 +62,9 @@ SUPPORTED_FORMATS = {
     'text_proposal_history': 'project_text_proposal_history_v1',
 }
 MAX_RECORDS = 100_000
-MAX_TOTAL_BYTES = 256 * 1024 * 1024
+# Scientific history can retain original runtime/file observations in hundreds
+# of Runs. Bound the whole local checkpoint separately from each document.
+MAX_TOTAL_BYTES = 2 * 1024 * 1024 * 1024
 IDENTIFIER = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$')
 REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')
 DOMAIN_FORMAT = re.compile(r'^[a-z][a-z0-9_]{0,95}_v([1-9][0-9]*)$')

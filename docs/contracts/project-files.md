@@ -32,9 +32,12 @@ request receipts and a SHA256 checkpoint. Its digest covers canonical bytes of
 the document with `checkpoint` omitted. The store supports only its declared
 format and family; malformed and future versions fail before projection writes.
 The canonical checkpoint index is limited to 64 MiB, separately from the
-100,000-record, 40 MiB-per-record and 256 MiB-total-record limits. Commit checks
+100,000-record, 40 MiB-per-record and 2 GiB-total-record limits. The aggregate
+budget covers canonical record bytes, excluding artifact payloads; scientific
+catalogs retain original runtime/file observations across many Runs. Commit
+and cold Open enforce the same aggregate budget. Commit checks
 the index size before staging immutable records. This format is unchanged;
-older installations with the former 16 MiB index limit cannot open larger
+older installations with the former 16 MiB index or 256 MiB aggregate limit cannot open larger
 checkpoints and must be upgraded before consuming them.
 
 Verified stopped-source backups and ordinary catalog backups share identical

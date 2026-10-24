@@ -308,6 +308,33 @@ except ProjectStoreError as exc:
         for value in invalid:
             with self.subTest(value=repr(value)):
                 self.assert_code('invalid', self.store.commit, [value], checkpoint, 'bad', body('bad'))
+
+    def test_portfolio_above_256_MiB_commits_and_cold_reopens(self):
+        # Each document fits the 40 MiB owner bound. Aggregate project metadata
+        # must also support scientific catalogs larger than the old 256 MiB.
+        text = 'p' * (30 * 1024 * 1024)
+        values = [record(str(index), text) for index in range(9)]
+        committed = self.store.commit(values, self.store.snapshot()['checkpoint'],
+                                      'large-portfolio', body('large-portfolio'))
+        self.assertGreater(sum(row['bytes'] for row in self.manifest()['inventory']),
+                           256 * 1024 * 1024)
+        self.assertEqual(self.reopen(), committed)
+        self.assertEqual(self.store.snapshot()['records'], values)
+
+    def test_aggregate_byte_bound_rejects_commit_and_cold_open(self):
+        values = [record('a'), record('b')]
+        total = sum(len(canonical(value['document'])) for value in values)
+        before = self.bytes_tree()
+        checkpoint = self.store.snapshot()['checkpoint']
+        with patch.object(store_module, 'MAX_TOTAL_BYTES', total - 1):
+            self.assert_code('invalid', self.store.commit, values, checkpoint,
+                             'over-budget', body('over-budget'))
+        self.assertEqual(self.bytes_tree(), before)
+        committed = self.commit(values)
+        self.store.close()
+        with patch.object(store_module, 'MAX_TOTAL_BYTES', total - 1):
+            self.assert_code('invalid', ProjectStore.open, self.root)
+        self.assertEqual(self.reopen(), committed)
         for value in [dict(record(), family='access_credentials'),
                       dict(record(), document={'format': 'workbench_text_v2'}),
                       dict(record(), document={'format': 'unknown_v1'})]:
