@@ -717,14 +717,23 @@ class ProjectStore:
                 fds.append(parent)
             name = digest + '.json'
             if raw is not None:
-                temporary = '.record-' + uuid.uuid4().hex + '.tmp'
-                _write_file(parent, temporary, raw)
                 try:
-                    _rename_noreplace(parent, temporary, name)
-                except FileExistsError:
-                    if _read(parent, name, MAX_RECORD_BYTES) != raw:
+                    existing = _read(parent, name, MAX_RECORD_BYTES)
+                except FileNotFoundError:
+                    temporary = '.record-' + uuid.uuid4().hex + '.tmp'
+                    _write_file(parent, temporary, raw)
+                    try:
+                        _rename_noreplace(parent, temporary, name)
+                    except FileExistsError:
+                        if _read(parent, name, MAX_RECORD_BYTES) != raw:
+                            _fail('Immutable project revision already has different bytes.')
+                        os.unlink(temporary, dir_fd=parent)
+                else:
+                    if existing != raw:
                         _fail('Immutable project revision already has different bytes.')
-                    os.unlink(temporary, dir_fd=parent)
+                # Existing revisions can come from a copied project or an
+                # interrupted earlier commit. Retain all ordinary sync checks;
+                # only the disposable write/rename/unlink cycle is avoided.
                 sync = True
             if sync:
                 _sync_file(parent, name)

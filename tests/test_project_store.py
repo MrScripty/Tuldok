@@ -86,6 +86,48 @@ class ProjectStoreTests(unittest.TestCase):
         committed['records'][0]['document']['text'] = 'Unchecked returned mutation'
         self.assertEqual(self.store.snapshot()['records'][0]['document']['text'], 'Notes preserve \r\n authored values')
 
+    def test_appending_one_record_does_not_rewrite_saved_immutable_revisions(self):
+        values = [record(str(index), 'Retained authored note %d' % index) for index in range(8)]
+        self.commit(values, key='initial-inventory')
+        writer = store_module._write_file
+        with patch.object(store_module, '_write_file', wraps=writer) as writes:
+            committed = self.commit([*values, record('new')], key='append-one')
+        record_writes = [call for call in writes.call_args_list if call.args[1].startswith('.record-')]
+        self.assertEqual(len(record_writes), 1,
+            'Appending one record must not write disposable copies of every saved immutable revision')
+        self.assertEqual(self.reopen(), committed)
+
+    def test_reusing_an_unreferenced_revision_still_checks_bytes_and_syncs_it(self):
+        first, second = record('first'), record('second')
+        self.commit([first], key='retain-first')
+        self.commit([second], key='retain-second')
+        writer, sync = store_module._write_file, store_module._sync_file
+        with patch.object(store_module, '_write_file', wraps=writer) as writes:
+            with patch.object(store_module, '_sync_file', wraps=sync) as syncs:
+                committed = self.commit([first, second], key='reuse-first')
+        self.assertFalse(any(call.args[1].startswith('.record-') for call in writes.call_args_list))
+        self.assertEqual(syncs.call_count, 2)
+        self.assertEqual(self.reopen(), committed)
+
+    def test_reusing_a_corrupt_unreferenced_revision_never_publishes_it(self):
+        first = record('first')
+        self.commit([first], key='retain-first')
+        entry = self.manifest()['inventory'][0]
+        self.commit([], key='exclude-first')
+        before = self.store.snapshot()
+        path = self.root / '.tuldok' / entry['path']
+        path.unlink()
+        path.write_bytes(b'{"corrupt":"unreferenced revision"}\n')
+        self.assert_code('invalid', self.commit, [first], key='reuse-corrupt')
+        self.assertEqual(self.reopen(), before)
+
+    def test_existing_revision_sync_failure_keeps_the_previous_checkpoint(self):
+        self.commit([record()], key='initial')
+        before = self.store.snapshot()
+        with patch.object(store_module, '_sync_file', side_effect=OSError(errno.EIO, 'existing revision sync failed')):
+            self.assert_code('unavailable', self.commit, [record()], key='reuse-with-sync-error')
+        self.assertEqual(self.reopen(), before)
+
     def test_fresh_copy_and_moved_folder_keep_identity_and_values(self):
         committed = self.commit()
         self.store.close()
