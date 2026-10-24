@@ -65,6 +65,8 @@ class RetainedMeasurementTests(unittest.TestCase):
         self.assertEqual([r['maximum']['value'] for r in query['summary']],[2e-15,0.02])
         row=table.inspect('a-case1-error')
         self.assertEqual(struct.pack('!d',row['observation']['value']),struct.pack('!d',1e-17))
+        self.assertEqual(row['scalar_evidence']['value'],1e-17)
+        self.assertEqual(row['case_evidence']['state'],'included')
         self.assertEqual(table.query('error',filters={'cpm':16})['rows'][0]['dimensions']['grid_x'],8)
         self.assertEqual(table.query('error',filters={'grid_x':16})['rows'][0]['dimensions']['cpm'],8)
         self.assertEqual(table.query('error',filters={'device':'CPU'})['total'],2)
@@ -82,6 +84,7 @@ class RetainedMeasurementTests(unittest.TestCase):
         self.assertTrue(all(v['maximum'] is None and v['count']==2 for v in query['summary']))
         self.assertEqual(query['summary'][1]['states'],{'measured':0,'failed':1,'unsupported':0,'unavailable':1})
         self.assertEqual(table.inspect('b-case2-latency')['source']['kind'],'opaque')
+        self.assertEqual(table.inspect('b-case2-latency')['scalar_evidence']['state'],'opaque')
 
     def test_missing_duplicate_and_unresolved_matrix_members_are_refused(self):
         for mutation in ('missing','duplicate','unknown','malformed'):

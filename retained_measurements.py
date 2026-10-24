@@ -337,4 +337,14 @@ class MeasurementTable:
             'case':self._cases[observation['case_id']],'subject':self._subjects[observation['subject_id']],
             'metric':self._metrics[observation['metric_id']],'scope':self._doc['scope'],
             'scope_definition':self._definition(self._doc['scope'],('id','label','population')),
+            'case_evidence':self._inspection_reference(self._cases[observation['case_id']]['reference']),
+            'scalar_evidence':self._inspection_reference(reference),
             'source':{k:v for k,v in source.items() if k!='data_base64'}})
+
+    def _inspection_reference(self,reference):
+        value=self._reference(reference)
+        state='opaque' if reference['pointer'] is None else 'included'
+        if state=='included' and len(encode(value))>16384:
+            state='exceeds_inspection_bound';value=None
+        return {'reference':copy.deepcopy(reference),'source_sha256':self._sources[reference['source_id']]['sha256'],
+                'state':state,'value':value}
