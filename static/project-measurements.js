@@ -308,7 +308,7 @@
       invalidate(); subjectPage(subjectOffset); controls();
     };
     for (const [name, direction] of [['subjects-prev',-1],['subjects-next',1]]) $(name).onclick = () => {
-      clearResults(); void perform(() => subjectPage(subjectOffset + direction * 40));
+      void perform(() => subjectPage(subjectOffset + direction * 40));
     };
     $('form').onsubmit = event => { event.preventDefault(); void compare(); };
     $('prev').onclick = () => void compare(Math.max(0, query.offset - query.limit), applied);
