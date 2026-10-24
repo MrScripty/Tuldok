@@ -120,6 +120,59 @@ class ForkFilesystemTests(unittest.TestCase):
         self.assert_code('conflict', self.fork, 'unrelated')
         self.assertEqual((other / '.tuldok/project.json').read_bytes(), unrelated)
 
+    def test_missing_runtime_inventory_does_not_repeat_full_source_closure_per_entry(self):
+        # Each snapshot validates the complete canonical file closure. Missing
+        # runtime declarations must not multiply that work by inventory length.
+        snapshot = self.source.snapshot
+        with patch.object(self.source, 'snapshot', wraps=snapshot) as scans:
+            self.fork('small-inventory')
+        baseline = scans.call_count
+        records = copy.deepcopy(self.original['records'])
+        runtime = set()
+        for index in range(32):
+            raw = ('unmaterialized runtime dependency %d' % index).encode()
+            sha = hashlib.sha256(raw).hexdigest()
+            runtime.add(sha)
+            records.append(dict(family='project_artifact', id=sha,
+                document=dict(format='project_artifact_v1', sha256=sha, bytes=len(raw))))
+        self.original = self.source.commit(records, self.original['checkpoint'],
+            'larger-runtime-inventory', body(records))
+        def candidate(source, destination):
+            value = self.candidate(source, destination)
+            for edge in value['artifacts']:
+                if edge['declaration']['sha256'] in runtime:
+                    edge['preservation'] = 'regenerable'
+            return value
+        with patch.object(self.source, 'snapshot', wraps=snapshot) as scans:
+            result = self.fork('large-inventory', build_candidate=candidate)
+        self.assertEqual(set(result['fork']['artifacts']['missing_regenerable']), runtime)
+        self.assertLessEqual(scans.call_count, baseline + 4,
+            'Full source closure scans must stay bounded when missing runtime inventory grows')
+
+    def test_present_payload_copy_does_not_repeat_full_source_closure_per_file(self):
+        snapshot = self.source.snapshot
+        with patch.object(self.source, 'snapshot', wraps=snapshot) as scans:
+            self.fork('small-payload-set')
+        baseline = scans.call_count
+        records = copy.deepcopy(self.original['records'])
+        payloads = {}
+        for index in range(8):
+            raw = ('retained unique output %d' % index).encode()
+            sha = hashlib.sha256(raw).hexdigest()
+            value = dict(format='project_artifact_v1', sha256=sha, bytes=len(raw))
+            self.artifacts.publish_bytes(raw, value)
+            records.append(dict(family='project_artifact', id=sha, document=value))
+            payloads[sha] = raw
+        self.original = self.source.commit(records, self.original['checkpoint'],
+            'larger-payload-set', body(records))
+        with patch.object(self.source, 'snapshot', wraps=snapshot) as scans:
+            result = self.fork('large-payload-set')
+        for sha, raw in payloads.items():
+            self.assertIn(sha, result['fork']['artifacts']['copied'])
+            self.assertEqual((self.root / 'large-payload-set/artifacts/sha256' / sha).read_bytes(), raw)
+        self.assertLessEqual(scans.call_count, baseline + 4,
+            'Full source closure scans must stay bounded when present payload count grows')
+
     def test_quiescence_checkpoint_overlap_and_symlink_guards_precede_publication(self):
         before = self.canonical_bytes()
         self.assert_code('busy', self.fork, quiescent=False)

@@ -353,8 +353,10 @@ def publish_fork(source_store, source_artifacts, trusted_root_fd, relative, *, r
                 _fail('Fork must retain the source payload inventory without regenerating bytes.')
             plan = _artifact_plan(candidate['artifacts'], declarations)
             copied, missing = [], []
-            for identity in sorted(plan):
-                status = source_artifacts.status(declarations[identity])['state']
+            identities = sorted(plan)
+            observations = source_artifacts.status_many([declarations[identity] for identity in identities])
+            for identity, observation in zip(identities, observations):
+                status = observation['state']
                 if status == 'corrupt':
                     _fail('Source fork payload is corrupt.', 'invalid', 400)
                 if status == 'missing':
@@ -374,10 +376,7 @@ def publish_fork(source_store, source_artifacts, trusted_root_fd, relative, *, r
             validate_candidate(copy.deepcopy(records), destination_id)
             _source_current(source_store, source)
             artifacts = ProjectArtifacts(staged)
-            for identity in copied:
-                value = declarations[identity]
-                with source_artifacts.open_verified(value, maximum_bytes=value['bytes']) as source_fd:
-                    artifacts.publish_fd(source_fd, value, maximum_bytes=value['bytes'])
+            source_artifacts.copy_many_to(artifacts, [declarations[identity] for identity in copied])
             # Ordinary authored files are explicitly adopted text. Only a new
             # task-owned fork stage materializes them; Open never calls this.
             from project_files import materialize_captured
