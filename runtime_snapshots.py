@@ -316,7 +316,14 @@ class RuntimeSnapshots:
             try:
                 for index,row in enumerate(manifest['files']):
                     if index%128==0 and shutil.disk_usage(self.path).free<reserve_bytes:fail('Disk reserve was consumed during capture.','unavailable')
-                    destination=staging/row['path'];destination.parent.mkdir(parents=True,mode=0o700,exist_ok=True)
+                    # pathlib's parents=True applies mode only to the final
+                    # directory. Create every snapshot parent privately without
+                    # changing the process-wide umask used by other threads.
+                    parent=staging
+                    parts=PurePosixPath(row['path']).parts
+                    for part in parts[:-1]:
+                        parent=parent/part;parent.mkdir(mode=0o700,exist_ok=True)
+                    destination=parent/parts[-1]
                     observed=file_identity(sources[row['path']],destination=destination)
                     if observed!={key:row[key] for key in ('bytes','sha256','mode','kind')}:fail('Source changed after inventory.','stale')
                 with (staging/'manifest.json').open('xb') as handle:
