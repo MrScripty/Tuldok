@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import agent_api as api
-from retained_measurements import MeasurementTable, encode
+from retained_measurements import MeasurementTable, MeasurementComparison, encode
 from test_project_files_clients import BINDING, PROJECT, CHECKPOINT, OTHER, bound, client
 from test_retained_measurements import fixture
 from tuldok_client import ProjectFilesClient
@@ -23,6 +23,23 @@ class MeasurementContracts(unittest.TestCase):
     def sdk(self,value):
         return ProjectFilesClient(client({'status':200,'result':dict(binding=BINDING,project_id=PROJECT,
             checkpoint=CHECKPOINT,value=value)}))
+
+    def test_group_comparison_header_and_query_correlate_every_original_source(self):
+        locator=dict(origin_catalog_id=PROJECT,packet_sha256=self.table.sha256)
+        comparison=MeasurementComparison([(locator,self.table)])
+        args=dict(binding=BINDING,checkpoint=CHECKPOINT,sources=[locator])
+        page=dict(sources=[self.source],value=comparison.read())
+        self.assertEqual(self.sdk(page).measurement_compare(**args)['value'],page)
+        query=dict(sources=[self.source],value=comparison.read('error',offset=1,limit=1))
+        request=dict(args,metric_id='error',offset=1,limit=1)
+        self.assertEqual(self.sdk(query).measurement_compare(**request)['value'],query)
+        for mutate in (lambda p:p['sources'][0].update(id=OTHER),
+                       lambda p:p['value']['query'].update(offset=0),
+                       lambda p:p['value']['query']['summary'][0]['states'].update(measured=99),
+                       lambda p:p['value']['query']['rows'][0]['source'].update(packet_sha256=OTHER),
+                       lambda p:p['value']['subjects'][0]['source'].update(origin_catalog_id='f'*32)):
+            bad=copy.deepcopy(query);mutate(bad)
+            with self.assertRaises(api.AgentAPIError):self.sdk(bad).measurement_compare(**request)
 
     def test_capability_bound_applies_to_the_actual_advertised_profile(self):
         sizes={profile:len(api.capabilities(PROJECT,profile=profile)['operations']) for profile in ('catalog','project')}

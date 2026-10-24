@@ -417,6 +417,10 @@ class ProjectFilesClient:
     def measurement_query(self, **arguments):
         return self._call('measurement_query', arguments)
 
+    def measurement_compare(self, **arguments):
+        """Compare compatible retained sources at one selected checkpoint."""
+        return self._call('measurement_compare', arguments)
+
     def measurement_inspect(self, **arguments):
         return self._call('measurement_inspect', arguments)
 

@@ -952,6 +952,23 @@ _project_file_operation('measurement_query','POST','/measurements/{packet_sha256
     required=[*list(_MEASUREMENT_SELECTION),'metric_id'],output=_MEASUREMENT_BOUND(_MEASUREMENT_QUERY))
 _project_file_operation('measurement_inspect','GET','/measurements/{packet_sha256}/observations/{observation_id}',
     dict(_MEASUREMENT_SELECTION,observation_id=_MEASUREMENT_ID),output=_MEASUREMENT_BOUND(_MEASUREMENT_INSPECTION))
+
+_COMPARISON_QUERY = obj(dict(
+    {key:_MEASUREMENT_QUERY['properties'][key] for key in ('metric','definition','filters','subject_ids','total','offset','limit','sampling')},
+    subject_ids=array(_MEASUREMENT_ID,256,1),
+    summary=array(obj(dict(_MEASUREMENT_SUMMARY['properties'],source=obj(_MEASUREMENT_SELECTION))),256),
+    rows=array(obj(dict(_MEASUREMENT_OBSERVATION['properties'],source=obj(_MEASUREMENT_SELECTION))),100)))
+_COMPARISON_VALUE = obj({'format':const('retained_measurement_comparison_v1'),
+    'scope':_MEASUREMENT_SCOPE,'scope_definition':{'type':'object'},
+    'dimensions':_MEASUREMENT_HEADER['properties']['dimensions'],'metrics':array(_MEASUREMENT_METRIC,32,1),
+    'definition_source':obj(_MEASUREMENT_SELECTION),'case_population_sha256':SHA,
+    'case_count':integer(1,4096),'observation_count':integer(1,100000),
+    'subjects':array(obj(dict(_MEASUREMENT_SUBJECT['properties'],source=obj(_MEASUREMENT_SELECTION))),256,1),
+    'query':{'oneOf':[_COMPARISON_QUERY,_NULL]}})
+_project_file_operation('measurement_compare','POST','/measurements/compare',
+    dict(sources=array(obj(_MEASUREMENT_SELECTION),16,1),metric_id=_MEASUREMENT_ID,
+        subject_ids=array(_MEASUREMENT_ID,256,1),filters=_MEASUREMENT_DIMENSIONS,offset=SAFE_NAT,limit=integer(1,100)),
+    required=['sources'],output=obj({'sources':array(_MEASUREMENT_SOURCE,16,1),'value':_COMPARISON_VALUE}))
 _project_file_operation('data_annotate', 'POST', '/data/{record_id}', {
     'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
     'task': {'enum': list(ANNOTATIONS)}, 'annotation': JSON_OBJECT,
@@ -3040,6 +3057,8 @@ def _validate_measurement_selection(action, page, arguments, project_id):
     """Correlate fixed scalar replies; scientific validity remains upstream."""
     def refuse():
         raise AgentAPIError('Retained measurements differ from the selected source or continuation.', 'transport', 502)
+    if action=='measurement_compare':
+        return _validate_comparison_selection(page, arguments)
     if action=='measurement_sources':
         offset,limit=arguments.get('offset',0),arguments.get('limit',40)
         keys=[(d['origin_catalog_id'],d['id']) for d in page['items']]
@@ -3070,6 +3089,50 @@ def _validate_measurement_selection(action, page, arguments, project_id):
                 or 'subject_ids' in arguments and subjects!=arguments['subject_ids']
                 or len(subjects)!=len(set(subjects)) or [s['subject_id'] for s in result['summary']]!=subjects
                 or any(r['metric_id']!=arguments['metric_id'] or r['subject_id'] not in subjects for r in result['rows'])):refuse()
+
+
+def _validate_comparison_selection(page, arguments):
+    """Bind aggregate replies to reviewed packets, subjects and exact page intent."""
+    def refuse():
+        raise AgentAPIError('Measurement comparison differs from its selected packets or continuation.', 'transport', 502)
+    def key(locator):
+        return locator['origin_catalog_id'], locator['packet_sha256']
+    selected = arguments['sources']
+    keys = [key(item) for item in selected]
+    documents, value = page['sources'], page['value']
+    if (len(keys)!=len(set(keys)) or len(documents)!=len(keys)
+            or [(doc['origin_catalog_id'],doc['id']) for doc in documents]!=keys
+            or any(doc['blob']['sha256']!=doc['id'] or doc['source']['measured_sha256']!=doc['id'] for doc in documents)
+            or sum(doc['blob']['bytes'] for doc in documents)>128*1024*1024
+            or value['definition_source']!=selected[0]):refuse()
+    subjects = value['subjects']
+    identities = [subject['id'] for subject in subjects]
+    if (len(identities)!=len(set(identities)) or any(key(subject['source']) not in keys for subject in subjects)
+            or value['observation_count']!=len(subjects)*value['case_count']*len(value['metrics'])):refuse()
+    owners = {subject['id']:subject['source'] for subject in subjects}
+    query = value['query']
+    if 'metric_id' not in arguments:
+        if query is not None:refuse()
+        return
+    if query is None:refuse()
+    wanted = arguments.get('subject_ids', identities)
+    offset,limit = arguments.get('offset',0),arguments.get('limit',50)
+    metrics = [metric for metric in value['metrics'] if metric['id']==arguments['metric_id']]
+    if (len(metrics)!=1 or query['metric']!=metrics[0] or query['subject_ids']!=wanted
+            or len(wanted)!=len(set(wanted)) or any(identity not in owners for identity in wanted)
+            or query['filters']!=arguments.get('filters',{})
+            or query['offset']!=offset or query['limit']!=limit
+            or len(query['rows'])!=min(limit,max(0,query['total']-offset))
+            or [summary['subject_id'] for summary in query['summary']]!=wanted
+            or sum(summary['count'] for summary in query['summary'])!=query['total']):refuse()
+    for summary in query['summary']:
+        if (summary['source']!=owners[summary['subject_id']]
+                or sum(summary['states'].values())!=summary['count']
+                or (summary['maximum'] is None)!=(summary['states']['measured']==0)):refuse()
+    for row in query['rows']:
+        if (row['subject_id'] not in wanted or row['metric_id']!=arguments['metric_id']
+                or row['source']!=owners[row['subject_id']]
+                or (row['value'] is None)!=(row['state']!='measured')):refuse()
 
 
 class PublicationOwnerClient(AgentClient):

@@ -10,7 +10,8 @@ from datetime import datetime
 from project_artifacts import validate_declaration
 from project_material import decode_records as material_records
 from projects import ID, NAME, SHA, relative_path
-from retained_measurements import MeasurementTable, MAX_BYTES, MAX_RESPONSE_BYTES, encode, text
+from retained_measurements import (MeasurementTable, MeasurementComparison, MAX_BYTES, MAX_RESPONSE_BYTES,
+    MAX_COMPARISON_SOURCES, MAX_COMPARISON_BYTES, encode, text)
 from workbench import WorkbenchError, timestamp
 
 
@@ -198,3 +199,39 @@ class ProjectMeasurements:
     def inspect(self, origin_catalog_id, packet_sha256, observation_id):
         return self._read(origin_catalog_id, packet_sha256, 'measurements.inspect',
                           lambda table: table.inspect(observation_id))
+
+    def compare(self, sources, metric_id=None, **selection):
+        """Read one checkpoint's bounded group with every original source intact."""
+        if type(sources) is not list or not 1 <= len(sources) <= MAX_COMPARISON_SOURCES:
+            raise WorkbenchError('Choose 1 through 16 native measurement sources.', 'too_large', 413)
+        targets = []
+        for source in sources:
+            _closed(source, ('origin_catalog_id','packet_sha256'))
+            _identity(source['origin_catalog_id'], ID)
+            _identity(source['packet_sha256'], SHA)
+            targets.append(source['origin_catalog_id'] + '.' + source['packet_sha256'])
+        if len(set(targets)) != len(targets):
+            raise WorkbenchError('Native comparison repeats a measurement source.')
+        with self.access.lock, self.session.lock, self.db.lock:
+            for target in targets:
+                self.access.require('inspect', 'measurements.compare', target)
+            self.session.check()
+            documents = self._documents()
+            if any(target not in documents for target in targets):
+                raise WorkbenchError('A comparison source is unavailable.', 'not_found', 404)
+            chosen = [documents[target] for target in targets]
+            if sum(doc['blob']['bytes'] for doc in chosen) > MAX_COMPARISON_BYTES:
+                raise WorkbenchError('Native comparison exceeds 128 MiB of original packets.', 'too_large', 413)
+            tables = []
+            for locator, doc in zip(sources, chosen):
+                raw = self.artifacts.read_blob(doc['blob'], maximum_bytes=MAX_BYTES)
+                table = MeasurementTable(raw)
+                if table.metadata()['title'] != doc['title']:
+                    raise WorkbenchError('Comparison title differs from its original packet.')
+                tables.append((locator, table))
+            value = MeasurementComparison(tables).read(metric_id, **selection)
+            result = self._bounded(dict(sources=chosen, value=value))
+            self.session.check()
+            for target in targets:
+                self.access.require('inspect', 'measurements.compare', target)
+            return result

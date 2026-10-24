@@ -37,7 +37,7 @@ _EXECUTION_ACTIONS = frozenset(('native_preflight','native_submit','native_retry
     'execution_study_prepare_package','execution_study_prepare_verifier','execution_study_abandon_preparation','execution_study_reconcile_preparation'))
 _RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon'))
 _MEASUREMENT_ACTIONS=frozenset(('measurement_import','measurement_sources','measurement_metadata',
-    'measurement_subjects','measurement_query','measurement_inspect'))
+    'measurement_subjects','measurement_query','measurement_inspect','measurement_compare'))
 _M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','files_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
     _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS | _MEASUREMENT_ACTIONS)
@@ -440,6 +440,7 @@ def _measurements(projection,action,a):
     if action=='measurement_import':
         return projection.source_adapter.import_measurements(_body(a),a['expected_checkpoint'],a['request_key'])
     if action=='measurement_sources':return owner.sources(offset=a.get('offset',0),limit=a.get('limit',40))
+    if action=='measurement_compare':return owner.compare(a['sources'],**_body(a,'sources'))
     origin,packet=a['origin_catalog_id'],a['packet_sha256']
     if action=='measurement_metadata':return owner.metadata(origin,packet)
     if action=='measurement_subjects':return owner.subjects(origin,packet,offset=a.get('offset',0),limit=a.get('limit',40))

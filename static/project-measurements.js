@@ -20,11 +20,11 @@
     details.append(node('summary', title), node('pre', JSON.stringify(value, null, 2))); return details;
   }
   window.ProjectMeasurements = function({root, read, onContextFocusLost = () => {}}) {
-    root.innerHTML = '<h2>Retained measurements</h2><p>Compare exact saved scalars and inspect their original cases. Maxima use every matching case; failed and unavailable observations remain counted.</p><div class="actions"><button type="button" id="project-measurements-sources">Load measurement sources</button><button type="button" id="project-measurements-sources-prev" hidden>Previous sources</button><button type="button" id="project-measurements-sources-next" hidden>Next sources</button></div><p id="project-measurements-source-page"></p><form id="project-measurements-source-form"><label>Measurement source<select id="project-measurements-source"></select></label><button id="project-measurements-load">Load source</button></form><p id="project-measurements-status" role="status" aria-live="polite"></p><div id="project-measurements-context"></div><form id="project-measurements-form" hidden><label>Metric<select id="project-measurements-metric"></select></label><label>Select subjects on this page<select id="project-measurements-subjects" multiple size="4"></select></label><p id="project-measurements-subject-page"></p><div class="actions"><button type="button" id="project-measurements-subjects-prev" hidden>Previous subjects</button><button type="button" id="project-measurements-subjects-next" hidden>Next subjects</button></div><details><summary>Filter declared attributes</summary><p>Grid density and domain cell counts are separate attributes. Filters use exact recorded values; unknown values must be selected explicitly.</p><div id="project-measurements-filters"></div></details><button id="project-measurements-compare">Compare metric</button></form><section id="project-measurements-results" hidden aria-label="Measurement comparison"><h3 id="project-measurements-heading" tabindex="-1"></h3><p id="project-measurements-counts"></p><div id="project-measurements-chart" role="img" aria-label="Maximum retained value per selected subject; exact values and keyboard inspection follow"></div><div id="project-measurements-maxima"></div><div id="project-measurements-rows"></div><div class="actions"><button type="button" id="project-measurements-prev">Previous observations</button><button type="button" id="project-measurements-next">Next observations</button></div></section><section id="project-measurements-inspection" hidden aria-label="Exact observation and original source"></section>';
+    root.innerHTML = '<h2>Retained measurements</h2><p>Compare exact saved scalars and inspect their original cases. Maxima use every matching case; failed and unavailable observations remain counted.</p><div class="actions"><button type="button" id="project-measurements-sources">Load measurement sources</button><button type="button" id="project-measurements-sources-prev" hidden>Previous sources</button><button type="button" id="project-measurements-sources-next" hidden>Next sources</button></div><p id="project-measurements-source-page"></p><form id="project-measurements-source-form"><label>Measurement sources (choose 1–16)<select id="project-measurements-source" multiple size="4"></select></label><button type="button" id="project-measurements-source-all">Select all listed sources</button><button id="project-measurements-load">Load selected sources</button></form><p id="project-measurements-status" role="status" aria-live="polite"></p><div id="project-measurements-context"></div><form id="project-measurements-form" hidden><label>Metric<select id="project-measurements-metric"></select></label><label>Select subjects on this page<select id="project-measurements-subjects" multiple size="4"></select></label><p id="project-measurements-subject-page"></p><div class="actions"><button type="button" id="project-measurements-subjects-all">Select all subjects</button><button type="button" id="project-measurements-subjects-clear">Clear subject selection</button></div><div class="actions"><button type="button" id="project-measurements-subjects-prev" hidden>Previous subjects</button><button type="button" id="project-measurements-subjects-next" hidden>Next subjects</button></div><details><summary>Filter declared attributes</summary><p>Grid density and domain cell counts are separate attributes. Filters use exact recorded values; unknown values must be selected explicitly.</p><div id="project-measurements-filters"></div></details><button id="project-measurements-compare">Compare metric</button></form><section id="project-measurements-results" hidden aria-label="Measurement comparison"><h3 id="project-measurements-heading" tabindex="-1"></h3><p id="project-measurements-counts"></p><div id="project-measurements-chart" role="img" aria-label="Maximum retained value per selected subject; exact values and keyboard inspection follow"></div><div id="project-measurements-maxima"></div><div id="project-measurements-rows"></div><div class="actions"><button type="button" id="project-measurements-prev">Previous observations</button><button type="button" id="project-measurements-next">Next observations</button></div></section><section id="project-measurements-inspection" hidden aria-label="Exact observation and original source"></section>';
     const $ = name => root.querySelector('#project-measurements-' + name);
     let context = null, generation = 0, plotGeneration = 0, pending, busy = false, pendingFocus = false;
-    let sources = [], sourceOffset = 0, sourceTotal = 0, selected = null, descriptor = null, metadata = null;
-    let subjects = [], subjectOffset = 0, subjectTotal = 0, filters = new Map(), applied = null, query = null;
+    let sources = [], sourceOffset = 0, sourceTotal = 0, selected = null, descriptors = null, metadata = null;
+    let subjects = [], subjectOffset = 0, subjectTotal = 0, filters = new Map(), applied = null, query = null, selectedSubjects = new Set();
     const renderer = window.RetainedChart.mount($('chart'), spec, {onError: error => {
       const ownsFocus = root.contains(document.activeElement); clearResults(); $('status').textContent = error.message; controls();
       if (ownsFocus) $('compare').focus();
@@ -37,15 +37,17 @@
     function controls() {
       for (const control of root.querySelectorAll('input,select,button')) control.disabled = !context?.enabled || busy;
       $('sources-prev').hidden = sourceOffset === 0; $('sources-next').hidden = sourceOffset + sources.length >= sourceTotal;
-      $('source').disabled ||= !sources.length; $('load').disabled ||= !$('source').value;
-      $('subjects-prev').hidden = subjectOffset === 0; $('subjects-next').hidden = subjectOffset + subjects.length >= subjectTotal;
-      $('compare').disabled ||= !metadata || !$('subjects').selectedOptions.length;
+      $('source').disabled ||= !sources.length; $('source-all').disabled ||= !sources.length || sources.length > 16;
+      $('load').disabled ||= !$('source').selectedOptions.length || $('source').selectedOptions.length > 16;
+      $('subjects-prev').hidden = subjectOffset === 0; $('subjects-next').hidden = subjectOffset + 40 >= subjectTotal;
+      $('compare').disabled ||= !metadata || !selectedSubjects.size;
+      $('subjects-all').disabled ||= !metadata; $('subjects-clear').disabled ||= !metadata;
       $('prev').disabled ||= !query || query.offset === 0;
       $('next').disabled ||= !query || query.offset + query.rows.length >= query.total;
       root.setAttribute('aria-busy', String(busy));
     }
     function clearSource() {
-      selected = descriptor = metadata = null; subjects = []; subjectOffset = subjectTotal = 0; filters.clear();
+      selected = descriptors = metadata = null; subjects = []; selectedSubjects.clear(); subjectOffset = subjectTotal = 0; filters.clear();
       $('form').hidden = true; $('context').replaceChildren(); $('filters').replaceChildren();
       $('metric').replaceChildren(); $('subjects').replaceChildren(); clearResults();
     }
@@ -84,33 +86,67 @@
           seen.add(key);
         }
         sources = value.items; sourceOffset = offset; sourceTotal = value.total; $('source').replaceChildren();
-        for (const item of sources) {
+        for (const [index, item] of sources.entries()) {
           const option = node('option', item.title + ' · ' + item.id.slice(0, 12) + (item.availability?.state === 'missing' ? ' · missing packet' : ''));
-          option.value = sourceKey(item); $('source').append(option);
+          option.value = sourceKey(item); option.selected = index === 0; $('source').append(option);
         }
         $('source-page').textContent = `${sources.length ? offset + 1 : 0}–${offset + sources.length} of ${sourceTotal} sources`;
-        $('status').textContent = sources.length ? 'Choose a source and load its exact retained metadata.' : 'No retained measurement sources in this project.';
+        $('status').textContent = sources.length ? 'Choose compatible sources and load their exact retained metadata.' : 'No retained measurement sources in this project.';
         return $('source');
       });
     }
-    function checkRead(value, source = selected) {
-      if (!value || value.source?.origin_catalog_id !== source?.origin_catalog_id || value.source?.id !== source?.id
-          || value.source.blob?.sha256 !== source.id || value.source.source?.measured_sha256 !== source.id
-          || descriptor && (value.source.blob.bytes !== descriptor.blob.bytes || value.source.title !== descriptor.title)
-          || new TextEncoder().encode(JSON.stringify(value)).length > 256 * 1024) throw Error('Measurement reply differs from the selected packet.');
-      return value.value;
+    const same = (left, right) => {
+      if (Object.is(left, right)) return true;
+      if (!left || !right || typeof left !== 'object' || typeof right !== 'object' || Array.isArray(left) !== Array.isArray(right)) return false;
+      const keys = Object.keys(left);
+      return keys.length === Object.keys(right).length && keys.every(key => Object.hasOwn(right, key) && same(left[key], right[key]));
+    };
+    const locatorKey = value => value.origin_catalog_id + '.' + value.packet_sha256;
+    const selection = () => ({sources:selected.map(item => ({origin_catalog_id:item.origin_catalog_id, packet_sha256:item.id}))});
+    function checkComparison(response) {
+      if (!response || !Array.isArray(response.sources) || response.sources.length !== selected.length
+          || new TextEncoder().encode(JSON.stringify(response)).length > 256 * 1024) throw Error('Comparison differs from selected sources.');
+      for (const [index, source] of response.sources.entries()) {
+        const expected = selected[index];
+        if (source.origin_catalog_id !== expected.origin_catalog_id || source.id !== expected.id
+            || source.title !== expected.title || source.blob?.sha256 !== source.id || source.blob.bytes !== expected.blob.bytes
+            || source.source?.measured_sha256 !== source.id) throw Error('Comparison source identity changed.');
+      }
+      if (descriptors && !same(descriptors, response.sources)) throw Error('Original comparison capture facts changed.');
+      const value = response.value, keys = selected.map(sourceKey);
+      if (value?.format !== 'retained_measurement_comparison_v1' || !hash(value.case_population_sha256)
+          || !Array.isArray(value.subjects) || !value.subjects.length || value.subjects.length > 256
+          || !natural(value.case_count) || !value.case_count || !natural(value.observation_count)
+          || !Array.isArray(value.metrics) || !value.metrics.length || value.metrics.length > 32
+          || !Array.isArray(value.dimensions) || value.dimensions.length > 32
+          || value.observation_count !== value.subjects.length * value.case_count * value.metrics.length
+          || locatorKey(value.definition_source) !== keys[0]
+          || value.subjects.some(item => !identity(item.id) || typeof item.label !== 'string' || !keys.includes(locatorKey(item.source)))
+          || new Set(value.subjects.map(item => item.id)).size !== value.subjects.length) throw Error('Invalid comparison metadata.');
+      if (metadata && ['scope','scope_definition','dimensions','metrics','definition_source','case_population_sha256','case_count','observation_count','subjects'].some(key => !same(value[key], metadata[key]))) throw Error('Comparison population changed.');
+      return value;
     }
-    const selection = () => ({origin_catalog_id: selected.origin_catalog_id, packet_sha256: selected.id});
-    async function subjectPage(offset, active, signal) {
-      const value = checkRead(await read('measurement_subjects', {...selection(), offset, limit: 40}, signal)); if (!active()) return;
-      page(value, offset, 40, value.items);
-      if (value.total !== metadata.subject_count) throw Error('Subject page differs from the retained packet population.');
-      if (value.items.some(item => !identity(item.id) || typeof item.label !== 'string')
-          || new Set(value.items.map(item => item.id)).size !== value.items.length) throw Error('Invalid retained subjects.');
-      subjects = value.items; subjectOffset = offset; subjectTotal = value.total; $('subjects').replaceChildren();
-      for (const item of subjects) { const option = node('option', item.label + ' · ' + item.id); option.value = item.id; option.selected = true; $('subjects').append(option); }
-      $('subject-page').textContent = `Subjects ${subjects.length ? offset + 1 : 0}–${offset + subjects.length} of ${subjectTotal}. Only explicitly selected subjects on this page will be compared.`;
+    function checkRead(response, source) {
+      const original = descriptors.find(item => sourceKey(item) === locatorKey(source));
+      if (!original || response?.source?.origin_catalog_id !== source.origin_catalog_id || response.source.id !== source.packet_sha256
+          || response.source.blob?.sha256 !== source.packet_sha256 || !same(response.source, original)
+          || new TextEncoder().encode(JSON.stringify(response)).length > 256 * 1024) throw Error('Observation differs from its original packet.');
+      return response.value;
+    }
+    function subjectPage(offset) {
+      if (!metadata || !natural(offset) || offset > subjectTotal) throw Error('Invalid comparison subject page.');
+      subjectOffset = offset; $('subjects').replaceChildren();
+      const items = subjects.slice(offset, offset + 40);
+      for (const item of items) {
+        const option = node('option', item.label + ' · ' + item.id); option.value = item.id;
+        option.selected = selectedSubjects.has(item.id); $('subjects').append(option);
+      }
+      subjectSelectionStatus();
       return $('subjects');
+    }
+    function subjectSelectionStatus() {
+      const count = Math.min(40, subjectTotal - subjectOffset);
+      $('subject-page').textContent = `Subjects ${count ? subjectOffset + 1 : 0}–${subjectOffset + count} of ${subjectTotal}. ${selectedSubjects.size} selected across all pages; selection is retained when paging.`;
     }
     function dimensions() {
       filters.clear(); $('filters').replaceChildren();
@@ -158,12 +194,13 @@
       for (const text of headings) { const cell = node('th', text); cell.scope = 'col'; row.append(cell); }
       head.append(row); result.append(node('caption', caption), head, body); return {result, body};
     }
-    async function inspect(observation_id) {
+    async function inspect(observation_id, source) {
       clearInspection();
       return perform(async(active, signal) => {
-        const value = checkRead(await read('measurement_inspect', {...selection(), observation_id}, signal)); if (!active()) return;
-        if (value.packet_sha256 !== selected.id || value.observation?.id !== observation_id
-            || value.observation.metric_id !== applied?.metric_id || !applied.subject_ids.includes(value.observation.subject_id)) throw Error('Observation differs from the selected comparison.');
+        const value = checkRead(await read('measurement_inspect', {...source, observation_id}, signal), source); if (!active()) return;
+        if (value.packet_sha256 !== source.packet_sha256 || value.observation?.id !== observation_id
+            || value.observation.metric_id !== applied?.metric_id || !applied.subject_ids.includes(value.observation.subject_id)
+            || !same(subjects.find(item => item.id === value.observation.subject_id)?.source, source)) throw Error('Observation differs from the selected comparison.');
         const heading = node('h3', value.subject.label + ' · ' + value.case.id); heading.tabIndex = -1;
         const observation = value.observation;
         $('inspection').append(heading, node('p', `${value.metric.label} · ${value.metric.units} · ${observation.state} · ${observation.value === null ? observation.reason : display(observation.value)}`),
@@ -175,27 +212,31 @@
       });
     }
     async function showQuery(value, request, active, signal, authority) {
-      if (value.packet_sha256 !== selected.id || value.metric?.id !== request.metric_id
+      if (!value || value.metric?.id !== request.metric_id
+          || !same(value.metric, metadata.metrics.find(metric => metric.id === request.metric_id))
           || JSON.stringify(value.subject_ids) !== JSON.stringify(request.subject_ids)
           || !value.filters || Object.keys(value.filters).length !== Object.keys(request.filters).length
           || Object.entries(request.filters).some(([key, wanted]) => !Object.hasOwn(value.filters, key) || value.filters[key] !== wanted)
           || !Array.isArray(value.summary) || value.summary.length !== request.subject_ids.length || value.sampling !== 'none') throw Error('Measurement comparison differs from its requested selection.');
       page(value, request.offset, request.limit, value.rows);
+      if (value.summary.reduce((count, summary) => count + summary.count, 0) !== value.total) throw Error('Comparison denominator differs from its complete summaries.');
       const maxima = table('Maximum over all matching cases, including every observation status', ['Subject / execution attributes','Maximum','Measured','Failed','Unsupported','Unavailable']);
-      const points = [];
+      const points = [], inspections = new Map();
       for (const [index, summary] of value.summary.entries()) {
         if (summary.subject_id !== request.subject_ids[index] || !natural(summary.count) || STATES.some(state => !natural(summary.states?.[state]))
             || STATES.reduce((sum, state) => sum + summary.states[state], 0) !== summary.count
             || (summary.maximum === null) !== (summary.states.measured === 0)) throw Error('Invalid complete measurement summary.');
-        const subject = subjects.find(item => item.id === summary.subject_id); if (!subject) throw Error('Subject is outside the selected page.');
+        const subject = subjects.find(item => item.id === summary.subject_id); if (!subject || !same(subject.source, summary.source)) throw Error('Subject differs from its original comparison packet.');
         const row = node('tr'), label = node('td'); label.append(node('strong', subject.label), attributes('Execution attributes', subject.dimensions));
         const maximum = node('td');
         if (summary.maximum === null) maximum.textContent = 'No measured value';
         else {
           const point = summary.maximum;
           if (!finite(point.value) || !identity(point.id) || !identity(point.case_id)) throw Error('Invalid retained maximum.');
-          maximum.append(button(display(point.value) + ' · inspect maximum for ' + subject.label, () => void inspect(point.id)));
-          points.push({subject_id:subject.id, value:point.value, observation_id:point.id});
+          maximum.append(button(display(point.value) + ' · inspect maximum for ' + subject.label, () => void inspect(point.id, summary.source)));
+          const token = JSON.stringify([summary.source.origin_catalog_id, summary.source.packet_sha256, point.id]);
+          inspections.set(token, {id:point.id, source:summary.source});
+          points.push({subject_id:subject.id, value:point.value, observation_id:token});
         }
         row.append(label, maximum, ...STATES.map(state => node('td', String(summary.states[state])))); maxima.body.append(row);
       }
@@ -204,7 +245,8 @@
         if (!request.subject_ids.includes(observation.subject_id) || observation.metric_id !== request.metric_id || !identity(observation.id)
             || !STATES.includes(observation.state) || (observation.state === 'measured' ? !finite(observation.value) : observation.value !== null)) throw Error('Invalid retained observation row.');
         const subject = subjects.find(item => item.id === observation.subject_id), row = node('tr'), detail = node('td');
-        detail.append(button('Inspect ' + observation.id, () => void inspect(observation.id)), attributes('Case and execution attributes', observation.dimensions));
+        if (!subject || !same(subject.source, observation.source)) throw Error('Observation belongs to another packet.');
+        detail.append(button('Inspect ' + observation.id, () => void inspect(observation.id, observation.source)), attributes('Case and execution attributes', observation.dimensions));
         row.append(node('td', subject.label), node('td', observation.case_id), node('td', observation.value === null ? observation.state + ': ' + observation.reason : display(observation.value)), detail); observations.body.append(row);
       }
       query = value; applied = structuredClone(request); $('results').hidden = false;
@@ -214,44 +256,59 @@
       const plotTicket = ++plotGeneration;
       if (points.length) await renderer.render({maxima:points}, {signal,
         isCurrent: () => context?.enabled && context.key === authority && plotTicket === plotGeneration,
-        onSignal:{measurement_select: selection => { const id = selection?.observation_id?.[0]; if (points.some(point => point.observation_id === id)) void inspect(id); }}});
+        onSignal:{measurement_select: selection => { const id = selection?.observation_id?.[0]; const original = inspections.get(id); if (original) void inspect(original.id, original.source); }}});
       else { renderer.clear(); $('chart').append(node('p', 'No measured values for this selection. Missing and failed observations remain counted below.')); }
       if (active()) { $('heading').focus(); $('status').textContent = 'Exact retained comparison. Metric and scope definitions are available above.'; }
     }
     function compare(offset = 0, saved = null) {
       return perform(async(active, signal, authority) => {
         const request = saved ? {...saved, offset} : {metric_id:$('metric').value,
-          subject_ids:[...$('subjects').selectedOptions].map(option => option.value), filters:filterValues(), offset, limit:50};
+          subject_ids:subjects.filter(item => selectedSubjects.has(item.id)).map(item => item.id), filters:filterValues(), offset, limit:50};
         if (!request.subject_ids.length) throw Error('Choose at least one subject.');
         clearResults();
-        const value = checkRead(await read('measurement_query', {...selection(), ...request}, signal)); if (!active()) return;
+        const value = checkComparison(await read('measurement_compare', {...selection(), ...request}, signal)).query; if (!active()) return;
         await showQuery(value, request, active, signal, authority);
       });
     }
     $('sources').onclick = () => void loadSources();
     $('sources-prev').onclick = () => void loadSources(Math.max(0, sourceOffset - 40));
     $('sources-next').onclick = () => void loadSources(sourceOffset + 40);
-    $('source').onchange = () => { invalidate(); clearSource(); controls(); };
+    $('source').onchange = () => { invalidate(); clearSource(); $('status').textContent = 'Load the selected compatible sources.'; controls(); };
     $('source-form').onsubmit = event => {
       event.preventDefault();
       void perform(async(active, signal) => {
-        const chosen = sources.find(source => sourceKey(source) === $('source').value); clearSource(); selected = chosen;
-        if (!selected) throw Error('Choose a retained measurement source.');
-        const response = await read('measurement_metadata', selection(), signal); if (!active()) return;
-        metadata = checkRead(response); descriptor = response.source;
-        if (metadata.packet_sha256 !== selected.id || metadata.title !== selected.title || !Array.isArray(metadata.metrics) || metadata.metrics.length > 32
-            || !Array.isArray(metadata.dimensions) || metadata.dimensions.length > 32) throw Error('Invalid exact measurement metadata.');
-        $('context').append(node('h3', metadata.title), node('p', metadata.scope.label + ' · population: ' + metadata.scope.population),
+        const chosen = [...$('source').selectedOptions].map(option => sources.find(item => sourceKey(item) === option.value));
+        clearSource(); selected = chosen;
+        if (!selected.length || selected.length > 16 || selected.some(item => !item)) throw Error('Choose 1 through 16 retained sources.');
+        const response = await read('measurement_compare', selection(), signal); if (!active()) return;
+        metadata = checkComparison(response); descriptors = response.sources;
+        if (metadata.query !== null) throw Error('Metadata reply unexpectedly contains a query.');
+        subjects = metadata.subjects; subjectTotal = subjects.length; selectedSubjects = new Set(subjects.map(item => item.id));
+        $('context').append(node('h3', `Comparison of ${selected.length} retained sources`), node('p', metadata.scope.label + ' · population: ' + metadata.scope.population),
           node('p', typeof metadata.scope_definition.task === 'string' ? metadata.scope_definition.task : 'Interpret results using the retained scope definition.'),
-          jsonDetails('Exact scope, metric definitions and packet source', {metadata, source:descriptor}));
+          jsonDetails('Exact compatible scope, metric definitions and original packet sources', {metadata, sources:descriptors}));
         for (const metric of metadata.metrics) { const option = node('option', metric.label + ' · ' + metric.units); option.value = metric.id; $('metric').append(option); }
-        dimensions(); await subjectPage(0, active, signal); if (!active()) return;
+        dimensions(); subjectPage(0); if (!active()) return;
         $('form').hidden = false; $('status').textContent = 'Choose a metric, subjects and optional exact attribute filters.'; return $('metric');
       });
     };
-    $('metric').onchange = invalidate; $('subjects').onchange = invalidate;
+    $('source-all').onclick = () => {
+      for (const option of $('source').options) option.selected = true;
+      $('source').onchange();
+    };
+    $('metric').onchange = invalidate;
+    $('subjects').onchange = () => {
+      for (const option of $('subjects').options) {
+        if (option.selected) selectedSubjects.add(option.value); else selectedSubjects.delete(option.value);
+      }
+      invalidate(); subjectSelectionStatus(); controls();
+    };
+    for (const [name, all] of [['subjects-all',true],['subjects-clear',false]]) $(name).onclick = () => {
+      selectedSubjects = new Set(all ? subjects.map(item => item.id) : []);
+      invalidate(); subjectPage(subjectOffset); controls();
+    };
     for (const [name, direction] of [['subjects-prev',-1],['subjects-next',1]]) $(name).onclick = () => {
-      clearResults(); void perform((active, signal) => subjectPage(subjectOffset + direction * 40, active, signal));
+      clearResults(); void perform(() => subjectPage(subjectOffset + direction * 40));
     };
     $('form').onsubmit = event => { event.preventDefault(); void compare(); };
     $('prev').onclick = () => void compare(Math.max(0, query.offset - query.limit), applied);
