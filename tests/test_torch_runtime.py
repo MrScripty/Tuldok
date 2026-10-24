@@ -89,6 +89,27 @@ class InstalledAssets(unittest.TestCase):
         with self.assertRaises(Cancelled):runtime.file_record(Path(self.config['python']),checkpoint=checkpoint)
         self.assertEqual(len(calls),2)
 
+    def test_retained_prelink_manifest_keeps_exact_hash_without_current_launch_authority(self):
+        from pipeline import digest
+        from project_material import decode_runtime_material
+        manifest=runtime.inventory(self.config);manifest.pop('file_links')
+        raw=runtime.encoded(manifest)
+        descriptor=dict(schema_version=1,profile=runtime.PROFILE,catalog_id='a'*32,
+                        manifest_sha256=runtime.sha(raw),manifest_bytes=len(raw),
+                        file_count=len(manifest['files']),total_bytes=manifest['total_bytes'])
+        with self.assertRaisesRegex(ValueError,'closed manifest'):
+            runtime.verify_descriptor(descriptor,manifest)
+        path=Path(self.temp.name)/'old-manifest.json';path.write_bytes(raw)
+        with self.assertRaisesRegex(ValueError,'closed manifest'):runtime.load(path)
+        value=dict(ref=dict(kind='runtime',catalog_id='a'*32,id=digest(descriptor),sha256=digest(descriptor)),
+                   descriptor=descriptor,environment=None,manifest=manifest)
+        self.assertEqual(decode_runtime_material(value,catalog_id='a'*32),value)
+        self.assertEqual(runtime.verify_retained_descriptor(descriptor,manifest),manifest)
+        self.assertNotIn('file_links',manifest)
+        changed=dict(manifest,unknown_field=[])
+        with self.assertRaises(ValueError):runtime.verify_retained_descriptor(descriptor,changed)
+        with self.assertRaises(ValueError):runtime.verify_retained_descriptor(dict(descriptor,manifest_sha256='f'*64),manifest)
+
     def test_manifest_link_noncanonical_encoding_and_descriptor_mismatch_are_rejected(self):
         manifest=runtime.inventory(self.config);raw=runtime.encoded(manifest)
         root=Path(self.temp.name);path=root/'manifest.json';path.write_bytes(raw)

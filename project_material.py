@@ -277,8 +277,8 @@ def decode_runtime_material(value, *, catalog_id):
             from recipe_process import validate_cpu_snapshot_manifest,encoded
             manifest=validate_cpu_snapshot_manifest(descriptor,value['manifest'])
         elif descriptor.get('profile') == 'managed_torch_python_v1':
-            from torch_runtime import verify_descriptor,encoded
-            manifest=verify_descriptor(descriptor,value['manifest'])
+            from torch_runtime import verify_retained_descriptor,encoded
+            manifest=verify_retained_descriptor(descriptor,value['manifest'])
         else: raise WorkbenchError('Unsupported retained runtime profile.', 'unsupported', 409)
         raw=encoded(manifest)
         if len(raw)!=descriptor['manifest_bytes'] or hashlib.sha256(raw).hexdigest()!=descriptor['manifest_sha256']:
@@ -440,8 +440,8 @@ class ProjectMaterial:
                 from recipe_process import decode, encoded, validate_cpu_manifest
                 manifest = validate_cpu_manifest(decode(raw))
             else:
-                from torch_runtime import decode, encoded, validate_manifest
-                manifest = validate_manifest(decode(raw))
+                from torch_runtime import decode, encoded, validate_retained_manifest
+                manifest = validate_retained_manifest(decode(raw))
             if encoded(manifest) != raw: raise WorkbenchError('Retained runtime manifest encoding differs.', 'invalid', 400)
         return value
 
@@ -581,8 +581,8 @@ class ProjectMaterial:
                 from recipe_process import decode,validate_cpu_manifest
                 manifest=validate_cpu_manifest(decode(manifest_raw))
             else:
-                from torch_runtime import decode,validate_manifest
-                manifest=validate_manifest(decode(manifest_raw))
+                from torch_runtime import decode,validate_retained_manifest
+                manifest=validate_retained_manifest(decode(manifest_raw))
         runtime=self.capture_runtime(dict(ref=ref,descriptor=descriptor,
             environment=None if descriptor is not None else environment,manifest=manifest),manifest_raw)
         return [*self.declarations(runtime),runtime]
