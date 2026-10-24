@@ -908,6 +908,7 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
                     '/experiment-graph.js': ('experiment-graph.js', 'text/javascript'),
+                    '/project-progression.js': ('project-progression.js', 'text/javascript'),
                     '/experiment-lineage.js': ('experiment-lineage.js', 'text/javascript'),
                     '/experiment-lineage.css': ('experiment-lineage.css', 'text/css'),
                     '/workspace-real.js': ('workspace-real.js', 'text/javascript'),

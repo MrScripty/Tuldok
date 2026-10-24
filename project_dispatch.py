@@ -25,7 +25,7 @@ _MATERIAL_ACTIONS = frozenset(('definitions', 'models', 'model_get', 'model_crea
     'recipe_get', 'recipe_create', 'recipe_save', 'recipe_prepare', 'model_material',
     'recipe_material', 'runtime_material', 'snapshot', 'materials'))
 _HISTORY_ACTIONS = frozenset(('studies', 'study', 'study_create', 'study_save', 'trial', 'trial_prepare',
-    'lineage', 'lineage_record', 'run', 'runs', 'candidate', 'candidate_select', 'evidence',
+    'lineage', 'lineage_record', 'progression_origins', 'progression', 'run', 'runs', 'candidate', 'candidate_select', 'evidence',
     'retained_analysis', 'retained_analysis_export', 'policies', 'policy', 'dependencies',
     'publication_result', 'package_state', 'expose_holdout', 'run_document_segment'))
 _OTHER_ACTIONS = frozenset(('artifacts', 'artifact_status', 'artifact_resolve', 'producers', 'producer', 'source_register', 'source_references'))
@@ -268,6 +268,8 @@ def _history(projection, action, a):
         origin_catalog_id=origin, expected_sha256=a['expected_sha256'], offset=a['offset'], limit=a['limit'])
     if action == 'candidate': return history.candidate(a['candidate_id'], origin_catalog_id=origin, verify=a.get('verify', False))
     if action == 'lineage': return _page(history.lineage(origin_catalog_id=origin)['records'], a)
+    if action == 'progression_origins': return history.progression_origins(offset=a.get('offset',0),limit=a.get('limit',40))
+    if action == 'progression': return history.progression(origin,offset=a.get('offset',0),limit=a.get('limit',20),cohort=a.get('cohort'))
     if action == 'policies': return _page(history.policies(origin_catalog_id=origin)['policies'], a)
     if action == 'policy': return history.policy(a['ref'])
     if action == 'runs':

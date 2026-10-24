@@ -991,6 +991,18 @@ for _verb in ('create', 'save'):
 _project_file_operation('trial_prepare', 'POST', '/studies/{study_id}/trials', {
     'study_id': ID, 'revision': SAFE_POS, 'material': MATERIAL_REF, 'replicate': SAFE_NAT}, mutation=True)
 _project_file_operation('lineage_record', 'POST', '/lineage', {'trial': _LINEAGE_REF, 'intent': _LINEAGE_INTENT}, mutation=True)
+_PROJECT_PROGRESSION_ORIGIN = obj({'origin_catalog_id':ID,'study_count':SAFE_NAT,'trial_count':SAFE_NAT})
+_PROJECT_PROGRESSION_RUN = obj({key:value for key,value in _LINEAGE_RUN['properties'].items() if key!='validation'})
+_PROJECT_PROGRESSION_NODE = obj({'trial':_TRIAL,'lineage':{'oneOf':[_LINEAGE_RECORD,_NULL]},
+    'study':obj({'id':ID,'name':text(120)}),'attempt_count':SAFE_NAT,
+    'runs':array(_PROJECT_PROGRESSION_RUN,5),'runs_truncated':{'type':'boolean'}})
+_project_file_operation('progression_origins','GET','/progression/origins',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj({'items':array(_PROJECT_PROGRESSION_ORIGIN,40),'offset':SAFE_NAT,'limit':integer(1,40),'total':SAFE_NAT}))
+_project_file_operation('progression','GET','/progression',
+    {'origin_catalog_id':ID,'offset':SAFE_NAT,'limit':integer(1,20),'cohort':text(120)},required=['origin_catalog_id'],
+    output=obj({'origin_catalog_id':ID,'evidence':const('saved_metadata_only'),'historical':const(True),
+        'execution_available':const(False),'nodes':array(_PROJECT_PROGRESSION_NODE,20),'related':array(_LINEAGE_REF,40),
+        'offset':SAFE_NAT,'limit':integer(1,20),'total':SAFE_NAT,'cohort':{'oneOf':[text(120),_NULL]}}))
 _project_file_operation('candidate_select', 'POST', '/studies/{study_id}/candidates',
     domain='studies.select_candidate', mutation=True)
 _project_file_operation('evidence', 'POST', '/runs/{run_id}/evidence', {

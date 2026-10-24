@@ -764,6 +764,55 @@ class ProjectHistory:
         origin=self._origin(origin_catalog_id)
         return {'records':[copy.deepcopy(doc) for (namespace,_),doc in sorted(self._facts().trials.items()) if namespace==origin]}
 
+    def progression_origins(self,*,offset=0,limit=40):
+        """Discover original namespaces without inventing current project ancestry."""
+        self._authorize('studies.lineage')
+        natural(offset,'Origin offset');natural(limit,'Origin page limit',1,40)
+        facts=self._facts();origins={origin for origin,_ in facts.studies}|{origin for origin,_ in facts.trials}
+        items=[{'origin_catalog_id':origin,
+                'study_count':sum(namespace==origin for namespace,_ in facts.studies),
+                'trial_count':sum(namespace==origin for namespace,_ in facts.trials)} for origin in sorted(origins)]
+        self._authorize('studies.lineage')
+        return {'items':items[offset:offset+limit],'offset':offset,'limit':limit,'total':len(items)}
+
+    def progression(self,origin_catalog_id,*,offset=0,limit=20,cohort=None):
+        """Bounded original Trial graph, with saved Run status only.
+
+        Numeric evidence stays behind its existing disclosure/query owners.
+        All references come from the already validated immutable history;
+        this projection reads no payload bytes or execution/recovery owner.
+        """
+        self._authorize('studies.lineage');identifier(origin_catalog_id,'Origin catalog')
+        natural(offset,'Progression offset');natural(limit,'Progression page limit',1,20)
+        if cohort is not None:text(cohort,'Recorded cohort',120)
+        facts=self._facts();origin=origin_catalog_id
+        if not any(namespace==origin for namespace,_ in facts.studies):
+            _invalid('Historical origin is unavailable.','not_found')
+        documents=[doc for (namespace,_),doc in sorted(facts.trials.items()) if namespace==origin
+                   and (cohort is None or doc['lineage'] is not None and doc['lineage']['intent']['cohort']==cohort)]
+        nodes=[]
+        for doc in documents[offset:offset+limit]:
+            trial=doc['trial'];study=facts.studies[(origin,trial['study_id'])]['study']
+            attempts=[facts.runs[(origin,value['run_id'])]['run']
+                      for (namespace,_),value in facts.reservations.items()
+                      if namespace==origin and value['trial_id']==trial['id']]
+            attempts.sort(key=lambda value:(value['created_at'],value['id']),reverse=True)
+            runs=[{key:copy.deepcopy(run.get(key)) for key in
+                   ('id','state','parent_run_id','created_at','finished_at')} for run in attempts[:5]]
+            nodes.append({'trial':copy.deepcopy(trial),'lineage':copy.deepcopy(doc['lineage']),
+                          'study':{'id':study['id'],'name':study['name']},
+                          'attempt_count':len(attempts),'runs':runs,'runs_truncated':len(attempts)>5})
+        visible={node['trial']['id'] for node in nodes};related={}
+        for node in nodes:
+            for kind in ('parent','baseline'):
+                ref=(node['lineage'] or {}).get('intent',{}).get(kind)
+                if ref is not None and (ref['catalog_id']!=origin or ref['trial_id'] not in visible):
+                    related[(ref['catalog_id'],ref['trial_id'])]=copy.deepcopy(ref)
+        self._authorize('studies.lineage')
+        return {'origin_catalog_id':origin,'evidence':'saved_metadata_only','historical':True,
+                'execution_available':False,'nodes':nodes,'related':[related[key] for key in sorted(related)],
+                'offset':offset,'limit':limit,'total':len(documents),'cohort':cohort}
+
     def run(self,run_id,*,origin_catalog_id=None,offset=None,limit=None):
         self._authorize('runs.get',run_id)
         facts=self._facts();doc=self._record(facts.runs,run_id,origin_catalog_id)

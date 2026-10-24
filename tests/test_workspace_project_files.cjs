@@ -34,6 +34,9 @@ function mount(initial=[reply(state()),reply(records())],capabilityValue=capabil
   const context={document:{getElementById:id=>{assert.ok(nodes.has(id),'Unknown node '+id);return nodes.get(id);},createElement:tag=>new Node(tag)},URLSearchParams,TextEncoder,crypto,console,window:null};
   context.window=context;context.TuldokAuth={canReview:()=>true,fetch:(url,options)=>{if(url==='/api/agent/capabilities'){discoveries.push({url,options});return Promise.resolve(reply(capabilityValue));}const header=options.headers?.['Tuldok-Operation-Contract'];assert.ok(header,'Every project call selects an exact contract');const [operation,version,digest]=header.split('/');assert.equal(version,'1');assert.equal(digest,pins[operation]);requests.push({url,options});assert.ok(answers.length,'Unexpected fetch '+url);return Promise.resolve(answers.shift());}};
   context.addEventListener=(name,handler)=>events.set(name,handler);
+  // View modules have separate real-browser evidence; this fixture owns native record/control lifetimes.
+  context.ScientificFieldInspector=()=>({clear(){},show(){}});
+  context.ProjectExperimentProgression=()=>({setContext(){},clear(){}});
   vm.createContext(context);vm.runInContext(source,context);
   return {nodes,requests,answers,events,discoveries,focused:()=>focused,
     input(id,value){const node=nodes.get(id);node.value=value;node.listeners.get('input')?.({target:node});},

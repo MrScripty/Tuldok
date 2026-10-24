@@ -3,22 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Text projects · Tuldok</title>
+  <title>Projects · Tuldok</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/auth.css">
   <link rel="stylesheet" href="/project-files.css">
   <link rel="stylesheet" href="/scientific-inspector.css">
+  <link rel="stylesheet" href="/experiment-lineage.css">
   <script defer src="/auth.js"></script>
   <script defer src="/scientific-inspector.js"></script>
+  <script defer src="/experiment-graph.js"></script>
+  <script defer src="/project-progression.js"></script>
   <script defer src="/project-files.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#project-files-main">Skip to project workspace</a>
   <main id="project-files-main">
-    <header><p class="eyebrow">Tuldok / external projects</p><h1>Text project workspace</h1>
-      <p>Create or open a folder under a configured local root. Submitted text and annotations are saved before acknowledgement.</p>
+    <header><p class="eyebrow">Tuldok / external projects</p><h1>Project workspace</h1>
+      <p>Create or open a project folder to work with data, models and experiment history.</p>
     </header>
-    <p id="project-files-status" role="status" aria-live="polite">Reading project status…</p>
+    <p id="project-files-status" role="status" aria-live="polite" tabindex="-1">Reading project status…</p>
     <p id="project-files-receipt" role="status" hidden></p>
     <p id="project-files-error" role="alert" tabindex="-1" hidden></p>
     <section aria-labelledby="project-files-title">
@@ -160,6 +163,7 @@
         <button id="record-history-more" type="button" hidden>Load older annotation history</button>
       </section>
     </div>
+    <section id="project-progression" class="panel panel-pad lineage-panel" hidden aria-label="Experiment progression"></section>
     <section class="project-history-panel" aria-labelledby="project-explore-title">
       <h2 id="project-explore-title">Project data and scientific history</h2>
       <p>Inspect saved records, models, Studies, Runs and their exact artifact availability. Opening a project never starts computation or restores permission to disclose held-out data.</p>

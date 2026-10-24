@@ -394,6 +394,14 @@ class ProjectFilesClient:
         """lineage record; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('lineage_record', arguments)
 
+    def progression_origins(self, **arguments):
+        """Read original history namespaces at the selected checkpoint."""
+        return self._call('progression_origins', arguments)
+
+    def progression(self, **arguments):
+        """Read a bounded saved Trial graph without execution or metric disclosure."""
+        return self._call('progression', arguments)
+
     def model_create(self, **arguments):
         """model create; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('model_create', arguments)

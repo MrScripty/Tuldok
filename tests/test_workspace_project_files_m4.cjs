@@ -39,6 +39,9 @@ function mount(capabilityValue=capabilities){
     const request={url,options};requests.push(request);assert.ok(answers.length,'Unexpected fetch '+url);
     const next=answers.shift();return typeof next==='function'?next(request):next;
   }};
+  // View modules have separate real-browser evidence; this fixture owns native record/control lifetimes.
+  context.ScientificFieldInspector=()=>({clear(){},show(){}});
+  context.ProjectExperimentProgression=()=>({setContext(){},clear(){}});
   vm.createContext(context);vm.runInContext(source,context);
   return {nodes,requests,answers,focused:()=>focused,
     input(id,value){const node=nodes.get(id);node.value=value;node.listeners.get('input')?.({target:node});},

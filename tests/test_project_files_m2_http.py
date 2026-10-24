@@ -138,6 +138,32 @@ class ProjectFilesM2HTTP(unittest.TestCase):
             'catalog_id':self.owner.catalog_id,'token_file':str(secret),'timeout':30}));config.chmod(0o600)
         return config
 
+    def test_progression_public_reads_pin_origin_scope_and_checkpoint(self):
+        from test_project_history import policy
+        self.create();old_checkpoint=self.state()['project']['checkpoint']
+        self.call('study_create',name='Saved progression fixture',
+            limits={'attempt_slots':3,'admitted_wall_seconds':100,'retained_bytes':1000000,'peak_staging_bytes':1000000},
+            policy=policy())
+        origin=self.state()['project']['project_id']
+        with self.owner.bound(self.workspace):
+            inspector=self.workspace.access.issue({'label':'Progression inspector','scopes':['inspect']})
+        before=m1.canonical_bytes(self.external/'alpha')
+        origins=self.call('progression_origins',token=inspector['token'])
+        self.assertEqual(origins['items'],[{'origin_catalog_id':origin,'study_count':1,'trial_count':0}])
+        result=self.call('progression',token=inspector['token'],origin_catalog_id=origin,limit=1)
+        self.assertEqual(result['nodes'],[]);self.assertEqual(result['related'],[])
+        self.assertEqual(result['evidence'],'saved_metadata_only')
+        self.assertFalse(result['execution_available'])
+        with self.owner.bound(self.workspace):
+            self.workspace.access.revoke(inspector['identity']['credential_id'])
+        for action,args in [('progression_origins',{}),('progression',{'origin_catalog_id':origin})]:
+            arguments=self.arguments(action,**args)
+            self.assertEqual(self.transport(action,arguments,token=inspector['token'])[0],401)
+            self.assertEqual(self.transport(action,dict(arguments,checkpoint=old_checkpoint))[0],409)
+        status,error=self.transport('progression',self.arguments('progression',origin_catalog_id='f'*32))
+        self.assertEqual(status,409);self.assertEqual(error['code'],'not_found')
+        self.assertEqual(m1.canonical_bytes(self.external/'alpha'),before)
+
     def test_public_mixed_authoring_git_clone_and_cold_reconstruction(self):
         self.create();image,raw=self.image()
         image=self.call('data_annotate',record_id=image['id'],revision=image['revision'],source_revision=image['source_revision'],
