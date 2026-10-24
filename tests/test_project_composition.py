@@ -99,6 +99,19 @@ class RetainedCompositionTests(unittest.TestCase):
         self.assertEqual(repeated.exception.code,'conflict')
         self.assertIn('source project identity repeats',str(repeated.exception))
 
+    def test_source_unique_policy_overrides_another_sources_runtime_dependency(self):
+        from project_composition import build_candidate
+        from test_project_fork_composition import runtime_records
+        import uuid
+        sha=hashlib.sha256(b'Z').hexdigest()
+        runtime,_,_=runtime_records('9'*32,shared_sha=sha,shared_bytes=1)
+        declaration=next(r for r in runtime if r['family']=='project_artifact' and r['id']==sha)
+        candidate=build_candidate([snapshot('1',runtime),snapshot('2',[copy.deepcopy(declaration)])],
+            '3'*32,created_at='2026-10-24T12:00:00+00:00',id_factory=lambda *_:uuid.uuid4().hex,
+            directory='combined',name='Conservative source custody',request_key='shared-policy')
+        policies={edge['declaration']['sha256']:edge['preservation'] for edge in candidate['artifacts']}
+        self.assertEqual(policies[sha],'unique')
+
     def test_source_snapshots_can_be_loaded_lazily(self):
         records=approved_history()
         def sources():

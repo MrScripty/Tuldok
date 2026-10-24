@@ -73,6 +73,23 @@ class CompositionPublicationTests(unittest.TestCase):
                 self.assertEqual(target.stat().st_nlink,1)
         self.assertEqual([s.snapshot() for s in self.stores],before)
 
+    def test_already_forked_sources_keep_their_independent_histories(self):
+        for number in range(2):
+            result=publish_fork(self.stores[number],self.artifacts[number],self.fd,'forked-source-'+str(number),
+                root_path=self.root,name='Already forked source',expected_checkpoint=self.snapshots[number]['checkpoint'],
+                request_key='prepare-fork-'+str(number),quiescent=True,
+                build_candidate=lambda snap,dest:fork_candidate(snap,dest,created_at=NOW,id_factory=lambda *_:uuid.uuid4().hex),
+                validate_candidate=lambda records,identity:validate(records,identity,None))
+            store=ProjectStore.open(self.root/('forked-source-'+str(number)))
+            artifacts=ProjectArtifacts(store);self.addCleanup(store.close);self.addCleanup(artifacts.close)
+            self.stores[number]=store;self.artifacts[number]=artifacts;self.snapshots[number]=result['snapshot']
+        source_overlays=[next(r for r in s['records'] if r['family']=='project_fork') for s in self.snapshots]
+        result=self.publish();records=result['snapshot']['records'];identity=result['snapshot']['project_id']
+        self.assertTrue(all(old in records for old in source_overlays))
+        self.assertTrue(all(dict(family='project_fork',id=old['id']) in result['fork']['archived'] for old in source_overlays))
+        self.assertEqual(decode_fork(records,project_id=identity)['destination_project_id'],identity)
+        self.assertIn(identity,decode_records(records,project_id=identity))
+
     def test_missing_unique_secondary_bytes_leave_only_retained_staging(self):
         (self.stores[1].path/'artifacts/sha256'/self.unique[1]).unlink()
         self.assert_code('unavailable',self.publish)

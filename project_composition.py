@@ -268,8 +268,23 @@ def build_candidate(snapshots, destination_project_id, *, created_at, id_factory
     records=[indexed[key] for key in sorted(indexed)]
     validate_source_memberships(records,snapshots,destination_project_id)
     archived={(r['family'],r['id']) for r in merged['archived']+fork['archived']}
+    # Every input has its own valid current fork. The combined records receive
+    # their one new current overlay only in the publication owner. Ask each
+    # source owner for its preservation policy before combining those roots;
+    # independent editable forks introduce no new payload identities.
+    plans={}
+    inventories=[fork['artifacts']]
+    inventories.extend(artifact_plan(source['records']) for source in snapshots[1:])
+    for inventory in inventories:
+        for edge in inventory:
+            sha=edge['declaration']['sha256'];previous=plans.get(sha)
+            if previous is not None and previous['declaration']!=edge['declaration']:
+                _fail('Composition source artifact declarations conflict.')
+            if previous is None or edge['preservation']=='unique':
+                plans[sha]=copy.deepcopy(edge)
     return dict(records=records,mapping=copy.deepcopy(fork['mapping']),
-                archived=[dict(family=f,id=i) for f,i in sorted(archived)],artifacts=artifact_plan(records))
+                archived=[dict(family=f,id=i) for f,i in sorted(archived)],
+                artifacts=[plans[sha] for sha in sorted(plans)])
 
 
 def publish_composition(primary_store, primary_artifacts, retained_sources, trusted_root_fd, directory,
