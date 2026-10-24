@@ -379,10 +379,14 @@ class _Capture:
         if len(matches) != 1:
             _missing('An exact selected project snapshot is not available in this pinned source.')
         saved = matches[0]
-        root = self.source.roots.get(saved['root'])
-        if root is None or list(root[1]) != saved['root_identity']:
-            _missing('The retained registration has no matching current explicit source-root capability.')
-        raw = self.source.read_root(saved['root'], saved['manifest_path'], 65536)
+        # Explicitly recovered bytes retain the original registration as inert
+        # history. Its former directory/inode is not current read authority.
+        raw = self.source.read_bound_payload(sha, maximum_bytes=65536)
+        if raw is None:
+            root = self.source.roots.get(saved['root'])
+            if root is None or list(root[1]) != saved['root_identity']:
+                _missing('The retained registration has no matching current explicit source-root capability.')
+            raw = self.source.read_root(saved['root'], saved['manifest_path'], 65536)
         if hashlib.sha256(raw).hexdigest() != sha or manifest(decode_manifest(raw)) != saved['manifest']:
             raise WorkbenchError('Original registered manifest bytes differ.', 'corrupt_payload', 409)
         blob = self.raw(key, raw, 'project_manifest')

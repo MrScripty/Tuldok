@@ -127,6 +127,52 @@ class LegacyCapture(unittest.TestCase):
              patch('runs.Runs.__init__', side_effect=AssertionError('Extraction constructed Runs')):
             return capture_legacy(source, selection)
 
+    def bind_manifest_copy(self, source):
+        recovered = self.root / 'recovered-original'
+        recovered.mkdir()
+        path = recovered / 'manifest.json'
+        path.write_bytes(self.manifest_raw)
+        descriptor = os.open(recovered, os.O_RDONLY | os.O_DIRECTORY)
+        info = os.fstat(descriptor)
+        source.roots['recovered'] = descriptor, [info.st_dev, info.st_ino]
+        source.bind_payload(hashlib.sha256(self.manifest_raw).hexdigest(), len(self.manifest_raw),
+                            'recovered', 'manifest.json')
+        return path
+
+    def test_explicit_original_manifest_binding_keeps_history_without_old_root_authority(self):
+        source = self.view()
+        self.bind_manifest_copy(source)
+        descriptor, _ = source.roots.pop('fixture')
+        os.close(descriptor)
+        captured = self.capture(source, {})
+        self.assertEqual(captured['blockers'], [])
+        snapshot = next(row['document'] for row in captured['records'] if row['family'] == 'project_snapshot')
+        self.assertEqual(snapshot['value']['root'], 'fixture')
+        self.assertEqual(snapshot['value']['manifest'], self.manifest)
+        declaration = next(row['document'] for row in captured['records'] if row['family'] == 'project_artifact')
+        self.assertEqual(source.artifacts.read_blob(declaration), self.manifest_raw)
+        self.assertNotIn('fixture', source.roots)
+
+    def test_explicit_original_manifest_bytes_do_not_read_changed_working_manifest(self):
+        source = self.view()
+        self.bind_manifest_copy(source)
+        changed = b'{"unrelated_current_working_file":true}\n'
+        (self.project_root / 'source.json').write_bytes(changed)
+        captured = self.capture(source, {})
+        self.assertEqual(captured['blockers'], [])
+        declaration = next(row['document'] for row in captured['records'] if row['family'] == 'project_artifact')
+        self.assertEqual(source.artifacts.read_blob(declaration), self.manifest_raw)
+        self.assertEqual((self.project_root / 'source.json').read_bytes(), changed)
+
+    def test_changed_explicit_manifest_binding_blocks_instead_of_using_working_file(self):
+        source = self.view()
+        recovered = self.bind_manifest_copy(source)
+        recovered.write_bytes(b'changed after explicit binding')
+        captured = self.capture(source, {})
+        self.assertTrue(any(row['code'] == 'stale_source' for row in captured['blockers']))
+        self.assertFalse(any(row['family'] == 'project_snapshot' for row in captured['records']))
+        self.assertEqual((self.project_root / 'source.json').read_bytes(), self.manifest_raw)
+
     def test_text_responses_history_and_unrelated_inventory_are_read_only(self):
         selected = self.text();unrelated = self.text('Unrelated original data')
         response_id = uuid.uuid4().hex

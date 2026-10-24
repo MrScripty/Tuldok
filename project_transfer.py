@@ -226,6 +226,18 @@ class SourceView:
         raw=self.read_root(location['root'],location['relative'],MAX_SOURCE_FILE)
         if len(raw)!=size or digest(raw)!=sha256:fail('External source payload differs from its declaration.')
         return raw
+    def read_bound_payload(self,sha256,*,maximum_bytes=MAX_SOURCE_FILE):
+        """Read exact operator-bound bytes; None means no explicit binding.
+
+        Historical paths or root identities never create this capability. A
+        changed, oversized or unavailable bound file remains an error, even if
+        another working file exists at the original historical location.
+        """
+        self.require();sha(sha256)
+        location=self._payload_locations.get(sha256)
+        if location is None:return None
+        if location['bytes']>maximum_bytes:fail('Bound original source exceeds its owner bound.','too_large',413)
+        return self.resolve_payload(sha256,location['bytes'])
     @contextmanager
     def payload_fd(self,sha256,size):
         sha(sha256)
