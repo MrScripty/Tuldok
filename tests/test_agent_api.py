@@ -50,6 +50,26 @@ def sample(schema):
 
 
 class RegistryTests(unittest.TestCase):
+    def test_ascii_shortcut_preserves_unicode_and_scoped_nul_rejection(self):
+        for codepoint in range(128):
+            value=chr(codepoint)
+            if codepoint==0:
+                with self.assertRaises(api.AgentAPIError):api.decode(json.dumps(value))
+            else:
+                self.assertEqual(api.decode(json.dumps(value)),value)
+        for codepoint in range(0xd800,0xe000):
+            with self.assertRaises(api.AgentAPIError):api.decode(json.dumps(chr(codepoint)))
+        for codepoint in (0x80,0x7ff,0x800,0xd7ff,0xe000,0xffff,0x10000,0x10ffff):
+            value=chr(codepoint)
+            self.assertEqual(api.decode(json.dumps(value,ensure_ascii=False)),value)
+        allowed={'entry':'left\x00right'}
+        self.assertEqual(api.decode(json.dumps(allowed),nul_path=('entry',)),allowed)
+        for denied in ({'entry':'ok','other':'\x00'},{'\x00':'ok'}):
+            with self.assertRaises(api.AgentAPIError):api.decode(json.dumps(denied),nul_path=('entry',))
+        class FalseAscii(str):
+            def isascii(self):return True
+        with self.assertRaises(api.AgentAPIError):api._finite(FalseAscii('\ud800'))
+
     def test_discovery_is_stdlib_only_in_cold_process(self):
         code = 'import sys;sys.path.insert(0,sys.argv[1]);import agent_api;agent_api.discovery();assert not any(x in sys.modules for x in ("jsonschema","app","workbench","mcp","psycopg"))'
         subprocess.run([sys.executable, '-I', '-S', '-c', code, str(Path(api.__file__).parent)], check=True, capture_output=True, timeout=10)

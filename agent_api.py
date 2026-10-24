@@ -1994,7 +1994,7 @@ def _finite(value, depth=0, *, nul_path=None, _path=()):
     if depth > DEPTH_LIMIT:
         raise AgentAPIError('JSON nesting exceeds the transport bound.')
     if isinstance(value, str):
-        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in value) or ('\x00' in value and _path != nul_path):
+        if (not str.isascii(value) and any(0xD800 <= ord(ch) <= 0xDFFF for ch in value)) or ('\x00' in value and _path != nul_path):
             raise AgentAPIError('Text contains an invalid code point.')
     elif isinstance(value, float) and not math.isfinite(value):
         raise AgentAPIError('JSON numbers must be finite.')
