@@ -289,6 +289,37 @@ def declarations(record):
     return list(values.values())
 
 
+def fork_preservation(document):
+    """Copy obligations for an already decoded historical Run document.
+
+    A payload label alone cannot weaken custody. Only an explicitly regenerable
+    historical runtime payload with the exact hash/count in this Run's recorded
+    runtime inventory may remain absent. Outputs, publication proofs and measured
+    host sources override that classification when they share the same bytes.
+    This projects copy policy; it does not rewrite the original retained facts.
+    """
+    run=document['run'];runtime=set();protected={item['sha256'] for item in run.get('artifacts',[])}
+    if run.get('execution_kind')=='external_recipe':
+        material=run['material']
+        for item in material.get('runtime',{}).get('files',{}).values():
+            _sha(item['sha256']);natural(item['bytes'],'Historical runtime file bytes')
+            runtime.add((item['sha256'],item['bytes']))
+        protected.update(material['host_files'].values())
+        protected.update(item['sha256'] for item in material.get('captures',{}).values())
+    result={}
+    for edge in document['payloads']:
+        blob=edge['blob'];digest=blob['sha256']
+        regenerative=(edge.get('role')=='historical_runtime' and edge.get('preservation')=='regenerable'
+                      and (blob['sha256'],blob['bytes']) in runtime)
+        policy='regenerable' if regenerative else 'unique'
+        if result.get(digest)!='unique':result[digest]=policy
+    publication=document['publication']
+    if publication is not None:
+        protected.update(publication[name]['sha256'] for name in ('source','result') if publication[name] is not None)
+    for digest in protected:result[digest]='unique'
+    return result
+
+
 class HistoryFacts:
     def __init__(self):
         self.studies={};self.trials={};self.runs={};self.candidates={};self.policies={};self.reservations={};self.observations={}

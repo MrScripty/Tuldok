@@ -140,6 +140,59 @@ class ArtifactDispositionTests(unittest.TestCase):
         self.assertEqual(caught.exception.code,'missing_unique')
         self.assertEqual(caught.exception.missing_unique,[dict(family='run_history',id=record['id'],role='host_source',name='recipe_process.py',sha256=missing,bytes=None)])
 
+    def test_imported_historical_runtime_keeps_its_verified_regenerable_disposition(self):
+        blob=dict(sha256='a'*64,bytes=12)
+        edge=dict(name='runtime-files/0',blob=blob,population='unknown',role='historical_runtime',
+                  preservation='regenerable',required_for=['scientific_inspection','execution_proof'])
+        doc=dict(payloads=[edge],publication=None,run=dict(execution_kind='external_recipe',material=dict(
+            runtime=dict(files={'/historical/runtime/dependency.py':copy.deepcopy(blob)}),host_files={})))
+        record=dict(family='run_history',id=self.catalog+'.'+uuid.uuid4().hex,document=doc)
+        policy=self.policies([declaration(blob['sha256'],blob['bytes']),record])
+        self.assertEqual(policy[blob['sha256']],'regenerable')
+
+    def test_historical_runtime_requires_its_exact_recorded_inventory_and_role(self):
+        blob=dict(sha256='a'*64,bytes=12)
+        for mutation in ('missing-inventory','different-hash','different-bytes','different-role','explicit-unique'):
+            edge=dict(name='runtime-files/0',blob=copy.deepcopy(blob),population='unknown',role='historical_runtime',
+                      preservation='regenerable',required_for=['scientific_inspection','execution_proof'])
+            runtime=copy.deepcopy(blob)
+            if mutation=='different-hash':runtime['sha256']='b'*64
+            if mutation=='different-bytes':runtime['bytes']+=1
+            if mutation=='different-role':edge['role']='checkpoint'
+            if mutation=='explicit-unique':edge['preservation']='unique'
+            doc=dict(payloads=[edge],publication=None,run=dict(execution_kind='external_recipe',material=dict(
+                runtime=dict(files={} if mutation=='missing-inventory' else {'/historical/file':runtime}),host_files={})))
+            record=dict(family='run_history',id=self.catalog+'.'+uuid.uuid4().hex,document=doc)
+            with self.subTest(mutation=mutation):
+                self.assertEqual(self.policies([declaration(blob['sha256'],blob['bytes']),record])[blob['sha256']],'unique')
+
+    def test_historical_runtime_alias_cannot_weaken_outputs_captures_proofs_or_host_sources(self):
+        blob=dict(sha256='a'*64,bytes=12)
+        for use in ('output','capture','publication','host','other-payload-first','other-payload-last'):
+            edge=dict(name='runtime-files/0',blob=copy.deepcopy(blob),population='unknown',role='historical_runtime',
+                      preservation='regenerable',required_for=['scientific_inspection','execution_proof'])
+            doc=dict(payloads=[edge],publication=None,run=dict(execution_kind='external_recipe',artifacts=[],material=dict(
+                runtime=dict(files={'/historical/file':copy.deepcopy(blob)}),host_files={},captures={})))
+            if use=='output':doc['run']['artifacts']=[dict(name=edge['name'],**blob)]
+            if use=='capture':doc['run']['material']['captures']={'capture.txt':copy.deepcopy(blob)}
+            if use=='publication':doc['publication']=dict(source=copy.deepcopy(blob),result=None)
+            if use=='host':doc['run']['material']['host_files']={'owned.py':blob['sha256']}
+            if use.startswith('other-payload'):
+                other=dict(copy.deepcopy(edge),name='weights.bin',role='checkpoint')
+                doc['payloads'].insert(0 if use.endswith('first') else 1,other)
+            record=dict(family='run_history',id=self.catalog+'.'+uuid.uuid4().hex,document=doc)
+            with self.subTest(use=use):
+                self.assertEqual(self.policies([declaration(blob['sha256'],blob['bytes']),record])[blob['sha256']],'unique')
+
+    def test_retained_run_observation_preserves_the_same_historical_runtime_policy(self):
+        blob=dict(sha256='a'*64,bytes=12)
+        edge=dict(name='runtime-files/0',blob=blob,population='unknown',role='historical_runtime',
+                  preservation='regenerable',required_for=['scientific_inspection','execution_proof'])
+        doc=dict(payloads=[edge],publication=None,run=dict(execution_kind='external_recipe',material=dict(
+            runtime=dict(files={'/historical/file':copy.deepcopy(blob)}),host_files={})))
+        record=dict(family='run_observation',id='b'*64,document=dict(observation=doc))
+        self.assertEqual(self.policies([declaration(blob['sha256'],blob['bytes']),record])[blob['sha256']],'regenerable')
+
     def test_native_measured_bytes_win_over_regenerable_runtime_alias_and_missing_declaration_blocks(self):
         sha=hashlib.sha256(b'').hexdigest()
         records,_,_=runtime_records(self.catalog,shared_sha=sha,shared_bytes=0)
