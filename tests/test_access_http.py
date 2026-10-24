@@ -4,6 +4,7 @@ import tempfile
 import threading
 import unittest
 import uuid
+from unittest.mock import patch
 from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -66,6 +67,31 @@ class AccessHTTP(unittest.TestCase):
         self.dataset.db.connection.close()
         status, body, _ = self.request('/api/access/session', headers={'Authorization': 'Bearer'})
         self.assertEqual((status, body['code']), (503, 'storage'))
+
+    def test_busy_catalog_authentication_returns_json_and_keeps_login_code_usable(self):
+        code = self.dataset.access._local_owner_token()
+        held, release = threading.Event(), threading.Event()
+        def hold_catalog():
+            with self.dataset.access.lock:
+                held.set()
+                release.wait(5)
+        holder = threading.Thread(target=hold_catalog)
+        holder.start()
+        try:
+            self.assertTrue(held.wait(2))
+            with patch('metadata.CATALOG_LOCAL_TIMEOUT', .05):
+                for body, headers in (({'token':code}, {'Origin':self.root}), (None, self.owner.headers),
+                                      (None, {'Authorization':'Bearer'}),
+                                      ({'token':code}, {'Origin':'http://elsewhere.invalid'})):
+                    status, value, _ = self.request('/api/access/session', body, headers)
+                    self.assertEqual((status, value['code']), (503, 'storage'))
+                    self.assertIn('busy completing another operation', value['error'])
+        finally:
+            release.set()
+            holder.join(5)
+        self.assertFalse(holder.is_alive())
+        status, identity, _ = self.request('/api/access/session', {'token':code}, {'Origin':self.root})
+        self.assertEqual((status, identity['kind']), (200, 'owner'))
 
     def test_agent_review_and_execution_denied_before_mutation(self):
         with self.owner.bound(self.dataset):
