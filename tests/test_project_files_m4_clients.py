@@ -58,6 +58,20 @@ def ready(reply, *, owner=False):
 
 
 class M4Clients(unittest.TestCase):
+    def test_batch_reply_must_match_every_reviewed_file_and_changed_count(self):
+        text='Exact note\n';raw=text.encode();path='notes/first.md'
+        item=dict(id=identity('note',path),project_id=PROJECT,kind='note',path=path,
+            revision=1,sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw),adopted_at=STAMP,changed=True)
+        arguments=dict(WRITE,items=[dict(kind='note',path=path,expected_revision=0,expected_sha256=item['sha256'])])
+        reply=dict(status=200,result=bound(dict(items=[item],changed_count=1),NEXT))
+        self.assertEqual(ProjectFilesClient(ready(reply)).files_adopt(**arguments),reply['result'])
+        for field,value in [('project_id','f'*32),('sha256','a'*64),('path','notes/other.md'),('revision',2)]:
+            bad=copy.deepcopy(reply);bad['result']['value']['items'][0][field]=value
+            with self.subTest(field=field),self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(ready(bad)).files_adopt(**arguments)
+        bad=copy.deepcopy(reply);bad['result']['value']['changed_count']=0
+        with self.assertRaises(api.AgentAPIError):ProjectFilesClient(ready(bad)).files_adopt(**arguments)
+
     def test_capability_profiles_fit_unchanged_budget_and_negotiate_only_intersections(self):
         native = api.capabilities(CATALOG)
         project = api.capabilities(CATALOG, profile='project')
@@ -70,8 +84,8 @@ class M4Clients(unittest.TestCase):
         with self.assertRaises(api.AgentAPIError): api.capabilities(CATALOG, profile='arbitrary')
         self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)
 
-    def test_ten_operations_have_fixed_consumers_and_closed_inputs(self):
-        self.assertEqual(len(api.PROJECT_FILES_M4), 10)
+    def test_eleven_operations_have_fixed_consumers_and_closed_inputs(self):
+        self.assertEqual(len(api.PROJECT_FILES_M4), 11)
         self.assertEqual(project_dispatch.SUPPORTED_OPERATIONS & api.PROJECT_FILES_M4,
                          api.PROJECT_FILES_M4 - {'project_files.save_as'})
         client = ProjectFilesClient(Mock())

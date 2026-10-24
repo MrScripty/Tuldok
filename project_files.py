@@ -18,6 +18,8 @@ FORMAT='project_file_v1'
 DELETION_FORMAT='project_file_v2'
 MAX_FILE_BYTES=1024*1024
 MAX_FILES=1000
+MAX_ADOPT_ITEMS=40
+MAX_ADOPT_BYTES=8*1024*1024
 KINDS={'script':'scripts','note':'notes'}
 VERSION_FIELDS={'revision','sha256','bytes','text','adopted_at','actor_id'}
 RESULT_FIELDS={'id','project_id','kind','path','revision','sha256','bytes','adopted_at','changed'}
@@ -127,6 +129,20 @@ def _result(envelope,changed):
 
 
 def validate_operation_result(operation,result,records=None):
+    if operation=='files.adopt_many':
+        closed(result,{'items','changed_count'},'batch adoption result')
+        if type(result['items']) is not list or not 1<=len(result['items'])<=MAX_ADOPT_ITEMS:
+            fail('Invalid batch adoption result size.')
+        seen=set();projects=set()
+        for item in result['items']:
+            validate_operation_result('files.adopt',item,records)
+            if item['id'] in seen:fail('Batch adoption result repeats a file.')
+            seen.add(item['id']);projects.add(item['project_id'])
+        if (len(projects)!=1 or type(result['changed_count']) is not int
+                or result['changed_count']!=sum(item['changed'] for item in result['items'])
+                or sum(item['bytes'] for item in result['items'])>MAX_ADOPT_BYTES):
+            fail('Batch adoption result count or project differs.')
+        return True
     if operation not in ('files.adopt','files.adopt_deletion'):return False
     deleted=operation=='files.adopt_deletion'
     closed(result,RESULT_FIELDS|{'deleted'} if deleted else RESULT_FIELDS,'adoption result')
@@ -275,31 +291,79 @@ class ProjectFiles:
     def materialize_captured(records,project_id,root_fd):
         return materialize_captured(records,project_id,root_fd)
 
-    def adopt(self,body,expected_checkpoint,key):
+    def _adoption_intent(self,body):
         closed(body,{'kind','path','expected_revision','expected_sha256'},'working-file adoption')
         parts=_path(body['kind'],body['path']);project_id=self.session.snapshot['project_id'];record_id=file_id(project_id,body['kind'],body['path']);sha(body['expected_sha256'])
         if type(body['expected_revision']) is not int or not 0<=body['expected_revision']<=2**53-1:fail('Invalid expected adoption revision.')
+        return dict(body),parts,record_id
+
+    def _capture_adoption(self,intent,prior,root):
+        body,parts,record_id=intent
+        revision=prior['document']['current']['revision'] if prior else 0
+        if revision!=body['expected_revision']:fail('Working-file adoption revision changed.','conflict',409)
+        try:text,observed,size=_read(root,parts)
+        except _WorkingError as error:fail('Working file is '+error.state+'.','unavailable' if error.state=='missing' else 'invalid',404 if error.state=='missing' else 400)
+        if observed!=body['expected_sha256']:fail('Working file changed after review.','conflict',409)
+        if prior is not None and observed==prior['document']['current']['sha256']:return _result(prior,False),None,size
+        actor=self.access.require('edit','files.adopt',record_id)
+        value=dict(revision=revision+1,sha256=observed,bytes=size,text=text,adopted_at=timestamp(),actor_id=actor.actor_id)
+        history=copy.deepcopy(prior['document']['history']) if prior else [];history.append(value)
+        envelope=dict(family=FAMILY,id=record_id,document=dict(format=prior['document']['format'] if prior else FORMAT,
+            project_id=self.session.snapshot['project_id'],kind=body['kind'],path=body['path'],current=copy.deepcopy(value),
+            history=history,origin=copy.deepcopy(prior['document']['origin']) if prior else None))
+        return _result(envelope,True),envelope,size
+
+    def adopt(self,body,expected_checkpoint,key):
+        intent=self._adoption_intent(body);body,parts,record_id=intent;project_id=self.session.snapshot['project_id']
         pending=[]
         with self.access.lock:
             self.access.require('edit','files.adopt',record_id)
             def invoke():
                 snapshot=self.session.snapshot;owned=[r for r in decode_records(snapshot['records']) if r['document']['project_id']==project_id]
                 prior=next((r for r in owned if r['id']==record_id),None)
-                revision=prior['document']['current']['revision'] if prior else 0
-                if revision!=body['expected_revision']:fail('Working-file adoption revision changed.','conflict',409)
                 if prior is None and len(owned)>=MAX_FILES:fail('Project already tracks 1,000 working files.','too_large',413)
                 with self.store.root_directory() as root:
-                    try:text,observed,size=_read(root,parts)
-                    except _WorkingError as error:fail('Working file is '+error.state+'.','unavailable' if error.state=='missing' else 'invalid',404 if error.state=='missing' else 400)
-                if observed!=body['expected_sha256']:fail('Working file changed after review.','conflict',409)
-                if prior is not None and observed==prior['document']['current']['sha256']:return _result(prior,False)
-                actor=self.access.require('edit','files.adopt',record_id)
-                value=dict(revision=revision+1,sha256=observed,bytes=size,text=text,adopted_at=timestamp(),actor_id=actor.actor_id)
-                history=copy.deepcopy(prior['document']['history']) if prior else [];history.append(value)
-                envelope=dict(family=FAMILY,id=record_id,document=dict(format=prior['document']['format'] if prior else FORMAT,project_id=project_id,kind=body['kind'],path=body['path'],current=copy.deepcopy(value),history=history,origin=copy.deepcopy(prior['document']['origin']) if prior else None))
-                decode_records([r for r in snapshot['records'] if not (r['family']==FAMILY and r['id']==record_id)]+[envelope]);pending.append(envelope)
-                return _result(envelope,True)
+                    result,envelope,_=self._capture_adoption(intent,prior,root)
+                if envelope is not None:
+                    decode_records([r for r in snapshot['records'] if not (r['family']==FAMILY and r['id']==record_id)]+[envelope]);pending.append(envelope)
+                return result
             return self.session.mutate('files.adopt',record_id,body,expected_checkpoint,key,invoke,
+                lambda result,before:dict(records=copy.deepcopy(pending),result=copy.deepcopy(result)))
+
+    def adopt_many(self,body,expected_checkpoint,key):
+        """Capture one bounded, all-or-nothing group through ordinary adoption.
+
+        Every file retains its permission/revision/hash and anchored read checks.
+        One verified root scope and one canonical publication cover the group.
+        No working file is rewritten, even when another input rejects the group.
+        """
+        closed(body,{'items'},'batch working-file adoption')
+        if type(body['items']) is not list or not 1<=len(body['items'])<=MAX_ADOPT_ITEMS:
+            fail('Choose 1 through 40 working files for adoption.','too_large',413)
+        intents=[self._adoption_intent(item) for item in body['items']]
+        ids=[intent[2] for intent in intents]
+        if len(set(ids))!=len(ids):fail('Batch adoption repeats a working-file path.')
+        body=dict(items=[intent[0] for intent in intents]);project_id=self.session.snapshot['project_id']
+        target=digest('\0'.join(ids).encode());pending=[]
+        with self.access.lock:
+            for identity in ids:self.access.require('edit','files.adopt',identity)
+            def invoke():
+                snapshot=self.session.snapshot
+                owned={r['id']:r for r in decode_records(snapshot['records']) if r['document']['project_id']==project_id}
+                if len(owned)+sum(identity not in owned for identity in ids)>MAX_FILES:
+                    fail('Project already tracks 1,000 working files.','too_large',413)
+                results=[];total=0
+                with self.store.root_directory(verify_after=True) as root:
+                    for intent in intents:
+                        result,envelope,size=self._capture_adoption(intent,owned.get(intent[2]),root)
+                        total+=size
+                        if total>MAX_ADOPT_BYTES:fail('Batch working-file capture exceeds 8 MiB.','too_large',413)
+                        if envelope is not None:pending.append(envelope)
+                        results.append(result)
+                changed={r['id'] for r in pending}
+                decode_records([r for r in snapshot['records'] if not (r['family']==FAMILY and r['id'] in changed)]+pending)
+                return dict(items=results,changed_count=sum(item['changed'] for item in results))
+            return self.session.mutate('files.adopt_many',target,body,expected_checkpoint,key,invoke,
                 lambda result,before:dict(records=copy.deepcopy(pending),result=copy.deepcopy(result)))
 
     def adopt_deletion(self,body,expected_checkpoint,key):

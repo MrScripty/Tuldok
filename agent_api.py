@@ -1327,6 +1327,9 @@ _project_file_operation('file_history','GET','/files/{file_id}/history',{'file_i
     output=obj(dict(_PROJECT_FILES_PAGE['properties'],id=SHA,items=array({'oneOf':[obj(_PROJECT_FILE_VERSION_META),obj(_PROJECT_FILE_DELETED_META)]},40))),milestone=4)
 _project_file_operation('file_adopt','POST','/files/adopt',{'kind':_PROJECT_FILE_KIND,'path':text(512),
     'expected_revision':SAFE_NAT,'expected_sha256':SHA},output=_PROJECT_FILE_RESULT,mutation=True,milestone=4)
+_project_file_operation('files_adopt','POST','/files/adopt-many',{'items':array(obj({'kind':_PROJECT_FILE_KIND,
+    'path':text(512),'expected_revision':SAFE_NAT,'expected_sha256':SHA}),40,1)},
+    output=obj({'items':array(_PROJECT_FILE_RESULT,40,1),'changed_count':integer(0,40)}),mutation=True,milestone=4)
 _project_file_operation('file_adopt_deletion','POST','/files/adopt-deletion',{'path':text(512),
     'expected_revision':SAFE_POS,'expected_sha256':SHA},output=obj(dict(_PROJECT_FILE_RESULT['properties'],
     kind=const('note'),revision=integer(2,9007199254740991),deleted=const(True),sha256={'type':'null'},bytes=const(0),changed=const(True))),
@@ -2671,6 +2674,18 @@ class AgentClient:
                     raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
                 page = value['value']
                 action=op['operation_id'].removeprefix('project_files.')
+                if action=='files_adopt':
+                    if (len(page['items'])!=len(arguments['items'])
+                            or page['changed_count']!=sum(item['changed'] for item in page['items'])
+                            or sum(item['bytes'] for item in page['items'])>8*1024*1024):
+                        raise AgentAPIError('Batch adoption count or capture bound differs.','transport',502)
+                    for item,reviewed in zip(page['items'],arguments['items']):
+                        identity=hashlib.sha256((value['project_id']+'\0'+reviewed['kind']+'\0'+reviewed['path']).encode()).hexdigest()
+                        if (item['id']!=identity or item['project_id']!=value['project_id']
+                                or item['kind']!=reviewed['kind'] or item['path']!=reviewed['path']
+                                or item['sha256']!=reviewed['expected_sha256']
+                                or item['revision']!=reviewed['expected_revision']+int(item['changed'])):
+                            raise AgentAPIError('Batch adoption differs from its reviewed files.','transport',502)
                 if action in ('file_get','file_adopt','file_adopt_deletion'):
                     kind,path=page['kind'],page['path']
                     expected_id=hashlib.sha256((value['project_id']+'\0'+kind+'\0'+path).encode()).hexdigest()

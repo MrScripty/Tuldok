@@ -39,6 +39,19 @@ class ProjectFilesM4HTTP(unittest.TestCase):
         self.assertEqual(status,200,value)
         return arguments,value
 
+    def test_batch_adoption_uses_real_http_and_survives_independent_fork(self):
+        self.create();root=self.external/'alpha';(root/'notes').mkdir();items=[]
+        for name,raw in [('first.md',b'Exact first note\r\n'),('second.md','Exact Ω note\n'.encode())]:
+            (root/'notes'/name).write_bytes(raw)
+            items.append(dict(kind='note',path='notes/'+name,expected_revision=0,expected_sha256=hashlib.sha256(raw).hexdigest()))
+        result=self.call('files_adopt',items=items)
+        self.assertEqual(result['changed_count'],2);self.assertEqual(len(self.call('files_inspect')['items']),2)
+        source=copy.deepcopy(self.workspace._projection.session.snapshot)
+        self.fork()
+        current=self.workspace._projection.session.snapshot;indexed={(r['family'],r['id']):r for r in current['records']}
+        for record in source['records']:self.assertEqual(indexed[(record['family'],record['id'])],record)
+        for item in items:self.assertEqual((self.external/'fork'/item['path']).read_bytes(),(root/item['path']).read_bytes())
+
     def test_nonempty_independent_fork_exact_science_new_editable_ids_and_same_request_key(self):
         self.create()
         row=self.call('data_import_text',text='Unique observation café 山',name='Original',

@@ -714,6 +714,10 @@ class ProjectFilesClient:
     def file_adopt(self, **arguments):
         return self._call('file_adopt',arguments)
 
+    def files_adopt(self, **arguments):
+        """Atomically adopt a bounded group of reviewed working files."""
+        return self._call('files_adopt',arguments)
+
     def file_adopt_deletion(self, **arguments):
         """Retain an explicitly reviewed missing note as a deletion revision."""
         return self._call('file_adopt_deletion',arguments)

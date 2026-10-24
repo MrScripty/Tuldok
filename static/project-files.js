@@ -66,6 +66,7 @@
   "project_files.file_adopt_deletion": "7b6d661856a614d1b83d8011d1ffc7f9e2619853495faf9250888739f880685c",
   "project_files.file_get": "a22c27e2fd890ffcb479e0aa8ea40a0cb32d06d1e5750b970b40f27915fe4d24",
   "project_files.file_history": "c83477f7b0f8616c96ad79cebaf0eb3887fe289567f5d5ceb1d1502bebed7423",
+  "project_files.files_adopt": "62215260bf40bfa5db2521f908413bb6dfe47656fb8ea30b38039d637e5daf51",
   "project_files.files_inspect": "0c2ff3ed93109ea19b5c92ffa24ac8f67e4bcfa3fe386921e984b5dfa3bfe7eb",
   "project_files.fork_info": "958bc1aa269b5459c7e2d9c6bcb6725c06f7055502d73c49a95330cc4065aea4",
   "project_files.get": "6b0f4e16a00aa119b86cbb5493be0bac945ff08a5e63773a8f2c2f9296658d5b",
@@ -82,6 +83,12 @@
   "project_files.material_intent_capabilities": "86e90e2d0f094beb1c277a680da9a35e28d78c827390ac1c4e51fc3003c1ce32",
   "project_files.material_intents": "6431fd2780d706c77d2c4dd82f15794017368fd3bade28ac62bbdff5c8b0c547",
   "project_files.materials": "92a6a6a1750fed89aef9574ab6e82be2c6c6351bfa89fbfcb1f3866d4ea3cb13",
+  "project_files.measurement_import": "c8e500396138fc60a31fc916c441bb95454f410231a6508609a7ebba5cd31f18",
+  "project_files.measurement_inspect": "fcbe9846ca49c3da4713b54a3cb4a8237189d8eea5799f275d33992ef268914f",
+  "project_files.measurement_metadata": "5a92ed5259f8876a3c5b8fd1886a9e0f44f0aea8e53d7f63902ac765ddac0de7",
+  "project_files.measurement_query": "65b1456a6870dd6d4b7499669777a2c66157142ccc27cac1864a995664220e1c",
+  "project_files.measurement_sources": "7805e9c5a6b2e2ab566ca134c18697116c89e08a1991b5192b0b5c152a34041d",
+  "project_files.measurement_subjects": "37bd3f717c7158e34b9c221bfa1dbce79490b9d55248803d13dab2ea17b35ea5",
   "project_files.model_create": "34cf790fb2a3355ccab7c3a6c7174ced8dae861812d9479582fd8d5a9212745c",
   "project_files.model_get": "95cc198ab6f084b596324f7251803ad4670a9f8e786e1a9639f1b9ed041798c3",
   "project_files.model_material": "46afde2b06e0e5b08565f12ec86d2d7ec43ef6b63d97c86c264fc9c2f451f20b",
@@ -142,13 +149,7 @@
   "project_files.study_create": "8d2aac7c073a6a7b3ebb41227b5b466cf03606625404f93a59b325038a4ad7a1",
   "project_files.study_save": "5bf3fb814588fd7d9c35836e9d964a64481b3cc4169caf76cad6ce776ff0fe15",
   "project_files.trial": "79afa4bed6d0907f3d4116cc04cb784e94e5a24ab89725ec24f5d7bce70e869f",
-  "project_files.trial_prepare": "e1f6973536fd4c356c4a92fc674d6766f7df0d8a113b8ee71bb05d0adc40b04f",
-  "project_files.measurement_import": "c8e500396138fc60a31fc916c441bb95454f410231a6508609a7ebba5cd31f18",
-  "project_files.measurement_sources": "7805e9c5a6b2e2ab566ca134c18697116c89e08a1991b5192b0b5c152a34041d",
-  "project_files.measurement_metadata": "5a92ed5259f8876a3c5b8fd1886a9e0f44f0aea8e53d7f63902ac765ddac0de7",
-  "project_files.measurement_subjects": "37bd3f717c7158e34b9c221bfa1dbce79490b9d55248803d13dab2ea17b35ea5",
-  "project_files.measurement_query": "65b1456a6870dd6d4b7499669777a2c66157142ccc27cac1864a995664220e1c",
-  "project_files.measurement_inspect": "fcbe9846ca49c3da4713b54a3cb4a8237189d8eea5799f275d33992ef268914f"
+  "project_files.trial_prepare": "e1f6973536fd4c356c4a92fc674d6766f7df0d8a113b8ee71bb05d0adc40b04f"
 }
 /* PROJECT_FILES_CONTRACTS_END */;
   // Generated fixed operation routes from agent_api; remote schemas are never executed.

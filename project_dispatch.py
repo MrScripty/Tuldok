@@ -38,7 +38,7 @@ _EXECUTION_ACTIONS = frozenset(('native_preflight','native_submit','native_retry
 _RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon'))
 _MEASUREMENT_ACTIONS=frozenset(('measurement_import','measurement_sources','measurement_metadata',
     'measurement_subjects','measurement_query','measurement_inspect'))
-_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
+_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','files_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
     _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS | _MEASUREMENT_ACTIONS)
 
@@ -365,6 +365,8 @@ def _m4(projection,action,a):
     session=projection.session
     if action=='file_adopt':
         return projection.files.adopt(_body(a),a['expected_checkpoint'],a['request_key'])
+    if action=='files_adopt':
+        return projection.files.adopt_many(_body(a),a['expected_checkpoint'],a['request_key'])
     if action=='file_adopt_deletion':
         return projection.files.adopt_deletion(_body(a),a['expected_checkpoint'],a['request_key'])
     with session.access.lock,session.lock,session.db.lock:
