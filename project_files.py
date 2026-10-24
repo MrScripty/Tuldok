@@ -231,6 +231,30 @@ def _read(root,parts):
         os.close(parent)
 
 
+def inspect_captured(records, project_id, root):
+    """Observe captured working files using only a locked project capability."""
+    owned=[r for r in decode_records(records) if r['document']['project_id']==project_id]
+    items=[]
+    for envelope in sorted(owned,key=lambda r:r['document']['path']):
+        doc=envelope['document'];value=doc['current']
+        observation=dict(id=envelope['id'],kind=doc['kind'],path=doc['path'],revision=value['revision'],
+            expected_sha256=value['sha256'],expected_bytes=value['bytes'],observed_sha256=None,observed_bytes=None,state='missing',reason=None)
+        try:
+            parts=_path(doc['kind'],doc['path'])
+            if value.get('deleted') is True and _missing(root,parts):
+                observation['state']='deleted'
+            else:
+                if value.get('deleted') is True:observation['state']='changed'
+                _,observed,size=_read(root,parts)
+                observation.update(observed_sha256=observed,observed_bytes=size,state='unchanged' if observed==value['sha256'] else 'changed')
+        except _WorkingError as error:
+            if value.get('deleted') is True:
+                observation.update(state='changed' if error.state in ('invalid_utf8','too_large') else 'invalid',reason=error.state)
+            else:observation.update(state='missing' if error.state=='missing' else 'invalid',reason=error.state)
+        items.append(observation)
+    return items
+
+
 class ProjectFiles:
     def __init__(self,session):
         self.session,self.access,self.db,self.store=session,session.access,session.db,session.store
@@ -238,25 +262,8 @@ class ProjectFiles:
     def inspect(self):
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('inspect','files.inspect');snapshot=self.session.check()
-            owned=[r for r in decode_records(snapshot['records']) if r['document']['project_id']==snapshot['project_id']];items=[]
             with self.store.root_directory() as root:
-                for envelope in sorted(owned,key=lambda r:r['document']['path']):
-                    doc=envelope['document'];value=doc['current']
-                    observation=dict(id=envelope['id'],kind=doc['kind'],path=doc['path'],revision=value['revision'],
-                        expected_sha256=value['sha256'],expected_bytes=value['bytes'],observed_sha256=None,observed_bytes=None,state='missing',reason=None)
-                    try:
-                        parts=_path(doc['kind'],doc['path'])
-                        if value.get('deleted') is True and _missing(root,parts):
-                            observation['state']='deleted'
-                        else:
-                            if value.get('deleted') is True:observation['state']='changed'
-                            _,observed,size=_read(root,parts)
-                            observation.update(observed_sha256=observed,observed_bytes=size,state='unchanged' if observed==value['sha256'] else 'changed')
-                    except _WorkingError as error:
-                        if value.get('deleted') is True:
-                            observation.update(state='changed' if error.state in ('invalid_utf8','too_large') else 'invalid',reason=error.state)
-                        else:observation.update(state='missing' if error.state=='missing' else 'invalid',reason=error.state)
-                    items.append(observation)
+                items=inspect_captured(snapshot['records'],snapshot['project_id'],root)
             self.session.check()
             return dict(items=items,project_id=snapshot['project_id'],checkpoint=snapshot['checkpoint'])
 

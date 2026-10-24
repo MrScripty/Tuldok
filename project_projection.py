@@ -58,6 +58,59 @@ def validate_artifact_resolution(operation, result, records):
     return True
 
 
+def validate_project_records(records, *, project_id, artifacts):
+    """Validate one inert candidate through every owning domain, without SQL reconstruction."""
+    claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_composition', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
+        MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
+    identities = set()
+    declarations = {}
+    for item in records:
+        identity = (item['family'], item['id'])
+        if item['family'] not in claimed or identity in identities:
+            raise WorkbenchError('Unknown or duplicate owned project family.', 'unsupported', 409)
+        identities.add(identity)
+        if item['family'] == 'project_artifact':
+            declaration = validate_declaration(item['document'])
+            if declaration['sha256'] != item['id']:
+                raise WorkbenchError('Artifact inventory identity differs.')
+            declarations[item['id']] = declaration
+    decode_data_records(records)
+    from project_fork import decode_fork
+    decode_fork(records, project_id=project_id)
+    from project_composition import decode_records as decode_compositions
+    decode_compositions(records, project_id=project_id)
+    from project_transfer import decode_records as decode_extraction_records
+    decode_extraction_records(records)
+    operation_records(records, project_id=project_id)
+    decode_file_records(records)
+    decode_native_records(records,artifacts=artifacts)
+    materials = MaterialSnapshot(records)
+    for blob in materials.artifact_blobs():
+        if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
+            raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
+    # Resolve every cross-owner reference against THIS candidate, rather
+    # than a resolver that still sees the preceding committed checkpoint.
+    decode_producer_records(records, artifacts=artifacts)
+    decode_history_records(records, materials=materials, artifacts=artifacts)
+    decode_measurement_records(records, artifacts=artifacts)
+    for receipt in operation_documents(records):
+        operation, result = receipt['operation'], receipt['result']
+        if (validate_data_result(operation, result, records)
+                or validate_material_result(operation, result, records)
+                or validate_history_result(operation, result, records)
+                or validate_source_result(operation, result, records)
+                or validate_measurement_result(operation, result, records)
+                or validate_execution_result(operation, result, records)
+                or validate_producer_result(operation, receipt['target'], result, records)
+                or validate_file_result(operation, result, records)
+                or validate_study_execution_result(operation, result, records)
+                or validate_runtime_result(operation, result, records)
+                or validate_preparation_result(operation, result, records)
+                or validate_artifact_resolution(operation, result, records)):
+            continue
+        raise WorkbenchError('No project owner accepts this operation receipt.', 'unsupported', 409)
+
+
 class ProjectProjection:
     def __init__(self, store, db, access, roots, *, custody=None, restore=True, runtime_sources=None):
         self.store, self.db, self.access = store, db, access
@@ -127,57 +180,9 @@ class ProjectProjection:
         return self.db.execute(*args, **kwargs)
 
     def validate_records(self, records, *, project_id=None, artifacts=None):
-        artifacts = self.artifacts if artifacts is None else artifacts
-        project_id = self.project_id if project_id is None else project_id
-        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_composition', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
-            MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
-        identities = set()
-        declarations = {}
-        for item in records:
-            identity = (item['family'], item['id'])
-            if item['family'] not in claimed or identity in identities:
-                raise WorkbenchError('Unknown or duplicate owned project family.', 'unsupported', 409)
-            identities.add(identity)
-            if item['family'] == 'project_artifact':
-                declaration = validate_declaration(item['document'])
-                if declaration['sha256'] != item['id']:
-                    raise WorkbenchError('Artifact inventory identity differs.')
-                declarations[item['id']] = declaration
-        decode_data_records(records)
-        from project_fork import decode_fork
-        decode_fork(records, project_id=project_id)
-        from project_composition import decode_records as decode_compositions
-        decode_compositions(records, project_id=project_id)
-        from project_transfer import decode_records as decode_extraction_records
-        decode_extraction_records(records)
-        operation_records(records, project_id=project_id)
-        decode_file_records(records)
-        decode_native_records(records,artifacts=artifacts)
-        materials = MaterialSnapshot(records)
-        for blob in materials.artifact_blobs():
-            if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
-                raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
-        # Resolve every cross-owner reference against THIS candidate, rather
-        # than a resolver that still sees the preceding committed checkpoint.
-        decode_producer_records(records, artifacts=artifacts)
-        decode_history_records(records, materials=materials, artifacts=artifacts)
-        decode_measurement_records(records, artifacts=artifacts)
-        for receipt in operation_documents(records):
-            operation, result = receipt['operation'], receipt['result']
-            if (validate_data_result(operation, result, records)
-                    or validate_material_result(operation, result, records)
-                    or validate_history_result(operation, result, records)
-                    or validate_source_result(operation, result, records)
-                    or validate_measurement_result(operation, result, records)
-                    or validate_execution_result(operation, result, records)
-                    or validate_producer_result(operation, receipt['target'], result, records)
-                    or validate_file_result(operation, result, records)
-                    or validate_study_execution_result(operation, result, records)
-                    or validate_runtime_result(operation, result, records)
-                    or validate_preparation_result(operation, result, records)
-                    or validate_artifact_resolution(operation, result, records)):
-                continue
-            raise WorkbenchError('No project owner accepts this operation receipt.', 'unsupported', 409)
+        return validate_project_records(records,
+            project_id=self.project_id if project_id is None else project_id,
+            artifacts=self.artifacts if artifacts is None else artifacts)
 
     def resolve_artifact(self, body, expected_checkpoint, key):
         """Explicitly supply exact bytes from a configured current local root."""

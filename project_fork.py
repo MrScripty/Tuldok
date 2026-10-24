@@ -279,6 +279,98 @@ def publish_fork(source_store, source_artifacts, trusted_root_fd, relative, *, r
         validate_candidate=lambda records,identity,_artifacts:validate_candidate(records,identity))
 
 
+def recover_committed_publication(trusted_root_fd, staging, relative, *, root_path,
+                                  expected_project_id, expected_checkpoint,
+                                  expected_request, quiescent):
+    """Publish one explicitly selected committed stage without rebuilding it.
+
+    This operator recovery accepts a frozen historical snapshot, not a new read
+    of its original sources. The caller owns current filesystem authority and
+    cessation of the former process. The store's exclusive root lock, complete
+    domain validation, exact original request/commit receipt, payload custody,
+    and clean captured files are required before a no-overwrite rename. No SQL
+    projection, source permission, source runtime or worker is restored here.
+    After an uncertain rename, repeat this exact recovery to inspect the final
+    destination; never repeat composition or create another stage.
+    """
+    if quiescent is not True:
+        _fail('Recovery requires proven cessation of the former publication owner.', 'busy', 409)
+    _uuid(expected_project_id);_sha(expected_checkpoint)
+    stage_parts=_relative_parts(staging);parts=_relative_parts(relative)
+    if (stage_parts[:-1]!=parts[:-1]
+            or not re.fullmatch(r'\.tuldok-fork-[a-f0-9]{32}',stage_parts[-1])
+            or stage_parts==parts):
+        _fail('Recovery requires an explicit fork stage beside its original destination.')
+    if type(expected_request) is not dict or expected_request.get('directory')!=relative:
+        _fail('Recovery requires the exact original publication request.')
+    key=expected_request.get('request_key')
+    if type(key) is not str or not REQUEST_KEY.fullmatch(key):
+        _fail('Recovery requires the original publication request key.')
+    digest=_digest(expected_request)
+    published=False
+    try:
+        with anchored_directory(trusted_root_fd,'/'.join(parts[:-1]),root_path=root_path) as parent:
+            def exists(name):
+                try:os.stat(name,dir_fd=parent,follow_symlinks=False);return True
+                except FileNotFoundError:return False
+            stage_exists,final_exists=exists(stage_parts[-1]),exists(parts[-1])
+            if stage_exists and final_exists:
+                _fail('Both stage and destination exist; neither was replaced.', 'conflict', 409)
+            if not stage_exists and not final_exists:
+                _fail('Neither the selected stage nor its destination is available.', 'unavailable', 409)
+            selected=relative if final_exists else staging
+            with ProjectStore.open_at(trusted_root_fd,selected,root_path=root_path) as store:
+                snapshot=store.snapshot()
+                if (snapshot['project_id']!=expected_project_id
+                        or snapshot['checkpoint']!=expected_checkpoint):
+                    _fail('Recovery project identity or checkpoint differs.', 'stale', 409)
+                overlay=decode_fork(snapshot['records'],project_id=expected_project_id)
+                if overlay is None:_fail('Recovery requires a committed independent publication.')
+                from project_composition import decode_records, composition_input
+                composition=decode_records(snapshot['records'],project_id=expected_project_id).get(expected_project_id)
+                observed=(composition_input(composition['sources'],composition['directory'],composition['name'],composition['request_key'])
+                          if composition is not None else _input(overlay['source'],overlay['directory'],overlay['name'],overlay['request_key']))
+                if observed!=expected_request or store.reconcile(key,digest) is None:
+                    _fail('Committed stage does not match the original request and receipt.', 'conflict', 409)
+                from project_projection import validate_project_records
+                from project_files import inspect_captured
+                declarations=_declarations(snapshot['records'])
+                with ProjectArtifacts(store) as artifacts:
+                    validate_project_records(snapshot['records'],project_id=expected_project_id,artifacts=artifacts)
+                    checks=artifacts.status_many([declarations[identity] for identity in overlay['artifacts']['copied']])
+                    if any(item['state']!='verified' for item in checks):
+                        _fail('Committed publication payloads are missing or corrupt.', 'unavailable', 409)
+                    with store.root_directory() as project_root:
+                        if any(item['state'] not in ('unchanged','deleted')
+                               for item in inspect_captured(snapshot['records'],expected_project_id,project_root)):
+                            _fail('Committed stage has changed or missing working files.', 'working_files_changed', 409)
+                    store.save(expected_checkpoint)
+                if not final_exists:
+                    # Recheck the selected directory entry while the store root
+                    # remains locked; an external rename must not substitute it.
+                    with store.root_directory() as project_root:
+                        entry=os.stat(stage_parts[-1],dir_fd=parent,follow_symlinks=False)
+                        actual=os.fstat(project_root)
+                        if (entry.st_dev,entry.st_ino)!=(actual.st_dev,actual.st_ino):
+                            _fail('Selected stage directory changed.', 'stale', 409)
+                    _rename_noreplace(parent,stage_parts[-1],parts[-1]);published=True
+                os.fsync(parent)
+                return dict(project_id=expected_project_id,checkpoint=expected_checkpoint,
+                            directory=relative,request_key=key,reconciled=final_exists,
+                            payloads_copied=0,selected=False)
+    except BaseException as error:
+        # Anchored directory owners also translate IO failures. Preserve the
+        # uncertain post-rename outcome through either exception representation.
+        if published:
+            raise ProjectForkError('Committed publication was renamed but acknowledgement is uncertain; reconcile this exact recovery.',
+                                   'unknown',503) from error
+        if isinstance(error,OSError):
+            code='conflict' if error.errno==errno.EEXIST else 'unavailable'
+            raise ProjectForkError('Committed publication recovery is unavailable; no stage was rebuilt.',
+                                   code,503 if code!='conflict' else 409) from error
+        raise
+
+
 def _publish_project(source_store, source_artifacts, trusted_root_fd, relative, *, root_path,
                      name, expected_checkpoint, request_key, quiescent, build_candidate,
                      validate_candidate, retained_sources=()):
