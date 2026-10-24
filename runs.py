@@ -193,7 +193,7 @@ def validate_retained_run(run, *, catalog_id, run_id, request_key, request_sha25
                     or Path(declared).parent.name != 'workspace-runs'):
                 raise ValueError('Invalid retained external staging location.')
             admitted_context=extension_context
-            recipe_contract.validate_spec(run['material'], run['spec'], declared,context=admitted_context)
+            recipe_contract.validate_retained_spec(run['material'], run['spec'], declared,context=admitted_context)
             if (run['graph'].get('recipe') != 'external_recipe'
                     or run['material']['catalog_id'] != catalog_id
                     or digest(run['material']) != run['material_sha256']

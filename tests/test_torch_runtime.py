@@ -130,6 +130,39 @@ class InstalledAssets(unittest.TestCase):
 class TorchRecipe(unittest.TestCase):
     setUp=fixtures.RecipePipelineTests.setUp
 
+    def test_retained_language_policy_keeps_exact_spec_and_cannot_enter_current_admission(self):
+        InstalledAssets.setUp(self)
+        manifest=runtime.inventory(self.config);raw=runtime.encoded(manifest)
+        identity=runtime.sha(raw)
+        descriptor=dict(schema_version=1,profile=runtime.PROFILE,catalog_id=self.dataset.db.dataset_id,
+                        manifest_sha256=identity,manifest_bytes=len(raw),file_count=len(manifest['files']),
+                        total_bytes=manifest['total_bytes'])
+        self.value.update(runtime=runtime.PROFILE,runtime_device='cuda',runtime_snapshot_sha256=identity)
+        self.recipe_raw=json.dumps(self.value).encode();(self.project/'recipe.json').write_bytes(self.recipe_raw)
+        self.body['expected_sha256']=runtime.sha(self.recipe_raw)
+        graph=self.dataset.pipelines.create_external(self.body)
+        with patch('torch_runtimes.TorchRuntimes.get',return_value=(descriptor,raw)), \
+             patch('subprocess.Popen',side_effect=AssertionError('Retained validation executes no source')):
+            preflight=self.dataset.pipelines.preflight_external(graph['id'],1)
+            captured=self.dataset.pipelines.capture_external(graph['id'],1,preflight['material_sha256'],self.root/'capture')
+        material=copy.deepcopy(captured['material']);spec=copy.deepcopy(captured['spec'])
+        material['environment']={'LANG':'C.UTF-8'};spec['env']={'LANG':'C.UTF-8'}
+        descriptor_in_current_spec=spec.pop('torch_runtime')
+        original_material=copy.deepcopy(material);original_spec=copy.deepcopy(spec)
+        with self.assertRaises(WorkbenchError):contract.validate_material(material)
+        with self.assertRaises(WorkbenchError):contract.spec_for_material(material,self.root/'capture')
+        with patch('subprocess.Popen',side_effect=AssertionError('Retained spec is inert')):
+            self.assertEqual(contract.validate_retained_spec(material,spec,self.root/'capture'),spec)
+        self.assertEqual(material,original_material);self.assertEqual(spec,original_spec)
+        with self.assertRaises(WorkbenchError):contract.validate_spec(material,spec,self.root/'capture')
+        for changed_env in ({'LANG':'elsewhere'},{'LANG':'C.UTF-8','PYTHONPATH':'/unsafe'}):
+            bad=copy.deepcopy(material);bad['environment']=changed_env
+            with self.assertRaises(WorkbenchError):contract.validate_retained_spec(bad,spec,self.root/'capture')
+        bad=copy.deepcopy(spec);bad['env']={}
+        with self.assertRaises(WorkbenchError):contract.validate_retained_spec(material,bad,self.root/'capture')
+        bad=copy.deepcopy(spec);bad['torch_runtime']=descriptor_in_current_spec
+        with self.assertRaises(WorkbenchError):contract.validate_retained_spec(material,bad,self.root/'capture')
+
     def test_capture_binds_manifest_bootstrap_and_explicit_device(self):
         InstalledAssets.setUp(self)
         manifest=runtime.inventory(self.config)
