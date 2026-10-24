@@ -184,15 +184,40 @@ class SourceAdapter:
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('edit','source.import_scientific',snapshot['project_id'])
             self.session.check()
-            historical=self.materials.snapshot_ref(snapshot['project_id'],snapshot['manifest_sha256'],
-                catalog_id=snapshot['origin_catalog_id'])
-            current,_raw=self.sources.read_snapshot_manifest(snapshot['project_id'],snapshot['manifest_sha256'])
-            if current['manifest']!=historical['manifest']:
-                raise WorkbenchError('Current source differs from the selected retained snapshot.','stale',409)
-            raw,source=self.sources.read_snapshot_data_reference(snapshot['project_id'],body['reference_id'],
-                                                               body['expected_sha256'],DATA_LIMIT)
-            if source['manifest_sha256']!=snapshot['manifest_sha256']:
-                raise WorkbenchError('Current source snapshot changed during capture.','stale',409)
+            raw,source=self._capture_reference(snapshot,body['reference_id'],body['expected_sha256'],DATA_LIMIT)
             # ProjectData owns the one canonical mutation and native parser;
             # current rooted reads above never become an imported capability.
             return self.data.import_scientific(raw,copy.deepcopy(body['document']),source,expected_checkpoint,key)
+
+    def _capture_reference(self,snapshot,reference_id,expected_sha256,maximum_bytes):
+        """One rooted capture policy shared by the two fixed native consumers.
+
+        Caller holds current access/session/database locks and authorizes the
+        action before any source read. Returned paths remain historical facts.
+        """
+        historical=self.materials.snapshot_ref(snapshot['project_id'],snapshot['manifest_sha256'],
+            catalog_id=snapshot['origin_catalog_id'])
+        current,_raw=self.sources.read_snapshot_manifest(snapshot['project_id'],snapshot['manifest_sha256'])
+        if current['manifest']!=historical['manifest']:
+            raise WorkbenchError('Current source differs from the selected retained snapshot.','stale',409)
+        raw,source=self.sources.read_snapshot_data_reference(snapshot['project_id'],reference_id,
+                                                           expected_sha256,maximum_bytes)
+        if source['manifest_sha256']!=snapshot['manifest_sha256']:
+            raise WorkbenchError('Current source snapshot changed during capture.','stale',409)
+        self.session.check()
+        return raw,source
+
+    def import_measurements(self,body,expected_checkpoint,key):
+        self._mutation_identity(expected_checkpoint,key)
+        _closed(body,('snapshot','reference_id','expected_sha256'))
+        snapshot=self._snapshot_reference(body['snapshot'])
+        _identity(body['reference_id'],NAME,'data reference')
+        _identity(body['expected_sha256'],SHA,'data SHA256')
+        from retained_measurements import MAX_BYTES
+        with self.access.lock,self.session.lock,self.db.lock:
+            self.access.require('edit','source.import_measurements',snapshot['project_id'])
+            self.session.check()
+            raw,source=self._capture_reference(snapshot,body['reference_id'],body['expected_sha256'],MAX_BYTES)
+            source=dict(source,origin_catalog_id=snapshot['origin_catalog_id'])
+            self.access.require('edit','source.import_measurements',snapshot['project_id'])
+            return self.projection.measurements.import_packet(raw,source,expected_checkpoint,key)

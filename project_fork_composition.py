@@ -98,6 +98,14 @@ def artifact_plan(records):
             for edge in record['document']['payloads']:
                 mark(edge['blob']['sha256'],record,edge['role'],edge['name'],edge['blob']['bytes'])
 
+        # Scalar sources are immutable original evidence, including when the
+        # same bytes are also declared by a regenerable runtime dependency.
+        from project_measurements import decode_records as measurement_records, FAMILY as MEASUREMENT_FAMILY
+        for locator, doc in measurement_records(records).items():
+            blob = doc['blob']
+            mark(blob['sha256'], dict(family=MEASUREMENT_FAMILY, id=locator),
+                 'measurement_packet', 'measurements.json', blob['bytes'])
+
         # Existing pure getter covers the four producer families, entry history
         # payload maps, and variation prompt-batch request/response observations.
         from project_producers import FAMILIES as PRODUCER_FAMILIES, _referenced_artifacts

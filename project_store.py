@@ -43,6 +43,7 @@ SUPPORTED_FORMATS = {
     'model_material': 'retained_model_material_v1',
     'recipe_material': 'retained_recipe_material_v1',
     'project_snapshot': 'retained_project_snapshot_v1',
+    'measurement_source': 'project_measurement_source_v1',
     'runtime_material': 'retained_runtime_material_v1',
     'study_history': 'project_study_history_v1',
     'trial_history': 'project_trial_history_v1',
