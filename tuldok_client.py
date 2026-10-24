@@ -706,6 +706,11 @@ class ProjectFilesClient:
         return self._call('save_as',dict(root=root,directory=directory,name=name,binding=binding,
             expected_checkpoint=expected_checkpoint,request_key=request_key))
 
+    def compose(self, *, root, directory, name, sources, binding, expected_checkpoint, request_key):
+        """Compose explicit retained checkpoints through the negotiated owner."""
+        return self._call('compose',dict(root=root,directory=directory,name=name,sources=sources,
+            binding=binding,expected_checkpoint=expected_checkpoint,request_key=request_key))
+
     def files_inspect(self, **arguments):
         return self._call('files_inspect',arguments)
 

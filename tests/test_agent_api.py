@@ -284,6 +284,14 @@ class ClientTests(unittest.TestCase):
             with self.assertRaises(api.AgentAPIError): client.call('data.query',{})
             self.assertLess(time.monotonic()-start,1)
 
+    def test_owner_transport_keeps_the_selected_absolute_wait_and_never_retries(self):
+        with server('trickle') as (endpoint,calls):
+            client=api.ProjectFilesOwnerClient(endpoint,TOKEN,CATALOG,timeout=.15)
+            start=time.monotonic()
+            with self.assertRaises(api.AgentAPIError):client._request('GET','/api/workbench/records')
+            self.assertLess(time.monotonic()-start,1)
+            self.assertEqual(len(calls),1)
+
 
 class OutputTests(unittest.TestCase):
     @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')

@@ -2395,6 +2395,8 @@ def _private_file(path, maximum):
 
 class AgentClient:
     """No catalog access, automatic retries, redirects, proxies or owner identity."""
+    MAX_TIMEOUT_SECONDS = 300
+
     def __init__(self, endpoint, token, expected_catalog_id, timeout=120):
         try:
             parsed = urlsplit(endpoint)
@@ -2404,7 +2406,7 @@ class AgentClient:
                 raise ValueError()
             if not re.fullmatch(r'[A-Za-z0-9_-]{20,4096}', token) or not re.fullmatch('[a-f0-9]{32}', expected_catalog_id):
                 raise ValueError()
-            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 300:
+            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= self.MAX_TIMEOUT_SECONDS:
                 raise ValueError()
         except (ValueError, TypeError):
             raise AgentAPIError('Invalid fixed loopback client configuration.', 'configuration') from None
@@ -3029,6 +3031,10 @@ class AgentClient:
 
 class ProjectFilesOwnerClient(AgentClient):
     """Explicit owner file-project access; no unrelated owner operations."""
+    # Large retained projects may outlast the generic transport's five minutes.
+    # Only an explicit owner configuration opts into a longer absolute wait.
+    MAX_TIMEOUT_SECONDS = 7200
+
     OPERATIONS = frozenset('project_files.' + action for action in
         ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate')) | PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4
 

@@ -14,6 +14,7 @@
   "project_files.candidate": "c519ff04bc06d5e538d36b7f278862d8f282d0e7b97dd7f262444c384a50f854",
   "project_files.candidate_select": "f043be6923760a208ca50d02a1ff4b60eadf09d48a034acdb18749806a537080",
   "project_files.close": "95d0099ec2a378a1bbb65676799dd3baae2f36b838301f7aa165b116fba5edf6",
+  "project_files.compose": "b1dcbbd4ad7ebe17b17e11238f99a93408da24d0d411527e187900cc0f089105",
   "project_files.data_annotate": "289270f5cb946765c5ced22fbbd18765bb55743145014c81cf54d7a6ba3025ea",
   "project_files.data_availability": "92332c04973a4fa45d47e384717152ebc4a9ca08e7eb487669688ccd2ed42cbb",
   "project_files.data_get": "0d19505995cbd8c12e3938cd89cf05955a2a63488a220711d29dd24b27c0c8c8",
@@ -167,6 +168,10 @@
   "project_files.get": {
     "1": "6b0f4e16a00aa119b86cbb5493be0bac945ff08a5e63773a8f2c2f9296658d5b",
     "2": "fdc0858fc03a0866bb743b04251ea5f9a3c1e6be1b211366db7e0652166736ea"
+  },
+  "project_files.measurement_compare": {
+    "1": "abbb5e406a3c95155e90f08e8a071f330425190b25275f0f6512de08b8afb929",
+    "2": "d2de9763a9109d0e4599f50e038a3fda0e6bf7c9c60684434825d0108019bc6f"
   }
 }
 /* PROJECT_FILES_VERSIONS_END */;
@@ -198,6 +203,11 @@
     "method": "POST",
     "mutation": true,
     "path": "/api/workspace/project-files/studies/{study_id}/candidates"
+  },
+  "project_files.compose": {
+    "method": "POST",
+    "mutation": true,
+    "path": "/api/workspace/project-files/compose"
   },
   "project_files.data_annotate": {
     "method": "POST",
