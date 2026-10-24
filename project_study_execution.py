@@ -16,7 +16,7 @@ from model_definitions import natural, text
 from pipeline import closed, identifier, digest
 from project_history import (FAMILY_FORMATS, _audit, _sha, envelope,
     decode_records as history_records)
-from project_material import ProjectMaterial
+from project_material import ProjectMaterial, MaterialSnapshot
 from project_session import operation_records
 from workbench import WorkbenchError, encode, timestamp
 
@@ -36,8 +36,7 @@ def _invalid(message,code='invalid'):
 
 
 def _facts(records):
-    view=SimpleNamespace(snapshot={'records':records},check=lambda:None)
-    return history_records(records,materials=ProjectMaterial(view))
+    return history_records(records,materials=MaterialSnapshot(records))
 
 
 def _intent_key(operation,key):
@@ -325,7 +324,7 @@ class ProjectStudyExecution:
 
     def _canonical(self,records=None):
         records=self.session.snapshot['records'] if records is None else records
-        return history_records(records,materials=self.materials)
+        return history_records(records,materials=self.materials.read_view(records))
 
     def restore_authoring(self,records=None):
         """Reconstruct intent only, under the current project guard."""
