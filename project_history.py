@@ -273,6 +273,21 @@ def _observation_document(record):
     return doc
 
 
+def capture_run_observation(document):
+    """Retain one already validated Run-history document as inert exact evidence.
+
+    This creates no disclosure fact or execution permission. The complete
+    history decoder still owns Run, admission and payload closure validation.
+    """
+    from project_store import _encode as canonical
+    sha=hashlib.sha256(canonical(document)).hexdigest()
+    record={'family':'run_observation','id':sha,'document':{
+        'format':FAMILY_FORMATS['run_observation'],'origin_catalog_id':document['origin_catalog_id'],
+        'run_id':document['run']['id'],'sha256':sha,'observation':copy.deepcopy(document)}}
+    _observation_document(record)
+    return record
+
+
 def declarations(record):
     if record['family']=='run_observation':
         return declarations({'family':'run_history','document':record['document']['observation']})
@@ -925,11 +940,9 @@ class ProjectHistory:
             current=self.access.require('expose-holdout','history.disclose',run_id)
             if current.actor_id!=actor_id:_invalid('Disclosure caller changed.','conflict')
             doc=self._record(self._facts().runs,run_id,body['origin_catalog_id'])
-            from project_store import _encode as canonical
-            sha=hashlib.sha256(canonical(doc)).hexdigest()
-            captured.append({'family':'run_observation','id':sha,'document':{
-                'format':FAMILY_FORMATS['run_observation'],'origin_catalog_id':body['origin_catalog_id'],
-                'run_id':run_id,'sha256':sha,'observation':copy.deepcopy(doc)}})
+            observation=capture_run_observation(doc)
+            sha=observation['id']
+            captured.append(observation)
             return validate_disclosure_fact({'format':'project_disclosure_v2','origin_catalog_id':body['origin_catalog_id'],
                 'run_id':run_id,'payload_set_sha256':payload_set_sha256(doc['origin_catalog_id'],run_id,doc['payloads']),
                 'population':'all','reason':body['reason'],'actor_id':actor_id,'occurred_at':timestamp(),
