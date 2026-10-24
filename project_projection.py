@@ -15,8 +15,7 @@ from project_data import validate_operation_result as validate_data_result
 from project_history import ProjectHistory, FAMILY_FORMATS as HISTORY_FAMILIES
 from project_history import decode_records as decode_history_records
 from project_history import validate_operation_result as validate_history_result
-from project_material import ProjectMaterial, FAMILIES as MATERIAL_FAMILIES
-from project_material import decode_records as decode_material_records
+from project_material import ProjectMaterial, MaterialSnapshot, FAMILIES as MATERIAL_FAMILIES
 from project_material import validate_operation_result as validate_material_result
 from project_producers import ProjectProducers, FAMILIES as PRODUCER_FAMILIES
 from project_producers import decode_records as decode_producer_records
@@ -151,18 +150,14 @@ class ProjectProjection:
         operation_records(records, project_id=project_id)
         decode_file_records(records)
         decode_native_records(records,artifacts=self.artifacts)
-        materials = decode_material_records(records)
-        for document in materials.values():
-            for edge in document.get('artifacts', []):
-                blob = edge['blob']
-                if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
-                    raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
+        materials = MaterialSnapshot(records)
+        for blob in materials.artifact_blobs():
+            if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
+                raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
         # Resolve every cross-owner reference against THIS candidate, rather
         # than a resolver that still sees the preceding committed checkpoint.
-        candidate = SimpleNamespace(snapshot=dict(project_id=project_id, records=records),
-                                    artifacts=self.artifacts, check=lambda: None)
         decode_producer_records(records, artifacts=self.artifacts)
-        decode_history_records(records, materials=ProjectMaterial(candidate), artifacts=self.artifacts)
+        decode_history_records(records, materials=materials, artifacts=self.artifacts)
         decode_measurement_records(records, artifacts=self.artifacts)
         for receipt in operation_documents(records):
             operation, result = receipt['operation'], receipt['result']

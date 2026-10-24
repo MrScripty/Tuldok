@@ -20,7 +20,7 @@ import agent_api
 from model_definitions import ModelDefinitions, blob, decode_model_draft, decode_model_material, verify_model_closure
 from pipeline import digest, decode_recipe_material, execution_digest, verify_recipe_closure
 from project_artifacts import ProjectArtifacts, ProjectArtifactError, validate_declaration
-from project_material import ProjectMaterial, decode_records, validate_operation_result
+from project_material import ProjectMaterial, MaterialSnapshot, decode_records, validate_operation_result
 from project_store import ProjectStore
 from project_session import ProjectSession, operation_records
 from workbench import WorkbenchError
@@ -122,6 +122,30 @@ class MaterialCodecs(unittest.TestCase):
         self.session.snapshot=dict(self.session.snapshot,records=[record])
         with patch('subprocess.Popen',side_effect=AssertionError('no process')),patch('os.stat',side_effect=AssertionError('no host paths')):
             self.assertEqual(self.material.runtime(ref,verify=True)['environment'],environment)
+
+    def test_fixed_material_snapshot_owns_input_and_returns_independent_values(self):
+        environment={'python':'/unavailable/original/python','packages':{'neutral':'1.0'},'definition_files':{'adapter.py':'a'*64}}
+        sha=digest(environment);ref=dict(kind='runtime',catalog_id=self.catalog,id=sha,sha256=sha)
+        original=dict(ref=ref,descriptor=None,environment=environment,manifest=None)
+        record=self.material.capture_runtime(original)
+        records=[record];view=MaterialSnapshot(records)
+        records[0]['document']['value']['environment']['packages']['neutral']='changed input'
+        value=view.runtime(ref);self.assertEqual(value,original)
+        value['environment']['packages']['neutral']='changed return'
+        self.assertEqual(view.runtime(ref),original)
+        with self.assertRaises(WorkbenchError):MaterialSnapshot(records)
+
+    def test_fixed_material_snapshot_checks_complete_reference_identity(self):
+        environment={'python':'/unavailable/original/python','packages':{},'definition_files':{}}
+        sha=digest(environment);ref=dict(kind='runtime',catalog_id=self.catalog,id=sha,sha256=sha)
+        record=self.material.capture_runtime(dict(ref=ref,descriptor=None,environment=environment,manifest=None))
+        view=MaterialSnapshot([record])
+        for change in ({'catalog_id':'f'*32},{'sha256':'f'*64},{'id':'f'*64},{'kind':'recipe_material'}):
+            with self.assertRaises(WorkbenchError):view.runtime(dict(ref,**change))
+
+    def test_invalid_live_material_reference_precedes_snapshot_access(self):
+        with patch.object(self.session,'check',side_effect=AssertionError('Invalid reference accessed snapshot')):
+            with self.assertRaises(WorkbenchError):self.material.runtime({'catalog_id':'invalid'})
 
     def test_operation_result_requires_exact_retained_revision_or_material(self):
         first=definition(self.catalog);record=self.material.capture_definition('model_definition',first,[],action='models.create')
@@ -238,6 +262,15 @@ class MaterialCodecs(unittest.TestCase):
         dependencies=self.material.capture_recipe_dependencies(dict(document={'value':retained}),[])
         self.assertEqual(dependencies[-1]['document']['value']['environment'],runtime)
         self.assertEqual(self.material.capture_recipe_dependencies(dict(document={'value':retained}),dependencies),[])
+        recipe_root=self.root/'retained-recipe';target=recipe_root/retained['ref']['sha256'];target.mkdir(parents=True)
+        for name,raw in recipe_payloads.items():(target/name).write_bytes(raw)
+        record=self.material.capture_recipe_material(retained,recipe_root)
+        view=MaterialSnapshot([record,*dependencies])
+        self.assertEqual(view.recipe(retained['ref']),retained)
+        expected=[edge['blob'] for item in [record,*dependencies] for edge in item['document']['artifacts']]
+        self.assertEqual(list(view.artifact_blobs()),expected)
+        changed=list(view.artifact_blobs());changed[0]['bytes']+=1
+        self.assertEqual(list(view.artifact_blobs()),expected)
         for field,replacement in (('data',{}),('executable_sha256','wrong'),('captures',[dict(item,media_type='text/plain')])):
             bad=copy.deepcopy(retained);bad['material'][field]=replacement
             changed=digest(bad['material']);bad['ref'].update(id=changed,sha256=changed)

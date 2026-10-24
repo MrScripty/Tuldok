@@ -315,6 +315,44 @@ def validate_operation_result(operation, result, records=None):
     return True
 
 
+def _retained_value(get_documents, family, ref):
+    catalog_id = _catalog(ref['catalog_id'])
+    reference(ref, {'model_material':'model', 'recipe_material':'recipe_material',
+                    'runtime_material':'runtime'}[family], catalog_id)
+    key = catalog_id + '.' + ref['sha256']
+    document = get_documents().get((family, key))
+    if document is None:
+        raise WorkbenchError('Retained material is unavailable.', 'unavailable', 409)
+    if document['value']['ref'] != ref:
+        raise WorkbenchError('Retained material reference differs.', 'invalid', 400)
+    return copy.deepcopy(document['value'])
+
+
+class MaterialSnapshot:
+    """Owned, validated material facts for one fixed candidate validation.
+
+    The decoder copies the selected documents. Neither input mutation nor a
+    returned value can alter this view. It has no live Session, artifact reader,
+    publication operation or current execution authority.
+    """
+    @_boundary
+    def __init__(self, records):
+        self.__documents = decode_records(records)
+
+    @_boundary
+    def recipe(self, ref):
+        return _retained_value(lambda: self.__documents, 'recipe_material', ref)
+
+    @_boundary
+    def runtime(self, ref):
+        return _retained_value(lambda: self.__documents, 'runtime_material', ref)
+
+    def artifact_blobs(self):
+        for document in self.__documents.values():
+            for edge in document.get('artifacts', []):
+                yield copy.deepcopy(edge['blob'])
+
+
 class ProjectMaterial:
     def __init__(self, session):
         self.session = session
@@ -356,13 +394,7 @@ class ProjectMaterial:
 
     @_boundary
     def _value(self, family, ref):
-        catalog_id = _catalog(ref['catalog_id'])
-        reference(ref,{'model_material':'model','recipe_material':'recipe_material','runtime_material':'runtime'}[family],catalog_id)
-        key = catalog_id + '.' + ref['sha256']
-        document = self._documents().get((family, key))
-        if document is None: raise WorkbenchError('Retained material is unavailable.', 'unavailable', 409)
-        if document['value']['ref'] != ref: raise WorkbenchError('Retained material reference differs.', 'invalid', 400)
-        return copy.deepcopy(document['value'])
+        return _retained_value(self._documents, family, ref)
 
     @_boundary
     def model(self, ref, *, verify=False):

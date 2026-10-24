@@ -760,8 +760,7 @@ class _Capture:
         if self.blockers:return
         try:
             data_codec.decode_data_records(records)
-            material_codec.decode_records(records)
-            materials = material_codec.ProjectMaterial(SimpleNamespace(snapshot=dict(project_id=self.origin, records=records), check=lambda: None))
+            materials = material_codec.MaterialSnapshot(records)
             history_codec.decode_records(records, materials=materials)
             producer_codec.decode_records(records, artifacts=self.source.artifacts)
         except WorkbenchError as error:
