@@ -207,14 +207,37 @@ class ProjectArtifacts:
             self._ensure_open()
             try:
                 with self.store.root_directory() as root:
-                    try:
-                        with self._source(root, declaration) as source:
-                            observed = _info(source, rooted=True).st_size
-                            state = 'unverified'
-                    except _Missing:
-                        observed, state = None, 'missing'
-                return dict(state=state, expected_sha256=declaration['sha256'], expected_bytes=declaration['bytes'],
-                            observed_sha256=None, observed_bytes=observed)
+                    return self._inspect_at(root, declaration)
+            except OSError as error:
+                _io(error)
+
+    def _inspect_at(self, root, declaration):
+        try:
+            with self._source(root, declaration) as source:
+                observed = _info(source, rooted=True).st_size
+                state = 'unverified'
+        except _Missing:
+            observed, state = None, 'missing'
+        return dict(state=state, expected_sha256=declaration['sha256'], expected_bytes=declaration['bytes'],
+                    observed_sha256=None, observed_bytes=observed)
+
+    def inspect_many(self, declarations):
+        """Observe a finite owner-supplied page under one verified root scope.
+
+        Each file still receives the same anchored ordinary-file checks as
+        inspect. Validate the canonical closure before AND after the group;
+        metadata corruption or a checkpoint change cannot produce a result.
+        Presence remains unverified and never claims a payload hash was read.
+        """
+        if type(declarations) is not list:
+            _fail('Artifact inspection pages must be explicit finite lists.')
+        declarations = [validate_declaration(value) for value in declarations]
+        with self._mutex:
+            self._ensure_open()
+            try:
+                with self.store.root_directory(verify_after=True) as root:
+                    result = [self._inspect_at(root, value) for value in declarations]
+                return result
             except OSError as error:
                 _io(error)
 

@@ -620,14 +620,18 @@ class ProjectStore:
             os.close(check)
 
     @contextmanager
-    def root_directory(self):
+    def root_directory(self, *, verify_after=False):
         """Borrow this project's physical root while its writer binding is pinned."""
+        if type(verify_after) is not bool:
+            _fail('Root read verification must be an explicit boolean.')
         with self._mutex:
-            self.snapshot()
+            before = self.snapshot()
             descriptor = os.dup(self._root_fd)
             try:
                 yield descriptor
                 self._binding()
+                if verify_after and self.snapshot()['checkpoint'] != before['checkpoint']:
+                    _fail('Project checkpoint changed during the bounded root read.', 'stale', 409)
             finally:
                 os.close(descriptor)
 

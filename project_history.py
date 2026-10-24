@@ -781,11 +781,13 @@ class ProjectHistory:
                   'disclosures_total':len(disclosures),
                   'disclosures_next_offset':disclosure_end if disclosure_end<len(disclosures) else None}
             payloads=payloads[offset:end];disclosures=disclosures[offset:disclosure_end]
+        availability=self.artifacts.inspect_many([
+            {'format':'project_artifact_v1',**edge['blob']} for edge in payloads])
         result={'origin_catalog_id':doc['origin_catalog_id'],'run':public,
                 'historical':True,'execution_available':False,'evidence':'unverified',
                 'disclosures':disclosures,'document':self.run_document_descriptor(run_id,origin_catalog_id=doc['origin_catalog_id']),
-                'payloads':[dict(copy.deepcopy(edge),availability=self.artifacts.inspect(
-                    {'format':'project_artifact_v1',**edge['blob']})) for edge in payloads]}
+                'payloads':[dict(copy.deepcopy(edge),availability=observed)
+                            for edge,observed in zip(payloads,availability)]}
         if page is not None:result['page']=page
         self._authorize('runs.get',run_id)
         return result
