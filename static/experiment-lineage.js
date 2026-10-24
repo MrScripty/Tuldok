@@ -4,23 +4,15 @@
   // Generated from agent_api.contract; checked by the lineage contract regression.
   Object.assign(window.WorkspaceModelContracts, {"studies.branch_trial": "76b6415bce7e03aef825e0a64fac690f6f2e46bcbb54fd3423979c87449b2af5", "studies.lineage": "33ee4e76a92b1481c2e6fca72b571b2f363ca18d9098acf065d025c2e27963f9", "studies.lineage_trial": "f3ec663dfa413eeeaf5ab017c28d02d0ec4f14a724c0067d07592110bf7e694a", "studies.prepare_branch": "7f4e4d8b92d86fc6f5dedf363c4ad4dbc125df914af9a18450aab0c894a13b43", "studies.record_lineage": "f8315af375e0667d4dd55e6d7decf8155ef70eaed2c19b60d7256010da9d26a4"});
   const enc=encodeURIComponent, short=value=>String(value||'').slice(0,12);
-  function layout(nodes) {
-    const byId=new Map(nodes.map(node=>[node.trial.id,node])), depth=new Map();
-    function level(id,path=new Set()) {
-      if(depth.has(id))return depth.get(id);
-      if(path.has(id))throw Error('Derivation contains a cycle.');
-      path=new Set(path);path.add(id);
-      const parent=byId.get(id)?.lineage?.intent.parent?.trial_id;
-      const value=parent&&byId.has(parent)?level(parent,path)+1:0;depth.set(id,value);return value;
-    }
-    const rows=new Map(), positions=new Map();
-    for(const node of [...nodes].sort((a,b)=>(a.lineage?.recorded_at||'').localeCompare(b.lineage?.recorded_at||'')||a.trial.id.localeCompare(b.trial.id))) {
-      const column=level(node.trial.id),row=rows.get(column)||0;rows.set(column,row+1);
-      positions.set(node.trial.id,{x:24+column*300,y:24+row*180});
-    }
-    return {positions,width:Math.max(600,...[...positions.values()].map(p=>p.x+276)),height:Math.max(240,...[...positions.values()].map(p=>p.y+160))};
+  function graphEntry(node) {
+    const intent=node.lineage?.intent,run=node.runs[0];
+    return {id:node.trial.id,title:node.study.name,recordedAt:node.lineage?.recorded_at||'',
+      parent:intent?.parent?.trial_id??null,baseline:intent?.baseline?.trial_id??null,
+      lines:[short(node.trial.id)+' · '+(intent?.ancestry||'ancestry unknown'),
+        intent?.change_summary||'Intent not recorded',
+        (run?.state||'prepared')+' · '+node.attempt_count+' attempts',
+        ...(intent?['Target: '+intent.target.metric_id+' '+intent.target.direction]:[])]};
   }
-  window.WorkspaceLineageLayout=layout;
   window.WorkspaceExperimentLineage=function({api,announce,getIntent,getView,getGraph,isDirty,openRecipe,openRun,compare}) {
     const esc=value=>window.workspaceEscape(value), identity=()=>window.TuldokAuth?.identity();
     let root=null,catalog=null,nodes=new Map(),revision=null,next=null,selected='',filter='',appliedFilter='',journalScope=null,message='',failed=false,
@@ -111,13 +103,9 @@
     function render(){
       if(!root||getView()!=='pipeline')return;
       const focus=root.contains(document.activeElement)?document.activeElement.id:null,scroll=root.querySelector('.lineage-viewport'),position=scroll?{left:scroll.scrollLeft,top:scroll.scrollTop}:null;
-      let graph;try{graph=layout([...nodes.values()]);}catch(error){graph={positions:new Map(),width:600,height:240};message=error.message;failed=true;}
-      const edges=[];
-      for(const node of nodes.values())for(const kind of ['parent','baseline']){
-        const target=node.lineage?.intent[kind]?.trial_id,from=graph.positions.get(target),to=graph.positions.get(node.trial.id);
-        if(from&&to)edges.push(`<path class="${kind}" d="M${from.x+252},${from.y+72+(kind==='baseline'?10:0)} C${from.x+285},${from.y+72} ${to.x-30},${to.y+72} ${to.x},${to.y+72}"/>`);
-      }
-      root.innerHTML=`<section class="panel panel-pad lineage-panel" aria-labelledby="lineage-heading"><span class="eyebrow">EXPERIMENTS · ACROSS STUDIES</span><h2 id="lineage-heading">Experiment progression</h2><p>Follow declared derivation, comparison baselines and actual outcomes. Solid edges show derivation; dashed edges show baselines. Execution retries remain inside their Trial.</p><form id="lineage-filter-form"><label>Cohort (exact match; blank shows all)<input id="lineage-filter" maxlength="120" value="${esc(filter)}" ${busy?'disabled':''}></label><button id="lineage-refresh" ${busy?'disabled':''}>Refresh graph</button></form><p role="status" class="${failed?'error-panel':''}">${esc(message)}</p><div class="actions"><button id="lineage-zoom-out" aria-label="Zoom graph out">−</button><button id="lineage-zoom-in" aria-label="Zoom graph in">+</button><button id="lineage-zoom-reset">Reset zoom</button><span>${Math.round(zoom*100)}%</span></div><div class="lineage-viewport" tabindex="0" aria-label="Experiment graph; scroll horizontally and vertically to explore"><div style="width:${graph.width*zoom}px;height:${graph.height*zoom}px"><div class="lineage-canvas" style="width:${graph.width}px;height:${graph.height}px;transform:scale(${zoom})"><svg width="${graph.width}" height="${graph.height}" aria-hidden="true">${edges.join('')}</svg>${[...nodes.values()].map(node=>{const p=graph.positions.get(node.trial.id);if(!p)return '';const intent=node.lineage?.intent,run=node.runs[0];return `<button id="lineage-node-${esc(node.trial.id)}" type="button" data-lineage-node="${esc(node.trial.id)}" class="lineage-node" aria-pressed="${selected===node.trial.id}" style="left:${p.x}px;top:${p.y}px"><strong>${esc(node.study.name)}</strong><span>${esc(short(node.trial.id))} · ${esc(intent?.ancestry||'ancestry unknown')}</span><span>${esc(intent?.change_summary||'Intent not recorded')}</span><span>${esc(run?.state||'prepared')} · ${node.attempt_count} attempts</span>${intent?`<span>Target: ${esc(intent.target.metric_id)} ${esc(intent.target.direction)}</span>`:''}</button>`;}).join('')}</div></div></div><p>${nodes.size} trials loaded${appliedFilter?' · applied cohort: '+esc(appliedFilter):' · all cohorts'}${next?' · more pages available':''}. ${related.length} related identities are outside this loaded window. Layout order does not imply chronology.</p><div class="actions">${next?`<button id="lineage-more" ${busy||nodes.size>=100?'disabled':''}>Load next 20 trials</button>`:''}${related.map(item=>`<button type="button" data-lineage-related="${esc(item.trial_id)}">Load related ${esc(short(item.trial_id))}</button>`).join('')}</div><div id="lineage-detail">${detail()}</div>${jobHTML()}</section>`;
+      let graph;try{graph=window.WorkspaceExperimentGraph.render([...nodes.values()].map(graphEntry),{selected,zoom});}
+      catch(error){graph=window.WorkspaceExperimentGraph.render([],{zoom});message=error.message;failed=true;}
+      root.innerHTML=`<section class="panel panel-pad lineage-panel" aria-labelledby="lineage-heading"><span class="eyebrow">EXPERIMENTS · ACROSS STUDIES</span><h2 id="lineage-heading">Experiment progression</h2><p>Follow declared derivation, comparison baselines and actual outcomes. Solid edges show derivation; dashed edges show baselines. Execution retries remain inside their Trial.</p><form id="lineage-filter-form"><label>Cohort (exact match; blank shows all)<input id="lineage-filter" maxlength="120" value="${esc(filter)}" ${busy?'disabled':''}></label><button id="lineage-refresh" ${busy?'disabled':''}>Refresh graph</button></form><p role="status" class="${failed?'error-panel':''}">${esc(message)}</p><div class="actions"><button id="lineage-zoom-out" aria-label="Zoom graph out">−</button><button id="lineage-zoom-in" aria-label="Zoom graph in">+</button><button id="lineage-zoom-reset">Reset zoom</button><span>${Math.round(zoom*100)}%</span></div>${graph.html}<p>${nodes.size} trials loaded${appliedFilter?' · applied cohort: '+esc(appliedFilter):' · all cohorts'}${next?' · more pages available':''}. ${related.length} related identities are outside this loaded window. Layout order does not imply chronology.</p><div class="actions">${next?`<button id="lineage-more" ${busy||nodes.size>=100?'disabled':''}>Load next 20 trials</button>`:''}${related.map(item=>`<button type="button" data-lineage-related="${esc(item.trial_id)}">Load related ${esc(short(item.trial_id))}</button>`).join('')}</div><div id="lineage-detail">${detail()}</div>${jobHTML()}</section>`;
       bind();if(position){const viewport=root.querySelector('.lineage-viewport');viewport.scrollLeft=position.left;viewport.scrollTop=position.top;}
       if(focus)root.querySelector('#'+CSS.escape(focus))?.focus({preventScroll:true});
     }
