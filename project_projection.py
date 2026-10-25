@@ -313,14 +313,15 @@ class _TextView:
         return self.projection.session.available
 
     def _tag(self, value):
-        snapshot = self.projection.session.snapshot
-        return dict(value, project_id=snapshot['project_id'], checkpoint=snapshot['checkpoint'])
+        summary = self.projection.session.summary
+        return dict(value, project_id=summary['project_id'], checkpoint=summary['checkpoint'])
 
     def records(self):
         self.projection.session.check_current()
         from project_fork import active_records
         snapshot = self.projection.session.snapshot
-        records = active_records(snapshot['records'], project_id=snapshot['project_id'])
+        records = active_records(snapshot['records'], project_id=snapshot['project_id'],
+                                 families=frozenset(('workbench_record', 'workbench_text')))
         return self._tag(dict(items=[copy.deepcopy(item['document']['current']) for item in records
                                     if item['family'] in ('workbench_record', 'workbench_text')
                                     and item['document']['current']['kind'] == 'text']))

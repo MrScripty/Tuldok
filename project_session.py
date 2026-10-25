@@ -9,6 +9,7 @@ import re
 import threading
 
 import agent_api
+from project_store import copy_validated_json
 from workbench import WorkbenchError
 
 
@@ -186,7 +187,7 @@ class ProjectSession:
     @property
     def snapshot(self):
         with self.lock:
-            return copy.deepcopy(self._snapshot)
+            return copy_validated_json(self._snapshot)
 
     def _validated(self, records):
         operation_records(records, project_id=self.project_id)
@@ -203,7 +204,7 @@ class ProjectSession:
             current = self.store.snapshot()
             if current != snapshot:
                 raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
-            self._snapshot = copy.deepcopy(snapshot)
+            self._snapshot = copy_validated_json(snapshot)
             self.available = True
 
     def _checked(self, read):

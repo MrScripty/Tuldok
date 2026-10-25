@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 import uuid
 
 import psycopg
@@ -119,6 +119,25 @@ class ProjectProjectionTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'unsupported')
         self.assertEqual(p.store.snapshot(), before)
         self.assertEqual(p.db.execute('SELECT COUNT(*) FROM workbench_records').fetchone()[0], 0)
+
+    def test_text_tag_uses_real_session_summary_and_record_list_remains_owned(self):
+        text = self.call('import_text', self.mutation(asset=dict(text='Owned note 山', groups=['owned'])))['record']
+        p = self.host._projection
+        with self.owner.bound(self.host):
+            expected = dict(project_id=p.session.summary['project_id'],
+                            checkpoint=p.session.summary['checkpoint'])
+            with patch.object(type(p.session), 'snapshot', new_callable=PropertyMock,
+                              side_effect=AssertionError('Scalar tag copied a full Session')):
+                self.assertEqual(p.text._tag(dict(value='Exact scalar tag')),
+                                 dict(expected, value='Exact scalar tag'))
+            exact_current = [r['document']['current'] for r in p.session.snapshot['records']
+                             if r['family'] in ('workbench_text', 'workbench_record')
+                             and r['document']['current']['kind'] == 'text']
+            result = p.text.records()
+            self.assertEqual(result, dict(expected, items=exact_current))
+            self.assertEqual([r['id'] for r in result['items']], [text['id']])
+            result['items'][0]['text'] = 'Caller mutation'
+            self.assertEqual(p.text.get(text['id'])['text'], 'Owned note 山')
 
     def test_explicit_rooted_artifact_supply_is_durable_and_never_fetches_or_executes(self):
         p = self.host._projection

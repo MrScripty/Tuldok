@@ -3,10 +3,12 @@ import copy
 import errno
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import struct
 import sys
 import tempfile
 import unittest
@@ -70,6 +72,25 @@ class ProjectStoreTests(unittest.TestCase):
         value.pop('checkpoint', None)
         value['checkpoint'] = sha(canonical(value))
         (self.root / '.tuldok/project.json').write_bytes(canonical(value))
+
+    def test_snapshot_preserves_scalar_types_float_bits_and_owned_nested_values(self):
+        floats = [-0.0, 0.0, 5e-324, -5e-324, 1.7976931348623157e308,
+                  math.nextafter(1.0, 0.0), math.nextafter(1.0, math.inf)]
+        value = record()
+        value['document']['scalars'] = [None, False, True, -2**63, 2**63-1,
+                                        'Unicode 漢字 \U0001f30a\x00', *floats]
+        expected = self.commit([value])
+        first, second = self.store.snapshot(), self.store.snapshot()
+        self.assertEqual(first, expected)
+        self.assertEqual(second, expected)
+        actual = first['records'][0]['document']['scalars']
+        self.assertEqual([type(v) for v in actual],
+                         [type(v) for v in value['document']['scalars']])
+        self.assertEqual([struct.pack('>d', v) for v in actual[6:]],
+                         [struct.pack('>d', v) for v in floats])
+        first['records'][0]['document']['history'][0]['reviewed'] = True
+        first['records'][0]['document']['scalars'].clear()
+        self.assertEqual(self.store.snapshot(), second)
 
     def test_create_commit_save_cold_reopen_and_independent_snapshots(self):
         initial = self.store.snapshot()

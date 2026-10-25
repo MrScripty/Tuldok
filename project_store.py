@@ -124,6 +124,17 @@ def _encode(value):
                        allow_nan=False) + '\n').encode('utf-8')
 
 
+def copy_validated_json(value):
+    """Own another tree of already validated JSON without Python graph copying.
+
+    Canonical Store/Session values contain only JSON scalars, lists and string
+    keyed dictionaries. This is a copy operation inside that proof boundary,
+    never an input decoder or a substitute for freshness/codec validation.
+    """
+    return json.loads(json.dumps(value, ensure_ascii=True, allow_nan=False,
+                                separators=(',', ':')))
+
+
 def _manifest_raw(manifest):
     raw = _encode(manifest)
     if len(raw) > MAX_MANIFEST_BYTES:
@@ -793,7 +804,7 @@ class ProjectStore:
 
     def _snapshot(self, manifest, records):
         return dict(project_id=manifest['project_id'], name=manifest['name'],
-                    checkpoint=manifest['checkpoint'], records=copy.deepcopy(records))
+                    checkpoint=manifest['checkpoint'], records=copy_validated_json(records))
 
     def _current(self):
         try:
