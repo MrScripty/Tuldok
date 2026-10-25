@@ -115,7 +115,10 @@ class NativeExtractionTests(unittest.TestCase):
         for name in originals: (stage / name).unlink()
         cold = ProjectStore.open(destination); self.addCleanup(cold.close)
         cold_artifacts = ProjectArtifacts(cold); self.addCleanup(cold_artifacts.close)
-        session = SimpleNamespace(snapshot=cold.snapshot(), access=self.access, artifacts=cold_artifacts, check_current=lambda: None)
+        snapshot = cold.snapshot()
+        session = SimpleNamespace(snapshot=snapshot,
+            summary={key:snapshot[key] for key in ('project_id','checkpoint')},
+            access=self.access, artifacts=cold_artifacts, check_current=lambda: None)
         history = ProjectHistory(session, authorize_disclosure=lambda *args: None)
         for name, raw in originals.items():
             self.assertEqual(history.artifact(run['id'], 'source/' + name, origin_catalog_id=self.db.dataset_id), raw)

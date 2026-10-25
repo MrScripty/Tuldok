@@ -750,11 +750,23 @@ class ProjectHistory:
             from project_material import ProjectMaterial
             materials=ProjectMaterial(session)
         self.materials=materials;self.authorize_disclosure=authorize_disclosure
+        self._decoded_checkpoint=None
+        self._decoded_facts=None
 
     def _facts(self):
         self.session.check_current()
+        summary=self.session.summary
+        checkpoint=(summary['project_id'],summary['checkpoint'])
+        if self._decoded_checkpoint==checkpoint:
+            return self._decoded_facts
         records=self.session.snapshot['records']
-        return decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
+        facts=decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
+        # Current canonical bytes are guarded on every call. Only this owner's
+        # private decoded metadata is retained; returned values and permissions
+        # remain the responsibility of each read below.
+        self._decoded_facts=facts
+        self._decoded_checkpoint=checkpoint
+        return facts
 
     def _authorize(self,action,target=None):
         self.access.require('inspect',action,target)

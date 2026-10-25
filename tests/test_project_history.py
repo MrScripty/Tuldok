@@ -85,6 +85,47 @@ def legacy_run(origin=ORIGIN):
 
 
 class HistoryCodecTests(unittest.TestCase):
+    def test_progression_reuses_one_decoded_checkpoint_and_keeps_returned_values_independent(self):
+        identity='9'*32
+        records=[study(trials=[identity]),trial(identity,'3'*32)]
+        checks=[]
+        session=SimpleNamespace(snapshot=dict(records=records,project_id=OTHER,checkpoint='c'*64),
+            summary=dict(project_id=OTHER,checkpoint='c'*64),artifacts=None,
+            access=SimpleNamespace(require=lambda *args,**kwargs:None),
+            check_current=lambda:checks.append('actual current-state guard'))
+        history=ProjectHistory(session,materials=Materials())
+        with patch('project_history.decode_records',wraps=decode_records) as decoder:
+            first=history.progression(ORIGIN,offset=0,limit=20)
+            first['nodes'][0]['study']['name']='Caller mutation'
+            first['nodes'][0]['trial']['replicate']=99
+            second=history.progression(ORIGIN,offset=0,limit=20)
+        self.assertEqual(decoder.call_count,1)
+        self.assertEqual(checks,['actual current-state guard']*2)
+        self.assertEqual(second['nodes'][0]['study']['name'],'Exact intent λ')
+        self.assertEqual(second['nodes'][0]['trial']['replicate'],0)
+
+    def test_history_cache_refreshes_on_checkpoint_change_and_does_not_cache_decode_failure(self):
+        identity='9'*32
+        records=[study(trials=[identity]),trial(identity,'3'*32)]
+        session=SimpleNamespace(snapshot=dict(records=records,project_id=OTHER),
+            summary=dict(project_id=OTHER,checkpoint='c'*64),artifacts=None,
+            access=SimpleNamespace(require=lambda *args,**kwargs:None),check_current=lambda:None)
+        history=ProjectHistory(session,materials=Materials())
+        self.assertEqual(history.progression(ORIGIN)['nodes'][0]['study']['name'],'Exact intent λ')
+        updated=copy.deepcopy(records)
+        for value in (updated[0]['document']['study'],updated[0]['document']['revisions'][0]):
+            value['name']='New checkpoint name'
+        session.snapshot=dict(records=updated,project_id=OTHER)
+        session.summary=dict(project_id=OTHER,checkpoint='d'*64)
+        with patch('project_history.decode_records',side_effect=WorkbenchError('Decode unavailable','unavailable',503)):
+            with self.assertRaisesRegex(WorkbenchError,'Decode unavailable') as failed:
+                history.progression(ORIGIN)
+        self.assertEqual(failed.exception.code,'unavailable')
+        with patch('project_history.decode_records',wraps=decode_records) as decoder:
+            self.assertEqual(history.progression(ORIGIN)['nodes'][0]['study']['name'],'New checkpoint name')
+            self.assertEqual(history.progression(ORIGIN)['nodes'][0]['study']['name'],'New checkpoint name')
+        self.assertEqual(decoder.call_count,1)
+
     def test_fork_preserves_archived_disclosure_observation_without_current_permission(self):
         from project_fork import _digest,_input
         from project_session import operation_records
@@ -137,6 +178,7 @@ class HistoryCodecTests(unittest.TestCase):
             def recipe(self, *args, **kwargs):
                 raise AssertionError('History reread the live material catalog')
         session=SimpleNamespace(snapshot=dict(records=records,project_id=OTHER),
+            summary=dict(project_id=OTHER,checkpoint='c'*64),
             artifacts=None,access=SimpleNamespace(),check_current=lambda:None)
         facts=ProjectHistory(session,materials=Provider())._facts()
         self.assertEqual(len(observed),1)
@@ -311,6 +353,32 @@ class ProjectHistoryPostgresTests(unittest.TestCase):
         session=ProjectSession(self.store,db,host.access,artifacts,validate_records=lambda records:decode_records(records,materials=Materials()))
         self.host,self.owner,self.session=host,owner,session
         self.history=ProjectHistory(session,materials=Materials())
+
+    def test_cached_history_still_reads_actual_bytes_and_rejects_restored_mtime_corruption(self):
+        from project_store import ProjectStoreError
+        identity='9'*32
+        records=[study(trials=[identity]),trial(identity,'3'*32)]
+        before=self.store.snapshot()
+        snapshot=self.store.commit(records,before['checkpoint'],'cache-corruption-fixture',digest(records))
+        self.session.adopt(snapshot)
+        with self.owner.bound(self.host):
+            expected=self.history.progression(ORIGIN)
+            header=json.loads((self.store.path/'.tuldok/project.json').read_bytes())
+            entry=next(item for item in header['inventory'] if item['family']=='study_history')
+            path=self.store.path/'.tuldok'/entry['path']
+            original=path.read_bytes();info=path.stat()
+            corrupt=original.replace(b'Exact intent',b'Wrong intent',1)
+            self.assertNotEqual(corrupt,original);self.assertEqual(len(corrupt),len(original))
+            try:
+                path.write_bytes(corrupt)
+                os.utime(path,ns=(info.st_atime_ns,info.st_mtime_ns))
+                with self.assertRaisesRegex(ProjectStoreError,'Canonical record bytes changed or are corrupt') as failed:
+                    self.history.progression(ORIGIN)
+                self.assertEqual((failed.exception.code,failed.exception.status),('stale',409))
+            finally:
+                path.write_bytes(original)
+                os.utime(path,ns=(info.st_atime_ns,info.st_mtime_ns))
+            self.assertEqual(self.history.progression(ORIGIN),expected)
 
     def test_progression_uses_original_namespaces_exact_edges_and_bounded_pages(self):
         parent='a'*32;child='b'*32

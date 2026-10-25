@@ -20,6 +20,7 @@ from psycopg import sql
 from access import Access
 from metadata import Metadata
 from model_definitions import ModelDefinitions
+from pipeline import digest
 from project_data import decode_data_records
 from project_extraction import _Capture, capture_legacy
 from project_material import decode_records as decode_material
@@ -650,6 +651,7 @@ class LegacyCapture(unittest.TestCase):
         # A fresh inert owner reader reconstructs the exact upstream custody
         # receipt from retained facts/private captured bytes, never source paths.
         session = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=copy.deepcopy(captured['records'])),
+            summary=dict(project_id=self.db.dataset_id, checkpoint=digest(captured['records'])),
             access=self.access, artifacts=source.artifacts, check_current=lambda: None)
         history = ProjectHistory(session, authorize_disclosure=lambda run, population:
             self.access.require('expose-holdout', 'runs.expose_test', run['id']))
