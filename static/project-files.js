@@ -902,6 +902,17 @@
     onContextFocusLost:()=>$('project-files-status').focus()
   });
   window.addEventListener('pagehide',()=>projectProgression.clear());
+  const projectPortfolio=window.ProjectModelPortfolio({
+    root:$('project-model-portfolio'),
+    async read(action,args,signal){
+      if(!m2Allowed(action))throw Error('Model organization inspection is unavailable for the selected project.');
+      const value=await m2Request(action,args,epoch,{signal});
+      if(value===null)throw new DOMException('Project selection changed.','AbortError');
+      return value;
+    },
+    onContextFocusLost:()=>$('project-files-status').focus()
+  });
+  window.addEventListener('pagehide',()=>projectPortfolio.clear());
   const projectMeasurements=window.ProjectMeasurements({
     root:$('project-measurements'),
     async read(action,args,signal){
@@ -1167,6 +1178,8 @@
   }
   const m2Allowed=action=>!busy&&!blocked&&state?.state==='open'&&selectedContracts.has('project_files.'+action);
   function m2Controls(){
+    projectPortfolio.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),
+      project_id:state?.project?.project_id,enabled:m2Allowed('files_inspect')&&m2Allowed('file_get')});
     projectProgression.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),
       project_id:state?.project?.project_id,enabled:m2Allowed('progression')&&m2Allowed('progression_origins')});
     projectMeasurements.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),

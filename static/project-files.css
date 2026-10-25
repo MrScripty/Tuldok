@@ -10,3 +10,13 @@
 #project-runtime-files,#project-runtime-summary,#project-runtime-pending,#project-runtime-layout,#project-runtime-status{overflow-wrap:anywhere;min-width:0}#project-runtime-layout,#project-runtime-status{white-space:pre-wrap;max-height:32rem;overflow:auto}
 
 #project-candidate-preparation-result,#project-candidate-preparation-status{overflow-wrap:anywhere;min-width:0}#project-candidate-preparation-result{white-space:pre-wrap;max-height:32rem;overflow:auto}
+
+#project-portfolio-source,#project-portfolio-detail,#project-portfolio-count{overflow-wrap:anywhere;min-width:0}
+#project-portfolio-detail p{white-space:pre-wrap;max-width:85ch}
+#project-portfolio-detail pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:32rem;overflow:auto}
+#project-portfolio-detail details{margin:1rem 0}
+#project-portfolio-detail h4{margin-bottom:.25rem}
+#project-portfolio-detail h3{scroll-margin-top:1rem}
+#project-portfolio-filter-form{display:grid;grid-template-columns:1fr 2fr 1fr;gap:.7rem;align-items:end}
+#project-portfolio-filter-form button{justify-self:start}
+@media(max-width:760px){#project-portfolio-filter-form{grid-template-columns:1fr}}

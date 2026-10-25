@@ -38,6 +38,7 @@ function mount(initial=[reply(state()),reply(records())],capabilityValue=capabil
   context.ScientificFieldInspector=()=>({clear(){},show(){}});
   context.ProjectExperimentProgression=()=>({setContext(){},clear(){}});
   context.ProjectMeasurements=()=>({setContext(){},clear(){}});
+  context.ProjectModelPortfolio=()=>({setContext(){},clear(){}});
   vm.createContext(context);vm.runInContext(source,context);
   return {nodes,requests,answers,events,discoveries,focused:()=>focused,
     input(id,value){const node=nodes.get(id);node.value=value;node.listeners.get('input')?.({target:node});},
