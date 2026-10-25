@@ -233,7 +233,12 @@ def _read(root,parts):
 
 def inspect_captured(records, project_id, root):
     """Observe captured working files using only a locked project capability."""
-    owned=[r for r in decode_records(records) if r['document']['project_id']==project_id]
+    return _inspect_validated(decode_records(records), project_id, root)
+
+
+def _inspect_validated(records, project_id, root):
+    """Consume full-decoder output or fresh values from a validated Session."""
+    owned=[r for r in records if r['document']['project_id']==project_id]
     items=[]
     for envelope in sorted(owned,key=lambda r:r['document']['path']):
         doc=envelope['document'];value=doc['current']
@@ -261,16 +266,16 @@ class ProjectFiles:
 
     def inspect(self):
         with self.access.lock,self.session.lock,self.db.lock:
-            self.access.require('inspect','files.inspect');snapshot=self.session.check()
+            self.access.require('inspect','files.inspect');snapshot=self.session.check_records(FAMILY)
             with self.store.root_directory() as root:
-                items=inspect_captured(snapshot['records'],snapshot['project_id'],root)
+                items=_inspect_validated(snapshot['records'],snapshot['project_id'],root)
             self.session.check_current()
             return dict(items=items,project_id=snapshot['project_id'],checkpoint=snapshot['checkpoint'])
 
     def read(self,record_id,revision=None):
         with self.access.lock,self.session.lock,self.db.lock:
-            self.access.require('inspect','files.read',record_id);snapshot=self.session.check()
-            envelope=next((r for r in decode_records(snapshot['records']) if r['id']==record_id),None)
+            self.access.require('inspect','files.read',record_id);snapshot=self.session.check_records(FAMILY)
+            envelope=next((r for r in snapshot['records'] if r['id']==record_id),None)
             if envelope is None:fail('Adopted working file is unavailable.','unavailable',404)
             values=envelope['document']['history']
             if revision is None:value=values[-1]
@@ -280,8 +285,8 @@ class ProjectFiles:
 
     def history(self,record_id):
         with self.access.lock,self.session.lock,self.db.lock:
-            self.access.require('inspect','files.history',record_id);snapshot=self.session.check()
-            envelope=next((r for r in decode_records(snapshot['records']) if r['id']==record_id),None)
+            self.access.require('inspect','files.history',record_id);snapshot=self.session.check_records(FAMILY)
+            envelope=next((r for r in snapshot['records'] if r['id']==record_id),None)
             if envelope is None:fail('Adopted working file is unavailable.','unavailable',404)
             return copy.deepcopy(envelope['document']['history'])
 

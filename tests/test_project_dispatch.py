@@ -30,7 +30,7 @@ class Authority:
 
 def projection():
     access = Authority()
-    session = SimpleNamespace(access=access, check=Mock(), snapshot={'project_id': PROJECT, 'records': []},
+    session = SimpleNamespace(access=access, check=Mock(), check_current=Mock(), snapshot={'project_id': PROJECT, 'records': []},
                               summary={'project_id': PROJECT, 'name': 'Dispatch fixture', 'checkpoint': CHECKPOINT})
     return SimpleNamespace(session=session, data=Mock(), materials=Mock(), history=Mock(),
         context=SimpleNamespace(models=Mock(), pipelines=Mock()), artifacts=Mock(),

@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -45,7 +46,8 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         changed = copy.deepcopy(self.records)
         changed[0]['document']['text'] = 'Independently published content'
         self.store.commit(changed, self.store.summary()['checkpoint'], 'other', 'c' * 64)
-        for check in (self.session.check_current, self.session.check):
+        for check in (self.session.check_current, self.session.check,
+                      lambda: self.session.check_records('workbench_text')):
             with self.assertRaises(ProjectSessionError) as caught:
                 check()
             self.assertEqual(caught.exception.code, 'stale_project')
@@ -54,7 +56,8 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         self.session.available = False
         with patch.object(self.store, 'summary', side_effect=AssertionError('Unavailable store read')), \
                 patch.object(self.store, 'snapshot', side_effect=AssertionError('Unavailable snapshot read')):
-            for check in (self.session.check_current, self.session.check):
+            for check in (self.session.check_current, self.session.check,
+                          lambda: self.session.check_records('workbench_text')):
                 with self.assertRaises(ProjectSessionError) as caught:
                     check()
                 self.assertEqual(caught.exception.code, 'projection_unavailable')
@@ -70,7 +73,8 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         path.chmod(0o600)
         path.write_bytes(changed)
         os.utime(path, ns=(info.st_atime_ns, info.st_mtime_ns))
-        for check in (self.session.check_current, self.session.check):
+        for check in (self.session.check_current, self.session.check,
+                      lambda: self.session.check_records('workbench_text')):
             with self.assertRaises(ProjectStoreError) as caught:
                 check()
             self.assertEqual(caught.exception.code, 'stale')
@@ -82,6 +86,50 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         self.assertEqual(self.session.check(), self.store.snapshot())
         self.assertEqual(self.session._snapshot, self.store.snapshot())
         self.assertNotEqual(current, self.session.check())
+
+    def add_unrelated_record(self):
+        unrelated = dict(family='project_artifact', id='d' * 64,
+            document=dict(format='project_artifact_v1', sha256='d' * 64, bytes=4))
+        self.session._snapshot = self.store.commit([*self.records, unrelated],
+            self.store.summary()['checkpoint'], 'unrelated', 'e' * 64)
+
+    def test_selected_records_are_exact_independent_and_do_not_copy_other_families(self):
+        self.add_unrelated_record()
+        expected = {key: value for key, value in self.store.snapshot().items() if key != 'records'}
+        expected['records'] = self.records
+        copied = []
+        deepcopy = copy.deepcopy
+        def observe(value):
+            self.assertEqual([row['family'] for row in value], ['workbench_text', 'workbench_text'])
+            copied.append(value)
+            return deepcopy(value)
+        with patch.object(self.store, '_snapshot', side_effect=AssertionError('Unselected graph copy')), \
+                patch.object(self.store, '_record_file', wraps=self.store._record_file) as reads, \
+                patch('project_session.copy', SimpleNamespace(deepcopy=observe)):
+            selected = self.session.check_records('workbench_text')
+        self.assertEqual(selected, expected)
+        self.assertEqual(reads.call_count, 3, 'Unselected actual records must still be read and hashed')
+        self.assertEqual(len(copied), 1)
+        selected['records'][0]['document']['text'] = 'Caller mutation'
+        self.assertEqual(self.session.check_records('workbench_text'), expected)
+        self.assertEqual(self.session.check_records('project_file')['records'], [])
+
+    def test_selected_read_rejects_corruption_in_an_unselected_family(self):
+        self.add_unrelated_record()
+        self.session.check_records('workbench_text')
+        manifest = json.loads((self.root / '.tuldok/project.json').read_bytes())
+        entry = next(row for row in manifest['inventory'] if row['family'] == 'project_artifact')
+        path = self.root / '.tuldok' / entry['path']
+        info, original = path.stat(), path.read_bytes()
+        changed = original.replace(b'"bytes": 4', b'"bytes": 5')
+        self.assertNotEqual(changed, original)
+        self.assertEqual(len(changed), len(original))
+        path.chmod(0o600)
+        path.write_bytes(changed)
+        os.utime(path, ns=(info.st_atime_ns, info.st_mtime_ns))
+        with self.assertRaises(ProjectStoreError) as caught:
+            self.session.check_records('workbench_text')
+        self.assertEqual(caught.exception.code, 'stale')
 
 
 if __name__ == '__main__':

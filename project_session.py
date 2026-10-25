@@ -226,6 +226,22 @@ class ProjectSession:
         """Return independent current records under caller-owned projection guards."""
         return self._checked(self.store.snapshot)
 
+    def check_records(self, family):
+        """Verify every canonical record, then copy one bound record family.
+
+        The complete snapshot, including cross-family closure, was validated
+        and isolated by adopt/publication. Returned copies retain that validity
+        inside the trusted owner boundary; they are not new imported raw input.
+        Exact current bytes and checkpoint must still match before using it.
+        Callers hold the same ordered guards as check(); no cached alias escapes.
+        """
+        if type(family) is not str:
+            raise TypeError('Record-family selection requires a string.')
+        current = self._checked(self.store.summary)
+        current['records'] = copy.deepcopy([
+            item for item in self._snapshot['records'] if item['family'] == family])
+        return current
+
     def mutate(self, operation, target, body, expected_checkpoint, key, invoke, capture, *, scope='edit'):
         """Invoke existing policy, capture fixed-owner upserts, publish, commit SQL.
 

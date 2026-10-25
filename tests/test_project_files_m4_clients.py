@@ -231,13 +231,25 @@ class M4Clients(unittest.TestCase):
         import threading
         access=SimpleNamespace(lock=threading.RLock(),require=Mock())
         session=SimpleNamespace(access=access,lock=threading.RLock(),db=SimpleNamespace(lock=threading.RLock()),
-            check=Mock(return_value={'project_id':PROJECT,'records':[]}))
+            check=Mock(side_effect=AssertionError('Unused full dispatcher snapshot')),check_current=Mock())
         files=SimpleNamespace(history=Mock(return_value=[version('large text '+str(i),i+1) for i in range(42)]))
         projection=SimpleNamespace(session=session,files=files)
         page=project_dispatch.dispatch(projection,'project_files.file_history',dict(READ,file_id=identity(),offset=40,limit=2))
         self.assertEqual((page['total'],[item['revision'] for item in page['items']]),(42,[41,42]))
         self.assertTrue(all('text' not in item for item in page['items']))
+        session.check_current.assert_called_once_with()
         api.validate_output('project_files.file_history',dict(status=200,result=bound(page)))
+
+    def test_dispatch_fork_info_retains_the_complete_snapshot_contract(self):
+        import threading
+        access=SimpleNamespace(lock=threading.RLock(),require=Mock())
+        session=SimpleNamespace(access=access,lock=threading.RLock(),db=SimpleNamespace(lock=threading.RLock()),
+            check=Mock(return_value={'project_id':PROJECT,'records':[]}),
+            check_current=Mock(side_effect=AssertionError('Fork must read its records')))
+        value=project_dispatch.dispatch(SimpleNamespace(session=session),'project_files.fork_info',dict(READ,offset=0,limit=40))
+        session.check.assert_called_once_with()
+        self.assertEqual(value,dict(source=None,project_id=PROJECT,
+            mapping=dict(items=[],offset=0,limit=40,total=0),archived_count=0,copied_count=0,missing_regenerable_count=0))
 
 
 if __name__=='__main__':unittest.main()
