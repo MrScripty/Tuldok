@@ -124,7 +124,7 @@ class ProjectMeasurements:
         """Called only after SourceAdapter's explicit current rooted capture."""
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self.access.require('edit', 'measurements.import')
-            self.session.check()
+            self.session.check_current()
             table = MeasurementTable(raw)
             blob = dict(sha256=table.sha256, bytes=len(raw))
             origin = self.session.summary['project_id']
@@ -152,11 +152,11 @@ class ProjectMeasurements:
             raise WorkbenchError('Invalid measurement source page.')
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('inspect', 'measurements.sources')
-            self.session.check()
+            self.session.check_current()
             docs = sorted(self._documents().values(), key=lambda d: (d['origin_catalog_id'], d['id']))
             items = [dict(doc, availability=self.artifacts.inspect(declaration(doc['blob'])))
                      for doc in docs[offset:offset+limit]]
-            self.session.check()
+            self.session.check_current()
             self.access.require('inspect', 'measurements.sources')
             return self._bounded(dict(items=items, total=len(docs), offset=offset, limit=limit))
 
@@ -172,7 +172,7 @@ class ProjectMeasurements:
         target = origin_catalog_id + '.' + packet_sha256
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('inspect', action, target)
-            self.session.check()
+            self.session.check_current()
             doc = self._documents().get(target)
             if doc is None:
                 raise WorkbenchError('Measurement source is unavailable.', 'not_found', 404)
@@ -181,7 +181,7 @@ class ProjectMeasurements:
             if table.metadata()['title'] != doc['title']:
                 raise WorkbenchError('Measurement title differs from the exact retained packet.')
             value = self._bounded(dict(source=doc, value=select(table)))
-            self.session.check()
+            self.session.check_current()
             self.access.require('inspect', action, target)
             return value
 
@@ -215,7 +215,7 @@ class ProjectMeasurements:
         with self.access.lock, self.session.lock, self.db.lock:
             for target in targets:
                 self.access.require('inspect', 'measurements.compare', target)
-            self.session.check()
+            self.session.check_current()
             documents = self._documents()
             if any(target not in documents for target in targets):
                 raise WorkbenchError('A comparison source is unavailable.', 'not_found', 404)
@@ -231,7 +231,7 @@ class ProjectMeasurements:
                 tables.append((locator, table))
             value = MeasurementComparison(tables).read(metric_id, **selection)
             result = self._bounded(dict(sources=chosen, value=value))
-            self.session.check()
+            self.session.check_current()
             for target in targets:
                 self.access.require('inspect', 'measurements.compare', target)
             return result

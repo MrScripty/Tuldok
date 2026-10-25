@@ -188,7 +188,7 @@ def validate_operation_result(operation,result,records=None):
                     _fail('Native intent source or frozen input differs from its graph.','invalid')
                 from types import SimpleNamespace
                 from project_material import ProjectMaterial
-                retained=ProjectMaterial(SimpleNamespace(snapshot=dict(records=records),check=lambda:None))
+                retained=ProjectMaterial(SimpleNamespace(snapshot=dict(records=records),check_current=lambda:None))
                 if result['model'] is not None:retained.model(result['model'])
                 if result['composition'] is not None:
                     composition=retained.recipe(result['composition'])['material']
@@ -230,7 +230,7 @@ class NativePreparationContext:
     def _check(self,recipe):
         if not self._active or _CURRENT.get() is not self or recipe!=self.graph['recipe']:
             _fail('An explicit current native preparation is required.')
-        self.adapter.session.check()
+        self.adapter.session.check_current()
         actor=self.adapter.access.require('execute','pipeline.probe_native',recipe,owner_only=True)
         if actor.actor_id!=self.actor.actor_id:_fail('Native preparation caller changed.','conflict')
         if (os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable)!=self.configured_executable:
@@ -297,7 +297,7 @@ class PurePreparationContext:
 
     def consume_admission(self):
         if not self._active or self._consumed:_fail('Current integrity qualification has already been consumed.')
-        self.adapter.session.check()
+        self.adapter.session.check_current()
         actor=self.adapter.access.require('execute','pipeline.snapshot',self.graph['id'],owner_only=True)
         if actor.actor_id!=self.actor.actor_id:_fail('Current integrity caller changed.','conflict')
         if self.owner.get(self.graph['id'])!=self.graph or self.owner.definition_identity(self.recipe)!=self.definition:
@@ -333,7 +333,7 @@ class ProjectNativePreparation:
         if self.db.in_transaction:_fail('Native preparation must precede the metadata transaction.','unsupported')
         if _CURRENT.get() is not None:_fail('A native preparation is already active.','busy')
         self.access.require('edit','native_preparation.'+purpose,graph['id'],owner_only=True)
-        self.session.check()
+        self.session.check_current()
         if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
         context=NativePreparationContext(self,owner,graph,model,composition,purpose,_key(purpose,key))
         result=dict(format='project_native_preparation_intent_v1',origin_catalog_id=self.session.project_id,
@@ -361,7 +361,7 @@ class ProjectNativePreparation:
         if graph['revision']!=revision:_fail('Graph changed before native validation.','stale')
         import release_validation
         if adapter_for_graph(graph) is release_validation:
-            self.session.check()
+            self.session.check_current()
             if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
             value=owner.validate_graph(graph)
             return self.session.mutate('native_preparation.validate',graph_id,body,expected_checkpoint,key,
@@ -375,7 +375,7 @@ class ProjectNativePreparation:
     def current_graph(self,owner,graph_id,revision,expected_checkpoint,key):
         if self.db.in_transaction:_fail('Current native validation must precede admission.','unsupported')
         self.access.require('edit','native_preparation.admission',graph_id,owner_only=True)
-        self.session.check()
+        self.session.check_current()
         if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
         graph=owner.get(graph_id)
         if graph['revision']!=revision:_fail('Graph changed before native admission.','stale')

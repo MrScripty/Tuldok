@@ -206,14 +206,25 @@ class ProjectSession:
             self._snapshot = copy.deepcopy(snapshot)
             self.available = True
 
-    def check(self):
-        """Check freshness while a caller holds host/session/projection guards."""
+    def _checked(self, read):
         if not self.available:
             raise ProjectSessionError('Reopen this project to reconstruct its projection.', 'projection_unavailable', 503)
-        current = self.store.snapshot()
+        current = read()
         if current['checkpoint'] != self._snapshot['checkpoint']:
             raise ProjectSessionError('Canonical project changed. Close and reopen it.', 'stale_project', 409)
         return current
+
+    def check_current(self):
+        """Verify actual canonical bytes without returning an unused record graph.
+
+        The caller holds the same host/session/projection guards as check().
+        Store.summary reads and hashes all current records before returning.
+        """
+        self._checked(self.store.summary)
+
+    def check(self):
+        """Return independent current records under caller-owned projection guards."""
+        return self._checked(self.store.snapshot)
 
     def mutate(self, operation, target, body, expected_checkpoint, key, invoke, capture, *, scope='edit'):
         """Invoke existing policy, capture fixed-owner upserts, publish, commit SQL.

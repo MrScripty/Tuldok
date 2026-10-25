@@ -1028,7 +1028,7 @@ class ProjectData:
                 fail('Data mutation body must be an object.')
             self._permission(operation, target, body)
             with self.session.lock, self.db.lock:
-                self.session.check()
+                self.session.check_current()
                 if operation in ('data.annotate','data.correct_rights_note','data.save_image_source','data.delete_image_source'):
                     self._require_record(target,extended=operation!='data.annotate')
                 legacy = self._legacy_replay(operation, target, body, key)
@@ -1158,10 +1158,10 @@ class ProjectData:
     def _read(self, action, invoke, target=None):
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('inspect', action, target)
-            self.session.check()
+            self.session.check_current()
             self._sync_sources()
             result = invoke()
-            self.session.check()
+            self.session.check_current()
             return result
 
     def query(self, options=None):
@@ -1399,7 +1399,7 @@ class ProjectData:
                     self.db.execute('INSERT INTO saved_searches VALUES (%s,%s,%s,%s,%s,%s)', (record_id,r['name'],r['revision'],encode_retained(r['criteria']),r['created_at'],r['updated_at']))
                 elif family == 'dataset_exposure':
                     self.db.execute('INSERT INTO workspace_exposures VALUES (%s,%s,%s,%s,%s,%s,%s)', tuple(doc[k] for k in ('id','record_id','source_hash','reason','run_id','release_id','created_at')))
-            self.session.check()
+            self.session.check_current()
         self._materialize_images_and_releases(owned)
         return snapshot
 

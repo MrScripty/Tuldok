@@ -264,7 +264,7 @@ class ProjectFiles:
             self.access.require('inspect','files.inspect');snapshot=self.session.check()
             with self.store.root_directory() as root:
                 items=inspect_captured(snapshot['records'],snapshot['project_id'],root)
-            self.session.check()
+            self.session.check_current()
             return dict(items=items,project_id=snapshot['project_id'],checkpoint=snapshot['checkpoint'])
 
     def read(self,record_id,revision=None):

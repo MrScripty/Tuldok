@@ -498,7 +498,7 @@ class LegacyCapture(unittest.TestCase):
         before = self.files();source = self.view()
         captured = self.capture(source, {'studies': [child['id']]})
         self.assertEqual(captured['blockers'], [], captured['blockers'])
-        view = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check=lambda: None)
+        view = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check_current=lambda: None)
         from project_material import ProjectMaterial
         facts = decode_history(captured['records'], materials=ProjectMaterial(view))
         self.assertEqual(set(facts.studies), {(self.db.dataset_id, parent['id']), (self.db.dataset_id, child['id'])})
@@ -639,7 +639,7 @@ class LegacyCapture(unittest.TestCase):
         captured = self.capture(source, {'runs': [consumer['id']]})
         self.assertEqual(captured['blockers'], [], captured['blockers'])
         facts = decode_records(captured['records'], materials=ProjectMaterial(SimpleNamespace(
-            snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check=lambda: None)))
+            snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check_current=lambda: None)))
         self.assertEqual(set(facts.runs), {(self.db.dataset_id, run['id']) for run in (producer, middle, consumer)})
         for downstream, upstream in ((consumer, middle), (middle, producer)):
             self.assertIn(dict(source=dict(family='run_history', id=self.db.dataset_id + '.' + downstream['id']),
@@ -650,7 +650,7 @@ class LegacyCapture(unittest.TestCase):
         # A fresh inert owner reader reconstructs the exact upstream custody
         # receipt from retained facts/private captured bytes, never source paths.
         session = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=copy.deepcopy(captured['records'])),
-            access=self.access, artifacts=source.artifacts, check=lambda: None)
+            access=self.access, artifacts=source.artifacts, check_current=lambda: None)
         history = ProjectHistory(session, authorize_disclosure=lambda run, population:
             self.access.require('expose-holdout', 'runs.expose_test', run['id']))
         with patch.object(source, 'read_catalog', side_effect=AssertionError('No original catalog reread')), \

@@ -592,9 +592,9 @@ class ProjectProducers:
     def _read(self, action, invoke):
         with self.session.access.lock, self.session.lock, self.session.db.lock:
             self.session.access.require('inspect', action)
-            self.session.check()
+            self.session.check_current()
             result = invoke(self.session.snapshot['records'])
-            self.session.check()
+            self.session.check_current()
             return result
 
     def list(self, family, *, origin_catalog_id=None, offset=0, limit=40):

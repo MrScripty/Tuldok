@@ -56,7 +56,7 @@ class MaterialCodecs(unittest.TestCase):
         self.artifacts=ProjectArtifacts(self.store);self.addCleanup(lambda:self.artifacts.close())
         self.catalog=self.store.snapshot()['project_id']
         self.session=SimpleNamespace(snapshot=self.store.snapshot(),summary=self.store.summary(),
-                                     artifacts=self.artifacts,check=lambda:None)
+                                     artifacts=self.artifacts,check_current=lambda:None)
         self.material=ProjectMaterial(self.session)
 
     def capture(self):
@@ -88,7 +88,7 @@ class MaterialCodecs(unittest.TestCase):
         self.artifacts.close();self.store.close();shutil.rmtree(root)
         moved=self.root/'moved';(self.root/'project').rename(moved)
         with ProjectStore.open(moved) as store,ProjectArtifacts(store) as artifacts:
-            material=ProjectMaterial(SimpleNamespace(snapshot=store.snapshot(),artifacts=artifacts,check=lambda:None))
+            material=ProjectMaterial(SimpleNamespace(snapshot=store.snapshot(),artifacts=artifacts,check_current=lambda:None))
             self.assertEqual(store.snapshot(),snapshot)
             self.assertEqual(material.model(value['ref'],verify=True),value)
             source=value['material']['source_closure'][0]['blob']
@@ -145,7 +145,7 @@ class MaterialCodecs(unittest.TestCase):
             with self.assertRaises(WorkbenchError):view.runtime(dict(ref,**change))
 
     def test_invalid_live_material_reference_precedes_snapshot_access(self):
-        with patch.object(self.session,'check',side_effect=AssertionError('Invalid reference accessed snapshot')):
+        with patch.object(self.session,'check_current',side_effect=AssertionError('Invalid reference accessed snapshot')):
             with self.assertRaises(WorkbenchError):self.material.runtime({'catalog_id':'invalid'})
 
     def test_material_read_view_uses_supplied_records_without_resnapshotting(self):
@@ -159,7 +159,7 @@ class MaterialCodecs(unittest.TestCase):
         self.assertEqual(self.session.snapshot['records'],[])
 
     def test_material_read_view_rechecks_session_availability(self):
-        with patch.object(self.session,'check',side_effect=WorkbenchError('Stale checkpoint.','stale',409)):
+        with patch.object(self.session,'check_current',side_effect=WorkbenchError('Stale checkpoint.','stale',409)):
             with self.assertRaisesRegex(WorkbenchError,'Stale checkpoint'):
                 self.material.read_view([])
 
@@ -361,7 +361,7 @@ class EvidenceCallbacks(unittest.TestCase):
                      patch('subprocess.Popen',side_effect=AssertionError('No process')):
                     expected=evidence.verify(root,run,metrics)
                     self.assertEqual(evidence.verify_blobs(run,metrics,read_blob=lambda name,maximum:payloads[name]),expected)
-                    material=ProjectMaterial(SimpleNamespace(check=lambda:None))
+                    material=ProjectMaterial(SimpleNamespace(check_current=lambda:None))
                     result=material.evidence(run,read_blob=lambda name,maximum:payloads[name])
                     self.assertEqual(result['state'],'verified')
                     checkpoint=result['checkpoint_index']['entries'][0]['checkpoint']['sha256']
@@ -450,7 +450,7 @@ class CanonicalPublication(unittest.TestCase):
             self.assertEqual(error.exception.code,'projection_unavailable')
             snapshot=self.store.snapshot();retained=next(item for item in snapshot['records'] if item['family']=='model_material')['document']['value']
             self.assertFalse((self.models.path/retained['ref']['sha256']).exists(),'Legacy rollback removes only disposable projection cache')
-            cold=ProjectMaterial(SimpleNamespace(snapshot=snapshot,artifacts=self.artifacts,check=lambda:None))
+            cold=ProjectMaterial(SimpleNamespace(snapshot=snapshot,artifacts=self.artifacts,check_current=lambda:None))
             self.assertEqual(cold.model(retained['ref'],verify=True),retained)
             self.assertEqual(cold.blob(retained['ref'],retained['material']['source_closure'][0]['blob']),SOURCE)
 
@@ -461,7 +461,7 @@ class CanonicalPublication(unittest.TestCase):
             draft=self.create();value=self.material.publish_model(self.models,draft['id'],{'revision':1},self.session.snapshot['checkpoint'],'cold-model')
         cold_db=Metadata(self.path/'cold-projection',dataset_id=self.db.dataset_id,projection_id=uuid.uuid4().hex)
         self.resources.append(cold_db);self.schemas.append(cold_db.schema)
-        cold=ProjectMaterial(SimpleNamespace(snapshot=self.store.snapshot(),artifacts=self.artifacts,db=cold_db,check=lambda:None))
+        cold=ProjectMaterial(SimpleNamespace(snapshot=self.store.snapshot(),artifacts=self.artifacts,db=cold_db,check_current=lambda:None))
         with patch('model_definitions.ModelDefinitions',side_effect=AssertionError('No mutable owner on Open')), \
              patch('pipeline.Pipelines',side_effect=AssertionError('No mutable owner on Open')), \
              patch('subprocess.Popen',side_effect=AssertionError('No process')):

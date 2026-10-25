@@ -232,7 +232,7 @@ class ForkCompositionTests(unittest.TestCase):
 
     def validate(self,records):
         decode_data_records(records);material_records(records);file_records(records);producer_records(records)
-        history_records(records,materials=ProjectMaterial(SimpleNamespace(snapshot=dict(records=records),check=lambda:None)))
+        history_records(records,materials=ProjectMaterial(SimpleNamespace(snapshot=dict(records=records),check_current=lambda:None)))
         for receipt in operation_documents(records):
             operation,result=receipt['operation'],receipt['result']
             if not (data_result(operation,result,records) or file_result(operation,result,records)

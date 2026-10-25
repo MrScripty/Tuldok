@@ -252,7 +252,7 @@ class ProjectTransferController:
                             fail('Recover the selected workspace before reconciling extraction.', 'projection_unavailable', 503)
                         guards.enter_context(projection.session.lock)
                         guards.enter_context(projection.db.lock)
-                        projection.session.check()
+                        projection.session.check_current()
                         opened = self.workspace._store
                     receipt = self._transfer.extract(self._selection, report_sha256, destination_fd, directory, name, request_key, opened_store=opened)
             except BaseException as error:

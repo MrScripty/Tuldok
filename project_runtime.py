@@ -156,7 +156,7 @@ class ProjectRuntime:
     def inspect(self, config_request):
         """Read an explicitly selected current source; never provision or execute."""
         with self.access.lock, self.session.lock, self.db.lock:
-            self._authorize('runtime_snapshots.inspect'); self.session.check()
+            self._authorize('runtime_snapshots.inspect'); self.session.check_current()
             _body(config_request, '0'*64, 0)
             with self.execution.runtime_inspection():
                 return self.owner.inspect(self.resolve_configuration(copy.deepcopy(config_request)))
@@ -165,7 +165,7 @@ class ProjectRuntime:
         """Read historical outcome only; captured does not claim local readiness."""
         _key(key)
         with self.access.lock, self.session.lock, self.db.lock:
-            self.access.require('inspect', 'runtime.capture_status'); self.session.check()
+            self.access.require('inspect', 'runtime.capture_status'); self.session.check_current()
             receipts = operation_records(self.session.snapshot['records'])
             intent = receipts.get(_intent_key(key)); complete = receipts.get(key)
             if intent is not None and intent['operation'] != 'runtime.capture_intent': intent = None
@@ -248,7 +248,7 @@ class ProjectRuntime:
         body_sha = _intent_input(body)
         intent = None
         with self.access.lock, self.session.lock, self.db.lock:
-            actor = self._authorize('runtime_snapshots.create'); self.session.check()
+            actor = self._authorize('runtime_snapshots.create'); self.session.check_current()
             receipts = operation_records(self.session.snapshot['records'])
             if any(r['operation']=='runtime.abandon' and r['result']['capture_key']==key for r in receipts.values()):
                 _fail('This capture was abandoned; use a fresh key for a new measurement.', 'conflict', 409)

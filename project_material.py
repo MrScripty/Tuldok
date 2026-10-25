@@ -359,7 +359,7 @@ class ProjectMaterial:
         self.owner_access = _MaterialAccess(session) if hasattr(session,'access') else None
 
     def _documents(self):
-        self.session.check()
+        self.session.check_current()
         return decode_records(self.session.snapshot['records'])
 
     def read_view(self, records):
@@ -369,7 +369,7 @@ class ProjectMaterial:
         live publication, verification or execution capability; later reads
         must select their own checkpoint and construct a new view.
         """
-        self.session.check()
+        self.session.check_current()
         return MaterialSnapshot(records)
 
     @_boundary

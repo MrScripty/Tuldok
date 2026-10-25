@@ -53,7 +53,7 @@ class ForkFilesystemTests(unittest.TestCase):
         capture.mkdir(parents=True)
         for name, raw in payloads.items():
             (capture / name).write_bytes(raw)
-        session = SimpleNamespace(snapshot=self.source.snapshot(), artifacts=self.artifacts, check=lambda: None)
+        session = SimpleNamespace(snapshot=self.source.snapshot(), artifacts=self.artifacts, check_current=lambda: None)
         self.material = ProjectMaterial(session)
         self.record = self.material.capture_model_material(self.material_value, local)
         records = [*self.material.declarations(self.record), self.record]
@@ -90,7 +90,7 @@ class ForkFilesystemTests(unittest.TestCase):
         self.assertEqual(overlay['source'], dict(project_id=self.origin, checkpoint=self.original['checkpoint']))
         self.assertEqual(next(item for item in snapshot['records'] if item['family'] == 'model_material'), self.record)
         with ProjectStore.open(self.root / 'fork') as destination, ProjectArtifacts(destination) as artifacts:
-            reader = ProjectMaterial(SimpleNamespace(snapshot=destination.snapshot(), artifacts=artifacts, check=lambda: None))
+            reader = ProjectMaterial(SimpleNamespace(snapshot=destination.snapshot(), artifacts=artifacts, check_current=lambda: None))
             self.assertEqual(reader.model(self.material_value['ref'], verify=True), self.material_value)
             source_ref = self.material_value['material']['source_closure'][0]['blob']
             self.assertEqual(reader.blob(self.material_value['ref'], source_ref), SOURCE)

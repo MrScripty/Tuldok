@@ -86,7 +86,7 @@ class NativeExtractionTests(unittest.TestCase):
         captured = self.capture_without_host(run, source)
         self.assertEqual(captured['blockers'], [], captured['blockers'])
         materials = ProjectMaterial(SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id,
-            records=captured['records']), check=lambda: None))
+            records=captured['records']), check_current=lambda: None))
         facts = decode_records(captured['records'], materials=materials)
         saved = facts.runs[(self.db.dataset_id, run['id'])]
         self.assertEqual(saved['run']['runtime'], run['runtime'])
@@ -115,7 +115,7 @@ class NativeExtractionTests(unittest.TestCase):
         for name in originals: (stage / name).unlink()
         cold = ProjectStore.open(destination); self.addCleanup(cold.close)
         cold_artifacts = ProjectArtifacts(cold); self.addCleanup(cold_artifacts.close)
-        session = SimpleNamespace(snapshot=cold.snapshot(), access=self.access, artifacts=cold_artifacts, check=lambda: None)
+        session = SimpleNamespace(snapshot=cold.snapshot(), access=self.access, artifacts=cold_artifacts, check_current=lambda: None)
         history = ProjectHistory(session, authorize_disclosure=lambda *args: None)
         for name, raw in originals.items():
             self.assertEqual(history.artifact(run['id'], 'source/' + name, origin_catalog_id=self.db.dataset_id), raw)

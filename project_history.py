@@ -752,7 +752,7 @@ class ProjectHistory:
         self.materials=materials;self.authorize_disclosure=authorize_disclosure
 
     def _facts(self):
-        self.session.check()
+        self.session.check_current()
         records=self.session.snapshot['records']
         return decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
 

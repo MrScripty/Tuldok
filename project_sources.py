@@ -117,7 +117,7 @@ class SourceAdapter:
         self._mutation_identity(expected_checkpoint,key)
         with self.access.lock,self.session.lock,self.db.lock:
             actor=self.access.require('edit','source.register',owner_only=True)
-            self.session.check()
+            self.session.check_current()
             saved,raw=self._read_registration(body)
             origin=self.session.summary['project_id'];invoked=False
             def invoke():
@@ -153,7 +153,7 @@ class SourceAdapter:
             raise WorkbenchError('Invalid bounded source reference page.')
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('inspect','source.references',snapshot['project_id'])
-            self.session.check()
+            self.session.check_current()
             historical=self.materials.snapshot_ref(snapshot['project_id'],snapshot['manifest_sha256'],
                 catalog_id=snapshot['origin_catalog_id'])
             try:current=self.sources._saved(snapshot['project_id'],extensions=True)
@@ -171,7 +171,7 @@ class SourceAdapter:
             selected=current['manifest']['data'][offset:offset+limit];budget=[INSPECTION_LIMIT]
             items=[self.sources._inspect(current['root'],copy.deepcopy(ref),budget,DATA_LIMIT) for ref in selected]
             self.sources.read_snapshot_manifest(snapshot['project_id'],snapshot['manifest_sha256'])
-            self.session.check();self.access.require('inspect','source.references',snapshot['project_id'])
+            self.session.check_current();self.access.require('inspect','source.references',snapshot['project_id'])
             return dict(items=items,total=len(current['manifest']['data']),offset=offset,limit=limit)
 
     def import_scientific(self,body,expected_checkpoint,key):
@@ -183,7 +183,7 @@ class SourceAdapter:
         if type(body['document']) is not dict:raise WorkbenchError('Scientific import metadata must be an object.')
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('edit','source.import_scientific',snapshot['project_id'])
-            self.session.check()
+            self.session.check_current()
             raw,source=self._capture_reference(snapshot,body['reference_id'],body['expected_sha256'],DATA_LIMIT)
             # ProjectData owns the one canonical mutation and native parser;
             # current rooted reads above never become an imported capability.
@@ -204,7 +204,7 @@ class SourceAdapter:
                                                            expected_sha256,maximum_bytes)
         if source['manifest_sha256']!=snapshot['manifest_sha256']:
             raise WorkbenchError('Current source snapshot changed during capture.','stale',409)
-        self.session.check()
+        self.session.check_current()
         return raw,source
 
     def import_measurements(self,body,expected_checkpoint,key):
@@ -216,7 +216,7 @@ class SourceAdapter:
         from retained_measurements import MAX_BYTES
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('edit','source.import_measurements',snapshot['project_id'])
-            self.session.check()
+            self.session.check_current()
             raw,source=self._capture_reference(snapshot,body['reference_id'],body['expected_sha256'],MAX_BYTES)
             source=dict(source,origin_catalog_id=snapshot['origin_catalog_id'])
             self.access.require('edit','source.import_measurements',snapshot['project_id'])

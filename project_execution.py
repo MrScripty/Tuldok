@@ -52,7 +52,7 @@ class _FileEffect:
 
     def confirmed(self):
         if not self.started:raise RuntimeError('File publication must have a durable start before confirmation.')
-        execution=self.execution;execution.session.check()
+        execution=self.execution;execution.session.check_current()
         if execution.db.in_transaction:
             raise RuntimeError('File publication confirms only after its canonical and outer SQL acknowledgement.')
         if execution.custody is not None:
@@ -164,7 +164,7 @@ class ProjectExecution:
 
     def before_launch(self, identity):
         with self.db.lock:
-            self.session.check();run=self.runs._load(identity);self._proof(run)
+            self.session.check_current();run=self.runs._load(identity);self._proof(run)
             self.runtime_access.require_job('runs',identity,run['admission_id'],run['request_sha256'])
             if self.custody is not None:
                 with self._journal_guard():self.custody.launch_intent(identity)
@@ -176,7 +176,7 @@ class ProjectExecution:
 
     def _local_owner(self, *, recover=True):
         """Construct execution only after the caller checked exact authority."""
-        self.session.check()
+        self.session.check_current()
         if self._runs is None:
             from runs import Runs
             from pipeline import Pipelines
@@ -398,7 +398,7 @@ class ProjectExecution:
 
     def register_producer(self, family, identity, admission_id, request_digest):
         with self.db.lock:
-            self.session.check();self._producer_authority(family,identity,admission_id,request_digest)
+            self.session.check_current();self._producer_authority(family,identity,admission_id,request_digest)
             if self.custody is not None:
                 with self._journal_guard():
                     if not self.custody.has_pending:self.custody.acknowledge(self.session.snapshot)
@@ -406,7 +406,7 @@ class ProjectExecution:
 
     def producer_effect_intent(self, family, identity):
         with self.db.lock:
-            self.session.check()
+            self.session.check_current()
             if self.custody is not None:
                 value=next((item for item in self.custody.snapshot()['producers']
                     if (item['family'],item['producer_id'])==(family,identity)),None)
@@ -416,7 +416,7 @@ class ProjectExecution:
 
     def update_producer_outcome(self, family, identity, provider_outcome, worker_drained):
         with self.db.lock:
-            self.session.check()
+            self.session.check_current()
             if self.custody is not None:
                 value=next((item for item in self.custody.snapshot()['producers']
                     if (item['family'],item['producer_id'])==(family,identity)),None)
@@ -591,7 +591,7 @@ class ProjectExecution:
     def preflight_external(self, graph_id, revision):
         self.runtime_access.require('inspect', 'pipeline.preflight_external', graph_id)
         with self.access.lock, self.session.lock, self.db.lock:
-            self.session.check()
+            self.session.check_current()
             return self.projection.pipelines.preflight_external(graph_id, revision)
 
     def native_preflight(self,graph_id,revision,expected_checkpoint,key):
@@ -615,7 +615,7 @@ class ProjectExecution:
         actor=self.runtime_access.require('execute','runs.submit',body['graph_id'],owner_only=True)
         effective=dict(body,actor_id=actor.actor_id)
         with self.db.lock:
-            self.session.check()
+            self.session.check_current()
             replay=self._native_replay('runs.submit',body['graph_id'],effective,expected_checkpoint,key)
             if replay is not None:return replay
         with self.projection.native_preparation.current_graph(self.projection.pipelines,body['graph_id'],
@@ -633,7 +633,7 @@ class ProjectExecution:
         actor=self.runtime_access.require('execute','runs.retry',run_id,owner_only=True)
         body=dict(actor_id=actor.actor_id)
         with self.db.lock:
-            self.session.check()
+            self.session.check_current()
             replay=self._native_replay('runs.retry',run_id,body,expected_checkpoint,key)
             if replay is not None:return replay
             if self._runs is None:raise WorkbenchError('Retry requires the actual current local Run owner.','unavailable',409)
@@ -655,7 +655,7 @@ class ProjectExecution:
     def submit_external(self, body, expected_checkpoint, key):
         authority = self.runtime_access.require_external_submission()
         with self.access.lock, self.session.lock, self.db.lock:
-            self.session.check()
+            self.session.check_current()
             prior = operation_records(self.session.snapshot['records']).get(key)
             if prior is None and expected_checkpoint != self.session.summary['checkpoint']:
                 raise WorkbenchError('Expected project checkpoint changed.', 'stale_project', 409)
@@ -678,7 +678,7 @@ class ProjectExecution:
     def approve_external(self, body, expected_checkpoint, key):
         authority = self.runtime_access.require('approve-execution', 'runs.approve_external', owner_only=True)
         with self.access.lock, self.session.lock, self.db.lock:
-            self.session.check()
+            self.session.check_current()
             prior = operation_records(self.session.snapshot['records']).get(key)
             if prior is None and expected_checkpoint != self.session.summary['checkpoint']:
                 raise WorkbenchError('Expected project checkpoint changed.', 'stale_project', 409)

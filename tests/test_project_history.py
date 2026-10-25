@@ -137,7 +137,7 @@ class HistoryCodecTests(unittest.TestCase):
             def recipe(self, *args, **kwargs):
                 raise AssertionError('History reread the live material catalog')
         session=SimpleNamespace(snapshot=dict(records=records,project_id=OTHER),
-            artifacts=None,access=SimpleNamespace(),check=lambda:None)
+            artifacts=None,access=SimpleNamespace(),check_current=lambda:None)
         facts=ProjectHistory(session,materials=Provider())._facts()
         self.assertEqual(len(observed),1)
         self.assertIs(observed[0],records)
@@ -653,7 +653,7 @@ class ProjectHistoryActualOwnerTests(CapturedModelCase):
         root=self.path/'portable-history';store=ProjectStore.create(root,'Actual cold history','new','f'*64)
         self.addCleanup(store.close)
         artifacts=ProjectArtifacts(store);self.addCleanup(artifacts.close)
-        view=SimpleNamespace(snapshot={'project_id':store.snapshot()['project_id'],'records':[]},artifacts=artifacts,check=lambda:None)
+        view=SimpleNamespace(snapshot={'project_id':store.snapshot()['project_id'],'records':[]},artifacts=artifacts,check_current=lambda:None)
         material=ProjectMaterial(view)
         model_record=material.capture_model_material(model,self.models.path)
         recipe_record=material.capture_recipe_material(composition,self.dataset.pipelines.material_path)

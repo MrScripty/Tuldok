@@ -190,7 +190,7 @@ class ProjectProjection:
             raise WorkbenchError('Choose one declared artifact and a current rooted file.')
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self.access.require('edit', 'artifacts.resolve', body['sha256'], owner_only=True)
-            self.session.check()
+            self.session.check_current()
             declaration = next((item['document'] for item in self.session.snapshot['records']
                                 if item['family'] == 'project_artifact' and item['id'] == body['sha256']), None)
             if declaration is None:
@@ -246,7 +246,7 @@ class ProjectProjection:
     def runtime_sources(self):
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('admin', 'runtime.sources', owner_only=True)
-            self.session.check()
+            self.session.check_current()
             return dict(sources=sorted(self._runtime_sources))
 
     def authorize_disclosure(self, run, population):
@@ -317,7 +317,7 @@ class _TextView:
         return dict(value, project_id=snapshot['project_id'], checkpoint=snapshot['checkpoint'])
 
     def records(self):
-        self.projection.session.check()
+        self.projection.session.check_current()
         from project_fork import active_records
         snapshot = self.projection.session.snapshot
         records = active_records(snapshot['records'], project_id=snapshot['project_id'])

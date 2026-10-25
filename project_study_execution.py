@@ -142,7 +142,7 @@ def _validate_preparation(operation,result,records):
         trial=result['trial'];origin=trial['material']['catalog_id']
         candidate=facts.candidates[(origin,result['candidate_id'])]['candidate']
         if candidate['study_id']!=trial['study_id']:_invalid('Preparation candidate belongs to another Study.')
-        materials=ProjectMaterial(SimpleNamespace(snapshot={'records':records},check=lambda:None))
+        materials=ProjectMaterial(SimpleNamespace(snapshot={'records':records},check_current=lambda:None))
         composition=materials.recipe(trial['material'])['material']
         if (composition['model']!=result['model'] or composition['recipe_id']!=result['graph']['id']
                 or composition['recipe_revision']!=result['graph']['revision']):
@@ -202,7 +202,7 @@ def validate_operation_result(operation,result,records=None):
             if saved is None or any(saved[key]!=reservation[key] for key in RESERVATION_FIELDS if key not in ('state','settled')):
                 _invalid('Admission receipt has no exact canonical reservation.')
             trial=facts.trials[(origin,result['trial_id'])]['trial'];run=facts.runs[(origin,result['run_id'])]['run']
-            view=SimpleNamespace(snapshot={'records':records},check=lambda:None)
+            view=SimpleNamespace(snapshot={'records':records},check_current=lambda:None)
             validate_retained_reservation(reservation,trial=trial,
                 composition=ProjectMaterial(view).recipe(trial['material']),run=run)
         elif operation=='study_execution.stop':
@@ -329,7 +329,7 @@ class ProjectStudyExecution:
     def restore_authoring(self,records=None):
         """Reconstruct intent only, under the current project guard."""
         with self.session.access.lock,self.session.lock,self.db.lock:
-            self.session.check();facts=self._canonical(records)
+            self.session.check_current();facts=self._canonical(records)
             with self.db.transaction():
                 for (origin,identity),doc in sorted(facts.studies.items()):
                     if origin!=self.origin:continue
@@ -589,7 +589,7 @@ class ProjectStudyExecution:
         authority=self.access.require_external_submission()
         with self.session.access.lock,self.session.lock,self.db.lock:
             builtin=None
-            self.session.check();self.refresh_authoring()
+            self.session.check_current();self.refresh_authoring()
             prior=operation_records(self.session.snapshot['records']).get(key)
             if prior is not None:
                 result=prior['result']
@@ -734,7 +734,7 @@ class ProjectStudyExecution:
         input_sha=digest(dict(study_id=study_id,body=effective))
         intent_key=_intent_key(operation,key);phase=intent_key.removesuffix('-intent')
         with self.session.access.lock,self.session.lock,self.db.lock:
-            self.session.check()
+            self.session.check_current()
             prior=operation_records(self.session.snapshot['records']).get(key)
             if prior is not None:
                 # Current authority is checked above. Historical completion
