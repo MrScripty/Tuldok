@@ -371,5 +371,28 @@ raise AssertionError('Fault window was not reached')
         self.assert_code('invalid', decode_fork, bad)
 
 
+class ActiveRecordSelectionTests(unittest.TestCase):
+    def test_family_selection_keeps_independent_values_and_default_membership(self):
+        records=[dict(family=family,id='a'*32,document=dict(format='fixture_v1',values=[1]))
+                 for family in ('project_operation','workbench_text')]
+        self.assertEqual(active_records(records),records)
+        selected=active_records(records,families=frozenset({'project_operation'}))
+        self.assertEqual(selected,[records[0]])
+        selected[0]['document']['values'].append(2)
+        self.assertEqual(records[0]['document']['values'],[1])
+        self.assertEqual(active_records(records,families=frozenset()),[])
+
+    def test_family_selection_still_validates_excluded_fork_structure(self):
+        record=dict(family='workbench_text',id='a'*32,document={'format':'workbench_text_v1'})
+        with self.assertRaisesRegex(ProjectForkError,'Duplicate'):
+            active_records([record,copy.deepcopy(record)],families=frozenset({'project_operation'}))
+
+    def test_family_selection_rejects_implicit_or_invalid_selectors(self):
+        for invalid in ('project_operation',[],frozenset({1}),frozenset({'bad/family'})):
+            with self.subTest(selector=invalid),self.assertRaises(ProjectStoreError) as caught:
+                active_records([],families=invalid)
+            self.assertEqual(caught.exception.code,'invalid')
+
+
 if __name__ == '__main__':
     unittest.main()

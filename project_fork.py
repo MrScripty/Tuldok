@@ -174,10 +174,16 @@ def decode_fork(records, *, project_id=None):
     return copy.deepcopy(overlays[current])
 
 
-def active_records(records, *, project_id=None):
+def active_records(records, *, project_id=None, families=None):
+    """Own selected active copies while validating the complete fork history."""
+    if families is not None:
+        if type(families) is not frozenset:
+            _fail('Active record families must be an explicit frozenset.')
+        for family in families:_identifier(family,'Active record family')
     overlay = decode_fork(records, project_id=project_id)
     archived = set() if overlay is None else {(item['family'], item['id']) for item in overlay['archived']}
-    return [copy.deepcopy(item) for item in records if (item['family'], item['id']) not in archived]
+    return [copy.deepcopy(item) for item in records
+            if (families is None or item['family'] in families) and (item['family'], item['id']) not in archived]
 
 
 def _inside(candidate_fd, ancestor_fd):

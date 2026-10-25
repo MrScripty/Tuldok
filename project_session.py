@@ -65,7 +65,8 @@ def operation_records(records, *, project_id=None):
     if project_id is None and overlay is not None:
         project_id = overlay['destination_project_id']
     result = {}
-    for value in operation_documents(active_records(records, project_id=project_id)):
+    for value in operation_documents(active_records(records, project_id=project_id,
+                                                  families=frozenset({OPERATION_FAMILY}))):
         if overlay is not None and value['format'] == 'project_operation_v1':
             raise ProjectSessionError('A fork must retain legacy operation receipts as archived historical facts.')
         if project_id is not None and value.get('project_id', project_id) != project_id:

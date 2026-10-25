@@ -14,6 +14,7 @@ import unittest
 from unittest.mock import patch
 import uuid
 
+import project_fork as fork_module
 import psycopg
 from psycopg import sql
 
@@ -27,6 +28,24 @@ from project_store import ProjectStore, ProjectStoreError
 
 
 class OperationCodecTests(unittest.TestCase):
+    def test_operation_lookup_does_not_copy_unrelated_active_envelopes(self):
+        key='selected-receipt'
+        document=dict(format='project_operation_v1',operation='fixture.capture',target=None,
+                      request_key=key,input_sha256='a'*64,result={})
+        receipt=dict(family='project_operation',id=hashlib.sha256(key.encode()).hexdigest(),document=document)
+        unrelated=dict(family='project_artifact',id='b'*64,
+                       document=dict(format='project_artifact_v1',sha256='b'*64,bytes=4))
+        copied=[];deepcopy=copy.deepcopy
+        def observe(value):
+            if value is unrelated:copied.append((value['family'],value['id']))
+            return deepcopy(value)
+        with patch.object(fork_module,'copy',SimpleNamespace(deepcopy=observe)):
+            actual=operation_records([unrelated,receipt])
+        self.assertEqual(actual,{key:document})
+        self.assertEqual(copied,[],'Receipt selection must not clone unrelated active records')
+        actual[key]['result']['changed']=True
+        self.assertEqual(document['result'],{})
+
     def test_namespaced_receipts_preserve_legacy_identity_and_independent_keys(self):
         key = 'independent-edit'
         document = dict(format='project_operation_v1', operation='fixture.capture', target=None,
