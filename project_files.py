@@ -5,6 +5,7 @@ never rewrites it, restores a missing file, executes a script, or installs tools
 """
 import copy
 from datetime import datetime
+from functools import cache, partial
 import errno
 import hashlib
 import os
@@ -128,14 +129,14 @@ def _result(envelope,changed):
     return result
 
 
-def validate_operation_result(operation,result,records=None):
+def _validate_result(operation,result,lookup=None):
     if operation=='files.adopt_many':
         closed(result,{'items','changed_count'},'batch adoption result')
         if type(result['items']) is not list or not 1<=len(result['items'])<=MAX_ADOPT_ITEMS:
             fail('Invalid batch adoption result size.')
         seen=set();projects=set()
         for item in result['items']:
-            validate_operation_result('files.adopt',item,records)
+            _validate_result('files.adopt',item,lookup)
             if item['id'] in seen:fail('Batch adoption result repeats a file.')
             seen.add(item['id']);projects.add(item['project_id'])
         if (len(projects)!=1 or type(result['changed_count']) is not int
@@ -153,12 +154,32 @@ def validate_operation_result(operation,result,records=None):
     else:sha(result['sha256'])
     _date(result['adopted_at'])
     if type(result['revision']) is not int or not 1<=result['revision']<=2**53-1 or type(result['bytes']) is not int or not 0<=result['bytes']<=MAX_FILE_BYTES:fail('Invalid adoption result bounds.')
-    if records is not None:
-        owned=decode_records(records)
-        envelope=next((r for r in owned if r['id']==result['id']),None)
+    if lookup is not None:
+        envelope=lookup(result['id'])
         if envelope is None or not any((value.get('deleted') is True)==deleted and all(value[key]==result[key] for key in ('revision','sha256','bytes','adopted_at')) for value in envelope['document']['history']):
             fail('Adoption result is not an exact retained working-file revision.')
     return True
+
+
+def receipt_validator(records):
+    """Own one decoded candidate's file histories for its receipt checks.
+
+    The returned validator has no live Session or publication authority. It
+    owns copied records, so caller mutation cannot change this fixed view.
+    A different candidate requires a new validator.
+    """
+    owned = {record['id']: record for record in decode_records(records)}
+    return partial(_validate_result, lookup=owned.get)
+
+
+def validate_operation_result(operation, result, records=None):
+    # Keep standalone shape/error ordering, and share only this call's lookup
+    # across batch items. There is no retained cache between invocations.
+    @cache
+    def owned():
+        return {record['id']: record for record in decode_records(records)}
+    lookup = None if records is None else lambda identity: owned().get(identity)
+    return _validate_result(operation, result, lookup)
 
 
 class _WorkingError(Exception):

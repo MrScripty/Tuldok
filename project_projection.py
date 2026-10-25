@@ -25,14 +25,17 @@ from project_execution import ProjectExecution, validate_operation_result as val
 from project_producer_execution import ProjectProducerExecution, validate_operation_result as validate_producer_result
 from project_files import ProjectFiles, decode_records as decode_file_records
 from project_files import validate_operation_result as validate_file_result
+from project_files import receipt_validator as file_receipt_validator
 from project_study_execution import ProjectStudyExecution, validate_operation_result as validate_study_execution_result
 from project_runtime import ProjectRuntime, validate_operation_result as validate_runtime_result
 from project_native_execution import FAMILY as NATIVE_FAMILY, decode_records as decode_native_records
 from project_native_preparation import ProjectNativePreparation, validate_operation_result as validate_preparation_result
 from project_sources import SourceAdapter, validate_operation_result as validate_source_result
+from project_sources import receipt_validator as source_receipt_validator
 from project_measurements import ProjectMeasurements, FAMILY as MEASUREMENT_FAMILY
 from project_measurements import decode_records as decode_measurement_records
 from project_measurements import validate_operation_result as validate_measurement_result
+from project_measurements import receipt_validator as measurement_receipt_validator
 from workbench import WorkbenchError
 from workbench import timestamp
 
@@ -82,7 +85,7 @@ def validate_project_records(records, *, project_id, artifacts):
     from project_transfer import decode_records as decode_extraction_records
     decode_extraction_records(records)
     operation_records(records, project_id=project_id)
-    decode_file_records(records)
+    validate_file_receipt = file_receipt_validator(records)
     decode_native_records(records,artifacts=artifacts)
     materials = MaterialSnapshot(records)
     for blob in materials.artifact_blobs():
@@ -92,17 +95,18 @@ def validate_project_records(records, *, project_id, artifacts):
     # than a resolver that still sees the preceding committed checkpoint.
     decode_producer_records(records, artifacts=artifacts)
     decode_history_records(records, materials=materials, artifacts=artifacts)
-    decode_measurement_records(records, artifacts=artifacts)
+    validate_measurement_receipt = measurement_receipt_validator(records, artifacts=artifacts)
+    validate_source_receipt = source_receipt_validator(records)
     for receipt in operation_documents(records):
         operation, result = receipt['operation'], receipt['result']
         if (validate_data_result(operation, result, records)
                 or validate_material_result(operation, result, records)
                 or validate_history_result(operation, result, records)
-                or validate_source_result(operation, result, records)
-                or validate_measurement_result(operation, result, records)
+                or validate_source_receipt(operation, result)
+                or validate_measurement_receipt(operation, result)
                 or validate_execution_result(operation, result, records)
                 or validate_producer_result(operation, receipt['target'], result, records)
-                or validate_file_result(operation, result, records)
+                or validate_file_receipt(operation, result)
                 or validate_study_execution_result(operation, result, records)
                 or validate_runtime_result(operation, result, records)
                 or validate_preparation_result(operation, result, records)

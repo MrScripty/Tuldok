@@ -6,6 +6,7 @@ reads after Open need no current source registration or producer execution.
 """
 import copy
 from datetime import datetime
+from functools import cache, partial
 
 from project_artifacts import validate_declaration
 from project_material import decode_records as material_records
@@ -101,15 +102,34 @@ def decode_records(records, *, artifacts=None):
     return result
 
 
-def validate_operation_result(operation, result, records=None):
+def _validate_result(operation, result, lookup=None):
     if operation != 'measurements.import':
         return False
     _document(result)
-    if records is not None:
+    if lookup is not None:
         identity = result['origin_catalog_id'] + '.' + result['id']
-        if decode_records(records).get(identity) != result:
+        if lookup(identity) != result:
             raise WorkbenchError('Measurement receipt has no exact retained source.')
     return True
+
+
+def receipt_validator(records, *, artifacts=None):
+    """Own one candidate's validated source bindings and packet custody.
+
+    Decode and copy every retained measurement once, including current available
+    packet bytes when supplied. The returned receipt checker is fixed to those
+    facts; it carries no live source or publication capability.
+    """
+    owned = decode_records(records, artifacts=artifacts)
+    return partial(_validate_result, lookup=owned.get)
+
+
+def validate_operation_result(operation, result, records=None):
+    @cache
+    def owned():
+        return decode_records(records)
+    lookup = None if records is None else lambda identity: owned().get(identity)
+    return _validate_result(operation, result, lookup)
 
 
 class ProjectMeasurements:

@@ -6,6 +6,7 @@ Canonical receipts describe retained facts; they are not filesystem capabilities
 """
 import copy
 from datetime import datetime
+from functools import cache, partial
 import hashlib
 import os
 
@@ -36,7 +37,7 @@ def _summary(saved, origin):
                 schema_version=saved['manifest']['schema_version'])
 
 
-def validate_operation_result(operation,result,records=None):
+def _validate_result(operation,result,lookup=None):
     """Validate the fixed source receipt against its exact retained snapshot."""
     if operation!='source.register':return False
     try:
@@ -50,8 +51,8 @@ def validate_operation_result(operation,result,records=None):
             raise WorkbenchError('Source registration requires an attributed timestamp.')
         if datetime.fromisoformat(result['registered_at']).utcoffset() is None:
             raise WorkbenchError('Source registration timestamp requires an offset.')
-        if records is not None:
-            document=material_records(records).get(('project_snapshot',result['origin_catalog_id']+'.'+result['manifest_sha256']))
+        if lookup is not None:
+            document=lookup(('project_snapshot',result['origin_catalog_id']+'.'+result['manifest_sha256']))
             expected={key:result[key] for key in ('origin_catalog_id','project_id','manifest_sha256','name','schema_version')}
             if document is None or _summary(document['value'],document['origin_catalog_id'])!=expected:
                 raise WorkbenchError('Source receipt differs from its exact retained snapshot.')
@@ -59,6 +60,20 @@ def validate_operation_result(operation,result,records=None):
     except WorkbenchError:raise
     except (ValueError,TypeError,KeyError,AttributeError,OverflowError,RecursionError):
         raise WorkbenchError('Malformed retained source operation result.') from None
+
+
+def receipt_validator(records):
+    """Own one candidate's retained material facts for source receipt checks."""
+    owned = material_records(records)
+    return partial(_validate_result, lookup=owned.get)
+
+
+def validate_operation_result(operation, result, records=None):
+    @cache
+    def owned():
+        return material_records(records)
+    lookup = None if records is None else lambda identity: owned().get(identity)
+    return _validate_result(operation, result, lookup)
 
 
 class SourceAdapter:
