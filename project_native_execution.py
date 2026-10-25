@@ -473,7 +473,7 @@ class ProjectNativeExecution:
         execution=self.execution;journal=execution.custody
         if journal is None:_fail('There is no original local native custody.','unavailable')
         with self.db.lock:
-            if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Expected native recovery checkpoint changed.','stale_project')
+            if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected native recovery checkpoint changed.','stale_project')
             local=journal.refresh()
             selected=next((row for row in local.get('native_phases',[]) if row['phase_id']==phase_id),None)
             if selected is None:_fail('A retained phase alone cannot select current native custody.','unavailable')
@@ -501,7 +501,7 @@ class ProjectNativeExecution:
         if self._active:_fail('Current native owner has not finished its bounded observation.','busy')
         with execution.access.lock,self.session.lock,self.db.lock:
             self.access.require('cancel','native_execution.reconcile',phase_id,owner_only=True)
-            if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Native checkpoint changed while draining.','stale_project')
+            if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Native checkpoint changed while draining.','stale_project')
             if journal.refresh()!=local:_fail('Original native custody changed while draining.','stale_project')
             binding=journal.binding
             if (binding['project_id']!=self.db.dataset_id or binding['projection_id']!=self.db.projection_id

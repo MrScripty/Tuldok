@@ -381,7 +381,7 @@ class ProjectMaterial:
         from project_material_fork import is_intent
         documents = self._documents()
         active = {(r['family'], r['id']) for r in active_records(
-            self.session.snapshot['records'], project_id=self.session.snapshot['project_id'])}
+            self.session.snapshot['records'], project_id=self.session.summary['project_id'])}
         return [dict(family=family, id=locator, current=copy.deepcopy(doc['current']),
                      fork_origin=copy.deepcopy(doc['fork_origin']))
                 for (family, locator), doc in sorted(documents.items())
@@ -392,7 +392,7 @@ class ProjectMaterial:
         intents = self.intents()
         unresolved = {(r['family'],r['id']) for r in intents}
         from project_fork import active_records
-        active = active_records(self.session.snapshot['records'], project_id=self.session.snapshot['project_id'])
+        active = active_records(self.session.snapshot['records'], project_id=self.session.summary['project_id'])
         return dict(requires_reselection=[dict(family=r['family'],id=r['id'],fields=r['current']['required_reselection']) for r in intents],
                     editable=[dict(family=r['family'],id=r['id']) for r in active
                               if r['family'] in EDITABLE and (r['family'],r['id']) not in unresolved])
@@ -461,7 +461,7 @@ class ProjectMaterial:
         return copy.deepcopy(doc['value'])
 
     def capture_definition(self, family, value, before_records, *, action, actor_id=None, audit_facts=None):
-        catalog_id = self.session.snapshot['project_id']
+        catalog_id = self.session.summary['project_id']
         value = _definition(family, value, catalog_id)
         key = catalog_id + '.' + value['id']
         prior = decode_records(before_records).get((family, key))

@@ -97,6 +97,18 @@ class ProjectStoreTests(unittest.TestCase):
             'Appending one record must not write disposable copies of every saved immutable revision')
         self.assertEqual(self.reopen(), committed)
 
+    def test_summary_reads_every_current_record_without_cloning_the_record_graph(self):
+        committed = self.commit([record('a'), record('b')], key='summary-fixture')
+        expected = {key: committed[key] for key in ('project_id', 'name', 'checkpoint')}
+        with patch.object(self.store, '_snapshot', side_effect=AssertionError('Unused record graph copy')), \
+                patch.object(self.store, '_record_file', wraps=self.store._record_file) as reads:
+            first = self.store.summary()
+            first['name'] = 'Caller mutation'
+            second = self.store.summary()
+        self.assertEqual(second, expected)
+        self.assertEqual(reads.call_count, 4, 'Each summary must still read/hash both actual records')
+        self.assertEqual(self.store.snapshot(), committed)
+
     def test_repeated_snapshot_and_root_reads_recheck_bytes_without_redecoding_identical_records(self):
         rows=[record('a'),record('b','Exact second note\n')]
         self.commit(rows,key='repeat-read-fixture')
@@ -124,6 +136,7 @@ class ProjectStoreTests(unittest.TestCase):
         path.chmod(0o600);path.write_bytes(changed)
         os.utime(path,ns=(info.st_atime_ns,info.st_mtime_ns))
         self.assert_code('stale',self.store.snapshot)
+        self.assert_code('stale',self.store.summary)
         with self.assertRaises(ProjectStoreError) as caught:
             with self.store.root_directory(verify_after=True):pass
         self.assertEqual(caught.exception.code,'stale')
@@ -250,12 +263,14 @@ except ProjectStoreError as exc:
         self.root.rename(displaced)
         self.root.mkdir()
         self.assert_code('stale', self.store.snapshot)
+        self.assert_code('stale', self.store.summary)
         self.root.rmdir()
         displaced.rename(self.root)
         meta = self.root / '.tuldok'
         meta.rename(self.root / '.old-tuldok')
         meta.mkdir()
         self.assert_code('stale', self.store.snapshot)
+        self.assert_code('stale', self.store.summary)
 
     def test_changed_checkpoint_is_rejected_before_mutation(self):
         initial = self.store.snapshot()

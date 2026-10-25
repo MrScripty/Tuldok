@@ -149,7 +149,7 @@ def _data(projection, action, a):
 def _definitions(projection, family, a):
     docs = projection.materials._documents()
     values = [doc['current'] for (kind, _), doc in docs.items()
-              if kind == family and doc['origin_catalog_id'] == projection.session.snapshot['project_id']]
+              if kind == family and doc['origin_catalog_id'] == projection.session.summary['project_id']]
     return _page(sorted(values, key=lambda item: item['id']), a)
 
 

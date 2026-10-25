@@ -55,7 +55,8 @@ class MaterialCodecs(unittest.TestCase):
         self.addCleanup(lambda:self.store.close())
         self.artifacts=ProjectArtifacts(self.store);self.addCleanup(lambda:self.artifacts.close())
         self.catalog=self.store.snapshot()['project_id']
-        self.session=SimpleNamespace(snapshot=self.store.snapshot(),artifacts=self.artifacts,check=lambda:None)
+        self.session=SimpleNamespace(snapshot=self.store.snapshot(),summary=self.store.summary(),
+                                     artifacts=self.artifacts,check=lambda:None)
         self.material=ProjectMaterial(self.session)
 
     def capture(self):

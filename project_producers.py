@@ -915,7 +915,7 @@ def _publish(owner, raw, role, media='application/json'):
         fail('Conflicting exact producer payload bytes.')
     owner._pending_payloads[declaration['sha256']] = raw
     owner._artifacts[declaration['sha256']] = declaration
-    return dict(artifact=dict(namespace=owner.session.snapshot['project_id'], sha256=declaration['sha256']),
+    return dict(artifact=dict(namespace=owner.session.summary['project_id'], sha256=declaration['sha256']),
                 media_type=media, kind='producer_evidence', role=role,
                 preservation='unique', required_for=['verify_producer'])
 

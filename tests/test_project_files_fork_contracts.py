@@ -35,8 +35,9 @@ class ForkTextContracts(unittest.TestCase):
         health = 'project_files.execution_health'
         self.assertEqual(api.contract(health,1)['sha256'],
             'c3b1d0017f5a49cf69c3a4c5c33e1d3db9846404d12627563d97ef40de7404a5')
+        comparison = 'project_files.measurement_compare'
         self.assertEqual(versions,{name:{str(v):api.contract(name,v)['sha256'] for v in (1,2)}
-                                  for name in (*expected, health)})
+                                  for name in (*expected, health, comparison)})
 
     def test_sdk_selects_v2_and_falls_back_to_exact_v1_without_falsifying_provenance(self):
         value=fork_result();raw=client({'status':200,'result':value});sdk=ProjectFilesClient(raw)

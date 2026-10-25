@@ -300,7 +300,7 @@ class ProjectFiles:
 
     def _adoption_intent(self,body):
         closed(body,{'kind','path','expected_revision','expected_sha256'},'working-file adoption')
-        parts=_path(body['kind'],body['path']);project_id=self.session.snapshot['project_id'];record_id=file_id(project_id,body['kind'],body['path']);sha(body['expected_sha256'])
+        parts=_path(body['kind'],body['path']);project_id=self.session.summary['project_id'];record_id=file_id(project_id,body['kind'],body['path']);sha(body['expected_sha256'])
         if type(body['expected_revision']) is not int or not 0<=body['expected_revision']<=2**53-1:fail('Invalid expected adoption revision.')
         return dict(body),parts,record_id
 
@@ -316,12 +316,12 @@ class ProjectFiles:
         value=dict(revision=revision+1,sha256=observed,bytes=size,text=text,adopted_at=timestamp(),actor_id=actor.actor_id)
         history=copy.deepcopy(prior['document']['history']) if prior else [];history.append(value)
         envelope=dict(family=FAMILY,id=record_id,document=dict(format=prior['document']['format'] if prior else FORMAT,
-            project_id=self.session.snapshot['project_id'],kind=body['kind'],path=body['path'],current=copy.deepcopy(value),
+            project_id=self.session.summary['project_id'],kind=body['kind'],path=body['path'],current=copy.deepcopy(value),
             history=history,origin=copy.deepcopy(prior['document']['origin']) if prior else None))
         return _result(envelope,True),envelope,size
 
     def adopt(self,body,expected_checkpoint,key):
-        intent=self._adoption_intent(body);body,parts,record_id=intent;project_id=self.session.snapshot['project_id']
+        intent=self._adoption_intent(body);body,parts,record_id=intent;project_id=self.session.summary['project_id']
         pending=[]
         with self.access.lock:
             self.access.require('edit','files.adopt',record_id)
@@ -350,7 +350,7 @@ class ProjectFiles:
         intents=[self._adoption_intent(item) for item in body['items']]
         ids=[intent[2] for intent in intents]
         if len(set(ids))!=len(ids):fail('Batch adoption repeats a working-file path.')
-        body=dict(items=[intent[0] for intent in intents]);project_id=self.session.snapshot['project_id']
+        body=dict(items=[intent[0] for intent in intents]);project_id=self.session.summary['project_id']
         target=digest('\0'.join(ids).encode());pending=[]
         with self.access.lock:
             for identity in ids:self.access.require('edit','files.adopt',identity)
@@ -377,7 +377,7 @@ class ProjectFiles:
         closed(body,{'path','expected_revision','expected_sha256'},'note deletion adoption')
         parts=_path('note',body['path']);sha(body['expected_sha256'])
         if type(body['expected_revision']) is not int or not 1<=body['expected_revision']<=2**53-1:fail('Invalid expected note revision.')
-        project_id=self.session.snapshot['project_id'];record_id=file_id(project_id,'note',body['path']);pending=[]
+        project_id=self.session.summary['project_id'];record_id=file_id(project_id,'note',body['path']);pending=[]
         with self.access.lock:
             self.access.require('edit','files.adopt_deletion',record_id)
             def invoke():

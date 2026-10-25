@@ -86,7 +86,7 @@ class ProjectSession:
         self._validate = validate_records
         self.available = False
         self._snapshot = None
-        self.project_id = store.snapshot()['project_id']
+        self.project_id = store.summary()['project_id']
         self.extra_capture = None
         self.publication_intent = None
         self.runtime_access = None
@@ -176,6 +176,12 @@ class ProjectSession:
             self.adopt(snapshot)
             self._recovery_records = None
             self._recovery_request = None
+
+    @property
+    def summary(self):
+        """Scalar metadata for the same bound checkpoint as snapshot."""
+        with self.lock:
+            return {key: self._snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
 
     @property
     def snapshot(self):

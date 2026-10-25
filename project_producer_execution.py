@@ -264,7 +264,7 @@ class ProjectProducerExecution:
                 # Every effectful request is preceded by canonical uncertainty;
                 # a terminal job with no such request is known not admitted.
                 outcome='not_admitted'
-            observation=(outcome,True,self.session.snapshot['checkpoint'])
+            observation=(outcome,True,self.session.summary['checkpoint'])
             if self._journal_observations.get(identity_key)!=observation:
                 self.execution.update_producer_outcome(family,producer_id,outcome,True)
                 self._journal_observations[identity_key]=observation

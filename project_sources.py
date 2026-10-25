@@ -119,7 +119,7 @@ class SourceAdapter:
             actor=self.access.require('edit','source.register',owner_only=True)
             self.session.check()
             saved,raw=self._read_registration(body)
-            origin=self.session.snapshot['project_id'];invoked=False
+            origin=self.session.summary['project_id'];invoked=False
             def invoke():
                 nonlocal invoked
                 invoked=True;self._bind(saved,raw)

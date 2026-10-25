@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import select
+import shutil
 import signal
 import sys
 import tempfile
@@ -311,8 +312,11 @@ class NativeProcessTests(unittest.TestCase):
         stage=self.root/'venv-alias-drift'
         prepared=native.prepare(stage,phase='probe',attempt_id=uuid.uuid4().hex,request_sha256='d'*64,
             runtime=runtime,worker='text_training.py',sources={'text_training.py':WORKER},wall_seconds=8)
-        Path(executable).unlink();Path(executable).symlink_to(Path('/usr/bin/python3').resolve())
-        with self.assertRaises(custody.ProcessError) as error:prepared.launch(stage/'custody')
+        replacement=self.root/'replacement-python'
+        shutil.copy2(runtime['executable_source'],replacement)
+        self.assertNotEqual(replacement.resolve(),Path(executable).resolve())
+        Path(executable).unlink();Path(executable).symlink_to(replacement)
+        with self.assertRaises(custody.ProcessError) as error:self.launch(prepared)
         self.assertEqual(error.exception.code,'stale');self.assertFalse((stage/'custody').exists())
 
     def test_spawn_callback_is_not_reached_for_current_config_alias_or_capture_refusal(self):

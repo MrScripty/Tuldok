@@ -185,7 +185,7 @@ class ProjectRuntime:
         body_sha = _intent_input(body)
         self._authorize('runtime_snapshots.create')
         self.execution.prepare_runtime_reconciliation(key, body_sha, expected_inventory_sha256, expected_checkpoint)
-        return self.capture(config_request, expected_inventory_sha256, self.session.snapshot['checkpoint'], key,
+        return self.capture(config_request, expected_inventory_sha256, self.session.summary['checkpoint'], key,
                             reserve_bytes=reserve_bytes)
 
     def abandon(self, capture_key, reason, expected_checkpoint, key):
@@ -212,7 +212,7 @@ class ProjectRuntime:
                 _fail('Runtime intent differs from its exact original local writer.', 'conflict', 409)
             if capture_key in receipts:
                 _fail('Capture completed; reconcile its acknowledgement with the exact capture request.', 'conflict', 409)
-            observed = self.session.snapshot['checkpoint']
+            observed = self.session.summary['checkpoint']
             def invoke():
                 current = self._authorize('runtime.capture_abandon')
                 if current.actor_id != actor.actor_id: _fail('Runtime abandonment caller changed.', 'conflict', 409)
@@ -273,7 +273,7 @@ class ProjectRuntime:
                         intent = self.session.mutate('runtime.capture_intent', expected_inventory_sha256, body,
                             expected_checkpoint, _intent_key(key), invalid, lambda *args: invalid(), scope='admin')
                     else:
-                        if expected_checkpoint != self.session.snapshot['checkpoint']:
+                        if expected_checkpoint != self.session.summary['checkpoint']:
                             _fail('Expected project checkpoint changed.', 'stale_project', 409)
                         config = self.resolve_configuration(copy.deepcopy(config_request))
                         observed = self.owner.inspect(config)
@@ -281,7 +281,7 @@ class ProjectRuntime:
                             _fail('Runtime inventory changed after inspection.', 'stale', 409)
                         intent = self.session.mutate('runtime.capture_intent', expected_inventory_sha256, body,
                             expected_checkpoint, _intent_key(key),
-                            lambda:_summary(self.session.snapshot['project_id'], observed, actor.actor_id, key),
+                            lambda:_summary(self.session.summary['project_id'], observed, actor.actor_id, key),
                             lambda result,before:dict(records=[],result=result), scope='admin')
                     guard.publication_started()
                     if os.path.lexists(self.owner.path / expected_inventory_sha256):
@@ -294,7 +294,7 @@ class ProjectRuntime:
                     from pipeline import digest
                     from pathlib import Path
                     raw = read_regular(Path(descriptor['root'])/'manifest.json', MAX_MANIFEST)
-                    runtime_ref = dict(kind='runtime',catalog_id=self.session.snapshot['project_id'],
+                    runtime_ref = dict(kind='runtime',catalog_id=self.session.summary['project_id'],
                                        id=digest(descriptor),sha256=digest(descriptor))
                     value = dict(ref=runtime_ref,descriptor=descriptor,environment=None,manifest=decode(raw))
                     observed = dict(inventory_sha256=descriptor['manifest_sha256'],file_count=descriptor['file_count'],total_bytes=descriptor['total_bytes'])
@@ -302,8 +302,8 @@ class ProjectRuntime:
                         record = self.materials.capture_runtime(value, raw)
                         return dict(records=[*self.materials.declarations(record),record],result=result)
                     result = self.session.mutate('runtime.capture', expected_inventory_sha256, body,
-                        self.session.snapshot['checkpoint'], key,
-                        lambda:_summary(self.session.snapshot['project_id'], observed, actor.actor_id, key, runtime_ref=runtime_ref), capture, scope='admin')
+                        self.session.summary['checkpoint'], key,
+                        lambda:_summary(self.session.summary['project_id'], observed, actor.actor_id, key, runtime_ref=runtime_ref), capture, scope='admin')
                     guard.confirmed()
                     return result
             except BaseException as error:

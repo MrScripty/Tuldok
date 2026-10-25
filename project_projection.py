@@ -116,7 +116,7 @@ class ProjectProjection:
         self.store, self.db, self.access = store, db, access
         self.custody = custody
         self.pending_original = []
-        self.project_id = store.snapshot()['project_id']
+        self.project_id = store.summary()['project_id']
         self.artifacts = ProjectArtifacts(store)
         self.sources = None
         self._disclosures = set()

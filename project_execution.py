@@ -296,7 +296,7 @@ class ProjectExecution:
             authority.require(scope,action,owner_only=True)
             if self.db.in_transaction:
                 raise RuntimeError('File reconciliation requires no outer SQL transaction.')
-            if self.session.snapshot['checkpoint']!=expected_checkpoint:
+            if self.session.summary['checkpoint']!=expected_checkpoint:
                 raise WorkbenchError('Expected current file checkpoint changed.','stale_project',409)
             if self.custody is None:
                 raise WorkbenchError('No original physical file custody exists.','unavailable',409)
@@ -464,7 +464,7 @@ class ProjectExecution:
                 # The domain owner has already checked submit/cancel authority;
                 # recheck live host credentials without inventing a worker owner.
                 self.runtime_access.require('inspect', 'runs.observe', identity)
-            if proof['admission']['catalog_id'] != self.session.snapshot['project_id']:
+            if proof['admission']['catalog_id'] != self.session.summary['project_id']:
                 raise AccessError('Local custody belongs to another project.')
 
     def _capture_run(self, identity):
@@ -626,7 +626,7 @@ class ProjectExecution:
                 context.consume_admission()
                 owner=self._local_owner();public=owner.submit(dict(body,request_key=key))
                 return _admission_result(owner._load(public['id']))
-            return self.mutate('runs.submit',body['graph_id'],effective,self.session.snapshot['checkpoint'],key,
+            return self.mutate('runs.submit',body['graph_id'],effective,self.session.summary['checkpoint'],key,
                 invoke,lambda value,before:dict(records=[],result=value),scope='execute')
 
     def native_retry(self,run_id,expected_checkpoint,key):
@@ -646,7 +646,7 @@ class ProjectExecution:
                 context.consume_admission()
                 owner=self.runs;public=owner.retry(run_id,dict(request_key=key))
                 return _admission_result(owner._load(public['id']))
-            return self.mutate('runs.retry',run_id,body,self.session.snapshot['checkpoint'],key,
+            return self.mutate('runs.retry',run_id,body,self.session.summary['checkpoint'],key,
                 invoke,lambda value,before:dict(records=[],result=value),scope='execute')
 
     def native_reconcile(self,phase_id,expected_checkpoint):
@@ -657,7 +657,7 @@ class ProjectExecution:
         with self.access.lock, self.session.lock, self.db.lock:
             self.session.check()
             prior = operation_records(self.session.snapshot['records']).get(key)
-            if prior is None and expected_checkpoint != self.session.snapshot['checkpoint']:
+            if prior is None and expected_checkpoint != self.session.summary['checkpoint']:
                 raise WorkbenchError('Expected project checkpoint changed.', 'stale_project', 409)
             if prior is not None:
                 # A retained request never recreates a local Run/admission or wakes
@@ -680,7 +680,7 @@ class ProjectExecution:
         with self.access.lock, self.session.lock, self.db.lock:
             self.session.check()
             prior = operation_records(self.session.snapshot['records']).get(key)
-            if prior is None and expected_checkpoint != self.session.snapshot['checkpoint']:
+            if prior is None and expected_checkpoint != self.session.summary['checkpoint']:
                 raise WorkbenchError('Expected project checkpoint changed.', 'stale_project', 409)
             if prior is not None:
                 value = prior['result']

@@ -252,7 +252,7 @@ class ProjectText:
                          encode(row['annotation']) if row['annotation'] is not None else None, row['review'], row['revision'], row['created_at'], row['updated_at']))
                     for state in doc['history']:
                         self._workbench._history(state)
-                if self.store.snapshot()['checkpoint'] != current['checkpoint']:
+                if self.store.summary()['checkpoint'] != current['checkpoint']:
                     raise ProjectTextError('Project changed during reconstruction.', 'stale_project', 409)
             self._snapshot, self.available = current, True
             return copy.deepcopy(current)

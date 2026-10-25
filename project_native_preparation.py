@@ -262,7 +262,7 @@ class NativePreparationContext:
         if self._probe is None:
             if self.adapter.db.in_transaction:_fail('Native probe cannot run inside a metadata transaction.','unsupported')
             self.authorize_probe(recipe)
-            result=self.adapter.execution.native.probe(recipe,expected_checkpoint=self.adapter.session.snapshot['checkpoint'],
+            result=self.adapter.execution.native.probe(recipe,expected_checkpoint=self.adapter.session.summary['checkpoint'],
                 request_key=self.key+'.probe',preparation=self)
             self._probe=copy.deepcopy(result['runtime']);self.phase=copy.deepcopy(result['phase'])
         return copy.deepcopy(self._probe)
@@ -334,7 +334,7 @@ class ProjectNativePreparation:
         if _CURRENT.get() is not None:_fail('A native preparation is already active.','busy')
         self.access.require('edit','native_preparation.'+purpose,graph['id'],owner_only=True)
         self.session.check()
-        if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
+        if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
         context=NativePreparationContext(self,owner,graph,model,composition,purpose,_key(purpose,key))
         result=dict(format='project_native_preparation_intent_v1',origin_catalog_id=self.session.project_id,
             actor_id=context.actor.actor_id,purpose=purpose,graph=dict(id=graph['id'],revision=graph['revision'],
@@ -362,13 +362,13 @@ class ProjectNativePreparation:
         import release_validation
         if adapter_for_graph(graph) is release_validation:
             self.session.check()
-            if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
+            if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
             value=owner.validate_graph(graph)
             return self.session.mutate('native_preparation.validate',graph_id,body,expected_checkpoint,key,
                 lambda:copy.deepcopy(value),lambda value,before:dict(records=[],result=value),scope='execute')
         with self._scope(owner,graph,None,None,'validation',expected_checkpoint,key) as context:
             value=owner.validate_graph(graph);context._check(graph['recipe'])
-            return self.session.mutate('native_preparation.validate',graph_id,body,self.session.snapshot['checkpoint'],key,
+            return self.session.mutate('native_preparation.validate',graph_id,body,self.session.summary['checkpoint'],key,
                 lambda:copy.deepcopy(value),lambda value,before:dict(records=[],result=value),scope='execute')
 
     @contextmanager
@@ -376,7 +376,7 @@ class ProjectNativePreparation:
         if self.db.in_transaction:_fail('Current native validation must precede admission.','unsupported')
         self.access.require('edit','native_preparation.admission',graph_id,owner_only=True)
         self.session.check()
-        if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
+        if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected project checkpoint changed.','stale_project')
         graph=owner.get(graph_id)
         if graph['revision']!=revision:_fail('Graph changed before native admission.','stale')
         import release_validation
@@ -413,7 +413,7 @@ class ProjectNativePreparation:
                     record=self.materials.capture_recipe_material(value,owner.material_path)
                     return dict(records=self.materials._coalesce([record,*self.materials.declarations(record),
                         *self.materials.capture_recipe_dependencies(record,before)]),result=value)
-                return self.session.mutate(operation,graph_id,body,self.session.snapshot['checkpoint'],key,
+                return self.session.mutate(operation,graph_id,body,self.session.summary['checkpoint'],key,
                     lambda:owner._retain_material(prepared),capture)
             finally:
                 if prepared['staging'].exists():shutil.rmtree(prepared['staging'])

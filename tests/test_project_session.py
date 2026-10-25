@@ -174,6 +174,23 @@ class ProjectSessionTests(unittest.TestCase):
         self.assertIn(('project_artifact', other['sha256']), ids)
         self.assertEqual(self.artifacts.read_blob({key: declaration[key] for key in ('sha256', 'bytes')}), 'Irreplaceable observation 山'.encode())
 
+    def test_scalar_summary_is_independent_and_tracks_the_bound_publication(self):
+        before = self.session.summary
+        arguments, _declaration, _calls = self.mutation()
+        self.call(arguments)
+        snapshot = self.session.snapshot
+        expected = {key: snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
+        self.assertNotEqual(before['checkpoint'], expected['checkpoint'])
+        original_copy = copy.deepcopy
+        def observe(value):
+            self.assertIsNot(value, self.session._snapshot, 'Summary must not clone the record graph')
+            return original_copy(value)
+        with patch('project_session.copy', SimpleNamespace(deepcopy=observe)):
+            first = self.session.summary
+            first['name'] = 'Caller mutation'
+            self.assertEqual(self.session.summary, expected)
+        self.assertEqual(self.session.snapshot['name'], expected['name'])
+
     def test_key_conflict_stale_and_current_auth_refuse_before_invoke(self):
         first, _declaration, _calls = self.mutation()
         self.call(first)

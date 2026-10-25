@@ -127,7 +127,7 @@ class ProjectMeasurements:
             self.session.check()
             table = MeasurementTable(raw)
             blob = dict(sha256=table.sha256, bytes=len(raw))
-            origin = self.session.snapshot['project_id']
+            origin = self.session.summary['project_id']
             request = dict(blob=blob, source=copy.deepcopy(source))
 
             def invoke():

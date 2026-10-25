@@ -1001,7 +1001,7 @@ class ProjectData:
         declaration = dict(format='project_artifact_v1', sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw))
         self.artifacts.publish_bytes(raw, declaration)
         self._pending_artifacts[declaration['sha256']] = declaration
-        return dict(artifact=dict(namespace=self.session.snapshot['project_id'], sha256=declaration['sha256']),
+        return dict(artifact=dict(namespace=self.session.summary['project_id'], sha256=declaration['sha256']),
                     media_type=media_type, kind=kind, role=role, preservation='unique', required_for=['inspect', 'release'])
 
     def _require_record(self, record_id, *, extended=False):

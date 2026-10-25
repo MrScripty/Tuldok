@@ -804,6 +804,12 @@ class ProjectStore:
         except OSError as exc:
             _io_error(exc, 'read project snapshot')
 
+    def summary(self):
+        """Return scalar metadata after the same complete freshness check."""
+        with self._mutex:
+            manifest, _records = self._current()
+            return {key: manifest[key] for key in ('project_id', 'name', 'checkpoint')}
+
     def snapshot(self):
         with self._mutex:
             manifest, records = self._current()
