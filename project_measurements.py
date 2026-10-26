@@ -138,7 +138,10 @@ class ProjectMeasurements:
         self.access, self.db = session.access, session.db
 
     def _documents(self):
-        return decode_records(self.session.snapshot['records'])
+        # Session adoption/publication already validates the complete candidate.
+        # Verify current canonical bytes, then own only the measurement family.
+        records = self.session.check_records(FAMILY)['records']
+        return {item['id']: item['document'] for item in records}
 
     def import_packet(self, raw, source, expected_checkpoint, key):
         """Called only after SourceAdapter's explicit current rooted capture."""
