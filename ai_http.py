@@ -88,6 +88,26 @@ def provider_error_detail(data, payload=None, headers=None):
     return 'Provider detail: ' + ' | '.join(messages)[:340] if messages else 'The provider returned no readable error message.'
 
 
+def pumas_error_detail(data, payload=None, headers=None):
+    """Pumas' OpenAI-compatible errors carry its (redacted) reason in `error.message`.
+
+    Returns '' for any body that is not a bounded `pumas_error`; that reason is
+    still passed through the same redaction as other provider diagnostics.
+    """
+    if not data or len(data) > MAX_ERROR_BODY:
+        return ''
+    try:
+        value = json.loads(data)
+    except (ValueError, UnicodeError):
+        return ''
+    error = value.get('error') if isinstance(value, dict) else None
+    if (not isinstance(error, dict) or error.get('type') != 'pumas_error'
+            or not isinstance(error.get('message'), str) or not error['message'].strip()):
+        return ''
+    detail = provider_error_detail(json.dumps({'message': error['message']}).encode(), payload, headers)
+    return 'Pumas reported: ' + detail.removeprefix('Provider detail: ') if detail.startswith('Provider detail: ') else ''
+
+
 def request_error_hint(data):
     """Classify bounded provider errors without exposing arbitrary response text."""
     try:
@@ -184,18 +204,24 @@ def request(base, path, payload=None, timeout=900, headers=None, label='Local mo
                         403: 'Check account permissions and provider restrictions.',
                         429: 'Rate limit reached; wait before trying again.'}.get(response.status,
                         'Check the selected model and structured-output support.')
-                if response.status == 400 or response.status >= 500:
-                    try:
-                        transport.settimeout(max(.001, min(2, deadline - time.monotonic())))
-                        error_data = response.read(MAX_ERROR_BODY + 1)
-                        specific = request_error_hint(error_data) if len(error_data) <= MAX_ERROR_BODY else ''
+                try:
+                    transport.settimeout(max(.001, min(2, deadline - time.monotonic())))
+                    error_data = response.read(MAX_ERROR_BODY + 1)
+                except (OSError, http.client.HTTPException):
+                    error_data = None
+                    if label == 'OpenRouter' and (response.status == 400 or response.status >= 500):
+                        hint = 'Could not read the provider error body within the diagnostic limit.'
+                if error_data is not None:
+                    specific = request_error_hint(error_data) if len(error_data) <= MAX_ERROR_BODY else ''
+                    pumas_detail = pumas_error_detail(error_data, payload, headers)
+                    if pumas_detail:
+                        # Pumas' own (redacted) reason is shown for every refusal status.
+                        hint = (specific + ' ' if specific else '') + pumas_detail
+                    elif response.status == 400 or response.status >= 500:
                         if label == 'OpenRouter' or response.status >= 500:
                             hint = provider_error_detail(error_data, payload, headers)
                         elif specific:
                             hint = specific
-                    except (OSError, http.client.HTTPException):
-                        if label == 'OpenRouter':
-                            hint = 'Could not read the provider error body within the diagnostic limit.'
                 raise CodexError(f'{label} returned HTTP {response.status}. {hint}',
                                  retryable=response.status in (502, 503, 504))
             yield response, transport, deadline

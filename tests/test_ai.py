@@ -68,6 +68,13 @@ class AITests(unittest.TestCase):
             self.data.suggest(dict(self.body,model='missing-projector'))
         self.assertIsNone(self.data.sample(self.sample['id'])['annotation'])
 
+    def test_pumas_refusal_reason_is_shown_for_any_status(self):
+        with self.assertRaisesRegex(ai_codex.CodexError, 'HTTP 409.*Pumas reported: model corners-test is served by profiles a, b'):
+            self.data.suggest(dict(self.body,model='pumas-conflict'))
+        with self.assertRaises(ai_codex.CodexError) as caught:
+            self.data.suggest(dict(self.body,model='plain-conflict'))
+        self.assertNotIn('private upstream wording',str(caught.exception))
+
     def test_openrouter_catalog_and_auth(self):
         with patch.object(ai_openrouter,'BASE_URL',self.url):
             catalog=ai.models(dict(provider='openrouter',api_key='test-key'))

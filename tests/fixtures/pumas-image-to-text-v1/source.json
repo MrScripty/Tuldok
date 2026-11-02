@@ -1,32 +1,45 @@
 {
   "producer_repository": "MrScripty/Pumas-Library",
-  "producer_pr": 68,
-  "producer_commit": "36c2aab2c885b8416fd4e39cf8c37c510596d6e4",
-  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/36c2aab2c885b8416fd4e39cf8c37c510596d6e4/docs/contracts/image-to-text-v0.8.md",
+  "producer_branch": "feat/v080-consumer-api",
+  "producer_commit": "4c79cd8e35db566b70caaa13d8d8f92265f5976e",
+  "producer_tree": "c646a01d5cc88814bdd2dd7e4565d9d1deda2203",
+  "contract_path": "docs/contracts/model-operations-v1.md",
+  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/4c79cd8e35db566b70caaa13d8d8f92265f5976e/docs/contracts/model-operations-v1.md",
+  "contract_sha256": "ab0f8a2c9b01f89a28d9a03ed3a9d9246eb6d1665ee2690a4fd2bcb8ff0f9d44",
   "fixture_kind": "Source-derived controlled consumer fixture; not actual native DTO export or model inference",
   "inspected_source_sha256": {
-    "types.rs": "875977948163c4256e60783d540337f117ec70edb1bb3636e7598e516587cca3",
-    "model_operations.rs": "7c4dfac738db1af29b576691ee929f873b141c7c8e9549e11bc44c4ee1e05c28",
-    "projection.rs": "444c500edd7ca3ea478d37e68212f8da9325028b87a35f6cdedb3e0e8aaed7a7",
-    "vision_tests.rs": "e2c175c8d1eab53227d1a91b0fca4621838081ec1d587325ff29312f93be41d6"
+    "types.rs": "dc4e11a3de059f268c7bbf0f2008b4d1710f5ca6e8c20d06608e67773579bbd0",
+    "model_operations.rs": "2ffd1b7e215fc0da59fbb70acfbd6a5beb2aa4370fb15546afc7a16f6b49ef16",
+    "projection.rs": "7357166a8ef9e73b29602323b6ef3d7cca3364b9a18ac0a4715f467e9080f9d8",
+    "vision_tests.rs": "ce340d0dfe576196330e85b6a92151e6d7329dd9878a0c39e52f0f8126a0dc5a"
   },
-  "schema_export_status": "Six actual production Rust DTO schemas were regenerated at schema_export_commit. The reviewed producer retains identical DTO definitions and schema dependencies; all six SHA-256 identities are unchanged. Handler and controlled-test source hashes are refreshed. The merged main source tree matches the reviewed producer exactly. Packaged/native qualification remains separate.",
   "inspected_source_native_blob_sha": {
-    "types.rs": "f7d70f90770deb124dc17dde5212d88b058d9e0e",
-    "model_operations.rs": "13d15ea4805cfc4df103951d974d76f8987d2964",
-    "projection.rs": "2a2061a0659a916998455bd22cbc55a7b7f4b0a6",
-    "vision_tests.rs": "531ff6b48c450800e860a5bc98ea7f00fe27fd3b"
+    "types.rs": "4b5414db04e62af6d1e39a3c39455ed6bc23e546",
+    "model_operations.rs": "64ed36cf3606f3028a3a2ec641d02790e71e56fc",
+    "projection.rs": "c1595de051af74c752e2553e6d2f3c5159c1f47e",
+    "vision_tests.rs": "4de87a94aba30ec82f19e49c4a8e47ef6de49654"
   },
-  "originating_vision_pr": 65,
+  "schema_export_status": "Six actual production Rust DTO schemas were regenerated at schema_export_commit with the export-contract feature. The controlled capability fixture follows that commit's descriptor construction for a llama.cpp vision serving with an 8192-token context. Packaged/native qualification remains separate.",
   "actual_dto_schema_sha256": {
-    "capabilities-response.schema.json": "b55b150f6958239e71d71f1b28fd36450907ddccf78544d52b64543ad4f2493d",
-    "capability-descriptor.schema.json": "eb25783123d38de5ff6aedf4cfa69de8f4f5f5c60799768b1b90da258b85f922",
-    "error-response.schema.json": "b024363b19d55a004d9577ad04d7e2ec9209d3d1193b7c53c46a7d6ed401e3be",
-    "modality-request.schema.json": "24b5f0a73a1252d31a3b22687a84f07b16a9d3ea700809a42e615e7f4e668704",
-    "operation-request.schema.json": "08f46f0e79c6cb288c413b008abbdfbedb1898d02fb98d396ef73faf8634c642",
-    "operation-response.schema.json": "20bf98dfd7292b1e3a99bf34ec524858351ba6f9d226f17257362e9ddf0500f8"
+    "capabilities-response.schema.json": "e1949bef5e7480f2808f2f1ec66e77adf438e44c6d000a04430bbf15d117a04e",
+    "capability-descriptor.schema.json": "c586a54fd8c0524dfcbae00dd298d5ee06bb70675c78e871b8a82a77c7ba5316",
+    "error-response.schema.json": "6b681ab7c7f224e2a35dddaeeb113e9ee2069b058904ced3390c17d1fe36c218",
+    "modality-request.schema.json": "feb94daa68db1003eb633161ef72431611c1cd5eb6c3096f20c2b69d4a6b9162",
+    "operation-request.schema.json": "a09fac92af50255d960d1d27ce570c7f89dd377bd7733cead30c4f7fea70a5c5",
+    "operation-response.schema.json": "17f366d747de6a0047d40a5e549af5abe7045a3a8f64d987c398b7786488d476"
   },
-  "schema_export_command": "PUMAS_IMAGE_CONTRACT_EXPORT_DIR=... ORT_SKIP_DOWNLOAD=1 CARGO_BUILD_JOBS=1 cargo test --locked --offline --manifest-path rust/Cargo.toml -p pumas-rpc --bin pumas-rpc --all-features handlers::model_operations::types::image_to_text_schema_tests::image_to_text_actual_dto_schema_export",
-  "producer_tree": "cf4d3ca3fbaa77ccd7ba2ebd10c7e9d5ba434ef4",
-  "schema_export_commit": "5c7d78d7e4eefe65f2395bb3ca2d7bc2ada83c2f"
+  "schema_export_command": "PUMAS_IMAGE_CONTRACT_EXPORT_DIR=... cargo test --locked -p pumas-rpc --features export-contract image_to_text_actual_dto_schema_export (from rust/)",
+  "schema_export_commit": "4c79cd8e35db566b70caaa13d8d8f92265f5976e",
+  "previous_producer": {
+    "producer_pr": 68,
+    "producer_commit": "36c2aab2c885b8416fd4e39cf8c37c510596d6e4",
+    "actual_dto_schema_sha256": {
+      "capabilities-response.schema.json": "b55b150f6958239e71d71f1b28fd36450907ddccf78544d52b64543ad4f2493d",
+      "capability-descriptor.schema.json": "eb25783123d38de5ff6aedf4cfa69de8f4f5f5c60799768b1b90da258b85f922",
+      "error-response.schema.json": "b024363b19d55a004d9577ad04d7e2ec9209d3d1193b7c53c46a7d6ed401e3be",
+      "modality-request.schema.json": "24b5f0a73a1252d31a3b22687a84f07b16a9d3ea700809a42e615e7f4e668704",
+      "operation-request.schema.json": "08f46f0e79c6cb288c413b008abbdfbedb1898d02fb98d396ef73faf8634c642",
+      "operation-response.schema.json": "20bf98dfd7292b1e3a99bf34ec524858351ba6f9d226f17257362e9ddf0500f8"
+    }
+  }
 }
