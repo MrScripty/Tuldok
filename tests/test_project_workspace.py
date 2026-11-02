@@ -76,8 +76,8 @@ class ProjectWorkspaceTests(unittest.TestCase):
         self.create()
         self.import_record('A retained record unrelated to the project summary')
         expected = self.state()
-        with patch.object(self.workspace._store, '_snapshot',
-                          wraps=self.workspace._store._snapshot) as snapshots:
+        with patch.object(self.workspace._store, 'snapshot',
+                          wraps=self.workspace._store.snapshot) as snapshots:
             observed = self.state()
         self.assertEqual(observed, expected)
         self.assertEqual(snapshots.call_count, 0,
@@ -126,20 +126,25 @@ class ProjectWorkspaceTests(unittest.TestCase):
         return caught.exception
 
     def unknown_import(self):
+        """Commit an edit whose PostgreSQL COMMIT acknowledgement is lost.
+
+        Records and projection rows commit together in the database working
+        copy, so the only uncertain outcome is a lost commit acknowledgement.
+        """
+        from contextlib import contextmanager
+        from metadata import CommitOutcomeUnknown
         before = self.state()
         arguments = self.mutation(before, asset=dict(text='Uncertain publication', groups=['owned']))
-        replace, fsync = project_store.os.replace, project_store.os.fsync
-        published = False
-        def after_replace(*args, **kwargs):
-            nonlocal published
-            replace(*args, **kwargs)
-            published = True
-        def fail_directory(fd):
-            if published and fd == self.workspace._store._meta_fd:
-                raise OSError(errno.EIO, 'actual checkpoint directory fsync failure')
-            return fsync(fd)
-        with patch.object(project_store.os, 'replace', side_effect=after_replace), patch.object(
-                project_store.os, 'fsync', side_effect=fail_directory):
+        db = self.workspace._projection.db
+        real = db.transaction
+        @contextmanager
+        def lost_acknowledgement(*args, **kwargs):
+            outermost = not db._rollback
+            with real(*args, **kwargs) as value:
+                yield value
+            if outermost:
+                raise CommitOutcomeUnknown('fixture lost COMMIT acknowledgement')
+        with patch.object(db, 'transaction', lost_acknowledgement):
             self.assert_code('unknown', 'import_text', arguments)
         return before, arguments
 
@@ -167,20 +172,15 @@ class ProjectWorkspaceTests(unittest.TestCase):
         with self.owner.bound(self.workspace):
             self.assertEqual(len(self.workspace._text.records()['items']), 1)
 
-    def test_unknown_recovery_does_not_succeed_until_directory_sync_failure_clears(self):
+    def test_unknown_recovery_does_not_succeed_until_the_working_copy_is_available(self):
         self.create()
         _before, edit = self.unknown_import()
         recovery = self.state()
         old_projection = self.workspace._projection
-        metadata = (self.external / 'alpha/.tuldok').stat()
-        fsync = project_store.os.fsync
-        def fail_metadata_sync(fd):
-            info = os.fstat(fd)
-            if (info.st_dev, info.st_ino) == (metadata.st_dev, metadata.st_ino):
-                raise OSError(errno.EIO, 'persistent checkpoint directory fsync failure')
-            return fsync(fd)
         reopen = self.mutation(recovery, root='fixture', directory='alpha')
-        with patch.object(project_store.os, 'fsync', side_effect=fail_metadata_sync):
+        from project_working_store import WorkingProjectStore
+        with patch.object(WorkingProjectStore, 'open',
+                          side_effect=project_store.ProjectStoreError('Local PostgreSQL is unavailable.', 'unavailable', 503)):
             self.assert_code('unavailable', 'open', reopen)
             self.assertEqual(self.state(), recovery)
             self.assertIs(self.workspace._projection, old_projection)
@@ -208,7 +208,7 @@ class ProjectWorkspaceTests(unittest.TestCase):
         self.assertEqual(selected['project']['project_id'], expected['project_id'])
         self.assertEqual(selected['project']['checkpoint'], expected['checkpoint'])
 
-    def test_real_sql_commit_failure_reports_durable_receipt_and_explicit_open_restores(self):
+    def test_rejected_sql_commit_rolls_back_records_and_projection_together(self):
         self.create()
         before = self.state()
         projection = self.workspace._projection
@@ -216,22 +216,17 @@ class ProjectWorkspaceTests(unittest.TestCase):
             BEGIN RAISE EXCEPTION 'fixture deferred rejection' USING ERRCODE='23514'; END $$""")
         projection.execute("""CREATE CONSTRAINT TRIGGER fixture_workspace_commit_failure AFTER INSERT ON workbench_records
             DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION fixture_workspace_refuse_commit()""")
-        arguments = self.mutation(before, asset=dict(text='Durable despite rejected SQL commit', groups=['owned']))
-        failure = self.assert_code('projection_unavailable', 'import_text', arguments)
-        canonical = self.workspace._store.snapshot()
-        self.assertEqual(failure.receipt, dict(committed=True, selected=True, project_id=canonical['project_id'],
-                         checkpoint=canonical['checkpoint'], request_key=arguments['request_key']))
+        arguments = self.mutation(before, asset=dict(text='Rejected with its SQL commit', groups=['owned']))
+        with self.assertRaises(Exception):
+            self.call('import_text', arguments)
+        # Nothing was committed: same checkpoint, no records, still open.
+        self.assertEqual(self.state(), before)
+        self.assertEqual(self.workspace._store.summary()['checkpoint'], before['project']['checkpoint'])
         self.assertEqual(projection.execute('SELECT count(*) FROM workbench_records').fetchone()[0], 0)
-        recovery = self.state()
-        self.assertEqual(recovery['state'], 'recovery_required')
-        self.assertEqual(recovery['project'], before['project'])
-        self.assertEqual(recovery['recovery']['reason'], 'projection_unavailable')
-        opened = self.call('open', self.mutation(recovery, root='fixture', directory='alpha'))
-        self.assertEqual(opened['project']['checkpoint'], canonical['checkpoint'])
-        result = self.call('import_text', dict(arguments, binding=opened['binding']))
-        self.assertEqual(result['record']['text'], 'Durable despite rejected SQL commit')
-        self.assertEqual(self.workspace._projection.execute('SELECT count(*) FROM workbench_records').fetchone()[0], 1)
-        self.assert_code('stale_project', 'import_text', arguments)
+        projection.execute('DROP TRIGGER fixture_workspace_commit_failure ON workbench_records')
+        result = self.call('import_text', arguments)
+        self.assertEqual(result['record']['text'], 'Rejected with its SQL commit')
+        self.assertEqual(projection.execute('SELECT count(*) FROM workbench_records').fetchone()[0], 1)
 
     def test_failed_reconstruction_keeps_recovery_generation_and_old_projection(self):
         self.create()

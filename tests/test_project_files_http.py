@@ -282,57 +282,39 @@ class ProjectFilesHTTP(unittest.TestCase):
             self.assertEqual(canonical_bytes(self.external), before)
             self.assertEqual(list((self.path / 'control').rglob('*.png')), [])
 
-    def test_real_deferred_sql_failure_returns_committed_receipt_and_explicit_recovery(self):
+    def test_real_deferred_sql_failure_rolls_back_the_edit_and_a_retry_succeeds(self):
         self.create()
         selected = self.state()
         projection_schema = self.workspace._projection.schema
-        # A real deferred PostgreSQL trigger fails the outer SQL COMMIT, after
-        # canonical publication. It exists only in this disposable projection.
+        # A real deferred PostgreSQL trigger fails the outer SQL COMMIT. Records
+        # and projection rows share that transaction, so both roll back.
         with psycopg.connect(connection_info(), autocommit=True) as connection:
             function = sql.Identifier(projection_schema, 'qa_reject_projection_commit')
             table = sql.Identifier(projection_schema, 'workbench_records')
             connection.execute(sql.SQL('''CREATE FUNCTION {}() RETURNS trigger LANGUAGE plpgsql
-                AS $$ BEGIN RAISE EXCEPTION 'Disposable QA deferred commit failure'; END; $$''').format(function))
+                AS $$ BEGIN RAISE EXCEPTION 'Disposable QA deferred commit failure' USING ERRCODE='23514'; END; $$''').format(function))
             connection.execute(sql.SQL('''CREATE CONSTRAINT TRIGGER qa_reject_projection_commit
                 AFTER INSERT ON {} DEFERRABLE INITIALLY DEFERRED
                 FOR EACH ROW EXECUTE FUNCTION {}()''').format(table, function))
-        asset = {'name': 'Committed despite unavailable SQL 山', 'text': TEXT,
+        asset = {'name': 'Rejected with its SQL commit 山', 'text': TEXT,
                  'groups': ['recovery'], 'parents': [], 'rights': 'Owned synthetic recovery fixture'}
         original = self.envelope(selected, asset=asset)
+        before = canonical_bytes(self.external / 'alpha')
         status, error = self.request(API + '/import-text', original)
-        self.assertEqual(status, 503, error)
-        self.assertEqual(error['code'], 'projection_unavailable')
-        receipt = error['receipt']
-        self.assertEqual(receipt['committed'], True)
-        self.assertEqual(receipt['selected'], True)
-        self.assertEqual(receipt['project_id'], selected['project']['project_id'])
-        self.assertEqual(receipt['request_key'], original['request_key'])
-        self.assertNotEqual(receipt['checkpoint'], selected['project']['checkpoint'])
-        before_recovery = canonical_bytes(self.external / 'alpha')
-        manifest = json.loads(before_recovery['.tuldok/project.json'])
-        self.assertEqual(manifest['checkpoint'], receipt['checkpoint'])
-        recovery = self.state()
-        self.assertEqual(recovery['state'], 'recovery_required')
-        self.assertEqual(recovery['available_actions'], ['open'])
-        self.assertEqual(recovery['recovery']['reason'], 'projection_unavailable')
-        status, denied = self.request(API + '/save', self.envelope(recovery))
-        self.assertEqual(status, 503, denied)
-        self.assertEqual(canonical_bytes(self.external / 'alpha'), before_recovery)
-        self.action('open', recovery, root='fixture', directory='alpha')
-        recovered = self.state()
-        self.assertEqual(recovered['state'], 'open')
-        self.assertEqual(recovered['project']['checkpoint'], receipt['checkpoint'])
-        self.assertNotEqual(self.workspace._projection.schema, projection_schema)
-        records = self.records(recovered)
+        self.assertEqual(status, 409, error)
+        self.assertEqual(error['code'], 'rejected')
+        self.assertEqual(self.state(), selected, 'Nothing changed; the project stays open and current')
+        self.assertEqual(self.records(selected), [])
+        self.assertEqual(canonical_bytes(self.external / 'alpha'), before)
+        with psycopg.connect(connection_info(), autocommit=True) as connection:
+            connection.execute(sql.SQL('DROP TRIGGER qa_reject_projection_commit ON {}').format(
+                sql.Identifier(projection_schema, 'workbench_records')))
+        status, imported = self.request(API + '/import-text', original)
+        self.assertEqual(status, 200, imported)
+        records = self.records()
         self.assertEqual(len(records), 1)
         self.assertEqual(self.detail(records[0]['id'])['record']['text'], TEXT)
-        # Reconcile the exact durable request with its old checkpoint and the
-        # new process binding. A committed operation cannot be duplicated.
-        status, replayed = self.request(API + '/import-text', dict(original, binding=recovered['binding']))
-        self.assertEqual(status, 200, replayed)
-        self.assertEqual(replayed['record']['id'], records[0]['id'])
-        self.assertEqual(len(self.records()), 1)
-        self.assertEqual(canonical_bytes(self.external / 'alpha'), before_recovery)
+        self.assertEqual(canonical_bytes(self.external / 'alpha'), before, 'Edits are not written until Save')
 
     @unittest.skipUnless(importlib.util.find_spec('mcp') and importlib.util.find_spec('anyio'),
                          'Requires the pinned optional MCP environment for real adapter acceptance')

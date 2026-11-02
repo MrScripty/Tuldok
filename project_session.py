@@ -155,12 +155,26 @@ class ProjectSession:
         if outcome not in ('committed', 'rolled_back', 'unknown'):
             raise ValueError('Invalid project SQL outcome.')
         pending, self._pending_observation = self._pending_observation, None
+        if pending is not None and self._atomic_store() and outcome == 'rolled_back':
+            # The record commit rolled back with the SQL transaction, so the
+            # bound checkpoint is still exactly current. Background local
+            # effects (for example a live phase) may have advanced, so their
+            # custody is reconciled explicitly before further use. A foreground
+            # mutate reports its own definite rollback and stays available.
+            if not self._foreground_publication:
+                self.available = False
+            return
         if pending is not None:
             self._snapshot = pending
             if outcome != 'committed':
                 self.available = False
         if outcome == 'unknown':
             self.available = False
+
+    def _atomic_store(self):
+        """Whether record commits share this session's SQL transactions."""
+        bound = getattr(self.store, '_db', None)
+        return bound is not None and bound is self.db
 
     def reconcile_selection(self, snapshot):
         """Bind only this owner's selected or uncertain publication, never a checkout.
@@ -443,6 +457,19 @@ class ProjectSession:
                 self._remember_validated(committed['checkpoint'])
                 return copy.deepcopy(captured['result'])
             except BaseException as error:
+                if committed is not None and self._atomic_store():
+                    from metadata import CommitOutcomeUnknown
+                    if isinstance(error, CommitOutcomeUnknown):
+                        # PostgreSQL may or may not have committed both the
+                        # records and the projection; reopening reads the outcome.
+                        self.available = False
+                        raise ProjectSessionError('PostgreSQL did not confirm this edit. Reopen the project to see whether it was saved.',
+                                                  'unknown', 503) from error
+                    # Records and projection rolled back together; nothing changed.
+                    if isinstance(error, ProjectSessionError):
+                        raise
+                    raise ProjectSessionError('PostgreSQL rejected this edit; nothing was saved.',
+                                              'rejected', 409) from error
                 if committed is not None:
                     self._snapshot, self.available = committed, False
                     failure = ProjectSessionError('Canonical operation committed; reopen to reconstruct the projection.',

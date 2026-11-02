@@ -158,7 +158,7 @@ class ProjectRuntimeRecoveryHTTP(unittest.TestCase):
         self.assertEqual(self.call('runtime_status',capture_key=key)['state'],'abandoned')
         self.action('save');self.action('close')
 
-    def test_final_sql_failure_retry_requires_exact_public_view_and_never_recopies(self):
+    def test_final_sql_failure_rolls_back_and_an_exact_retry_completes_without_recopying(self):
         projection=self.workspace._projection;db=projection.db;key='lost-final-sql'
         db.execute('CREATE TABLE runtime_ack_parent(id INTEGER PRIMARY KEY)')
         db.execute('CREATE TABLE runtime_ack_child(id INTEGER REFERENCES runtime_ack_parent(id) DEFERRABLE INITIALLY DEFERRED)')
@@ -170,20 +170,23 @@ class ProjectRuntimeRecoveryHTTP(unittest.TestCase):
             return mutate(operation,target,body,checkpoint,request_key,bad,capture,**kwargs)
         with patch.object(projection.session,'mutate',side_effect=fault):
             status,error=self.transport('runtime_capture',self.capture_arguments(key))
-        self.assertEqual(status,503,error);self.assertFalse(projection.session.available)
-        state=self.state();self.assertEqual(state['state'],'recovery_required')
-        arguments=self.capture_arguments(key);before=projection.session.snapshot
-        for change in (dict(binding='f'*32),dict(expected_checkpoint='f'*64)):
-            with patch.object(projection.runtime,'recover_capture',side_effect=AssertionError('Rejected public view reached recovery')):
-                status,error=self.transport('runtime_capture',dict(arguments,**change))
-            self.assertEqual(status,409,error);self.assertEqual(error['code'],'stale_project')
-        self.assertEqual(projection.session.snapshot,before);self.assertTrue(projection.custody.has_pending)
-        with patch.object(projection.runtime.owner,'create',side_effect=AssertionError('Do not recopy committed runtime')):
+        # The final records and projection rows rolled back together; only the
+        # previously committed intent remains (its receipt is reported).
+        self.assertEqual(status,409,error);self.assertEqual(error['code'],'rejected')
+        self.assertTrue(error['receipt']['committed'])
+        self.assertTrue(projection.session.available)
+        self.assertEqual(self.state()['state'],'open')
+        self.assertNotIn(key,projection.session.operations())
+        arguments=self.capture_arguments(key)
+        status,error=self.transport('runtime_capture',dict(arguments,binding='f'*32))
+        self.assertEqual(status,409,error);self.assertEqual(error['code'],'stale_project')
+        with patch.object(projection.runtime.owner,'create',side_effect=AssertionError('Do not recopy the copied runtime')):
             status,recovered=self.transport('runtime_capture',arguments)
-        self.assertEqual(status,200,recovered);self.assertEqual(recovered['binding'],state['binding'])
+        self.assertEqual(status,200,recovered)
         self.assertEqual(self.state()['state'],'open');self.assertTrue(projection.session.available)
-        self.assertFalse(projection.custody.has_pending)
         self.assertEqual(self.call('runtime_status',capture_key=key)['state'],'captured')
+        receipts=[r for r in projection.session.operations().values() if r['operation']=='runtime.capture']
+        self.assertEqual(len(receipts),1)
         self.action('close')
 
     def test_original_physical_cache_recovery_and_foreign_intent_cannot_regenerate(self):
@@ -195,6 +198,9 @@ class ProjectRuntimeRecoveryHTTP(unittest.TestCase):
             status,error=self.transport('runtime_capture',self.capture_arguments(key))
         self.assertEqual(status,503,error);physical=projection.db.projection_id
         self.assertTrue((projection.runtime.owner.path/self.inventory['inventory_sha256']).is_dir())
+        # The committed intent was saved to the folder before it was copied
+        # (the workspace itself refuses Save while recovery is required).
+        original._store.save(original._store.summary()['checkpoint'])
         shutil.copytree(self.external/'alpha',self.external/'clone',ignore=shutil.ignore_patterns('.tuldok-local'))
         self.start_application(self.path/'foreign-control',sources={'inert-fixture':self.config})
         self.action('open',root='fixture',directory='clone')

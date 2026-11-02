@@ -404,6 +404,8 @@ class ProjectFilesM2HTTP(unittest.TestCase):
         status,admitted=self.transport('measurement_import',import_args)
         self.assertEqual(status,200,admitted)
         origin=admitted['project_id'];selection=dict(origin_catalog_id=origin,packet_sha256=digest)
+        # Edits stay in the database working copy until an explicit Save.
+        self.action('save')
         canonical=m1.canonical_bytes(self.external/'alpha')
         self.assertEqual(self.transport('measurement_import',import_args)[1],admitted)
         self.assertEqual(m1.canonical_bytes(self.external/'alpha'),canonical)
