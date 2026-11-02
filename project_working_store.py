@@ -29,7 +29,7 @@ from psycopg import sql
 from metadata import _key, connection_info
 from project_store import (FORMAT, MAX_RECORD_BYTES, MAX_RECORDS, MAX_TOTAL_BYTES, SUPPORTED_FORMATS,
                            ProjectStoreError, _RecordsDigest, _decode, _digest, _domain_format, _encode,
-                           _fail, _identifier, _keys, _manifest_raw, _request, _sha)
+                           _fail, _identifier, _keys, _manifest_raw, _request, _sha, envelope_digest)
 
 WORKING_ID = re.compile(r'^[a-f0-9]{32}$')
 _TABLES = (
@@ -41,6 +41,10 @@ _TABLES = (
            family text COLLATE "C" NOT NULL, id text COLLATE "C" NOT NULL,
            format text NOT NULL, bytes integer NOT NULL, sha256 text NOT NULL,
            raw bytea NOT NULL, PRIMARY KEY (family, id))''',
+)
+_MIGRATIONS = (
+    # SHA256 of the canonical {family, id, document} envelope (see envelope_digest).
+    'ALTER TABLE {schema}.records ADD COLUMN IF NOT EXISTS envelope_sha256 text',
 )
 _ORDER = sql.SQL('ORDER BY family COLLATE "C", id COLLATE "C"')
 
@@ -68,7 +72,7 @@ class WorkingProjectStore:
                 raise ProjectStoreError('This project is already open in another Tuldok session.', 'busy', 409)
             with self._own.transaction():
                 self._own.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(self.schema)))
-                for statement in _TABLES:
+                for statement in (*_TABLES, *_MIGRATIONS):
                     self._own.execute(sql.SQL(statement).format(schema=sql.Identifier(self.schema)))
         except BaseException:
             self._own.close()
@@ -79,8 +83,29 @@ class WorkingProjectStore:
 
     def bind(self, db):
         """Use the projection database's connection and transactions."""
-        with self._mutex:
+        with self._locked():
             self._db = db
+
+    @contextmanager
+    def _locked(self):
+        """Store ownership in one global order: projection lock, then this mutex.
+
+        A bound projection connection is shared with Session/owner threads that
+        hold the projection lock across their transactions, so store work never
+        takes its own mutex first and then waits for that lock.
+        """
+        if self._db is not None:
+            with self._catalog_lock(), self._mutex:
+                yield
+        else:
+            with self._mutex:
+                yield
+
+    def _catalog_lock(self):
+        # The projection may install a composite host -> session -> catalog
+        # lock; the store is innermost, so it takes only the catalog lock.
+        lock = self._db.lock
+        return getattr(lock, 'projection', lock)
 
     def _joined(self):
         # Join the projection only inside its open transaction (Session.mutate,
@@ -95,12 +120,12 @@ class WorkingProjectStore:
     def _guard(self):
         # A bound projection connection is shared; its catalog lock serializes
         # every command and transaction on it across threads.
-        return self._db.lock if self._joined() else nullcontext()
+        return self._catalog_lock() if self._joined() else nullcontext()
 
     @contextmanager
     def _transaction(self):
         if self._joined():
-            with self._db.lock, self._db.transaction():
+            with self._catalog_lock(), self._db.transaction():
                 yield
         else:
             with self._own.transaction():
@@ -149,7 +174,7 @@ class WorkingProjectStore:
 
     def _import(self, raw, manifest):
         """Bring the working copy to the folder's checkpoint, reading only new revisions."""
-        with self._mutex, self._transaction():
+        with self._locked(), self._transaction():
             existing = {(row[0], row[1]): row[2] for row in
                         self._execute(self._q('SELECT family, id, sha256 FROM {records}'))}
             wanted = {}
@@ -169,10 +194,11 @@ class WorkingProjectStore:
                 if type(document) is not dict or document.get('format') != entry['format']:
                     _fail('Domain document format disagrees with its inventory.')
                 self._execute(self._q(
-                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw) VALUES (%s,%s,%s,%s,%s,%s) '
+                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw, envelope_sha256) VALUES (%s,%s,%s,%s,%s,%s,%s) '
                     'ON CONFLICT (family, id) DO UPDATE SET format=EXCLUDED.format, bytes=EXCLUDED.bytes, '
-                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw'),
-                    (entry['family'], entry['id'], entry['format'], entry['bytes'], entry['sha256'], body))
+                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw, envelope_sha256=EXCLUDED.envelope_sha256'),
+                    (entry['family'], entry['id'], entry['format'], entry['bytes'], entry['sha256'], body,
+                     envelope_digest(entry['family'], entry['id'], body)))
             for family, record_id in set(existing) - set(wanted):
                 self._execute(self._q('DELETE FROM {records} WHERE family=%s AND id=%s'), (family, record_id))
             if self._records_digest() != manifest['receipts'][-1]['records_sha256']:
@@ -256,18 +282,18 @@ class WorkingProjectStore:
         return self._folder._root_fd
 
     def summary(self):
-        with self._mutex:
+        with self._locked():
             state = self._state()
             return {key: state[key] for key in ('project_id', 'name', 'checkpoint')}
 
     def dirty(self):
         """Whether the working copy has changes not yet saved to the folder."""
-        with self._mutex:
+        with self._locked():
             return self._state()['dirty']
 
     def snapshot(self):
         """Complete independent record set (costly for large projects)."""
-        with self._mutex:
+        with self._locked():
             state = self._state()
             records = [dict(family=f, id=i, document=json.loads(raw))
                        for f, i, raw in self._rows(self._q('SELECT family, id, raw FROM {records} {order}'))]
@@ -278,9 +304,28 @@ class WorkingProjectStore:
         """Independent decoded envelopes of the selected families, in record order."""
         if not families or any(type(family) is not str for family in families):
             raise TypeError('Select one or more record families by name.')
-        with self._mutex:
+        with self._locked():
             return [dict(family=f, id=i, document=json.loads(raw)) for f, i, raw in self._rows(
                 self._q('SELECT family, id, raw FROM {records} WHERE family = ANY(%s) {order}'), (list(families),))]
+
+    def envelope_digests(self):
+        """(family, id) -> canonical envelope SHA256 for every stored revision.
+
+        Rows imported before this column existed are filled once from their
+        stored canonical bytes.
+        """
+        with self._locked():
+            missing = self._execute(self._q('SELECT count(*) FROM {records} WHERE envelope_sha256 IS NULL')).fetchone()[0]
+            if missing:
+                with self._transaction():
+                    digests = [(envelope_digest(family, record_id, raw), family, record_id) for family, record_id, raw
+                               in self._rows(self._q('SELECT family, id, raw FROM {records} WHERE envelope_sha256 IS NULL {order}'))]
+                    with self._guard():
+                        with self._connection().cursor() as cursor:
+                            cursor.executemany(self._q('UPDATE {records} SET envelope_sha256=%s WHERE family=%s AND id=%s'),
+                                               digests)
+            return {(row[0], row[1]): row[2] for row in
+                    self._execute(self._q('SELECT family, id, envelope_sha256 FROM {records}'))}
 
     def records_view(self, *families):
         """Every record identity in order; documents decoded only for selected families.
@@ -290,7 +335,7 @@ class WorkingProjectStore:
         """
         if not families or any(type(family) is not str for family in families):
             raise TypeError('Select one or more record families by name.')
-        with self._mutex, self._guard():
+        with self._locked():
             connection = self._connection()
             idle = connection.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
             result = []
@@ -305,14 +350,14 @@ class WorkingProjectStore:
             return result
 
     def record(self, family, record_id):
-        with self._mutex:
+        with self._locked():
             row = self._execute(self._q('SELECT raw FROM {records} WHERE family=%s AND id=%s'),
                                 (family, record_id)).fetchone()
             return None if row is None else dict(family=family, id=record_id, document=json.loads(bytes(row[0])))
 
     def reconcile(self, request_key, request_sha256):
         _request(request_key, request_sha256)
-        with self._mutex:
+        with self._locked():
             for receipt in self._state()['receipts']:
                 if receipt['request_key'] == request_key:
                     if receipt['request_sha256'] != request_sha256:
@@ -333,7 +378,7 @@ class WorkingProjectStore:
         _digest(expected_checkpoint, 'Expected checkpoint')
         if type(records) is not list or len(records) > MAX_RECORDS:
             _fail('Project records must be a bounded list.')
-        with self._mutex, self._transaction():
+        with self._locked(), self._transaction():
             state = self._state()
             inventory = {(f, i): (fmt, size, sha) for f, i, fmt, size, sha in self._inventory()}
             candidates = {}
@@ -387,9 +432,10 @@ class WorkingProjectStore:
             for (family, identity), raw in replacements.items():
                 fmt, size, digest = entries[(family, identity)]
                 self._execute(self._q(
-                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw) VALUES (%s,%s,%s,%s,%s,%s) '
+                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw, envelope_sha256) VALUES (%s,%s,%s,%s,%s,%s,%s) '
                     'ON CONFLICT (family, id) DO UPDATE SET format=EXCLUDED.format, bytes=EXCLUDED.bytes, '
-                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw'), (family, identity, fmt, size, digest, raw))
+                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw, envelope_sha256=EXCLUDED.envelope_sha256'),
+                    (family, identity, fmt, size, digest, raw, envelope_digest(family, identity, raw)))
             for family, identity in set(inventory) - set(candidates):
                 self._execute(self._q('DELETE FROM {records} WHERE family=%s AND id=%s'), (family, identity))
             self._write_state(manifest, external_sha256=state['external_sha256'], dirty=True)
@@ -401,7 +447,7 @@ class WorkingProjectStore:
     def save(self, expected_checkpoint):
         """Export the working copy to the external folder (the only folder write)."""
         _digest(expected_checkpoint, 'Expected checkpoint')
-        with self._mutex:
+        with self._locked():
             state = self._state()
             if expected_checkpoint != state['checkpoint']:
                 _fail('Expected project checkpoint is stale.', 'stale', 409)
@@ -432,7 +478,7 @@ class WorkingProjectStore:
 
     def verify_records(self):
         """Re-check every stored revision's bytes against its SHA256 and length."""
-        with self._mutex:
+        with self._locked():
             inventory = {(f, i): (size, sha) for f, i, _fmt, size, sha in self._inventory()}
             for family, record_id, raw in self._rows(self._q('SELECT family, id, raw FROM {records} {order}')):
                 size, digest = inventory[(family, record_id)]
@@ -448,7 +494,7 @@ class WorkingProjectStore:
         """Borrow the external folder's physical root (payload artifacts live there)."""
         if type(verify_after) is not bool:
             _fail('Root read verification must be an explicit boolean.')
-        with self._mutex:
+        with self._locked():
             before = self._state()['checkpoint']
             descriptor = os.dup(self._folder._root_fd)
             try:
@@ -460,6 +506,7 @@ class WorkingProjectStore:
                 os.close(descriptor)
 
     def close(self):
+        # The projection (and its lock's connection) may already be closed.
         with self._mutex:
             if self._closed:
                 return

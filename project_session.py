@@ -120,12 +120,27 @@ class ProjectSession:
                 snapshot = self.store.snapshot()
                 if snapshot['checkpoint'] != summary['checkpoint']:
                     raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
-                self._validated(snapshot['records'], snapshot['checkpoint'])
+                with self._known_envelopes(snapshot['records']):
+                    self._validated(snapshot['records'], snapshot['checkpoint'])
                 del snapshot
             if self.store.summary()['checkpoint'] != summary['checkpoint']:
                 raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
             self._bind(summary)
             self.available = True
+
+    def _known_envelopes(self, records, changed=frozenset()):
+        """Validation context with stored envelope digests for unchanged records."""
+        from contextlib import nullcontext
+        if not self._lazy or not callable(getattr(self.store, 'envelope_digests', None)):
+            return nullcontext()
+        from project_composition import known_envelope_digests
+        digests = self.store.envelope_digests()
+        known = {}
+        for record in records:
+            identity = (record['family'], record['id'])
+            if identity not in changed and identity in digests and digests[identity] is not None:
+                known[id(record)] = (record, digests[identity])
+        return known_envelope_digests(known)
 
     def _bind(self, snapshot):
         """Bind a committed checkpoint; a lazy session keeps only its metadata."""
@@ -178,7 +193,8 @@ class ProjectSession:
         current = self.check()
         merged = self._merge(current['records'], records)
         candidate = [merged[identity] for identity in sorted(merged)]
-        self._validated(candidate)
+        with self._known_envelopes(candidate, {(item['family'], item['id']) for item in records}):
+            self._validated(candidate)
         if self.publication_intent is not None:
             self.publication_intent(copy.deepcopy(current), copy.deepcopy(candidate), key, digest)
         try:
@@ -513,7 +529,8 @@ class ProjectSession:
                     identity = (OPERATION_FAMILY, self.project_id + '.' + hashlib.sha256(key.encode('utf-8')).hexdigest())
                     merged[identity] = dict(family=identity[0], id=identity[1], document=document)
                     records = [merged[identity] for identity in sorted(merged)]
-                    self._validated(records)
+                    with self._known_envelopes(records, {(item['family'], item['id']) for item in upserts} | {identity}):
+                        self._validated(records)
                     # Unique payloads have already reached artifact custody;
                     # SQL callbacks can delete only disposable projection files.
                     attempted_records = records

@@ -200,6 +200,25 @@ class WorkingProjectStoreTests(unittest.TestCase):
             store.commit(changed, self.initial['checkpoint'], 'later', '5' * 64)
         self.assertEqual(caught.exception.code, 'stale')
 
+    def test_envelope_digests_equal_canonical_envelope_hashes(self):
+        from project_composition import _record_sha, known_envelope_digests
+        store = self.open()
+        changed = copy.deepcopy(self.records)
+        changed[0]['document']['text'] = 'Committed after import'
+        store.commit(changed, self.initial['checkpoint'], 'edit', '6' * 64)
+        digests = store.envelope_digests()
+        snapshot = store.snapshot()
+        self.assertEqual(set(digests), {(r['family'], r['id']) for r in snapshot['records']})
+        for record in snapshot['records']:
+            self.assertEqual(digests[(record['family'], record['id'])], _record_sha(record))
+        # A supplied digest applies only to that exact object.
+        record = snapshot['records'][0]
+        with known_envelope_digests({id(record): (record, 'f' * 64)}):
+            self.assertEqual(_record_sha(record), 'f' * 64)
+            self.assertNotEqual(_record_sha(copy.deepcopy(record)), 'f' * 64)
+        store._execute(store._q('UPDATE {records} SET envelope_sha256=NULL'))
+        self.assertEqual(store.envelope_digests(), digests, 'Missing digests are recomputed from stored bytes')
+
     def test_verify_records_detects_working_copy_corruption(self):
         store = self.open()
         store.verify_records()

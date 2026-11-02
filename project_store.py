@@ -286,6 +286,22 @@ class _RecordsDigest:
         return final.hexdigest()
 
 
+def envelope_digest(family, identity, raw):
+    """SHA256 of _encode(dict(family, id, document)) from the document's canonical bytes.
+
+    Canonical JSON has no literal newline inside strings, so the document nested
+    one level deep differs from its standalone encoding only by two spaces after
+    each newline.
+    """
+    if not raw.endswith(b'\n'):
+        _fail('Canonical record bytes must end with LF.')
+    digest = hashlib.sha256(b'{\n  "document": ')
+    digest.update(raw[:-1].replace(b'\n', b'\n  '))
+    digest.update(b',\n  "family": ' + json.dumps(family, ensure_ascii=False).encode('utf-8'))
+    digest.update(b',\n  "id": ' + json.dumps(identity, ensure_ascii=False).encode('utf-8') + b'\n}\n')
+    return digest.hexdigest()
+
+
 def _records_digest(rows):
     """Digest of (family, id, canonical raw) rows; see _RecordsDigest."""
     digest = _RecordsDigest()

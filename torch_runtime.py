@@ -110,6 +110,15 @@ def inventory(configuration):
     return validate_manifest(value)
 
 
+def _contained_path(path, roots):
+    """Canonical absolute path under one of roots (one Path construction)."""
+    if not (type(path) is str and 0<len(path)<=4096 and '\0' not in path):
+        return False
+    candidate=Path(path)
+    return (candidate.is_absolute() and '..' not in candidate.parts and str(candidate)==path
+            and any(candidate.is_relative_to(root) for root in roots))
+
+
 def validate_manifest(value):
     require(type(value) is dict and set(value)=={'schema_version','profile','python','python_root','site_packages',
             'python_version','stdlib','packages','files','file_links','total_bytes','assumption'},'closed manifest')
@@ -124,11 +133,11 @@ def validate_manifest(value):
     require(type(value['packages']) is dict and set(value['packages'])=={'torch','numpy'}
             and all(type(v) is str and 0<len(v)<128 for v in value['packages'].values()),'package version inventory')
     files=value['files'];require(type(files) is list and 1<=len(files)<=MAX_FILES,'file inventory bound')
+    roots=(Path(value['python_root']),Path(value['site_packages']))
     seen=[];total=0
     for row in files:
         require(type(row) is dict and set(row)=={'path','bytes','sha256'},'asset record')
-        path=row['path'];require(type(path) is str and 0<len(path)<=4096 and '\0' not in path and Path(path).is_absolute() and '..' not in Path(path).parts
-              and str(Path(path))==path and any(Path(path).is_relative_to(value[root]) for root in ('python_root','site_packages')),'contained asset')
+        path=row['path'];require(_contained_path(path,roots),'contained asset')
         require(type(row['bytes']) is int and 0<=row['bytes']<=MAX_FILE and type(row['sha256']) is str
                 and re.fullmatch('[a-f0-9]{64}',row['sha256']) is not None,'asset size/hash')
         seen.append(path);total+=row['bytes']
@@ -138,10 +147,7 @@ def validate_manifest(value):
     for link in links:
         require(type(link) is dict and set(link)=={'path','target'},'asset link record')
         path=link['path']
-        require(type(path) is str and 0<len(path)<=4096 and '\0' not in path and Path(path).is_absolute()
-                and '..' not in Path(path).parts and str(Path(path))==path
-                and any(Path(path).is_relative_to(value[root]) for root in ('python_root','site_packages')),
-                'contained asset link')
+        require(_contained_path(path,roots),'contained asset link')
         require(type(link['target']) is str and link['target'] in targets and path not in targets,'inventoried asset link target')
         aliases.append(path)
     require(aliases==sorted(set(aliases)),'ordered unique asset links')

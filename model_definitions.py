@@ -33,9 +33,13 @@ def natural(value, name, minimum=0, maximum=MAX_INTEGER):
     return value
 
 
+# Same code points as any(ord(c)<32 or ord(c)==127 or 0xD800<=ord(c)<=0xDFFF), scanned in C.
+_TEXT_FORBIDDEN=re.compile('[\x00-\x1f\x7f\ud800-\udfff]')
+
+
 def text(value, name, maximum=120):
     if (type(value) is not str or not value.strip() or len(value)>maximum or
-            any(ord(c)<32 or ord(c)==127 or 0xD800<=ord(c)<=0xDFFF for c in value)):
+            _TEXT_FORBIDDEN.search(value)):
         raise WorkbenchError(name+' must be bounded nonempty text without controls.')
     return value
 

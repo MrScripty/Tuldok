@@ -7,6 +7,8 @@ No source root, catalog permission, runtime or editable overlay is activated her
 The lifecycle owner must validate each source and the complete final candidate,
 clone primary edits and publish all required bytes through the native owners.
 """
+import contextvars
+from contextlib import contextmanager
 import hashlib
 
 from project_fork import ARCHIVE_FAMILIES, _sha, _uuid, decode_fork
@@ -23,7 +25,30 @@ def _fail(message, code='invalid', status=400):
     raise ProjectCompositionError(message, code, status)
 
 
+_KNOWN_ENVELOPES = contextvars.ContextVar('known_envelope_digests', default=None)
+
+
+@contextmanager
+def known_envelope_digests(known):
+    """Supply verified envelope digests for exact record objects during validation.
+
+    known maps id(record) -> (record, digest) for envelopes whose document is the
+    stored canonical revision. Only that same object uses its digest; any other
+    envelope (for example a constructed observation variant) is encoded.
+    """
+    token = _KNOWN_ENVELOPES.set(known)
+    try:
+        yield
+    finally:
+        _KNOWN_ENVELOPES.reset(token)
+
+
 def _record_sha(record):
+    known = _KNOWN_ENVELOPES.get()
+    if known is not None:
+        entry = known.get(id(record))
+        if entry is not None and entry[0] is record:
+            return entry[1]
     return hashlib.sha256(_encode(record)).hexdigest()
 
 
