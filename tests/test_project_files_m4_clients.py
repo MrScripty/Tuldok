@@ -58,6 +58,20 @@ def ready(reply, *, owner=False):
 
 
 class M4Clients(unittest.TestCase):
+    def test_batch_reply_must_match_every_reviewed_file_and_changed_count(self):
+        text='Exact note\n';raw=text.encode();path='notes/first.md'
+        item=dict(id=identity('note',path),project_id=PROJECT,kind='note',path=path,
+            revision=1,sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw),adopted_at=STAMP,changed=True)
+        arguments=dict(WRITE,items=[dict(kind='note',path=path,expected_revision=0,expected_sha256=item['sha256'])])
+        reply=dict(status=200,result=bound(dict(items=[item],changed_count=1),NEXT))
+        self.assertEqual(ProjectFilesClient(ready(reply)).files_adopt(**arguments),reply['result'])
+        for field,value in [('project_id','f'*32),('sha256','a'*64),('path','notes/other.md'),('revision',2)]:
+            bad=copy.deepcopy(reply);bad['result']['value']['items'][0][field]=value
+            with self.subTest(field=field),self.assertRaises(api.AgentAPIError):
+                ProjectFilesClient(ready(bad)).files_adopt(**arguments)
+        bad=copy.deepcopy(reply);bad['result']['value']['changed_count']=0
+        with self.assertRaises(api.AgentAPIError):ProjectFilesClient(ready(bad)).files_adopt(**arguments)
+
     def test_capability_profiles_fit_unchanged_budget_and_negotiate_only_intersections(self):
         native = api.capabilities(CATALOG)
         project = api.capabilities(CATALOG, profile='project')
@@ -70,10 +84,12 @@ class M4Clients(unittest.TestCase):
         with self.assertRaises(api.AgentAPIError): api.capabilities(CATALOG, profile='arbitrary')
         self.assertEqual(api.REGISTRY_DIGEST, api._LEGACY_DIGEST)
 
-    def test_ten_operations_have_fixed_consumers_and_closed_inputs(self):
-        self.assertEqual(len(api.PROJECT_FILES_M4), 10)
+    def test_complete_m4_operations_have_fixed_consumers_and_closed_inputs(self):
+        self.assertEqual(api.PROJECT_FILES_M4,{'project_files.'+name for name in (
+            'compose','save_as','files_inspect','file_get','file_history','file_adopt','files_adopt',
+            'file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info')})
         self.assertEqual(project_dispatch.SUPPORTED_OPERATIONS & api.PROJECT_FILES_M4,
-                         api.PROJECT_FILES_M4 - {'project_files.save_as'})
+                         api.PROJECT_FILES_M4 - {'project_files.save_as','project_files.compose'})
         client = ProjectFilesClient(Mock())
         parser = project_cli.parser()
         for operation in api.PROJECT_FILES_M4:
@@ -215,13 +231,25 @@ class M4Clients(unittest.TestCase):
         import threading
         access=SimpleNamespace(lock=threading.RLock(),require=Mock())
         session=SimpleNamespace(access=access,lock=threading.RLock(),db=SimpleNamespace(lock=threading.RLock()),
-            check=Mock(return_value={'project_id':PROJECT,'records':[]}))
+            check=Mock(side_effect=AssertionError('Unused full dispatcher snapshot')),check_current=Mock())
         files=SimpleNamespace(history=Mock(return_value=[version('large text '+str(i),i+1) for i in range(42)]))
         projection=SimpleNamespace(session=session,files=files)
         page=project_dispatch.dispatch(projection,'project_files.file_history',dict(READ,file_id=identity(),offset=40,limit=2))
         self.assertEqual((page['total'],[item['revision'] for item in page['items']]),(42,[41,42]))
         self.assertTrue(all('text' not in item for item in page['items']))
+        session.check_current.assert_called_once_with()
         api.validate_output('project_files.file_history',dict(status=200,result=bound(page)))
+
+    def test_dispatch_fork_info_retains_the_complete_snapshot_contract(self):
+        import threading
+        access=SimpleNamespace(lock=threading.RLock(),require=Mock())
+        session=SimpleNamespace(access=access,lock=threading.RLock(),db=SimpleNamespace(lock=threading.RLock()),
+            check=Mock(return_value={'project_id':PROJECT,'records':[]}),
+            check_current=Mock(side_effect=AssertionError('Fork must read its records')))
+        value=project_dispatch.dispatch(SimpleNamespace(session=session),'project_files.fork_info',dict(READ,offset=0,limit=40))
+        session.check.assert_called_once_with()
+        self.assertEqual(value,dict(source=None,project_id=PROJECT,
+            mapping=dict(items=[],offset=0,limit=40,total=0),archived_count=0,copied_count=0,missing_regenerable_count=0))
 
 
 if __name__=='__main__':unittest.main()

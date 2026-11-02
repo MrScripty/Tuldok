@@ -95,6 +95,31 @@ class CandidatePreparationContractTests(unittest.TestCase):
 
 
 class StudyExecutionCodecTests(unittest.TestCase):
+    def test_canonical_reconstruction_uses_one_selected_material_view(self):
+        records=[];view=object();calls=[]
+        class Materials:
+            def read_view(self,selected):
+                calls.append(selected);return view
+        adapter=ProjectStudyExecution.__new__(ProjectStudyExecution)
+        adapter.session=SimpleNamespace(snapshot={'records':records});adapter.materials=Materials()
+        def decoded(selected,*,materials):
+            self.assertIs(selected,records);self.assertIs(materials,view);return 'selected facts'
+        with patch('project_study_execution.history_records',side_effect=decoded):
+            self.assertEqual(adapter._canonical(),'selected facts')
+            self.assertEqual(adapter._canonical(records),'selected facts')
+        self.assertEqual(len(calls),2)
+        self.assertTrue(all(selected is records for selected in calls))
+
+    def test_fixed_record_validation_has_no_live_material_session(self):
+        import project_study_execution as owner
+        from project_material import MaterialSnapshot
+        records=[]
+        def decoded(selected,*,materials):
+            self.assertIs(selected,records);self.assertIsInstance(materials,MaterialSnapshot);return 'fixed facts'
+        with patch('project_study_execution.ProjectMaterial',side_effect=AssertionError('No live material lookups')), \
+             patch('project_study_execution.history_records',side_effect=decoded):
+            self.assertEqual(owner._facts(records),'fixed facts')
+
     def test_admission_has_only_exact_reservation_and_references(self):
         value=trial('9'*32,'3'*32)['document']['trial'];composition=Materials().recipe(value['material'])
         charge=composition['material']['resource_envelope']

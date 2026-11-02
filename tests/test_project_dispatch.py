@@ -30,7 +30,8 @@ class Authority:
 
 def projection():
     access = Authority()
-    session = SimpleNamespace(access=access, check=Mock(), snapshot={'project_id': PROJECT, 'records': []})
+    session = SimpleNamespace(access=access, check=Mock(), check_current=Mock(), snapshot={'project_id': PROJECT, 'records': []},
+                              summary={'project_id': PROJECT, 'name': 'Dispatch fixture', 'checkpoint': CHECKPOINT})
     return SimpleNamespace(session=session, data=Mock(), materials=Mock(), history=Mock(),
         context=SimpleNamespace(models=Mock(), pipelines=Mock()), artifacts=Mock(),
         producers=Mock(), source_adapter=Mock(), runtime_manifest=Mock(), disclose=Mock(), resolve_artifact=Mock(), execution=SimpleNamespace(study_execution=Mock(), producer_execution=Mock(), health=Mock(), preflight_external=Mock(), approve_external=Mock(), submit_external=Mock(), cancel_run=Mock(), reconcile_current=Mock()))
@@ -38,7 +39,7 @@ def projection():
 
 class Dispatch(unittest.TestCase):
     def test_supported_operations_match_the_finite_public_contract(self):
-        self.assertEqual(SUPPORTED_OPERATIONS, agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | (agent_api.PROJECT_FILES_M4 - {'project_files.save_as'}))
+        self.assertEqual(SUPPORTED_OPERATIONS, agent_api.PROJECT_FILES_M2 | agent_api.PROJECT_FILES_M3 | (agent_api.PROJECT_FILES_M4 - {'project_files.save_as', 'project_files.compose'}))
         with self.assertRaises(WorkbenchError) as failure:
             dispatch(object(), 'project_files.runs_execute', {})
         self.assertEqual(failure.exception.code, 'unsupported')

@@ -14,6 +14,7 @@ import unittest
 from unittest.mock import patch
 import uuid
 
+import project_fork as fork_module
 import psycopg
 from psycopg import sql
 
@@ -27,6 +28,24 @@ from project_store import ProjectStore, ProjectStoreError
 
 
 class OperationCodecTests(unittest.TestCase):
+    def test_operation_lookup_does_not_copy_unrelated_active_envelopes(self):
+        key='selected-receipt'
+        document=dict(format='project_operation_v1',operation='fixture.capture',target=None,
+                      request_key=key,input_sha256='a'*64,result={})
+        receipt=dict(family='project_operation',id=hashlib.sha256(key.encode()).hexdigest(),document=document)
+        unrelated=dict(family='project_artifact',id='b'*64,
+                       document=dict(format='project_artifact_v1',sha256='b'*64,bytes=4))
+        copied=[];deepcopy=copy.deepcopy
+        def observe(value):
+            if value is unrelated:copied.append((value['family'],value['id']))
+            return deepcopy(value)
+        with patch.object(fork_module,'copy',SimpleNamespace(deepcopy=observe)):
+            actual=operation_records([unrelated,receipt])
+        self.assertEqual(actual,{key:document})
+        self.assertEqual(copied,[],'Receipt selection must not clone unrelated active records')
+        actual[key]['result']['changed']=True
+        self.assertEqual(document['result'],{})
+
     def test_namespaced_receipts_preserve_legacy_identity_and_independent_keys(self):
         key = 'independent-edit'
         document = dict(format='project_operation_v1', operation='fixture.capture', target=None,
@@ -154,6 +173,23 @@ class ProjectSessionTests(unittest.TestCase):
         self.assertIn(('project_artifact', declaration['sha256']), ids)
         self.assertIn(('project_artifact', other['sha256']), ids)
         self.assertEqual(self.artifacts.read_blob({key: declaration[key] for key in ('sha256', 'bytes')}), 'Irreplaceable observation 山'.encode())
+
+    def test_scalar_summary_is_independent_and_tracks_the_bound_publication(self):
+        before = self.session.summary
+        arguments, _declaration, _calls = self.mutation()
+        self.call(arguments)
+        snapshot = self.session.snapshot
+        expected = {key: snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
+        self.assertNotEqual(before['checkpoint'], expected['checkpoint'])
+        original_copy = copy.deepcopy
+        def observe(value):
+            self.assertIsNot(value, self.session._snapshot, 'Summary must not clone the record graph')
+            return original_copy(value)
+        with patch('project_session.copy', SimpleNamespace(deepcopy=observe)):
+            first = self.session.summary
+            first['name'] = 'Caller mutation'
+            self.assertEqual(self.session.summary, expected)
+        self.assertEqual(self.session.snapshot['name'], expected['name'])
 
     def test_key_conflict_stale_and_current_auth_refuse_before_invoke(self):
         first, _declaration, _calls = self.mutation()

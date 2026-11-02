@@ -20,7 +20,7 @@ import agent_api
 from model_definitions import ModelDefinitions, blob, decode_model_draft, decode_model_material, verify_model_closure
 from pipeline import digest, decode_recipe_material, execution_digest, verify_recipe_closure
 from project_artifacts import ProjectArtifacts, ProjectArtifactError, validate_declaration
-from project_material import ProjectMaterial, decode_records, validate_operation_result
+from project_material import ProjectMaterial, MaterialSnapshot, decode_records, validate_operation_result
 from project_store import ProjectStore
 from project_session import ProjectSession, operation_records
 from workbench import WorkbenchError
@@ -55,7 +55,8 @@ class MaterialCodecs(unittest.TestCase):
         self.addCleanup(lambda:self.store.close())
         self.artifacts=ProjectArtifacts(self.store);self.addCleanup(lambda:self.artifacts.close())
         self.catalog=self.store.snapshot()['project_id']
-        self.session=SimpleNamespace(snapshot=self.store.snapshot(),artifacts=self.artifacts,check=lambda:None)
+        self.session=SimpleNamespace(snapshot=self.store.snapshot(),summary=self.store.summary(),
+                                     artifacts=self.artifacts,check_current=lambda:None)
         self.material=ProjectMaterial(self.session)
 
     def capture(self):
@@ -87,7 +88,7 @@ class MaterialCodecs(unittest.TestCase):
         self.artifacts.close();self.store.close();shutil.rmtree(root)
         moved=self.root/'moved';(self.root/'project').rename(moved)
         with ProjectStore.open(moved) as store,ProjectArtifacts(store) as artifacts:
-            material=ProjectMaterial(SimpleNamespace(snapshot=store.snapshot(),artifacts=artifacts,check=lambda:None))
+            material=ProjectMaterial(SimpleNamespace(snapshot=store.snapshot(),artifacts=artifacts,check_current=lambda:None))
             self.assertEqual(store.snapshot(),snapshot)
             self.assertEqual(material.model(value['ref'],verify=True),value)
             source=value['material']['source_closure'][0]['blob']
@@ -122,6 +123,45 @@ class MaterialCodecs(unittest.TestCase):
         self.session.snapshot=dict(self.session.snapshot,records=[record])
         with patch('subprocess.Popen',side_effect=AssertionError('no process')),patch('os.stat',side_effect=AssertionError('no host paths')):
             self.assertEqual(self.material.runtime(ref,verify=True)['environment'],environment)
+
+    def test_fixed_material_snapshot_owns_input_and_returns_independent_values(self):
+        environment={'python':'/unavailable/original/python','packages':{'neutral':'1.0'},'definition_files':{'adapter.py':'a'*64}}
+        sha=digest(environment);ref=dict(kind='runtime',catalog_id=self.catalog,id=sha,sha256=sha)
+        original=dict(ref=ref,descriptor=None,environment=environment,manifest=None)
+        record=self.material.capture_runtime(original)
+        records=[record];view=MaterialSnapshot(records)
+        records[0]['document']['value']['environment']['packages']['neutral']='changed input'
+        value=view.runtime(ref);self.assertEqual(value,original)
+        value['environment']['packages']['neutral']='changed return'
+        self.assertEqual(view.runtime(ref),original)
+        with self.assertRaises(WorkbenchError):MaterialSnapshot(records)
+
+    def test_fixed_material_snapshot_checks_complete_reference_identity(self):
+        environment={'python':'/unavailable/original/python','packages':{},'definition_files':{}}
+        sha=digest(environment);ref=dict(kind='runtime',catalog_id=self.catalog,id=sha,sha256=sha)
+        record=self.material.capture_runtime(dict(ref=ref,descriptor=None,environment=environment,manifest=None))
+        view=MaterialSnapshot([record])
+        for change in ({'catalog_id':'f'*32},{'sha256':'f'*64},{'id':'f'*64},{'kind':'recipe_material'}):
+            with self.assertRaises(WorkbenchError):view.runtime(dict(ref,**change))
+
+    def test_invalid_live_material_reference_precedes_snapshot_access(self):
+        with patch.object(self.session,'check_current',side_effect=AssertionError('Invalid reference accessed snapshot')):
+            with self.assertRaises(WorkbenchError):self.material.runtime({'catalog_id':'invalid'})
+
+    def test_material_read_view_uses_supplied_records_without_resnapshotting(self):
+        environment={'python':'/unavailable/original/python','packages':{},'definition_files':{}}
+        sha=digest(environment);ref=dict(kind='runtime',catalog_id=self.catalog,id=sha,sha256=sha)
+        original=dict(ref=ref,descriptor=None,environment=environment,manifest=None)
+        records=[self.material.capture_runtime(original)]
+        self.assertEqual(self.session.snapshot['records'],[])
+        view=self.material.read_view(records)
+        self.assertEqual(view.runtime(ref),original)
+        self.assertEqual(self.session.snapshot['records'],[])
+
+    def test_material_read_view_rechecks_session_availability(self):
+        with patch.object(self.session,'check_current',side_effect=WorkbenchError('Stale checkpoint.','stale',409)):
+            with self.assertRaisesRegex(WorkbenchError,'Stale checkpoint'):
+                self.material.read_view([])
 
     def test_operation_result_requires_exact_retained_revision_or_material(self):
         first=definition(self.catalog);record=self.material.capture_definition('model_definition',first,[],action='models.create')
@@ -185,6 +225,27 @@ class MaterialCodecs(unittest.TestCase):
         self.assertEqual(restored[-1],record)
         self.assertEqual(self.material.runtime(ref,verify=True),value)
 
+    def test_legacy_activity_path_is_retained_without_becoming_a_current_manifest(self):
+        from projects import manifest as current_manifest, decode_retained_snapshot
+        manifest = dict(schema_version=1, id='c'*32, name='Archived activity',
+                        data=[], recipes=[], evidence=[], requirements=[], activity_path='old/activity.json')
+        raw = (json.dumps(manifest, indent=3)+'\n\n').encode()
+        saved = dict(id=manifest['id'], name=manifest['name'], root='gone', root_identity=[1,2],
+                     manifest_path='original.json', manifest_sha256=hashlib.sha256(raw).hexdigest(), manifest=manifest)
+        with self.assertRaises(WorkbenchError): current_manifest(manifest)
+        with patch('subprocess.Popen', side_effect=AssertionError('Retained activity is inert')):
+            self.assertEqual(decode_retained_snapshot(saved),saved)
+            record=self.material.capture_snapshot(saved,raw,catalog_id=self.catalog)
+            self.session.snapshot=dict(self.session.snapshot,records=[*self.material.declarations(record),record])
+            self.assertEqual(self.material.snapshot_ref(manifest['id'],saved['manifest_sha256'],verify=True),saved)
+            documents=decode_records(self.session.snapshot['records'])
+            self.assertEqual(documents[('project_snapshot',self.catalog+'.'+saved['manifest_sha256'])]['value'],saved)
+        for bad_path in ('../escape.json','/absolute.json','a\\b.json',False):
+            bad=copy.deepcopy(saved);bad['manifest']['activity_path']=bad_path
+            with self.assertRaises(WorkbenchError): decode_retained_snapshot(bad)
+        bad=copy.deepcopy(saved);bad['manifest']['unknown_activity_field']='anything'
+        with self.assertRaises(WorkbenchError): decode_retained_snapshot(bad)
+
     def test_original_snapshot_manifest_whitespace_is_not_reserialized_for_identity(self):
         manifest=dict(schema_version=1,id='c'*32,name='Snapshot',data=[],recipes=[],evidence=[],requirements=[])
         import json
@@ -238,6 +299,15 @@ class MaterialCodecs(unittest.TestCase):
         dependencies=self.material.capture_recipe_dependencies(dict(document={'value':retained}),[])
         self.assertEqual(dependencies[-1]['document']['value']['environment'],runtime)
         self.assertEqual(self.material.capture_recipe_dependencies(dict(document={'value':retained}),dependencies),[])
+        recipe_root=self.root/'retained-recipe';target=recipe_root/retained['ref']['sha256'];target.mkdir(parents=True)
+        for name,raw in recipe_payloads.items():(target/name).write_bytes(raw)
+        record=self.material.capture_recipe_material(retained,recipe_root)
+        view=MaterialSnapshot([record,*dependencies])
+        self.assertEqual(view.recipe(retained['ref']),retained)
+        expected=[edge['blob'] for item in [record,*dependencies] for edge in item['document']['artifacts']]
+        self.assertEqual(list(view.artifact_blobs()),expected)
+        changed=list(view.artifact_blobs());changed[0]['bytes']+=1
+        self.assertEqual(list(view.artifact_blobs()),expected)
         for field,replacement in (('data',{}),('executable_sha256','wrong'),('captures',[dict(item,media_type='text/plain')])):
             bad=copy.deepcopy(retained);bad['material'][field]=replacement
             changed=digest(bad['material']);bad['ref'].update(id=changed,sha256=changed)
@@ -291,7 +361,7 @@ class EvidenceCallbacks(unittest.TestCase):
                      patch('subprocess.Popen',side_effect=AssertionError('No process')):
                     expected=evidence.verify(root,run,metrics)
                     self.assertEqual(evidence.verify_blobs(run,metrics,read_blob=lambda name,maximum:payloads[name]),expected)
-                    material=ProjectMaterial(SimpleNamespace(check=lambda:None))
+                    material=ProjectMaterial(SimpleNamespace(check_current=lambda:None))
                     result=material.evidence(run,read_blob=lambda name,maximum:payloads[name])
                     self.assertEqual(result['state'],'verified')
                     checkpoint=result['checkpoint_index']['entries'][0]['checkpoint']['sha256']
@@ -380,7 +450,7 @@ class CanonicalPublication(unittest.TestCase):
             self.assertEqual(error.exception.code,'projection_unavailable')
             snapshot=self.store.snapshot();retained=next(item for item in snapshot['records'] if item['family']=='model_material')['document']['value']
             self.assertFalse((self.models.path/retained['ref']['sha256']).exists(),'Legacy rollback removes only disposable projection cache')
-            cold=ProjectMaterial(SimpleNamespace(snapshot=snapshot,artifacts=self.artifacts,check=lambda:None))
+            cold=ProjectMaterial(SimpleNamespace(snapshot=snapshot,artifacts=self.artifacts,check_current=lambda:None))
             self.assertEqual(cold.model(retained['ref'],verify=True),retained)
             self.assertEqual(cold.blob(retained['ref'],retained['material']['source_closure'][0]['blob']),SOURCE)
 
@@ -391,7 +461,7 @@ class CanonicalPublication(unittest.TestCase):
             draft=self.create();value=self.material.publish_model(self.models,draft['id'],{'revision':1},self.session.snapshot['checkpoint'],'cold-model')
         cold_db=Metadata(self.path/'cold-projection',dataset_id=self.db.dataset_id,projection_id=uuid.uuid4().hex)
         self.resources.append(cold_db);self.schemas.append(cold_db.schema)
-        cold=ProjectMaterial(SimpleNamespace(snapshot=self.store.snapshot(),artifacts=self.artifacts,db=cold_db,check=lambda:None))
+        cold=ProjectMaterial(SimpleNamespace(snapshot=self.store.snapshot(),artifacts=self.artifacts,db=cold_db,check_current=lambda:None))
         with patch('model_definitions.ModelDefinitions',side_effect=AssertionError('No mutable owner on Open')), \
              patch('pipeline.Pipelines',side_effect=AssertionError('No mutable owner on Open')), \
              patch('subprocess.Popen',side_effect=AssertionError('No process')):

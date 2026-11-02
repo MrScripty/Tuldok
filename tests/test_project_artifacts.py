@@ -57,12 +57,111 @@ class _ArtifactFixture:
         return self.store.commit(records, self.store.snapshot()['checkpoint'], key, request(records))
 
 class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
+    def test_copy_group_keeps_exact_independent_snapshots_with_two_source_closure_checks(self):
+        raws = [b'first exact output', b'second exact output']
+        values = [declaration(raw) for raw in raws]
+        for raw, value in zip(raws, values):
+            self.artifacts.publish_bytes(raw, value)
+        self.commit(values)
+        target = self.path / 'copy'
+        with ProjectStore.create(target, 'Copy', 'copy', 'b' * 64) as store, ProjectArtifacts(store) as destination:
+            publish = destination.publish_fd
+            def mutate_source_after_snapshot(fd, value, **options):
+                # A mutable original source must not be the fd consumed by the
+                # destination. Its already-verified snapshot stays independent.
+                original = self.payload(value)
+                original.unlink()
+                original.write_bytes(b'changed after verified capture')
+                return publish(fd, value, **options)
+            with patch.object(destination, 'publish_fd', side_effect=mutate_source_after_snapshot):
+                with patch.object(self.store, '_current', wraps=self.store._current) as checks:
+                    self.artifacts.copy_many_to(destination, values)
+            self.assertEqual(checks.call_count, 2)
+            for raw, value in zip(raws, values):
+                copied = target / 'artifacts/sha256' / value['sha256']
+                self.assertEqual(copied.read_bytes(), raw)
+                self.assertEqual(copied.stat().st_nlink, 1)
+                self.assertNotEqual(copied.stat().st_ino, self.payload(value).stat().st_ino)
+
+    def test_copy_group_rejects_source_canonical_corruption_before_success(self):
+        value = declaration(b'present')
+        self.artifacts.publish_bytes(b'present', value)
+        self.commit([value])
+        manifest = json.loads((self.project / '.tuldok/project.json').read_bytes())
+        record = self.project / '.tuldok' / manifest['inventory'][0]['path']
+        with ProjectStore.create(self.path / 'copy', 'Copy', 'copy', 'b' * 64) as store, ProjectArtifacts(store) as destination:
+            publish = destination.publish_fd
+            def corrupt_after_copy(*args, **options):
+                result = publish(*args, **options)
+                record.write_bytes(b'{"corrupt":true}\n')
+                return result
+            with patch.object(destination, 'publish_fd', side_effect=corrupt_after_copy):
+                self.assert_code('stale', self.artifacts.copy_many_to, destination, [value])
+
+    def test_copy_group_prevalidates_inventory_and_preserves_missing_payload_failure(self):
+        value, missing = declaration(b'present'), declaration(b'missing')
+        self.artifacts.publish_bytes(b'present', value)
+        self.commit([value, missing])
+        with ProjectStore.create(self.path / 'copy', 'Copy', 'copy', 'b' * 64) as store, ProjectArtifacts(store) as destination:
+            with patch.object(destination, 'publish_fd', wraps=destination.publish_fd) as publish:
+                self.assert_code('invalid', self.artifacts.copy_many_to, destination, [value, dict(missing, bytes=True)])
+                publish.assert_not_called()
+            self.assert_code('unavailable', self.artifacts.copy_many_to, destination, [value, missing])
+            self.assertEqual(destination.status(value)['state'], 'verified')
+            self.assertEqual(destination.status(missing)['state'], 'missing')
+
+    def test_status_group_retains_exact_hash_observations_with_two_closure_checks(self):
+        values = [declaration(b'present'), declaration(b'missing'), declaration(b'correct')]
+        self.artifacts.publish_bytes(b'present', values[0])
+        self.artifacts.publish_bytes(b'correct', values[2])
+        self.commit(values)
+        self.payload(values[2]).unlink()
+        self.payload(values[2]).write_bytes(b'changed')
+        expected = [self.artifacts.status(value) for value in values]
+        with patch.object(self.store, '_current', wraps=self.store._current) as checks:
+            actual = self.artifacts.status_many(values)
+        self.assertEqual(actual, expected)
+        self.assertEqual([item['state'] for item in actual], ['verified', 'missing', 'corrupt'])
+        self.assertEqual(checks.call_count, 2)
+        self.assertEqual(actual[0]['observed_sha256'], values[0]['sha256'])
+        self.assertEqual(actual[2]['observed_sha256'], hashlib.sha256(b'changed').hexdigest())
+
+    def test_status_group_rejects_canonical_corruption_during_observation(self):
+        value = declaration(b'present')
+        self.artifacts.publish_bytes(b'present', value)
+        self.commit([value])
+        manifest = json.loads((self.project / '.tuldok/project.json').read_bytes())
+        record = self.project / '.tuldok' / manifest['inventory'][0]['path']
+        original = self.artifacts._source
+        @contextmanager
+        def corrupt_after_observation(*args):
+            with original(*args) as source:
+                yield source
+            record.write_bytes(b'{"corrupt":true}\n')
+        with patch.object(self.artifacts, '_source', side_effect=corrupt_after_observation):
+            self.assert_code('stale', self.artifacts.status_many, [value])
+
+    def test_status_group_rejects_checkpoint_change_and_unsafe_aliases(self):
+        value = declaration(b'present')
+        self.artifacts.publish_bytes(b'present', value)
+        self.commit([value])
+        original = self.artifacts._source
+        @contextmanager
+        def change_checkpoint(*args):
+            with original(*args) as source:
+                yield source
+            self.commit([], key='new-checkpoint')
+        with patch.object(self.artifacts, '_source', side_effect=change_checkpoint):
+            self.assert_code('stale', self.artifacts.status_many, [value])
+        os.link(self.payload(value), self.path / 'outside-alias')
+        self.assert_code('invalid', self.artifacts.status_many, [value])
+
     def test_presence_batch_matches_individual_observations_with_two_closure_checks(self):
         values=[declaration(b'present'),declaration(b'missing'),declaration(b'other')]
         self.artifacts.publish_bytes(b'present',values[0])
         self.commit(values)
         expected=[self.artifacts.inspect(value) for value in values]
-        with patch.object(self.store,'snapshot',wraps=self.store.snapshot) as checks:
+        with patch.object(self.store,'_current',wraps=self.store._current) as checks:
             actual=self.artifacts.inspect_many(values)
         self.assertEqual(actual,expected)
         self.assertEqual(checks.call_count,2)

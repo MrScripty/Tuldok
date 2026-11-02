@@ -53,6 +53,21 @@ class RuntimeSnapshotContract(unittest.TestCase):
         self.assertEqual((root/'packages/torch/__init__.py').stat().st_mode&0o777,0o400)
         self.assertFalse(list(owner.path.glob('.capture-*')))
 
+    def test_capture_seals_intermediate_directories_under_group_writable_umask(self):
+        db,access,owner,config=self.fixture()
+        nested=Path(config['site_packages'])/'torch'/'nested'/'data'
+        nested.mkdir(parents=True);(nested/'fixture.txt').write_text('Recorded nested source')
+        observed=owner.inspect(config)
+        previous=os.umask(0o002)
+        try:
+            value=owner.create(config,observed['inventory_sha256'],quiesced=True,reserve_bytes=0)
+            root=Path(value['root'])
+            for directory in [root,*[path for path in root.rglob('*') if path.is_dir()]]:
+                self.assertEqual(directory.stat().st_mode & 0o022,0)
+            self.assertEqual(owner.get(observed['inventory_sha256']),value)
+        finally:
+            self.assertEqual(os.umask(previous),0o002)
+
     def test_backup_restore_keeps_cold_runtime_modes_and_refuses_changed_completed_modes(self):
         from backup_metadata import backup_catalog, restore_catalog, StorageTransferError
         db, access, owner, config = self.fixture()

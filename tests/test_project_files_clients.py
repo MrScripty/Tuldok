@@ -272,6 +272,9 @@ class Contracts(unittest.TestCase):
         self.assertEqual(pins, {name: api.contract(name)['sha256'] for name in api._CONTRACTS if name.startswith('project_files.')})
         for name, digest in pins.items():
             self.assertEqual(api.selected_header(name), name + '/1/' + digest)
+        versions=json.loads(re.search(r'/\* PROJECT_FILES_VERSIONS_START \*/\s*(.*?)\s*/\* PROJECT_FILES_VERSIONS_END \*/',source,re.S)[1])
+        self.assertEqual(versions,{name:{str(v):api.contract(name,v)['sha256'] for v in sorted(values)}
+            for name,values in api._CONTRACTS.items() if name.startswith('project_files.') and len(values)>1})
 
     def test_reads_pin_binding_checkpoint_and_path_record_without_body(self):
         arguments = {'record_id': RECORD, 'binding': BINDING, 'checkpoint': CHECKPOINT}
@@ -352,6 +355,22 @@ class Contracts(unittest.TestCase):
 
 
 class Consumers(unittest.TestCase):
+    def test_explicit_owner_wait_budget_preserves_generic_bounds_and_private_configuration(self):
+        endpoint,token='http://127.0.0.1:12345','fixture-agent-token-for-client-tests'
+        self.assertEqual(api.ProjectFilesOwnerClient(endpoint,token,CATALOG).timeout,120)
+        self.assertEqual(api.ProjectFilesOwnerClient(endpoint,token,CATALOG,timeout=7200).timeout,7200)
+        for client_type,invalid in ((api.AgentClient,301),(api.ProjectFilesOwnerClient,7201),
+                (api.ProjectFilesOwnerClient,float('inf')),(api.ProjectFilesOwnerClient,True)):
+            with self.subTest(client=client_type.__name__,timeout=invalid),self.assertRaises(api.AgentAPIError):
+                client_type(endpoint,token,CATALOG,timeout=invalid)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);credential=root/'token';configuration=root/'config.json'
+            credential.write_text(token);credential.chmod(0o600)
+            configuration.write_text(json.dumps(dict(endpoint=endpoint,catalog_id=CATALOG,
+                token_file=str(credential),timeout=7200)));configuration.chmod(0o600)
+            self.assertEqual(api.ProjectFilesOwnerClient.from_config(configuration).timeout,7200)
+            with self.assertRaises(api.AgentAPIError):api.AgentClient.from_config(configuration)
+
     def test_owner_file_client_keeps_unrelated_operations_outside_authority(self):
         raw = client({'status': 200, 'result': state()}, owner=True)
         self.assertEqual(ProjectFilesClient(raw).save(**bound()), state())

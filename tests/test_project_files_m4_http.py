@@ -10,6 +10,7 @@ import uuid
 
 import project_workspace
 from project_store import ProjectStoreError
+from workbench import WorkbenchError
 import test_project_files_http as m1
 import test_project_files_m2_http as m2
 
@@ -39,6 +40,25 @@ class ProjectFilesM4HTTP(unittest.TestCase):
         self.assertEqual(status,200,value)
         return arguments,value
 
+    def test_batch_adoption_uses_real_http_and_survives_independent_fork(self):
+        self.create();root=self.external/'alpha';(root/'notes').mkdir();items=[]
+        for name,raw in [('first.md',b'Exact first note\r\n'),('second.md','Exact Ω note\n'.encode())]:
+            (root/'notes'/name).write_bytes(raw)
+            items.append(dict(kind='note',path='notes/'+name,expected_revision=0,expected_sha256=hashlib.sha256(raw).hexdigest()))
+        result=self.call('files_adopt',items=items)
+        self.assertEqual(result['changed_count'],2);self.assertEqual(len(self.call('files_inspect')['items']),2)
+        with patch.object(self.workspace._store,'_snapshot',side_effect=AssertionError('Unrelated full graph copy')):
+            self.assertEqual(len(self.call('files_inspect')['items']),2)
+            selected=self.call('file_get',file_id=result['items'][0]['id'])
+            self.assertEqual(selected['version']['text'].encode(),b'Exact first note\r\n')
+            history=self.call('file_history',file_id=result['items'][0]['id'])
+            self.assertEqual([v['revision'] for v in history['items']],[1])
+        source=copy.deepcopy(self.workspace._projection.session.snapshot)
+        self.fork()
+        current=self.workspace._projection.session.snapshot;indexed={(r['family'],r['id']):r for r in current['records']}
+        for record in source['records']:self.assertEqual(indexed[(record['family'],record['id'])],record)
+        for item in items:self.assertEqual((self.external/'fork'/item['path']).read_bytes(),(root/item['path']).read_bytes())
+
     def test_nonempty_independent_fork_exact_science_new_editable_ids_and_same_request_key(self):
         self.create()
         row=self.call('data_import_text',text='Unique observation café 山',name='Original',
@@ -57,6 +77,18 @@ class ProjectFilesM4HTTP(unittest.TestCase):
         current=self.workspace._projection.session.snapshot
         indexed={(r['family'],r['id']):r for r in current['records']}
         for r in original['records']:self.assertEqual(indexed[(r['family'],r['id'])],r)
+        forged=copy.deepcopy(current)
+        inherited=next(r['document'] for r in forged['records'] if r['family']=='project_file'
+            and r['document']['project_id']==current['project_id'])
+        forged_version=inherited['history'][0];forged_text='Forged inherited script\n'
+        forged_version.update(text=forged_text,bytes=len(forged_text.encode()),sha256=hashlib.sha256(forged_text.encode()).hexdigest())
+        inherited['current']=copy.deepcopy(inherited['history'][-1])
+        from project_files import decode_records
+        with self.assertRaisesRegex(WorkbenchError,'Working-file fork requires its exact archived history'):
+            decode_records(forged['records'])
+        with self.assertRaisesRegex(WorkbenchError,'Working-file fork requires its exact archived history'):
+            self.workspace._projection.session.adopt(forged)
+        self.assertEqual(self.workspace._projection.session.snapshot,current)
         active=self.call('data_query')['items']
         self.assertEqual(len(active),1);self.assertNotEqual(active[0]['id'],row['id'])
         self.assertEqual(self.call('data_get',record_id=active[0]['id'])['text'],row['text'])

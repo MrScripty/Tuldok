@@ -247,12 +247,34 @@ class ProjectArtifacts:
             self._ensure_open()
             try:
                 with self.store.root_directory() as root:
-                    try:
-                        with self._source(root, declaration) as source:
-                            return _observe(source, declaration)
-                    except _Missing:
-                        return dict(state='missing', expected_sha256=declaration['sha256'], expected_bytes=declaration['bytes'],
-                                    observed_sha256=None, observed_bytes=None)
+                    return self._status_at(root, declaration)
+            except OSError as error:
+                _io(error)
+
+    def _status_at(self, root, declaration):
+        try:
+            with self._source(root, declaration) as source:
+                return _observe(source, declaration)
+        except _Missing:
+            return dict(state='missing', expected_sha256=declaration['sha256'], expected_bytes=declaration['bytes'],
+                        observed_sha256=None, observed_bytes=None)
+
+    def status_many(self, declarations):
+        """Hash each explicit artifact under one before/after-verified root.
+
+        Unlike presence inspection, these observations verify present payload
+        hashes. An unchanged canonical closure is proved for the entire group;
+        every individual file retains its anchored source-location checks.
+        """
+        if type(declarations) is not list:
+            _fail('Artifact status groups must be explicit finite lists.')
+        declarations = [validate_declaration(value) for value in declarations]
+        with self._mutex:
+            self._ensure_open()
+            try:
+                with self.store.root_directory(verify_after=True) as root:
+                    result = [self._status_at(root, value) for value in declarations]
+                return result
             except OSError as error:
                 _io(error)
 
@@ -327,35 +349,73 @@ class ProjectArtifacts:
         snapshot = None
         try:
             with self.store.root_directory() as root:
-                local = staging = None
-                try:
-                    with self._source(root, declaration) as source:
-                        local = _directory(root, '.tuldok-local', create=True)
-                        staging = _directory(local, 'artifact-snapshots', create=True)
-                        temporary = '.snapshot-' + uuid.uuid4().hex + '.tmp'
-                        output = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
-                                         0o600, dir_fd=staging)
-                        try:
-                            _verified(_observe(source, declaration, output=output))
-                            os.fchmod(output, 0o400)
-                            os.fsync(output)
-                        finally:
-                            os.close(output)
-                        snapshot = os.open(temporary, FILE_FLAGS, dir_fd=staging)
-                        _info(snapshot, rooted=True)
-                        os.unlink(temporary, dir_fd=staging)
-                except _Missing as error:
-                    raise ProjectArtifactError('Required artifact bytes are missing.', 'unavailable', 404) from error
-                finally:
-                    if staging is not None:
-                        os.close(staging)
-                    if local is not None:
-                        os.close(local)
+                snapshot = self._snapshot_at(root, declaration)
             return snapshot
         except BaseException:
             if snapshot is not None:
                 os.close(snapshot)
             raise
+
+    def _snapshot_at(self, root, declaration):
+        snapshot = None
+        try:
+            local = staging = None
+            try:
+                with self._source(root, declaration) as source:
+                    local = _directory(root, '.tuldok-local', create=True)
+                    staging = _directory(local, 'artifact-snapshots', create=True)
+                    temporary = '.snapshot-' + uuid.uuid4().hex + '.tmp'
+                    output = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                     0o600, dir_fd=staging)
+                    try:
+                        _verified(_observe(source, declaration, output=output))
+                        os.fchmod(output, 0o400)
+                        os.fsync(output)
+                    finally:
+                        os.close(output)
+                    snapshot = os.open(temporary, FILE_FLAGS, dir_fd=staging)
+                    _info(snapshot, rooted=True)
+                    os.unlink(temporary, dir_fd=staging)
+            except _Missing as error:
+                raise ProjectArtifactError('Required artifact bytes are missing.', 'unavailable', 404) from error
+            finally:
+                if staging is not None:
+                    os.close(staging)
+                if local is not None:
+                    os.close(local)
+            return snapshot
+        except BaseException:
+            if snapshot is not None:
+                os.close(snapshot)
+            raise
+
+    def copy_many_to(self, destination, declarations):
+        """Copy a finite inventory with one before/after-verified source root.
+
+        Each payload uses its own verified unlinked snapshot and ordinary atomic
+        destination publication. Only one temporary payload is retained at once.
+        A later failure can leave earlier verified destination blobs inert; the
+        caller owns publication of the complete destination project.
+        """
+        if not isinstance(destination, ProjectArtifacts) or destination is self:
+            _fail('Artifact copying requires a distinct destination owner.')
+        if type(declarations) is not list:
+            _fail('Artifact copy groups must be explicit finite lists.')
+        declarations = [validate_declaration(value) for value in declarations]
+        first, second = sorted((self, destination), key=id)
+        with first._mutex, second._mutex:
+            self._ensure_open()
+            destination._ensure_open()
+            try:
+                with self.store.root_directory(verify_after=True) as root:
+                    for declaration in declarations:
+                        snapshot = self._snapshot_at(root, declaration)
+                        try:
+                            destination.publish_fd(snapshot, declaration, maximum_bytes=declaration['bytes'])
+                        finally:
+                            os.close(snapshot)
+            except OSError as error:
+                _io(error)
 
     @contextmanager
     def open_verified(self, declaration, *, maximum_bytes=None):

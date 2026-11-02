@@ -23,6 +23,10 @@ MAX_SOURCE_BYTES = 8 * 1024 * 1024
 MAX_SOURCE_TOTAL = 16 * 1024 * 1024
 MAX_RESPONSE_BYTES = 256 * 1024
 MAX_ROWS = 100000
+MAX_COMPARISON_SOURCES = 16
+MAX_COMPARISON_SUBJECTS = 256
+MAX_COMPARISON_BYTES = 128 * 1024 * 1024
+MAX_COMPARISON_ROWS = 250000
 STATES = ('measured', 'failed', 'unsupported', 'unavailable')
 ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')
 SHA = re.compile(r'^[a-f0-9]{64}$')
@@ -137,6 +141,7 @@ class MeasurementTable:
         if type(raw) is not bytes or not 0 < len(raw) <= MAX_BYTES:
             fail('A bounded complete byte snapshot is required.', 'too_large', 413)
         self.sha256 = hashlib.sha256(raw).hexdigest()
+        self.bytes = len(raw)
         doc = decode(raw)
         exact(doc, ('format', 'schema_version', 'title', 'scope', 'dimensions', 'subjects',
                     'cases', 'metrics', 'observations', 'sources'))
@@ -348,3 +353,112 @@ class MeasurementTable:
             state='exceeds_inspection_bound';value=None
         return {'reference':copy.deepcopy(reference),'source_sha256':self._sources[reference['source_id']]['sha256'],
                 'state':state,'value':value}
+
+
+class MeasurementComparison:
+    """One bounded scientific comparison over immutable, source-bound tables.
+
+    The native custody owner supplies validated locator/table pairs. Compatibility
+    depends on original definitions and actual case evidence, not display names.
+    Returned rows keep their packet locator; no observations or counts are pooled
+    across subjects. Pagination affects rows only, never the maximum denominator.
+    """
+    def __init__(self, tables):
+        if type(tables) is not list or not 1 <= len(tables) <= MAX_COMPARISON_SOURCES:
+            fail('Choose 1 through 16 comparison sources.', 'too_large', 413)
+        self._tables = []
+        self._subjects = {}
+        seen = set()
+        basis = None
+        observations = raw_bytes = 0
+        for locator, table in tables:
+            exact(locator, ('origin_catalog_id', 'packet_sha256'))
+            if (type(locator['origin_catalog_id']) is not str
+                    or not re.fullmatch('[a-f0-9]{32}', locator['origin_catalog_id'])
+                    or not isinstance(table, MeasurementTable) or locator['packet_sha256'] != table.sha256):
+                fail('Comparison source differs from its validated packet.')
+            key = (locator['origin_catalog_id'], locator['packet_sha256'])
+            if key in seen:
+                fail('Comparison repeats a source.')
+            seen.add(key)
+            raw_bytes += table.bytes
+            if raw_bytes > MAX_COMPARISON_BYTES:
+                fail('Comparison exceeds 128 MiB of original packets.', 'too_large', 413)
+            metadata = table.metadata()
+            cases = []
+            for case in table._cases.values():
+                reference = case['reference']
+                evidence = table._reference(reference)
+                cases.append(dict(id=case['id'], dimensions=case['dimensions'], evidence=evidence,
+                    opaque_source_sha256=table._sources[reference['source_id']]['sha256']
+                    if reference['pointer'] is None else None))
+            current = dict(scope=metadata['scope_definition'], dimensions=metadata['dimensions'],
+                metrics=[table._definition(metric, ('id','label','units')) for metric in table._metrics.values()],
+                cases=cases)
+            # Canonical source bytes distinguish Boolean/numeric values too;
+            # ordinary Python equality is not the scientific identity relation.
+            identity = digest(current)
+            if basis is None:
+                basis = identity
+                self._header = dict(format='retained_measurement_comparison_v1',
+                    scope=metadata['scope'], scope_definition=metadata['scope_definition'],
+                    dimensions=metadata['dimensions'], metrics=metadata['metrics'],
+                    definition_source=copy.deepcopy(locator), case_population_sha256=digest(cases),
+                    case_count=metadata['case_count'])
+            elif identity != basis:
+                fail('Comparison sources have different scope, metric, dimension or original case definitions.', 'incompatible', 409)
+            for subject in table._subjects.values():
+                if subject['id'] in self._subjects:
+                    fail('Comparison sources overlap a subject identity.', 'conflict', 409)
+                self._subjects[subject['id']] = dict(copy.deepcopy(subject), source=copy.deepcopy(locator))
+            observations += metadata['observation_count']
+            if len(self._subjects) > MAX_COMPARISON_SUBJECTS or observations > MAX_COMPARISON_ROWS:
+                fail('Comparison exceeds 256 subjects or 250,000 observations.', 'too_large', 413)
+            self._tables.append((copy.deepcopy(locator), table))
+        self._header.update(subjects=list(self._subjects.values()), observation_count=observations)
+
+    def read(self, metric_id=None, *, subject_ids=None, filters=None, offset=0, limit=50):
+        result = copy.deepcopy(self._header)
+        result['query'] = None
+        if metric_id is None:
+            if subject_ids is not None or filters is not None or offset != 0 or limit != 50:
+                fail('A comparison selection requires an explicit metric.')
+            return self._bounded(result)
+        selected = list(self._subjects) if subject_ids is None else subject_ids
+        if (type(selected) is not list or not selected
+                or any(type(value) is not str or value not in self._subjects for value in selected)
+                or len(set(selected)) != len(selected)):
+            fail('Choose existing unique comparison subjects.')
+        if type(offset) is not int or not 0 <= offset <= 2**53-1 or type(limit) is not int or not 1 <= limit <= 100:
+            fail('Comparison page bounds must be finite integers.')
+        summaries = {}
+        rows = []
+        total = 0
+        template = None
+        for locator, table in self._tables:
+            own = [identity for identity in selected if identity in table._subjects]
+            if not own:
+                continue
+            page = table.query(metric_id, subject_ids=own, filters=filters, offset=0, limit=1)
+            if template is None:
+                template = page
+            for summary in page['summary']:
+                summaries[summary['subject_id']] = dict(summary, source=copy.deepcopy(locator))
+            start = max(0, offset-total)
+            if total+page['total'] > offset and len(rows) < limit:
+                current = table.query(metric_id, subject_ids=own, filters=filters,
+                    offset=start, limit=limit-len(rows))
+                rows.extend(dict(row, source=copy.deepcopy(locator)) for row in current['rows'])
+            total += page['total']
+        metric = next(item for item in self._header['metrics'] if item['id'] == metric_id)
+        result['query'] = dict(metric=copy.deepcopy(metric), definition=template['definition'],
+            filters=template['filters'], subject_ids=list(selected),
+            summary=[summaries[identity] for identity in selected], rows=rows,
+            total=total, offset=offset, limit=limit, sampling='none')
+        return self._bounded(result)
+
+    @staticmethod
+    def _bounded(value):
+        if len(encode(value)) > MAX_RESPONSE_BYTES:
+            fail('Comparison response exceeds its bound; choose fewer sources or a smaller page.', 'too_large', 413)
+        return value

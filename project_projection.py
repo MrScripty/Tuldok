@@ -15,8 +15,7 @@ from project_data import validate_operation_result as validate_data_result
 from project_history import ProjectHistory, FAMILY_FORMATS as HISTORY_FAMILIES
 from project_history import decode_records as decode_history_records
 from project_history import validate_operation_result as validate_history_result
-from project_material import ProjectMaterial, FAMILIES as MATERIAL_FAMILIES
-from project_material import decode_records as decode_material_records
+from project_material import ProjectMaterial, MaterialSnapshot, FAMILIES as MATERIAL_FAMILIES
 from project_material import validate_operation_result as validate_material_result
 from project_producers import ProjectProducers, FAMILIES as PRODUCER_FAMILIES
 from project_producers import decode_records as decode_producer_records
@@ -26,14 +25,17 @@ from project_execution import ProjectExecution, validate_operation_result as val
 from project_producer_execution import ProjectProducerExecution, validate_operation_result as validate_producer_result
 from project_files import ProjectFiles, decode_records as decode_file_records
 from project_files import validate_operation_result as validate_file_result
+from project_files import receipt_validator as file_receipt_validator
 from project_study_execution import ProjectStudyExecution, validate_operation_result as validate_study_execution_result
 from project_runtime import ProjectRuntime, validate_operation_result as validate_runtime_result
 from project_native_execution import FAMILY as NATIVE_FAMILY, decode_records as decode_native_records
 from project_native_preparation import ProjectNativePreparation, validate_operation_result as validate_preparation_result
 from project_sources import SourceAdapter, validate_operation_result as validate_source_result
+from project_sources import receipt_validator as source_receipt_validator
 from project_measurements import ProjectMeasurements, FAMILY as MEASUREMENT_FAMILY
 from project_measurements import decode_records as decode_measurement_records
 from project_measurements import validate_operation_result as validate_measurement_result
+from project_measurements import receipt_validator as measurement_receipt_validator
 from workbench import WorkbenchError
 from workbench import timestamp
 
@@ -59,12 +61,66 @@ def validate_artifact_resolution(operation, result, records):
     return True
 
 
+def validate_project_records(records, *, project_id, artifacts):
+    """Validate one inert candidate through every owning domain, without SQL reconstruction."""
+    claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_composition', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
+        MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
+    identities = set()
+    declarations = {}
+    for item in records:
+        identity = (item['family'], item['id'])
+        if item['family'] not in claimed or identity in identities:
+            raise WorkbenchError('Unknown or duplicate owned project family.', 'unsupported', 409)
+        identities.add(identity)
+        if item['family'] == 'project_artifact':
+            declaration = validate_declaration(item['document'])
+            if declaration['sha256'] != item['id']:
+                raise WorkbenchError('Artifact inventory identity differs.')
+            declarations[item['id']] = declaration
+    decode_data_records(records)
+    from project_fork import decode_fork
+    decode_fork(records, project_id=project_id)
+    from project_composition import decode_records as decode_compositions
+    decode_compositions(records, project_id=project_id)
+    from project_transfer import decode_records as decode_extraction_records
+    decode_extraction_records(records)
+    operation_records(records, project_id=project_id)
+    validate_file_receipt = file_receipt_validator(records)
+    decode_native_records(records,artifacts=artifacts)
+    materials = MaterialSnapshot(records)
+    for blob in materials.artifact_blobs():
+        if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
+            raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
+    # Resolve every cross-owner reference against THIS candidate, rather
+    # than a resolver that still sees the preceding committed checkpoint.
+    decode_producer_records(records, artifacts=artifacts)
+    decode_history_records(records, materials=materials, artifacts=artifacts)
+    validate_measurement_receipt = measurement_receipt_validator(records, artifacts=artifacts)
+    validate_source_receipt = source_receipt_validator(records)
+    for receipt in operation_documents(records):
+        operation, result = receipt['operation'], receipt['result']
+        if (validate_data_result(operation, result, records)
+                or validate_material_result(operation, result, records)
+                or validate_history_result(operation, result, records)
+                or validate_source_receipt(operation, result)
+                or validate_measurement_receipt(operation, result)
+                or validate_execution_result(operation, result, records)
+                or validate_producer_result(operation, receipt['target'], result, records)
+                or validate_file_receipt(operation, result)
+                or validate_study_execution_result(operation, result, records)
+                or validate_runtime_result(operation, result, records)
+                or validate_preparation_result(operation, result, records)
+                or validate_artifact_resolution(operation, result, records)):
+            continue
+        raise WorkbenchError('No project owner accepts this operation receipt.', 'unsupported', 409)
+
+
 class ProjectProjection:
     def __init__(self, store, db, access, roots, *, custody=None, restore=True, runtime_sources=None):
         self.store, self.db, self.access = store, db, access
         self.custody = custody
         self.pending_original = []
-        self.project_id = store.snapshot()['project_id']
+        self.project_id = store.summary()['project_id']
         self.artifacts = ProjectArtifacts(store)
         self.sources = None
         self._disclosures = set()
@@ -127,59 +183,10 @@ class ProjectProjection:
     def execute(self, *args, **kwargs):
         return self.db.execute(*args, **kwargs)
 
-    def validate_records(self, records, *, project_id=None):
-        project_id = self.project_id if project_id is None else project_id
-        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
-            MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
-        identities = set()
-        declarations = {}
-        for item in records:
-            identity = (item['family'], item['id'])
-            if item['family'] not in claimed or identity in identities:
-                raise WorkbenchError('Unknown or duplicate owned project family.', 'unsupported', 409)
-            identities.add(identity)
-            if item['family'] == 'project_artifact':
-                declaration = validate_declaration(item['document'])
-                if declaration['sha256'] != item['id']:
-                    raise WorkbenchError('Artifact inventory identity differs.')
-                declarations[item['id']] = declaration
-        decode_data_records(records)
-        from project_fork import decode_fork
-        decode_fork(records, project_id=project_id)
-        from project_transfer import decode_records as decode_extraction_records
-        decode_extraction_records(records)
-        operation_records(records, project_id=project_id)
-        decode_file_records(records)
-        decode_native_records(records,artifacts=self.artifacts)
-        materials = decode_material_records(records)
-        for document in materials.values():
-            for edge in document.get('artifacts', []):
-                blob = edge['blob']
-                if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
-                    raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
-        # Resolve every cross-owner reference against THIS candidate, rather
-        # than a resolver that still sees the preceding committed checkpoint.
-        candidate = SimpleNamespace(snapshot=dict(project_id=project_id, records=records),
-                                    artifacts=self.artifacts, check=lambda: None)
-        decode_producer_records(records, artifacts=self.artifacts)
-        decode_history_records(records, materials=ProjectMaterial(candidate), artifacts=self.artifacts)
-        decode_measurement_records(records, artifacts=self.artifacts)
-        for receipt in operation_documents(records):
-            operation, result = receipt['operation'], receipt['result']
-            if (validate_data_result(operation, result, records)
-                    or validate_material_result(operation, result, records)
-                    or validate_history_result(operation, result, records)
-                    or validate_source_result(operation, result, records)
-                    or validate_measurement_result(operation, result, records)
-                    or validate_execution_result(operation, result, records)
-                    or validate_producer_result(operation, receipt['target'], result, records)
-                    or validate_file_result(operation, result, records)
-                    or validate_study_execution_result(operation, result, records)
-                    or validate_runtime_result(operation, result, records)
-                    or validate_preparation_result(operation, result, records)
-                    or validate_artifact_resolution(operation, result, records)):
-                continue
-            raise WorkbenchError('No project owner accepts this operation receipt.', 'unsupported', 409)
+    def validate_records(self, records, *, project_id=None, artifacts=None):
+        return validate_project_records(records,
+            project_id=self.project_id if project_id is None else project_id,
+            artifacts=self.artifacts if artifacts is None else artifacts)
 
     def resolve_artifact(self, body, expected_checkpoint, key):
         """Explicitly supply exact bytes from a configured current local root."""
@@ -187,7 +194,7 @@ class ProjectProjection:
             raise WorkbenchError('Choose one declared artifact and a current rooted file.')
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self.access.require('edit', 'artifacts.resolve', body['sha256'], owner_only=True)
-            self.session.check()
+            self.session.check_current()
             declaration = next((item['document'] for item in self.session.snapshot['records']
                                 if item['family'] == 'project_artifact' and item['id'] == body['sha256']), None)
             if declaration is None:
@@ -243,7 +250,7 @@ class ProjectProjection:
     def runtime_sources(self):
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('admin', 'runtime.sources', owner_only=True)
-            self.session.check()
+            self.session.check_current()
             return dict(sources=sorted(self._runtime_sources))
 
     def authorize_disclosure(self, run, population):
@@ -310,14 +317,15 @@ class _TextView:
         return self.projection.session.available
 
     def _tag(self, value):
-        snapshot = self.projection.session.snapshot
-        return dict(value, project_id=snapshot['project_id'], checkpoint=snapshot['checkpoint'])
+        summary = self.projection.session.summary
+        return dict(value, project_id=summary['project_id'], checkpoint=summary['checkpoint'])
 
     def records(self):
-        self.projection.session.check()
+        self.projection.session.check_current()
         from project_fork import active_records
         snapshot = self.projection.session.snapshot
-        records = active_records(snapshot['records'], project_id=snapshot['project_id'])
+        records = active_records(snapshot['records'], project_id=snapshot['project_id'],
+                                 families=frozenset(('workbench_record', 'workbench_text')))
         return self._tag(dict(items=[copy.deepcopy(item['document']['current']) for item in records
                                     if item['family'] in ('workbench_record', 'workbench_text')
                                     and item['document']['current']['kind'] == 'text']))

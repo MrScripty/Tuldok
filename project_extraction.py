@@ -18,7 +18,7 @@ import project_data as data_codec
 import project_material as material_codec
 import project_history as history_codec
 import project_producers as producer_codec
-from projects import decode_retained_snapshot, manifest, decode as decode_manifest, relative_path
+from projects import decode_retained_snapshot, decode_retained_manifest, decode as decode_manifest, relative_path
 from project_files import file_id, MAX_FILE_BYTES
 
 MAX_PAYLOAD = 40 * 1024 * 1024
@@ -60,6 +60,8 @@ class _Capture:
         self.origin = data_codec.identity(self.db.dataset_id)
         self.records, self.inventory, self.dependencies = {}, {}, {}
         self.blockers, self.warnings, self.working_files = [], [], []
+        # Preserve emitted order without scanning prior runtime diagnostics.
+        self._issue_keys = {False: set(), True: set()}
         self.anchor = None
         self.queue, self.visited, self.queued = deque(), set(), set()
         self.snapshot_by_id = {}
@@ -67,7 +69,7 @@ class _Capture:
         self.payload_gaps = []
         self.deleted_intents = set()
         self.session = SimpleNamespace(snapshot=source.snapshot, db=self.db,
-            artifacts=source.artifacts, check=lambda: None)
+            artifacts=source.artifacts, check_current=lambda: None)
         # Workbench and each metadata-view constructor only assign references;
         # none runs SQL, creates directories or constructs Dataset/Jobs/Runs.
         # Never call get/history: those public owners may enroll images.
@@ -121,10 +123,13 @@ class _Capture:
         return target
 
     def issue(self, key, code, detail, *, warning=False):
-        value = dict(family=key[0], id=key[1], code=code, detail=str(detail)[:1000])
-        destination = self.warnings if warning else self.blockers
-        if value not in destination:
-            destination.append(value)
+        detail = str(detail)[:1000]
+        identity = key[0], key[1], code, detail
+        seen = self._issue_keys[bool(warning)]
+        if identity not in seen:
+            seen.add(identity)
+            destination = self.warnings if warning else self.blockers
+            destination.append(dict(family=key[0], id=key[1], code=code, detail=detail))
 
     def add(self, record):
         key = record['family'], record['id']
@@ -374,11 +379,15 @@ class _Capture:
         if len(matches) != 1:
             _missing('An exact selected project snapshot is not available in this pinned source.')
         saved = matches[0]
-        root = self.source.roots.get(saved['root'])
-        if root is None or list(root[1]) != saved['root_identity']:
-            _missing('The retained registration has no matching current explicit source-root capability.')
-        raw = self.source.read_root(saved['root'], saved['manifest_path'], 65536)
-        if hashlib.sha256(raw).hexdigest() != sha or manifest(decode_manifest(raw)) != saved['manifest']:
+        # Explicitly recovered bytes retain the original registration as inert
+        # history. Its former directory/inode is not current read authority.
+        raw = self.source.read_bound_payload(sha, maximum_bytes=65536)
+        if raw is None:
+            root = self.source.roots.get(saved['root'])
+            if root is None or list(root[1]) != saved['root_identity']:
+                _missing('The retained registration has no matching current explicit source-root capability.')
+            raw = self.source.read_root(saved['root'], saved['manifest_path'], 65536)
+        if hashlib.sha256(raw).hexdigest() != sha or decode_retained_manifest(decode_manifest(raw)) != saved['manifest']:
             raise WorkbenchError('Original registered manifest bytes differ.', 'corrupt_payload', 409)
         blob = self.raw(key, raw, 'project_manifest')
         record = dict(family='project_snapshot', id=key[1], document=dict(format=material_codec.FAMILIES['project_snapshot'],
@@ -751,8 +760,7 @@ class _Capture:
         if self.blockers:return
         try:
             data_codec.decode_data_records(records)
-            material_codec.decode_records(records)
-            materials = material_codec.ProjectMaterial(SimpleNamespace(snapshot=dict(project_id=self.origin, records=records), check=lambda: None))
+            materials = material_codec.MaterialSnapshot(records)
             history_codec.decode_records(records, materials=materials)
             producer_codec.decode_records(records, artifacts=self.source.artifacts)
         except WorkbenchError as error:

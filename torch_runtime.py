@@ -199,14 +199,35 @@ def validate_descriptor(value):
     return value
 
 
-def verify_descriptor(value,manifest):
-    """Bind a captured manifest to the catalog descriptor before installed asset reads."""
-    validate_descriptor(value);validate_manifest(manifest)
+def validate_retained_manifest(value):
+    """Validate original pre-link inventories solely as historical evidence.
+
+    The measured bytes keep their original shape/hash. Current load and launch
+    still require validate_manifest and its explicit link inventory.
+    """
+    if type(value) is dict and 'file_links' not in value:
+        validate_manifest(dict(value,file_links=[]))
+        return value
+    return validate_manifest(value)
+
+
+def _verify_descriptor(value,manifest,validate):
+    validate_descriptor(value);validate(manifest)
     raw=encoded(manifest)
     require(value['manifest_sha256']==sha(raw) and value['manifest_bytes']==len(raw)
             and value['file_count']==len(manifest['files']) and value['total_bytes']==manifest['total_bytes'],
             'descriptor differs from measured manifest')
     return manifest
+
+
+def verify_descriptor(value,manifest):
+    """Bind a captured manifest to the catalog descriptor before installed asset reads."""
+    return _verify_descriptor(value,manifest,validate_manifest)
+
+
+def verify_retained_descriptor(value,manifest):
+    """Bind an original current or pre-link manifest without granting execution."""
+    return _verify_descriptor(value,manifest,validate_retained_manifest)
 
 
 def launch(path,device,entry,arguments):

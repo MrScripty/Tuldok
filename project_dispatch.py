@@ -37,8 +37,8 @@ _EXECUTION_ACTIONS = frozenset(('native_preflight','native_submit','native_retry
     'execution_study_prepare_package','execution_study_prepare_verifier','execution_study_abandon_preparation','execution_study_reconcile_preparation'))
 _RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon'))
 _MEASUREMENT_ACTIONS=frozenset(('measurement_import','measurement_sources','measurement_metadata',
-    'measurement_subjects','measurement_query','measurement_inspect'))
-_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
+    'measurement_subjects','measurement_query','measurement_inspect','measurement_compare'))
+_M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','files_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
     _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS | _MEASUREMENT_ACTIONS)
 
@@ -149,7 +149,7 @@ def _data(projection, action, a):
 def _definitions(projection, family, a):
     docs = projection.materials._documents()
     values = [doc['current'] for (kind, _), doc in docs.items()
-              if kind == family and doc['origin_catalog_id'] == projection.session.snapshot['project_id']]
+              if kind == family and doc['origin_catalog_id'] == projection.session.summary['project_id']]
     return _page(sorted(values, key=lambda item: item['id']), a)
 
 
@@ -365,10 +365,21 @@ def _m4(projection,action,a):
     session=projection.session
     if action=='file_adopt':
         return projection.files.adopt(_body(a),a['expected_checkpoint'],a['request_key'])
+    if action=='files_adopt':
+        return projection.files.adopt_many(_body(a),a['expected_checkpoint'],a['request_key'])
     if action=='file_adopt_deletion':
         return projection.files.adopt_deletion(_body(a),a['expected_checkpoint'],a['request_key'])
     with session.access.lock,session.lock,session.db.lock:
-        session.access.require('inspect','project_files.'+action);snapshot=session.check()
+        session.access.require('inspect','project_files.'+action)
+        if action=='fork_info':
+            snapshot=session.check()
+            from project_fork import decode_fork
+            overlay=decode_fork(snapshot['records'],project_id=snapshot['project_id'])
+            return dict(source=overlay['source'] if overlay else None,project_id=snapshot['project_id'],
+                mapping=_page(overlay['mapping'] if overlay else [],a),archived_count=len(overlay['archived']) if overlay else 0,
+                copied_count=len(overlay['artifacts']['copied']) if overlay else 0,
+                missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']) if overlay else 0)
+        session.check_current()
         if action=='files_inspect':return _page(projection.files.inspect()['items'],a)
         if action=='file_get':return projection.files.read(a['file_id'],a.get('revision'))
         if action=='file_history':
@@ -388,13 +399,6 @@ def _m4(projection,action,a):
             items=[dict(item,requires_reselection=[]) for item in value['editable']]
             items.extend(dict(family=item['family'],id=item['id'],requires_reselection=item['fields']) for item in value['requires_reselection'])
             return _page(sorted(items,key=lambda item:(item['family'],item['id'])),a)
-        if action=='fork_info':
-            from project_fork import decode_fork
-            overlay=decode_fork(snapshot['records'],project_id=snapshot['project_id'])
-            return dict(source=overlay['source'] if overlay else None,project_id=snapshot['project_id'],
-                mapping=_page(overlay['mapping'] if overlay else [],a),archived_count=len(overlay['archived']) if overlay else 0,
-                copied_count=len(overlay['artifacts']['copied']) if overlay else 0,
-                missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']) if overlay else 0)
     raise AssertionError('Closed M4 dispatch is incomplete.')
 
 
@@ -438,6 +442,7 @@ def _measurements(projection,action,a):
     if action=='measurement_import':
         return projection.source_adapter.import_measurements(_body(a),a['expected_checkpoint'],a['request_key'])
     if action=='measurement_sources':return owner.sources(offset=a.get('offset',0),limit=a.get('limit',40))
+    if action=='measurement_compare':return owner.compare(a['sources'],**_body(a,'sources'))
     origin,packet=a['origin_catalog_id'],a['packet_sha256']
     if action=='measurement_metadata':return owner.metadata(origin,packet)
     if action=='measurement_subjects':return owner.subjects(origin,packet,offset=a.get('offset',0),limit=a.get('limit',40))

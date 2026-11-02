@@ -486,9 +486,15 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
             except (ValueError, workbench.WorkbenchError):
                 raise access.AccessError('Access requests require a bounded JSON object.', 'invalid', 400) from None
 
+        def _catalog_busy(self):
+            return self.reply({'error': 'Tuldok is busy completing another operation. Try again after it finishes.',
+                               'code': 'storage'}, 503)
+
         def _access_error(self, error):
             try:
                 dataset.access.denial(error, 'http.request', urlsplit(self.path).path[:512], anonymous=True)
+            except CatalogBusy:
+                return self._catalog_busy()
             except CommitOutcomeUnknown:
                 return self.reply({'error': 'Commit outcome is unknown; inspect state before retrying.', 'code': 'commit_unknown'}, 503)
             except psycopg.Error:
@@ -583,6 +589,8 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except access.AccessError as error:
                 return self._access_error(error)
+            except CatalogBusy:
+                return self._catalog_busy()
             except CommitOutcomeUnknown:
                 return self.reply({'error': 'Commit outcome is unknown; inspect state before retrying.', 'code': 'commit_unknown'}, 503)
             except psycopg.Error:
@@ -633,6 +641,8 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except access.AccessError as error:
                 return self._access_error(error)
+            except CatalogBusy:
+                return self._catalog_busy()
             except CommitOutcomeUnknown:
                 return self.reply({'error': 'Commit outcome is unknown; inspect state before retrying.', 'code': 'commit_unknown'}, 503)
             except psycopg.Error:
@@ -909,6 +919,7 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
                     '/experiment-graph.js': ('experiment-graph.js', 'text/javascript'),
                     '/project-progression.js': ('project-progression.js', 'text/javascript'),
+                    '/project-model-portfolio.js': ('project-model-portfolio.js', 'text/javascript'),
                     '/project-measurements.js': ('project-measurements.js', 'text/javascript'),
                     '/project-measurements.css': ('project-measurements.css', 'text/css'),
                     '/experiment-lineage.js': ('experiment-lineage.js', 'text/javascript'),

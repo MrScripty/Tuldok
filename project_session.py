@@ -9,6 +9,7 @@ import re
 import threading
 
 import agent_api
+from project_store import copy_validated_json
 from workbench import WorkbenchError
 
 
@@ -65,7 +66,8 @@ def operation_records(records, *, project_id=None):
     if project_id is None and overlay is not None:
         project_id = overlay['destination_project_id']
     result = {}
-    for value in operation_documents(active_records(records, project_id=project_id)):
+    for value in operation_documents(active_records(records, project_id=project_id,
+                                                  families=frozenset({OPERATION_FAMILY}))):
         if overlay is not None and value['format'] == 'project_operation_v1':
             raise ProjectSessionError('A fork must retain legacy operation receipts as archived historical facts.')
         if project_id is not None and value.get('project_id', project_id) != project_id:
@@ -85,7 +87,7 @@ class ProjectSession:
         self._validate = validate_records
         self.available = False
         self._snapshot = None
-        self.project_id = store.snapshot()['project_id']
+        self.project_id = store.summary()['project_id']
         self.extra_capture = None
         self.publication_intent = None
         self.runtime_access = None
@@ -177,9 +179,15 @@ class ProjectSession:
             self._recovery_request = None
 
     @property
+    def summary(self):
+        """Scalar metadata for the same bound checkpoint as snapshot."""
+        with self.lock:
+            return {key: self._snapshot[key] for key in ('project_id', 'name', 'checkpoint')}
+
+    @property
     def snapshot(self):
         with self.lock:
-            return copy.deepcopy(self._snapshot)
+            return copy_validated_json(self._snapshot)
 
     def _validated(self, records):
         operation_records(records, project_id=self.project_id)
@@ -196,16 +204,43 @@ class ProjectSession:
             current = self.store.snapshot()
             if current != snapshot:
                 raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
-            self._snapshot = copy.deepcopy(snapshot)
+            self._snapshot = copy_validated_json(snapshot)
             self.available = True
 
-    def check(self):
-        """Check freshness while a caller holds host/session/projection guards."""
+    def _checked(self, read):
         if not self.available:
             raise ProjectSessionError('Reopen this project to reconstruct its projection.', 'projection_unavailable', 503)
-        current = self.store.snapshot()
+        current = read()
         if current['checkpoint'] != self._snapshot['checkpoint']:
             raise ProjectSessionError('Canonical project changed. Close and reopen it.', 'stale_project', 409)
+        return current
+
+    def check_current(self):
+        """Verify actual canonical bytes without returning an unused record graph.
+
+        The caller holds the same host/session/projection guards as check().
+        Store.summary reads and hashes all current records before returning.
+        """
+        self._checked(self.store.summary)
+
+    def check(self):
+        """Return independent current records under caller-owned projection guards."""
+        return self._checked(self.store.snapshot)
+
+    def check_records(self, family):
+        """Verify every canonical record, then copy one bound record family.
+
+        The complete snapshot, including cross-family closure, was validated
+        and isolated by adopt/publication. Returned copies retain that validity
+        inside the trusted owner boundary; they are not new imported raw input.
+        Exact current bytes and checkpoint must still match before using it.
+        Callers hold the same ordered guards as check(); no cached alias escapes.
+        """
+        if type(family) is not str:
+            raise TypeError('Record-family selection requires a string.')
+        current = self._checked(self.store.summary)
+        current['records'] = copy.deepcopy([
+            item for item in self._snapshot['records'] if item['family'] == family])
         return current
 
     def mutate(self, operation, target, body, expected_checkpoint, key, invoke, capture, *, scope='edit'):

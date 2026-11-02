@@ -277,8 +277,8 @@ def decode_runtime_material(value, *, catalog_id):
             from recipe_process import validate_cpu_snapshot_manifest,encoded
             manifest=validate_cpu_snapshot_manifest(descriptor,value['manifest'])
         elif descriptor.get('profile') == 'managed_torch_python_v1':
-            from torch_runtime import verify_descriptor,encoded
-            manifest=verify_descriptor(descriptor,value['manifest'])
+            from torch_runtime import verify_retained_descriptor,encoded
+            manifest=verify_retained_descriptor(descriptor,value['manifest'])
         else: raise WorkbenchError('Unsupported retained runtime profile.', 'unsupported', 409)
         raw=encoded(manifest)
         if len(raw)!=descriptor['manifest_bytes'] or hashlib.sha256(raw).hexdigest()!=descriptor['manifest_sha256']:
@@ -315,14 +315,62 @@ def validate_operation_result(operation, result, records=None):
     return True
 
 
+def _retained_value(get_documents, family, ref):
+    catalog_id = _catalog(ref['catalog_id'])
+    reference(ref, {'model_material':'model', 'recipe_material':'recipe_material',
+                    'runtime_material':'runtime'}[family], catalog_id)
+    key = catalog_id + '.' + ref['sha256']
+    document = get_documents().get((family, key))
+    if document is None:
+        raise WorkbenchError('Retained material is unavailable.', 'unavailable', 409)
+    if document['value']['ref'] != ref:
+        raise WorkbenchError('Retained material reference differs.', 'invalid', 400)
+    return copy.deepcopy(document['value'])
+
+
+class MaterialSnapshot:
+    """Owned, validated material facts for one fixed checkpoint read.
+
+    The decoder copies the selected documents. Neither input mutation nor a
+    returned value can alter this view. It has no live Session, artifact reader,
+    publication operation or current execution authority.
+    """
+    @_boundary
+    def __init__(self, records):
+        self.__documents = decode_records(records)
+
+    @_boundary
+    def recipe(self, ref):
+        return _retained_value(lambda: self.__documents, 'recipe_material', ref)
+
+    @_boundary
+    def runtime(self, ref):
+        return _retained_value(lambda: self.__documents, 'runtime_material', ref)
+
+    def artifact_blobs(self):
+        for document in self.__documents.values():
+            for edge in document.get('artifacts', []):
+                yield copy.deepcopy(edge['blob'])
+
+
 class ProjectMaterial:
     def __init__(self, session):
         self.session = session
         self.owner_access = _MaterialAccess(session) if hasattr(session,'access') else None
 
     def _documents(self):
-        self.session.check()
+        self.session.check_current()
         return decode_records(self.session.snapshot['records'])
+
+    def read_view(self, records):
+        """Own validated material facts from one guarded checkpoint read.
+
+        The history reader supplies its selected records. This view carries no
+        live publication, verification or execution capability; later reads
+        must select their own checkpoint and construct a new view.
+        """
+        self.session.check_current()
+        return MaterialSnapshot(records)
 
     @_boundary
     def intents(self):
@@ -333,7 +381,7 @@ class ProjectMaterial:
         from project_material_fork import is_intent
         documents = self._documents()
         active = {(r['family'], r['id']) for r in active_records(
-            self.session.snapshot['records'], project_id=self.session.snapshot['project_id'])}
+            self.session.snapshot['records'], project_id=self.session.summary['project_id'])}
         return [dict(family=family, id=locator, current=copy.deepcopy(doc['current']),
                      fork_origin=copy.deepcopy(doc['fork_origin']))
                 for (family, locator), doc in sorted(documents.items())
@@ -344,7 +392,7 @@ class ProjectMaterial:
         intents = self.intents()
         unresolved = {(r['family'],r['id']) for r in intents}
         from project_fork import active_records
-        active = active_records(self.session.snapshot['records'], project_id=self.session.snapshot['project_id'])
+        active = active_records(self.session.snapshot['records'], project_id=self.session.summary['project_id'])
         return dict(requires_reselection=[dict(family=r['family'],id=r['id'],fields=r['current']['required_reselection']) for r in intents],
                     editable=[dict(family=r['family'],id=r['id']) for r in active
                               if r['family'] in EDITABLE and (r['family'],r['id']) not in unresolved])
@@ -356,13 +404,7 @@ class ProjectMaterial:
 
     @_boundary
     def _value(self, family, ref):
-        catalog_id = _catalog(ref['catalog_id'])
-        reference(ref,{'model_material':'model','recipe_material':'recipe_material','runtime_material':'runtime'}[family],catalog_id)
-        key = catalog_id + '.' + ref['sha256']
-        document = self._documents().get((family, key))
-        if document is None: raise WorkbenchError('Retained material is unavailable.', 'unavailable', 409)
-        if document['value']['ref'] != ref: raise WorkbenchError('Retained material reference differs.', 'invalid', 400)
-        return copy.deepcopy(document['value'])
+        return _retained_value(self._documents, family, ref)
 
     @_boundary
     def model(self, ref, *, verify=False):
@@ -398,8 +440,8 @@ class ProjectMaterial:
                 from recipe_process import decode, encoded, validate_cpu_manifest
                 manifest = validate_cpu_manifest(decode(raw))
             else:
-                from torch_runtime import decode, encoded, validate_manifest
-                manifest = validate_manifest(decode(raw))
+                from torch_runtime import decode, encoded, validate_retained_manifest
+                manifest = validate_retained_manifest(decode(raw))
             if encoded(manifest) != raw: raise WorkbenchError('Retained runtime manifest encoding differs.', 'invalid', 400)
         return value
 
@@ -411,15 +453,15 @@ class ProjectMaterial:
         if len(candidates) != 1: raise WorkbenchError('Retained project snapshot is unavailable or ambiguous.', 'unavailable', 409)
         doc = candidates[0]
         if verify:
-            from projects import decode, manifest
+            from projects import decode, decode_retained_manifest
             edge = doc['artifacts'][0]['blob']
             raw = self.session.artifacts.read_blob(edge, maximum_bytes=64*1024)
-            if manifest(decode(raw)) != doc['value']['manifest']:
+            if decode_retained_manifest(decode(raw)) != doc['value']['manifest']:
                 raise WorkbenchError('Retained project manifest differs.', 'invalid', 400)
         return copy.deepcopy(doc['value'])
 
     def capture_definition(self, family, value, before_records, *, action, actor_id=None, audit_facts=None):
-        catalog_id = self.session.snapshot['project_id']
+        catalog_id = self.session.summary['project_id']
         value = _definition(family, value, catalog_id)
         key = catalog_id + '.' + value['id']
         prior = decode_records(before_records).get((family, key))
@@ -539,17 +581,17 @@ class ProjectMaterial:
                 from recipe_process import decode,validate_cpu_manifest
                 manifest=validate_cpu_manifest(decode(manifest_raw))
             else:
-                from torch_runtime import decode,validate_manifest
-                manifest=validate_manifest(decode(manifest_raw))
+                from torch_runtime import decode,validate_retained_manifest
+                manifest=validate_retained_manifest(decode(manifest_raw))
         runtime=self.capture_runtime(dict(ref=ref,descriptor=descriptor,
             environment=None if descriptor is not None else environment,manifest=manifest),manifest_raw)
         return [*self.declarations(runtime),runtime]
 
     @_boundary
     def capture_snapshot(self, value, raw, *, catalog_id):
-        from projects import decode_retained_snapshot,decode,manifest
+        from projects import decode_retained_snapshot,decode,decode_retained_manifest
         value=decode_retained_snapshot(value);_catalog(catalog_id)
-        if type(raw) is not bytes or len(raw)>64*1024 or hashlib.sha256(raw).hexdigest()!=value['manifest_sha256'] or manifest(decode(raw))!=value['manifest']:
+        if type(raw) is not bytes or len(raw)>64*1024 or hashlib.sha256(raw).hexdigest()!=value['manifest_sha256'] or decode_retained_manifest(decode(raw))!=value['manifest']:
             raise WorkbenchError('Exact original project manifest bytes differ.')
         key=catalog_id+'.'+value['manifest_sha256']
         prior=decode_records(self.session.snapshot['records']).get(('project_snapshot',key))

@@ -54,6 +54,7 @@ SUPPORTED_FORMATS = {
     'project_artifact': 'project_artifact_v1',
     'project_operation': 'project_operation_v1',
     'project_fork': 'project_fork_v1',
+    'project_composition': 'project_composition_v1',
     'project_file': 'project_file_v1',
     'project_extraction': 'project_extraction_v1',
     'generation_history': 'project_generation_history_v1',
@@ -62,7 +63,9 @@ SUPPORTED_FORMATS = {
     'text_proposal_history': 'project_text_proposal_history_v1',
 }
 MAX_RECORDS = 100_000
-MAX_TOTAL_BYTES = 256 * 1024 * 1024
+# Scientific history can retain original runtime/file observations in hundreds
+# of Runs. Bound the whole local checkpoint separately from each document.
+MAX_TOTAL_BYTES = 2 * 1024 * 1024 * 1024
 IDENTIFIER = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$')
 REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')
 DOMAIN_FORMAT = re.compile(r'^[a-z][a-z0-9_]{0,95}_v([1-9][0-9]*)$')
@@ -119,6 +122,17 @@ def _encode(value):
     _json_value(value)
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2,
                        allow_nan=False) + '\n').encode('utf-8')
+
+
+def copy_validated_json(value):
+    """Own another tree of already validated JSON without Python graph copying.
+
+    Canonical Store/Session values contain only JSON scalars, lists and string
+    keyed dictionaries. This is a copy operation inside that proof boundary,
+    never an input decoder or a substitute for freshness/codec validation.
+    """
+    return json.loads(json.dumps(value, ensure_ascii=True, allow_nan=False,
+                                separators=(',', ':')))
 
 
 def _manifest_raw(manifest):
@@ -465,6 +479,7 @@ class ProjectStore:
         self._origin_path = Path(origin_path)
         self._meta_fd = None
         self._manifest = None
+        self._read_cache = None
         self._mutex = threading.RLock()
         self._unknown = False
         try:
@@ -626,12 +641,12 @@ class ProjectStore:
         if type(verify_after) is not bool:
             _fail('Root read verification must be an explicit boolean.')
         with self._mutex:
-            before = self.snapshot()
+            before = self._current()[0]['checkpoint']
             descriptor = os.dup(self._root_fd)
             try:
                 yield descriptor
                 self._binding()
-                if verify_after and self.snapshot()['checkpoint'] != before['checkpoint']:
+                if verify_after and self._current()[0]['checkpoint'] != before:
                     _fail('Project checkpoint changed during the bounded root read.', 'stale', 409)
             finally:
                 os.close(descriptor)
@@ -639,6 +654,17 @@ class ProjectStore:
     def _load(self):
         self._binding()
         raw = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
+        cached = self._read_cache
+        if cached is not None and raw == cached[0]:
+            manifest, loaded = cached[1:]
+            # Reuse decoding only after checking every actual canonical file.
+            # Stat identity is not content identity; corruption still fails.
+            for entry in manifest['inventory']:
+                self._verified_record_bytes(entry)
+            if _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES) != raw:
+                _fail('Project checkpoint changed while reading.', 'stale', 409)
+            self._binding()
+            return manifest, loaded
         manifest = _decode(raw)
         if type(manifest) is not dict:
             _fail('Project checkpoint must be an object.')
@@ -680,9 +706,7 @@ class ProjectStore:
             total += entry['bytes']
             if total > MAX_TOTAL_BYTES:
                 _fail('Project records exceed their total byte limit.')
-            record_raw = self._record_file(family, record_id, digest)
-            if len(record_raw) != entry['bytes'] or _sha(record_raw) != digest:
-                _fail('Canonical record bytes changed or are corrupt.', 'stale' if self._manifest else 'invalid', 409 if self._manifest else 400)
+            record_raw = self._verified_record_bytes(entry)
             document = _decode(record_raw)
             if type(document) is not dict or document.get('format') != entry['format']:
                 _fail('Domain document format disagrees with its inventory.')
@@ -706,7 +730,15 @@ class ProjectStore:
         if _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES) != raw:
             _fail('Project checkpoint changed while reading.', 'stale', 409)
         self._binding()
+        self._read_cache = (raw, manifest, loaded)
         return manifest, loaded
+
+    def _verified_record_bytes(self, entry):
+        raw = self._record_file(entry['family'], entry['id'], entry['sha256'])
+        if len(raw) != entry['bytes'] or _sha(raw) != entry['sha256']:
+            _fail('Canonical record bytes changed or are corrupt.',
+                  'stale' if self._manifest else 'invalid', 409 if self._manifest else 400)
+        return raw
 
     def _record_file(self, family, record_id, digest, raw=None, sync=False):
         fds = []
@@ -717,14 +749,23 @@ class ProjectStore:
                 fds.append(parent)
             name = digest + '.json'
             if raw is not None:
-                temporary = '.record-' + uuid.uuid4().hex + '.tmp'
-                _write_file(parent, temporary, raw)
                 try:
-                    _rename_noreplace(parent, temporary, name)
-                except FileExistsError:
-                    if _read(parent, name, MAX_RECORD_BYTES) != raw:
+                    existing = _read(parent, name, MAX_RECORD_BYTES)
+                except FileNotFoundError:
+                    temporary = '.record-' + uuid.uuid4().hex + '.tmp'
+                    _write_file(parent, temporary, raw)
+                    try:
+                        _rename_noreplace(parent, temporary, name)
+                    except FileExistsError:
+                        if _read(parent, name, MAX_RECORD_BYTES) != raw:
+                            _fail('Immutable project revision already has different bytes.')
+                        os.unlink(temporary, dir_fd=parent)
+                else:
+                    if existing != raw:
                         _fail('Immutable project revision already has different bytes.')
-                    os.unlink(temporary, dir_fd=parent)
+                # Existing revisions can come from a copied project or an
+                # interrupted earlier commit. Retain all ordinary sync checks;
+                # only the disposable write/rename/unlink cycle is avoided.
                 sync = True
             if sync:
                 _sync_file(parent, name)
@@ -763,17 +804,27 @@ class ProjectStore:
 
     def _snapshot(self, manifest, records):
         return dict(project_id=manifest['project_id'], name=manifest['name'],
-                    checkpoint=manifest['checkpoint'], records=copy.deepcopy(records))
+                    checkpoint=manifest['checkpoint'], records=copy_validated_json(records))
+
+    def _current(self):
+        try:
+            manifest, records = self._load()
+            if manifest != self._manifest:
+                _fail('Project checkpoint changed; close and reopen.', 'stale', 409)
+            return manifest, records
+        except OSError as exc:
+            _io_error(exc, 'read project snapshot')
+
+    def summary(self):
+        """Return scalar metadata after the same complete freshness check."""
+        with self._mutex:
+            manifest, _records = self._current()
+            return {key: manifest[key] for key in ('project_id', 'name', 'checkpoint')}
 
     def snapshot(self):
         with self._mutex:
-            try:
-                manifest, records = self._load()
-                if manifest != self._manifest:
-                    _fail('Project checkpoint changed; close and reopen.', 'stale', 409)
-                return self._snapshot(manifest, records)
-            except OSError as exc:
-                _io_error(exc, 'read project snapshot')
+            manifest, records = self._current()
+            return self._snapshot(manifest, records)
 
     def reconcile(self, request_key, request_sha256):
         """Inspect retry identity before a domain mutation; never repeat effects."""
@@ -872,6 +923,7 @@ class ProjectStore:
 
     def close(self):
         with self._mutex:
+            self._read_cache = None
             if self._meta_fd is not None:
                 os.close(self._meta_fd)
                 self._meta_fd = None

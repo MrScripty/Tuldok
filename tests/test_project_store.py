@@ -3,10 +3,12 @@ import copy
 import errno
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import struct
 import sys
 import tempfile
 import unittest
@@ -71,6 +73,25 @@ class ProjectStoreTests(unittest.TestCase):
         value['checkpoint'] = sha(canonical(value))
         (self.root / '.tuldok/project.json').write_bytes(canonical(value))
 
+    def test_snapshot_preserves_scalar_types_float_bits_and_owned_nested_values(self):
+        floats = [-0.0, 0.0, 5e-324, -5e-324, 1.7976931348623157e308,
+                  math.nextafter(1.0, 0.0), math.nextafter(1.0, math.inf)]
+        value = record()
+        value['document']['scalars'] = [None, False, True, -2**63, 2**63-1,
+                                        'Unicode 漢字 \U0001f30a\x00', *floats]
+        expected = self.commit([value])
+        first, second = self.store.snapshot(), self.store.snapshot()
+        self.assertEqual(first, expected)
+        self.assertEqual(second, expected)
+        actual = first['records'][0]['document']['scalars']
+        self.assertEqual([type(v) for v in actual],
+                         [type(v) for v in value['document']['scalars']])
+        self.assertEqual([struct.pack('>d', v) for v in actual[6:]],
+                         [struct.pack('>d', v) for v in floats])
+        first['records'][0]['document']['history'][0]['reviewed'] = True
+        first['records'][0]['document']['scalars'].clear()
+        self.assertEqual(self.store.snapshot(), second)
+
     def test_create_commit_save_cold_reopen_and_independent_snapshots(self):
         initial = self.store.snapshot()
         self.assertEqual(initial['records'], [])
@@ -85,6 +106,92 @@ class ProjectStoreTests(unittest.TestCase):
         values[0]['document']['text'] = 'Unchecked caller mutation'
         committed['records'][0]['document']['text'] = 'Unchecked returned mutation'
         self.assertEqual(self.store.snapshot()['records'][0]['document']['text'], 'Notes preserve \r\n authored values')
+
+    def test_appending_one_record_does_not_rewrite_saved_immutable_revisions(self):
+        values = [record(str(index), 'Retained authored note %d' % index) for index in range(8)]
+        self.commit(values, key='initial-inventory')
+        writer = store_module._write_file
+        with patch.object(store_module, '_write_file', wraps=writer) as writes:
+            committed = self.commit([*values, record('new')], key='append-one')
+        record_writes = [call for call in writes.call_args_list if call.args[1].startswith('.record-')]
+        self.assertEqual(len(record_writes), 1,
+            'Appending one record must not write disposable copies of every saved immutable revision')
+        self.assertEqual(self.reopen(), committed)
+
+    def test_summary_reads_every_current_record_without_cloning_the_record_graph(self):
+        committed = self.commit([record('a'), record('b')], key='summary-fixture')
+        expected = {key: committed[key] for key in ('project_id', 'name', 'checkpoint')}
+        with patch.object(self.store, '_snapshot', side_effect=AssertionError('Unused record graph copy')), \
+                patch.object(self.store, '_record_file', wraps=self.store._record_file) as reads:
+            first = self.store.summary()
+            first['name'] = 'Caller mutation'
+            second = self.store.summary()
+        self.assertEqual(second, expected)
+        self.assertEqual(reads.call_count, 4, 'Each summary must still read/hash both actual records')
+        self.assertEqual(self.store.snapshot(), committed)
+
+    def test_repeated_snapshot_and_root_reads_recheck_bytes_without_redecoding_identical_records(self):
+        rows=[record('a'),record('b','Exact second note\n')]
+        self.commit(rows,key='repeat-read-fixture')
+        expected=self.store.snapshot()
+        canonical_documents={canonical(row['document']) for row in rows}
+        with patch.object(store_module,'_decode',wraps=store_module._decode) as decode, \
+                patch.object(self.store,'_record_file',wraps=self.store._record_file) as read, \
+                patch.object(self.store,'_snapshot',wraps=self.store._snapshot) as snapshot:
+            self.assertEqual(self.store.snapshot(),expected)
+            with self.store.root_directory(verify_after=True) as descriptor:
+                self.assertTrue(os.fstat(descriptor).st_ino)
+            self.assertEqual(self.store.snapshot(),expected)
+        self.assertEqual(read.call_count,8,'All two records must still be read in each of four checks')
+        self.assertEqual(snapshot.call_count,2,'Root borrowing must not clone an unused public snapshot')
+        decoded=[call for call in decode.call_args_list if call.args[0] in canonical_documents]
+        self.assertEqual(len(decoded),0,'Byte-identical canonical records need no repeat decoding within one Store')
+
+    def test_verified_decode_cache_still_rejects_same_length_corruption_with_restored_mtime(self):
+        self.commit([record('note','Alpha\n')],key='cache-corruption-fixture')
+        self.store.snapshot()
+        entry=self.manifest()['inventory'][0]
+        path=self.root/'.tuldok'/entry['path'];info=path.stat();raw=path.read_bytes()
+        changed=raw.replace(b'Alpha',b'Omega')
+        self.assertEqual(len(changed),len(raw));self.assertNotEqual(changed,raw)
+        path.chmod(0o600);path.write_bytes(changed)
+        os.utime(path,ns=(info.st_atime_ns,info.st_mtime_ns))
+        self.assert_code('stale',self.store.snapshot)
+        self.assert_code('stale',self.store.summary)
+        with self.assertRaises(ProjectStoreError) as caught:
+            with self.store.root_directory(verify_after=True):pass
+        self.assertEqual(caught.exception.code,'stale')
+
+    def test_reusing_an_unreferenced_revision_still_checks_bytes_and_syncs_it(self):
+        first, second = record('first'), record('second')
+        self.commit([first], key='retain-first')
+        self.commit([second], key='retain-second')
+        writer, sync = store_module._write_file, store_module._sync_file
+        with patch.object(store_module, '_write_file', wraps=writer) as writes:
+            with patch.object(store_module, '_sync_file', wraps=sync) as syncs:
+                committed = self.commit([first, second], key='reuse-first')
+        self.assertFalse(any(call.args[1].startswith('.record-') for call in writes.call_args_list))
+        self.assertEqual(syncs.call_count, 2)
+        self.assertEqual(self.reopen(), committed)
+
+    def test_reusing_a_corrupt_unreferenced_revision_never_publishes_it(self):
+        first = record('first')
+        self.commit([first], key='retain-first')
+        entry = self.manifest()['inventory'][0]
+        self.commit([], key='exclude-first')
+        before = self.store.snapshot()
+        path = self.root / '.tuldok' / entry['path']
+        path.unlink()
+        path.write_bytes(b'{"corrupt":"unreferenced revision"}\n')
+        self.assert_code('invalid', self.commit, [first], key='reuse-corrupt')
+        self.assertEqual(self.reopen(), before)
+
+    def test_existing_revision_sync_failure_keeps_the_previous_checkpoint(self):
+        self.commit([record()], key='initial')
+        before = self.store.snapshot()
+        with patch.object(store_module, '_sync_file', side_effect=OSError(errno.EIO, 'existing revision sync failed')):
+            self.assert_code('unavailable', self.commit, [record()], key='reuse-with-sync-error')
+        self.assertEqual(self.reopen(), before)
 
     def test_fresh_copy_and_moved_folder_keep_identity_and_values(self):
         committed = self.commit()
@@ -177,12 +284,14 @@ except ProjectStoreError as exc:
         self.root.rename(displaced)
         self.root.mkdir()
         self.assert_code('stale', self.store.snapshot)
+        self.assert_code('stale', self.store.summary)
         self.root.rmdir()
         displaced.rename(self.root)
         meta = self.root / '.tuldok'
         meta.rename(self.root / '.old-tuldok')
         meta.mkdir()
         self.assert_code('stale', self.store.snapshot)
+        self.assert_code('stale', self.store.summary)
 
     def test_changed_checkpoint_is_rejected_before_mutation(self):
         initial = self.store.snapshot()
@@ -266,6 +375,33 @@ except ProjectStoreError as exc:
         for value in invalid:
             with self.subTest(value=repr(value)):
                 self.assert_code('invalid', self.store.commit, [value], checkpoint, 'bad', body('bad'))
+
+    def test_portfolio_above_256_MiB_commits_and_cold_reopens(self):
+        # Each document fits the 40 MiB owner bound. Aggregate project metadata
+        # must also support scientific catalogs larger than the old 256 MiB.
+        text = 'p' * (30 * 1024 * 1024)
+        values = [record(str(index), text) for index in range(9)]
+        committed = self.store.commit(values, self.store.snapshot()['checkpoint'],
+                                      'large-portfolio', body('large-portfolio'))
+        self.assertGreater(sum(row['bytes'] for row in self.manifest()['inventory']),
+                           256 * 1024 * 1024)
+        self.assertEqual(self.reopen(), committed)
+        self.assertEqual(self.store.snapshot()['records'], values)
+
+    def test_aggregate_byte_bound_rejects_commit_and_cold_open(self):
+        values = [record('a'), record('b')]
+        total = sum(len(canonical(value['document'])) for value in values)
+        before = self.bytes_tree()
+        checkpoint = self.store.snapshot()['checkpoint']
+        with patch.object(store_module, 'MAX_TOTAL_BYTES', total - 1):
+            self.assert_code('invalid', self.store.commit, values, checkpoint,
+                             'over-budget', body('over-budget'))
+        self.assertEqual(self.bytes_tree(), before)
+        committed = self.commit(values)
+        self.store.close()
+        with patch.object(store_module, 'MAX_TOTAL_BYTES', total - 1):
+            self.assert_code('invalid', ProjectStore.open, self.root)
+        self.assertEqual(self.reopen(), committed)
         for value in [dict(record(), family='access_credentials'),
                       dict(record(), document={'format': 'workbench_text_v2'}),
                       dict(record(), document={'format': 'unknown_v1'})]:

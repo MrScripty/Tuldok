@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -19,13 +20,55 @@ from psycopg import sql
 from access import Access
 from metadata import Metadata
 from model_definitions import ModelDefinitions
+from pipeline import digest
 from project_data import decode_data_records
-from project_extraction import capture_legacy
+from project_extraction import _Capture, capture_legacy
 from project_material import decode_records as decode_material
-from project_transfer import ReadonlyCatalog, SourceView
+from project_transfer import CapturedArtifacts, ReadonlyCatalog, SourceView
 from projects import Projects
 from saved_searches import SavedSearches
 from workbench import Workbench, WorkbenchError
+
+
+class CaptureDiagnostics(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='tuldok-capture-diagnostics-')
+        self.addCleanup(temporary.cleanup)
+        # These constructors assign owner references only. This fixture never
+        # calls a data reader, SQL, a model runtime or the source capability.
+        self.source = SimpleNamespace(
+            db=SimpleNamespace(dataset_id='a' * 32, path=Path(temporary.name), lock=threading.RLock()),
+            snapshot=dict(project_id='a' * 32, records=[]), artifacts=CapturedArtifacts())
+        self.capture = _Capture(self.source)
+
+    def test_severity_parent_family_and_code_keep_distinct_diagnostics(self):
+        capture = self.capture
+        parent = 'run_history', 'b' * 32
+        capture.issue(parent, 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(parent, 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(parent, 'missing_source', 'Original source unavailable')
+        capture.issue(('study_history', parent[1]), 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(('run_history', 'c' * 32), 'missing_source', 'Original source unavailable', warning=True)
+        capture.issue(parent, 'unsupported', 'Original source unavailable', warning=True)
+        self.assertEqual(capture.warnings, [
+            dict(family='run_history', id=parent[1], code='missing_source', detail='Original source unavailable'),
+            dict(family='study_history', id=parent[1], code='missing_source', detail='Original source unavailable'),
+            dict(family='run_history', id='c' * 32, code='missing_source', detail='Original source unavailable'),
+            dict(family='run_history', id=parent[1], code='unsupported', detail='Original source unavailable')])
+        self.assertEqual(capture.blockers, [capture.warnings[0]])
+
+    def test_retained_detail_normalization_and_first_observation_order(self):
+        capture = self.capture
+        parent = 'run_history', 'b' * 32
+        prefix = 'λ' * 1000
+        capture.issue(parent, 'missing_source', prefix + 'first', warning=True)
+        capture.issue(parent, 'missing_source', prefix + 'second', warning=True)
+        capture.issue(parent, 'missing_source', 42, warning=True)
+        capture.issue(parent, 'missing_source', '42', warning=True)
+        self.assertEqual(capture.warnings, [
+            dict(family='run_history', id=parent[1], code='missing_source', detail=prefix),
+            dict(family='run_history', id=parent[1], code='missing_source', detail='42')])
+        self.assertEqual(capture.blockers, [])
 
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL')
@@ -84,6 +127,70 @@ class LegacyCapture(unittest.TestCase):
              patch('synthetic.Jobs.__init__', side_effect=AssertionError('Extraction constructed Jobs')), \
              patch('runs.Runs.__init__', side_effect=AssertionError('Extraction constructed Runs')):
             return capture_legacy(source, selection)
+
+    def bind_manifest_copy(self, source):
+        recovered = self.root / 'recovered-original'
+        recovered.mkdir()
+        path = recovered / 'manifest.json'
+        path.write_bytes(self.manifest_raw)
+        descriptor = os.open(recovered, os.O_RDONLY | os.O_DIRECTORY)
+        info = os.fstat(descriptor)
+        source.roots['recovered'] = descriptor, [info.st_dev, info.st_ino]
+        source.bind_payload(hashlib.sha256(self.manifest_raw).hexdigest(), len(self.manifest_raw),
+                            'recovered', 'manifest.json')
+        return path
+
+    def test_exact_legacy_activity_manifest_is_captured_without_reading_activity(self):
+        self.manifest['activity_path']='activity-must-remain-inert.json'
+        self.manifest_raw=(json.dumps(self.manifest,ensure_ascii=False,indent=3)+'\n\n').encode()
+        saved=json.loads(self.dataset.db.execute('SELECT document FROM workspace_projects WHERE id=%s',
+                                               (self.project_id,)).fetchone()[0])
+        saved['manifest']=copy.deepcopy(self.manifest)
+        saved['manifest_sha256']=hashlib.sha256(self.manifest_raw).hexdigest()
+        self.dataset.db.execute('UPDATE workspace_projects SET document=%s WHERE id=%s',
+                               (json.dumps(saved),self.project_id))
+        self.selection['project_snapshot']['manifest_sha256']=saved['manifest_sha256']
+        source=self.view();self.bind_manifest_copy(source)
+        fd,_=source.roots.pop('fixture');os.close(fd)
+        captured=self.capture(source,{})
+        self.assertEqual(captured['blockers'],[])
+        snapshot=next(row['document'] for row in captured['records'] if row['family']=='project_snapshot')
+        self.assertEqual(snapshot['value'],saved)
+        self.assertEqual(len(snapshot['artifacts']),1)
+
+    def test_explicit_original_manifest_binding_keeps_history_without_old_root_authority(self):
+        source = self.view()
+        self.bind_manifest_copy(source)
+        descriptor, _ = source.roots.pop('fixture')
+        os.close(descriptor)
+        captured = self.capture(source, {})
+        self.assertEqual(captured['blockers'], [])
+        snapshot = next(row['document'] for row in captured['records'] if row['family'] == 'project_snapshot')
+        self.assertEqual(snapshot['value']['root'], 'fixture')
+        self.assertEqual(snapshot['value']['manifest'], self.manifest)
+        declaration = next(row['document'] for row in captured['records'] if row['family'] == 'project_artifact')
+        self.assertEqual(source.artifacts.read_blob(declaration), self.manifest_raw)
+        self.assertNotIn('fixture', source.roots)
+
+    def test_explicit_original_manifest_bytes_do_not_read_changed_working_manifest(self):
+        source = self.view()
+        self.bind_manifest_copy(source)
+        changed = b'{"unrelated_current_working_file":true}\n'
+        (self.project_root / 'source.json').write_bytes(changed)
+        captured = self.capture(source, {})
+        self.assertEqual(captured['blockers'], [])
+        declaration = next(row['document'] for row in captured['records'] if row['family'] == 'project_artifact')
+        self.assertEqual(source.artifacts.read_blob(declaration), self.manifest_raw)
+        self.assertEqual((self.project_root / 'source.json').read_bytes(), changed)
+
+    def test_changed_explicit_manifest_binding_blocks_instead_of_using_working_file(self):
+        source = self.view()
+        recovered = self.bind_manifest_copy(source)
+        recovered.write_bytes(b'changed after explicit binding')
+        captured = self.capture(source, {})
+        self.assertTrue(any(row['code'] == 'stale_source' for row in captured['blockers']))
+        self.assertFalse(any(row['family'] == 'project_snapshot' for row in captured['records']))
+        self.assertEqual((self.project_root / 'source.json').read_bytes(), self.manifest_raw)
 
     def test_text_responses_history_and_unrelated_inventory_are_read_only(self):
         selected = self.text();unrelated = self.text('Unrelated original data')
@@ -392,7 +499,7 @@ class LegacyCapture(unittest.TestCase):
         before = self.files();source = self.view()
         captured = self.capture(source, {'studies': [child['id']]})
         self.assertEqual(captured['blockers'], [], captured['blockers'])
-        view = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check=lambda: None)
+        view = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check_current=lambda: None)
         from project_material import ProjectMaterial
         facts = decode_history(captured['records'], materials=ProjectMaterial(view))
         self.assertEqual(set(facts.studies), {(self.db.dataset_id, parent['id']), (self.db.dataset_id, child['id'])})
@@ -533,7 +640,7 @@ class LegacyCapture(unittest.TestCase):
         captured = self.capture(source, {'runs': [consumer['id']]})
         self.assertEqual(captured['blockers'], [], captured['blockers'])
         facts = decode_records(captured['records'], materials=ProjectMaterial(SimpleNamespace(
-            snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check=lambda: None)))
+            snapshot=dict(project_id=self.db.dataset_id, records=captured['records']), check_current=lambda: None)))
         self.assertEqual(set(facts.runs), {(self.db.dataset_id, run['id']) for run in (producer, middle, consumer)})
         for downstream, upstream in ((consumer, middle), (middle, producer)):
             self.assertIn(dict(source=dict(family='run_history', id=self.db.dataset_id + '.' + downstream['id']),
@@ -544,7 +651,8 @@ class LegacyCapture(unittest.TestCase):
         # A fresh inert owner reader reconstructs the exact upstream custody
         # receipt from retained facts/private captured bytes, never source paths.
         session = SimpleNamespace(snapshot=dict(project_id=self.db.dataset_id, records=copy.deepcopy(captured['records'])),
-            access=self.access, artifacts=source.artifacts, check=lambda: None)
+            summary=dict(project_id=self.db.dataset_id, checkpoint=digest(captured['records'])),
+            access=self.access, artifacts=source.artifacts, check_current=lambda: None)
         history = ProjectHistory(session, authorize_disclosure=lambda run, population:
             self.access.require('expose-holdout', 'runs.expose_test', run['id']))
         with patch.object(source, 'read_catalog', side_effect=AssertionError('No original catalog reread')), \

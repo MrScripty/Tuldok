@@ -7,6 +7,7 @@ import uuid
 from unittest.mock import patch
 
 import test_project_data as data_fixture
+import project_files as files_module
 from project_files import (ProjectFiles, decode_records, validate_operation_result,
                            file_id, fork_records, materialize_captured, MAX_FILE_BYTES, MAX_FILES)
 from project_session import ProjectSession, operation_records
@@ -38,6 +39,98 @@ class ProjectFilesTests(unittest.TestCase):
         self.ordinal+=1
         return self.files.adopt(dict(kind=kind,path=path,expected_revision=revision,
             expected_sha256=hashlib.sha256(raw).hexdigest()),self.session.snapshot['checkpoint'],key or 'files-'+str(self.ordinal))
+
+    def intent(self,path,text,revision=0,kind='note'):
+        raw=text.encode('utf-8');target=self.root/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
+        return dict(kind=kind,path=path,expected_revision=revision,expected_sha256=hashlib.sha256(raw).hexdigest())
+
+    def test_inspection_never_copies_the_complete_record_graph(self):
+        self.adopt('notes/inspection.md', 'Exact retained scientific note', kind='note')
+        expected = self.files.inspect()
+        with patch.object(self.session.store, '_snapshot',
+                          wraps=self.session.store._snapshot) as snapshots:
+            observed = self.files.inspect()
+        self.assertEqual(observed, expected)
+        self.assertEqual(snapshots.call_count, 0,
+                         'File inspection needs only independent file records and complete freshness')
+
+    def test_batch_captures_exact_files_in_one_canonical_mutation(self):
+        items=[self.intent('notes/a.md','Exact Ω\r\n'),self.intent('notes/empty.md','')]
+        before=self.session.snapshot['checkpoint']
+        with patch.object(self.session,'mutate',wraps=self.session.mutate) as mutations:
+            result=self.files.adopt_many(dict(items=items),before,'batch')
+        self.assertEqual(mutations.call_count,1);self.assertEqual(result['changed_count'],2)
+        self.assertEqual([self.files.read(r['id'])['version']['text'] for r in result['items']],['Exact Ω\r\n',''])
+        operations=list(operation_records(self.session.snapshot['records']).values())
+        self.assertEqual(sum(o['operation']=='files.adopt_many' for o in operations),1)
+        self.assertTrue(validate_operation_result('files.adopt_many',result,self.session.snapshot['records']))
+
+    def test_batch_changed_missing_or_repeated_file_never_partially_publishes(self):
+        first=self.intent('notes/a.md','First');second=self.intent('notes/b.md','Second')
+        before=copy.deepcopy(self.session.snapshot)
+        for label,items in [('hash',[first,dict(second,expected_sha256='0'*64)]),
+                            ('duplicate',[first,first]),('revision',[first,dict(second,expected_revision=1)])]:
+            with self.subTest(label=label),self.assertRaises(WorkbenchError):
+                self.files.adopt_many(dict(items=items),before['checkpoint'],'reject-'+label)
+            self.assertEqual(self.session.snapshot,before)
+        (self.root/'notes/b.md').unlink()
+        with self.assertRaises(WorkbenchError):self.files.adopt_many(dict(items=[first,second]),before['checkpoint'],'missing')
+        self.assertEqual(self.session.snapshot,before);self.assertEqual(decode_records(self.session.snapshot['records']),[])
+
+    def test_batch_permission_precedes_file_reads_and_replay_preserves_exact_history(self):
+        items=[self.intent('notes/a.md','Original'),self.intent('notes/b.md','Other')]
+        token=self.fixture.access.issue(dict(label='Batch inspect only',scopes=['inspect']))['token']
+        with self.fixture.access.bind(token),patch.object(files_module,'_read',side_effect=AssertionError('Unauthorized read')):
+            with self.assertRaises(AccessError):self.files.adopt_many(dict(items=items),self.session.snapshot['checkpoint'],'deny')
+        before=self.session.snapshot['checkpoint'];result=self.files.adopt_many(dict(items=items),before,'original-batch')
+        saved=copy.deepcopy(self.session.snapshot);(self.root/'notes/a.md').write_text('Unadopted edit')
+        with patch.object(files_module,'_read',side_effect=AssertionError('Replay must not recapture')):
+            self.assertEqual(self.files.adopt_many(dict(items=items),'0'*64,'original-batch'),result)
+        self.assertEqual(self.session.snapshot,saved)
+        self.intent('notes/a.md','Original');noop=[dict(item,expected_revision=1) for item in items]
+        value=self.files.adopt_many(dict(items=noop),self.session.snapshot['checkpoint'],'noop-batch')
+        self.assertEqual(value['changed_count'],0);self.assertTrue(all(len(self.files.history(r['id']))==1 for r in value['items']))
+
+    def test_batch_item_and_total_byte_bounds_keep_checkpoint(self):
+        before=copy.deepcopy(self.session.snapshot)
+        with self.assertRaises(WorkbenchError):self.files.adopt_many(dict(items=[]),before['checkpoint'],'empty')
+        items=[dict(kind='note',path=f'notes/{i}.md',expected_revision=0,expected_sha256='0'*64) for i in range(41)]
+        with self.assertRaises(WorkbenchError):self.files.adopt_many(dict(items=items),before['checkpoint'],'too-many')
+        large=[self.intent(f'notes/large-{i}.md','x'*MAX_FILE_BYTES) for i in range(9)]
+        with self.assertRaises(WorkbenchError):self.files.adopt_many(dict(items=large),before['checkpoint'],'aggregate-too-large')
+        self.assertEqual(self.session.snapshot,before)
+
+    def test_batch_unsafe_last_file_and_project_capacity_never_publish(self):
+        first=self.intent('notes/a.md','First');last=self.intent('notes/b.md','Second')
+        before=copy.deepcopy(self.session.snapshot);path=self.root/'notes/b.md'
+        for label in ('symlink','utf8'):
+            path.unlink()
+            if label=='symlink':path.symlink_to(self.root/'notes/a.md')
+            else:path.write_bytes(b'\xff')
+            with self.subTest(label=label),self.assertRaises(WorkbenchError):
+                self.files.adopt_many(dict(items=[first,last]),before['checkpoint'],'unsafe-'+label)
+            self.assertEqual(self.session.snapshot,before)
+        self.intent('notes/b.md','Second')
+        with patch.object(files_module,'MAX_FILES',1),self.assertRaises(WorkbenchError):
+            self.files.adopt_many(dict(items=[first,last]),before['checkpoint'],'capacity')
+        self.assertEqual(self.session.snapshot,before)
+
+    def test_batch_revision_history_and_forged_receipt_are_bound_to_retained_bytes(self):
+        item=self.intent('notes/a.md','First');body=dict(items=[item])
+        first=self.files.adopt_many(body,self.session.snapshot['checkpoint'],'first-batch')
+        second=self.intent('notes/a.md','Second',1)
+        result=self.files.adopt_many(dict(items=[second]),self.session.snapshot['checkpoint'],'second-batch')
+        self.assertEqual(self.files.read(result['items'][0]['id'])['version']['revision'],2)
+        records=self.session.snapshot['records']
+        self.assertTrue(validate_operation_result('files.adopt_many',first,records))
+        for label in ('hash','count','duplicate','project'):
+            bad=copy.deepcopy(result)
+            if label=='hash':bad['items'][0]['sha256']='0'*64
+            elif label=='count':bad['changed_count']=0
+            elif label=='duplicate':bad['items'].append(copy.deepcopy(bad['items'][0]));bad['changed_count']=2
+            else:bad['items'][0]['project_id']='f'*32
+            with self.subTest(label=label),self.assertRaises(WorkbenchError):
+                validate_operation_result('files.adopt_many',bad,records)
 
     def test_adoption_exact_utf8_history_changed_missing_and_cold_no_restore(self):
         source='#!/usr/bin/env python3\r\n# authored cafe\u0301 😀\r\n'

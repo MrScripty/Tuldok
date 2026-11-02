@@ -73,7 +73,7 @@ class ProjectProducerExecution:
         return family
 
     def _owner(self, family):
-        self._family(family);self.session.check()
+        self._family(family);self.session.check_current()
         if self._fenced:
             raise WorkbenchError('Current producer custody is uncertain. Reopen for inert inspection.', 'outcome_unknown', 409)
         self._refuse_unknown_provider()
@@ -264,7 +264,7 @@ class ProjectProducerExecution:
                 # Every effectful request is preceded by canonical uncertainty;
                 # a terminal job with no such request is known not admitted.
                 outcome='not_admitted'
-            observation=(outcome,True,self.session.snapshot['checkpoint'])
+            observation=(outcome,True,self.session.summary['checkpoint'])
             if self._journal_observations.get(identity_key)!=observation:
                 self.execution.update_producer_outcome(family,producer_id,outcome,True)
                 self._journal_observations[identity_key]=observation
@@ -429,7 +429,7 @@ class ProjectProducerExecution:
             raise WorkbenchError('Invalid current producer health page.')
         with self.session.access.lock,self.session.lock,self.db.lock:
             self.session.access.require('inspect','producers.health')
-            self.session.check()
+            self.session.check_current()
             self._settle_drained()
             items=[]
             for family,owner in self._owners.items():

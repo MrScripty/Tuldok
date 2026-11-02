@@ -16,7 +16,7 @@ from model_definitions import natural, text
 from pipeline import closed, identifier, digest
 from project_history import (FAMILY_FORMATS, _audit, _sha, envelope,
     decode_records as history_records)
-from project_material import ProjectMaterial
+from project_material import ProjectMaterial, MaterialSnapshot
 from project_session import operation_records
 from workbench import WorkbenchError, encode, timestamp
 
@@ -36,8 +36,7 @@ def _invalid(message,code='invalid'):
 
 
 def _facts(records):
-    view=SimpleNamespace(snapshot={'records':records},check=lambda:None)
-    return history_records(records,materials=ProjectMaterial(view))
+    return history_records(records,materials=MaterialSnapshot(records))
 
 
 def _intent_key(operation,key):
@@ -143,7 +142,7 @@ def _validate_preparation(operation,result,records):
         trial=result['trial'];origin=trial['material']['catalog_id']
         candidate=facts.candidates[(origin,result['candidate_id'])]['candidate']
         if candidate['study_id']!=trial['study_id']:_invalid('Preparation candidate belongs to another Study.')
-        materials=ProjectMaterial(SimpleNamespace(snapshot={'records':records},check=lambda:None))
+        materials=ProjectMaterial(SimpleNamespace(snapshot={'records':records},check_current=lambda:None))
         composition=materials.recipe(trial['material'])['material']
         if (composition['model']!=result['model'] or composition['recipe_id']!=result['graph']['id']
                 or composition['recipe_revision']!=result['graph']['revision']):
@@ -203,7 +202,7 @@ def validate_operation_result(operation,result,records=None):
             if saved is None or any(saved[key]!=reservation[key] for key in RESERVATION_FIELDS if key not in ('state','settled')):
                 _invalid('Admission receipt has no exact canonical reservation.')
             trial=facts.trials[(origin,result['trial_id'])]['trial'];run=facts.runs[(origin,result['run_id'])]['run']
-            view=SimpleNamespace(snapshot={'records':records},check=lambda:None)
+            view=SimpleNamespace(snapshot={'records':records},check_current=lambda:None)
             validate_retained_reservation(reservation,trial=trial,
                 composition=ProjectMaterial(view).recipe(trial['material']),run=run)
         elif operation=='study_execution.stop':
@@ -268,7 +267,7 @@ class _PreparationProjects:
     def __getattr__(self,name):return getattr(self.source,name)
     def open(self,body):
         return self.adapter.projection.source_adapter.register(body,
-            self.adapter.session.snapshot['checkpoint'],self.phase+'-source')
+            self.adapter.session.summary['checkpoint'],self.phase+'-source')
 
 
 class _PreparationModels:
@@ -279,11 +278,11 @@ class _PreparationModels:
     def create(self,body):
         adapter=self.adapter
         return adapter.materials.mutate_definition('model_definition','models.create',None,body,
-            adapter.session.snapshot['checkpoint'],self.phase+'-model',lambda:adapter.projection.models.create(body))
+            adapter.session.summary['checkpoint'],self.phase+'-model',lambda:adapter.projection.models.create(body))
     def publish(self,identity,body):
         adapter=self.adapter
         return adapter.materials.publish_model(adapter.projection.models,identity,body,
-            adapter.session.snapshot['checkpoint'],self.phase+'-publish')
+            adapter.session.summary['checkpoint'],self.phase+'-publish')
 
 
 class _PreparationPipelines:
@@ -296,7 +295,7 @@ class _PreparationPipelines:
     def create_external(self,body):
         adapter=self.adapter
         return adapter.materials.mutate_definition('pipeline_graph','graphs.create_external',None,body,
-            adapter.session.snapshot['checkpoint'],self.phase+'-graph',lambda:self.owner.create_external(body))
+            adapter.session.summary['checkpoint'],self.phase+'-graph',lambda:self.owner.create_external(body))
     def prepare_external_material(self,*args,**kwargs):return self.owner.prepare_external_material(*args,**kwargs)
     def _retain_material(self,prepared):
         adapter=self.adapter;value=self.owner._retain_material(prepared)
@@ -311,7 +310,7 @@ class ProjectStudyExecution:
         self.projection,self.execution=projection,execution
         self.session,self.db,self.history=projection.session,projection.db,projection.history
         self.materials=projection.materials;self.access=execution.runtime_access
-        self.origin=self.session.snapshot['project_id']
+        self.origin=self.session.summary['project_id']
         self._dirty=set();self._revisions={};self._epochs={};self._pending_epochs={}
         self._package_records=[]
         self.context=copy.copy(projection.context)
@@ -325,12 +324,12 @@ class ProjectStudyExecution:
 
     def _canonical(self,records=None):
         records=self.session.snapshot['records'] if records is None else records
-        return history_records(records,materials=self.materials)
+        return history_records(records,materials=self.materials.read_view(records))
 
     def restore_authoring(self,records=None):
         """Reconstruct intent only, under the current project guard."""
         with self.session.access.lock,self.session.lock,self.db.lock:
-            self.session.check();facts=self._canonical(records)
+            self.session.check_current();facts=self._canonical(records)
             with self.db.transaction():
                 for (origin,identity),doc in sorted(facts.studies.items()):
                     if origin!=self.origin:continue
@@ -574,7 +573,7 @@ class ProjectStudyExecution:
                 validate_operation_result(prior['operation'],prior['result'],self.session.snapshot['records'])
                 self._current_grant(prior['result'],current.actor_id)
             else:
-                if expected_checkpoint!=self.session.snapshot['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
+                if expected_checkpoint!=self.session.summary['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
                 self._materialize_trial(study_id,body['trial_id'],body['expected_material_sha256'])
             def invoke():
                 grant=self.studies.approve(study_id,body)
@@ -590,7 +589,7 @@ class ProjectStudyExecution:
         authority=self.access.require_external_submission()
         with self.session.access.lock,self.session.lock,self.db.lock:
             builtin=None
-            self.session.check();self.refresh_authoring()
+            self.session.check_current();self.refresh_authoring()
             prior=operation_records(self.session.snapshot['records']).get(key)
             if prior is not None:
                 result=prior['result']
@@ -598,7 +597,7 @@ class ProjectStudyExecution:
                     'SELECT run_id FROM model_attempt_reservations WHERE run_id=%s',(result.get('run_id'),)).fetchone() is None):
                     _invalid('A historical admission receipt cannot create a current local attempt.','unavailable')
             else:
-                if expected_checkpoint!=self.session.snapshot['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
+                if expected_checkpoint!=self.session.summary['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
                 self.require_current_epoch(self.studies._study(study_id))
                 self.reject_historical_request(study_id,authority.actor_id,key,None)
                 trial=self._materialize_trial(study_id,body['trial_id'])
@@ -627,7 +626,7 @@ class ProjectStudyExecution:
                 # Qualification may launch the explicit probe. It finishes
                 # before Session opens the finite admission transaction.
                 with preparation.admission(pipelines,ref,expected_checkpoint,key):
-                    return self._mutate('study_execution.admit',study_id,body,self.session.snapshot['checkpoint'],key,invoke,'inspect')
+                    return self._mutate('study_execution.admit',study_id,body,self.session.summary['checkpoint'],key,invoke,'inspect')
             return self._mutate('study_execution.admit',study_id,body,expected_checkpoint,key,invoke,'inspect')
 
     def stop(self,study_id,body,expected_checkpoint,key):
@@ -646,7 +645,7 @@ class ProjectStudyExecution:
             # cancellation phase. Receipt replay does not repeat effects.
             for run_id in invoked:
                 cancel_key='study-stop-'+hashlib.sha256((key+':'+run_id).encode()).hexdigest()
-                try:self.execution.cancel_run(run_id,self.session.snapshot['checkpoint'],cancel_key)
+                try:self.execution.cancel_run(run_id,self.session.summary['checkpoint'],cancel_key)
                 except BaseException as error:
                     error.study_stop_receipt=copy.deepcopy(result)
                     raise
@@ -684,7 +683,7 @@ class ProjectStudyExecution:
                 if complete.get('native_receipt'):
                     effective=_preparation_body(intent,body['preparation_key'])
                     effective.pop('request_key');effective['actor_id']=intent['actor_id']
-                    result=self._mutate(operation,study_id,effective,self.session.snapshot['checkpoint'],body['preparation_key'],
+                    result=self._mutate(operation,study_id,effective,self.session.summary['checkpoint'],body['preparation_key'],
                         lambda:copy.deepcopy(complete['result']),'cancel')
                 else:result=copy.deepcopy(complete['result'])
                 guard.confirmed()
@@ -704,7 +703,7 @@ class ProjectStudyExecution:
                 operation,current_intent,complete=_preparation_reference(self.session.snapshot['records'],study_id,body['preparation_key'])
                 if current_intent!=intent:_invalid('Preparation intent changed during guarded reconciliation.','conflict')
                 if complete is not None:_invalid('Preparation is complete; reconcile its acknowledgement without abandoning science.','conflict')
-                observed_checkpoint=self.session.snapshot['checkpoint']
+                observed_checkpoint=self.session.summary['checkpoint']
                 def invoke():
                     actor=self.access.require('cancel','studies.abandon_preparation',study_id,owner_only=True)
                     if actor.actor_id!=current.actor_id:_invalid('Abandonment caller changed.','conflict')
@@ -735,14 +734,14 @@ class ProjectStudyExecution:
         input_sha=digest(dict(study_id=study_id,body=effective))
         intent_key=_intent_key(operation,key);phase=intent_key.removesuffix('-intent')
         with self.session.access.lock,self.session.lock,self.db.lock:
-            self.session.check()
+            self.session.check_current()
             prior=operation_records(self.session.snapshot['records']).get(key)
             if prior is not None:
                 # Current authority is checked above. Historical completion
                 # acknowledges science and cannot repeat filesystem effects.
                 return self._mutate(operation,study_id,effective,expected_checkpoint,key,
                     lambda:(_ for _ in ()).throw(RuntimeError('Completed preparation replay invoked effects.')),'edit')
-            if expected_checkpoint!=self.session.snapshot['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
+            if expected_checkpoint!=self.session.summary['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
             receipts=operation_records(self.session.snapshot['records'])
             if any(_intent_key(other,key) in receipts for other in PREPARATIONS if other!=operation):
                 _invalid('Preparation key already identifies another preparation operation.','conflict')
@@ -779,7 +778,7 @@ class ProjectStudyExecution:
                 publication=SimpleNamespace(runtime_snapshot=snapshot,before_write=guard.publication_started,
                     read_recipe_blob=self.materials.blob)
                 result=_prepare_operation(studies,study_id,dict(body,request_key=key),kind,publication=publication)
-                value=self._mutate(operation,study_id,effective,self.session.snapshot['checkpoint'],key,
+                value=self._mutate(operation,study_id,effective,self.session.summary['checkpoint'],key,
                     lambda:copy.deepcopy(result),'edit')
                 guard.confirmed()
                 return value

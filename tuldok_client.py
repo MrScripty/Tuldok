@@ -417,6 +417,10 @@ class ProjectFilesClient:
     def measurement_query(self, **arguments):
         return self._call('measurement_query', arguments)
 
+    def measurement_compare(self, **arguments):
+        """Compare compatible retained sources at one selected checkpoint."""
+        return self._call('measurement_compare', arguments)
+
     def measurement_inspect(self, **arguments):
         return self._call('measurement_inspect', arguments)
 
@@ -702,6 +706,11 @@ class ProjectFilesClient:
         return self._call('save_as',dict(root=root,directory=directory,name=name,binding=binding,
             expected_checkpoint=expected_checkpoint,request_key=request_key))
 
+    def compose(self, *, root, directory, name, sources, binding, expected_checkpoint, request_key):
+        """Compose explicit retained checkpoints through the negotiated owner."""
+        return self._call('compose',dict(root=root,directory=directory,name=name,sources=sources,
+            binding=binding,expected_checkpoint=expected_checkpoint,request_key=request_key))
+
     def files_inspect(self, **arguments):
         return self._call('files_inspect',arguments)
 
@@ -713,6 +722,10 @@ class ProjectFilesClient:
 
     def file_adopt(self, **arguments):
         return self._call('file_adopt',arguments)
+
+    def files_adopt(self, **arguments):
+        """Atomically adopt a bounded group of reviewed working files."""
+        return self._call('files_adopt',arguments)
 
     def file_adopt_deletion(self, **arguments):
         """Retain an explicitly reviewed missing note as a deletion revision."""

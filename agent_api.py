@@ -952,6 +952,23 @@ _project_file_operation('measurement_query','POST','/measurements/{packet_sha256
     required=[*list(_MEASUREMENT_SELECTION),'metric_id'],output=_MEASUREMENT_BOUND(_MEASUREMENT_QUERY))
 _project_file_operation('measurement_inspect','GET','/measurements/{packet_sha256}/observations/{observation_id}',
     dict(_MEASUREMENT_SELECTION,observation_id=_MEASUREMENT_ID),output=_MEASUREMENT_BOUND(_MEASUREMENT_INSPECTION))
+
+_COMPARISON_QUERY = obj(dict(
+    {key:_MEASUREMENT_QUERY['properties'][key] for key in ('metric','definition','filters','subject_ids','total','offset','limit','sampling')},
+    subject_ids=array(_MEASUREMENT_ID,256,1),
+    summary=array(obj(dict(_MEASUREMENT_SUMMARY['properties'],source=obj(_MEASUREMENT_SELECTION))),256),
+    rows=array(obj(dict(_MEASUREMENT_OBSERVATION['properties'],source=obj(_MEASUREMENT_SELECTION))),100)))
+_COMPARISON_VALUE = obj({'format':const('retained_measurement_comparison_v1'),
+    'scope':_MEASUREMENT_SCOPE,'scope_definition':{'type':'object'},
+    'dimensions':_MEASUREMENT_HEADER['properties']['dimensions'],'metrics':array(_MEASUREMENT_METRIC,32,1),
+    'definition_source':obj(_MEASUREMENT_SELECTION),'case_population_sha256':SHA,
+    'case_count':integer(1,4096),'observation_count':integer(1,100000),
+    'subjects':array(obj(dict(_MEASUREMENT_SUBJECT['properties'],source=obj(_MEASUREMENT_SELECTION))),256,1),
+    'query':{'oneOf':[_COMPARISON_QUERY,_NULL]}})
+_project_file_operation('measurement_compare','POST','/measurements/compare',
+    dict(sources=array(obj(_MEASUREMENT_SELECTION),16,1),metric_id=_MEASUREMENT_ID,
+        subject_ids=array(_MEASUREMENT_ID,256,1),filters=_MEASUREMENT_DIMENSIONS,offset=SAFE_NAT,limit=integer(1,100)),
+    required=['sources'],output=obj({'sources':array(_MEASUREMENT_SOURCE,16,1),'value':_COMPARISON_VALUE}))
 _project_file_operation('data_annotate', 'POST', '/data/{record_id}', {
     'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
     'task': {'enum': list(ANNOTATIONS)}, 'annotation': JSON_OBJECT,
@@ -1312,6 +1329,17 @@ model_operation('project_files.save_as','POST','/api/workspace/project-files/sav
     scopes=('inspect','edit'),mutation=True,description='Create an independent idle project fork at an explicit configured local destination; retain inert origins and exact copy completeness.')
 _OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=PROJECT_FILES_RECEIPT
 PROJECT_FILES_M4.add('project_files.save_as');_OWNER_OPERATION_IDS.add('project_files.save_as');_MODEL_RECEIPT_IDS.add('project_files.save_as')
+# Composition is a new owner-only operation; existing Save As pins/state stay frozen.
+_PROJECT_COMPOSITION_SOURCE=obj({'root':text(160),'directory':text(512),'project_id':ID,'checkpoint':SHA})
+model_operation('project_files.compose','POST','/api/workspace/project-files/compose',
+    dict(_PROJECT_FILES_MUTATION,root=text(160),directory=text(512),name=text(200),
+         sources=array(_PROJECT_COMPOSITION_SOURCE,15,1)),
+    output=obj({'state':PROJECT_FILES_STATE,'fork':_PROJECT_FORK_RESULT,
+                'sources':array(obj({'project_id':ID,'checkpoint':SHA}),16,2)}),
+    scopes=('inspect','edit'),mutation=True,
+    description='Compose explicit retained project checkpoints with the current editable primary into one independent inert project.')
+_OPERATIONS[-1]['outputSchema']['oneOf'][1]['properties']['result']['properties']['receipt']=PROJECT_FILES_RECEIPT
+PROJECT_FILES_M4.add('project_files.compose');_OWNER_OPERATION_IDS.add('project_files.compose');_MODEL_RECEIPT_IDS.add('project_files.compose')
 _PROJECT_FILE_INSPECTION=obj({'id':SHA,'kind':_PROJECT_FILE_KIND,'path':text(512),'revision':SAFE_POS,
     'expected_sha256':{'oneOf':[SHA,{'type':'null'}]},'expected_bytes':integer(0,1048576),
     'observed_sha256':{'oneOf':[SHA,{'type':'null'}]},'observed_bytes':{'oneOf':[integer(0,1048576),{'type':'null'}]},
@@ -1327,6 +1355,9 @@ _project_file_operation('file_history','GET','/files/{file_id}/history',{'file_i
     output=obj(dict(_PROJECT_FILES_PAGE['properties'],id=SHA,items=array({'oneOf':[obj(_PROJECT_FILE_VERSION_META),obj(_PROJECT_FILE_DELETED_META)]},40))),milestone=4)
 _project_file_operation('file_adopt','POST','/files/adopt',{'kind':_PROJECT_FILE_KIND,'path':text(512),
     'expected_revision':SAFE_NAT,'expected_sha256':SHA},output=_PROJECT_FILE_RESULT,mutation=True,milestone=4)
+_project_file_operation('files_adopt','POST','/files/adopt-many',{'items':array(obj({'kind':_PROJECT_FILE_KIND,
+    'path':text(512),'expected_revision':SAFE_NAT,'expected_sha256':SHA}),40,1)},
+    output=obj({'items':array(_PROJECT_FILE_RESULT,40,1),'changed_count':integer(0,40)}),mutation=True,milestone=4)
 _project_file_operation('file_adopt_deletion','POST','/files/adopt-deletion',{'path':text(512),
     'expected_revision':SAFE_POS,'expected_sha256':SHA},output=obj(dict(_PROJECT_FILE_RESULT['properties'],
     kind=const('note'),revision=integer(2,9007199254740991),deleted=const(True),sha256={'type':'null'},bytes=const(0),changed=const(True))),
@@ -1440,6 +1471,13 @@ _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# Keep the installed v1 bounds/hash exact. Version 2 admits complete larger
+# comparisons; each individual packet and every response page retain their caps.
+_comparison_capacity=copy.deepcopy(_CONTRACTS['project_files.measurement_compare'][1])
+_comparison_value=_comparison_capacity['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']['properties']['value']['properties']
+_comparison_value['observation_count']=integer(1,250000)
+_comparison_value['query']['oneOf'][0]['properties']['total']=integer(0,250000)
+_CONTRACTS['project_files.measurement_compare'][2]=_comparison_capacity
 # v1 remains the closed Run-only current custody view. v2 additionally exposes
 # bounded original local native phases; imported history never populates it.
 _native_health=copy.deepcopy(_CONTRACTS['project_files.execution_health'][1])
@@ -1943,6 +1981,12 @@ def operation(name, version=None):
     return copy.deepcopy(versions[max(versions) if version is None else version])
 
 
+def measurement_comparison_row_limit(version=None):
+    """Return the selected immutable public contract's comparison budget."""
+    selected=operation('project_files.measurement_compare',version)
+    return selected['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']['properties']['value']['properties']['observation_count']['maximum']
+
+
 def _native_validation_result_ok(value, revision):
     """Check the finite public truth fields without interpreting native runtime data.
 
@@ -1974,7 +2018,7 @@ def _finite(value, depth=0, *, nul_path=None, _path=()):
     if depth > DEPTH_LIMIT:
         raise AgentAPIError('JSON nesting exceeds the transport bound.')
     if isinstance(value, str):
-        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in value) or ('\x00' in value and _path != nul_path):
+        if (not str.isascii(value) and any(0xD800 <= ord(ch) <= 0xDFFF for ch in value)) or ('\x00' in value and _path != nul_path):
             raise AgentAPIError('Text contains an invalid code point.')
     elif isinstance(value, float) and not math.isfinite(value):
         raise AgentAPIError('JSON numbers must be finite.')
@@ -2351,6 +2395,8 @@ def _private_file(path, maximum):
 
 class AgentClient:
     """No catalog access, automatic retries, redirects, proxies or owner identity."""
+    MAX_TIMEOUT_SECONDS = 300
+
     def __init__(self, endpoint, token, expected_catalog_id, timeout=120):
         try:
             parsed = urlsplit(endpoint)
@@ -2360,7 +2406,7 @@ class AgentClient:
                 raise ValueError()
             if not re.fullmatch(r'[A-Za-z0-9_-]{20,4096}', token) or not re.fullmatch('[a-f0-9]{32}', expected_catalog_id):
                 raise ValueError()
-            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 300:
+            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= self.MAX_TIMEOUT_SECONDS:
                 raise ValueError()
         except (ValueError, TypeError):
             raise AgentAPIError('Invalid fixed loopback client configuration.', 'configuration') from None
@@ -2650,7 +2696,7 @@ class AgentClient:
             elif (value['binding']!=arguments['binding'] or value['receipt']['request_key']!=arguments['request_key']
                     or value['receipt']['report_sha256']!=arguments['report_sha256']):
                 raise AgentAPIError('Extraction receipt belongs to another controller report or request.','transport',502)
-        if op['operation_id']=='project_files.save_as' and result['status']<400:
+        if op['operation_id'] in ('project_files.save_as','project_files.compose') and result['status']<400:
             value=result['result'];fork=value['fork'];state=value['state']
             if (state['state']!='open' or state['project']['project_id']!=fork['project_id']
                     or state['project']['checkpoint']!=fork['checkpoint'] or state['project']['name']!=arguments['name'] or state['binding']==arguments['binding']
@@ -2658,6 +2704,11 @@ class AgentClient:
                     or fork['source_checkpoint']!=arguments['expected_checkpoint']
                     or any(fork[field]!=arguments[field] for field in ('root','directory','request_key'))):
                 raise AgentAPIError('Save As result differs from its source, destination or selected state.','transport',502)
+            if op['operation_id']=='project_files.compose':
+                expected=[dict(project_id=fork['source_project_id'],checkpoint=arguments['expected_checkpoint'])]
+                expected.extend({key:item[key] for key in ('project_id','checkpoint')} for item in arguments['sources'])
+                if value['sources']!=expected:
+                    raise AgentAPIError('Composition result differs from its exact ordered sources.','transport',502)
         elif op['operation_id'] in PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4:
             value = result['result']
             if result['status'] >= 400:
@@ -2671,6 +2722,18 @@ class AgentClient:
                     raise AgentAPIError('Project read response belongs to a different checkpoint.', 'transport', 502)
                 page = value['value']
                 action=op['operation_id'].removeprefix('project_files.')
+                if action=='files_adopt':
+                    if (len(page['items'])!=len(arguments['items'])
+                            or page['changed_count']!=sum(item['changed'] for item in page['items'])
+                            or sum(item['bytes'] for item in page['items'])>8*1024*1024):
+                        raise AgentAPIError('Batch adoption count or capture bound differs.','transport',502)
+                    for item,reviewed in zip(page['items'],arguments['items']):
+                        identity=hashlib.sha256((value['project_id']+'\0'+reviewed['kind']+'\0'+reviewed['path']).encode()).hexdigest()
+                        if (item['id']!=identity or item['project_id']!=value['project_id']
+                                or item['kind']!=reviewed['kind'] or item['path']!=reviewed['path']
+                                or item['sha256']!=reviewed['expected_sha256']
+                                or item['revision']!=reviewed['expected_revision']+int(item['changed'])):
+                            raise AgentAPIError('Batch adoption differs from its reviewed files.','transport',502)
                 if action in ('file_get','file_adopt','file_adopt_deletion'):
                     kind,path=page['kind'],page['path']
                     expected_id=hashlib.sha256((value['project_id']+'\0'+kind+'\0'+path).encode()).hexdigest()
@@ -2968,6 +3031,10 @@ class AgentClient:
 
 class ProjectFilesOwnerClient(AgentClient):
     """Explicit owner file-project access; no unrelated owner operations."""
+    # Large retained projects may outlast the generic transport's five minutes.
+    # Only an explicit owner configuration opts into a longer absolute wait.
+    MAX_TIMEOUT_SECONDS = 7200
+
     OPERATIONS = frozenset('project_files.' + action for action in
         ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate')) | PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4
 
@@ -3025,6 +3092,8 @@ def _validate_measurement_selection(action, page, arguments, project_id):
     """Correlate fixed scalar replies; scientific validity remains upstream."""
     def refuse():
         raise AgentAPIError('Retained measurements differ from the selected source or continuation.', 'transport', 502)
+    if action=='measurement_compare':
+        return _validate_comparison_selection(page, arguments)
     if action=='measurement_sources':
         offset,limit=arguments.get('offset',0),arguments.get('limit',40)
         keys=[(d['origin_catalog_id'],d['id']) for d in page['items']]
@@ -3055,6 +3124,50 @@ def _validate_measurement_selection(action, page, arguments, project_id):
                 or 'subject_ids' in arguments and subjects!=arguments['subject_ids']
                 or len(subjects)!=len(set(subjects)) or [s['subject_id'] for s in result['summary']]!=subjects
                 or any(r['metric_id']!=arguments['metric_id'] or r['subject_id'] not in subjects for r in result['rows'])):refuse()
+
+
+def _validate_comparison_selection(page, arguments):
+    """Bind aggregate replies to reviewed packets, subjects and exact page intent."""
+    def refuse():
+        raise AgentAPIError('Measurement comparison differs from its selected packets or continuation.', 'transport', 502)
+    def key(locator):
+        return locator['origin_catalog_id'], locator['packet_sha256']
+    selected = arguments['sources']
+    keys = [key(item) for item in selected]
+    documents, value = page['sources'], page['value']
+    if (len(keys)!=len(set(keys)) or len(documents)!=len(keys)
+            or [(doc['origin_catalog_id'],doc['id']) for doc in documents]!=keys
+            or any(doc['blob']['sha256']!=doc['id'] or doc['source']['measured_sha256']!=doc['id'] for doc in documents)
+            or sum(doc['blob']['bytes'] for doc in documents)>128*1024*1024
+            or value['definition_source']!=selected[0]):refuse()
+    subjects = value['subjects']
+    identities = [subject['id'] for subject in subjects]
+    if (len(identities)!=len(set(identities)) or any(key(subject['source']) not in keys for subject in subjects)
+            or value['observation_count']!=len(subjects)*value['case_count']*len(value['metrics'])):refuse()
+    owners = {subject['id']:subject['source'] for subject in subjects}
+    query = value['query']
+    if 'metric_id' not in arguments:
+        if query is not None:refuse()
+        return
+    if query is None:refuse()
+    wanted = arguments.get('subject_ids', identities)
+    offset,limit = arguments.get('offset',0),arguments.get('limit',50)
+    metrics = [metric for metric in value['metrics'] if metric['id']==arguments['metric_id']]
+    if (len(metrics)!=1 or query['metric']!=metrics[0] or query['subject_ids']!=wanted
+            or len(wanted)!=len(set(wanted)) or any(identity not in owners for identity in wanted)
+            or query['filters']!=arguments.get('filters',{})
+            or query['offset']!=offset or query['limit']!=limit
+            or len(query['rows'])!=min(limit,max(0,query['total']-offset))
+            or [summary['subject_id'] for summary in query['summary']]!=wanted
+            or sum(summary['count'] for summary in query['summary'])!=query['total']):refuse()
+    for summary in query['summary']:
+        if (summary['source']!=owners[summary['subject_id']]
+                or sum(summary['states'].values())!=summary['count']
+                or (summary['maximum'] is None)!=(summary['states']['measured']==0)):refuse()
+    for row in query['rows']:
+        if (row['subject_id'] not in wanted or row['metric_id']!=arguments['metric_id']
+                or row['source']!=owners[row['subject_id']]
+                or (row['value'] is None)!=(row['state']!='measured')):refuse()
 
 
 class PublicationOwnerClient(AgentClient):

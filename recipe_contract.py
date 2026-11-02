@@ -830,8 +830,23 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
             'graph_revision':graph['revision'], 'execution_sha256':execution_sha256}, captured
 
 
+def _legacy_torch_policy(material):
+    return (material['schema_version']==1 and material['recipe']['schema_version']==1
+            and material['recipe']['runtime']==TORCH_PROFILE
+            and material['environment']=={'LANG':'C.UTF-8'})
+
+
 def validate_material(material):
     """Cold structural custody checks; no filesystem access or current-code comparison."""
+    return _validate_material(material, retained=False)
+
+
+def validate_retained_material(material):
+    """Validate current and original schema1 execution facts without admission."""
+    return _validate_material(material, retained=True)
+
+
+def _validate_material(material, *, retained):
     closed(material, ('schema_version', 'catalog_id', 'project', 'graph_execution_sha256', 'recipe',
                       'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot','torch_runtime','extension_binding'))
     if type(material['schema_version']) is not int or material['schema_version'] not in (1,2,3) or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
@@ -856,7 +871,11 @@ def validate_material(material):
         raise WorkbenchError('Material leaves no generated context capacity.')
     if encode(validate_parameters(definition, material['parameters'])) != encode(material['parameters']):
         raise WorkbenchError('Retained parameters must include every typed value.')
-    if material['resources'] != definition['resources'] or material['environment'] != ({} if definition['runtime']==TORCH_PROFILE else {'LANG':'C.UTF-8'}) or material['permissions'] != {'filesystem':'trusted-local', 'network':'not_isolated'}:
+    expected_environment = {} if definition['runtime']==TORCH_PROFILE else {'LANG':'C.UTF-8'}
+    legacy_environment = retained and _legacy_torch_policy(material)
+    if (material['resources'] != definition['resources']
+            or material['environment'] != expected_environment and not legacy_environment
+            or material['permissions'] != {'filesystem':'trusted-local', 'network':'not_isolated'}):
         raise WorkbenchError('Material execution policy is inconsistent.')
     if not isinstance(material['inputs'], dict) or set(material['inputs']) != set(definition['inputs']): raise WorkbenchError('Material input inventory differs.')
     expected = {'source/'+item['path']:item['sha256'] for item in definition['sources']}
@@ -991,6 +1010,10 @@ def validate_material(material):
 def spec_for_material(material, staging, *, context=None):
     """Pure reconstruction: retained approvals never depend on current source/runtime."""
     validate_material(material)
+    return _spec_for_material(material, staging, context=context)
+
+
+def _spec_for_material(material, staging, *, context=None):
     staging = Path(staging).absolute()
     output = staging/'output'
     definition = material['recipe']; runtime = material['runtime']
@@ -1041,6 +1064,23 @@ def validate_spec(material, spec, staging, *, context=None):
     if is_evidence(material['recipe']) and context is None:
         raise WorkbenchError('Final model-evidence specification requires authoritative attempt context.')
     expected = spec_for_material(material, staging, context=context)
+    return _validate_spec(expected, spec)
+
+
+def validate_retained_spec(material, spec, staging, *, context=None):
+    """Prove an exact historical spec; never select this path for new work."""
+    validate_retained_material(material)
+    if is_evidence(material['recipe']) and context is None:
+        raise WorkbenchError('Final model-evidence specification requires authoritative attempt context.')
+    expected = _spec_for_material(material, staging, context=context)
+    if _legacy_torch_policy(material):
+        # This original policy predates descriptor duplication in the spec.
+        # Its descriptor remains mandatory in the exact retained material.
+        expected.pop('torch_runtime')
+    return _validate_spec(expected, spec)
+
+
+def _validate_spec(expected, spec):
     actual = {key:value for key,value in spec.items() if key not in ('attempt_id', 'request_sha256')}
     if encode(actual) != encode(expected):
         raise WorkbenchError('Execution specification differs from the approved material.', 'conflict', 409)
