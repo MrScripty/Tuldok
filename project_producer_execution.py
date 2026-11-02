@@ -211,7 +211,8 @@ class ProjectProducerExecution:
             # Unknown acknowledgement fences authority. It never authorizes an
             # unacknowledged cancellation signal to a current worker.
         if outcome == 'committed':
-            records = self.session.snapshot['records']
+            from project_session import session_records
+            records = session_records(self.session, *FAMILIES, 'project_artifact')
             self.archive._records = copy.deepcopy([r for r in records if r['family'] in FAMILIES])
             declarations = _declarations(records)
             self.archive._artifacts = {sha:declarations[sha] for sha in _referenced_artifacts(self.archive._records)}

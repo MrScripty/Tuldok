@@ -19,6 +19,7 @@ from project_material import ProjectMaterial, MaterialSnapshot, FAMILIES as MATE
 from project_material import validate_operation_result as validate_material_result
 from project_producers import ProjectProducers, FAMILIES as PRODUCER_FAMILIES
 from project_producers import decode_records as decode_producer_records
+from project_session import session_records_for
 from project_session import ProjectSession, operation_documents, operation_records
 from project_locks import ProjectLock
 from project_execution import ProjectExecution, validate_operation_result as validate_execution_result
@@ -142,7 +143,9 @@ class ProjectProjection:
             self.history = ProjectHistory(self.session, materials=self.materials,
                                           authorize_disclosure=self.authorize_disclosure)
             if restore:
-                self.producers.restore(self.session.snapshot)
+                # Producer restore reads its families, declarations and forks.
+                self.producers.restore(dict(records=session_records_for(
+                    self.session, *PRODUCER_FAMILIES, 'project_artifact', 'project_fork')))
                 self.data.restore()
                 self.materials.restore()
             # These owners create only disposable local directories. Their
