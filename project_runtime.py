@@ -15,6 +15,7 @@ from project_material import decode_records as material_records
 from project_session import operation_records, REQUEST_KEY, _digest as operation_digest
 from runtime_snapshots import RuntimeSnapshots, DEFAULT_RESERVE, MAX_FILES, MAX_BYTES, MAX_MANIFEST
 from workbench import WorkbenchError, timestamp
+from project_session import session_operations
 
 OPERATIONS = frozenset(('runtime.capture_intent', 'runtime.capture', 'runtime.abandon'))
 RESULT_FIELDS = frozenset(('format','project_id','manifest_sha256','file_count','total_bytes',
@@ -166,7 +167,7 @@ class ProjectRuntime:
         _key(key)
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('inspect', 'runtime.capture_status'); self.session.check_current()
-            receipts = operation_records(self.session.snapshot['records'])
+            receipts = session_operations(self.session)
             intent = receipts.get(_intent_key(key)); complete = receipts.get(key)
             if intent is not None and intent['operation'] != 'runtime.capture_intent': intent = None
             if complete is not None and complete['operation'] != 'runtime.capture': complete = None
@@ -203,7 +204,7 @@ class ProjectRuntime:
                                        forbidden, lambda *args: forbidden(), scope='admin')
         with self.execution.runtime_reconciliation(capture_key, marker['input_sha256'],
                 marker['manifest_sha256'], expected_checkpoint) as guard:
-            receipts = operation_records(self.session.snapshot['records'])
+            receipts = session_operations(self.session)
             intent = receipts.get(_intent_key(capture_key))
             if (intent is None or intent['operation']!='runtime.capture_intent'
                     or intent['input_sha256']!=marker['input_sha256']
@@ -249,7 +250,7 @@ class ProjectRuntime:
         intent = None
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self._authorize('runtime_snapshots.create'); self.session.check_current()
-            receipts = operation_records(self.session.snapshot['records'])
+            receipts = session_operations(self.session)
             if any(r['operation']=='runtime.abandon' and r['result']['capture_key']==key for r in receipts.values()):
                 _fail('This capture was abandoned; use a fresh key for a new measurement.', 'conflict', 409)
             if (_intent_key(key) in receipts and key not in receipts
@@ -257,7 +258,7 @@ class ProjectRuntime:
                 _fail('This incomplete capture intent is inert history; use a fresh key for a new capture.', 'unavailable', 409)
             try:
                 with self.execution.runtime_effect(key, body_sha, expected_inventory_sha256) as guard:
-                    receipts = operation_records(self.session.snapshot['records'])
+                    receipts = session_operations(self.session)
                     if key in receipts:
                         result = self._replay(key, body, expected_checkpoint)
                         descriptor = self.owner.get(expected_inventory_sha256)

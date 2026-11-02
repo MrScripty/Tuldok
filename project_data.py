@@ -20,6 +20,7 @@ from project_text import decode_records as decode_text_records, SNAPSHOT_FIELDS
 from saved_searches import SavedSearches, criteria
 from saved_selections import SavedSelections
 from dataset_releases import Releases
+from project_session import session_active, session_records, session_records_for
 
 FAMILIES = {
     'workbench_record': 'workbench_record_v1',
@@ -971,11 +972,10 @@ class ProjectData:
         return captured
 
     def _sync_sources(self):
-        records = self.session.snapshot['records']
-        from project_fork import active_records
-        active = active_records(records, project_id=self.session.project_id)
-        self.context.project_sources = {r['id']: copy.deepcopy(r['document']['source']) for r in active if r['family'] == 'workbench_record'}
-        self._declarations = {r['id']: r['document'] for r in records if r['family'] == 'project_artifact'}
+        # Only the selected families are copied; fork history is still checked.
+        active = session_active(self.session, 'workbench_record')
+        self.context.project_sources = {r['id']: r['document']['source'] for r in active if r['family'] == 'workbench_record'}
+        self._declarations = {r['id']: r['document'] for r in session_records(self.session, 'project_artifact')}
 
     def _available(self, record_id):
         source = self.context.project_sources.get(record_id)
@@ -1333,16 +1333,18 @@ class ProjectData:
         return {'records': list(unique.values()), 'result': copy.deepcopy(result)}
 
     def restore(self, snapshot=None):
-        snapshot = snapshot or self.session.snapshot
-        if snapshot != self.session.snapshot:
+        if snapshot is not None and snapshot != self.session.snapshot:
             fail('Data reconstruction snapshot is stale.', 'stale_project', 409)
-        owned = decode_data_records(snapshot['records'])
+        # The decoder reads its own families and project_fork overlays, and its
+        # fork validation needs every record identity; unrelated documents are
+        # shared read-only instead of copying unrelated Run history.
+        families = (*FAMILIES, 'workbench_text', 'project_artifact', 'project_fork')
+        owned = decode_data_records(session_records_for(self.session, *families))
         self._sync_sources()
         # Validate present source bytes through the existing semantic owners
         # before touching any selected SQL row. Missing bytes retain metadata.
         self._verify_sources(owned)
-        from project_fork import active_records
-        active = active_records(snapshot['records'], project_id=self.session.project_id)
+        active = session_active(self.session, *families)
         identities = {(r['family'], r['id']) for r in active}
         owned = [r for r in owned if (r['family'], r['id']) in identities]
         with self.db.lock, self.db.transaction():

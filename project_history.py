@@ -25,6 +25,7 @@ from projects import relative_path
 from runs import (ACTIVE, TERMINAL, TEST_FILES, MAX_ARTIFACT_BYTES, validate_retained_run,
                   project_run_projection, public_run_projection, artifact_capture_source, validate_external_artifact_inventory)
 from workbench import WorkbenchError, timestamp
+from project_session import session_derived, session_operations, session_records
 
 FAMILY_FORMATS = {
     'study_history': 'project_study_history_v1',
@@ -562,6 +563,17 @@ def _decode_records(records, *, materials=None, artifacts=None):
     return facts
 
 
+def checkpoint_facts(session, materials):
+    """Decoded history of the session's bound checkpoint, shared by its owners.
+
+    Decoded once per checkpoint; callers copy any part they return.
+    """
+    def compute():
+        records=session.snapshot['records']
+        return decode_records(records,materials=materials.read_view(records))
+    return session_derived(session, 'history_facts',compute)
+
+
 def decode_records(records, *, materials=None, artifacts=None):
     try:
         return _decode_records(records,materials=materials,artifacts=artifacts)
@@ -755,15 +767,18 @@ class ProjectHistory:
 
     def _facts(self):
         self.session.check_current()
+        # Current canonical bytes are guarded on every call. A ProjectSession
+        # shares decoded metadata per checkpoint with the Study owner; other
+        # snapshot views keep this owner's private per-checkpoint cache.
+        # Returned values and permissions remain each read's responsibility.
+        if callable(getattr(self.session,'derived',None)):
+            return checkpoint_facts(self.session,self.materials)
         summary=self.session.summary
         checkpoint=(summary['project_id'],summary['checkpoint'])
         if self._decoded_checkpoint==checkpoint:
             return self._decoded_facts
         records=self.session.snapshot['records']
         facts=decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
-        # Current canonical bytes are guarded on every call. Only this owner's
-        # private decoded metadata is retained; returned values and permissions
-        # remain the responsibility of each read below.
         self._decoded_facts=facts
         self._decoded_checkpoint=checkpoint
         return facts
@@ -827,10 +842,12 @@ class ProjectHistory:
         """Discover original namespaces without inventing current project ancestry."""
         self._authorize('studies.lineage')
         natural(offset,'Origin offset');natural(limit,'Origin page limit',1,40)
-        facts=self._facts();origins={origin for origin,_ in facts.studies}|{origin for origin,_ in facts.trials}
-        items=[{'origin_catalog_id':origin,
-                'study_count':sum(namespace==origin for namespace,_ in facts.studies),
-                'trial_count':sum(namespace==origin for namespace,_ in facts.trials)} for origin in sorted(origins)]
+        facts=self._facts();counts={}
+        # One pass over Studies and Trials instead of origins x (studies+trials).
+        for namespace,_ in facts.studies:counts.setdefault(namespace,[0,0])[0]+=1
+        for namespace,_ in facts.trials:counts.setdefault(namespace,[0,0])[1]+=1
+        items=[{'origin_catalog_id':origin,'study_count':counts[origin][0],'trial_count':counts[origin][1]}
+               for origin in sorted(counts)]
         self._authorize('studies.lineage')
         return {'items':items[offset:offset+limit],'offset':offset,'limit':limit,'total':len(items)}
 
@@ -935,7 +952,7 @@ class ProjectHistory:
     def disclosure_facts(self,run_id,*,origin_catalog_id=None):
         self._authorize('runs.get',run_id);origin=self._origin(origin_catalog_id)
         result=[]
-        for operation in operation_documents(self.session.snapshot['records']):
+        for operation in operation_documents(session_records(self.session, 'project_operation')):
             if operation['operation']!='history.disclose':continue
             value=validate_disclosure_fact(operation['result'])
             if value['origin_catalog_id']==origin and value['run_id']==run_id:result.append(value)
@@ -965,8 +982,7 @@ class ProjectHistory:
     def dependencies(self,run_id,*,origin_catalog_id=None,offset=0,limit=100):
         self._authorize('runs.get',run_id);natural(offset,'Dependency offset');natural(limit,'Dependency limit',1,100)
         doc=self._record(self._facts().runs,run_id,origin_catalog_id);run=doc['run']
-        declarations_by_sha={item['document']['sha256']:item['document'] for item in self.session.snapshot['records']
-                             if item['family']=='project_artifact'}
+        declarations_by_sha={item['document']['sha256']:item['document'] for item in session_records(self.session, 'project_artifact')}
         required=[]
         for edge in doc['payloads']:
             required.append({'name':edge['name'],'sha256':edge['blob']['sha256'],'bytes':edge['blob']['bytes'],
@@ -1210,7 +1226,7 @@ class ProjectHistory:
         closed(body,('revision','material','replicate'));body=checked_json(body)
         natural(body['replicate'],'Replicate')
         self.access.require('edit','studies.prepare_trial',study_id)
-        if request_key not in operation_records(self.session.snapshot['records']):
+        if request_key not in session_operations(self.session):
             self.materials.recipe(body['material'],verify=True)
         def build(facts):
             origin=self.session.summary['project_id'];doc=copy.deepcopy(self._record(facts.studies,study_id,origin))
@@ -1239,7 +1255,7 @@ class ProjectHistory:
         origin=self.session.summary['project_id']
         self.access.require('edit','studies.select_candidate',study_id)
         evidence=(self.evidence(body['run_id'],{},origin_catalog_id=origin)
-                  if request_key not in operation_records(self.session.snapshot['records']) else None)
+                  if request_key not in session_operations(self.session) else None)
         def build(facts):
             doc=copy.deepcopy(self._record(facts.studies,study_id,origin));study=doc['study']
             if body['revision']!=study['revision']:_invalid('Study changed. Reload.','stale')

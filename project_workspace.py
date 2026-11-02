@@ -20,6 +20,7 @@ from metadata import Metadata
 from project_store import ProjectStore, ProjectStoreError
 from project_projection import ProjectProjection
 from project_custody import ProjectCustody
+from project_validation_cache import ProjectValidationCache
 from workbench import WorkbenchError
 
 
@@ -83,6 +84,7 @@ class ProjectWorkspace:
         self.lock = self.db.lock
         self.access = Access(self.db, self.path)
         self.custody = ProjectCustody(self.path, self.db.dataset_id)
+        self.validation_cache = ProjectValidationCache(self.path)
         self._retained_recovery = None
         self._dsn = dsn
         self._runtime_sources = configured
@@ -212,7 +214,8 @@ class ProjectWorkspace:
             owner = ProjectProjection(store, projection, self.access,
                                       {alias: value[0] for alias, value in self._roots.items()},
                                       custody=self.custody.for_projection(store, identity),
-                                      runtime_sources=self._runtime_sources)
+                                      runtime_sources=self._runtime_sources,
+                                      validation_cache=self.validation_cache)
             owner.pending_original = self.custody.pending(store)
             if owner.pending_original:
                 owner.session.available = False
@@ -232,7 +235,7 @@ class ProjectWorkspace:
             return ProjectProjection(store, db, self.access,
                 {alias: value[0] for alias, value in self._roots.items()},
                 custody=self.custody.for_projection(store, projection_id), restore=False,
-                runtime_sources=self._runtime_sources)
+                runtime_sources=self._runtime_sources, validation_cache=self.validation_cache)
         except BaseException:
             db.close()
             raise

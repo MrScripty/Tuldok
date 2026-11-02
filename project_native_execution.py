@@ -20,6 +20,7 @@ from pipeline import adapter_for_graph, adapter_identity_for_graph, decode_probe
 from project_native_process import ENVIRONMENT, PHASES, WORKERS, prepare, validate_prepared_spec, validate_job_evidence
 from project_session import REQUEST_KEY
 from workbench import WorkbenchError, timestamp
+from project_session import session_record, session_records
 
 FAMILY = 'native_execution_history'
 FORMAT = 'native_execution_history_v1'
@@ -404,7 +405,7 @@ class ProjectNativeExecution:
         from project_store import DIR_FLAGS, FILE_FLAGS, ProjectStoreError, _open_directory_path, anchored_directory
         stage_id=document['phase_id']
         if document['phase']=='verify':
-            matches=[row['document'] for row in self.session.snapshot['records']
+            matches=[row['document'] for row in session_records(self.session, FAMILY)
                 if row['family']==FAMILY and row['document']['phase']=='train'
                 and row['document']['origin_catalog_id']==self.db.dataset_id
                 and row['document']['run_id']==document['run_id']]
@@ -634,8 +635,8 @@ class ProjectNativeExecution:
     def capture_run_payloads(self,run,artifacts):
         """Copy a newly admitted frozen native input, then reuse exact custody."""
         from projects import Projects
-        prior=next((record['document'] for record in self.session.snapshot['records']
-            if record['family']=='run_history' and record['id']==run['dataset_id']+'.'+run['id']),None)
+        prior=session_record(self.session, 'run_history',run['dataset_id']+'.'+run['id'])
+        prior=None if prior is None else prior['document']
         if prior is not None:
             retained=[copy.deepcopy(edge) for edge in prior['payloads']
                       if edge['name']=='release.zip' or edge['name'].startswith('source/')]
@@ -881,8 +882,8 @@ class ProjectNativeExecution:
                 try:handle.close_control()
                 except (OSError,recipe_process.ProcessError):pass
             if phase_id not in self._never_launched:
-                retained=next((record['document'] for record in self.session.snapshot['records']
-                    if record['family']==FAMILY and record['id']==self.session.project_id+'.'+phase_id),None)
+                retained=session_record(self.session, FAMILY,self.session.project_id+'.'+phase_id)
+                retained=None if retained is None else retained['document']
                 acknowledged=(self.session.available and retained is not None
                     and retained['events'][-1]['state'] in ('completed','failed')
                     and retained['events'][-1]['receipt_sha256'] is not None)

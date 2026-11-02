@@ -79,12 +79,13 @@ def operation_records(records, *, project_id=None):
 
 
 class ProjectSession:
-    def __init__(self, store, db, access, artifacts, *, validate_records):
+    def __init__(self, store, db, access, artifacts, *, validate_records, validation_cache=None):
         if not callable(validate_records):
             raise TypeError('A complete owner-codec validator is required.')
         self.store, self.db, self.access, self.artifacts = store, db, access, artifacts
         self.lock = threading.RLock()
         self._validate = validate_records
+        self.validation_cache = validation_cache
         self.available = False
         self._snapshot = None
         self.project_id = store.summary()['project_id']
@@ -95,7 +96,7 @@ class ProjectSession:
         self._pending_observation = None
         self._recovery_records = None
         self._recovery_request = None
-        self.adopt(store.snapshot())
+        self.adopt(store.snapshot(), _owned=True)
 
     @property
     def foreground_publication(self):
@@ -145,6 +146,7 @@ class ProjectSession:
                 self._recovery_records = copy.deepcopy(candidate)
                 self._recovery_request = (key, digest)
             raise
+        self._remember_validated(self._pending_observation['checkpoint'])
         return copy.deepcopy(self._pending_observation)
 
     def _observation_outcome(self, outcome):
@@ -189,21 +191,141 @@ class ProjectSession:
         with self.lock:
             return copy_validated_json(self._snapshot)
 
-    def _validated(self, records):
+    def records(self, *families):
+        """Independent copies of only the selected families at the bound checkpoint.
+
+        Equivalent to filtering a complete snapshot copy, without copying the
+        unselected families (most bytes are usually retained Run history).
+        """
+        if not families or any(type(family) is not str for family in families):
+            raise TypeError('Select one or more record families by name.')
+        selected = frozenset(families)
+        with self.lock:
+            return copy_validated_json([item for item in self._snapshot['records']
+                                        if item['family'] in selected])
+
+    def records_for(self, *families):
+        """Every bound record, in order, for one owner's pure decoder.
+
+        Envelopes of the selected families are independent copies the owner
+        may keep or mutate. Every other envelope is a fresh envelope sharing its
+        verified document read-only, so fork/membership validators still see
+        the complete record set without copying unrelated Run history. Owners
+        must not mutate documents outside their selected families.
+        """
+        if not families or any(type(family) is not str for family in families):
+            raise TypeError('Select one or more record families by name.')
+        selected = frozenset(families)
+        with self.lock:
+            return [copy_validated_json(item) if item['family'] in selected else
+                    dict(family=item['family'], id=item['id'], document=item['document'])
+                    for item in self._snapshot['records']]
+
+    def active(self, *families, project_id=None):
+        """active_records for selected families over the bound checkpoint.
+
+        Validates the complete fork history against every bound identity, but
+        copies only the selected active envelopes.
+        """
+        if not families or any(type(family) is not str for family in families):
+            raise TypeError('Select one or more record families by name.')
+        from project_fork import active_records
+        with self.lock:
+            return active_records(self._snapshot['records'],
+                                  project_id=self.project_id if project_id is None else project_id,
+                                  families=frozenset(families))
+
+    def derived(self, name, compute):
+        """Memoize one owner-derived read-only fact set per bound checkpoint.
+
+        compute() must be a pure function of the bound records. Owners share
+        the result; they must copy any part they return or mutate.
+        """
+        if type(name) is not str or not callable(compute):
+            raise TypeError('Derived facts need a name and a compute function.')
+        with self.lock:
+            checkpoint = self._snapshot['checkpoint']
+            cache = getattr(self, '_derived_cache', None)
+            if cache is None or cache[0] != checkpoint:
+                cache = (checkpoint, {})
+                self._derived_cache = cache
+            if name not in cache[1]:
+                value = compute()
+                if self._snapshot['checkpoint'] != checkpoint:
+                    raise ProjectSessionError('Project changed while deriving facts.', 'stale_project', 409)
+                cache[1][name] = value
+            return cache[1][name]
+
+    def record(self, family, record_id):
+        """An independent copy of one bound record envelope, or None."""
+        if type(family) is not str or type(record_id) is not str:
+            raise TypeError('Select a record by family and ID.')
+        with self.lock:
+            index = getattr(self, '_record_index', None)
+            if index is None or index[0] != self._snapshot['checkpoint']:
+                index = (self._snapshot['checkpoint'],
+                         {(item['family'], item['id']): item for item in self._snapshot['records']})
+                self._record_index = index
+            found = index[1].get((family, record_id))
+            return None if found is None else copy_validated_json(found)
+
+    def operations(self, *, project_id=None):
+        """operation_records over the bound checkpoint, computed once per checkpoint.
+
+        The bound records are immutable for a checkpoint, so the result is a
+        pure function of (checkpoint, project_id). Callers receive independent
+        copies, exactly as from operation_records(self.snapshot['records']).
+        """
+        with self.lock:
+            key = (self._snapshot['checkpoint'], project_id)
+            cached = getattr(self, '_operations_cache', None)
+            if cached is None or cached[0] != key:
+                # operation_records copies what it returns and never mutates input.
+                cached = (key, operation_records(self._snapshot['records'], project_id=project_id))
+                self._operations_cache = cached
+            return copy.deepcopy(cached[1])
+
+    def _validated(self, records, checkpoint=None):
+        """Completely validate records; reuse an exact earlier success.
+
+        checkpoint, when given, must be the Store checkpoint naming exactly
+        these records. Only then can a remembered validation be reused.
+        """
+        cache = getattr(self, 'validation_cache', None)
+        if checkpoint is not None and cache is not None and cache.known(self.project_id, checkpoint):
+            return
         operation_records(records, project_id=self.project_id)
         self._validate(records)
+        if checkpoint is not None and cache is not None:
+            cache.remember(self.project_id, checkpoint)
 
-    def adopt(self, snapshot):
+    def _remember_validated(self, checkpoint):
+        cache = getattr(self, 'validation_cache', None)
+        if cache is not None:
+            cache.remember(self.project_id, checkpoint)
+
+    def adopt(self, snapshot, *, _owned=False):
         """Bind a fully validated checkpoint after inert reconstruction/cutover.
 
         The caller owns SQL reconstruction. This method never repairs or writes
         canonical bytes, and is not authorization to trust an imported receipt.
+        _owned marks a snapshot this session just read from its own Store: its
+        checkpoint then names its records, so freshness is a checkpoint check
+        and the independent snapshot needs no second copy or full comparison.
         """
         with self.access.lock, self.lock, self.db.lock:
+            if _owned:
+                self._validated(snapshot['records'], snapshot['checkpoint'])
+                if self.store.summary()['checkpoint'] != snapshot['checkpoint']:
+                    raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
+                self._snapshot = snapshot
+                self.available = True
+                return
             self._validated(snapshot['records'])
             current = self.store.snapshot()
             if current != snapshot:
                 raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
+            self._remember_validated(snapshot['checkpoint'])
             self._snapshot = copy_validated_json(snapshot)
             self.available = True
 
@@ -272,7 +394,7 @@ class ProjectSession:
                     raise ProjectSessionError('Request key already has different input.', 'conflict', 409)
                 # The current composed codec validates the exact historical
                 # result too; receipt facts can never authorize execution.
-                self._validated(current['records'])
+                self._validated(current['records'], current['checkpoint'])
                 return copy.deepcopy(prior['result'])
             if self.store.reconcile(key, digest) is not None:
                 raise ProjectSessionError('Request key belongs to another canonical operation.', 'conflict', 409)
@@ -310,6 +432,8 @@ class ProjectSession:
                     # and before any deferred dispatch/wake can run.
                     self._pending_observation = committed
                 self._snapshot = committed
+                # These exact records were completely validated as the candidate.
+                self._remember_validated(committed['checkpoint'])
                 return copy.deepcopy(captured['result'])
             except BaseException as error:
                 if committed is not None:
@@ -328,3 +452,49 @@ class ProjectSession:
             finally:
                 self._foreground_publication = False
                 self._pending_observation = None
+
+
+# Owners also accept lightweight snapshot views (for example inert candidate or
+# retained-material views that expose only snapshot/check_current). These
+# helpers use a ProjectSession's copy-avoiding bound reads when available and
+# otherwise compute exactly the same values from the view's snapshot.
+
+def session_records(session, *families):
+    if hasattr(session, 'records') and callable(session.records):
+        return session.records(*families)
+    return [item for item in session.snapshot['records'] if item['family'] in families]
+
+
+def session_record(session, family, record_id):
+    if hasattr(session, 'record') and callable(session.record):
+        return session.record(family, record_id)
+    return next((item for item in session.snapshot['records']
+                 if item['family'] == family and item['id'] == record_id), None)
+
+
+def session_records_for(session, *families):
+    if hasattr(session, 'records_for') and callable(session.records_for):
+        return session.records_for(*families)
+    return session.snapshot['records']
+
+
+def session_active(session, *families, project_id=None):
+    if hasattr(session, 'active') and callable(session.active):
+        return session.active(*families, project_id=project_id)
+    from project_fork import active_records
+    snapshot = session.snapshot
+    return active_records(snapshot['records'],
+                          project_id=session.project_id if project_id is None else project_id,
+                          families=frozenset(families))
+
+
+def session_operations(session, *, project_id=None):
+    if hasattr(session, 'operations') and callable(session.operations):
+        return session.operations(project_id=project_id)
+    return operation_records(session.snapshot['records'], project_id=project_id)
+
+
+def session_derived(session, name, compute):
+    if hasattr(session, 'derived') and callable(session.derived):
+        return session.derived(name, compute)
+    return compute()

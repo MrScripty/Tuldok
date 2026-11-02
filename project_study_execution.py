@@ -19,6 +19,7 @@ from project_history import (FAMILY_FORMATS, _audit, _sha, envelope,
 from project_material import ProjectMaterial, MaterialSnapshot
 from project_session import operation_records
 from workbench import WorkbenchError, encode, timestamp
+from project_session import session_operations
 
 PREPARATIONS={'study_execution.prepare_package':'studies.prepare_package',
               'study_execution.prepare_verifier':'studies.prepare_verifier'}
@@ -323,6 +324,9 @@ class ProjectStudyExecution:
         self.history.study_execution=self
 
     def _canonical(self,records=None):
+        if records is None and callable(getattr(self.session,'derived',None)):
+            from project_history import checkpoint_facts
+            return checkpoint_facts(self.session,self.materials)
         records=self.session.snapshot['records'] if records is None else records
         return history_records(records,materials=self.materials.read_view(records))
 
@@ -521,7 +525,7 @@ class ProjectStudyExecution:
         self.access.require('execute','studies.continue',study_id,owner_only=True)
         with self.session.access.lock,self.session.lock,self.db.lock:
             self.refresh_authoring()
-            prior=operation_records(self.session.snapshot['records']).get(key)
+            prior=session_operations(self.session).get(key)
             if prior is not None and not self.epoch_current(self.studies._study(study_id)):
                 _invalid('A historical Continue receipt cannot activate this runtime; use a fresh key.','unavailable')
             def invoke():
@@ -567,7 +571,7 @@ class ProjectStudyExecution:
         current=self.access.require('approve-execution','studies.approve',study_id,owner_only=True)
         effective=dict(body,approver_actor_id=current.actor_id)
         with self.session.access.lock,self.session.lock,self.db.lock:
-            self.refresh_authoring();prior=operation_records(self.session.snapshot['records']).get(key)
+            self.refresh_authoring();prior=session_operations(self.session).get(key)
             if prior is not None:
                 if prior['operation']!='study_execution.approve':_invalid('Request key has another operation.','conflict')
                 validate_operation_result(prior['operation'],prior['result'],self.session.snapshot['records'])
@@ -590,7 +594,7 @@ class ProjectStudyExecution:
         with self.session.access.lock,self.session.lock,self.db.lock:
             builtin=None
             self.session.check_current();self.refresh_authoring()
-            prior=operation_records(self.session.snapshot['records']).get(key)
+            prior=session_operations(self.session).get(key)
             if prior is not None:
                 result=prior['result']
                 if (prior['operation']!='study_execution.admit' or self.db.execute(
@@ -735,14 +739,14 @@ class ProjectStudyExecution:
         intent_key=_intent_key(operation,key);phase=intent_key.removesuffix('-intent')
         with self.session.access.lock,self.session.lock,self.db.lock:
             self.session.check_current()
-            prior=operation_records(self.session.snapshot['records']).get(key)
+            prior=session_operations(self.session).get(key)
             if prior is not None:
                 # Current authority is checked above. Historical completion
                 # acknowledges science and cannot repeat filesystem effects.
                 return self._mutate(operation,study_id,effective,expected_checkpoint,key,
                     lambda:(_ for _ in ()).throw(RuntimeError('Completed preparation replay invoked effects.')),'edit')
             if expected_checkpoint!=self.session.summary['checkpoint']:_invalid('Expected project checkpoint changed.','stale_project')
-            receipts=operation_records(self.session.snapshot['records'])
+            receipts=session_operations(self.session)
             if any(_intent_key(other,key) in receipts for other in PREPARATIONS if other!=operation):
                 _invalid('Preparation key already identifies another preparation operation.','conflict')
             previous_intent=receipts.get(intent_key)

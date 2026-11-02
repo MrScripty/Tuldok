@@ -38,6 +38,7 @@ from project_measurements import validate_operation_result as validate_measureme
 from project_measurements import receipt_validator as measurement_receipt_validator
 from workbench import WorkbenchError
 from workbench import timestamp
+from project_session import session_record
 
 
 def validate_artifact_resolution(operation, result, records):
@@ -116,7 +117,8 @@ def validate_project_records(records, *, project_id, artifacts):
 
 
 class ProjectProjection:
-    def __init__(self, store, db, access, roots, *, custody=None, restore=True, runtime_sources=None):
+    def __init__(self, store, db, access, roots, *, custody=None, restore=True, runtime_sources=None,
+                 validation_cache=None):
         self.store, self.db, self.access = store, db, access
         self.custody = custody
         self.pending_original = []
@@ -129,7 +131,8 @@ class ProjectProjection:
         self._runtime_sources = copy.deepcopy(runtime_sources or {})
         try:
             self.session = ProjectSession(store, db, access, self.artifacts,
-                                          validate_records=self.validate_records)
+                                          validate_records=self.validate_records,
+                                          validation_cache=validation_cache)
             # Install before domain constructors retain their lock references.
             db.lock = ProjectLock(access.lock, self.session.lock, db.lock)
             self.producers = ProjectProducers(self.session)
@@ -195,8 +198,8 @@ class ProjectProjection:
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self.access.require('edit', 'artifacts.resolve', body['sha256'], owner_only=True)
             self.session.check_current()
-            declaration = next((item['document'] for item in self.session.snapshot['records']
-                                if item['family'] == 'project_artifact' and item['id'] == body['sha256']), None)
+            declaration = session_record(self.session, 'project_artifact', body['sha256'])
+            declaration = None if declaration is None else declaration['document']
             if declaration is None:
                 raise WorkbenchError('Artifact is not declared by this project.', 'not_found', 404)
             def invoke():

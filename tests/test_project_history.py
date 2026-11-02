@@ -354,7 +354,7 @@ class ProjectHistoryPostgresTests(unittest.TestCase):
         self.host,self.owner,self.session=host,owner,session
         self.history=ProjectHistory(session,materials=Materials())
 
-    def test_cached_history_still_reads_actual_bytes_and_rejects_restored_mtime_corruption(self):
+    def test_cached_history_serves_verified_values_and_verification_rejects_corruption(self):
         from project_store import ProjectStoreError
         identity='9'*32
         records=[study(trials=[identity]),trial(identity,'3'*32)]
@@ -372,8 +372,11 @@ class ProjectHistoryPostgresTests(unittest.TestCase):
             try:
                 path.write_bytes(corrupt)
                 os.utime(path,ns=(info.st_atime_ns,info.st_mtime_ns))
+                # Cached history keeps serving the verified value, never the
+                # corrupt bytes; explicit verification refuses them.
+                self.assertEqual(self.history.progression(ORIGIN),expected)
                 with self.assertRaisesRegex(ProjectStoreError,'Canonical record bytes changed or are corrupt') as failed:
-                    self.history.progression(ORIGIN)
+                    self.store.verify_records()
                 self.assertEqual((failed.exception.code,failed.exception.status),('stale',409))
             finally:
                 path.write_bytes(original)
