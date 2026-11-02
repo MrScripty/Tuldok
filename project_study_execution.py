@@ -19,7 +19,7 @@ from project_history import (FAMILY_FORMATS, _audit, _sha, envelope,
 from project_material import ProjectMaterial, MaterialSnapshot
 from project_session import operation_records
 from workbench import WorkbenchError, encode, timestamp
-from project_session import session_operations
+from project_session import session_operations, session_records
 
 PREPARATIONS={'study_execution.prepare_package':'studies.prepare_package',
               'study_execution.prepare_verifier':'studies.prepare_verifier'}
@@ -330,10 +330,24 @@ class ProjectStudyExecution:
         records=self.session.snapshot['records'] if records is None else records
         return history_records(records,materials=self.materials.read_view(records))
 
+    def _authoring_facts(self,records=None):
+        """Studies and Trials of the bound checkpoint for SQL authoring.
+
+        For a checkpoint whose complete validation is on record, only the Study
+        and Trial documents are needed and collected (no Run history); this is
+        exactly the studies/trials part of the complete decode.
+        """
+        if records is None:
+            validated=getattr(self.session,'validated_checkpoint',None)
+            if validated is not None and validated==self.session.summary['checkpoint']:
+                from project_history import assemble_validated_facts
+                return assemble_validated_facts(session_records(self.session,'study_history','trial_history'),owned=True)
+        return self._canonical(records)
+
     def restore_authoring(self,records=None):
         """Reconstruct intent only, under the current project guard."""
         with self.session.access.lock,self.session.lock,self.db.lock:
-            self.session.check_current();facts=self._canonical(records)
+            self.session.check_current();facts=self._authoring_facts(records)
             with self.db.transaction():
                 for (origin,identity),doc in sorted(facts.studies.items()):
                     if origin!=self.origin:continue

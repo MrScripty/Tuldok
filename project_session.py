@@ -79,6 +79,9 @@ def operation_records(records, *, project_id=None):
 
 
 class ProjectSession:
+    # Sessions over a database working copy hold no record set (see __init__).
+    _lazy = False
+
     def __init__(self, store, db, access, artifacts, *, validate_records, validation_cache=None):
         if not callable(validate_records):
             raise TypeError('A complete owner-codec validator is required.')
@@ -98,7 +101,45 @@ class ProjectSession:
         self._pending_observation = None
         self._recovery_records = None
         self._recovery_request = None
-        self.adopt(store.snapshot(), _owned=True)
+        # A database working copy serves record reads directly; the session
+        # then binds checkpoint metadata only and holds no record set.
+        self._lazy = callable(getattr(store, 'records_view', None))
+        if self._lazy:
+            self._adopt_working_copy()
+        else:
+            self.adopt(store.snapshot(), _owned=True)
+
+    def _adopt_working_copy(self):
+        """Bind the working copy's checkpoint; validate its records only if unknown."""
+        with self.access.lock, self.lock, self.db.lock:
+            summary = self.store.summary()
+            cache = getattr(self, 'validation_cache', None)
+            if cache is not None and cache.known(self.project_id, summary['checkpoint']):
+                self.validated_checkpoint = summary['checkpoint']
+            else:
+                snapshot = self.store.snapshot()
+                if snapshot['checkpoint'] != summary['checkpoint']:
+                    raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
+                self._validated(snapshot['records'], snapshot['checkpoint'])
+                del snapshot
+            if self.store.summary()['checkpoint'] != summary['checkpoint']:
+                raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
+            self._bind(summary)
+            self.available = True
+
+    def _bind(self, snapshot):
+        """Bind a committed checkpoint; a lazy session keeps only its metadata."""
+        if self._lazy:
+            self._snapshot = dict(project_id=snapshot['project_id'], name=snapshot['name'],
+                                  checkpoint=snapshot['checkpoint'], records=None)
+        else:
+            self._snapshot = snapshot
+
+    def _fresh_store(self):
+        """The working copy must still be at the bound checkpoint."""
+        if self.store.summary()['checkpoint'] != self._snapshot['checkpoint']:
+            raise ProjectSessionError('Canonical project changed. Close and reopen it.', 'stale_project', 409)
+        return self.store
 
     @property
     def foreground_publication(self):
@@ -141,7 +182,12 @@ class ProjectSession:
         if self.publication_intent is not None:
             self.publication_intent(copy.deepcopy(current), copy.deepcopy(candidate), key, digest)
         try:
-            self._pending_observation = self.store.commit(candidate, current['checkpoint'], key, digest)
+            if self._lazy:
+                changed = {(item['family'], item['id']) for item in records}
+                self._pending_observation = self.store.commit(candidate, current['checkpoint'], key, digest,
+                                                              changed=changed)
+            else:
+                self._pending_observation = self.store.commit(candidate, current['checkpoint'], key, digest)
         except BaseException as error:
             if getattr(error, 'code', None) in ('unknown', 'outcome_unknown'):
                 self.available = False
@@ -165,7 +211,7 @@ class ProjectSession:
                 self.available = False
             return
         if pending is not None:
-            self._snapshot = pending
+            self._bind(pending)
             if outcome != 'committed':
                 self.available = False
         if outcome == 'unknown':
@@ -183,7 +229,10 @@ class ProjectSession:
         all ordered guards until fixed inert reconstruction succeeds or fences.
         """
         with self.access.lock, self.lock, self.db.lock:
-            known = snapshot == self._snapshot
+            if self._lazy:
+                known = all(snapshot[key] == self._snapshot[key] for key in ('project_id', 'name', 'checkpoint'))
+            else:
+                known = snapshot == self._snapshot
             attempted = (self._recovery_records is not None
                          and snapshot['project_id'] == self._snapshot['project_id']
                          and snapshot['name'] == self._snapshot['name']
@@ -205,6 +254,12 @@ class ProjectSession:
     @property
     def snapshot(self):
         with self.lock:
+            if self._lazy:
+                # Complete independent record set from the working copy (costly).
+                current = self._fresh_store().snapshot()
+                if current['checkpoint'] != self._snapshot['checkpoint']:
+                    raise ProjectSessionError('Canonical project changed. Close and reopen it.', 'stale_project', 409)
+                return current
             return copy_validated_json(self._snapshot)
 
     def records(self, *families):
@@ -217,6 +272,8 @@ class ProjectSession:
             raise TypeError('Select one or more record families by name.')
         selected = frozenset(families)
         with self.lock:
+            if self._lazy:
+                return self._fresh_store().records(*families)
             return copy_validated_json([item for item in self._snapshot['records']
                                         if item['family'] in selected])
 
@@ -233,6 +290,9 @@ class ProjectSession:
             raise TypeError('Select one or more record families by name.')
         selected = frozenset(families)
         with self.lock:
+            if self._lazy:
+                # Unselected envelopes carry document None (identity only).
+                return self._fresh_store().records_view(*families)
             return [copy_validated_json(item) if item['family'] in selected else
                     dict(family=item['family'], id=item['id'], document=item['document'])
                     for item in self._snapshot['records']]
@@ -247,6 +307,10 @@ class ProjectSession:
             raise TypeError('Select one or more record families by name.')
         from project_fork import active_records
         with self.lock:
+            if self._lazy:
+                return active_records(self._fresh_store().records_view(*families, 'project_fork'),
+                                      project_id=self.project_id if project_id is None else project_id,
+                                      families=frozenset(families))
             return active_records(self._snapshot['records'],
                                   project_id=self.project_id if project_id is None else project_id,
                                   families=frozenset(families))
@@ -277,6 +341,8 @@ class ProjectSession:
         if type(family) is not str or type(record_id) is not str:
             raise TypeError('Select a record by family and ID.')
         with self.lock:
+            if self._lazy:
+                return self._fresh_store().record(family, record_id)
             index = getattr(self, '_record_index', None)
             if index is None or index[0] != self._snapshot['checkpoint']:
                 index = (self._snapshot['checkpoint'],
@@ -297,7 +363,9 @@ class ProjectSession:
             cached = getattr(self, '_operations_cache', None)
             if cached is None or cached[0] != key:
                 # operation_records copies what it returns and never mutates input.
-                cached = (key, operation_records(self._snapshot['records'], project_id=project_id))
+                records = (self._fresh_store().records_view(OPERATION_FAMILY, 'project_fork') if self._lazy
+                           else self._snapshot['records'])
+                cached = (key, operation_records(records, project_id=project_id))
                 self._operations_cache = cached
             return copy.deepcopy(cached[1])
 
@@ -339,7 +407,7 @@ class ProjectSession:
                 self._validated(snapshot['records'], snapshot['checkpoint'])
                 if self.store.summary()['checkpoint'] != snapshot['checkpoint']:
                     raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
-                self._snapshot = snapshot
+                self._bind(snapshot)
                 self.available = True
                 return
             self._validated(snapshot['records'])
@@ -347,7 +415,7 @@ class ProjectSession:
             if current != snapshot:
                 raise ProjectSessionError('Project changed while binding its projection.', 'stale_project', 409)
             self._remember_validated(snapshot['checkpoint'])
-            self._snapshot = copy_validated_json(snapshot)
+            self._bind(copy_validated_json(snapshot) if not self._lazy else snapshot)
             self.available = True
 
     def _checked(self, read):
@@ -382,6 +450,9 @@ class ProjectSession:
         if type(family) is not str:
             raise TypeError('Record-family selection requires a string.')
         current = self._checked(self.store.summary)
+        if self._lazy:
+            current['records'] = self.store.records(family)
+            return current
         current['records'] = copy.deepcopy([
             item for item in self._snapshot['records'] if item['family'] == family])
         return current
@@ -448,11 +519,16 @@ class ProjectSession:
                     attempted_records = records
                     if self.publication_intent is not None:
                         self.publication_intent(copy.deepcopy(current), copy.deepcopy(records), key, digest)
-                    committed = self.store.commit(records, current['checkpoint'], key, digest)
+                    if self._lazy:
+                        # Only the captured upserts and this receipt can differ.
+                        changed = {(item['family'], item['id']) for item in upserts} | {identity}
+                        committed = self.store.commit(records, current['checkpoint'], key, digest, changed=changed)
+                    else:
+                        committed = self.store.commit(records, current['checkpoint'], key, digest)
                     # Outcome hooks see canonical selection before SQL outcome
                     # and before any deferred dispatch/wake can run.
                     self._pending_observation = committed
-                self._snapshot = committed
+                self._bind(committed)
                 # These exact records were completely validated as the candidate.
                 self._remember_validated(committed['checkpoint'])
                 return copy.deepcopy(captured['result'])
@@ -471,7 +547,8 @@ class ProjectSession:
                     raise ProjectSessionError('PostgreSQL rejected this edit; nothing was saved.',
                                               'rejected', 409) from error
                 if committed is not None:
-                    self._snapshot, self.available = committed, False
+                    self._bind(committed)
+                    self.available = False
                     failure = ProjectSessionError('Canonical operation committed; reopen to reconstruct the projection.',
                                                   'projection_unavailable', 503)
                     failure.receipt = dict(committed=True, selected=True, project_id=committed['project_id'],

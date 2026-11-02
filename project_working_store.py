@@ -82,23 +82,29 @@ class WorkingProjectStore:
         with self._mutex:
             self._db = db
 
+    def _joined(self):
+        # Join the projection only inside its open transaction (Session.mutate,
+        # background publication), so record and projection rows commit
+        # atomically. Other commits use this store's own connection and never
+        # fire the projection's commit hooks.
+        return self._db is not None and self._db.in_transaction
+
     def _connection(self):
-        return self._db.connection if self._db is not None else self._own
+        return self._db.connection if self._joined() else self._own
 
     def _guard(self):
         # A bound projection connection is shared; its catalog lock serializes
         # every command and transaction on it across threads.
-        return self._db.lock if self._db is not None else nullcontext()
+        return self._db.lock if self._joined() else nullcontext()
 
     @contextmanager
     def _transaction(self):
-        with self._guard():
-            if self._db is not None:
-                with self._db.transaction():
-                    yield
-            else:
-                with self._own.transaction():
-                    yield
+        if self._joined():
+            with self._db.lock, self._db.transaction():
+                yield
+        else:
+            with self._own.transaction():
+                yield
 
     def _execute(self, statement, parameters=None):
         if self._closed:
@@ -275,6 +281,28 @@ class WorkingProjectStore:
         with self._mutex:
             return [dict(family=f, id=i, document=json.loads(raw)) for f, i, raw in self._rows(
                 self._q('SELECT family, id, raw FROM {records} WHERE family = ANY(%s) {order}'), (list(families),))]
+
+    def records_view(self, *families):
+        """Every record identity in order; documents decoded only for selected families.
+
+        Unselected envelopes carry document None. Fork and membership
+        validators need every identity but only read their own families.
+        """
+        if not families or any(type(family) is not str for family in families):
+            raise TypeError('Select one or more record families by name.')
+        with self._mutex, self._guard():
+            connection = self._connection()
+            idle = connection.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
+            result = []
+            with (connection.transaction() if idle else nullcontext()), \
+                    connection.cursor(name='working_' + uuid.uuid4().hex) as cursor:
+                cursor.itersize = 256
+                cursor.execute(self._q('SELECT family, id, CASE WHEN family = ANY(%s) THEN raw END '
+                                       'FROM {records} {order}'), (list(families),))
+                for family, record_id, raw in cursor:
+                    result.append(dict(family=family, id=record_id,
+                                       document=None if raw is None else json.loads(bytes(raw))))
+            return result
 
     def record(self, family, record_id):
         with self._mutex:
