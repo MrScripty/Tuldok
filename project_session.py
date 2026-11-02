@@ -142,6 +142,20 @@ class ProjectSession:
                 known[id(record)] = (record, digests[identity])
         return known_envelope_digests(known)
 
+    def _edit_scope(self, base_checkpoint, changed, operations=(), base_records=None):
+        """Validate only what this edit can affect when its base is validated.
+
+        The candidate is the base checkpoint's records plus changed identities
+        (never deletions); see project_validation_delta.
+        """
+        from contextlib import nullcontext
+        if getattr(self, 'validated_checkpoint', None) != base_checkpoint:
+            return nullcontext()
+        from project_validation_delta import ValidationDelta, edit_delta
+        base = set() if base_records is None else {(item['family'], item['id']) for item in base_records}
+        added = frozenset(identity for identity in changed if base_records is not None and identity not in base)
+        return edit_delta(ValidationDelta(frozenset(changed), frozenset(operations), added))
+
     def _bind(self, snapshot):
         """Bind a committed checkpoint; a lazy session keeps only its metadata."""
         if self._lazy:
@@ -161,8 +175,14 @@ class ProjectSession:
         return self._foreground_publication
 
     @staticmethod
-    def _merge(records, upserts):
-        merged = {(item['family'], item['id']): copy.deepcopy(item) for item in records}
+    def _merge(records, upserts, *, owned=False):
+        """Candidate record map: base records plus copied upserts.
+
+        owned=True means the caller owns these base records (a fresh working
+        copy read), so they are used without another whole-project copy.
+        """
+        merged = ({(item['family'], item['id']): item for item in records} if owned else
+                  {(item['family'], item['id']): copy.deepcopy(item) for item in records})
         seen = {}
         for item in upserts:
             if type(item) is not dict or set(item) != {'family', 'id', 'document'}:
@@ -191,9 +211,11 @@ class ProjectSession:
             raise ProjectSessionError('Invalid background publication identity.')
         authorize()
         current = self.check()
-        merged = self._merge(current['records'], records)
+        merged = self._merge(current['records'], records, owned=self._lazy)
         candidate = [merged[identity] for identity in sorted(merged)]
-        with self._known_envelopes(candidate, {(item['family'], item['id']) for item in records}):
+        changed = {(item['family'], item['id']) for item in records}
+        with self._known_envelopes(candidate, changed), \
+                self._edit_scope(current['checkpoint'], changed, base_records=current['records']):
             self._validated(candidate)
         if self.publication_intent is not None:
             self.publication_intent(copy.deepcopy(current), copy.deepcopy(candidate), key, digest)
@@ -512,24 +534,30 @@ class ProjectSession:
                 self._foreground_publication = True
                 with self.db.transaction():
                     result = invoke()
-                    captured = capture(result, copy.deepcopy(current['records']))
+                    # A working-copy read is already this mutation's own fresh
+                    # copy; owner captures read it and copy what they change.
+                    before = current['records'] if self._lazy else copy.deepcopy(current['records'])
+                    captured = capture(result, before)
                     if type(captured) is not dict or set(captured) != {'records', 'result'} or type(captured['records']) is not list:
                         raise ProjectSessionError('Invalid owned project capture.')
                     if len(agent_api.encoded(captured['result'])) > agent_api.RESPONSE_LIMIT:
                         raise ProjectSessionError('Project result exceeds its transport bound.', 'too_large', 413)
                     upserts = captured['records']
                     if self.extra_capture is not None:
-                        extra = self.extra_capture(copy.deepcopy(current['records']))
+                        extra = self.extra_capture(current['records'] if self._lazy else copy.deepcopy(current['records']))
                         if type(extra) is not list:
                             raise ProjectSessionError('Invalid fixed runtime capture.')
                         upserts = upserts + extra
-                    merged = self._merge(current['records'], upserts)
+                    merged = self._merge(current['records'], upserts, owned=self._lazy)
                     document = dict(format=OPERATION_FORMAT, project_id=self.project_id, operation=operation, target=target,
                                     request_key=key, input_sha256=digest, result=copy.deepcopy(captured['result']))
                     identity = (OPERATION_FAMILY, self.project_id + '.' + hashlib.sha256(key.encode('utf-8')).hexdigest())
                     merged[identity] = dict(family=identity[0], id=identity[1], document=document)
                     records = [merged[identity] for identity in sorted(merged)]
-                    with self._known_envelopes(records, {(item['family'], item['id']) for item in upserts} | {identity}):
+                    changed = {(item['family'], item['id']) for item in upserts} | {identity}
+                    with self._known_envelopes(records, changed), \
+                            self._edit_scope(current['checkpoint'], changed, (operation,),
+                                             base_records=current['records']):
                         self._validated(records)
                     # Unique payloads have already reached artifact custody;
                     # SQL callbacks can delete only disposable projection files.

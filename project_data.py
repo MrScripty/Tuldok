@@ -1005,9 +1005,8 @@ class ProjectData:
                     media_type=media_type, kind=kind, role=role, preservation='unique', required_for=['inspect', 'release'])
 
     def _require_record(self, record_id, *, extended=False):
-        from project_fork import active_records
-        snapshot = self.session.snapshot
-        for item in active_records(snapshot['records'], project_id=snapshot['project_id']):
+        # Only these families are inspected; fork history is still checked.
+        for item in session_active(self.session, 'workbench_record', 'workbench_text'):
             if item['id'] == record_id and item['family'] in ('workbench_record', 'workbench_text'):
                 if extended and item['family'] == 'workbench_text':
                     fail('This operation requires an explicitly converted data record.', 'unsupported', 409)
@@ -1047,9 +1046,8 @@ class ProjectData:
 
     def _legacy_replay(self, operation, target, body, key):
         """Retain M1 request meaning after the shared M2 session cutover."""
-        records = self.session.snapshot['records']
-        from project_fork import active_records
-        records = active_records(records, project_id=self.session.project_id)
+        # Only receipts and legacy text are inspected below.
+        records = session_active(self.session, 'project_operation', 'workbench_text')
         if any(r['family']=='project_operation' and r['document']['request_key']==key for r in records):
             return None
         if operation not in ('data.import_text','data.annotate'):
@@ -1291,7 +1289,8 @@ class ProjectData:
         for family, table, owner in (('saved_selection', 'saved_selections', self.selections), ('saved_search', 'saved_searches', self.searches)):
             live = {r[0] for r in self.db.execute('SELECT id FROM ' + table)}
             from project_fork import active_records
-            all_ids = live | {r['id'] for r in active_records(before_records, project_id=self.session.project_id) if r['family'] == family}
+            all_ids = live | {r['id'] for r in active_records(before_records, project_id=self.session.project_id,
+                                                               families=frozenset({family})) if r['family'] == family}
             for record_id in all_ids:
                 old = before.get((family, record_id))
                 current = owner._get(record_id) if record_id in live else copy.deepcopy(old['document']['current'])
