@@ -1,5 +1,7 @@
 """Edit-scoped validation re-checks exactly what an edit can affect."""
+import os
 import unittest
+from unittest.mock import patch
 
 from project_projection import validate_project_records
 from project_validation_delta import COMPONENTS, ValidationDelta, edit_delta
@@ -43,7 +45,14 @@ class ScopedValidation(unittest.TestCase):
 
     def test_untouched_component_is_not_revalidated(self):
         # The base checkpoint is assumed validated; an unrelated edit skips data.
-        self.validate([BROKEN_TEXT], ValidationDelta(frozenset({('project_file', 'other')})))
+        with patch.dict(os.environ, {'TULDOK_VALIDATION_CROSSCHECK': '0'}):
+            self.validate([BROKEN_TEXT], ValidationDelta(frozenset({('project_file', 'other')})))
+
+    def test_crosscheck_reports_a_skipped_failure(self):
+        # Only possible when the 'validated base' assumption is violated, as here.
+        with patch.dict(os.environ, {'TULDOK_VALIDATION_CROSSCHECK': '1'}):
+            with self.assertRaisesRegex(AssertionError, 'disagrees'):
+                self.validate([BROKEN_TEXT], ValidationDelta(frozenset({('project_file', 'other')})))
 
     def test_identity_and_claim_checks_always_run(self):
         duplicate = [BROKEN_TEXT, dict(BROKEN_TEXT)]

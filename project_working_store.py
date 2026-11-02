@@ -27,6 +27,7 @@ import psycopg
 from psycopg import sql
 
 from metadata import _key, connection_info
+from project_record_dedupe import CLOSURE_FAMILY, RUN_FAMILY, compact, expand, is_compact
 from project_store import (FORMAT, MAX_RECORD_BYTES, MAX_RECORDS, MAX_TOTAL_BYTES, SUPPORTED_FORMATS,
                            ProjectStoreError, _RecordsDigest, _decode, _digest, _domain_format, _encode,
                            _fail, _identifier, _keys, _manifest_raw, _request, _sha, envelope_digest)
@@ -45,6 +46,8 @@ _TABLES = (
 _MIGRATIONS = (
     # SHA256 of the canonical {family, id, document} envelope (see envelope_digest).
     'ALTER TABLE {schema}.records ADD COLUMN IF NOT EXISTS envelope_sha256 text',
+    # Shared runtime closure referenced by a compact Run row (project_record_dedupe).
+    'ALTER TABLE {schema}.records ADD COLUMN IF NOT EXISTS closure_id text',
 )
 _ORDER = sql.SQL('ORDER BY family COLLATE "C", id COLLATE "C"')
 
@@ -193,12 +196,17 @@ class WorkingProjectStore:
                     proven.append(entry['sha256'])
                 if type(document) is not dict or document.get('format') != entry['format']:
                     _fail('Domain document format disagrees with its inventory.')
+                compact_run = is_compact(entry['family'], document)
                 self._execute(self._q(
-                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw, envelope_sha256) VALUES (%s,%s,%s,%s,%s,%s,%s) '
+                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw, envelope_sha256, closure_id) '
+                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s) '
                     'ON CONFLICT (family, id) DO UPDATE SET format=EXCLUDED.format, bytes=EXCLUDED.bytes, '
-                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw, envelope_sha256=EXCLUDED.envelope_sha256'),
+                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw, envelope_sha256=EXCLUDED.envelope_sha256, '
+                    'closure_id=EXCLUDED.closure_id'),
                     (entry['family'], entry['id'], entry['format'], entry['bytes'], entry['sha256'], body,
-                     envelope_digest(entry['family'], entry['id'], body)))
+                     # A compact Run's logical envelope digest is filled from its expansion.
+                     None if compact_run or entry['family'] == CLOSURE_FAMILY else envelope_digest(entry['family'], entry['id'], body),
+                     document['runtime_closure']['id'] if compact_run else None))
             for family, record_id in set(existing) - set(wanted):
                 self._execute(self._q('DELETE FROM {records} WHERE family=%s AND id=%s'), (family, record_id))
             if self._records_digest() != manifest['receipts'][-1]['records_sha256']:
@@ -253,6 +261,24 @@ class WorkingProjectStore:
                 _fail('Unchanged candidate record is missing from the working copy.')
         return digest.hexdigest()
 
+    # ---- Logical documents: closures hidden, compact Runs expanded.
+
+    def _closure(self, identity):
+        cache = self.__dict__.setdefault('_closures', {})
+        if identity not in cache:
+            row = self._execute(self._q('SELECT raw FROM {records} WHERE family=%s AND id=%s'),
+                                (CLOSURE_FAMILY, identity)).fetchone()
+            if row is None:
+                _fail('Compact Run references a missing runtime closure.')
+            cache[identity] = json.loads(bytes(row[0]))
+        return cache[identity]
+
+    def _logical(self, family, raw):
+        document = json.loads(raw)
+        if is_compact(family, document):
+            document = expand(document, self._closure(document['runtime_closure']['id']))
+        return document
+
     # ---- Manifest identity, identical to the file format.
 
     def _inventory(self):
@@ -295,8 +321,8 @@ class WorkingProjectStore:
         """Complete independent record set (costly for large projects)."""
         with self._locked():
             state = self._state()
-            records = [dict(family=f, id=i, document=json.loads(raw))
-                       for f, i, raw in self._rows(self._q('SELECT family, id, raw FROM {records} {order}'))]
+            records = [dict(family=f, id=i, document=self._logical(f, raw)) for f, i, raw in self._rows(
+                self._q('SELECT family, id, raw FROM {records} WHERE family <> %s {order}'), (CLOSURE_FAMILY,))]
             return dict(project_id=state['project_id'], name=state['name'],
                         checkpoint=state['checkpoint'], records=records)
 
@@ -305,8 +331,9 @@ class WorkingProjectStore:
         if not families or any(type(family) is not str for family in families):
             raise TypeError('Select one or more record families by name.')
         with self._locked():
-            return [dict(family=f, id=i, document=json.loads(raw)) for f, i, raw in self._rows(
-                self._q('SELECT family, id, raw FROM {records} WHERE family = ANY(%s) {order}'), (list(families),))]
+            selected = [family for family in families if family != CLOSURE_FAMILY]
+            return [dict(family=f, id=i, document=self._logical(f, raw)) for f, i, raw in self._rows(
+                self._q('SELECT family, id, raw FROM {records} WHERE family = ANY(%s) {order}'), (selected,))]
 
     def envelope_digests(self):
         """(family, id) -> canonical envelope SHA256 for every stored revision.
@@ -315,17 +342,23 @@ class WorkingProjectStore:
         stored canonical bytes.
         """
         with self._locked():
-            missing = self._execute(self._q('SELECT count(*) FROM {records} WHERE envelope_sha256 IS NULL')).fetchone()[0]
+            missing = self._execute(self._q('SELECT count(*) FROM {records} WHERE envelope_sha256 IS NULL AND family <> %s'),
+                                    (CLOSURE_FAMILY,)).fetchone()[0]
             if missing:
                 with self._transaction():
-                    digests = [(envelope_digest(family, record_id, raw), family, record_id) for family, record_id, raw
-                               in self._rows(self._q('SELECT family, id, raw FROM {records} WHERE envelope_sha256 IS NULL {order}'))]
+                    # Logical envelopes: a compact Run hashes its exact expansion.
+                    digests = [(envelope_digest(family, record_id, _encode(self._logical(family, raw))
+                                                if family == RUN_FAMILY else raw), family, record_id)
+                               for family, record_id, raw in self._rows(self._q(
+                                   'SELECT family, id, raw FROM {records} WHERE envelope_sha256 IS NULL AND family <> %s {order}'),
+                                   (CLOSURE_FAMILY,))]
                     with self._guard():
                         with self._connection().cursor() as cursor:
                             cursor.executemany(self._q('UPDATE {records} SET envelope_sha256=%s WHERE family=%s AND id=%s'),
                                                digests)
             return {(row[0], row[1]): row[2] for row in
-                    self._execute(self._q('SELECT family, id, envelope_sha256 FROM {records}'))}
+                    self._execute(self._q('SELECT family, id, envelope_sha256 FROM {records} WHERE family <> %s'),
+                                  (CLOSURE_FAMILY,))}
 
     def records_view(self, *families):
         """Every record identity in order; documents decoded only for selected families.
@@ -343,17 +376,20 @@ class WorkingProjectStore:
                     connection.cursor(name='working_' + uuid.uuid4().hex) as cursor:
                 cursor.itersize = 256
                 cursor.execute(self._q('SELECT family, id, CASE WHEN family = ANY(%s) THEN raw END '
-                                       'FROM {records} {order}'), (list(families),))
-                for family, record_id, raw in cursor:
-                    result.append(dict(family=family, id=record_id,
-                                       document=None if raw is None else json.loads(bytes(raw))))
+                                       'FROM {records} WHERE family <> %s {order}'), (list(families), CLOSURE_FAMILY))
+                rows = [(family, record_id, None if raw is None else bytes(raw)) for family, record_id, raw in cursor]
+            for family, record_id, raw in rows:
+                result.append(dict(family=family, id=record_id,
+                                   document=None if raw is None else self._logical(family, raw)))
             return result
 
     def record(self, family, record_id):
+        if family == CLOSURE_FAMILY:
+            return None
         with self._locked():
             row = self._execute(self._q('SELECT raw FROM {records} WHERE family=%s AND id=%s'),
                                 (family, record_id)).fetchone()
-            return None if row is None else dict(family=family, id=record_id, document=json.loads(bytes(row[0])))
+            return None if row is None else dict(family=family, id=record_id, document=self._logical(family, bytes(row[0])))
 
     def reconcile(self, request_key, request_sha256):
         _request(request_key, request_sha256)
@@ -388,6 +424,8 @@ class WorkingProjectStore:
                 _identifier(family, 'Record family')
                 if family not in SUPPORTED_FORMATS:
                     _fail('Unsupported project record family.', 'unsupported', 422)
+                if family == CLOSURE_FAMILY:
+                    _fail('Runtime closures are store-owned records.', 'unsupported', 422)
                 _identifier(identity, 'Record ID')
                 if (family, identity) in candidates:
                     _fail('Duplicate project record identity.')
@@ -396,27 +434,60 @@ class WorkingProjectStore:
                 _domain_format(document.get('format'), family)
                 candidates[(family, identity)] = document
             replacements, entries, total = {}, {}, 0
+            closure_rows = {row[1]: row[2] for row in self._execute(self._q(
+                'SELECT family, id, closure_id FROM {records} WHERE closure_id IS NOT NULL'))}
+            new_closures, row_closures, logical_raw, referenced = {}, {}, {}, set()
             for identity in sorted(candidates):
                 document = candidates[identity]
                 current = inventory.get(identity)
                 if current is not None and changed is not None and identity not in changed \
-                        and current[0] == document['format']:
+                        and current[0] in (document['format'], 'project_run_history_v2'):
+                    entries[identity] = current
+                    total += current[1]
+                    if identity[1] in closure_rows and identity[0] == RUN_FAMILY:
+                        referenced.add(closure_rows[identity[1]])
+                    continue
+                physical = document
+                if (identity[0] == RUN_FAMILY and changed is None and current is not None
+                        and current[0] == document['format'] and _sha(_encode(document)) == current[2]):
+                    # An unchanged uncompacted Run keeps its verified revision (as in
+                    # ProjectStore); compact_run_closures migrates explicitly.
                     entries[identity] = current
                     total += current[1]
                     continue
-                raw = _encode(document)
+                if identity[0] == RUN_FAMILY:
+                    compacted = compact(document)
+                    if compacted is not None:
+                        physical, closure = compacted
+                        closure_id = physical['runtime_closure']['id']
+                        new_closures.setdefault(closure_id, closure)
+                        referenced.add(closure_id)
+                        row_closures[identity] = closure_id
+                        logical_raw[identity] = _encode(document)
+                raw = _encode(physical)
                 if len(raw) > MAX_RECORD_BYTES:
                     _fail('Project records exceed the synchronous byte limit.')
                 digest = _sha(raw)
                 if current is None or current[2] != digest:
                     replacements[identity] = raw
-                entries[identity] = (document['format'], len(raw), digest)
+                entries[identity] = (physical['format'], len(raw), digest)
                 total += len(raw)
                 if total > MAX_TOTAL_BYTES:
                     _fail('Project records exceed the synchronous byte limit.')
+            # Exactly the closures referenced by stored compact Runs are kept.
+            for closure_id in sorted(referenced):
+                identity = (CLOSURE_FAMILY, closure_id)
+                if identity in inventory:
+                    entries[identity] = inventory[identity]
+                    total += inventory[identity][1]
+                    continue
+                raw = _encode(new_closures[closure_id])
+                replacements[identity] = raw
+                entries[identity] = (new_closures[closure_id]['format'], len(raw), _sha(raw))
+                total += len(raw)
             if total > MAX_TOTAL_BYTES:
                 _fail('Project records exceed the synchronous byte limit.')
-            records_digest = self._records_digest(replacements, sorted(candidates))
+            records_digest = self._records_digest(replacements, sorted(entries))
             for receipt in state['receipts']:
                 if receipt['request_key'] == request_key:
                     if receipt['request_sha256'] != request_sha256 or receipt['records_sha256'] != records_digest:
@@ -431,18 +502,39 @@ class WorkingProjectStore:
             _manifest_raw(manifest)
             for (family, identity), raw in replacements.items():
                 fmt, size, digest = entries[(family, identity)]
+                key = (family, identity)
+                envelope = (None if family == CLOSURE_FAMILY else
+                            envelope_digest(family, identity, logical_raw.get(key, raw)))
                 self._execute(self._q(
-                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw, envelope_sha256) VALUES (%s,%s,%s,%s,%s,%s,%s) '
+                    'INSERT INTO {records} (family, id, format, bytes, sha256, raw, envelope_sha256, closure_id) '
+                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s) '
                     'ON CONFLICT (family, id) DO UPDATE SET format=EXCLUDED.format, bytes=EXCLUDED.bytes, '
-                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw, envelope_sha256=EXCLUDED.envelope_sha256'),
-                    (family, identity, fmt, size, digest, raw, envelope_digest(family, identity, raw)))
-            for family, identity in set(inventory) - set(candidates):
+                    'sha256=EXCLUDED.sha256, raw=EXCLUDED.raw, envelope_sha256=EXCLUDED.envelope_sha256, '
+                    'closure_id=EXCLUDED.closure_id'),
+                    (family, identity, fmt, size, digest, raw, envelope, row_closures.get(key)))
+            for family, identity in set(inventory) - set(entries):
                 self._execute(self._q('DELETE FROM {records} WHERE family=%s AND id=%s'), (family, identity))
             self._write_state(manifest, external_sha256=state['external_sha256'], dirty=True)
             if self._canonical_digests is not None and replacements:
                 self._canonical_digests.add_many([_sha(raw) for raw in replacements.values()])
             return dict(project_id=state['project_id'], name=state['name'], checkpoint=manifest['checkpoint'],
                         records=[dict(family=f, id=i, document=candidates[(f, i)]) for f, i in sorted(candidates)])
+
+    def compact_run_closures(self, request_key, request_sha256):
+        """Format migration: store every compactable Run against a shared closure.
+
+        The logical record set is unchanged (each compaction is checked to expand
+        to the exact original bytes); only the physical records and checkpoint
+        change. Returns (previous checkpoint, committed snapshot summary).
+        """
+        with self._locked():
+            state = self._state()
+            uncompacted = {(row[0], row[1]) for row in self._execute(self._q(
+                "SELECT family, id FROM {records} WHERE family=%s AND format='project_run_history_v1'"), (RUN_FAMILY,))}
+            snapshot = self.snapshot()
+            committed = self.commit(snapshot['records'], state['checkpoint'], request_key, request_sha256,
+                                    changed=uncompacted)
+            return state['checkpoint'], {key: committed[key] for key in ('project_id', 'name', 'checkpoint')}
 
     def save(self, expected_checkpoint):
         """Export the working copy to the external folder (the only folder write)."""

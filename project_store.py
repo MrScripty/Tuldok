@@ -61,6 +61,9 @@ SUPPORTED_FORMATS = {
     'grounded_history': 'project_grounded_history_v1',
     'caption_proposal_history': 'project_caption_proposal_history_v1',
     'text_proposal_history': 'project_text_proposal_history_v1',
+    # Store-only: one shared retained runtime closure for compact Runs
+    # (project_record_dedupe); never visible to domain owners.
+    'run_runtime_closure': 'project_run_runtime_closure_v1',
 }
 MAX_RECORDS = 100_000
 # Scientific history can retain original runtime/file observations in hundreds
@@ -185,7 +188,8 @@ def _domain_format(value, family):
         _fail('Domain document requires a versioned format.')
     if value != SUPPORTED_FORMATS[family] and not (
             family == 'project_operation' and value == 'project_operation_v2'
-            or family == 'project_file' and value == 'project_file_v2'):
+            or family == 'project_file' and value == 'project_file_v2'
+            or family == 'run_history' and value == 'project_run_history_v2'):
         _fail('Unsupported domain document format.', 'unsupported', 422)
 
 
@@ -314,6 +318,53 @@ def _records(records):
     """Complete canonical encoding as (family, id, document, raw) tuples."""
     return [(family, identity, document, raw)
             for family, identity, document, raw, _entry in _prepared_records(records)]
+
+
+def _physical_candidates(records, logical, physical):
+    """Physical envelopes for a logical candidate record set.
+
+    A candidate equal to its current logical document reuses the current
+    physical document (so its verified revision is kept). Changed Runs are
+    compacted to a shared runtime closure when exactly reversible; every
+    referenced closure is included once. Returns (physical candidates, logical
+    result in record order) or (records, None) for malformed input, which
+    _prepared_records then rejects with its usual errors.
+    """
+    from project_record_dedupe import CLOSURE_FAMILY, RUN_FAMILY, compact, is_compact
+    if type(records) is not list or any(type(item) is not dict or set(item) != {'family', 'id', 'document'}
+                                        or type(item['family']) is not str or type(item['id']) is not str
+                                        for item in records):
+        return records, None
+    if any(item['family'] == CLOSURE_FAMILY for item in records):
+        _fail('Runtime closures are store-owned records.', 'unsupported', 422)
+    current_logical = {(item['family'], item['id']): item['document'] for item in logical}
+    current_physical = {(item['family'], item['id']): item['document'] for item in physical}
+    closures = {item['id']: item['document'] for item in physical if item['family'] == CLOSURE_FAMILY}
+    candidates, logical_out, referenced = [], [], set()
+    for item in records:
+        key = (item['family'], item['id'])
+        document = item['document']
+        if key in current_logical and _same_json(document, current_logical[key]):
+            stored = current_physical[key]
+            candidates.append(dict(family=key[0], id=key[1], document=stored))
+            logical_out.append(dict(family=key[0], id=key[1], document=current_logical[key]))
+            if is_compact(key[0], stored):
+                referenced.add(stored['runtime_closure']['id'])
+            continue
+        owned = copy.deepcopy(document)
+        logical_out.append(dict(family=key[0], id=key[1], document=owned))
+        compacted = compact(owned) if key[0] == RUN_FAMILY else None
+        if compacted is not None:
+            reduced, closure = compacted
+            identity = reduced['runtime_closure']['id']
+            closures.setdefault(identity, closure)
+            referenced.add(identity)
+            candidates.append(dict(family=key[0], id=key[1], document=reduced))
+        else:
+            candidates.append(dict(family=key[0], id=key[1], document=owned))
+    candidates.extend(dict(family=CLOSURE_FAMILY, id=identity, document=closures[identity]) for identity in sorted(referenced))
+    logical_out.sort(key=lambda item: (item['family'], item['id']))
+    return candidates, logical_out
 
 
 def _request(key, digest):
@@ -942,7 +993,7 @@ class ProjectStore:
             # freshness check is redundant. On-disk corruption after that point
             # is still refused by Save (verify_records) and by every reopen.
             self._binding()
-            return cached[1:]
+            return cached[1], cached[2]
         manifest = checked_manifest(raw)
         loaded = []
         records_digest = _RecordsDigest()
@@ -972,8 +1023,12 @@ class ProjectStore:
         self._binding()
         if known is not None and proven:
             known.add_many(proven)
-        self._read_cache = (raw, manifest, loaded)
-        return manifest, loaded
+        # Domain owners see logical records: shared runtime closures hidden and
+        # compact Runs expanded to their exact original documents.
+        from project_record_dedupe import logical_records
+        logical = logical_records(loaded)
+        self._read_cache = (raw, manifest, logical, loaded)
+        return manifest, logical
 
     def _verified_record_bytes(self, entry):
         raw = self._record_file(entry['family'], entry['id'], entry['sha256'])
@@ -1105,13 +1160,16 @@ class ProjectStore:
                 current, loaded = self._load()
                 if current != self._manifest:
                     _fail('Project checkpoint changed; close and reopen.', 'stale', 409)
+                physical = self._read_cache[3]
                 # Unchanged records keep their verified canonical revision: no
                 # re-encoding, rewrite or read-back of identical immutable bytes.
                 entries = {(entry['family'], entry['id']): entry for entry in current['inventory']}
                 unchanged = {(item['family'], item['id']): (item['document'], entries[(item['family'], item['id'])])
-                             for item in loaded}
-                prepared = _prepared_records(records, unchanged)
-                normalized = [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared]
+                             for item in physical}
+                candidates, logical_out = _physical_candidates(records, loaded, physical)
+                prepared = _prepared_records(candidates, unchanged)
+                if logical_out is None:
+                    logical_out = [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared]
                 digest_rows = _RecordsDigest()
                 for family, identity, _document, raw, entry in prepared:
                     if raw is None:
@@ -1155,8 +1213,9 @@ class ProjectStore:
                         [_sha(raw) for _f, _i, _d, raw, _e in prepared if raw is not None])
                 # Every committed revision is either freshly written and read
                 # back byte-for-byte or an unchanged verified revision.
-                self._read_cache = (published, manifest, normalized)
-                return self._snapshot(manifest, normalized)
+                self._read_cache = (published, manifest, logical_out,
+                                    [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared])
+                return self._snapshot(manifest, logical_out)
             except OSError as exc:
                 _io_error(exc, 'commit project records')
 
