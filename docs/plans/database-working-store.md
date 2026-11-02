@@ -1,6 +1,6 @@
 # Database working store for external projects
 
-Status: in progress (2026-11-02). Owner decision recorded with the user.
+Status: stages 1–2 implemented; stage 3 revised (2026-11-02). Owner decision recorded with the user.
 
 ## Decision
 
@@ -54,21 +54,33 @@ the project can be tracked in Git.
 
 ## Stages
 
-1. **Working store.** `WorkingProjectStore` with the ProjectStore interface
-   (`summary`, `snapshot`, `commit`, `save`, `reconcile`, `root_directory`,
-   `verify_records`, `recover_checkpoint`, `close`) plus family/record reads,
-   backed by tables in the project's persistent projection schema. Incremental
-   import; commit to the database; Save exports. Workspace keeps one persistent
-   projection per project folder and re-attaches it.
-2. **No whole-project memory copy.** Session binds checkpoint metadata and reads
-   through the store; convert remaining `snapshot['records']` consumers to
-   family/record reads. Target: hundreds of MB, not GB.
-3. **Projection reuse.** Skip SQL restore when the projection already reflects
-   the bound checkpoint.
-4. **Incremental validation for commits.** Re-run only the owner validators
-   whose families a mutation touches.
-5. **Smaller project files.** Store each captured runtime file listing once and
-   reference it from Runs (format migration with exact round trip).
+1. **Working store — done.** `WorkingProjectStore` (project_working_store.py)
+   with the ProjectStore interface, incremental import, commits joined to the
+   projection's open SQL transaction, Save as the only folder write. Workspace
+   keeps a private folder→working-copy registry.
+2. **No whole-project memory copy — done.** Sessions over a working copy bind
+   checkpoint metadata only; family/record/identity reads come from
+   PostgreSQL, commit hooks never materialize the record set, Study authoring
+   restores from Study/Trial documents and Run history loads per Run.
+3. **Projection reuse — revised.** Reusing the SQL projection across sessions
+   would carry live execution state (runs, admissions, execution grants) into
+   a later session, which a cold open deliberately starts without. Instead the
+   projection is still reconstructed fresh, from cheap family-scoped reads.
+4. **Incremental validation for commits — open.** Each commit still validates
+   the complete candidate record set (about 2.5 minutes on the portfolio).
+5. **Smaller project files — open.** Store each captured runtime file listing
+   once and reference it from Runs (format migration with exact round trip).
+
+## Measured on the Rheon portfolio (54k records, 1.77 GB metadata)
+
+| | before | reopen now |
+|---|---|---|
+| Open | ~9 min (CPU) | ~11 s |
+| Peak memory | 21.7 GB | 0.76 GB |
+| First history/progression read | ~100 s | 0.5 s |
+
+First import into a new workspace takes ~50 s plus one complete validation
+(~2.5 min) per checkpoint and validator version.
 
 Payload blobs (`artifacts/sha256/*`, 16 GB for the portfolio) remain
 content-addressed files under the project folder in stages 1–4.
