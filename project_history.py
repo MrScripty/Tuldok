@@ -5,6 +5,7 @@ inserted into a worker, admission, grant or request replay table. The optional
 SQL connection is only a query engine for bounded supplied immutable JSON.
 """
 import base64
+from collections.abc import Mapping
 import copy
 import hashlib
 import re
@@ -25,7 +26,7 @@ from projects import relative_path
 from runs import (ACTIVE, TERMINAL, TEST_FILES, MAX_ARTIFACT_BYTES, validate_retained_run,
                   project_run_projection, public_run_projection, artifact_capture_source, validate_external_artifact_inventory)
 from workbench import WorkbenchError, timestamp
-from project_session import session_derived, session_operations, session_records, session_records_for
+from project_session import session_derived, session_operations, session_record, session_records, session_records_for
 
 FAMILY_FORMATS = {
     'study_history': 'project_study_history_v1',
@@ -598,6 +599,35 @@ def assemble_validated_facts(records, *, owned=False):
     return facts
 
 
+class _LazyRuns(Mapping):
+    """Validated Run history documents by (origin, run_id), loaded on first use.
+
+    Keys come from verified record identities (origin + '.' + run_id); each
+    document is read from the working copy once per checkpoint and shared like
+    every other fact (callers copy what they return).
+    """
+    def __init__(self, identities, load):
+        self._identities = identities
+        self._load = load
+        self._documents = {}
+
+    def __getitem__(self, key):
+        if key not in self._identities:
+            raise KeyError(key)
+        if key not in self._documents:
+            envelope = self._load(self._identities[key])
+            if envelope is None:
+                _invalid('Historical Run is unavailable.', 'unavailable')
+            self._documents[key] = envelope['document']
+        return self._documents[key]
+
+    def __iter__(self):
+        return iter(self._identities)
+
+    def __len__(self):
+        return len(self._identities)
+
+
 def checkpoint_facts(session, materials):
     """Decoded history of the session's bound checkpoint, shared by its owners.
 
@@ -607,6 +637,19 @@ def checkpoint_facts(session, materials):
     """
     def compute():
         validated=getattr(session,'validated_checkpoint',None)
+        if validated is not None and validated==session.summary['checkpoint'] and getattr(session,'_lazy',False):
+            # A working copy serves Run documents on demand: decode everything
+            # except Run history now, and keep only Run identities.
+            selected=('study_history','trial_history','run_observation','candidate_history')
+            view=session_records_for(session,*selected)
+            facts=assemble_validated_facts([r for r in view if r['family'] in selected],owned=True)
+            identities={}
+            for envelope in view:
+                if envelope['family']=='run_history':
+                    origin,run_id=envelope['id'].split('.',1)
+                    identities[(origin,run_id)]=envelope['id']
+            facts.runs=_LazyRuns(identities,lambda record_id:session_record(session,'run_history',record_id))
+            return facts
         if validated is not None and validated==session.summary['checkpoint']:
             # records_for returns independent copies of exactly these families.
             return assemble_validated_facts(session_records_for(session,*FAMILY_FORMATS),owned=True)
