@@ -868,6 +868,8 @@ _project_file_operation('definitions', 'GET', '/definitions')
 # Actual data and its authored histories. Inline source imports retain the
 # existing decoded-byte bound; compound sources use their existing parsers.
 _project_file_operation('data_query', 'GET', '/data', domain='data.query')
+_project_file_operation('data_scientific', 'GET', '/data/{record_id}/scientific',
+    {'content_hash': SHA}, domain='data.scientific')
 _project_file_operation('data_get', 'GET', '/data/{record_id}', {'record_id': ID})
 _project_file_operation('data_availability', 'GET', '/data/{record_id}/availability', {'record_id': ID})
 for _action, _suffix in [('data_history', 'history'), ('data_responses', 'responses'),
@@ -883,6 +885,73 @@ _project_file_operation('data_import_scientific', 'POST', '/data/import-scientif
     'snapshot': obj({'origin_catalog_id': ID, 'project_id': ID, 'manifest_sha256': SHA}),
     'reference_id': REF, 'expected_sha256': SHA,
     'document': obj(OPTIONAL_META, required=['groups'])}, mutation=True)
+# Retained scalar packets use their own fixed native owner. Definitions and
+# original JSON evidence stay producer-authored data, never executable specs.
+_MEASUREMENT_ID = {'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$'}
+_MEASUREMENT_SCALAR = {'type':['string','number','boolean','null']}
+_MEASUREMENT_DIMENSIONS = {'type':'object','maxProperties':32,'additionalProperties':_MEASUREMENT_SCALAR}
+_MEASUREMENT_REF = obj({'source_id':_MEASUREMENT_ID,'pointer':{'oneOf':[text(512,True),_NULL]}})
+_MEASUREMENT_DEFINITION = obj(dict(_MEASUREMENT_REF['properties'],sha256=SHA))
+_MEASUREMENT_SCOPE = obj({'id':_MEASUREMENT_ID,'label':text(240),
+    'population':{'enum':['training','consumed','independent','reserved','unknown']},'definition':_MEASUREMENT_DEFINITION})
+_MEASUREMENT_METRIC = obj({'id':_MEASUREMENT_ID,'label':text(240),
+    'units':text(120),'definition':_MEASUREMENT_DEFINITION})
+_MEASUREMENT_SUBJECT = obj({'id':_MEASUREMENT_ID,'label':text(240),
+    'dimensions':_MEASUREMENT_DIMENSIONS,'reference':_MEASUREMENT_REF})
+_MEASUREMENT_CASE = obj({'id':_MEASUREMENT_ID,'dimensions':_MEASUREMENT_DIMENSIONS,'reference':_MEASUREMENT_REF})
+_MEASUREMENT_STATE = {'enum':['measured','failed','unsupported','unavailable']}
+_MEASUREMENT_OBSERVATION = obj({'id':_MEASUREMENT_ID,'subject_id':_MEASUREMENT_ID,
+    'case_id':_MEASUREMENT_ID,'metric_id':_MEASUREMENT_ID,'state':_MEASUREMENT_STATE,
+    'value':{'type':['number','null']},'reason':{'oneOf':[text(1000),_NULL]},
+    'dimensions':_MEASUREMENT_DIMENSIONS,'reference':_MEASUREMENT_REF})
+_MEASUREMENT_CAPTURE = obj({'origin_catalog_id':ID,'project_id':ID,'manifest_sha256':SHA,
+    'reference_id':REF,'path':text(512),'measured_sha256':SHA})
+_MEASUREMENT_SOURCE = obj({'format':const('project_measurement_source_v1'),'origin_catalog_id':ID,
+    'id':SHA,'title':text(240),'blob':obj({'sha256':SHA,'bytes':integer(1,32*1024*1024)}),
+    'source':_MEASUREMENT_CAPTURE,'actor_id':ID,'imported_at':text(80)})
+_MEASUREMENT_AVAILABILITY = obj({'state':{'enum':['unverified','missing']},
+    'expected_sha256':SHA,'expected_bytes':SAFE_NAT,'observed_sha256':const(None),
+    'observed_bytes':{'oneOf':[SAFE_NAT,_NULL]}})
+_MEASUREMENT_SOURCE_ITEM = obj(dict(_MEASUREMENT_SOURCE['properties'],availability=_MEASUREMENT_AVAILABILITY))
+_MEASUREMENT_HEADER = obj({'format':const('retained_measurements_v1'),'packet_sha256':SHA,'title':text(240),
+    'scope':_MEASUREMENT_SCOPE,'scope_definition':{'type':'object'},
+    'dimensions':array(obj({'id':_MEASUREMENT_ID,'label':text(240),'type':{'enum':['string','number','integer','boolean']},
+        'units':{'oneOf':[text(120),_NULL]},'scope':{'enum':['subject','case','observation']}}),32),
+    'metrics':array(_MEASUREMENT_METRIC,32),'subject_count':integer(1,100000),'case_count':integer(1,4096),
+    'observation_count':integer(1,100000),'source_count':integer(1,256)})
+_MEASUREMENT_SUMMARY = obj({'subject_id':_MEASUREMENT_ID,'count':SAFE_NAT,
+    'states':obj({state:SAFE_NAT for state in ('measured','failed','unsupported','unavailable')}),
+    'maximum':{'oneOf':[obj({'id':_MEASUREMENT_ID,'case_id':_MEASUREMENT_ID,'value':{'type':'number'}}),_NULL]}})
+_MEASUREMENT_QUERY = obj({'format':const('retained_measurement_query_v1'),'packet_sha256':SHA,
+    'scope':_MEASUREMENT_SCOPE,'metric':_MEASUREMENT_METRIC,'scope_definition':{'type':'object'},'definition':{'type':'object'},
+    'filters':_MEASUREMENT_DIMENSIONS,'subject_ids':array(_MEASUREMENT_ID,100000,1),
+    'summary':array(_MEASUREMENT_SUMMARY,100000),'rows':array(_MEASUREMENT_OBSERVATION,100),
+    'total':SAFE_NAT,'offset':SAFE_NAT,'limit':integer(1,100),'sampling':const('none')})
+_MEASUREMENT_EVIDENCE = obj({'reference':_MEASUREMENT_REF,'source_sha256':SHA,
+    'state':{'enum':['included','opaque','exceeds_inspection_bound']},'value':{}})
+_MEASUREMENT_INSPECTION = obj({'packet_sha256':SHA,'observation':_MEASUREMENT_OBSERVATION,
+    'case':_MEASUREMENT_CASE,'subject':_MEASUREMENT_SUBJECT,'metric':_MEASUREMENT_METRIC,
+    'scope':_MEASUREMENT_SCOPE,'scope_definition':{'type':'object'},'case_evidence':_MEASUREMENT_EVIDENCE,
+    'scalar_evidence':_MEASUREMENT_EVIDENCE,'source':obj({'id':_MEASUREMENT_ID,'label':text(240),
+        'kind':{'enum':['json','opaque']},'bytes':integer(1,8*1024*1024),'sha256':SHA})})
+_MEASUREMENT_SELECTION = {'origin_catalog_id':ID,'packet_sha256':SHA}
+_MEASUREMENT_BOUND = lambda value:obj({'source':_MEASUREMENT_SOURCE,'value':value})
+_project_file_operation('measurement_import','POST','/measurements/import',
+    {'snapshot':obj({'origin_catalog_id':ID,'project_id':ID,'manifest_sha256':SHA}),
+     'reference_id':REF,'expected_sha256':SHA},mutation=True,output=_MEASUREMENT_SOURCE)
+_project_file_operation('measurement_sources','GET','/measurements',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj({'items':array(_MEASUREMENT_SOURCE_ITEM,40),'offset':SAFE_NAT,'limit':integer(1,40),'total':SAFE_NAT}))
+_project_file_operation('measurement_metadata','GET','/measurements/{packet_sha256}',_MEASUREMENT_SELECTION,
+    output=_MEASUREMENT_BOUND(_MEASUREMENT_HEADER))
+_project_file_operation('measurement_subjects','GET','/measurements/{packet_sha256}/subjects',
+    dict(_MEASUREMENT_SELECTION,**_PROJECT_FILES_PAGE_INPUT),required=list(_MEASUREMENT_SELECTION),
+    output=_MEASUREMENT_BOUND(obj({'items':array(_MEASUREMENT_SUBJECT,40),'offset':SAFE_NAT,'limit':integer(1,40),'total':SAFE_NAT})))
+_project_file_operation('measurement_query','POST','/measurements/{packet_sha256}/query',
+    dict(_MEASUREMENT_SELECTION,metric_id=_MEASUREMENT_ID,subject_ids=array(_MEASUREMENT_ID,100000,1),
+        filters=_MEASUREMENT_DIMENSIONS,offset=SAFE_NAT,limit=integer(1,100)),
+    required=[*list(_MEASUREMENT_SELECTION),'metric_id'],output=_MEASUREMENT_BOUND(_MEASUREMENT_QUERY))
+_project_file_operation('measurement_inspect','GET','/measurements/{packet_sha256}/observations/{observation_id}',
+    dict(_MEASUREMENT_SELECTION,observation_id=_MEASUREMENT_ID),output=_MEASUREMENT_BOUND(_MEASUREMENT_INSPECTION))
 _project_file_operation('data_annotate', 'POST', '/data/{record_id}', {
     'record_id': ID, 'revision': SAFE_POS, 'source_revision': SAFE_POS,
     'task': {'enum': list(ANNOTATIONS)}, 'annotation': JSON_OBJECT,
@@ -989,6 +1058,18 @@ for _verb in ('create', 'save'):
 _project_file_operation('trial_prepare', 'POST', '/studies/{study_id}/trials', {
     'study_id': ID, 'revision': SAFE_POS, 'material': MATERIAL_REF, 'replicate': SAFE_NAT}, mutation=True)
 _project_file_operation('lineage_record', 'POST', '/lineage', {'trial': _LINEAGE_REF, 'intent': _LINEAGE_INTENT}, mutation=True)
+_PROJECT_PROGRESSION_ORIGIN = obj({'origin_catalog_id':ID,'study_count':SAFE_NAT,'trial_count':SAFE_NAT})
+_PROJECT_PROGRESSION_RUN = obj({key:value for key,value in _LINEAGE_RUN['properties'].items() if key!='validation'})
+_PROJECT_PROGRESSION_NODE = obj({'trial':_TRIAL,'lineage':{'oneOf':[_LINEAGE_RECORD,_NULL]},
+    'study':obj({'id':ID,'name':text(120)}),'attempt_count':SAFE_NAT,
+    'runs':array(_PROJECT_PROGRESSION_RUN,5),'runs_truncated':{'type':'boolean'}})
+_project_file_operation('progression_origins','GET','/progression/origins',_PROJECT_FILES_PAGE_INPUT,required=[],
+    output=obj({'items':array(_PROJECT_PROGRESSION_ORIGIN,40),'offset':SAFE_NAT,'limit':integer(1,40),'total':SAFE_NAT}))
+_project_file_operation('progression','GET','/progression',
+    {'origin_catalog_id':ID,'offset':SAFE_NAT,'limit':integer(1,20),'cohort':text(120)},required=['origin_catalog_id'],
+    output=obj({'origin_catalog_id':ID,'evidence':const('saved_metadata_only'),'historical':const(True),
+        'execution_available':const(False),'nodes':array(_PROJECT_PROGRESSION_NODE,20),'related':array(_LINEAGE_REF,40),
+        'offset':SAFE_NAT,'limit':integer(1,20),'total':SAFE_NAT,'cohort':{'oneOf':[text(120),_NULL]}}))
 _project_file_operation('candidate_select', 'POST', '/studies/{study_id}/candidates',
     domain='studies.select_candidate', mutation=True)
 _project_file_operation('evidence', 'POST', '/runs/{run_id}/evidence', {
@@ -1675,8 +1756,6 @@ def contract(name, version=1):
 def capabilities(catalog_id, profile='catalog'):
     if type(catalog_id) is not str or not re.fullmatch('[a-f0-9]{32}', catalog_id):
         raise AgentAPIError('Invalid capability catalog identity.', 'registry_invalid', 503)
-    if len(_CONTRACTS) > MAX_OPERATIONS:
-        raise AgentAPIError('Operation registry exceeds its capability bound.', 'registry_invalid', 503)
     if profile not in ('catalog','project'):
         raise AgentAPIError('Unsupported capability profile.','registry_invalid',503)
     operations = []
@@ -1684,6 +1763,11 @@ def capabilities(catalog_id, profile='catalog'):
         if (profile=='catalog' and name.startswith('project_files.')
                 or profile=='project' and not name.startswith(('project_files.','project_transfer.')) and name not in ('context.get','identity.get')):
             continue
+        # The protocol bound applies to this advertised profile, just as the
+        # receiver checks its one manifest. Disjoint catalog/project contracts
+        # are not all transmitted together. Keep the installed 256-op limit.
+        if len(operations) >= MAX_OPERATIONS:
+            raise AgentAPIError('Operation profile exceeds its capability bound.', 'registry_invalid', 503)
         if not 1 <= len(versions) <= MAX_CONTRACTS:
             raise AgentAPIError('Contract version count exceeds its bound.', 'registry_invalid', 503)
         operations.append({'id': name, 'contracts': [contract(name, version) for version in sorted(versions)],
@@ -2748,6 +2832,8 @@ class AgentClient:
                             or len(segment) != min(page['limit'], page['bytes'] - page['offset'])
                             or page['next_offset'] != (end if end < page['bytes'] else None)):
                         raise AgentAPIError('Retained Run document segment differs from its exact selection.', 'transport', 502)
+                if action.startswith('measurement_'):
+                    _validate_measurement_selection(action,page,arguments,value['project_id'])
                 target_key = {'data_get': 'record_id', 'model_get': 'model_id', 'graph_get': 'graph_id',
                     'recipe_get': 'recipe_id', 'trial': 'trial_id'}.get(op['operation_id'].split('.')[1])
                 if target_key and page.get('id') != arguments[target_key]:
@@ -2933,6 +3019,42 @@ class ProjectTransferOwnerClient(AgentClient):
             # No response causes an automatic credential/catalog substitution.
             self._handoff_required=True
         return result
+
+
+def _validate_measurement_selection(action, page, arguments, project_id):
+    """Correlate fixed scalar replies; scientific validity remains upstream."""
+    def refuse():
+        raise AgentAPIError('Retained measurements differ from the selected source or continuation.', 'transport', 502)
+    if action=='measurement_sources':
+        offset,limit=arguments.get('offset',0),arguments.get('limit',40)
+        keys=[(d['origin_catalog_id'],d['id']) for d in page['items']]
+        if (page['offset']!=offset or page['limit']!=limit or keys!=sorted(set(keys))
+                or len(keys)!=min(limit,max(0,page['total']-offset))):refuse()
+        return
+    if action=='measurement_import':
+        source=page['source']
+        if (page['origin_catalog_id']!=project_id or page['id']!=arguments['expected_sha256']
+                or page['blob']['sha256']!=page['id'] or source['measured_sha256']!=page['id']
+                or source['reference_id']!=arguments['reference_id']
+                or any(source[k]!=v for k,v in arguments['snapshot'].items())):refuse()
+        return
+    source,result=page['source'],page['value']
+    if (source['origin_catalog_id']!=arguments['origin_catalog_id'] or source['id']!=arguments['packet_sha256']
+            or source['blob']['sha256']!=source['id'] or source['source']['measured_sha256']!=source['id']):refuse()
+    if action!='measurement_subjects' and result['packet_sha256']!=source['id']:refuse()
+    if action=='measurement_inspect' and result['observation']['id']!=arguments['observation_id']:refuse()
+    if action=='measurement_metadata' and result['title']!=source['title']:refuse()
+    if action in ('measurement_query','measurement_subjects'):
+        offset,limit=arguments.get('offset',0),arguments.get('limit',50 if action=='measurement_query' else 40)
+        rows=result['rows' if action=='measurement_query' else 'items']
+        if (result['offset']!=offset or result['limit']!=limit
+                or len(rows)!=min(limit,max(0,result['total']-offset))):refuse()
+    if action=='measurement_query':
+        subjects=result['subject_ids']
+        if (result['metric']['id']!=arguments['metric_id'] or result['filters']!=arguments.get('filters',{})
+                or 'subject_ids' in arguments and subjects!=arguments['subject_ids']
+                or len(subjects)!=len(set(subjects)) or [s['subject_id'] for s in result['summary']]!=subjects
+                or any(r['metric_id']!=arguments['metric_id'] or r['subject_id'] not in subjects for r in result['rows'])):refuse()
 
 
 class PublicationOwnerClient(AgentClient):

@@ -24,7 +24,9 @@ import uuid
 FORMAT = 'tuldok_project_v1'
 GITIGNORE = b'/artifacts/\n/.tuldok-local/\n/.venv/\n/__pycache__/\n/PGDATA/\n/output/\n'
 MAX_RECORD_BYTES = 40 * 1024 * 1024
-MAX_MANIFEST_BYTES = 16 * 1024 * 1024
+# A retained scientific runtime can declare tens of thousands of small files.
+# Their index is bounded separately from the actual record/payload byte budgets.
+MAX_MANIFEST_BYTES = 64 * 1024 * 1024
 # Coordinated internal codecs; adding a family requires its owning decoder.
 SUPPORTED_FORMATS = {
     'workbench_text': 'workbench_text_v1',
@@ -41,6 +43,7 @@ SUPPORTED_FORMATS = {
     'model_material': 'retained_model_material_v1',
     'recipe_material': 'retained_recipe_material_v1',
     'project_snapshot': 'retained_project_snapshot_v1',
+    'measurement_source': 'project_measurement_source_v1',
     'runtime_material': 'retained_runtime_material_v1',
     'study_history': 'project_study_history_v1',
     'trial_history': 'project_trial_history_v1',
@@ -94,8 +97,11 @@ def _json_value(value, depth=0):
     if type(value) is float and math.isfinite(value):
         return
     if type(value) is str:
-        if any(0xD800 <= ord(c) <= 0xDFFF for c in value):
-            _fail('Project JSON contains an invalid Unicode surrogate.')
+        if not value.isascii():
+            try:
+                value.encode('utf-8')
+            except UnicodeEncodeError:
+                _fail('Project JSON contains an invalid Unicode surrogate.')
         return
     if type(value) is list:
         for item in value:
@@ -113,6 +119,13 @@ def _encode(value):
     _json_value(value)
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2,
                        allow_nan=False) + '\n').encode('utf-8')
+
+
+def _manifest_raw(manifest):
+    raw = _encode(manifest)
+    if len(raw) > MAX_MANIFEST_BYTES:
+        _fail('Project checkpoint exceeds its byte limit.')
+    return raw
 
 
 def _pairs(pairs):
@@ -608,14 +621,18 @@ class ProjectStore:
             os.close(check)
 
     @contextmanager
-    def root_directory(self):
+    def root_directory(self, *, verify_after=False):
         """Borrow this project's physical root while its writer binding is pinned."""
+        if type(verify_after) is not bool:
+            _fail('Root read verification must be an explicit boolean.')
         with self._mutex:
-            self.snapshot()
+            before = self.snapshot()
             descriptor = os.dup(self._root_fd)
             try:
                 yield descriptor
                 self._binding()
+                if verify_after and self.snapshot()['checkpoint'] != before['checkpoint']:
+                    _fail('Project checkpoint changed during the bounded root read.', 'stale', 409)
             finally:
                 os.close(descriptor)
 
@@ -720,9 +737,7 @@ class ProjectStore:
                 os.close(fd)
 
     def _publish(self, manifest, creating=False):
-        raw = _encode(manifest)
-        if len(raw) > MAX_MANIFEST_BYTES:
-            _fail('Project checkpoint exceeds its byte limit.')
+        raw = _manifest_raw(manifest)
         temporary = '.checkpoint-' + uuid.uuid4().hex + '.tmp'
         replaced = False
         try:
@@ -794,7 +809,6 @@ class ProjectStore:
                 inventory = []
                 for family, identity, document, raw in prepared:
                     digest = _sha(raw)
-                    self._record_file(family, identity, digest, raw)
                     inventory.append(dict(family=family, id=identity, format=document['format'],
                         namespace=current['project_id'], path=f'records/{family}/{identity}/{digest}.json',
                         bytes=len(raw), sha256=digest))
@@ -804,6 +818,11 @@ class ProjectStore:
                     request_sha256=request_sha256, records_sha256=records_digest))
                 del manifest['checkpoint']
                 manifest['checkpoint'] = _sha(_encode(manifest))
+                # Refuse before record staging. The final publication also
+                # rechecks this bound after the immutable files are durable.
+                _manifest_raw(manifest)
+                for family, identity, document, raw in prepared:
+                    self._record_file(family, identity, _sha(raw), raw)
                 self._publish(manifest)
                 self._manifest = manifest
                 return self._snapshot(manifest, normalized)

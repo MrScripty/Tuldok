@@ -35,6 +35,7 @@
   "project_files.data_response_save": "fa5b92afe529520fe8206d629bd88085a68f4f9b399cd40dd05fd3948d3592f0",
   "project_files.data_responses": "3e0c009244cad04fca4356cf3647bfd2b42cfc0d6a2ac31bb8de25cdb3c60ec8",
   "project_files.data_rights": "ead16cca68b03533daa81bf06148e1918ce40dbc823ee060bd9908581f788653",
+  "project_files.data_scientific": "c954a680440fdb822a0f895f7e14b90e05dca82535478b1271dfb33cfbfdada9",
   "project_files.data_source_delete": "457618e618cca92a71b668ffb9f68b0db87e51c417c2e5f41dcde76d71a23985",
   "project_files.data_source_save": "0d50c45d445b2ce1014a696c3bc95965f0b548ded939f4a650f985f34e1ce849",
   "project_files.definitions": "3516fcf8764382780c7da699218a05ff1f811634656cc81722ef547f21159698",
@@ -98,6 +99,8 @@
   "project_files.policy": "5bdb86600f2ec387fde721b22fdd0afa3ed47660126847c2908c1bb9de0421cb",
   "project_files.producer": "6187a9eb1e32cb3bcf13d283492b1ad909c32753aa5ed97fbc12a9708523d9e3",
   "project_files.producers": "65b2f4dff355c3bf5a023bf4f9dc116e302eda85ad90e6afaa2f21f0aa0667b5",
+  "project_files.progression": "4b70964ce2509f3526b2915cb5bd1ec086f7f553d82d8cf43c87d524cc3db7f3",
+  "project_files.progression_origins": "380b9ae9931faf5f161bcbd0e689dd93525be22ae2d9b00a524ce48d377d8c95",
   "project_files.publication_result": "10b4a5f3d4f37343322327024ddbedf5b6b69672c785e208ec48534d7b40c867",
   "project_files.query": "9a8b0d3a99adf5d7d53b62261dfac83e8b3ea44c10cb2f6c7a9c3d79422fef08",
   "project_files.recipe_create": "53a6760f03675d4d8a8d3a0ffd5b56689975667bbc136b1edf8a206307c18651",
@@ -139,7 +142,13 @@
   "project_files.study_create": "8d2aac7c073a6a7b3ebb41227b5b466cf03606625404f93a59b325038a4ad7a1",
   "project_files.study_save": "5bf3fb814588fd7d9c35836e9d964a64481b3cc4169caf76cad6ce776ff0fe15",
   "project_files.trial": "79afa4bed6d0907f3d4116cc04cb784e94e5a24ab89725ec24f5d7bce70e869f",
-  "project_files.trial_prepare": "e1f6973536fd4c356c4a92fc674d6766f7df0d8a113b8ee71bb05d0adc40b04f"
+  "project_files.trial_prepare": "e1f6973536fd4c356c4a92fc674d6766f7df0d8a113b8ee71bb05d0adc40b04f",
+  "project_files.measurement_import": "c8e500396138fc60a31fc916c441bb95454f410231a6508609a7ebba5cd31f18",
+  "project_files.measurement_sources": "7805e9c5a6b2e2ab566ca134c18697116c89e08a1991b5192b0b5c152a34041d",
+  "project_files.measurement_metadata": "5a92ed5259f8876a3c5b8fd1886a9e0f44f0aea8e53d7f63902ac765ddac0de7",
+  "project_files.measurement_subjects": "37bd3f717c7158e34b9c221bfa1dbce79490b9d55248803d13dab2ea17b35ea5",
+  "project_files.measurement_query": "65b1456a6870dd6d4b7499669777a2c66157142ccc27cac1864a995664220e1c",
+  "project_files.measurement_inspect": "fcbe9846ca49c3da4713b54a3cb4a8237189d8eea5799f275d33992ef268914f"
 }
 /* PROJECT_FILES_CONTRACTS_END */;
   // Generated fixed operation routes from agent_api; remote schemas are never executed.
@@ -292,6 +301,11 @@
     "method": "POST",
     "path": "/api/workspace/project-files/data/{record_id}/rights",
     "mutation": true
+  },
+  "project_files.data_scientific": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/data/{record_id}/scientific",
+    "mutation": false
   },
   "project_files.data_source_delete": {
     "method": "POST",
@@ -588,6 +602,16 @@
     "path": "/api/workspace/project-files/producers",
     "mutation": false
   },
+  "project_files.progression": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/progression",
+    "mutation": false
+  },
+  "project_files.progression_origins": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/progression/origins",
+    "mutation": false
+  },
   "project_files.publication_result": {
     "method": "GET",
     "path": "/api/workspace/project-files/runs/{run_id}/publication-result",
@@ -782,6 +806,36 @@
     "method": "POST",
     "path": "/api/workspace/project-files/studies/{study_id}/trials",
     "mutation": true
+  },
+  "project_files.measurement_import": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/measurements/import",
+    "mutation": true
+  },
+  "project_files.measurement_inspect": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}/observations/{observation_id}",
+    "mutation": false
+  },
+  "project_files.measurement_metadata": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}",
+    "mutation": false
+  },
+  "project_files.measurement_query": {
+    "method": "POST",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}/query",
+    "mutation": false
+  },
+  "project_files.measurement_sources": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements",
+    "mutation": false
+  },
+  "project_files.measurement_subjects": {
+    "method": "GET",
+    "path": "/api/workspace/project-files/measurements/{packet_sha256}/subjects",
+    "mutation": false
   }
 }
 /* PROJECT_FILES_ROUTES_END */;
@@ -801,6 +855,42 @@
   const m2HistoryActions=new Set(['data_history','data_response_history','data_preference_history']);
   const dirty=()=>importDirty||annotationDirty||m2Dirty;
   const checkpoint=()=>state?.project?.checkpoint??null;
+  let scientificEpoch=null;
+  const projectScientific=window.ScientificFieldInspector({
+    root:$('scientific-inspection'),
+    isCurrent:record=>scientificEpoch===epoch&&!blocked&&state?.state==='open'&&explored?.category==='data_query'&&explored.id===record.id&&explored.value.content_hash===record.content_hash&&explored.checkpoint===checkpoint(),
+    async readSlice(record,selection,signal){
+      const result=await m2Request('data_scientific',{record_id:record.id,content_hash:record.content_hash,...selection},epoch,{signal});
+      if(result===null)throw new DOMException('Project selection changed.','AbortError');
+      return result;
+    }
+  });
+  function clearScientific(){scientificEpoch=null;projectScientific.clear();}
+  const projectProgression=window.ProjectExperimentProgression({
+    root:$('project-progression'),
+    async read(action,args,signal){
+      if(!m2Allowed(action))throw Error('History inspection is unavailable for the selected project.');
+      const value=await m2Request(action,args,epoch,{signal});
+      if(value===null)throw new DOMException('Project selection changed.','AbortError');
+      return value;
+    },
+    inspectStudy:(origin,id)=>run(ticket=>inspectItem('studies',{id},origin,ticket),{clean:true}),
+    inspectTrial:(origin,id)=>run(ticket=>inspectItem('trials',{id},origin,ticket),{clean:true}),
+    inspectRun:(origin,id)=>run(ticket=>inspectItem('runs',{id},origin,ticket),{clean:true}),
+    onContextFocusLost:()=>$('project-files-status').focus()
+  });
+  window.addEventListener('pagehide',()=>projectProgression.clear());
+  const projectMeasurements=window.ProjectMeasurements({
+    root:$('project-measurements'),
+    async read(action,args,signal){
+      if(!m2Allowed(action))throw Error('Measurement inspection is unavailable for the selected project.');
+      const value=await m2Request(action,args,epoch,{signal});
+      if(value===null)throw new DOMException('Project selection changed.','AbortError');
+      return value;
+    },onContextFocusLost:()=>$('project-files-status').focus()
+  });
+  window.addEventListener('pagehide',()=>projectMeasurements.clear());
+  window.addEventListener('pagehide',clearScientific);
   const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
   const str=(value,max,empty=false)=>typeof value==='string'&&Array.from(value).length<=max&&(empty||/\S/u.test(value));
   const id=value=>typeof value==='string'&&/^[a-f0-9]{32}$/.test(value);
@@ -1055,6 +1145,11 @@
   }
   const m2Allowed=action=>!busy&&!blocked&&state?.state==='open'&&selectedContracts.has('project_files.'+action);
   function m2Controls(){
+    projectProgression.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),
+      project_id:state?.project?.project_id,enabled:m2Allowed('progression')&&m2Allowed('progression_origins')});
+    projectMeasurements.setContext({key:JSON.stringify([state?.binding,state?.project?.project_id,checkpoint(),window.TuldokAuth?.identity?.()?.credential_id,epoch]),
+      enabled:['measurement_sources','measurement_metadata','measurement_subjects','measurement_query','measurement_inspect'].every(m2Allowed)});
+    if(blocked||state?.state!=='open'||scientificEpoch!==null&&(scientificEpoch!==epoch||explored?.checkpoint!==checkpoint()))clearScientific();
     const action=$('project-explore-kind').value;
     $('project-explore-load').disabled=!m2Allowed(action);
     $('project-explore-more').disabled=!m2Allowed(action);
@@ -1074,6 +1169,7 @@
     for(const button of $('project-explore-list').querySelectorAll('button'))button.disabled=busy||blocked;
   }
   function clearExploration(){
+    clearScientific();
     explored=null;exploreOffset=0;exploreTotal=0;historyOffset=0;historyTotal=0;
     $('project-explore-list').replaceChildren();$('project-detail-facts').replaceChildren();$('project-detail-history-list').replaceChildren();
     $('project-detail-title').textContent='Choose a saved record';$('project-explore-summary').textContent='';
@@ -1125,7 +1221,7 @@
       for(const item of page.items)if(!exact(item,['family','source_id','source_revision','destination_id'])||!safeText(item.family,80)||!safeText(item.source_id,512)||!(item.source_revision===null||positive(item.source_revision))||!safeText(item.destination_id,512))invalid();
     }
   }
-  async function m2Request(action,arguments_,ticket){
+  async function m2Request(action,arguments_,ticket,{signal}={}){
     const operation='project_files.'+action,definition=m2Operations[operation];
     if(!definition||!selectedContracts.has(operation))throw Error('This operation is unavailable for the selected project.');
     const binding=state.binding,cp=checkpoint(),project=state.project.project_id;
@@ -1133,7 +1229,7 @@
     let path=definition.path;
     for(const [name,value] of Object.entries(values))path=path.replace('{'+name+'}',encodeURIComponent(value));
     const remaining=Object.fromEntries(Object.entries(values).filter(([name])=>!definition.path.includes('{'+name+'}')));
-    const options={method:definition.method,cache:'no-store',headers:{'Tuldok-Operation-Contract':selectedHeader(operation)}};
+    const options={method:definition.method,cache:'no-store',signal,headers:{'Tuldok-Operation-Contract':selectedHeader(operation)}};
     if(definition.method==='GET')path+='?'+new URLSearchParams(remaining);
     else{
       if(definition.mutation&&!['execution_reconcile_current','execution_study_reconcile_preparation','native_reconcile'].includes(action)){
@@ -1160,7 +1256,7 @@
     }
     let response,value;
     try{response=await window.TuldokAuth.fetch(path,options);value=await response.json();}
-    catch(_){const failure=Error(definition.mutation?'Acknowledgement unavailable; this change may already be saved. Keep your edits and refresh project status.':'Saved history is unavailable. Refresh project status.');failure.code='transport';throw failure;}
+    catch(problem){if(problem.name==='AbortError')throw problem;const failure=Error(definition.mutation?'Acknowledgement unavailable; this change may already be saved. Keep your edits and refresh project status.':'Saved history is unavailable. Refresh project status.');failure.code='transport';throw failure;}
     if(ticket!==epoch)return null;
     if(!response.ok){
       const failure=Error(str(value?.error,1000)?value.error:'Unsupported project error response.');failure.code=value?.code??'transport';failure.status=response.status;
@@ -1213,17 +1309,18 @@
   async function inspectItem(category,item,origin,ticket){
     const fact=item.study??item.run??item.current??item.value??item;
     const entry={category,origin,id:fact.id??item.id,value:fact,checkpoint:checkpoint()};
-    const request={data_query:['data_get','record_id'],models:['model_get','model_id'],graphs:['graph_get','graph_id'],recipes:['recipe_get','recipe_id'],studies:['study','study_id'],runs:['run','run_id'],selections:['selection_get','selection_id']}[category];
+    const request={data_query:['data_get','record_id'],models:['model_get','model_id'],graphs:['graph_get','graph_id'],recipes:['recipe_get','recipe_id'],studies:['study','study_id'],trials:['trial','trial_id'],runs:['run','run_id'],selections:['selection_get','selection_id']}[category];
     let detail=fact;
     if(category==='producers'){detail=await m2Request('producer',{origin_catalog_id:origin,producer_id:entry.id,family:$('project-producer-family').value},ticket);if(!detail)return;}
-    if(request){const args={[request[1]]:entry.id};if(['studies','runs'].includes(category))args.origin_catalog_id=origin;detail=await m2Request(request[0],args,ticket);if(!detail)return;}
+    if(request){const args={[request[1]]:entry.id};if(['studies','trials','runs'].includes(category))args.origin_catalog_id=origin;detail=await m2Request(request[0],args,ticket);if(!detail)return;}
     clearExplorationDetail();entry.value=detail.study??detail;entry.saveAction={models:'model_save',graphs:'graph_save',recipes:'recipe_save',studies:'study_save'}[category];explored=entry;
-    $('project-detail-title').textContent=entry.value.name??`${category==='runs'?'Historical Run':'Saved record'} ${entry.id??''}`;
+    $('project-detail-title').textContent=entry.value.name??`${category==='runs'?'Historical Run':category==='trials'?'Historical Trial':'Saved record'} ${entry.id??''}`;
     $('project-detail-facts').append(projectValue(detail));
     if(category==='artifacts'){entry.artifactSha=detail.sha256;$('project-artifact-status').hidden=false;artifactResolutionForm(detail.availability?.state);}
     if(category==='models')$('project-model-publish').hidden=false;
     if(entry.saveAction&&origin===state.project.project_id){$('project-metadata-form').hidden=false;$('project-metadata-name').value=entry.value.name??'';}
     if(category==='data_query'){
+      if(entry.value.kind==='field_sequence'){scientificEpoch=ticket;projectScientific.show(entry.value);}
       $('project-detail-history').hidden=false;$('project-detail-availability').hidden=false;$('project-rights-form').hidden=false;$('project-selection-form').hidden=false;
       $('project-rights-note').value=entry.value.provenance?.rights_note_correction?.note??entry.value.provenance?.rights??'unknown';
       const key=entry.value.task?.endsWith('_classification')?'label':entry.value.task==='image_caption'?'caption':entry.value.task==='text_corpus'||['sequence','mesh','pointcloud','volume','field_sequence'].includes(entry.value.kind)?'note':null;
@@ -1233,6 +1330,7 @@
     controls();$('project-detail-title').focus();
   }
   function clearExplorationDetail(){
+    clearScientific();
     explored=null;historyOffset=0;historyTotal=0;$('project-detail-facts').replaceChildren();$('project-detail-history-list').replaceChildren();
     for(const name of ['project-metadata-form','project-data-note-form','project-rights-form','project-selection-form','project-detail-history','project-detail-history-more','project-detail-availability','project-run-evidence','project-run-document','project-run-disclose','project-disclosure-label','project-model-publish','project-artifact-status','project-artifact-resolve-form'])$(name).hidden=true;
   }

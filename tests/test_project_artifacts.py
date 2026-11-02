@@ -1,5 +1,6 @@
 """Exact artifact custody on real files, processes and disposable PostgreSQL."""
 import copy
+from contextlib import contextmanager
 import errno
 import hashlib
 import json
@@ -56,6 +57,48 @@ class _ArtifactFixture:
         return self.store.commit(records, self.store.snapshot()['checkpoint'], key, request(records))
 
 class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
+    def test_presence_batch_matches_individual_observations_with_two_closure_checks(self):
+        values=[declaration(b'present'),declaration(b'missing'),declaration(b'other')]
+        self.artifacts.publish_bytes(b'present',values[0])
+        self.commit(values)
+        expected=[self.artifacts.inspect(value) for value in values]
+        with patch.object(self.store,'snapshot',wraps=self.store.snapshot) as checks:
+            actual=self.artifacts.inspect_many(values)
+        self.assertEqual(actual,expected)
+        self.assertEqual(checks.call_count,2)
+        self.assertTrue(all(v['observed_sha256'] is None for v in actual))
+
+    def test_presence_batch_detects_canonical_corruption_before_returning(self):
+        value=declaration(b'present')
+        self.artifacts.publish_bytes(b'present',value)
+        self.commit([value])
+        manifest=json.loads((self.project/'.tuldok/project.json').read_text())
+        record=self.project/'.tuldok'/manifest['inventory'][0]['path']
+        original=self.artifacts._source
+        @contextmanager
+        def corrupt_after_observation(*args):
+            with original(*args) as source:
+                yield source
+            record.write_bytes(b'{"corrupt":"outside canonical membership"}\n')
+        with patch.object(self.artifacts,'_source',side_effect=corrupt_after_observation):
+            self.assert_code('stale',self.artifacts.inspect_many,[value])
+
+    def test_presence_batch_detects_checkpoint_change_and_rejects_unsafe_aliases(self):
+        value=declaration(b'present')
+        self.artifacts.publish_bytes(b'present',value)
+        self.commit([value])
+        original=self.artifacts._source
+        @contextmanager
+        def change_checkpoint(*args):
+            with original(*args) as source:
+                yield source
+            self.commit([],key='new-checkpoint')
+        with patch.object(self.artifacts,'_source',side_effect=change_checkpoint):
+            self.assert_code('stale',self.artifacts.inspect_many,[value])
+        alias=self.path/'outside-alias'
+        os.link(self.payload(value),alias)
+        self.assert_code('invalid',self.artifacts.inspect_many,[value])
+
     def test_exact_payload_declaration_roundtrip_copy_and_missing_metadata_remain_distinct(self):
         raw = b'Unique source\x00annotation\xff\r\n'
         value = declaration(raw)

@@ -447,16 +447,16 @@ class Projects:
         return self._read_recipe_sources(project_id, sources, extensions=True)
 
     @authorized('inspect', 'projects.read_data_reference')
-    def read_data_reference(self, project_id, reference_id, expected_sha256, limit):
+    def read_data_reference(self, project_id, reference_id, expected_sha256, limit, *, stream=False):
         """Capture a selected saved reference; source owners interpret its bytes."""
         saved = self._saved(project_id, extensions=True)
         return self._read_data_reference(project_id, reference_id, expected_sha256, limit,
-                                         extensions=saved['manifest']['schema_version'] == 2)
+                                         extensions=saved['manifest']['schema_version'] == 2, stream=stream)
 
-    def _read_data_reference(self, project_id, reference_id, expected_sha256, limit, *, extensions=False):
+    def _read_data_reference(self, project_id, reference_id, expected_sha256, limit, *, extensions=False, stream=False):
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
             raise WorkbenchError('Import requires the observed source SHA256.')
-        if type(limit) is not int or not 0 < limit <= DATA_LIMIT:
+        if type(stream) is not bool or type(limit) is not int or not 0 < limit <= (2**53 - 1 if stream else DATA_LIMIT):
             raise WorkbenchError('Invalid bounded data read limit.')
         saved = self._snapshot_saved(project_id)[0] if extensions else self._saved(project_id)
         if not self._bound(saved):
@@ -465,13 +465,24 @@ class Projects:
         if ref is None:
             raise WorkbenchError('Data reference not found.', 'not_found', 404)
         try:
-            if extensions:
+            if stream:
+                from capture_payloads import FilePayload
+                before = self._snapshot_identity(saved, ref['path'])
+                def guard():
+                    return self._snapshot_identity(saved, ref['path'])
+                with self._file(saved['root'], ref['path']) as (fd, _info):
+                    raw = FilePayload(fd, limit, expected_sha256=expected_sha256, guard=guard)
+                if before != guard():
+                    raw.close()
+                    raise WorkbenchError('Snapshot path changed during capture.', 'conflict', 409)
+            elif extensions:
                 raw = self._read_snapshot_file(saved, ref['path'], limit)
             else:
                 raw = self._read(saved['root'], ref['path'], limit)
         except OSError:
             raise WorkbenchError('Data reference cannot be safely read.', 'unavailable', 409) from None
-        digest = hashlib.sha256(raw).hexdigest()
+        from capture_payloads import payload_digest
+        digest = payload_digest(raw)
         if digest != expected_sha256 or ref.get('sha256', digest) != digest:
             raise WorkbenchError('Data changed or differs from its declared SHA256. Inspect again before importing.', 'conflict', 409)
         if extensions:

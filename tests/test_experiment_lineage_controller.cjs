@@ -1,7 +1,7 @@
 'use strict';
 // Controlled delivery and navigation tests; actual CPU + UI evidence lives in browser_model_development.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
-const source=fs.readFileSync(require('node:path').join(__dirname,'../static/experiment-lineage.js'),'utf8');
+const source=['experiment-graph.js','experiment-lineage.js'].map(file=>fs.readFileSync(require('node:path').join(__dirname,'../static',file),'utf8')).join('\n');
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 const catalog='c'.repeat(32),trial=id=>({trial:{id,material:{catalog_id:catalog,sha256:'a'.repeat(64)}},study:{id:'s',name:'Finite study'},recipe:{id:'g',revision:1},lineage:null,attempt_count:0,runs:[]});
@@ -16,10 +16,6 @@ function fixture(saved=null){
   return {window,root,ui,calls,history,setHandler:value=>handler=value,mount(){elements.clear();ui.mount(root,{dataset_id:catalog});},navigate(){intent++;ui.invalidate();},session(){actor={...actor,credential_id:'session2'};ui.sessionChanged();},other(){actor={...actor,actor_id:'other',credential_id:'otherSession'};ui.sessionChanged();},click(id){const button=root.querySelector('#'+id);assert.ok(button,id+' exists');button.click();},submit(){root.querySelector('#lineage-filter-form').submit({preventDefault(){}});}};
 }
 (async()=>{
-  const f=fixture(),layout=f.window.WorkspaceLineageLayout;
-  const a=trial('a'),b=trial('b'),c=trial('c');b.lineage={recorded_at:'2',intent:{parent:{trial_id:'a'}}};c.lineage={recorded_at:'3',intent:{parent:{trial_id:'b'}}};
-  const positioned=layout([c,a,b]);assert.ok(positioned.positions.get('a').x<positioned.positions.get('b').x);assert.ok(positioned.positions.get('b').x<positioned.positions.get('c').x);
-  a.lineage={recorded_at:'1',intent:{parent:{trial_id:'c'}}};assert.throws(()=>layout([a,b,c]),/cycle/);
   for(const change of ['navigate','session','other']){
     const g=fixture(),held=deferred();g.setHandler(()=>held.promise);g.mount();g[change]();held.resolve({revision:'r',nodes:[trial('secret')],related:[],next_cursor:null});await tick();
     assert.ok(!g.root.innerHTML.includes('data-lineage-node="secret"'),'late page after '+change+' must not publish');
@@ -39,5 +35,5 @@ function fixture(saved=null){
   function workflowAdmission(){return {request_key:'original-admission',revision:2,admission_epoch:1,trial_id:'child'};}
   const filters=fixture();let pages=0;filters.setHandler(route=>Promise.resolve({revision:'r',nodes:[trial('page'+(++pages))],related:[],next_cursor:pages<3?'cursor':null}));filters.mount();await tick();filters.root.querySelector('#lineage-filter').input({target:{value:'cohort-a'}});filters.submit();await tick();filters.root.querySelector('#lineage-filter').input({target:{value:'cohort-b'}});filters.click('lineage-more');await tick();
   assert.match(filters.calls.at(-1).route,/cohort=cohort-a/);assert.doesNotMatch(filters.calls.at(-1).route,/cohort-b/);assert.match(filters.root.innerHTML,/applied cohort: cohort-a/);
-  console.log('PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination');
+  console.log('PASS lineage read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination');
 })().catch(error=>{console.error(error);process.exitCode=1;});

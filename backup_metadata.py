@@ -112,10 +112,61 @@ def tree_modes(path, expected):
     return result
 
 
-def copy_tree(source, target, expected):
+def _linked_backup_copy(source, target, anchor, entry, mode):
+    """Verify both contents before sharing an inode inside a private backup.
+
+    The caller owns the fresh target tree exclusively. No link ever names an
+    original source file; all anchors were independently copied into this tree.
+    """
+    def verified(path):
+        before = path.lstat()
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            opened = os.fstat(descriptor)
+            if (not stat.S_ISREG(opened.st_mode) or before != opened
+                    or stat.S_IMODE(opened.st_mode) != mode):
+                raise StorageTransferError('Backup copy source identity or permissions changed.')
+            result = hashlib.sha256()
+            for chunk in iter(lambda: os.read(descriptor, 1024 * 1024), b''):
+                result.update(chunk)
+            after = os.fstat(descriptor)
+            fields = lambda info: (info.st_dev, info.st_ino, info.st_mode, info.st_size,
+                                   info.st_mtime_ns, info.st_ctime_ns, info.st_nlink)
+            if (fields(opened) != fields(after) or fields(path.lstat()) != fields(after)
+                    or after.st_size != entry['bytes'] or result.hexdigest() != entry['sha256']):
+                raise StorageTransferError('Backup copy source bytes or binding changed.')
+            return descriptor, after
+        except BaseException:
+            os.close(descriptor)
+            raise
+
+    source_fd, original = verified(source)
+    anchor_fd = None
+    try:
+        anchor_fd, copied = verified(anchor)
+        if (original.st_dev, original.st_ino) == (copied.st_dev, copied.st_ino):
+            raise StorageTransferError('Backup anchor must be independent of the original source.')
+        os.link(anchor, target, follow_symlinks=False)
+        linked = target.lstat()
+        if (not stat.S_ISREG(linked.st_mode) or
+                (linked.st_dev, linked.st_ino) != (copied.st_dev, copied.st_ino)):
+            raise StorageTransferError('Backup anchor changed during link publication.')
+        # The already-durable copied inode is unchanged; linking changes only
+        # its link count/ctime. The containing directories are synced by copy_tree.
+        os.fsync(anchor_fd)
+    finally:
+        os.close(source_fd)
+        if anchor_fd is not None:
+            os.close(anchor_fd)
+
+
+def copy_tree(source, target, expected, *, deduplicate=False):
     """Preserve bytes and permissions, refusing changed or contradictory staging."""
     source, target = Path(source), Path(target)
+    if deduplicate and target.exists():
+        raise StorageTransferError('Deduplicated backup requires an absent destination tree.')
     modes = tree_modes(source, expected)
+    copies = {}
     target.mkdir(parents=True, exist_ok=True)
     for name, mode in modes.items():
         directory = target / name
@@ -135,10 +186,13 @@ def copy_tree(source, target, expected):
             target_file.mkdir(parents=True, exist_ok=True)
         else:
             target_file.parent.mkdir(parents=True, exist_ok=True)
+            content_key = (entry['sha256'], entry['bytes'], modes[name])
             if target_file.exists():
                 if (not target_file.is_file() or file_hash(target_file) != entry['sha256']
                         or stat.S_IMODE(target_file.stat().st_mode) != modes[name]):
                     raise StorageTransferError('Staged artifact bytes or permissions differ: ' + name)
+            elif deduplicate and content_key in copies:
+                _linked_backup_copy(source_file, target_file, copies[content_key], entry, modes[name])
             else:
                 # Never widen read-only staging permissions to force a retry.
                 if not target_file.parent.stat().st_mode & stat.S_IWUSR:
@@ -169,6 +223,8 @@ def copy_tree(source, target, expected):
                     os.rename(temporary, target_file)
                 finally:
                     temporary.unlink(missing_ok=True)
+            if deduplicate:
+                copies.setdefault(content_key, target_file)
     if tree_modes(source, expected) != modes:
         raise StorageTransferError('Source permissions changed during copy.')
     directories = [name for name, entry in expected.items() if entry['kind'] == 'directory']
@@ -340,7 +396,7 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
             before = tree_manifest(path)
             tables = read_catalog(metadata)
             sequences = read_sequences(metadata)
-            copy_tree(path, temporary / 'catalog', before)
+            copy_tree(path, temporary / 'catalog', before, deduplicate=True)
             if (before != tree_manifest(path) or before != tree_manifest(temporary / 'catalog')
                     or tree_modes(path, before) != tree_modes(temporary / 'catalog', before)):
                 raise StorageTransferError('Artifacts changed during backup. Keep all writers stopped.')

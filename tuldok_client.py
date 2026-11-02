@@ -278,6 +278,10 @@ class ProjectFilesClient:
         """data get; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('data_get', arguments)
 
+    def data_scientific(self, **arguments):
+        """Inspect an exact scientific field slice in the selected project."""
+        return self._call('data_scientific', arguments)
+
     def data_history(self, **arguments):
         """data history; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('data_history', arguments)
@@ -389,6 +393,32 @@ class ProjectFilesClient:
     def lineage_record(self, **arguments):
         """lineage record; exact selected project checkpoint, existing domain validation, no execution."""
         return self._call('lineage_record', arguments)
+
+    def progression_origins(self, **arguments):
+        """Read original history namespaces at the selected checkpoint."""
+        return self._call('progression_origins', arguments)
+
+    def progression(self, **arguments):
+        """Read a bounded saved Trial graph without execution or metric disclosure."""
+        return self._call('progression', arguments)
+
+    def measurement_import(self, **arguments):
+        return self._call('measurement_import', arguments)
+
+    def measurement_sources(self, **arguments):
+        return self._call('measurement_sources', arguments)
+
+    def measurement_metadata(self, **arguments):
+        return self._call('measurement_metadata', arguments)
+
+    def measurement_subjects(self, **arguments):
+        return self._call('measurement_subjects', arguments)
+
+    def measurement_query(self, **arguments):
+        return self._call('measurement_query', arguments)
+
+    def measurement_inspect(self, **arguments):
+        return self._call('measurement_inspect', arguments)
 
     def model_create(self, **arguments):
         """model create; exact selected project checkpoint, existing domain validation, no execution."""

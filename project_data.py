@@ -1168,6 +1168,14 @@ class ProjectData:
         return self._read('workbench.query', lambda: self.workbench.query(options or {}))
     def get(self, record_id):
         return self._read('workbench.get', lambda: self.workbench.get(record_id), record_id)
+    def scientific(self, record_id, content_hash, **selection):
+        sha(content_hash)
+        def inspect():
+            record = self.workbench.get(record_id)
+            if record['content_hash'] != content_hash:
+                fail('Scientific source differs from the selected content hash.', 'conflict', 409)
+            return self.workbench.scientific.inspect(record_id, **selection)
+        return self._read('scientific_fields.inspect', inspect, record_id)
     def history(self, record_id):
         return self._read('workbench.history', lambda: self.workbench.history(record_id), record_id)
     def responses(self, record_id):

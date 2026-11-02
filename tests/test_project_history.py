@@ -293,6 +293,55 @@ class ProjectHistoryPostgresTests(unittest.TestCase):
         self.host,self.owner,self.session=host,owner,session
         self.history=ProjectHistory(session,materials=Materials())
 
+    def test_progression_uses_original_namespaces_exact_edges_and_bounded_pages(self):
+        parent='a'*32;child='b'*32
+        ref={'catalog_id':ORIGIN,'trial_id':parent,'material_sha256':MATERIAL}
+        records=[study('3'*32,trials=[parent]),study('4'*32,trials=[child]),
+                 trial(parent,'3'*32),trial(child,'4'*32,parent=ref,baseline=ref)]
+        before=self.store.snapshot()
+        captured=self.store.commit(records,before['checkpoint'],'fixture-progress',digest(records))
+        self.session.adopt(captured);before=self.session.snapshot
+        with self.owner.bound(self.host),patch('runs.Runs',side_effect=AssertionError('No live Run owner')):
+            origins=self.history.progression_origins(limit=1)
+            self.assertEqual(origins,{'items':[{'origin_catalog_id':ORIGIN,'study_count':2,'trial_count':2}],
+                'total':1,'offset':0,'limit':1})
+            self.assertEqual(self.history.progression_origins(offset=1)['items'],[])
+            first=self.history.progression(ORIGIN,limit=1)
+            self.assertEqual(first['nodes'][0]['trial'],records[2]['document']['trial'])
+            self.assertIsNone(first['nodes'][0]['lineage'])
+            self.assertEqual(first['related'],[])
+            second=self.history.progression(ORIGIN,offset=1,limit=1)
+            self.assertEqual(second['nodes'][0]['lineage'],records[3]['document']['lineage'])
+            self.assertEqual(second['related'],[ref])
+            self.assertEqual(second['nodes'][0]['attempt_count'],0)
+            self.assertFalse(second['nodes'][0]['runs_truncated'])
+            self.assertFalse(second['execution_available']);self.assertTrue(second['historical'])
+            self.assertEqual(second['evidence'],'saved_metadata_only')
+            both=self.history.progression(ORIGIN)
+            self.assertEqual(both['related'],[])
+            filtered=self.history.progression(ORIGIN,cohort='cross-study')
+            self.assertEqual([v['trial']['id'] for v in filtered['nodes']],[child])
+            self.assertEqual(self.history.progression(ORIGIN,cohort='not recorded')['nodes'],[])
+            for kwargs in ({'limit':21},{'offset':True},{'cohort':''}):
+                with self.assertRaises(WorkbenchError):self.history.progression(ORIGIN,**kwargs)
+            with self.assertRaisesRegex(WorkbenchError,'origin'):
+                self.history.progression(self.session.snapshot['project_id'])
+            self.assertEqual(self.session.snapshot,before)
+        from access import AccessError
+        original_facts=self.history._facts
+        for operation in (self.history.progression_origins,lambda:self.history.progression(ORIGIN)):
+            with self.owner.bound(self.host):
+                inspector=self.host.access.issue({'label':'Revoked during progression read','scopes':['inspect']})
+            def revoke_after_read():
+                facts=original_facts()
+                with self.owner.bound(self.host):
+                    self.host.access.revoke(inspector['identity']['credential_id'])
+                return facts
+            with self.host.access.bind(inspector['token']),patch.object(self.history,'_facts',side_effect=revoke_after_read):
+                with self.assertRaises(AccessError):operation()
+        for table in ('model_trials','model_studies','workspace_runs','access_admissions'):
+            self.assertEqual(self.host.db.execute('SELECT count(*) FROM '+table).fetchone()[0],0)
+
     def test_metadata_edits_cold_reopen_keep_history_without_active_authority(self):
         with self.owner.bound(self.host):
             before=self.session.snapshot['checkpoint']

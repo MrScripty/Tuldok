@@ -297,7 +297,7 @@ def _verified_backup(source,parent_fd,directory):
     path=Path('/proc/self/fd')/str(parent_fd)/stage
     tables,sequences,fingerprint=_snapshot(source)
     before=tree_manifest(source.root_path)
-    copy_tree(source.root_path,path/'catalog',before)
+    copy_tree(source.root_path,path/'catalog',before,deduplicate=True)
     metadata=dict(format_version=1,schema_version=source.db.schema_version,dataset_id=source.db.dataset_id,tables=tables,sequences=sequences)
     from backup_metadata import write_json,file_hash
     write_json(path/'metadata.json',metadata)
@@ -501,10 +501,10 @@ class ProjectTransfer:
         for value in captured['working_files']:
             closed(value,{'kind','path','sha256','bytes','text'},'observed working file')
             if ('project_file',file_id(source.db.dataset_id,value['kind'],value['path'])) in required:file_observations.append(copy.deepcopy(value))
-        if not isinstance(source,StoppedSourceLease):blockers.append(dict(family='source',id=source.db.dataset_id,code='cessation_proof_unavailable',detail='The current trusted owner must explicitly stop and capture this source.'))
         if not blockers:
             try:_validate_candidate(records,source.db.dataset_id,source.artifacts)
             except WorkbenchError as error:blockers.append(dict(family='closure',id=source.db.dataset_id,code=getattr(error,'code','invalid'),detail=str(error)))
+        if not isinstance(source,StoppedSourceLease):blockers.append(dict(family='source',id=source.db.dataset_id,code='cessation_proof_unavailable',detail='The current trusted owner must explicitly stop and capture this source.'))
         report=dict(format='project_transfer_report_v1',source=dict(catalog_id=source.db.dataset_id,schema_version=source.db.schema_version,
             catalog_signature=source.db._signature(),snapshot_sha256=source.fingerprint,
             backup_receipt_sha256=digest(canonical(source.backup_receipt)) if source.backup_receipt is not None else None,

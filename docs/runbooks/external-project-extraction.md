@@ -38,6 +38,12 @@ The report binds the exact selection, source schema and snapshot, backup and
 external inventory. Extraction requires the same report digest and selection.
 An unresolved or incomplete report is not successful empty-project creation.
 
+When the selected content and unique payloads are available, Preview validates
+the captured native domain composition while the source is still live. Domain
+refusals appear before an owner has to stop the source to discover them. This
+does not satisfy cessation: the independent `cessation_proof_unavailable`
+blocker remains until the existing trusted owner completes Stop and capture.
+
 ## Stop through the existing owner
 
 The explicit stop operation belongs to the currently opened legacy controller.

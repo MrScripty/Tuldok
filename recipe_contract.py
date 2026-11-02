@@ -10,6 +10,7 @@ import struct
 from projects import closed, decode, relative_path
 from recipe_process import CUDA_WALL_SECONDS_LIMIT
 from workbench import WorkbenchError, encode
+from capture_payloads import FORMAT as STREAMED_CAPTURE, payload_digest, copy_payload
 
 NAME = re.compile(r'[A-Za-z][A-Za-z0-9_-]{0,63}')
 SHA = re.compile(r'[a-f0-9]{64}')
@@ -18,6 +19,7 @@ MAX_CAPTURE_BYTES = 64 * 1024 * 1024
 CPU_INPUT_BYTES = 256 * 1024 * 1024
 CPU_CAPTURE_BYTES = 320 * 1024 * 1024
 MAX_FILES = 128
+MAX_CONFIGURED_CAPTURE_BYTES = 2**53 - 1
 RUNTIME_LIMIT = 512 * 1024 * 1024
 TYPES = ('input', 'execute', 'output')
 PORTS = {'input': (None, 'data'), 'execute': ('data', 'artifacts'), 'output': ('artifacts', None)}
@@ -32,7 +34,7 @@ LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
 INPUT_EVIDENCE = 'runtime-bootstrap/input-evidence.json'
 CPU_DESCRIPTOR = 'runtime-bootstrap/snapshot.json'
 CPU_BOOTSTRAP = 'runtime-bootstrap/recipe_process.py'
-HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py')
+HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py', 'capture_payloads.py', 'model_definitions.py')
 EVIDENCE_HOST_NAMES = (*HOST_NAMES, 'extension_evidence.py', 'field_evidence.py', 'scientific_fields.py', 'scientific_release.py')
 INDEXED_POLICY_FORMAT = 'extension_field_policy_indexed_v1'
 DIAGNOSTIC_HOST_NAMES = ('tuldok_extension_sdk/__init__.py', 'tuldok_extension_sdk/evidence.py', 'tuldok_extension_sdk/diagnostics.py')
@@ -82,13 +84,31 @@ def digest(value):
 
 
 def file_digest(raw):
-    return hashlib.sha256(raw).hexdigest()
+    return payload_digest(raw)
 
 
 def bounded_int(value, low, high, label):
     if type(value) is not int or not low <= value <= high:
         raise WorkbenchError(label + ' is outside its supported integer bounds.')
     return value
+
+
+def capture_limits(definition):
+    """Explicit per-recipe byte budgets; omission preserves historical defaults."""
+    policy = definition.get('capture_policy')
+    if 'capture_policy' not in definition:
+        managed = definition['runtime'] in (CPU_PROFILE, TORCH_PROFILE)
+        return (40*1024**2, CPU_INPUT_BYTES if managed else MAX_CAPTURE_BYTES,
+                CPU_CAPTURE_BYTES if managed else MAX_CAPTURE_BYTES)
+    if definition['runtime'] != TORCH_PROFILE or is_evidence(definition):
+        raise WorkbenchError('Streamed inputs require an explicit managed Torch opaque recipe.', 'unsupported', 400)
+    closed(policy, ('format', 'max_input_file_bytes', 'max_input_bytes', 'max_capture_bytes'))
+    if policy['format'] != STREAMED_CAPTURE:
+        raise WorkbenchError('Unsupported input capture policy.')
+    total = bounded_int(policy['max_capture_bytes'], 1, MAX_CONFIGURED_CAPTURE_BYTES, 'Capture budget')
+    inputs = bounded_int(policy['max_input_bytes'], 1, total, 'Input aggregate budget')
+    per_file = bounded_int(policy['max_input_file_bytes'], 1, inputs, 'Input file budget')
+    return per_file, inputs, total
 
 
 def named(value):
@@ -102,7 +122,7 @@ def decode_definition(raw):
         raise WorkbenchError('Recipe definition exceeds 64 KiB.')
     value = decode(raw)
     closed(value, ('schema_version', 'format', 'id', 'name', 'version', 'runtime', 'sources', 'entrypoint',
-                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','runtime_device','model_evidence','extension_selection'))
+                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','runtime_device','model_evidence','extension_selection','capture_policy'))
     evidence = is_evidence(value)
     bound = is_bound_evidence(value)
     if bound != ('extension_selection' in value):
@@ -134,6 +154,7 @@ def decode_definition(raw):
             raise WorkbenchError('Managed Torch recipes require an explicit CPU or CUDA device.')
     elif 'runtime_device' in value:
         raise WorkbenchError('Only managed Torch recipes select a device.')
+    input_file_limit, _input_limit, _capture_limit = capture_limits(value)
     sources = value['sources']
     if not isinstance(sources, list) or not 1 <= len(sources) <= 64:
         raise WorkbenchError('Declare 1–64 source files.')
@@ -174,7 +195,7 @@ def decode_definition(raw):
         raise WorkbenchError('Declare at most 32 named inputs.')
     for key, rule in value['inputs'].items():
         named(key); closed(rule, ('max_bytes',))
-        bounded_int(rule['max_bytes'], 1, 40 * 1024 * 1024, 'Input bytes')
+        bounded_int(rule['max_bytes'], 1, input_file_limit, 'Input bytes')
     argument_limit = 56 if value['runtime'] == CPU_PROFILE else 55 if value['runtime'] == TORCH_PROFILE else 59
     if not isinstance(value['arguments'], list) or len(value['arguments']) > argument_limit:
         raise WorkbenchError('Recipe arguments exceed the runtime argument bound.')
@@ -742,7 +763,8 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         else:
             closed(binding, ('reference_id', 'expected_sha256'))
             reader = projects.read_snapshot_data_reference if bound else projects.read_data_reference
-            raw, receipt = reader(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
+            options = {'stream': True} if 'capture_policy' in definition else {}
+            raw, receipt = reader(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'], **options)
         captured['input/' + name] = raw; inputs[name] = receipt
     if canonical:
         prefix={'catalog_id':projects.db.dataset_id,'recipe':definition,'inputs':inputs,
@@ -750,8 +772,7 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         validate_canonical_captures(prefix,captured)
     if {'input_evidence': True} in definition['arguments']:
         captured[INPUT_EVIDENCE] = encode(inputs).encode()
-    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
-    input_limit = CPU_INPUT_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
+    _file_limit, input_limit, capture_limit = capture_limits(definition)
     if sum(len(raw) for path,raw in captured.items() if path.startswith('input/')) > input_limit:
         raise WorkbenchError('Captured inputs exceed the runtime profile byte bound.')
     if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
@@ -936,8 +957,7 @@ def validate_material(material):
                 raise WorkbenchError('Frozen input receipt and captured size differ.')
         if path in generated and item['bytes'] != len(generated[path]): raise WorkbenchError('Generated native policy size differs.')
         if item['sha256'] != expected[path]: raise WorkbenchError('Captured digest contradicts source/input identity.')
-    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
-    input_limit = CPU_INPUT_BYTES if definition['runtime'] in (CPU_PROFILE,TORCH_PROFILE) else MAX_CAPTURE_BYTES
+    _file_limit, input_limit, capture_limit = capture_limits(definition)
     if total > capture_limit or input_total > input_limit:
         raise WorkbenchError('Captured material exceeds runtime profile byte bound.')
     runtime = material['runtime']
@@ -958,7 +978,12 @@ def validate_material(material):
     host_names = CANONICAL_EVIDENCE_HOST_NAMES if is_canonical_evidence(definition) else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES
     if is_indexed_evidence(definition): host_names = (*host_names, *DIAGNOSTIC_HOST_NAMES)
     if definition['runtime'] == TORCH_PROFILE: host_names = (*host_names, *TORCH_HOST_NAMES)
-    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(host_names): raise WorkbenchError('Invalid retained host closure.')
+    allowed_names = [set(host_names)]
+    if 'capture_policy' not in definition:
+        # Both complete inventories were emitted by supported historical hosts.
+        allowed_names.append(set(host_names) - {'capture_payloads.py', 'model_definitions.py'})
+    if not isinstance(material['host_files'],dict) or set(material['host_files']) not in allowed_names:
+        raise WorkbenchError('Invalid retained host closure.')
     for value in material['host_files'].values(): sha(value)
     return material
 
@@ -997,6 +1022,7 @@ def spec_for_material(material, staging, *, context=None):
     if 'native_policies' in material or 'cpu_snapshot' in material: spec['native_loader_policy'] = NATIVE_POLICY
     if 'cpu_snapshot' in material: spec['cpu_snapshot'] = material['cpu_snapshot']
     if 'torch_runtime' in material: spec['torch_runtime'] = material['torch_runtime']
+    if 'capture_policy' in definition: spec['capture_policy'] = dict(definition['capture_policy'])
     if 'profile' in definition['resources']: spec['resource_profile'] = definition['resources']['profile']
     if is_evidence(definition):
         spec['schema_version']=2
@@ -1037,7 +1063,7 @@ def capture(preflight, captured, staging):
     for relative, raw in captured.items():
         path = staging/relative; path.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
         with path.open('xb') as handle:
-            handle.write(raw); handle.flush(); os.fchmod(handle.fileno(),0o400); os.fsync(handle.fileno())
+            copy_payload(raw, handle); handle.flush(); os.fchmod(handle.fileno(),0o400); os.fsync(handle.fileno())
     for directory, _dirs, _files in os.walk(staging, topdown=False):
         _sync_directory(directory)
     _sync_directory(staging.parent)

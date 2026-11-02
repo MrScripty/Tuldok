@@ -34,7 +34,12 @@ RIGHTS = 'Owned synthetic source; corrected by M2 acceptance café 山.'
 SOURCE_FILES = ('app.py','agent_api.py','access.py','project_workspace.py','project_dispatch.py',
     'project_projection.py','project_data.py','project_sources.py','project_material.py',
     'project_history.py','project_producers.py','project_session.py','project_store.py',
-    'static/project-files.js','static/project-files.html','tuldok_client.py','project_cli.py','mcp_stdio.py')
+    'static/project-files.js','static/project-files.html','tuldok_client.py','project_cli.py','mcp_stdio.py',
+    'static/scientific-inspector.js','static/scientific-inspector.css','static/scientific-fields.js',
+    'static/workbench.html','static/workbench.css')
+SOURCE_FILES+=('project_measurements.py','retained_measurements.py','project_fork_composition.py')
+SOURCE_FILES+=('static/retained-chart.js','static/project-measurements.js','static/project-measurements.css',
+    'static/retained-measurement-maxima.vl.json')
 
 
 def subject_hashes():
@@ -135,6 +140,32 @@ class ProjectFilesM2HTTP(unittest.TestCase):
         config=self.path/(name+'.json');config.write_text(json.dumps({'endpoint':self.origin,
             'catalog_id':self.owner.catalog_id,'token_file':str(secret),'timeout':30}));config.chmod(0o600)
         return config
+
+    def test_progression_public_reads_pin_origin_scope_and_checkpoint(self):
+        from test_project_history import policy
+        self.create();old_checkpoint=self.state()['project']['checkpoint']
+        self.call('study_create',name='Saved progression fixture',
+            limits={'attempt_slots':3,'admitted_wall_seconds':100,'retained_bytes':1000000,'peak_staging_bytes':1000000},
+            policy=policy())
+        origin=self.state()['project']['project_id']
+        with self.owner.bound(self.workspace):
+            inspector=self.workspace.access.issue({'label':'Progression inspector','scopes':['inspect']})
+        before=m1.canonical_bytes(self.external/'alpha')
+        origins=self.call('progression_origins',token=inspector['token'])
+        self.assertEqual(origins['items'],[{'origin_catalog_id':origin,'study_count':1,'trial_count':0}])
+        result=self.call('progression',token=inspector['token'],origin_catalog_id=origin,limit=1)
+        self.assertEqual(result['nodes'],[]);self.assertEqual(result['related'],[])
+        self.assertEqual(result['evidence'],'saved_metadata_only')
+        self.assertFalse(result['execution_available'])
+        with self.owner.bound(self.workspace):
+            self.workspace.access.revoke(inspector['identity']['credential_id'])
+        for action,args in [('progression_origins',{}),('progression',{'origin_catalog_id':origin})]:
+            arguments=self.arguments(action,**args)
+            self.assertEqual(self.transport(action,arguments,token=inspector['token'])[0],401)
+            self.assertEqual(self.transport(action,dict(arguments,checkpoint=old_checkpoint))[0],409)
+        status,error=self.transport('progression',self.arguments('progression',origin_catalog_id='f'*32))
+        self.assertEqual(status,409);self.assertEqual(error['code'],'not_found')
+        self.assertEqual(m1.canonical_bytes(self.external/'alpha'),before)
 
     def test_public_mixed_authoring_git_clone_and_cold_reconstruction(self):
         self.create();image,raw=self.image()
@@ -265,6 +296,35 @@ class ProjectFilesM2HTTP(unittest.TestCase):
             document={'name':'Unpinned but explicitly measured source','groups':['m2-unpinned'],'rights':'Owned authored data'})
         self.assertEqual(row['source_sha256'],item['observed_sha256'])
 
+    def test_native_scientific_slice_refuses_stale_selection_and_changed_artifact(self):
+        self.create();_manifest,raw=authored_source(self.external)
+        registered=self.call('source_register',root='fixture',manifest_path='source-project.json')
+        snapshot={key:registered[key] for key in ('origin_catalog_id','project_id','manifest_sha256')}
+        row=self.call('data_import_scientific',snapshot=snapshot,reference_id='fields',
+            expected_sha256=hashlib.sha256(raw).hexdigest(),
+            document={'name':'Native slice source','groups':['m2-slice'],'rights':'Owned fixture'})
+        arguments=self.arguments('data_scientific',record_id=row['id'],content_hash=row['content_hash'],
+            frame=1,field='scalar',axis='z',index=2)
+        before=m1.canonical_bytes(self.external/'alpha')
+        status,value=self.transport('data_scientific',arguments)
+        self.assertEqual(status,200,value)
+        self.assertEqual(value['value']['values'][1][2],1212+2**-45)
+        for change in ({'checkpoint':'0'*64},{'binding':'0'*32},{'content_hash':'0'*64}):
+            status,error=self.transport('data_scientific',dict(arguments,**change))
+            self.assertEqual(status,409,error)
+        with self.owner.bound(self.workspace):
+            credential=self.workspace.access.issue({'label':'Revoked slice inspection','scopes':['inspect']})
+            self.workspace.access.revoke(credential['identity']['credential_id'])
+        self.assertEqual(self.transport('data_scientific',arguments,token=credential['token'])[0],401)
+        self.assertEqual(m1.canonical_bytes(self.external/'alpha'),before)
+        path=self.external/'alpha/artifacts/sha256'/row['content_hash']
+        self.assertEqual(path.read_bytes(),raw)
+        path.chmod(0o600) # Deliberate external corruption of this disposable fixture.
+        path.write_bytes(b'x'*len(raw))
+        self.assertNotEqual(self.transport('data_scientific',arguments)[0],200)
+        path.unlink()
+        self.assertNotEqual(self.transport('data_scientific',arguments)[0],200)
+
     @unittest.skipUnless(importlib.util.find_spec('mcp'),'Requires pinned real MCP optional dependencies')
     def test_real_sdk_cli_mcp_roles_lost_reply_and_stale_binding(self):
         import anyio
@@ -326,6 +386,66 @@ class ProjectFilesM2HTTP(unittest.TestCase):
         old=self.state();self.action('close');self.action('open',root='fixture',directory='adapters')
         status,error=self.transport('data_get',{'binding':old['binding'],'checkpoint':old['project']['checkpoint'],'record_id':record['id']})
         self.assertEqual(status,409,error);self.assertEqual(m1.canonical_bytes(self.external/'adapters'),committed)
+
+
+    def test_retained_measurement_import_query_permissions_and_independent_cold_copy(self):
+        from retained_measurements import MeasurementTable,encode
+        from test_retained_measurements import fixture
+        self.create()
+        raw=encode(fixture());digest=hashlib.sha256(raw).hexdigest()
+        (self.external/'measurements.json').write_bytes(raw)
+        manifest=dict(schema_version=1,id=uuid.uuid4().hex,name='Exact native scalar source',
+            data=[dict(id='measurements',label='Retained scalars',path='measurements.json',sha256=digest)],
+            recipes=[],evidence=[],requirements=[])
+        (self.external/'measurement-source.json').write_text(json.dumps(manifest))
+        registered=self.call('source_register',root='fixture',manifest_path='measurement-source.json')
+        snapshot={k:registered[k] for k in ('origin_catalog_id','project_id','manifest_sha256')}
+        import_args=self.arguments('measurement_import',snapshot=snapshot,reference_id='measurements',expected_sha256=digest)
+        status,admitted=self.transport('measurement_import',import_args)
+        self.assertEqual(status,200,admitted)
+        origin=admitted['project_id'];selection=dict(origin_catalog_id=origin,packet_sha256=digest)
+        canonical=m1.canonical_bytes(self.external/'alpha')
+        self.assertEqual(self.transport('measurement_import',import_args)[1],admitted)
+        self.assertEqual(m1.canonical_bytes(self.external/'alpha'),canonical)
+        metadata=self.call('measurement_metadata',**selection)
+        self.assertEqual(metadata['value'],MeasurementTable(raw).metadata())
+        self.assertEqual(self.call('measurement_sources')['items'][0]['id'],digest)
+        self.assertEqual(self.call('measurement_subjects',**selection,offset=1,limit=1)['value']['items'][0]['id'],'b')
+        query_args=self.arguments('measurement_query',**selection,metric_id='error',filters={'cpm':16})
+        expected=self.call('measurement_query',**selection,metric_id='error',filters={'cpm':16})
+        self.assertEqual(expected['value'],MeasurementTable(raw).query('error',filters={'cpm':16}))
+        row=self.call('measurement_inspect',**selection,observation_id='a-case1-error')
+        self.assertEqual(row['value']['scalar_evidence']['value'],1e-17)
+        timing=self.call('measurement_query',**selection,metric_id='latency')['value']
+        self.assertTrue(all(s['maximum'] is None for s in timing['summary']))
+        status,error=self.transport('measurement_query',dict(query_args,checkpoint='0'*64))
+        self.assertEqual(status,409,error)
+        status,error=self.transport('measurement_query',dict(query_args,filters={'expression':'never execute'}))
+        self.assertEqual(status,400,error)
+        with self.owner.bound(self.workspace):
+            inspector=self.workspace.access.issue(dict(label='Scalar HTTP inspector',scopes=['inspect']))
+        status,value=self.transport('measurement_query',query_args,token=inspector['token'])
+        self.assertEqual(status,200,value)
+        denied=self.arguments('measurement_import',snapshot=snapshot,reference_id='measurements',expected_sha256=digest)
+        self.assertEqual(self.transport('measurement_import',denied,token=inspector['token'])[0],403)
+        with self.owner.bound(self.workspace):
+            self.workspace.access.revoke(inspector['identity']['credential_id'])
+        self.assertEqual(self.transport('measurement_query',query_args,token=inspector['token'])[0],401)
+        self.assertEqual(m1.canonical_bytes(self.external/'alpha'),canonical)
+        self.action('save');self.action('close')
+        coldroot=self.path/'scalar-cold';coldroot.mkdir()
+        shutil.copytree(self.external/'alpha',coldroot/'copied')
+        self.assertEqual(m1.canonical_bytes(coldroot/'copied'),canonical)
+        for name in canonical:
+            self.assertNotEqual((self.external/'alpha'/name).stat().st_ino,(coldroot/'copied'/name).stat().st_ino)
+        self.select_host(self.path/'scalar-cold-control',{'fixture':coldroot})
+        self.action('open',root='fixture',directory='copied')
+        self.assertEqual(self.workspace._projection.db.execute('SELECT count(*) FROM workspace_projects').fetchone()[0],0)
+        self.assertEqual(self.call('measurement_query',**selection,metric_id='error',filters={'cpm':16}),expected)
+        self.assertEqual(self.call('measurement_inspect',**selection,observation_id='a-case1-error'),row)
+        self.assertEqual(self.transport('measurement_query',query_args)[0],409)
+        self.action('save');self.action('close')
+        self.assertEqual(m1.canonical_bytes(coldroot/'copied'),canonical)
 
 
 if __name__=='__main__':unittest.main()

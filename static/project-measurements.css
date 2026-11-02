@@ -1,0 +1,14 @@
+#project-measurements{overflow-wrap:anywhere;min-width:0}
+#project-measurements section{margin-top:1rem;padding:1rem}
+#project-measurements table{width:100%;border-collapse:collapse;margin:1rem 0}
+#project-measurements caption{text-align:left;font-weight:600;padding:.5rem 0}
+#project-measurements th,#project-measurements td{border-bottom:1px solid #c6d0c7;padding:.6rem;text-align:left;vertical-align:top}
+#project-measurements pre{white-space:pre-wrap;max-height:28rem;overflow:auto;font-size:.9rem}
+#project-measurements dl{margin:.5rem 0}#project-measurements dt{font-weight:600}#project-measurements dd{margin:0 0 .5rem}
+#project-measurements details{margin:.75rem 0}#project-measurements summary{cursor:pointer;font-weight:600}
+#project-measurements-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1rem 0}
+#project-measurements-filters fieldset{border:1px solid #c6d0c7;padding:.75rem}
+#project-measurements-chart{min-height:5rem;min-width:0;width:100%}
+#project-measurements-chart .vega-embed{width:100%}
+#project-measurements-maxima,#project-measurements-rows{overflow:auto;min-width:0}
+@media(max-width:760px){#project-measurements-filters{grid-template-columns:1fr}#project-measurements table{min-width:34rem}}

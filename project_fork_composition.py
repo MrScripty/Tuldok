@@ -71,21 +71,23 @@ def artifact_plan(records):
                 mark(edge['blob']['sha256'],record,edge['role'],edge['name'],edge['blob']['bytes'],
                      policy='regenerable' if runtime_file else 'unique')
 
-        # Run outputs, exact execution captures, publication proofs and measured
-        # host module bytes remain unique regardless of a weaker edge label.
-        from project_history import declarations as run_declarations
+        # The history owner distinguishes recorded runtime dependencies from
+        # outputs/proofs/host sources; a weaker payload label alone grants none.
+        from project_history import declarations as run_declarations, fork_preservation
         for record in records:
             if record['family'] not in ('run_history', 'run_observation'): continue
             doc = (record['document']['observation'] if record['family'] == 'run_observation'
                    else record['document'])
             by_sha = {edge['blob']['sha256']:edge['name'] for edge in doc['payloads']}
             publication = doc['publication']
+            preservation = fork_preservation(doc)
             if publication is not None:
                 for name in ('source','result'):
                     if publication[name] is not None: by_sha[publication[name]['sha256']] = 'publication.'+name
             for declaration in run_declarations(dict(family='run_history', id=record['id'], document=doc)):
                 blob = declaration['document']
-                mark(blob['sha256'],record,'run_payload',by_sha[blob['sha256']],blob['bytes'])
+                mark(blob['sha256'],record,'run_payload',by_sha[blob['sha256']],blob['bytes'],
+                     policy=preservation[blob['sha256']])
             run = doc['run']
             if run.get('execution_kind') == 'external_recipe':
                 for name, sha in run['material']['host_files'].items():
@@ -97,6 +99,14 @@ def artifact_plan(records):
             if record['family'] != 'native_execution_history': continue
             for edge in record['document']['payloads']:
                 mark(edge['blob']['sha256'],record,edge['role'],edge['name'],edge['blob']['bytes'])
+
+        # Scalar sources are immutable original evidence, including when the
+        # same bytes are also declared by a regenerable runtime dependency.
+        from project_measurements import decode_records as measurement_records, FAMILY as MEASUREMENT_FAMILY
+        for locator, doc in measurement_records(records).items():
+            blob = doc['blob']
+            mark(blob['sha256'], dict(family=MEASUREMENT_FAMILY, id=locator),
+                 'measurement_packet', 'measurements.json', blob['bytes'])
 
         # Existing pure getter covers the four producer families, entry history
         # payload maps, and variation prompt-batch request/response observations.

@@ -79,6 +79,35 @@ class ProjectTransferTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):
             with self.dataset._project_request():pass
         with self.assertRaises(WorkbenchError):self.dataset.stop_for_project_extraction(self.parent_fd,'retry-backup')
+
+    def test_native_stop_backup_deduplicates_copies_without_linking_originals(self):
+        original=[self.dataset.path/name for name in ('duplicate-a.bin','duplicate-b.bin')]
+        for path in original:path.write_bytes(b'Exact original payload' * 1000)
+        before=[(p.stat().st_ino,p.stat().st_ctime_ns,p.stat().st_nlink) for p in original]
+        source=self.stop()
+        copied=[self.root/'verified-backup/catalog'/p.name for p in original]
+        self.assertEqual(copied[0].stat().st_ino,copied[1].stat().st_ino)
+        self.assertTrue(all(p.stat().st_ino!=c.stat().st_ino for p,c in zip(original,copied)))
+        self.assertEqual(before,[(p.stat().st_ino,p.stat().st_ctime_ns,p.stat().st_nlink) for p in original])
+        self.assertEqual(tree_manifest(self.root/'verified-backup/catalog'),source.backup_receipt['files'])
+        _assert_unchanged(source)
+
+    def test_live_preview_reports_domain_refusal_before_source_stop(self):
+        from project_projection import ProjectProjection
+        record=self.text();self.selection['roots']['records']=[record['id']]
+        before=tree_manifest(self.dataset.path)
+        # Controlled downstream domain refusal: callers must see it while the
+        # source is still live, without stopping just to discover the failure.
+        with preview_source(self.dataset) as source,patch.object(ProjectProjection,'validate_records',
+                side_effect=WorkbenchError('Selected retained composition is incompatible.','invalid',409)):
+            report=ProjectTransfer(source).preview(self.selection)
+        self.assertFalse(report['can_extract'])
+        self.assertIn(dict(family='closure',id=self.dataset.db.dataset_id,code='invalid',
+            detail='Selected retained composition is incompatible.'),report['blockers'])
+        self.assertTrue(any(row['code']=='cessation_proof_unavailable' for row in report['blockers']))
+        self.assertFalse(self.dataset._extraction_stopping)
+        self.assertFalse(self.dataset._closed)
+        self.assertEqual(tree_manifest(self.dataset.path),before)
     def test_json_bool_and_fake_controller_guards_never_stop(self):
         for guard in (True,{},SimpleNamespace(require=lambda _:None)):
             with self.assertRaises(WorkbenchError) as caught:

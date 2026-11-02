@@ -64,30 +64,10 @@
     for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
     return element;
   }
-  async function specification(signal) {
-    const reply = await fetch(SPEC_PATH, {signal, credentials: 'same-origin', cache: 'no-cache'});
-    if (!reply.ok) throw Error('Retained chart specification is unavailable.');
-    const reader = reply.body.getReader();
-    let raw = new Uint8Array(0);
-    while (true) {
-      const {value, done} = await reader.read();
-      if (done) break;
-      if (raw.byteLength + value.byteLength > 16384) {
-        await reader.cancel();
-        throw Error('Retained chart specification exceeds its budget.');
-      }
-      const next = new Uint8Array(raw.byteLength + value.byteLength);
-      next.set(raw); next.set(value, raw.byteLength); raw = next;
-    }
-    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', raw))].map(byte => byte.toString(16).padStart(2, '0')).join('');
-    if (hash !== SPEC_SHA256) throw Error('Retained chart specification identity differs.');
-    return JSON.parse(new TextDecoder().decode(raw));
-  }
   function mount(root, {load, onSelection = () => {}}) {
-    let disposed = false, generation = 0, pending, view, observer, current;
+    let disposed = false, generation = 0, pending, renderer, current;
     function clear() {
-      view?.finalize(); view = undefined;
-      observer?.disconnect(); observer = undefined;
+      renderer?.dispose(); renderer = undefined;
       current = undefined;
       root.replaceChildren();
     }
@@ -100,7 +80,7 @@
       root.append(node('p', 'Loading exact retained result…', {role: 'status'}));
       const active = () => !disposed && ticket === generation && !signal.aborted;
       try {
-        const [received, base] = await Promise.all([load(request, {signal, authorityKey, export: false}), specification(signal)]);
+        const received = await load(request, {signal, authorityKey, export: false});
         if (!active()) return;
         const data = validate(received, request);
         clear();
@@ -157,21 +137,16 @@
         });
         const details = node('details'); details.append(node('summary', 'Exact retained provenance'), node('pre', JSON.stringify(data.provenance, null, 2)));
         root.append(heading, status, chart, buttons, filterLabel, support, table, navigation, exportButton, details);
-        if (typeof window.vegaEmbed !== 'function' || typeof window.vega?.expressionInterpreter !== 'object') throw Error('Pinned chart assets are unavailable.');
-        base.datasets = {curve: data.curve.map(point => ({...point, selected: point.checkpoint_sha256 === request.checkpoint_sha256}))};
-        // Data, images and links cannot leave the controlled inline dataset.
-        const deny = () => Promise.reject(Error('Chart URL loading is disabled.'));
-        const embedded = await window.vegaEmbed(chart, base, {actions: false, defaultStyle: false, tooltip: false, mode: 'vega-lite', renderer: 'svg', ast: true, expr: window.vega.expressionInterpreter, loader: {load: deny, sanitize: deny}});
-        if (!active()) { embedded.finalize(); return; }
-        view = embedded.view;
-        view.addSignalListener('checkpoint_select', (_name, value) => {
-          const sha = value?.checkpoint_sha256?.[0];
-          if (data.curve.some(point => point.checkpoint_sha256 === sha)) choose(sha);
+        renderer = window.RetainedChart.mount(chart, {path: SPEC_PATH, sha256: SPEC_SHA256}, {onError: () => {
+          if (active()) { clear(); root.append(node('p', 'Retained chart resize failed.', {role: 'alert'})); }
+        }});
+        await renderer.render({curve: data.curve.map(point => ({...point, selected: point.checkpoint_sha256 === request.checkpoint_sha256}))}, {
+          signal, isCurrent: active, onSignal: {checkpoint_select: value => {
+            const sha = value?.checkpoint_sha256?.[0];
+            if (data.curve.some(point => point.checkpoint_sha256 === sha)) choose(sha);
+          }}
         });
-        observer = new ResizeObserver(() => {
-          if (active()) void view?.resize().runAsync().catch(() => { if (active()) { clear(); root.append(node('p', 'Retained chart resize failed.', {role: 'alert'})); } });
-        });
-        observer.observe(chart);
+        if (!active()) return;
         current = {request, authorityKey};
       } catch (error) {
         if (active()) {
@@ -182,7 +157,7 @@
     }
     return {
       update,
-      resize() { return view?.resize().runAsync(); },
+      resize() { return renderer?.resize(); },
       selection() { return current ? structuredClone(current.request) : null; },
       dispose() { disposed = true; ++generation; pending?.abort(); clear(); root.removeAttribute('aria-busy'); }
     };

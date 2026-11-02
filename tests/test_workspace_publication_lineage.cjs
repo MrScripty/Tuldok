@@ -19,7 +19,7 @@ function fixture(){
   const camel=v=>v.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
   function make(key,values){if(!elements.has(key))elements.set(key,{...values,addEventListener(type,fn){this[type]=fn;},focus(){document.activeElement=this;}});return elements.get(key);}
   const context={window,history,document,crypto:crypto.webcrypto,TextEncoder,structuredClone,URLSearchParams,CSS:{escape:v=>v},Map,Set,Event};
-  for(const file of ['workspace-external.js','experiment-lineage.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../static',file),'utf8'),context);
+  for(const file of ['workspace-external.js','experiment-graph.js','experiment-lineage.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../static',file),'utf8'),context);
   const ui=window.WorkspaceExperimentLineage({api:async(route,body,version)=>{calls.push({route,body,version});return handler(route,body,version);},announce(){},getIntent:()=>intent,getView:()=> 'pipeline',getGraph:()=>null,isDirty:()=>false,openRecipe:async()=>{},openRun:async(id,current)=>{if(current())opened.push(id);},compare:async()=>{}});
   return {root,ui,calls,opened,setHandler:fn=>handler=fn,mount(){ui.mount(root,{dataset_id:catalog});},click:selector=>{const button=root.querySelector(selector);assert.ok(button,selector);return button.onclick?button.onclick():button.click();},navigate(){intent++;ui.invalidate();},session(){actor={...actor,credential_id:'two'};ui.sessionChanged();},other(){actor={...actor,actor_id:'9'.repeat(32),credential_id:'two'};ui.sessionChanged();}};
 }

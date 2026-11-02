@@ -31,6 +31,9 @@ from project_runtime import ProjectRuntime, validate_operation_result as validat
 from project_native_execution import FAMILY as NATIVE_FAMILY, decode_records as decode_native_records
 from project_native_preparation import ProjectNativePreparation, validate_operation_result as validate_preparation_result
 from project_sources import SourceAdapter, validate_operation_result as validate_source_result
+from project_measurements import ProjectMeasurements, FAMILY as MEASUREMENT_FAMILY
+from project_measurements import decode_records as decode_measurement_records
+from project_measurements import validate_operation_result as validate_measurement_result
 from workbench import WorkbenchError
 from workbench import timestamp
 
@@ -76,6 +79,7 @@ class ProjectProjection:
             self.producers = ProjectProducers(self.session)
             self.data = ProjectData(self.session, generation_entries=self.producers.generation_jobs)
             self.materials = ProjectMaterial(self.session)
+            self.measurements = ProjectMeasurements(self.session)
             self.history = ProjectHistory(self.session, materials=self.materials,
                                           authorize_disclosure=self.authorize_disclosure)
             if restore:
@@ -125,7 +129,7 @@ class ProjectProjection:
 
     def validate_records(self, records, *, project_id=None):
         project_id = self.project_id if project_id is None else project_id
-        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_extraction', NATIVE_FAMILY} | set(DATA_FAMILIES) | set(
+        claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
             MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
         identities = set()
         declarations = {}
@@ -159,12 +163,14 @@ class ProjectProjection:
                                     artifacts=self.artifacts, check=lambda: None)
         decode_producer_records(records, artifacts=self.artifacts)
         decode_history_records(records, materials=ProjectMaterial(candidate), artifacts=self.artifacts)
+        decode_measurement_records(records, artifacts=self.artifacts)
         for receipt in operation_documents(records):
             operation, result = receipt['operation'], receipt['result']
             if (validate_data_result(operation, result, records)
                     or validate_material_result(operation, result, records)
                     or validate_history_result(operation, result, records)
                     or validate_source_result(operation, result, records)
+                    or validate_measurement_result(operation, result, records)
                     or validate_execution_result(operation, result, records)
                     or validate_producer_result(operation, receipt['target'], result, records)
                     or validate_file_result(operation, result, records)

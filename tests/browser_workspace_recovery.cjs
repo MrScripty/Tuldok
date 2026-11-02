@@ -34,6 +34,7 @@ else if(route.includes('/predictions')){if(route.includes(b.id)&&route.endsWith(
 else value={};return {ok:status===200,status,json:async()=>structuredClone(value)}};`);
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-external.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-service.js'),'utf8'));
+await ev(fs.readFileSync(path.resolve(__dirname,'../static/experiment-graph.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/experiment-lineage.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-phase-timings.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-scientific-comparison.js'),'utf8'));
@@ -67,4 +68,39 @@ const damaged=await ev(`({runButtons:document.querySelectorAll('[data-real-run]'
 await ev(`document.querySelector('[data-real-run="'+a.id+'"]').click()`);await pause(150);
 if(!await ev(`document.getElementById('real-run-'+a.id).getAttribute('aria-current')==='true' && document.getElementById('real-run-state').textContent==='completed'`))throw Error('Healthy run not selectable after damaged detail');
 console.log('PASS: damaged selected run retains list/warning, no metrics, and healthy run remains selectable.');
+
+// Exercise the shared graph with the actual Workbench controller and real DOM.
+// Only the service transport is synthetic; these are no training/history claims.
+await ev(`real.show(null);document.body.replaceChildren();
+window.graphCalls=[];window.graphHost=document.createElement('main');document.body.append(graphHost);
+window.graphStyle=document.createElement('style');graphStyle.textContent=${JSON.stringify(fs.readFileSync(path.resolve(__dirname,'../static/experiment-lineage.css'),'utf8'))};document.head.append(graphStyle);
+window.rootTrial='1'.repeat(32);window.childTrial='2'.repeat(32);window.graphCatalog='3'.repeat(32);
+window.TuldokAuth={identity:()=>({kind:'agent',actor_id:'6'.repeat(32),credential_id:'7'.repeat(32),scopes:['inspect']})};
+window.baseGraphNode={trial:{id:rootTrial,material:{catalog_id:graphCatalog,sha256:'a'.repeat(64)}},study:{id:'4'.repeat(32),name:'Saved Study <img src=x onerror=bad>'},recipe:{id:'5'.repeat(32),revision:1},lineage:null,attempt_count:0,runs:[],runs_truncated:false};
+window.childGraphNode=structuredClone(baseGraphNode);childGraphNode.trial.id=childTrial;
+childGraphNode.lineage={recorded_at:'2026-10-23',timing:'retrospective',intent:{ancestry:'derived',parent:{catalog_id:graphCatalog,trial_id:rootTrial,material_sha256:'a'.repeat(64)},baseline:{catalog_id:graphCatalog,trial_id:rootTrial,material_sha256:'a'.repeat(64)},cohort:'Graph rendering fixture',hypothesis:'Preserve declared relationships',change_summary:'Synthetic graph presentation fixture',target:{metric_id:'loss',direction:'minimize',threshold:null,acceptance:'Rendering only',metric_definition_sha256:null}}};
+window.graphUI=WorkspaceExperimentLineage({api:async(route,body)=>{graphCalls.push({route,body});return {revision:'b'.repeat(64),nodes:[baseGraphNode,childGraphNode],related:[],next_cursor:null};},announce(){},getIntent:()=>0,getView:()=> 'pipeline',getGraph:()=>null,isDirty:()=>false,openRecipe:async()=>{},openRun:async()=>{},compare:async()=>{}});
+graphUI.mount(graphHost,{dataset_id:graphCatalog});`);
+await pause(100);
+const initialGraph=await ev(`({nodes:graphHost.querySelectorAll('[data-lineage-node]').length,parents:graphHost.querySelectorAll('path.parent').length,baselines:graphHost.querySelectorAll('path.baseline').length,images:graphHost.querySelectorAll('img').length,writes:graphCalls.filter(v=>v.body!==undefined).length})`);
+if(initialGraph.nodes!==2||initialGraph.parents!==1||initialGraph.baselines!==1||initialGraph.images||initialGraph.writes)throw Error('Shared graph changed declared ancestry, escaped names or read-only transport');
+await ev(`graphHost.querySelector('#lineage-zoom-reset').focus()`);
+for(let i=0;i<3;i++){
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+ await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+}
+const keyboardTarget=await ev(`({id:document.activeElement.dataset.lineageNode,visible:document.activeElement.matches(':focus-visible'),outline:getComputedStyle(document.activeElement).outlineWidth})`);
+if(keyboardTarget.id!==await ev('childTrial')||!keyboardTarget.visible||parseFloat(keyboardTarget.outline)<3)throw Error('Graph entries are not reachable with visible keyboard focus');
+await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+const activatedGraph=await ev(`({selected:graphHost.querySelector('[aria-pressed="true"]')?.dataset.lineageNode,focused:document.activeElement.dataset.lineageNode,details:graphHost.querySelector('#lineage-detail').innerText,branch:!!graphHost.querySelector('#lineage-branch')})`);
+if(activatedGraph.selected!==await ev('childTrial')||activatedGraph.focused!==activatedGraph.selected||!activatedGraph.details.includes('Preserve declared relationships')||activatedGraph.branch)throw Error('Keyboard selection lost graph focus, exact details or inspect-only behavior');
+await ev(`graphHost.querySelector('[data-lineage-node="'+rootTrial+'"]').scrollIntoView({block:'center'})`);
+const point=await ev(`(()=>{const r=graphHost.querySelector('[data-lineage-node="'+rootTrial+'"]').getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};})()`);
+await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
+await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
+if(!await ev(`graphHost.querySelector('[aria-pressed="true"]')?.dataset.lineageNode===rootTrial && graphHost.querySelector('#lineage-detail').innerText.includes('Historical ancestry and intent are unknown')`))throw Error('Pointer selection fabricated root ancestry or lost detail');
+console.log(JSON.stringify({initialGraph,keyboardTarget,activatedSelected:activatedGraph.selected}));
+console.log('PASS: shared graph real DOM/CSS, declared parent versus baseline, escaped names, Tab/Enter selection with visible retained focus, pointer selection, unknown ancestry and inspect-only behavior. Synthetic transport; no backend or native-project acceptance claim.');
+
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{clearTimeout(deadline);if(ws)ws.close();if(browser)browser.kill();if(server)server.close();await pause(150);fs.rmSync(dir,{recursive:true,force:true})});

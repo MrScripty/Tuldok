@@ -16,7 +16,7 @@ const root = path.resolve(__dirname, ".."),
   report = qaDirectory(root, "model-development"),
   temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tuldok-model-development-")),
   children = [];
-const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/experiment-lineage.js','static/experiment-lineage.css','static/workspaces.css','static/workspaces.html','experiment_lineage.py','agent_api.py','app.py','experiments.py','pipeline.py','runs.py','metadata.py','upgrade_metadata.py','tests/browser_model_development.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
+const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/experiment-graph.js','static/experiment-lineage.js','static/experiment-lineage.css','static/workspaces.css','static/workspaces.html','experiment_lineage.py','agent_api.py','app.py','experiments.py','pipeline.py','runs.py','metadata.py','upgrade_metadata.py','tests/browser_model_development.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
 const errors = [],
   posts = [],
   captures = [],

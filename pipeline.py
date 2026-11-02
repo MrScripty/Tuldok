@@ -338,10 +338,15 @@ def decode_recipe_material(value, *, catalog_id):
     for item in material['data']:reference(item,'release',catalog_id)
     envelope=material['resource_envelope'];closed(envelope,('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes'))
     for number in envelope.values():natural(number,'Resource envelope',1)
+    # This pure decoder owns descriptor bounds. The authenticated recipe bytes
+    # own the narrower capture policy before any large capture is read/copied.
+    capture_limit = (min(envelope['retained_bytes'], recipe_contract.MAX_CONFIGURED_CAPTURE_BYTES)
+                     if material['trainer']['id'] == 'external_recipe_v1'
+                     else recipe_contract.CPU_CAPTURE_BYTES)
     inventory=[material['recipe_document'],material['resolved_profile'],*material['captures']]
     names=[];total=0
     for item in inventory:
-        closed(item,('name','sha256','bytes','media_type'));natural(item['bytes'],'Capture bytes',0,recipe_contract.CPU_CAPTURE_BYTES)
+        closed(item,('name','sha256','bytes','media_type'));natural(item['bytes'],'Capture bytes',0,capture_limit)
         if (type(item['name']) is not str or not re.fullmatch(r'(?:recipe\.json|profile\.json|capture-\d{4}\.bin)',item['name']) or
                 type(item['sha256']) is not str or not HASH.fullmatch(item['sha256']) or
                 item['media_type']!=('application/octet-stream' if item['name'].startswith('capture-') else 'application/json')):
@@ -349,7 +354,7 @@ def decode_recipe_material(value, *, catalog_id):
         if item['name'] in ('recipe.json','profile.json') and item['bytes']>2*1024**2:
             raise WorkbenchError('Recipe/profile document exceeds its bound.','unavailable',409)
         names.append(item['name']);total+=item['bytes']
-    if len(set(names))!=len(names) or total>recipe_contract.CPU_CAPTURE_BYTES+2*1024**2:
+    if len(set(names))!=len(names) or total>capture_limit+2*1024**2:
         raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
     if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
         raise WorkbenchError('Recipe document names differ.','unavailable',409)
@@ -1215,7 +1220,7 @@ class Pipelines:
         try:
             for name,raw in payloads.items():
                 with (staging/name).open('xb') as handle:
-                    handle.write(raw);handle.flush();os.fchmod(handle.fileno(),0o400);os.fsync(handle.fileno())
+                    recipe_contract.copy_payload(raw,handle);handle.flush();os.fchmod(handle.fileno(),0o400);os.fsync(handle.fileno())
             _sync_directory(staging)
             return {'document':document,'staging':staging,'graph':graph,'orphan':None,'reconcile_capture':False}
         except BaseException:
@@ -1240,7 +1245,7 @@ class Pipelines:
             raise WorkbenchError('Retained built-in execution changed.', 'stale', 409)
         captured={item['path']:read_owned_blob(self.material_path,sha,item['blob'],recipe_contract.CPU_CAPTURE_BYTES) for item in snapshot['capture_paths']}
         expected=self.definition_identity(graph['recipe'])['definition_files']
-        if {name:hashlib.sha256(raw).hexdigest() for name,raw in captured.items()}!=expected:
+        if {name:recipe_contract.file_digest(raw) for name,raw in captured.items()}!=expected:
             raise WorkbenchError('Retained adapter source differs.', 'stale', 409)
         return {'kind':'builtin','graph':graph,'validation':validation,
                 'release':self.inspect_release(validation['release']['id'],private=True,recipe=graph['recipe']),
@@ -1274,7 +1279,7 @@ class Pipelines:
         for path,raw in captured.items():
             if path.startswith('source/'):
                 original=source_map.get(path[len('source/'):])
-                if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
+                if original is None or original['sha256']!=recipe_contract.file_digest(raw) or original['bytes']!=len(raw):
                     raise WorkbenchError('Model and execution source inventories differ.','stale',409)
         payloads={};paths=[]
         for number,(path,raw) in enumerate(sorted(captured.items())):
@@ -1330,18 +1335,22 @@ class Pipelines:
             'captures':[item['blob'] for item in paths],'resource_envelope':envelope}
         material=checked_json(material);sha=digest(material)
         document={'ref':{'kind':'recipe_material','catalog_id':self.db.dataset_id,'id':sha,'sha256':sha},'material':material}
+        if 'capture_policy' in preflight['material']['recipe']:
+            needed = envelope['peak_staging_bytes'] + 1024**3
+            if shutil.disk_usage(self.material_path).free < needed:
+                raise WorkbenchError('Insufficient disk for retained capture and execution staging.', 'too_large', 409)
         staging=Path(tempfile.mkdtemp(prefix='.recipe-',dir=self.material_path))
         try:
             for name,raw in payloads.items():
                 with (staging/name).open('xb') as handle:
-                    handle.write(raw);handle.flush();os.fchmod(handle.fileno(),0o400);os.fsync(handle.fileno())
+                    recipe_contract.copy_payload(raw,handle);handle.flush();os.fchmod(handle.fileno(),0o400);os.fsync(handle.fileno())
             _sync_directory(staging)
             if self.get(graph_id)!=graph:
                 raise WorkbenchError('Recipe changed during capture.','stale',409)
             orphan=None;target=self.material_path/sha
             if reconcile_capture and target.exists():
-                files={name:read_owned_blob(self.material_path,sha,blob(raw,name),recipe_contract.CPU_CAPTURE_BYTES,
-                                           with_identity=True)[1] for name,raw in payloads.items()}
+                files={name:read_owned_blob(self.material_path,sha,blob(raw,name),recipe_contract.capture_limits(preflight['material']['recipe'])[2],
+                                           with_identity=True,stream='capture_policy' in preflight['material']['recipe'])[1] for name,raw in payloads.items()}
                 orphan=owned_inventory(self.material_path,sha,payloads)
                 if orphan['files']!=files:raise WorkbenchError('Orphan recipe changed after hashing.','unavailable',409)
             return {'document':document,'staging':staging,'graph':graph,'orphan':orphan,'reconcile_capture':reconcile_capture}
@@ -1400,6 +1409,8 @@ class Pipelines:
     def recipe_material(self, ref, *, verify=False):
         from model_definitions import read_owned_blob,retained_json,ModelDefinitions
         value=self._recipe_material_record(ref);material=value['material']
+        capture_limit = recipe_contract.CPU_CAPTURE_BYTES
+        streamed = False
         if material['trainer']['id'] in ('external_recipe_v1',recipe_contract.EVIDENCE_FORMAT):
             # Current disclosure of retained captures follows all Run inputs,
             # independently from their historical integrity and exact grant.
@@ -1415,12 +1426,14 @@ class Pipelines:
                     or preflight['material']['graph_execution_sha256']!=execution_digest(graph)):
                 raise WorkbenchError('Retained input material binding differs.','unavailable',409)
             recipe_contract.validate_material(preflight['material'])
+            capture_limit = recipe_contract.capture_limits(preflight['material']['recipe'])[2]
+            streamed = 'capture_policy' in preflight['material']['recipe']
             from candidate_packages import authorize_material_inputs
             authorize_material_inputs(self.dataset.runs,preflight['material'])
             if evidence:self._retained_extension_static(value)
         if verify:
             inventory=[material['recipe_document'],material['resolved_profile'],*material['captures']]
-            for item in inventory:read_owned_blob(self.material_path,ref['sha256'],item,recipe_contract.CPU_CAPTURE_BYTES)
+            for item in inventory:read_owned_blob(self.material_path,ref['sha256'],item,capture_limit,stream=streamed)
             (getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)).material(material['model'],verify=True)
         return value
 
@@ -1462,7 +1475,9 @@ class Pipelines:
             closed(item,('path','blob'))
             if item['path'] in retained or item['blob'] not in material['captures']:
                 raise WorkbenchError('Capture mapping differs.','unavailable',409)
-            retained[item['path']]=read_owned_blob(self.material_path,ref['sha256'],item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
+            retained[item['path']]=read_owned_blob(self.material_path,ref['sha256'],item['blob'],
+                recipe_contract.capture_limits(preflight['material']['recipe'])[2],
+                stream='capture_policy' in preflight['material']['recipe'])
         if recipe_contract.is_bound_evidence(preflight['material']['recipe']):
             recipe_contract.revalidate_bound_material(self.dataset.projects,preflight['material'],retained,
                 getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases)

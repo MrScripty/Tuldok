@@ -12,7 +12,7 @@ from workbench import WorkbenchError
 
 
 _BOUND_FIELDS = frozenset(('binding', 'checkpoint', 'expected_checkpoint', 'request_key'))
-_DATA_ACTIONS = frozenset(('data_query', 'data_get', 'data_availability', 'data_history',
+_DATA_ACTIONS = frozenset(('data_query', 'data_get', 'data_scientific', 'data_availability', 'data_history',
     'data_responses', 'data_response_history', 'data_preferences', 'data_preference_history',
     'data_import_text', 'data_import_image', 'data_import_audio', 'data_import_mesh',
     'data_import_pointcloud', 'data_import_volume', 'data_import_sequence', 'data_import_scientific',
@@ -25,7 +25,7 @@ _MATERIAL_ACTIONS = frozenset(('definitions', 'models', 'model_get', 'model_crea
     'recipe_get', 'recipe_create', 'recipe_save', 'recipe_prepare', 'model_material',
     'recipe_material', 'runtime_material', 'snapshot', 'materials'))
 _HISTORY_ACTIONS = frozenset(('studies', 'study', 'study_create', 'study_save', 'trial', 'trial_prepare',
-    'lineage', 'lineage_record', 'run', 'runs', 'candidate', 'candidate_select', 'evidence',
+    'lineage', 'lineage_record', 'progression_origins', 'progression', 'run', 'runs', 'candidate', 'candidate_select', 'evidence',
     'retained_analysis', 'retained_analysis_export', 'policies', 'policy', 'dependencies',
     'publication_result', 'package_state', 'expose_holdout', 'run_document_segment'))
 _OTHER_ACTIONS = frozenset(('artifacts', 'artifact_status', 'artifact_resolve', 'producers', 'producer', 'source_register', 'source_references'))
@@ -36,9 +36,11 @@ _EXECUTION_ACTIONS = frozenset(('native_preflight','native_submit','native_retry
     'execution_producer_decide', 'execution_producer_cancel', 'execution_producer_health',
     'execution_study_prepare_package','execution_study_prepare_verifier','execution_study_abandon_preparation','execution_study_reconcile_preparation'))
 _RUNTIME_ACTIONS=frozenset(('runtime_sources','runtime_inspect','runtime_capture','runtime_status','runtime_abandon'))
+_MEASUREMENT_ACTIONS=frozenset(('measurement_import','measurement_sources','measurement_metadata',
+    'measurement_subjects','measurement_query','measurement_inspect'))
 _M4_ACTIONS=frozenset(('files_inspect','file_get','file_history','file_adopt','file_adopt_deletion','material_intents','material_intent','material_intent_capabilities','fork_info'))
 SUPPORTED_OPERATIONS = frozenset('project_files.' + action for action in
-    _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS)
+    _DATA_ACTIONS | _MATERIAL_ACTIONS | _HISTORY_ACTIONS | _OTHER_ACTIONS | _EXECUTION_ACTIONS | _M4_ACTIONS | _RUNTIME_ACTIONS | _MEASUREMENT_ACTIONS)
 
 
 def _body(arguments, *omit):
@@ -104,6 +106,8 @@ def _data(projection, action, a):
     data = projection.data
     if action == 'data_query': return data.query(_body(a))
     if action == 'data_get': return data.get(a['record_id'])
+    if action == 'data_scientific': return data.scientific(a['record_id'], a['content_hash'],
+        **{key: a[key] for key in ('frame', 'field', 'axis', 'index') if key in a})
     if action == 'data_availability': return data.availability(a['record_id'])
     if action == 'data_history': return _page(data.history(a['record_id']), a, default=1)
     if action == 'data_responses': return _page(data.responses(a['record_id'])['responses'], a)
@@ -266,6 +270,8 @@ def _history(projection, action, a):
         origin_catalog_id=origin, expected_sha256=a['expected_sha256'], offset=a['offset'], limit=a['limit'])
     if action == 'candidate': return history.candidate(a['candidate_id'], origin_catalog_id=origin, verify=a.get('verify', False))
     if action == 'lineage': return _page(history.lineage(origin_catalog_id=origin)['records'], a)
+    if action == 'progression_origins': return history.progression_origins(offset=a.get('offset',0),limit=a.get('limit',40))
+    if action == 'progression': return history.progression(origin,offset=a.get('offset',0),limit=a.get('limit',20),cohort=a.get('cohort'))
     if action == 'policies': return _page(history.policies(origin_catalog_id=origin)['policies'], a)
     if action == 'policy': return history.policy(a['ref'])
     if action == 'runs':
@@ -397,6 +403,7 @@ def dispatch(projection, name, arguments):
         raise WorkbenchError('Unsupported external-project operation.', 'unsupported', 409)
     action = name.split('.')[1]
     projection.session.access.require('inspect', name)
+    if action in _MEASUREMENT_ACTIONS:return _measurements(projection,action,arguments)
     if action in _RUNTIME_ACTIONS:return _runtime(projection,action,arguments)
     if action in _M4_ACTIONS:return _m4(projection,action,arguments)
     if action in _EXECUTION_ACTIONS: return _execution(projection, action, arguments)
@@ -424,3 +431,16 @@ def dispatch(projection, name, arguments):
         projection.session.access.require('edit', 'project_files.source_register', owner_only=True)
         return projection.source_adapter.register(_body(arguments), arguments['expected_checkpoint'], arguments['request_key'])
     raise AssertionError('Closed project dispatch is incomplete.')
+
+
+def _measurements(projection,action,a):
+    owner=projection.measurements
+    if action=='measurement_import':
+        return projection.source_adapter.import_measurements(_body(a),a['expected_checkpoint'],a['request_key'])
+    if action=='measurement_sources':return owner.sources(offset=a.get('offset',0),limit=a.get('limit',40))
+    origin,packet=a['origin_catalog_id'],a['packet_sha256']
+    if action=='measurement_metadata':return owner.metadata(origin,packet)
+    if action=='measurement_subjects':return owner.subjects(origin,packet,offset=a.get('offset',0),limit=a.get('limit',40))
+    if action=='measurement_query':return owner.query(origin,packet,**_body(a,'origin_catalog_id','packet_sha256'))
+    if action=='measurement_inspect':return owner.inspect(origin,packet,a['observation_id'])
+    raise AssertionError('Closed measurement dispatch is incomplete.')
