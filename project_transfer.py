@@ -720,7 +720,7 @@ def _extract(self,selection,expected_report_sha256,destination_parent_fd,directo
     try:
         store=ProjectStore.create_at(destination_parent_fd,stage_name,name,'extraction-stage.'+digest(request_key.encode())[:32],request_digest,root_path=root_path)
         with store.root_directory() as owned_fd:stage_identity=_fd_identity(owned_fd)
-        destination=store.snapshot()['project_id'];created_at=timestamp()
+        destination=store.summary()['project_id'];created_at=timestamp()
         from project_data_fork import fork_records as fork_data
         from project_material_fork import fork_records as fork_material
         original=copy.deepcopy(records);mappings=[]
@@ -755,7 +755,7 @@ def _extract(self,selection,expected_report_sha256,destination_parent_fd,directo
             with source.artifacts.open_verified(value,maximum_bytes=value['bytes']) as fd:artifacts.publish_fd(fd,value,maximum_bytes=value['bytes'])
         with store.root_directory() as fd:materialize_captured(records,destination,fd)
         _validate_candidate(records,destination,artifacts)
-        committed=store.commit(records,store.snapshot()['checkpoint'],request_key,request_digest)
+        committed=store.commit(records,store.summary()['checkpoint'],request_key,request_digest)
         verification=_cold_verify(store,source)
         store.save(committed['checkpoint']);_assert_unchanged(source)
         _rename_noreplace(destination_parent_fd,stage_name,directory);published=True;os.fsync(destination_parent_fd)

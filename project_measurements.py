@@ -6,6 +6,7 @@ reads after Open need no current source registration or producer execution.
 """
 import copy
 from datetime import datetime
+from functools import cache, partial
 
 from project_artifacts import validate_declaration
 from project_material import decode_records as material_records
@@ -101,15 +102,34 @@ def decode_records(records, *, artifacts=None):
     return result
 
 
-def validate_operation_result(operation, result, records=None):
+def _validate_result(operation, result, lookup=None):
     if operation != 'measurements.import':
         return False
     _document(result)
-    if records is not None:
+    if lookup is not None:
         identity = result['origin_catalog_id'] + '.' + result['id']
-        if decode_records(records).get(identity) != result:
+        if lookup(identity) != result:
             raise WorkbenchError('Measurement receipt has no exact retained source.')
     return True
+
+
+def receipt_validator(records, *, artifacts=None):
+    """Own one candidate's validated source bindings and packet custody.
+
+    Decode and copy every retained measurement once, including current available
+    packet bytes when supplied. The returned receipt checker is fixed to those
+    facts; it carries no live source or publication capability.
+    """
+    owned = decode_records(records, artifacts=artifacts)
+    return partial(_validate_result, lookup=owned.get)
+
+
+def validate_operation_result(operation, result, records=None):
+    @cache
+    def owned():
+        return decode_records(records)
+    lookup = None if records is None else lambda identity: owned().get(identity)
+    return _validate_result(operation, result, lookup)
 
 
 class ProjectMeasurements:
@@ -118,16 +138,19 @@ class ProjectMeasurements:
         self.access, self.db = session.access, session.db
 
     def _documents(self):
-        return decode_records(self.session.snapshot['records'])
+        # Session adoption/publication already validates the complete candidate.
+        # Verify current canonical bytes, then own only the measurement family.
+        records = self.session.check_records(FAMILY)['records']
+        return {item['id']: item['document'] for item in records}
 
     def import_packet(self, raw, source, expected_checkpoint, key):
         """Called only after SourceAdapter's explicit current rooted capture."""
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self.access.require('edit', 'measurements.import')
-            self.session.check()
+            self.session.check_current()
             table = MeasurementTable(raw)
             blob = dict(sha256=table.sha256, bytes=len(raw))
-            origin = self.session.snapshot['project_id']
+            origin = self.session.summary['project_id']
             request = dict(blob=blob, source=copy.deepcopy(source))
 
             def invoke():
@@ -152,11 +175,11 @@ class ProjectMeasurements:
             raise WorkbenchError('Invalid measurement source page.')
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('inspect', 'measurements.sources')
-            self.session.check()
+            self.session.check_current()
             docs = sorted(self._documents().values(), key=lambda d: (d['origin_catalog_id'], d['id']))
             items = [dict(doc, availability=self.artifacts.inspect(declaration(doc['blob'])))
                      for doc in docs[offset:offset+limit]]
-            self.session.check()
+            self.session.check_current()
             self.access.require('inspect', 'measurements.sources')
             return self._bounded(dict(items=items, total=len(docs), offset=offset, limit=limit))
 
@@ -172,7 +195,7 @@ class ProjectMeasurements:
         target = origin_catalog_id + '.' + packet_sha256
         with self.access.lock, self.session.lock, self.db.lock:
             self.access.require('inspect', action, target)
-            self.session.check()
+            self.session.check_current()
             doc = self._documents().get(target)
             if doc is None:
                 raise WorkbenchError('Measurement source is unavailable.', 'not_found', 404)
@@ -181,7 +204,7 @@ class ProjectMeasurements:
             if table.metadata()['title'] != doc['title']:
                 raise WorkbenchError('Measurement title differs from the exact retained packet.')
             value = self._bounded(dict(source=doc, value=select(table)))
-            self.session.check()
+            self.session.check_current()
             self.access.require('inspect', action, target)
             return value
 
@@ -215,7 +238,7 @@ class ProjectMeasurements:
         with self.access.lock, self.session.lock, self.db.lock:
             for target in targets:
                 self.access.require('inspect', 'measurements.compare', target)
-            self.session.check()
+            self.session.check_current()
             documents = self._documents()
             if any(target not in documents for target in targets):
                 raise WorkbenchError('A comparison source is unavailable.', 'not_found', 404)
@@ -231,7 +254,7 @@ class ProjectMeasurements:
                 tables.append((locator, table))
             value = MeasurementComparison(tables).read(metric_id, **selection)
             result = self._bounded(dict(sources=chosen, value=value))
-            self.session.check()
+            self.session.check_current()
             for target in targets:
                 self.access.require('inspect', 'measurements.compare', target)
             return result

@@ -44,6 +44,16 @@ class ProjectFilesTests(unittest.TestCase):
         raw=text.encode('utf-8');target=self.root/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
         return dict(kind=kind,path=path,expected_revision=revision,expected_sha256=hashlib.sha256(raw).hexdigest())
 
+    def test_inspection_never_copies_the_complete_record_graph(self):
+        self.adopt('notes/inspection.md', 'Exact retained scientific note', kind='note')
+        expected = self.files.inspect()
+        with patch.object(self.session.store, '_snapshot',
+                          wraps=self.session.store._snapshot) as snapshots:
+            observed = self.files.inspect()
+        self.assertEqual(observed, expected)
+        self.assertEqual(snapshots.call_count, 0,
+                         'File inspection needs only independent file records and complete freshness')
+
     def test_batch_captures_exact_files_in_one_canonical_mutation(self):
         items=[self.intent('notes/a.md','Exact Ω\r\n'),self.intent('notes/empty.md','')]
         before=self.session.snapshot['checkpoint']

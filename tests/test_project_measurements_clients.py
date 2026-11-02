@@ -24,6 +24,16 @@ class MeasurementContracts(unittest.TestCase):
         return ProjectFilesClient(client({'status':200,'result':dict(binding=BINDING,project_id=PROJECT,
             checkpoint=CHECKPOINT,value=value)}))
 
+    def test_comparison_capacity_is_versioned_without_changing_packet_headers(self):
+        from retained_measurements import MAX_COMPARISON_ROWS,MAX_ROWS
+        self.assertEqual(api.measurement_comparison_row_limit(1),100000)
+        self.assertEqual(api.measurement_comparison_row_limit(2),250000)
+        self.assertEqual(api.measurement_comparison_row_limit(2),MAX_COMPARISON_ROWS)
+        self.assertEqual(MAX_ROWS,100000)
+        self.assertEqual(api._MEASUREMENT_HEADER['properties']['observation_count']['maximum'],100000)
+        self.assertNotEqual(api.contract('project_files.measurement_compare',1)['sha256'],
+                            api.contract('project_files.measurement_compare',2)['sha256'])
+
     def test_group_comparison_header_and_query_correlate_every_original_source(self):
         locator=dict(origin_catalog_id=PROJECT,packet_sha256=self.table.sha256)
         comparison=MeasurementComparison([(locator,self.table)])

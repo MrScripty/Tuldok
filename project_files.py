@@ -5,6 +5,7 @@ never rewrites it, restores a missing file, executes a script, or installs tools
 """
 import copy
 from datetime import datetime
+from functools import cache, partial
 import errno
 import hashlib
 import os
@@ -128,14 +129,14 @@ def _result(envelope,changed):
     return result
 
 
-def validate_operation_result(operation,result,records=None):
+def _validate_result(operation,result,lookup=None):
     if operation=='files.adopt_many':
         closed(result,{'items','changed_count'},'batch adoption result')
         if type(result['items']) is not list or not 1<=len(result['items'])<=MAX_ADOPT_ITEMS:
             fail('Invalid batch adoption result size.')
         seen=set();projects=set()
         for item in result['items']:
-            validate_operation_result('files.adopt',item,records)
+            _validate_result('files.adopt',item,lookup)
             if item['id'] in seen:fail('Batch adoption result repeats a file.')
             seen.add(item['id']);projects.add(item['project_id'])
         if (len(projects)!=1 or type(result['changed_count']) is not int
@@ -153,12 +154,32 @@ def validate_operation_result(operation,result,records=None):
     else:sha(result['sha256'])
     _date(result['adopted_at'])
     if type(result['revision']) is not int or not 1<=result['revision']<=2**53-1 or type(result['bytes']) is not int or not 0<=result['bytes']<=MAX_FILE_BYTES:fail('Invalid adoption result bounds.')
-    if records is not None:
-        owned=decode_records(records)
-        envelope=next((r for r in owned if r['id']==result['id']),None)
+    if lookup is not None:
+        envelope=lookup(result['id'])
         if envelope is None or not any((value.get('deleted') is True)==deleted and all(value[key]==result[key] for key in ('revision','sha256','bytes','adopted_at')) for value in envelope['document']['history']):
             fail('Adoption result is not an exact retained working-file revision.')
     return True
+
+
+def receipt_validator(records):
+    """Own one decoded candidate's file histories for its receipt checks.
+
+    The returned validator has no live Session or publication authority. It
+    owns copied records, so caller mutation cannot change this fixed view.
+    A different candidate requires a new validator.
+    """
+    owned = {record['id']: record for record in decode_records(records)}
+    return partial(_validate_result, lookup=owned.get)
+
+
+def validate_operation_result(operation, result, records=None):
+    # Keep standalone shape/error ordering, and share only this call's lookup
+    # across batch items. There is no retained cache between invocations.
+    @cache
+    def owned():
+        return {record['id']: record for record in decode_records(records)}
+    lookup = None if records is None else lambda identity: owned().get(identity)
+    return _validate_result(operation, result, lookup)
 
 
 class _WorkingError(Exception):
@@ -231,39 +252,51 @@ def _read(root,parts):
         os.close(parent)
 
 
+def inspect_captured(records, project_id, root):
+    """Observe captured working files using only a locked project capability."""
+    return _inspect_validated(decode_records(records), project_id, root)
+
+
+def _inspect_validated(records, project_id, root):
+    """Consume full-decoder output or fresh values from a validated Session."""
+    owned=[r for r in records if r['document']['project_id']==project_id]
+    items=[]
+    for envelope in sorted(owned,key=lambda r:r['document']['path']):
+        doc=envelope['document'];value=doc['current']
+        observation=dict(id=envelope['id'],kind=doc['kind'],path=doc['path'],revision=value['revision'],
+            expected_sha256=value['sha256'],expected_bytes=value['bytes'],observed_sha256=None,observed_bytes=None,state='missing',reason=None)
+        try:
+            parts=_path(doc['kind'],doc['path'])
+            if value.get('deleted') is True and _missing(root,parts):
+                observation['state']='deleted'
+            else:
+                if value.get('deleted') is True:observation['state']='changed'
+                _,observed,size=_read(root,parts)
+                observation.update(observed_sha256=observed,observed_bytes=size,state='unchanged' if observed==value['sha256'] else 'changed')
+        except _WorkingError as error:
+            if value.get('deleted') is True:
+                observation.update(state='changed' if error.state in ('invalid_utf8','too_large') else 'invalid',reason=error.state)
+            else:observation.update(state='missing' if error.state=='missing' else 'invalid',reason=error.state)
+        items.append(observation)
+    return items
+
+
 class ProjectFiles:
     def __init__(self,session):
         self.session,self.access,self.db,self.store=session,session.access,session.db,session.store
 
     def inspect(self):
         with self.access.lock,self.session.lock,self.db.lock:
-            self.access.require('inspect','files.inspect');snapshot=self.session.check()
-            owned=[r for r in decode_records(snapshot['records']) if r['document']['project_id']==snapshot['project_id']];items=[]
+            self.access.require('inspect','files.inspect');snapshot=self.session.check_records(FAMILY)
             with self.store.root_directory() as root:
-                for envelope in sorted(owned,key=lambda r:r['document']['path']):
-                    doc=envelope['document'];value=doc['current']
-                    observation=dict(id=envelope['id'],kind=doc['kind'],path=doc['path'],revision=value['revision'],
-                        expected_sha256=value['sha256'],expected_bytes=value['bytes'],observed_sha256=None,observed_bytes=None,state='missing',reason=None)
-                    try:
-                        parts=_path(doc['kind'],doc['path'])
-                        if value.get('deleted') is True and _missing(root,parts):
-                            observation['state']='deleted'
-                        else:
-                            if value.get('deleted') is True:observation['state']='changed'
-                            _,observed,size=_read(root,parts)
-                            observation.update(observed_sha256=observed,observed_bytes=size,state='unchanged' if observed==value['sha256'] else 'changed')
-                    except _WorkingError as error:
-                        if value.get('deleted') is True:
-                            observation.update(state='changed' if error.state in ('invalid_utf8','too_large') else 'invalid',reason=error.state)
-                        else:observation.update(state='missing' if error.state=='missing' else 'invalid',reason=error.state)
-                    items.append(observation)
-            self.session.check()
+                items=_inspect_validated(snapshot['records'],snapshot['project_id'],root)
+            self.session.check_current()
             return dict(items=items,project_id=snapshot['project_id'],checkpoint=snapshot['checkpoint'])
 
     def read(self,record_id,revision=None):
         with self.access.lock,self.session.lock,self.db.lock:
-            self.access.require('inspect','files.read',record_id);snapshot=self.session.check()
-            envelope=next((r for r in decode_records(snapshot['records']) if r['id']==record_id),None)
+            self.access.require('inspect','files.read',record_id);snapshot=self.session.check_records(FAMILY)
+            envelope=next((r for r in snapshot['records'] if r['id']==record_id),None)
             if envelope is None:fail('Adopted working file is unavailable.','unavailable',404)
             values=envelope['document']['history']
             if revision is None:value=values[-1]
@@ -273,8 +306,8 @@ class ProjectFiles:
 
     def history(self,record_id):
         with self.access.lock,self.session.lock,self.db.lock:
-            self.access.require('inspect','files.history',record_id);snapshot=self.session.check()
-            envelope=next((r for r in decode_records(snapshot['records']) if r['id']==record_id),None)
+            self.access.require('inspect','files.history',record_id);snapshot=self.session.check_records(FAMILY)
+            envelope=next((r for r in snapshot['records'] if r['id']==record_id),None)
             if envelope is None:fail('Adopted working file is unavailable.','unavailable',404)
             return copy.deepcopy(envelope['document']['history'])
 
@@ -293,7 +326,7 @@ class ProjectFiles:
 
     def _adoption_intent(self,body):
         closed(body,{'kind','path','expected_revision','expected_sha256'},'working-file adoption')
-        parts=_path(body['kind'],body['path']);project_id=self.session.snapshot['project_id'];record_id=file_id(project_id,body['kind'],body['path']);sha(body['expected_sha256'])
+        parts=_path(body['kind'],body['path']);project_id=self.session.summary['project_id'];record_id=file_id(project_id,body['kind'],body['path']);sha(body['expected_sha256'])
         if type(body['expected_revision']) is not int or not 0<=body['expected_revision']<=2**53-1:fail('Invalid expected adoption revision.')
         return dict(body),parts,record_id
 
@@ -309,12 +342,12 @@ class ProjectFiles:
         value=dict(revision=revision+1,sha256=observed,bytes=size,text=text,adopted_at=timestamp(),actor_id=actor.actor_id)
         history=copy.deepcopy(prior['document']['history']) if prior else [];history.append(value)
         envelope=dict(family=FAMILY,id=record_id,document=dict(format=prior['document']['format'] if prior else FORMAT,
-            project_id=self.session.snapshot['project_id'],kind=body['kind'],path=body['path'],current=copy.deepcopy(value),
+            project_id=self.session.summary['project_id'],kind=body['kind'],path=body['path'],current=copy.deepcopy(value),
             history=history,origin=copy.deepcopy(prior['document']['origin']) if prior else None))
         return _result(envelope,True),envelope,size
 
     def adopt(self,body,expected_checkpoint,key):
-        intent=self._adoption_intent(body);body,parts,record_id=intent;project_id=self.session.snapshot['project_id']
+        intent=self._adoption_intent(body);body,parts,record_id=intent;project_id=self.session.summary['project_id']
         pending=[]
         with self.access.lock:
             self.access.require('edit','files.adopt',record_id)
@@ -343,7 +376,7 @@ class ProjectFiles:
         intents=[self._adoption_intent(item) for item in body['items']]
         ids=[intent[2] for intent in intents]
         if len(set(ids))!=len(ids):fail('Batch adoption repeats a working-file path.')
-        body=dict(items=[intent[0] for intent in intents]);project_id=self.session.snapshot['project_id']
+        body=dict(items=[intent[0] for intent in intents]);project_id=self.session.summary['project_id']
         target=digest('\0'.join(ids).encode());pending=[]
         with self.access.lock:
             for identity in ids:self.access.require('edit','files.adopt',identity)
@@ -370,7 +403,7 @@ class ProjectFiles:
         closed(body,{'path','expected_revision','expected_sha256'},'note deletion adoption')
         parts=_path('note',body['path']);sha(body['expected_sha256'])
         if type(body['expected_revision']) is not int or not 1<=body['expected_revision']<=2**53-1:fail('Invalid expected note revision.')
-        project_id=self.session.snapshot['project_id'];record_id=file_id(project_id,'note',body['path']);pending=[]
+        project_id=self.session.summary['project_id'];record_id=file_id(project_id,'note',body['path']);pending=[]
         with self.access.lock:
             self.access.require('edit','files.adopt_deletion',record_id)
             def invoke():

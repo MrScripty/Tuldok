@@ -6,6 +6,7 @@ Canonical receipts describe retained facts; they are not filesystem capabilities
 """
 import copy
 from datetime import datetime
+from functools import cache, partial
 import hashlib
 import os
 
@@ -36,7 +37,7 @@ def _summary(saved, origin):
                 schema_version=saved['manifest']['schema_version'])
 
 
-def validate_operation_result(operation,result,records=None):
+def _validate_result(operation,result,lookup=None):
     """Validate the fixed source receipt against its exact retained snapshot."""
     if operation!='source.register':return False
     try:
@@ -50,8 +51,8 @@ def validate_operation_result(operation,result,records=None):
             raise WorkbenchError('Source registration requires an attributed timestamp.')
         if datetime.fromisoformat(result['registered_at']).utcoffset() is None:
             raise WorkbenchError('Source registration timestamp requires an offset.')
-        if records is not None:
-            document=material_records(records).get(('project_snapshot',result['origin_catalog_id']+'.'+result['manifest_sha256']))
+        if lookup is not None:
+            document=lookup(('project_snapshot',result['origin_catalog_id']+'.'+result['manifest_sha256']))
             expected={key:result[key] for key in ('origin_catalog_id','project_id','manifest_sha256','name','schema_version')}
             if document is None or _summary(document['value'],document['origin_catalog_id'])!=expected:
                 raise WorkbenchError('Source receipt differs from its exact retained snapshot.')
@@ -59,6 +60,20 @@ def validate_operation_result(operation,result,records=None):
     except WorkbenchError:raise
     except (ValueError,TypeError,KeyError,AttributeError,OverflowError,RecursionError):
         raise WorkbenchError('Malformed retained source operation result.') from None
+
+
+def receipt_validator(records):
+    """Own one candidate's retained material facts for source receipt checks."""
+    owned = material_records(records)
+    return partial(_validate_result, lookup=owned.get)
+
+
+def validate_operation_result(operation, result, records=None):
+    @cache
+    def owned():
+        return material_records(records)
+    lookup = None if records is None else lambda identity: owned().get(identity)
+    return _validate_result(operation, result, lookup)
 
 
 class SourceAdapter:
@@ -117,9 +132,9 @@ class SourceAdapter:
         self._mutation_identity(expected_checkpoint,key)
         with self.access.lock,self.session.lock,self.db.lock:
             actor=self.access.require('edit','source.register',owner_only=True)
-            self.session.check()
+            self.session.check_current()
             saved,raw=self._read_registration(body)
-            origin=self.session.snapshot['project_id'];invoked=False
+            origin=self.session.summary['project_id'];invoked=False
             def invoke():
                 nonlocal invoked
                 invoked=True;self._bind(saved,raw)
@@ -153,7 +168,7 @@ class SourceAdapter:
             raise WorkbenchError('Invalid bounded source reference page.')
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('inspect','source.references',snapshot['project_id'])
-            self.session.check()
+            self.session.check_current()
             historical=self.materials.snapshot_ref(snapshot['project_id'],snapshot['manifest_sha256'],
                 catalog_id=snapshot['origin_catalog_id'])
             try:current=self.sources._saved(snapshot['project_id'],extensions=True)
@@ -171,7 +186,7 @@ class SourceAdapter:
             selected=current['manifest']['data'][offset:offset+limit];budget=[INSPECTION_LIMIT]
             items=[self.sources._inspect(current['root'],copy.deepcopy(ref),budget,DATA_LIMIT) for ref in selected]
             self.sources.read_snapshot_manifest(snapshot['project_id'],snapshot['manifest_sha256'])
-            self.session.check();self.access.require('inspect','source.references',snapshot['project_id'])
+            self.session.check_current();self.access.require('inspect','source.references',snapshot['project_id'])
             return dict(items=items,total=len(current['manifest']['data']),offset=offset,limit=limit)
 
     def import_scientific(self,body,expected_checkpoint,key):
@@ -183,7 +198,7 @@ class SourceAdapter:
         if type(body['document']) is not dict:raise WorkbenchError('Scientific import metadata must be an object.')
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('edit','source.import_scientific',snapshot['project_id'])
-            self.session.check()
+            self.session.check_current()
             raw,source=self._capture_reference(snapshot,body['reference_id'],body['expected_sha256'],DATA_LIMIT)
             # ProjectData owns the one canonical mutation and native parser;
             # current rooted reads above never become an imported capability.
@@ -204,7 +219,7 @@ class SourceAdapter:
                                                            expected_sha256,maximum_bytes)
         if source['manifest_sha256']!=snapshot['manifest_sha256']:
             raise WorkbenchError('Current source snapshot changed during capture.','stale',409)
-        self.session.check()
+        self.session.check_current()
         return raw,source
 
     def import_measurements(self,body,expected_checkpoint,key):
@@ -216,7 +231,7 @@ class SourceAdapter:
         from retained_measurements import MAX_BYTES
         with self.access.lock,self.session.lock,self.db.lock:
             self.access.require('edit','source.import_measurements',snapshot['project_id'])
-            self.session.check()
+            self.session.check_current()
             raw,source=self._capture_reference(snapshot,body['reference_id'],body['expected_sha256'],MAX_BYTES)
             source=dict(source,origin_catalog_id=snapshot['origin_catalog_id'])
             self.access.require('edit','source.import_measurements',snapshot['project_id'])

@@ -72,6 +72,17 @@ class ProjectWorkspaceTests(unittest.TestCase):
         arguments = self.mutation(root='fixture', directory=directory, name='Workspace authored project')
         return self.call('new', arguments), arguments
 
+    def test_status_returns_current_metadata_without_copying_the_record_graph(self):
+        self.create()
+        self.import_record('A retained record unrelated to the project summary')
+        expected = self.state()
+        with patch.object(self.workspace._store, '_snapshot',
+                          wraps=self.workspace._store._snapshot) as snapshots:
+            observed = self.state()
+        self.assertEqual(observed, expected)
+        self.assertEqual(snapshots.call_count, 0,
+                         'Status must not copy every retained record to return three metadata fields')
+
     def test_control_project_ancestry_is_rejected_before_destination_or_projection_creation(self):
         with ProjectStore.create(self.external/'science','Existing portable project','existing-project','b'*64):pass
         self.start(self.external/'science/control')

@@ -452,7 +452,7 @@ class ProjectNativeExecution:
 
     def _publish(self, document, state, *, helper=None, receipt_sha256=None):
         with self.db.lock,self.db.transaction():
-            self.session.check();actor=self._authorize(document['phase_id'])
+            self.session.check_current();actor=self._authorize(document['phase_id'])
             document['events'].append(dict(state=state,at=timestamp(),actor_id=actor.actor_id,
                 helper=copy.deepcopy(helper),receipt_sha256=receipt_sha256))
             self._dirty[document['phase_id']]=copy.deepcopy(document)
@@ -473,7 +473,7 @@ class ProjectNativeExecution:
         execution=self.execution;journal=execution.custody
         if journal is None:_fail('There is no original local native custody.','unavailable')
         with self.db.lock:
-            if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Expected native recovery checkpoint changed.','stale_project')
+            if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Expected native recovery checkpoint changed.','stale_project')
             local=journal.refresh()
             selected=next((row for row in local.get('native_phases',[]) if row['phase_id']==phase_id),None)
             if selected is None:_fail('A retained phase alone cannot select current native custody.','unavailable')
@@ -501,7 +501,7 @@ class ProjectNativeExecution:
         if self._active:_fail('Current native owner has not finished its bounded observation.','busy')
         with execution.access.lock,self.session.lock,self.db.lock:
             self.access.require('cancel','native_execution.reconcile',phase_id,owner_only=True)
-            if self.session.snapshot['checkpoint']!=expected_checkpoint:_fail('Native checkpoint changed while draining.','stale_project')
+            if self.session.summary['checkpoint']!=expected_checkpoint:_fail('Native checkpoint changed while draining.','stale_project')
             if journal.refresh()!=local:_fail('Original native custody changed while draining.','stale_project')
             binding=journal.binding
             if (binding['project_id']!=self.db.dataset_id or binding['projection_id']!=self.db.projection_id
@@ -788,7 +788,7 @@ class ProjectNativeExecution:
     def _run_phase(self, phase, recipe, request_key, actor, inputs, authority, *, run_id=None, job=None, phase_id=None):
         if self.db.in_transaction:_fail('Native phase cannot launch inside a metadata transaction.','busy')
         with self.db.lock:
-            self.session.check()
+            self.session.check_current()
             if run_id is None and self._foreground_phase is not None:
                 _fail('Another explicit native preparation phase is active.','busy')
             if not self.db.claim_runtime('project_native_phases'):_fail('Another current native phase owner is active.','busy')
@@ -818,7 +818,7 @@ class ProjectNativeExecution:
             self._publish(document,'prepared')
             if self.execution.custody is None:_fail('Native launch requires its original physical custody journal.','unavailable')
             with self.db.lock,self.execution._journal_guard():
-                self._dispatch_authorized(phase_id);self.session.check()
+                self._dispatch_authorized(phase_id);self.session.check_current()
                 if not self.execution.custody.has_pending:self.execution.custody.acknowledge(self.session.snapshot)
                 self.execution.custody.native_prepared(document)
                 self.execution.custody.native_launch_intent(phase_id)
@@ -847,7 +847,7 @@ class ProjectNativeExecution:
                         # Recheck actual authority after both durable ACKs. A
                         # saved GO intent is never permission to retry this send.
                         with self.db.lock:
-                            self.session.check();self._dispatch_authorized(phase_id)
+                            self.session.check_current();self._dispatch_authorized(phase_id)
                             if not self.execution.custody.has_pending:_fail('Native local custody disappeared.','unknown')
                             prepared.check_current_runtime()
                             handle.go(handle.ready)

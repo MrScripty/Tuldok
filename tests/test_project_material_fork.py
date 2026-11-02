@@ -52,7 +52,8 @@ def overlay(records, made, source, checkpoint, destination):
 class MaterialForkCodecs(unittest.TestCase):
     def setUp(self):
         self.source=uuid.uuid4().hex;self.checkpoint='a'*64
-        self.session=SimpleNamespace(snapshot=dict(project_id=self.source,checkpoint=self.checkpoint,records=[]),check=lambda:None)
+        self.session=SimpleNamespace(snapshot=dict(project_id=self.source,checkpoint=self.checkpoint,records=[]),
+                                     summary=dict(project_id=self.source,checkpoint=self.checkpoint),check_current=lambda:None)
         self.material=ProjectMaterial(self.session)
 
     def capture(self,family,current):
@@ -108,7 +109,8 @@ class MaterialForkCodecs(unittest.TestCase):
                 ('pipeline_graph',graph(external=True)),('recipe_definition',recipe(self.source))]
         captured=[self.capture(f,v) for f,v in drafts]
         made,combined,destination=self.fork()
-        session=SimpleNamespace(snapshot=dict(project_id=destination,records=combined),check=lambda:None)
+        session=SimpleNamespace(snapshot=dict(project_id=destination,records=combined),
+                                summary=dict(project_id=destination),check_current=lambda:None)
         reader=ProjectMaterial(session)
         intents=reader.intents()
         self.assertEqual(len(intents),4)
@@ -167,7 +169,8 @@ class MaterialForkCodecs(unittest.TestCase):
         doc=made['records'][0]['document']
         self.assertEqual(doc['current']['required_reselection'],['source_selector'])
         self.assertEqual(doc['current']['definition']['source_selector'],value['source_selector'])
-        reader=ProjectMaterial(SimpleNamespace(snapshot=dict(project_id=destination,records=combined),check=lambda:None))
+        reader=ProjectMaterial(SimpleNamespace(snapshot=dict(project_id=destination,records=combined),
+                                              summary=dict(project_id=destination),check_current=lambda:None))
         with self.assertRaises(WorkbenchError) as caught:
             reader.publish_model(SimpleNamespace(publish=lambda *args: self.fail('Intent reached owner publication')),
                 doc['current']['id'],{'revision':1},'a'*64,'forbidden-intent')

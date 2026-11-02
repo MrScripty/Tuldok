@@ -53,7 +53,7 @@ class ForkFilesystemTests(unittest.TestCase):
         capture.mkdir(parents=True)
         for name, raw in payloads.items():
             (capture / name).write_bytes(raw)
-        session = SimpleNamespace(snapshot=self.source.snapshot(), artifacts=self.artifacts, check=lambda: None)
+        session = SimpleNamespace(snapshot=self.source.snapshot(), artifacts=self.artifacts, check_current=lambda: None)
         self.material = ProjectMaterial(session)
         self.record = self.material.capture_model_material(self.material_value, local)
         records = [*self.material.declarations(self.record), self.record]
@@ -90,7 +90,7 @@ class ForkFilesystemTests(unittest.TestCase):
         self.assertEqual(overlay['source'], dict(project_id=self.origin, checkpoint=self.original['checkpoint']))
         self.assertEqual(next(item for item in snapshot['records'] if item['family'] == 'model_material'), self.record)
         with ProjectStore.open(self.root / 'fork') as destination, ProjectArtifacts(destination) as artifacts:
-            reader = ProjectMaterial(SimpleNamespace(snapshot=destination.snapshot(), artifacts=artifacts, check=lambda: None))
+            reader = ProjectMaterial(SimpleNamespace(snapshot=destination.snapshot(), artifacts=artifacts, check_current=lambda: None))
             self.assertEqual(reader.model(self.material_value['ref'], verify=True), self.material_value)
             source_ref = self.material_value['material']['source_closure'][0]['blob']
             self.assertEqual(reader.blob(self.material_value['ref'], source_ref), SOURCE)
@@ -369,6 +369,29 @@ raise AssertionError('Fault window was not reached')
         bad = copy.deepcopy(records)
         bad[-1]['document']['mapping'][0]['destination_id'] = source_id
         self.assert_code('invalid', decode_fork, bad)
+
+
+class ActiveRecordSelectionTests(unittest.TestCase):
+    def test_family_selection_keeps_independent_values_and_default_membership(self):
+        records=[dict(family=family,id='a'*32,document=dict(format='fixture_v1',values=[1]))
+                 for family in ('project_operation','workbench_text')]
+        self.assertEqual(active_records(records),records)
+        selected=active_records(records,families=frozenset({'project_operation'}))
+        self.assertEqual(selected,[records[0]])
+        selected[0]['document']['values'].append(2)
+        self.assertEqual(records[0]['document']['values'],[1])
+        self.assertEqual(active_records(records,families=frozenset()),[])
+
+    def test_family_selection_still_validates_excluded_fork_structure(self):
+        record=dict(family='workbench_text',id='a'*32,document={'format':'workbench_text_v1'})
+        with self.assertRaisesRegex(ProjectForkError,'Duplicate'):
+            active_records([record,copy.deepcopy(record)],families=frozenset({'project_operation'}))
+
+    def test_family_selection_rejects_implicit_or_invalid_selectors(self):
+        for invalid in ('project_operation',[],frozenset({1}),frozenset({'bad/family'})):
+            with self.subTest(selector=invalid),self.assertRaises(ProjectStoreError) as caught:
+                active_records([],families=invalid)
+            self.assertEqual(caught.exception.code,'invalid')
 
 
 if __name__ == '__main__':

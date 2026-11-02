@@ -750,17 +750,29 @@ class ProjectHistory:
             from project_material import ProjectMaterial
             materials=ProjectMaterial(session)
         self.materials=materials;self.authorize_disclosure=authorize_disclosure
+        self._decoded_checkpoint=None
+        self._decoded_facts=None
 
     def _facts(self):
-        self.session.check()
+        self.session.check_current()
+        summary=self.session.summary
+        checkpoint=(summary['project_id'],summary['checkpoint'])
+        if self._decoded_checkpoint==checkpoint:
+            return self._decoded_facts
         records=self.session.snapshot['records']
-        return decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
+        facts=decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
+        # Current canonical bytes are guarded on every call. Only this owner's
+        # private decoded metadata is retained; returned values and permissions
+        # remain the responsibility of each read below.
+        self._decoded_facts=facts
+        self._decoded_checkpoint=checkpoint
+        return facts
 
     def _authorize(self,action,target=None):
         self.access.require('inspect',action,target)
 
     def _origin(self,origin):
-        return self.session.snapshot['project_id'] if origin is None else origin
+        return self.session.summary['project_id'] if origin is None else origin
 
     def _record(self,collection,identity,origin=None):
         origin=self._origin(origin);identifier(origin,'Origin catalog');identifier(identity)
@@ -1163,7 +1175,7 @@ class ProjectHistory:
         closed(body,('name','limits','policy'));body=checked_json(body)
         text(body['name'],'Study name');limits=budget(body['limits']);policy=validate_retained_policy(body['policy'])
         def build(facts):
-            origin=self.session.snapshot['project_id'];identity=uuid.uuid4().hex;sha=digest(policy)
+            origin=self.session.summary['project_id'];identity=uuid.uuid4().hex;sha=digest(policy)
             prior=next((key for key,value in facts.policies.items() if key[0]==origin and key[3]==sha),None)
             policy_id=prior[1] if prior else uuid.uuid4().hex
             ref={'kind':'selection_policy','catalog_id':origin,'id':policy_id,'revision':1,'sha256':sha}
@@ -1180,7 +1192,7 @@ class ProjectHistory:
         closed(body,('revision','name','limits','policy'));body=checked_json(body)
         text(body['name'],'Study name');limits=budget(body['limits'])
         def build(facts):
-            origin=self.session.snapshot['project_id'];doc=copy.deepcopy(self._record(facts.studies,study_id,origin));study=doc['study']
+            origin=self.session.summary['project_id'];doc=copy.deepcopy(self._record(facts.studies,study_id,origin));study=doc['study']
             if body['revision']!=study['revision']:_invalid('Study changed. Reload.','stale')
             ref=reference(body['policy'],'selection_policy',origin)
             policy=facts.policies.get((origin,ref['id'],ref['revision'],ref['sha256']))
@@ -1201,7 +1213,7 @@ class ProjectHistory:
         if request_key not in operation_records(self.session.snapshot['records']):
             self.materials.recipe(body['material'],verify=True)
         def build(facts):
-            origin=self.session.snapshot['project_id'];doc=copy.deepcopy(self._record(facts.studies,study_id,origin))
+            origin=self.session.summary['project_id'];doc=copy.deepcopy(self._record(facts.studies,study_id,origin))
             study=doc['study']
             if body['revision']!=study['revision']:_invalid('Study changed. Reload.','stale')
             ref=reference(body['material'],'recipe_material',origin);self.materials.recipe(ref)
@@ -1224,7 +1236,7 @@ class ProjectHistory:
         identifier(body['trial_id']);identifier(body['run_id'])
         # Expensive semantic proof precedes the write transaction. All exact
         # associations and selected policy are checked again under publication.
-        origin=self.session.snapshot['project_id']
+        origin=self.session.summary['project_id']
         self.access.require('edit','studies.select_candidate',study_id)
         evidence=(self.evidence(body['run_id'],{},origin_catalog_id=origin)
                   if request_key not in operation_records(self.session.snapshot['records']) else None)
@@ -1254,7 +1266,7 @@ class ProjectHistory:
     def record_lineage(self,body,expected_checkpoint,request_key):
         closed(body,('trial','intent'));body=checked_json(body,INTENT_LIMIT+4096)
         def build(facts):
-            origin=self.session.snapshot['project_id'];trial=facts.trial_ref(body['trial'])
+            origin=self.session.summary['project_id'];trial=facts.trial_ref(body['trial'])
             if body['trial']['catalog_id']!=origin:_invalid('Inherited Trials remain immutable historical evidence.','conflict')
             doc=copy.deepcopy(facts.trials[(origin,trial['id'])])
             if doc['lineage'] is not None:_invalid('Trial lineage is already recorded and immutable.','conflict')

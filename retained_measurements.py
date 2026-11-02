@@ -26,6 +26,7 @@ MAX_ROWS = 100000
 MAX_COMPARISON_SOURCES = 16
 MAX_COMPARISON_SUBJECTS = 256
 MAX_COMPARISON_BYTES = 128 * 1024 * 1024
+MAX_COMPARISON_ROWS = 250000
 STATES = ('measured', 'failed', 'unsupported', 'unavailable')
 ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')
 SHA = re.compile(r'^[a-f0-9]{64}$')
@@ -411,8 +412,8 @@ class MeasurementComparison:
                     fail('Comparison sources overlap a subject identity.', 'conflict', 409)
                 self._subjects[subject['id']] = dict(copy.deepcopy(subject), source=copy.deepcopy(locator))
             observations += metadata['observation_count']
-            if len(self._subjects) > MAX_COMPARISON_SUBJECTS or observations > MAX_ROWS:
-                fail('Comparison exceeds 256 subjects or 100,000 observations.', 'too_large', 413)
+            if len(self._subjects) > MAX_COMPARISON_SUBJECTS or observations > MAX_COMPARISON_ROWS:
+                fail('Comparison exceeds 256 subjects or 250,000 observations.', 'too_large', 413)
             self._tables.append((copy.deepcopy(locator), table))
         self._header.update(subjects=list(self._subjects.values()), observation_count=observations)
 

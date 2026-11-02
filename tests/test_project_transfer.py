@@ -433,7 +433,7 @@ class ProjectTransferTests(unittest.TestCase):
             from project_material import ProjectMaterial
             with ProjectStore.open(self.root/'science') as store,ProjectArtifacts(store) as artifacts:
                 snapshot=store.snapshot();records=snapshot['records']
-                view=SimpleNamespace(snapshot=snapshot,artifacts=artifacts,check=lambda:None)
+                view=SimpleNamespace(snapshot=snapshot,artifacts=artifacts,check_current=lambda:None)
                 facts=history(records,materials=ProjectMaterial(view),artifacts=artifacts)
                 self.assertEqual(len(facts.studies),2);self.assertEqual(len(facts.trials),2)
                 self.assertEqual(len(facts.candidates),1);self.assertEqual(len(facts.reservations),1);self.assertEqual(len(facts.runs),1)

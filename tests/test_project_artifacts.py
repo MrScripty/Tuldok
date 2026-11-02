@@ -74,7 +74,7 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
                 original.write_bytes(b'changed after verified capture')
                 return publish(fd, value, **options)
             with patch.object(destination, 'publish_fd', side_effect=mutate_source_after_snapshot):
-                with patch.object(self.store, 'snapshot', wraps=self.store.snapshot) as checks:
+                with patch.object(self.store, '_current', wraps=self.store._current) as checks:
                     self.artifacts.copy_many_to(destination, values)
             self.assertEqual(checks.call_count, 2)
             for raw, value in zip(raws, values):
@@ -118,7 +118,7 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
         self.payload(values[2]).unlink()
         self.payload(values[2]).write_bytes(b'changed')
         expected = [self.artifacts.status(value) for value in values]
-        with patch.object(self.store, 'snapshot', wraps=self.store.snapshot) as checks:
+        with patch.object(self.store, '_current', wraps=self.store._current) as checks:
             actual = self.artifacts.status_many(values)
         self.assertEqual(actual, expected)
         self.assertEqual([item['state'] for item in actual], ['verified', 'missing', 'corrupt'])
@@ -161,7 +161,7 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
         self.artifacts.publish_bytes(b'present',values[0])
         self.commit(values)
         expected=[self.artifacts.inspect(value) for value in values]
-        with patch.object(self.store,'snapshot',wraps=self.store.snapshot) as checks:
+        with patch.object(self.store,'_current',wraps=self.store._current) as checks:
             actual=self.artifacts.inspect_many(values)
         self.assertEqual(actual,expected)
         self.assertEqual(checks.call_count,2)

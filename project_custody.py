@@ -197,7 +197,7 @@ class ProjectCustody:
         finally:os.close(parent)
 
     def _binding(self, store, projection_id):
-        snapshot=store.snapshot()
+        snapshot=store.summary()
         with store.root_directory() as descriptor:
             info=os.fstat(descriptor)
         return dict(host_catalog_id=self.host_catalog_id,project_id=snapshot['project_id'],
@@ -247,7 +247,7 @@ class CustodyJournal:
         persisted=value is not None
         if value is None:
             value=dict(format='project_local_custody_v1',**binding,
-                       project_name=store.snapshot()['name'],selected_checkpoint=store.snapshot()['checkpoint'],
+                       project_name=store.summary()['name'],selected_checkpoint=store.summary()['checkpoint'],
                        attempted=None,runs=[],producers=[],runtime_effects=[],package_effects=[])
         if any(value[key]!=item for key,item in binding.items()):_fail('Original physical custody binding differs.')
         self.value=validate(value)

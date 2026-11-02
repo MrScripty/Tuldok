@@ -1471,6 +1471,13 @@ _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# Keep the installed v1 bounds/hash exact. Version 2 admits complete larger
+# comparisons; each individual packet and every response page retain their caps.
+_comparison_capacity=copy.deepcopy(_CONTRACTS['project_files.measurement_compare'][1])
+_comparison_value=_comparison_capacity['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']['properties']['value']['properties']
+_comparison_value['observation_count']=integer(1,250000)
+_comparison_value['query']['oneOf'][0]['properties']['total']=integer(0,250000)
+_CONTRACTS['project_files.measurement_compare'][2]=_comparison_capacity
 # v1 remains the closed Run-only current custody view. v2 additionally exposes
 # bounded original local native phases; imported history never populates it.
 _native_health=copy.deepcopy(_CONTRACTS['project_files.execution_health'][1])
@@ -1974,6 +1981,12 @@ def operation(name, version=None):
     return copy.deepcopy(versions[max(versions) if version is None else version])
 
 
+def measurement_comparison_row_limit(version=None):
+    """Return the selected immutable public contract's comparison budget."""
+    selected=operation('project_files.measurement_compare',version)
+    return selected['outputSchema']['oneOf'][0]['properties']['result']['properties']['value']['properties']['value']['properties']['observation_count']['maximum']
+
+
 def _native_validation_result_ok(value, revision):
     """Check the finite public truth fields without interpreting native runtime data.
 
@@ -2382,6 +2395,8 @@ def _private_file(path, maximum):
 
 class AgentClient:
     """No catalog access, automatic retries, redirects, proxies or owner identity."""
+    MAX_TIMEOUT_SECONDS = 300
+
     def __init__(self, endpoint, token, expected_catalog_id, timeout=120):
         try:
             parsed = urlsplit(endpoint)
@@ -2391,7 +2406,7 @@ class AgentClient:
                 raise ValueError()
             if not re.fullmatch(r'[A-Za-z0-9_-]{20,4096}', token) or not re.fullmatch('[a-f0-9]{32}', expected_catalog_id):
                 raise ValueError()
-            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 300:
+            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= self.MAX_TIMEOUT_SECONDS:
                 raise ValueError()
         except (ValueError, TypeError):
             raise AgentAPIError('Invalid fixed loopback client configuration.', 'configuration') from None
@@ -3016,6 +3031,10 @@ class AgentClient:
 
 class ProjectFilesOwnerClient(AgentClient):
     """Explicit owner file-project access; no unrelated owner operations."""
+    # Large retained projects may outlast the generic transport's five minutes.
+    # Only an explicit owner configuration opts into a longer absolute wait.
+    MAX_TIMEOUT_SECONDS = 7200
+
     OPERATIONS = frozenset('project_files.' + action for action in
         ('status', 'new', 'open', 'save', 'close', 'query', 'get', 'import_text', 'annotate')) | PROJECT_FILES_M2 | PROJECT_FILES_M3 | PROJECT_FILES_M4
 

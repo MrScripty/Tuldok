@@ -105,6 +105,16 @@ annotations; human review still requires the owner. Every project action is boun
 to an opaque workspace generation and its expected canonical checkpoint.
 
 Use `ProjectFilesOwnerClient` only for the narrow owner project-file operations.
+Its explicit `timeout` configuration may be up to 7,200 seconds for large retained
+projects; the default remains 120 seconds. The absolute request watchdog still
+applies and a transport timeout never authorizes an automatic mutation retry.
+Generic clients retain their 300-second maximum. This wait budget is not an
+execution deadline or a cancellation request.
+
+Browser contract tables derive from the local `agent_api` registry. Regenerate
+them with `python scripts/generate_project_files_contracts.py`; add `--check`
+to verify that the installed v1 pins, all supported version pins and fixed
+routes match that registry. Remote schemas remain opaque discovery data.
 `ProjectFilesClient` wraps a negotiated client. CLI domain `file-*` commands take
 `--arguments` JSON files; lifecycle commands use explicit flags and select
 `--owner-project-files` with a

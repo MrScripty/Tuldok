@@ -149,7 +149,7 @@ def _data(projection, action, a):
 def _definitions(projection, family, a):
     docs = projection.materials._documents()
     values = [doc['current'] for (kind, _), doc in docs.items()
-              if kind == family and doc['origin_catalog_id'] == projection.session.snapshot['project_id']]
+              if kind == family and doc['origin_catalog_id'] == projection.session.summary['project_id']]
     return _page(sorted(values, key=lambda item: item['id']), a)
 
 
@@ -370,7 +370,16 @@ def _m4(projection,action,a):
     if action=='file_adopt_deletion':
         return projection.files.adopt_deletion(_body(a),a['expected_checkpoint'],a['request_key'])
     with session.access.lock,session.lock,session.db.lock:
-        session.access.require('inspect','project_files.'+action);snapshot=session.check()
+        session.access.require('inspect','project_files.'+action)
+        if action=='fork_info':
+            snapshot=session.check()
+            from project_fork import decode_fork
+            overlay=decode_fork(snapshot['records'],project_id=snapshot['project_id'])
+            return dict(source=overlay['source'] if overlay else None,project_id=snapshot['project_id'],
+                mapping=_page(overlay['mapping'] if overlay else [],a),archived_count=len(overlay['archived']) if overlay else 0,
+                copied_count=len(overlay['artifacts']['copied']) if overlay else 0,
+                missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']) if overlay else 0)
+        session.check_current()
         if action=='files_inspect':return _page(projection.files.inspect()['items'],a)
         if action=='file_get':return projection.files.read(a['file_id'],a.get('revision'))
         if action=='file_history':
@@ -390,13 +399,6 @@ def _m4(projection,action,a):
             items=[dict(item,requires_reselection=[]) for item in value['editable']]
             items.extend(dict(family=item['family'],id=item['id'],requires_reselection=item['fields']) for item in value['requires_reselection'])
             return _page(sorted(items,key=lambda item:(item['family'],item['id'])),a)
-        if action=='fork_info':
-            from project_fork import decode_fork
-            overlay=decode_fork(snapshot['records'],project_id=snapshot['project_id'])
-            return dict(source=overlay['source'] if overlay else None,project_id=snapshot['project_id'],
-                mapping=_page(overlay['mapping'] if overlay else [],a),archived_count=len(overlay['archived']) if overlay else 0,
-                copied_count=len(overlay['artifacts']['copied']) if overlay else 0,
-                missing_regenerable_count=len(overlay['artifacts']['missing_regenerable']) if overlay else 0)
     raise AssertionError('Closed M4 dispatch is incomplete.')
 
 

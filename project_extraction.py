@@ -69,7 +69,7 @@ class _Capture:
         self.payload_gaps = []
         self.deleted_intents = set()
         self.session = SimpleNamespace(snapshot=source.snapshot, db=self.db,
-            artifacts=source.artifacts, check=lambda: None)
+            artifacts=source.artifacts, check_current=lambda: None)
         # Workbench and each metadata-view constructor only assign references;
         # none runs SQL, creates directories or constructs Dataset/Jobs/Runs.
         # Never call get/history: those public owners may enroll images.
