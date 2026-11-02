@@ -20,7 +20,7 @@ from metadata import Metadata
 from project_store import ProjectStore, ProjectStoreError
 from project_projection import ProjectProjection
 from project_custody import ProjectCustody
-from project_validation_cache import ProjectValidationCache
+from project_validation_cache import CanonicalDigestCache, ProjectValidationCache
 from workbench import WorkbenchError
 
 
@@ -85,6 +85,7 @@ class ProjectWorkspace:
         self.access = Access(self.db, self.path)
         self.custody = ProjectCustody(self.path, self.db.dataset_id)
         self.validation_cache = ProjectValidationCache(self.path)
+        self.canonical_digests = CanonicalDigestCache(self.path)
         self._retained_recovery = None
         self._dsn = dsn
         self._runtime_sources = configured
@@ -274,7 +275,7 @@ class ProjectWorkspace:
             self._store = None
         store = projection = None
         try:
-            store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path)
+            store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
             snapshot = store.summary()
             if snapshot['project_id'] != self._last_project['project_id']:
                 raise WorkbenchError('Recovery destination has a different project identity.', 'stale_project', 409)
@@ -329,7 +330,7 @@ class ProjectWorkspace:
                     # unselected destination. Only its exact receipt authorizes
                     # treating it as this New; unrelated folders remain conflicts.
                     try:
-                        store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path)
+                        store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
                     except ProjectStoreError:
                         raise error
                     if store.reconcile(arguments['request_key'], digest) is None:
@@ -340,7 +341,7 @@ class ProjectWorkspace:
                     store.save(snapshot['checkpoint'])
                 created = snapshot
             else:
-                store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path)
+                store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
             projection, text = self._projection_for(store)
             self._detach()
             self._store, self._projection, self._text = store, projection, text
@@ -411,7 +412,7 @@ class ProjectWorkspace:
                         raise WorkbenchError('Composition source identity repeats.','conflict',409)
                     identities.add(selected['project_id'])
                     directory,descriptor=self._root(selected['root'],selected['directory'])
-                    store=retained.enter_context(ProjectStore.open_at(descriptor,selected['directory'],root_path=directory))
+                    store=retained.enter_context(ProjectStore.open_at(descriptor,selected['directory'],root_path=directory, canonical_digests=self.canonical_digests))
                     actual=store.summary()
                     if actual['project_id']!=selected['project_id'] or actual['checkpoint']!=selected['checkpoint']:
                         raise WorkbenchError('Selected composition source checkpoint differs.','stale_project',409)
@@ -432,7 +433,7 @@ class ProjectWorkspace:
             # A filesystem editor can act outside the workspace lock. Leave the
             # complete fork unselected if its source working files changed.
             source.files.require_clean()
-            incoming = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path)
+            incoming = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
             projection, text = self._projection_for(incoming)
             snapshot, overlay = published['snapshot'], published['fork']
             self._detach()

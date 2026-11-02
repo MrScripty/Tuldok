@@ -167,6 +167,28 @@ class HistoryCodecTests(unittest.TestCase):
         changed=copy.deepcopy(records);changed[-1]['document']['lineage']['intent']['baseline']['catalog_id']=OTHER
         with self.assertRaises(WorkbenchError):decode_records(changed,materials=Materials())
 
+    def test_validated_fact_assembly_equals_complete_decode(self):
+        from project_history import assemble_validated_facts
+        parent_id='9'*32;child_id='a'*32
+        parent_ref={'catalog_id':ORIGIN,'trial_id':parent_id,'material_sha256':MATERIAL}
+        saved=capture_run(legacy_run(),payloads=[])
+        fixtures=(
+            [study('3'*32,trials=[parent_id]),study('b'*32,trials=[child_id]),
+             trial(parent_id,'3'*32),trial(child_id,'b'*32,parent=parent_ref,baseline=parent_ref)],
+            [saved,*declarations(saved)],
+        )
+        for records in fixtures:
+            with self.subTest(families=sorted({r['family'] for r in records})):
+                decoded=decode_records(copy.deepcopy(records),materials=Materials())
+                for owned in (False,True):
+                    before=copy.deepcopy(records)
+                    with patch('project_history._validate_run_document',side_effect=AssertionError('Validator rerun')):
+                        assembled=assemble_validated_facts(copy.deepcopy(records) if owned else records,owned=owned)
+                    self.assertEqual(records,before)
+                    for field in ('studies','trials','runs','candidates','policies','reservations','observations'):
+                        self.assertEqual(getattr(assembled,field),getattr(decoded,field),field)
+                        self.assertEqual(list(getattr(assembled,field)),list(getattr(decoded,field)),field)
+
     def test_history_read_uses_one_material_view_of_the_selected_records(self):
         identity='9'*32
         records=[study(trials=[identity]),trial(identity,'3'*32)]

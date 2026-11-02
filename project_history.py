@@ -25,7 +25,7 @@ from projects import relative_path
 from runs import (ACTIVE, TERMINAL, TEST_FILES, MAX_ARTIFACT_BYTES, validate_retained_run,
                   project_run_projection, public_run_projection, artifact_capture_source, validate_external_artifact_inventory)
 from workbench import WorkbenchError, timestamp
-from project_session import session_derived, session_operations, session_records
+from project_session import session_derived, session_operations, session_records, session_records_for
 
 FAMILY_FORMATS = {
     'study_history': 'project_study_history_v1',
@@ -563,12 +563,53 @@ def _decode_records(records, *, materials=None, artifacts=None):
     return facts
 
 
+def assemble_validated_facts(records, *, owned=False):
+    """Collect HistoryFacts from records whose complete validation is on record.
+
+    decode_records validates and collects exactly these values: each history
+    document (as a checked JSON copy), Run observations, and the policy and
+    reservation indexes taken from Study documents. Only for a checkpoint that
+    already passed complete domain validation (which runs decode_records over
+    these same records) may the collection be repeated without re-running the
+    validators. tests/test_project_history.py and the portfolio equivalence
+    check compare this against decode_records field by field. owned=True means
+    the caller supplies independent copies the facts may keep without recopying.
+    """
+    facts=HistoryFacts()
+    for record in records:
+        family=record.get('family')
+        if family not in FAMILY_FORMATS:continue
+        if family=='run_observation':
+            doc=_observation_document(record)
+            facts.observations[(doc['origin_catalog_id'],doc['run_id'],doc['sha256'])]=doc
+            continue
+        doc=record['document'] if owned else checked_json(record['document'],MAX_HISTORY_BYTES)
+        origin=doc['origin_catalog_id']
+        if family=='study_history':target,identity=facts.studies,doc['study']['id']
+        elif family=='trial_history':target,identity=facts.trials,doc['trial']['id']
+        elif family=='run_history':target,identity=facts.runs,doc['run']['id']
+        else:target,identity=facts.candidates,doc['candidate']['id']
+        target[(origin,identity)]=doc
+    for (origin,_identity),doc in facts.studies.items():
+        for item in doc['policies']:
+            ref=item['ref'];facts.policies[(origin,ref['id'],ref['revision'],ref['sha256'])]=item['policy']
+        for reservation in doc['reservations']:
+            facts.reservations[(origin,reservation.get('run_id'))]=reservation
+    return facts
+
+
 def checkpoint_facts(session, materials):
     """Decoded history of the session's bound checkpoint, shared by its owners.
 
-    Decoded once per checkpoint; callers copy any part they return.
+    Decoded once per checkpoint; callers copy any part they return. When the
+    session records that this exact checkpoint passed complete validation,
+    the facts are collected without repeating the validators.
     """
     def compute():
+        validated=getattr(session,'validated_checkpoint',None)
+        if validated is not None and validated==session.summary['checkpoint']:
+            # records_for returns independent copies of exactly these families.
+            return assemble_validated_facts(session_records_for(session,*FAMILY_FORMATS),owned=True)
         records=session.snapshot['records']
         return decode_records(records,materials=materials.read_view(records))
     return session_derived(session, 'history_facts',compute)

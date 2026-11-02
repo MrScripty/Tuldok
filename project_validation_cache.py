@@ -94,3 +94,62 @@ class ProjectValidationCache:
             os.replace(temporary, path)
         except OSError:
             pass
+
+
+class CanonicalDigestCache:
+    """Private set of record digests whose bytes were proven canonical JSON.
+
+    Canonicality is a property of the bytes alone, and record files are named
+    by their SHA256, so a proof for one digest holds for every project that
+    contains those exact bytes. The set is versioned by the canonical codec's
+    own source, so any change to the encoding rules starts a fresh set.
+    """
+    def __init__(self, control_path):
+        import inspect
+        import project_store
+        codec = ''.join(inspect.getsource(function) for function in (
+            project_store._json_value, project_store._encode, project_store._pairs, project_store._decode))
+        version = hashlib.sha256((codec + json.__version__).encode('utf-8')).hexdigest()[:32]
+        self.path = Path(control_path) / '.canonical-digests' / f'{version}.bin'
+        self._known = None
+        self._lock = threading.Lock()
+
+    def _load(self):
+        if self._known is None:
+            known = set()
+            try:
+                with open(self.path, 'rb') as stream:
+                    raw = stream.read()
+                if len(raw) % 32 == 0:
+                    known = {raw[index:index + 32] for index in range(0, len(raw), 32)}
+            except OSError:
+                pass
+            self._known = known
+        return self._known
+
+    def __contains__(self, digest):
+        with self._lock:
+            return bytes.fromhex(digest) in self._load()
+
+    def add_many(self, digests):
+        """Best effort: a lost update only means those records are re-proven."""
+        with self._lock:
+            known = self._load()
+            fresh = {bytes.fromhex(digest) for digest in digests} - known
+            if not fresh:
+                return
+            known |= fresh
+            try:
+                self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                temporary = self.path.parent / f'.{uuid.uuid4().hex}.tmp'
+                descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                try:
+                    remaining = memoryview(b''.join(sorted(known)))
+                    while remaining:
+                        remaining = remaining[os.write(descriptor, remaining):]
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
+                os.replace(temporary, self.path)
+            except OSError:
+                pass

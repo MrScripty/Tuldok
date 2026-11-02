@@ -86,6 +86,8 @@ class ProjectSession:
         self.lock = threading.RLock()
         self._validate = validate_records
         self.validation_cache = validation_cache
+        # Checkpoint whose exact records passed complete domain validation.
+        self.validated_checkpoint = None
         self.available = False
         self._snapshot = None
         self.project_id = store.summary()['project_id']
@@ -293,13 +295,18 @@ class ProjectSession:
         """
         cache = getattr(self, 'validation_cache', None)
         if checkpoint is not None and cache is not None and cache.known(self.project_id, checkpoint):
+            self.validated_checkpoint = checkpoint
             return
         operation_records(records, project_id=self.project_id)
         self._validate(records)
-        if checkpoint is not None and cache is not None:
-            cache.remember(self.project_id, checkpoint)
+        if checkpoint is not None:
+            self.validated_checkpoint = checkpoint
+            if cache is not None:
+                cache.remember(self.project_id, checkpoint)
 
     def _remember_validated(self, checkpoint):
+        # The caller completely validated exactly the records this names.
+        self.validated_checkpoint = checkpoint
         cache = getattr(self, 'validation_cache', None)
         if cache is not None:
             cache.remember(self.project_id, checkpoint)

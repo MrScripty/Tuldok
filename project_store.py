@@ -556,8 +556,10 @@ class ProjectStore:
     revisions are never pruned. Callers validate domain semantics before commit
     and after Open; this owner validates only the generic JSON/inventory contract.
     """
-    def __init__(self, path, root_fd, origin_fd, relative_parts, origin_path):
+    def __init__(self, path, root_fd, origin_fd, relative_parts, origin_path, canonical_digests=None):
         self.path = Path(path)
+        # Optional private set of digests already proven canonical; see _load.
+        self._canonical_digests = canonical_digests
         self._root_fd = root_fd
         self._origin_fd = origin_fd
         self._relative_parts = relative_parts
@@ -663,7 +665,7 @@ class ProjectStore:
                 os.close(origin_fd)
 
     @classmethod
-    def open(cls, path):
+    def open(cls, path, *, canonical_digests=None):
         raw = _path_string(path)
         if type(raw) is not str or '\x00' in raw or '..' in raw.split('/'):
             _fail('Unsafe project root path.')
@@ -671,12 +673,12 @@ class ProjectStore:
         parent, leaf = os.path.split(absolute)
         _, parent_fd = _open_directory_path(parent)
         try:
-            return cls.open_at(parent_fd, leaf, root_path=parent)
+            return cls.open_at(parent_fd, leaf, root_path=parent, canonical_digests=canonical_digests)
         finally:
             os.close(parent_fd)
 
     @classmethod
-    def open_at(cls, trusted_root_fd, relative, *, root_path):
+    def open_at(cls, trusted_root_fd, relative, *, root_path, canonical_digests=None):
         """Open a descendant without following any configured-root or child alias."""
         parts = _relative_parts(relative)
         absolute = _verify_origin(trusted_root_fd, root_path)
@@ -685,7 +687,8 @@ class ProjectStore:
         try:
             fd = _walk(origin_fd, parts)
             owned_origin, origin_fd = origin_fd, None
-            store = cls(Path(absolute).joinpath(*parts), fd, owned_origin, parts, absolute)
+            store = cls(Path(absolute).joinpath(*parts), fd, owned_origin, parts, absolute,
+                        canonical_digests=canonical_digests)
             store._meta_fd = _directory(fd, '.tuldok')
             store._manifest, _ = store._load()
             return store
@@ -771,6 +774,8 @@ class ProjectStore:
             _fail('Invalid project inventory.')
         loaded, roots, total, previous = [], [], 0, None
         records_digest = _RecordsDigest()
+        known = self._canonical_digests
+        proven = []
         for entry in inventory:
             _keys(entry, ('family', 'id', 'format', 'namespace', 'path', 'bytes', 'sha256'), 'Inventory entry')
             family, record_id, digest = entry['family'], entry['id'], entry['sha256']
@@ -792,7 +797,14 @@ class ProjectStore:
             if total > MAX_TOTAL_BYTES:
                 _fail('Project records exceed their total byte limit.')
             record_raw = self._verified_record_bytes(entry)
-            document = _decode(record_raw)
+            if known is not None and digest in known:
+                # These exact bytes (named by their verified SHA256) were already
+                # proven to be their value's canonical encoding, which excludes
+                # duplicate keys and non-finite numbers; a plain parse is exact.
+                document = json.loads(record_raw)
+            else:
+                document = _decode(record_raw)
+                proven.append(digest)
             if type(document) is not dict or document.get('format') != entry['format']:
                 _fail('Domain document format disagrees with its inventory.')
             records_digest.add(family, record_id, record_raw)
@@ -817,6 +829,8 @@ class ProjectStore:
         if _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES) != raw:
             _fail('Project checkpoint changed while reading.', 'stale', 409)
         self._binding()
+        if known is not None and proven:
+            known.add_many(proven)
         self._read_cache = (raw, manifest, loaded)
         return manifest, loaded
 
@@ -994,6 +1008,10 @@ class ProjectStore:
                         self._record_file(family, identity, _sha(raw), raw)
                 published = self._publish(manifest)
                 self._manifest = manifest
+                if self._canonical_digests is not None:
+                    # Freshly written revisions are canonical by construction.
+                    self._canonical_digests.add_many(
+                        [_sha(raw) for _f, _i, _d, raw, _e in prepared if raw is not None])
                 # Every committed revision is either freshly written and read
                 # back byte-for-byte or an unchanged verified revision.
                 self._read_cache = (published, manifest, normalized)
