@@ -31,7 +31,9 @@ $('pumas-gateway-scan').addEventListener('click',async()=>{
     pumasGateways=result.gateways;
     $('pumas-gateway-choice').replaceChildren(new Option('Choose an advertised gateway',''),...pumasGateways.map(row=>
       new Option(row.server_url+' · '+row.advertisement.build_info.package_version+' · '+row.advertisement.instance.registry_library_id,row.server_url)));
-    pumasGatewayStatus(pumasGateways.length?'Choose a gateway and annotation workflow. Model support is checked when you request a proposal.':'No compatible HTTP advertisements found. Start Pumas with HTTP discovery, or enter a legacy gateway URL in the proposal form.');
+    // Advertisements Pumas served but Tuldok refused keep their reasons.
+    const refused=(Array.isArray(result.rejected)?result.rejected:[]).map(row=>' Refused '+row.server_url+': '+row.reason).join('');
+    pumasGatewayStatus((pumasGateways.length?'Choose a gateway and annotation workflow. Model support is checked when you request a proposal.':'No compatible HTTP advertisements found. Start Pumas with HTTP discovery, or enter a legacy gateway URL in the proposal form.')+refused);
   }catch(error){if(token.epoch===pumasGatewayEpoch&&!pumasGatewayPaused)pumasGatewayStatus(error.message);}
   finally{if(pumasGatewayOperation===token){pumasGatewayOperation=null;renderPumasGateway();}}
 });

@@ -40,8 +40,13 @@ Choose **Pumas typed v1** in the image caption form, select the serving alias an
 optional exact profile, and inspect capabilities. On each new attempt, the owner
 requires `pumas.model-operations.image-to-text:1` in the gateway build advertisement
 and an available Image→Text descriptor for the exact resolved model/profile. The
-gateway advertisement keeps its own closed, versioned decoder: it is retained as
-evidence, so unknown advertisement fields are refused rather than stored.
+gateway advertisement (`GET /.well-known/pumas`) has its own versioned decoder,
+which also grows additively: unknown fields and new protocol, schema, capability or
+compiled-feature entries are ignored and are not retained in the stored build
+observation, which keeps only the known fields. Missing required fields, wrong
+types, unsupported schema versions and malformed endpoints are refused with a
+reason naming the field; a gateway scan lists such refused advertisements with
+their reasons instead of hiding them.
 The request uses the facade's `messages`, `semantic_task:"image_to_text"`,
 text-generation options and `stream:false`. The seed is omitted. Named image and
 `image_messages` inputs are also supported by the bounded consumer request builder.

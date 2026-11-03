@@ -218,15 +218,20 @@ def scan_advertised():
         def observe(item):
             host, port = item
             address = '[' + host + ']' if ':' in host else host
+            url = f'http://{address}:{port}'
             try:
-                return inspect_advertised(f'http://{address}:{port}', deadline)
+                return inspect_advertised(url, deadline), None
+            except descriptor.Rejected as error:
+                # Pumas answered but its advertisement was refused: keep the reason for the user.
+                return None, {'server_url': url, 'reason': str(error)}
             except (OSError, ValueError, TypeError, http.client.HTTPException):
-                return None
+                return None, None
         with ThreadPoolExecutor(max_workers=32) as pool:
             results = list(pool.map(observe, endpoints))
         # Distinct IPv4/IPv6 services on one port must retain their library context.
-        found = {row['server_url']: row for row in results if row is not None}
-        return {'gateways': list(found.values()), 'qualification':
+        found = {row['server_url']: row for row, _ in results if row is not None}
+        rejected = [refusal for _, refusal in results if refusal is not None]
+        return {'gateways': list(found.values()), 'rejected': rejected, 'qualification':
                 'Read-only HTTP advertisements. Core ownership is not authenticated; compiled features do not prove model readiness.'}
     finally:
         SCAN_LOCK.release()
