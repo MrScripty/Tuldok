@@ -103,6 +103,8 @@ for name in ('torch','numpy'):
   await activate('#project-runtime-status-form button');await settled();const historical=JSON.parse(await evaluate('document.getElementById("project-runtime-status").textContent'));assert.equal(historical.state,'captured');assert.deepEqual(historical.result,captured);
   assert.ok(!fs.existsSync(sentinel));assert.ok(!fs.existsSync(audit),'Application never attempted subprocess/exec/install');
   check('Fresh explicit confirmed capture copies offline bytes and retains intent/result; no child process or package import executes');
+  // Edits reach the project folder on Save; Close keeps them only in the working copy.
+  await activate('#project-files-save');await settled();
   await activate('#project-files-close');await until(async()=>(await state()).state==='no_project_open','close captured project');await stop(server);
   const source=path.join(external,'alpha'),coldRoot=path.join(temporary,'cold-external');fs.mkdirSync(coldRoot);const clone=path.join(coldRoot,'clone'),canonical=snapshot(source);
   const git=(...args)=>execFileSync('git',args,{env:gitEnv,stdio:['ignore','pipe','pipe']});git('init','-q','--template=',source);git('-C',source,'add','.');git('-C',source,'-c','user.name=Disposable M3 QA','-c','user.email=qa@example.invalid','-c','commit.gpgsign=false','-c','core.hooksPath=/dev/null','commit','-qm','Inert canonical runtime facts');git('-c','core.hooksPath=/dev/null','clone','-q','--no-hardlinks','--template=',source,clone);if(fs.existsSync(path.join(source,'artifacts')))fs.cpSync(path.join(source,'artifacts'),path.join(clone,'artifacts'),{recursive:true});assert.deepEqual(snapshot(clone),canonical);
