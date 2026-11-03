@@ -178,9 +178,10 @@ class OwnerMCPHTTP(unittest.TestCase):
                         imported=await self.tool(session,'import_text',f.envelope(opened,asset=dict(
                             text=http_fixture.TEXT,name='Actual owner MCP authored observation',groups=['owner-mcp'],parents=[],rights='Owned synthetic fixture')))
                         state=await self.tool(session,'status',{});source_id=state['project']['project_id']
-                        source_before=http_fixture.canonical_bytes(f.external/'owner-source')
                         saved=await self.tool(session,'save',f.envelope(state))
                         self.assertEqual(saved['project'],state['project'])
+                        # Edits reach the folder on Save; Save As must leave the saved source exact.
+                        source_before=http_fixture.canonical_bytes(f.external/'owner-source')
                         fork=await self.tool(session,'save_as',f.envelope(saved,root='fixture',directory='owner-fork',name='Independent MCP Ω'))
                         current=fork['state'];self.assertNotEqual(current['project']['project_id'],source_id)
                         self.assertEqual(http_fixture.canonical_bytes(f.external/'owner-source'),source_before)

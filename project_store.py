@@ -61,6 +61,9 @@ SUPPORTED_FORMATS = {
     'grounded_history': 'project_grounded_history_v1',
     'caption_proposal_history': 'project_caption_proposal_history_v1',
     'text_proposal_history': 'project_text_proposal_history_v1',
+    # Store-only: one shared retained runtime closure for compact Runs
+    # (project_record_dedupe); never visible to domain owners.
+    'run_runtime_closure': 'project_run_runtime_closure_v1',
 }
 MAX_RECORDS = 100_000
 # Scientific history can retain original runtime/file observations in hundreds
@@ -185,7 +188,8 @@ def _domain_format(value, family):
         _fail('Domain document requires a versioned format.')
     if value != SUPPORTED_FORMATS[family] and not (
             family == 'project_operation' and value == 'project_operation_v2'
-            or family == 'project_file' and value == 'project_file_v2'):
+            or family == 'project_file' and value == 'project_file_v2'
+            or family == 'run_history' and value == 'project_run_history_v2'):
         _fail('Unsupported domain document format.', 'unsupported', 422)
 
 
@@ -286,6 +290,22 @@ class _RecordsDigest:
         return final.hexdigest()
 
 
+def envelope_digest(family, identity, raw):
+    """SHA256 of _encode(dict(family, id, document)) from the document's canonical bytes.
+
+    Canonical JSON has no literal newline inside strings, so the document nested
+    one level deep differs from its standalone encoding only by two spaces after
+    each newline.
+    """
+    if not raw.endswith(b'\n'):
+        _fail('Canonical record bytes must end with LF.')
+    digest = hashlib.sha256(b'{\n  "document": ')
+    digest.update(raw[:-1].replace(b'\n', b'\n  '))
+    digest.update(b',\n  "family": ' + json.dumps(family, ensure_ascii=False).encode('utf-8'))
+    digest.update(b',\n  "id": ' + json.dumps(identity, ensure_ascii=False).encode('utf-8') + b'\n}\n')
+    return digest.hexdigest()
+
+
 def _records_digest(rows):
     """Digest of (family, id, canonical raw) rows; see _RecordsDigest."""
     digest = _RecordsDigest()
@@ -300,10 +320,122 @@ def _records(records):
             for family, identity, document, raw, _entry in _prepared_records(records)]
 
 
+def _physical_candidates(records, logical, physical):
+    """Physical envelopes for a logical candidate record set.
+
+    A candidate equal to its current logical document reuses the current
+    physical document (so its verified revision is kept). Changed Runs are
+    compacted to a shared runtime closure when exactly reversible; every
+    referenced closure is included once. Returns (physical candidates, logical
+    result in record order) or (records, None) for malformed input, which
+    _prepared_records then rejects with its usual errors.
+    """
+    from project_record_dedupe import CLOSURE_FAMILY, RUN_FAMILY, compact, is_compact
+    if type(records) is not list or any(type(item) is not dict or set(item) != {'family', 'id', 'document'}
+                                        or type(item['family']) is not str or type(item['id']) is not str
+                                        for item in records):
+        return records, None
+    if any(item['family'] == CLOSURE_FAMILY for item in records):
+        _fail('Runtime closures are store-owned records.', 'unsupported', 422)
+    current_logical = {(item['family'], item['id']): item['document'] for item in logical}
+    current_physical = {(item['family'], item['id']): item['document'] for item in physical}
+    closures = {item['id']: item['document'] for item in physical if item['family'] == CLOSURE_FAMILY}
+    candidates, logical_out, referenced = [], [], set()
+    for item in records:
+        key = (item['family'], item['id'])
+        document = item['document']
+        if key in current_logical and _same_json(document, current_logical[key]):
+            stored = current_physical[key]
+            candidates.append(dict(family=key[0], id=key[1], document=stored))
+            logical_out.append(dict(family=key[0], id=key[1], document=current_logical[key]))
+            if is_compact(key[0], stored):
+                referenced.add(stored['runtime_closure']['id'])
+            continue
+        owned = copy.deepcopy(document)
+        logical_out.append(dict(family=key[0], id=key[1], document=owned))
+        compacted = compact(owned) if key[0] == RUN_FAMILY else None
+        if compacted is not None:
+            reduced, closure = compacted
+            identity = reduced['runtime_closure']['id']
+            closures.setdefault(identity, closure)
+            referenced.add(identity)
+            candidates.append(dict(family=key[0], id=key[1], document=reduced))
+        else:
+            candidates.append(dict(family=key[0], id=key[1], document=owned))
+    candidates.extend(dict(family=CLOSURE_FAMILY, id=identity, document=closures[identity]) for identity in sorted(referenced))
+    logical_out.sort(key=lambda item: (item['family'], item['id']))
+    return candidates, logical_out
+
+
 def _request(key, digest):
     if type(key) is not str or not REQUEST_KEY.fullmatch(key):
         _fail('Request key must contain 1–128 supported characters.')
     _digest(digest, 'Request body digest')
+
+
+def checked_manifest(raw):
+    """Decode and check a project checkpoint without reading any record file.
+
+    Verifies format, identity, the checkpoint digest, every inventory entry's
+    shape, ordering, rooted path and byte bounds, membership roots and receipt
+    structure. Record bytes and the latest receipt's records digest are checked
+    by whoever reads the records.
+    """
+    manifest = _decode(raw)
+    if type(manifest) is not dict:
+        _fail('Project checkpoint must be an object.')
+    if manifest.get('format') != FORMAT:
+        if type(manifest.get('format')) is str and re.fullmatch(r'tuldok_project_v[1-9][0-9]*', manifest['format']):
+            _fail('Unsupported project format.', 'unsupported', 422)
+        _fail('Invalid project format.')
+    _keys(manifest, ('format', 'project_id', 'name', 'checkpoint', 'roots', 'inventory', 'receipts'), 'Project checkpoint')
+    identity = manifest['project_id']
+    if type(identity) is not str or not re.fullmatch('[a-f0-9]{32}', identity):
+        _fail('Invalid project UUID.')
+    if type(manifest['name']) is not str or not manifest['name'].strip() or len(manifest['name']) > 200:
+        _fail('Invalid project display name.')
+    _digest(manifest['checkpoint'], 'Checkpoint')
+    core = {k: v for k, v in manifest.items() if k != 'checkpoint'}
+    if _sha(_encode(core)) != manifest['checkpoint']:
+        _fail('Project checkpoint digest does not match its contents.')
+    inventory = manifest['inventory']
+    if type(inventory) is not list or len(inventory) > MAX_RECORDS:
+        _fail('Invalid project inventory.')
+    roots, total, previous = [], 0, None
+    for entry in inventory:
+        _keys(entry, ('family', 'id', 'format', 'namespace', 'path', 'bytes', 'sha256'), 'Inventory entry')
+        family, record_id, digest = entry['family'], entry['id'], entry['sha256']
+        _identifier(family, 'Record family')
+        if family not in SUPPORTED_FORMATS:
+            _fail('Unsupported project record family.', 'unsupported', 422)
+        _identifier(record_id, 'Record ID')
+        _digest(digest, 'Record digest')
+        _domain_format(entry['format'], family)
+        key = (family, record_id)
+        if previous is not None and key <= previous:
+            _fail('Inventory must have unique sorted record identities.')
+        previous = key
+        if entry['namespace'] != identity or entry['path'] != f'records/{family}/{record_id}/{digest}.json':
+            _fail('Invalid inventory namespace or rooted record path.')
+        if type(entry['bytes']) is not int or not 0 < entry['bytes'] <= MAX_RECORD_BYTES:
+            _fail('Invalid inventory record byte count.')
+        total += entry['bytes']
+        if total > MAX_TOTAL_BYTES:
+            _fail('Project records exceed their total byte limit.')
+        roots.append(dict(family=family, id=record_id))
+    if manifest['roots'] != roots:
+        _fail('Project membership roots disagree with the inventory.')
+    if type(manifest['receipts']) is not list or not manifest['receipts']:
+        _fail('Project requires operation receipts.')
+    seen = set()
+    for receipt in manifest['receipts']:
+        _keys(receipt, ('request_key', 'request_sha256', 'records_sha256'), 'Operation receipt')
+        _request(receipt['request_key'], receipt['request_sha256'])
+        _digest(receipt['records_sha256'], 'Receipt records digest')
+        if receipt['request_key'] in seen:
+            _fail('Duplicate operation receipt key.')
+        seen.add(receipt['request_key'])
+    return manifest
 
 
 def _path_string(path):
@@ -569,6 +701,7 @@ class ProjectStore:
         self._read_cache = None
         self._mutex = threading.RLock()
         self._unknown = False
+        self._folder_mode = False
         try:
             fcntl.flock(root_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as exc:
@@ -704,6 +837,115 @@ class ProjectStore:
             if origin_fd is not None:
                 os.close(origin_fd)
 
+    # ---- Folder mode: the external project as an import source/export target.
+    # A folder-mode Store holds the writer lock and root binding but never
+    # loads the record set; the database working copy owns current records.
+
+    @classmethod
+    def open_folder_at(cls, trusted_root_fd, relative, *, root_path):
+        """Bind an existing external project folder without reading its records."""
+        parts = _relative_parts(relative)
+        absolute = _verify_origin(trusted_root_fd, root_path)
+        origin_fd = os.dup(trusted_root_fd)
+        store = None
+        try:
+            fd = _walk(origin_fd, parts)
+            owned_origin, origin_fd = origin_fd, None
+            store = cls(Path(absolute).joinpath(*parts), fd, owned_origin, parts, absolute)
+            store._meta_fd = _directory(fd, '.tuldok')
+            store._folder_mode = True
+            return store
+        except OSError as exc:
+            if store is not None:
+                store.close()
+            _io_error(exc, 'open project folder')
+        except BaseException:
+            if store is not None:
+                store.close()
+            raise
+        finally:
+            if origin_fd is not None:
+                os.close(origin_fd)
+
+    def folder_checkpoint(self):
+        """(raw bytes, checked manifest) of the folder's current project.json."""
+        with self._mutex:
+            self._binding()
+            try:
+                raw = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
+            except OSError as exc:
+                _io_error(exc, 'read project checkpoint')
+            return raw, checked_manifest(raw)
+
+    def folder_record(self, entry):
+        """One inventory entry's exact bytes after length/SHA256 verification."""
+        with self._mutex:
+            try:
+                raw = self._record_file(entry['family'], entry['id'], entry['sha256'])
+            except OSError as exc:
+                _io_error(exc, 'read project record')
+            if len(raw) != entry['bytes'] or _sha(raw) != entry['sha256']:
+                _fail('Canonical record bytes changed or are corrupt.')
+            return raw
+
+    def folder_has_record(self, entry):
+        """Whether the content-addressed revision file exists with its byte length."""
+        with self._mutex:
+            fds = []
+            try:
+                parent = self._meta_fd
+                for part in ('records', entry['family'], entry['id']):
+                    parent = _directory(parent, part)
+                    fds.append(parent)
+                info = os.stat(entry['sha256'] + '.json', dir_fd=parent, follow_symlinks=False)
+                return stat.S_ISREG(info.st_mode) and info.st_size == entry['bytes']
+            except FileNotFoundError:
+                return False
+            except OSError as exc:
+                _io_error(exc, 'inspect project record')
+            finally:
+                for fd in reversed(fds):
+                    os.close(fd)
+
+    def folder_write_record(self, family, record_id, digest, raw):
+        """Durably publish one immutable revision; existing bytes must be identical."""
+        with self._mutex:
+            try:
+                written = self._record_file(family, record_id, digest, raw)
+            except OSError as exc:
+                _io_error(exc, 'write project record')
+            if written != raw:
+                _fail('Immutable project revision already has different bytes.')
+
+    def folder_publish(self, raw, expected_raw):
+        """Atomically replace project.json only if it still has expected_raw.
+
+        expected_raw None means the folder has no checkpoint yet. Refuses to
+        overwrite a checkpoint someone else published since import/export.
+        """
+        if len(raw) > MAX_MANIFEST_BYTES:
+            _fail('Project checkpoint exceeds its byte limit.')
+        with self._mutex:
+            temporary = '.checkpoint-' + uuid.uuid4().hex + '.tmp'
+            replaced = False
+            try:
+                _write_file(self._meta_fd, temporary, raw)
+                self._binding()
+                try:
+                    current = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
+                except FileNotFoundError:
+                    current = None
+                if current != expected_raw:
+                    os.unlink(temporary, dir_fd=self._meta_fd)
+                    _fail('The external project changed since Tuldok last imported or saved it.', 'conflict', 409)
+                os.replace(temporary, 'project.json', src_dir_fd=self._meta_fd, dst_dir_fd=self._meta_fd)
+                replaced = True
+                os.fsync(self._meta_fd)
+                os.fsync(self._root_fd)
+            except OSError as exc:
+                self._unknown = replaced
+                _io_error(exc, 'publish checkpoint', unknown=replaced)
+
     def _binding(self):
         if self._root_fd is None:
             _fail('Project store is closed.', 'unavailable', 409)
@@ -751,51 +993,14 @@ class ProjectStore:
             # freshness check is redundant. On-disk corruption after that point
             # is still refused by Save (verify_records) and by every reopen.
             self._binding()
-            return cached[1:]
-        manifest = _decode(raw)
-        if type(manifest) is not dict:
-            _fail('Project checkpoint must be an object.')
-        if manifest.get('format') != FORMAT:
-            if type(manifest.get('format')) is str and re.fullmatch(r'tuldok_project_v[1-9][0-9]*', manifest['format']):
-                _fail('Unsupported project format.', 'unsupported', 422)
-            _fail('Invalid project format.')
-        _keys(manifest, ('format', 'project_id', 'name', 'checkpoint', 'roots', 'inventory', 'receipts'), 'Project checkpoint')
-        identity = manifest['project_id']
-        if type(identity) is not str or not re.fullmatch('[a-f0-9]{32}', identity):
-            _fail('Invalid project UUID.')
-        if type(manifest['name']) is not str or not manifest['name'].strip() or len(manifest['name']) > 200:
-            _fail('Invalid project display name.')
-        _digest(manifest['checkpoint'], 'Checkpoint')
-        core = {k: v for k, v in manifest.items() if k != 'checkpoint'}
-        if _sha(_encode(core)) != manifest['checkpoint']:
-            _fail('Project checkpoint digest does not match its contents.')
-        inventory = manifest['inventory']
-        if type(inventory) is not list or len(inventory) > MAX_RECORDS:
-            _fail('Invalid project inventory.')
-        loaded, roots, total, previous = [], [], 0, None
+            return cached[1], cached[2]
+        manifest = checked_manifest(raw)
+        loaded = []
         records_digest = _RecordsDigest()
         known = self._canonical_digests
         proven = []
-        for entry in inventory:
-            _keys(entry, ('family', 'id', 'format', 'namespace', 'path', 'bytes', 'sha256'), 'Inventory entry')
+        for entry in manifest['inventory']:
             family, record_id, digest = entry['family'], entry['id'], entry['sha256']
-            _identifier(family, 'Record family')
-            if family not in SUPPORTED_FORMATS:
-                _fail('Unsupported project record family.', 'unsupported', 422)
-            _identifier(record_id, 'Record ID')
-            _digest(digest, 'Record digest')
-            _domain_format(entry['format'], family)
-            key = (family, record_id)
-            if previous is not None and key <= previous:
-                _fail('Inventory must have unique sorted record identities.')
-            previous = key
-            if entry['namespace'] != identity or entry['path'] != f'records/{family}/{record_id}/{digest}.json':
-                _fail('Invalid inventory namespace or rooted record path.')
-            if type(entry['bytes']) is not int or not 0 < entry['bytes'] <= MAX_RECORD_BYTES:
-                _fail('Invalid inventory record byte count.')
-            total += entry['bytes']
-            if total > MAX_TOTAL_BYTES:
-                _fail('Project records exceed their total byte limit.')
             record_raw = self._verified_record_bytes(entry)
             if known is not None and digest in known:
                 # These exact bytes (named by their verified SHA256) were already
@@ -809,19 +1014,6 @@ class ProjectStore:
                 _fail('Domain document format disagrees with its inventory.')
             records_digest.add(family, record_id, record_raw)
             loaded.append(dict(family=family, id=record_id, document=document))
-            roots.append(dict(family=family, id=record_id))
-        if manifest['roots'] != roots:
-            _fail('Project membership roots disagree with the inventory.')
-        if type(manifest['receipts']) is not list or not manifest['receipts']:
-            _fail('Project requires operation receipts.')
-        seen = set()
-        for receipt in manifest['receipts']:
-            _keys(receipt, ('request_key', 'request_sha256', 'records_sha256'), 'Operation receipt')
-            _request(receipt['request_key'], receipt['request_sha256'])
-            _digest(receipt['records_sha256'], 'Receipt records digest')
-            if receipt['request_key'] in seen:
-                _fail('Duplicate operation receipt key.')
-            seen.add(receipt['request_key'])
         # _decode proved each raw revision is its document's canonical encoding.
         if manifest['receipts'][-1]['records_sha256'] != records_digest.hexdigest():
             _fail('Latest operation receipt disagrees with the current record set.')
@@ -831,8 +1023,12 @@ class ProjectStore:
         self._binding()
         if known is not None and proven:
             known.add_many(proven)
-        self._read_cache = (raw, manifest, loaded)
-        return manifest, loaded
+        # Domain owners see logical records: shared runtime closures hidden and
+        # compact Runs expanded to their exact original documents.
+        from project_record_dedupe import logical_records
+        logical = logical_records(loaded)
+        self._read_cache = (raw, manifest, logical, loaded)
+        return manifest, logical
 
     def _verified_record_bytes(self, entry):
         raw = self._record_file(entry['family'], entry['id'], entry['sha256'])
@@ -964,13 +1160,16 @@ class ProjectStore:
                 current, loaded = self._load()
                 if current != self._manifest:
                     _fail('Project checkpoint changed; close and reopen.', 'stale', 409)
+                physical = self._read_cache[3]
                 # Unchanged records keep their verified canonical revision: no
                 # re-encoding, rewrite or read-back of identical immutable bytes.
                 entries = {(entry['family'], entry['id']): entry for entry in current['inventory']}
                 unchanged = {(item['family'], item['id']): (item['document'], entries[(item['family'], item['id'])])
-                             for item in loaded}
-                prepared = _prepared_records(records, unchanged)
-                normalized = [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared]
+                             for item in physical}
+                candidates, logical_out = _physical_candidates(records, loaded, physical)
+                prepared = _prepared_records(candidates, unchanged)
+                if logical_out is None:
+                    logical_out = [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared]
                 digest_rows = _RecordsDigest()
                 for family, identity, _document, raw, entry in prepared:
                     if raw is None:
@@ -1014,8 +1213,9 @@ class ProjectStore:
                         [_sha(raw) for _f, _i, _d, raw, _e in prepared if raw is not None])
                 # Every committed revision is either freshly written and read
                 # back byte-for-byte or an unchanged verified revision.
-                self._read_cache = (published, manifest, normalized)
-                return self._snapshot(manifest, normalized)
+                self._read_cache = (published, manifest, logical_out,
+                                    [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared])
+                return self._snapshot(manifest, logical_out)
             except OSError as exc:
                 _io_error(exc, 'commit project records')
 

@@ -150,7 +150,8 @@ def project_run_projection(run, *, imported=False):
                 item['name'] in seen or type(item['sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',item['sha256'])):
             raise WorkbenchError('Historical Run artifact identity differs.')
         seen.add(item['name']);natural(item['bytes'],'Artifact bytes');text(item['media_type'],'Artifact media type',120)
-    return {key:copy.deepcopy(item) for key,item in run.items() if key in RUN_FIELDS}
+    # checked_json above already returned an independent copy owned here.
+    return {key:item for key,item in run.items() if key in RUN_FIELDS}
 
 
 def validate_approved_composition(value, sha, graph, execution_material_sha256, *, catalog_id):

@@ -703,7 +703,8 @@ def _extract(self,selection,expected_report_sha256,destination_parent_fd,directo
     if opened_store is not None:
         # Trusted controller-only capability. Its caller pins workspace,
         # authority, selected session and SQL ownership through this replay.
-        if not isinstance(opened_store,ProjectStore) or existing is None:
+        from project_working_store import WorkingProjectStore
+        if not isinstance(opened_store,(ProjectStore,WorkingProjectStore)) or existing is None:
             fail('Current selected destination is unavailable.','stale',409)
         with opened_store.root_directory() as owned_fd:
             try:target_fd=os.open(directory,DIR_FLAGS,dir_fd=destination_parent_fd)

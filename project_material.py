@@ -326,7 +326,9 @@ def _retained_value(get_documents, family, ref):
         raise WorkbenchError('Retained material is unavailable.', 'unavailable', 409)
     if document['value']['ref'] != ref:
         raise WorkbenchError('Retained material reference differs.', 'invalid', 400)
-    return copy.deepcopy(document['value'])
+    # Decoded retained values are plain JSON: an exact independent copy.
+    from project_store import copy_validated_json
+    return copy_validated_json(document['value'])
 
 
 class MaterialSnapshot:

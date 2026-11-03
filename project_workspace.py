@@ -21,6 +21,7 @@ from project_store import ProjectStore, ProjectStoreError
 from project_projection import ProjectProjection
 from project_custody import ProjectCustody
 from project_validation_cache import CanonicalDigestCache, ProjectValidationCache
+from project_working_store import WORKING_ID, WorkingProjectStore
 from workbench import WorkbenchError
 
 
@@ -206,11 +207,47 @@ class ProjectWorkspace:
         assert_separate_project_control(root_fd, relative, root_path=root_path, control_path=self.path)
         return self._roots[alias]
 
+    def _working_identity(self, alias, directory, project_id):
+        """The persistent working copy for one project folder (private registry)."""
+        key = hashlib.sha256(f'{alias}\0{directory}'.encode('utf-8')).hexdigest()
+        registry = self.path / '.project-working'
+        path = registry / f'{key}.json'
+        try:
+            value = json.loads(path.read_bytes())
+            if (value.get('project_id') == project_id and type(value.get('working_id')) is str
+                    and WORKING_ID.fullmatch(value['working_id'])):
+                return value['working_id']
+        except (OSError, ValueError, AttributeError):
+            pass
+        working_id = uuid.uuid4().hex
+        registry.mkdir(mode=0o700, exist_ok=True)
+        temporary = registry / f'.{uuid.uuid4().hex}.tmp'
+        temporary.write_bytes(json.dumps(dict(format='project_working_registration_v1', root=alias,
+            directory=directory, project_id=project_id, working_id=working_id), sort_keys=True).encode('utf-8'))
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+        return working_id
+
+    def _open_working(self, root_fd, root_path, alias, directory):
+        """Attach the folder's working copy, importing only if the folder changed."""
+        folder = ProjectStore.open_folder_at(root_fd, directory, root_path=root_path)
+        try:
+            _raw, manifest = folder.folder_checkpoint()
+            working_id = self._working_identity(alias, directory, manifest['project_id'])
+            return WorkingProjectStore.open(folder, working_id, dsn=self._dsn,
+                                            canonical_digests=self.canonical_digests)
+        except BaseException:
+            folder.close()
+            raise
+
     def _projection_for(self, store):
         identity = uuid.uuid4().hex
         path = self.path / '.project-projections' / identity
         snapshot = store.summary()
         projection = Metadata(path, dsn=self._dsn, dataset_id=snapshot['project_id'], projection_id=identity)
+        if hasattr(store, 'bind'):
+            # Record commits share the projection's transactions.
+            store.bind(projection)
         try:
             owner = ProjectProjection(store, projection, self.access,
                                       {alias: value[0] for alias, value in self._roots.items()},
@@ -232,6 +269,8 @@ class ProjectWorkspace:
             raise WorkbenchError('Invalid original local projection identity.', 'unavailable', 409)
         db = Metadata(self.path / '.project-projections' / projection_id, dsn=self._dsn,
                       create=False, dataset_id=store.summary()['project_id'], projection_id=projection_id)
+        if hasattr(store, 'bind'):
+            store.bind(db)
         try:
             return ProjectProjection(store, db, self.access,
                 {alias: value[0] for alias, value in self._roots.items()},
@@ -245,9 +284,8 @@ class ProjectWorkspace:
         """Release only a project whose current local effects have drained."""
         if self._projection is not None:
             self._projection.execution.assert_quiescent()
-        if self._store is not None:
-            # Prove pending project publications and their full closure first.
-            self._store.save(self._store.summary()['checkpoint'])
+        # Closing keeps unsaved work in the database working copy; only an
+        # explicit Save writes the external folder.
         if self._projection is not None:
             self._projection.close()
         if self._store is not None:
@@ -275,13 +313,12 @@ class ProjectWorkspace:
             self._store = None
         store = projection = None
         try:
-            store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
+            store = self._open_working(root_fd, root_path, *self._selection)
             snapshot = store.summary()
             if snapshot['project_id'] != self._last_project['project_id']:
                 raise WorkbenchError('Recovery destination has a different project identity.', 'stale_project', 409)
-            # A reread reconciles identity; only a successful durability barrier
-            # resolves a prior checkpoint/directory fsync failure.
-            store.save(snapshot['checkpoint'])
+            # Database commits are atomic: reattaching the working copy
+            # reconciles the outcome without writing the external folder.
             projection, text = self._projection_for(store)
             snapshot = store.summary()
             if self._projection is not None:
@@ -334,14 +371,18 @@ class ProjectWorkspace:
                     except ProjectStoreError:
                         raise error
                     if store.reconcile(arguments['request_key'], digest) is None:
+                        store.close()
                         raise error
                     reconciled = True
                 snapshot = store.summary()
                 if reconciled:
                     store.save(snapshot['checkpoint'])
                 created = snapshot
+                # The new folder becomes this workspace's working copy.
+                store.close()
+                store = self._open_working(root_fd, root_path, arguments['root'], arguments['directory'])
             else:
-                store = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
+                store = self._open_working(root_fd, root_path, arguments['root'], arguments['directory'])
             projection, text = self._projection_for(store)
             self._detach()
             self._store, self._projection, self._text = store, projection, text
@@ -398,7 +439,6 @@ class ProjectWorkspace:
         source = self._projection
         source.execution.assert_quiescent()
         source.files.require_clean()
-        self._store.save(arguments['expected_checkpoint'])
         published = None
         incoming = projection = None
         retained = ExitStack()
@@ -433,7 +473,7 @@ class ProjectWorkspace:
             # A filesystem editor can act outside the workspace lock. Leave the
             # complete fork unselected if its source working files changed.
             source.files.require_clean()
-            incoming = ProjectStore.open_at(root_fd, arguments['directory'], root_path=root_path, canonical_digests=self.canonical_digests)
+            incoming = self._open_working(root_fd, root_path, arguments['root'], arguments['directory'])
             projection, text = self._projection_for(incoming)
             snapshot, overlay = published['snapshot'], published['fork']
             self._detach()

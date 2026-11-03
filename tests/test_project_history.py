@@ -188,6 +188,11 @@ class HistoryCodecTests(unittest.TestCase):
                     for field in ('studies','trials','runs','candidates','policies','reservations','observations'):
                         self.assertEqual(getattr(assembled,field),getattr(decoded,field),field)
                         self.assertEqual(list(getattr(assembled,field)),list(getattr(decoded,field)),field)
+                # Study authoring restore collects only Study and Trial documents.
+                authoring=assemble_validated_facts([r for r in copy.deepcopy(records)
+                    if r['family'] in ('study_history','trial_history')],owned=True)
+                for field in ('studies','trials','policies','reservations'):
+                    self.assertEqual(getattr(authoring,field),getattr(decoded,field),field)
 
     def test_history_read_uses_one_material_view_of_the_selected_records(self):
         identity='9'*32

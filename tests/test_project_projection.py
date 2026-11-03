@@ -76,6 +76,8 @@ class ProjectProjectionTests(unittest.TestCase):
                         preprocessing_policy={'kind': 'identity'}, output_policy={'kind': 'bytes'})
             model = p.materials.mutate_definition('model_definition', 'models.create', None, body,
                 p.session.snapshot['checkpoint'], 'model-create', lambda: p.models.create(body))
+        # Another workspace sees edits only after they are saved to the folder.
+        self.call('save', self.mutation())
         snapshot = self.host._store.snapshot()
         canonical = (self.external / 'project' / '.tuldok' / 'project.json').read_bytes()
         sentinel = self.external / 'project' / 'must-not-run'

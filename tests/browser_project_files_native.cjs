@@ -85,6 +85,8 @@ function check(value){checks.push(value);console.log('PASS '+value);}
   facts=await fixture.command('facts');assert.equal(facts.go_events.length,1);assert.equal(facts.pending,false);assert.equal(facts.available,true);assert.equal(facts.workspace_runs,0);
   await activate('#project-files-discard');await activate('#project-files-refresh');await settled();sourceFacts=await fixture.command('facts');
   check('Named retry refuses absent current Run; real deferrable SQL fault after canonical GO intent sends zero GO, then keyboard health phase selection and explicit reconciliation restore availability without execution');
+  // Edits reach the project folder on Save; Close keeps them only in the working copy.
+  await activate('#project-files-save');await settled();
   const source=path.join(sourceHost.ready.external,'alpha'),canonical=snapshot(source),saved=(await state()).project;
   await activate('#project-files-close');await until(async()=>(await state()).state==='no_project_open','close before cold clone');await sourceHost.stop();
   const coldHostRoot=path.join(temporary,'cold-host'),external=path.join(coldHostRoot,'external');fs.mkdirSync(external,{recursive:true});const clone=path.join(external,'clone');

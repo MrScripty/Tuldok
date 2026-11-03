@@ -85,7 +85,9 @@ def retain_project_evidence(projection, label):
     store=projection.session.store
     with projection.session.access.lock,projection.session.lock,projection.db.lock:
         snapshot=store.snapshot()
-        manifest=(store.path/'.tuldok/project.json').read_bytes()
+        # A database working copy's checkpoint reaches the folder only on Save.
+        manifest=(store.manifest_raw() if callable(getattr(store,'manifest_raw',None))
+                  else (store.path/'.tuldok/project.json').read_bytes())
         if json.loads(manifest)['checkpoint']!=snapshot['checkpoint']:
             raise AssertionError('Native fixture snapshot and manifest checkpoints differ')
     output=output/(label+'-'+snapshot['project_id']+'-'+snapshot['checkpoint'])

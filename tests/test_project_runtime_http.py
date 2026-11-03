@@ -65,6 +65,8 @@ class ProjectRuntimeHTTP(unittest.TestCase):
             self.assertTrue(any(r['operation']=='runtime.capture' for r in receipts))
             status,replay=self.transport('runtime_capture',arguments);self.assertEqual(status,200,replay)
             self.assertEqual(replay['value'],captured)
+            # Another workspace sees the capture only after it is saved.
+            self.action('save')
             self.action('close')
             self.select_host(self.path/'cold-control',{'fixture':self.external})
             self.action('open',root='fixture',directory='alpha')
