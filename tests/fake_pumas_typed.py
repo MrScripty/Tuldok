@@ -24,6 +24,8 @@ def start():
             try: self.wfile.write(raw)
             except OSError: pass
         def do_GET(self):
+            if self.path == '/v1/served-models' and state.get('served_models') is not None:
+                return self.reply(state['served_models'])
             if self.path == '/v1/models':
                 rows = [{'id': 'controlled-text'}, {'id': 'controlled-image'}]
                 if state.get('duplicate_alias'): rows.append({'id': 'controlled-text'})
@@ -31,7 +33,13 @@ def start():
             query = parse_qs(urlsplit(self.path).query)
             model = query.get('model', [''])[0]
             if model not in ('controlled-text', 'controlled-image'):
+                if urlsplit(self.path).path == '/v1/capabilities':
+                    return self.reply({'contract_version': 1, 'request_id': None, 'error': {'code': 'model_not_found',
+                        'outcome': 'not_admitted', 'message': 'no served model is named ' + repr(model)}}, 404)
                 return self.reply({'error': 'unknown model'}, 404)
+            if state.get('ambiguous'):
+                return self.reply({'contract_version': 1, 'request_id': None, 'error': {'code': 'ambiguous_model',
+                    'outcome': 'not_admitted', 'message': 'alias is served by profiles a, b; send profile'}}, 409)
             manifest = json.loads((FIXTURES / (model+'-capabilities.json')).read_bytes())
             if state['mode'] == 'wrong_profile': manifest['profile'] = 'foreign'
             if state['mode'] == 'unavailable':
@@ -47,7 +55,11 @@ def start():
             if mode == 'loss': self.close_connection = True; return
             if mode in ('not_admitted', 'unknown'):
                 return self.reply({'contract_version': 1, 'request_id': body['request_id'],
-                    'error': {'code': 'capability_unavailable' if mode == 'not_admitted' else 'provider_failure', 'outcome': mode}}, 503)
+                    'error': {'code': 'capability_unavailable' if mode == 'not_admitted' else 'provider_failure', 'outcome': mode,
+                              'message': state.get('error_message', 'fixture provider reason')}}, state.get('error_status', 503))
+            if mode == 'unreadable':
+                return self.reply({'contract_version': 1, 'request_id': None, 'error': {'code': 'invalid_request',
+                    'outcome': 'not_admitted', 'message': 'request body is not valid JSON'}}, 400)
             result = {'kind': 'text', 'text': state['content'], 'finish_reason': 'stop'}
             if body['capability'] == 'image_generation':
                 import io

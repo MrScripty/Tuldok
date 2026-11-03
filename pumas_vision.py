@@ -1,4 +1,4 @@
-"""Finite Image→Text consumer pinned to combined Pumas PR68, never model qualification.
+"""Finite Image→Text consumer of the Pumas v0.8 typed contract, never model qualification.
 
 The application sends its prepared image bytes, without URL/path authority.
 Pumas's production PNG/turbojpeg decoder remains the admission authority.
@@ -17,7 +17,7 @@ import gateway_discovery
 import pumas_operations as pumas
 from workbench import encode
 
-SOURCE_COMMIT = '36c2aab2c885b8416fd4e39cf8c37c510596d6e4'
+SOURCE_COMMIT = pumas.SOURCE_COMMIT
 SCHEMA = 'pumas.model-operations.image-to-text'
 MAX_REQUEST = 32 * 1024 * 1024
 MAX_IMAGE = 8 * 1024 * 1024
@@ -26,6 +26,9 @@ MAX_IMAGES = 4
 MAX_AXIS = 4096
 MAX_PIXELS = 4194304
 MAX_MESSAGES = MAX_PARTS = 128
+# Pumas has no fixed generation cap; the live max_tokens bound follows the served context.
+MAX_TOKENS = 4294967295
+IMAGE_FACTS = ('image_count', 'image_bytes', 'image_pixels', 'width', 'height')
 
 
 def _container(data, encoding):
@@ -142,7 +145,8 @@ def validate_input(value, *, facade=False):
 
 
 def request(job, input_value, *, facade=True, max_tokens=512, temperature=None, top_p=None):
-    if type(max_tokens) is not int or not 1 <= max_tokens <= 2048: raise ValueError('Tokens must be 1–2048.')
+    if type(max_tokens) is not int or not 1 <= max_tokens <= MAX_TOKENS:
+        raise ValueError('Tokens must be a positive integer; the selected model bounds the maximum.')
     options = {'kind': 'text_generation', 'max_tokens': max_tokens}
     for key, value, maximum in [('temperature', temperature, 2), ('top_p', top_p, 1)]:
         if value is not None:
@@ -171,7 +175,8 @@ def prepare(job, payload, stop):
     payload['profile'] = observed['capabilities']['profile']
     input_format, images = validate_input(payload['input'], facade='semantic_task' in payload)
     options = {key: value for key, value in payload['options'].items() if key != 'kind'}
-    pumas.require(observed, 'image_to_text', input_format, 'text', dict(options, image_count=len(images)))
-    for image in images: pumas.require(observed, 'image_to_text', input_format, 'text', image)
+    # Image facts are checked against advertised bounds; local preflight already bounds them.
+    pumas.require(observed, 'image_to_text', input_format, 'text', dict(options, image_count=len(images)), advisory=IMAGE_FACTS)
+    for image in images: pumas.require(observed, 'image_to_text', input_format, 'text', image, advisory=IMAGE_FACTS)
     job.update(capability_observation=observed, build_observation=build, producer_contract_source=SOURCE_COMMIT)
     pumas.request_evidence(job, payload)

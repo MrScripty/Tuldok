@@ -50,6 +50,9 @@ def start():
                         return
             if body['prompt'] == 'busy':
                 return self.reply({'error': {'code': 'runtime_busy'}}, 409)
+            if body['prompt'] == 'pumas-refusal':
+                return self.reply({'error': {'message': 'width 33 is not a multiple of 8 for this model; token=sk-abcdefghijkl',
+                                             'type': 'pumas_error', 'code': 'invalid_request'}}, 400)
             if body['prompt'] == 'unprocessable':
                 return self.reply({'detail': 'fixture contract mismatch'}, 422)
             raw = b'invalid PNG' if body['prompt'] == 'invalid' else png((body['width'], body['height']), '#467e9a' if body.get('seed', 7) == 7 else '#%06x' % (body['seed'] % 16777216))

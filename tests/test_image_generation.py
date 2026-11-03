@@ -64,6 +64,23 @@ class ImageGenerationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'contract'):
             self.manager.generate({**self.body(), 'prompt': 'unprocessable', 'width': 33, 'height': 33})
         self.assertEqual(len(self.requests), 1)
+    def test_pumas_error_message_is_shown_redacted(self):
+        with self.assertRaises(ValueError) as caught:
+            self.manager.generate({**self.body(), 'prompt': 'pumas-refusal'})
+        message = str(caught.exception)
+        self.assertIn('Pumas rejected the image request', message)
+        self.assertIn('Pumas reported: width 33 is not a multiple of 8', message)
+        self.assertNotIn('sk-abcdefghijkl', message)
+        with self.assertRaises(ValueError) as caught:
+            self.manager.generate({**self.body(), 'prompt': 'busy'})
+        self.assertNotIn('Pumas reported', str(caught.exception))
+    def test_pumas_error_detail_only_reads_pumas_shaped_bodies(self):
+        import ai_http
+        self.assertEqual(ai_http.pumas_error_detail(b'{"error":{"message":"m","type":"server_error"}}'), '')
+        self.assertEqual(ai_http.pumas_error_detail(b'<html>'), '')
+        self.assertEqual(ai_http.pumas_error_detail(b'{"error":{"message":"  ","type":"pumas_error"}}'), '')
+        self.assertEqual(ai_http.pumas_error_detail(b'{"error":{"message":"context window exceeded","type":"pumas_error"}}'),
+                         'Pumas reported: context window exceeded')
     def test_no_duration_deadline_remains_and_connect_stays_bounded(self):
         source = Path(image_generation.__file__).read_text()
         self.assertFalse(hasattr(image_generation, 'TIMEOUT'))

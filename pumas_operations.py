@@ -1,4 +1,9 @@
-"""Finite PR54 selected-model operations. Discovery budgets never time generation."""
+"""Finite Pumas typed model operations (contract version 1, v0.8 additive rules).
+
+Discovery budgets never time generation. Responses grow additively: unknown
+response fields, capabilities, formats, option names, availability reasons and
+error codes are ignored; only what Tuldok uses is validated and selected by name.
+"""
 import hashlib
 import http.client
 import json
@@ -13,20 +18,20 @@ from pumas_gateway_descriptor import endpoint
 from workbench import WorkbenchError, encode
 
 PROTOCOL = 'pumas_typed_v1'
-SOURCE_COMMIT = '40c5cbfed67a6f0e862a1197bb5105363d67bdb1'
-MAX_CAPABILITIES = 65536
+SOURCE_COMMIT = '4c79cd8e35db566b70caaa13d8d8f92265f5976e'
+MAX_CAPABILITIES = 1024 * 1024
+MAX_SERVED_MODELS = 8 * 1024 * 1024
 MAX_TEXT_RESPONSE = 256 * 1024
 MAX_IMAGE_JSON = 12 * 1024 * 1024
 MAX_DIMENSION = 2048
 MAX_PIXELS = 4194304
-CAPABILITIES = {'chat_generation': 'chat_generation', 'text_generation': 'text_generation',
-                'text_embedding': 'text_embedding', 'image_generation': 'text_to_image',
-                'image_to_text': 'image_to_text',
-                'audio_transcription': 'speech_to_text', 'audio_classification': 'audio_classification'}
-ERROR_CODES = {'invalid_request', 'unsupported_contract', 'model_not_found', 'ambiguous_model',
-               'ambiguous_operation', 'unsupported_modality',
-               'capability_unavailable', 'provider_failure', 'invalid_provider_result',
-               'request_limit', 'response_limit', 'transport_lost'}
+MAX_MESSAGE = 600
+# Capabilities Tuldok sends, with their fixed contract-version-1 semantic task.
+USED_CAPABILITIES = {'chat_generation': 'chat_generation', 'image_generation': 'text_to_image',
+                     'image_to_text': 'image_to_text'}
+# Option bounds Tuldok compares against. Other advertised options are ignored.
+USED_OPTIONS = {'max_tokens', 'temperature', 'top_p', 'width', 'height', 'seed',
+                'image_bytes', 'image_pixels', 'image_count'}
 
 
 class OperationError(WorkbenchError):
@@ -56,8 +61,61 @@ def strict_json(raw):
 
 
 def object_fields(value, required, optional=()):
+    """Closed shape for request-side DTOs that Tuldok itself builds."""
     if type(value) is not dict or not set(required) <= value.keys() or value.keys() - set(required) - set(optional):
         raise ValueError('Unsupported typed Pumas fields.')
+
+
+def response_fields(value, required):
+    """Open shape for Pumas responses: required fields present, additive fields ignored."""
+    if type(value) is not dict or not set(required) <= value.keys():
+        raise ValueError('Typed Pumas response is missing required fields.')
+
+
+def _positive_int(value):
+    return type(value) is int and value > 0
+
+
+def message_text(value):
+    """Bounded single-line display of Pumas' human-readable reason (never parsed)."""
+    if not isinstance(value, str):
+        return ''
+    value = ' '.join(''.join(c if c.isprintable() else ' ' for c in value).split())
+    return value[:MAX_MESSAGE] + ('…' if len(value) > MAX_MESSAGE else '')
+
+
+def typed_error(value):
+    """Decode `{contract_version, request_id, error:{code, outcome, message}}` or return None.
+
+    `outcome` is authoritative. Only `not_admitted` proves no provider effect;
+    any other value is treated as `unknown`. Unknown codes are kept verbatim.
+    """
+    if type(value) is not dict or type(value.get('error')) is not dict:
+        return None
+    error = value['error']
+    code = error.get('code')
+    if not isinstance(code, str) or not code or len(code) > 200:
+        return None
+    outcome = 'not_admitted' if error.get('outcome') == 'not_admitted' else 'unknown'
+    return {'code': code, 'outcome': outcome, 'message': message_text(error.get('message'))}
+
+
+def error_message(error, prefix='Pumas'):
+    detail = (': ' + error['message']) if error['message'] else '.'
+    if error['outcome'] == 'not_admitted':
+        return f"{prefix} refused the request ({error['code']}; not admitted, no provider effect){detail}"
+    return f"{prefix} reported {error['code']}; provider outcome unknown, no automatic replay{detail}"
+
+
+def http_error(status, raw):
+    """Raise a readable ValueError for a non-200 typed discovery response."""
+    try:
+        error = typed_error(strict_json(raw))
+    except ValueError:
+        error = None
+    if error is None:
+        raise ValueError(f'Pumas returned HTTP {status} without a typed error body.')
+    raise ValueError(error_message(error))
 
 
 def alias(value):
@@ -89,50 +147,69 @@ def configuration(body, *, image=False):
     return {'protocol': PROTOCOL, 'profile': profile(body['profile'])}
 
 
+def _bound_number(value):
+    return type(value) in (int, float) and -1e308 <= value <= 1e308
+
+
+def _descriptor(item):
+    """Validate one descriptor Tuldok uses. Extra fields and enum values are ignored."""
+    response_fields(item, ('capability', 'semantic_task', 'input_formats', 'output_formats', 'availability', 'option_bounds'))
+    name = item['capability']
+    if item['semantic_task'] != USED_CAPABILITIES[name]:
+        raise ValueError('Pumas reports a different semantic task for '+name+' within contract version 1.')
+    for field in ('input_formats', 'output_formats'):
+        if type(item[field]) is not list or any(type(value) is not str for value in item[field]):
+            raise ValueError('Invalid typed Pumas '+field.replace('_', ' ')+'.')
+    availability = item['availability']
+    if (type(availability) is not dict or type(availability.get('state')) is not str
+            or availability.get('reason') is not None and type(availability['reason']) is not str):
+        raise ValueError('Invalid typed Pumas availability.')
+    bounds = item['option_bounds']
+    if type(bounds) is not list:
+        raise ValueError('Invalid typed Pumas option bounds.')
+    seen = set()
+    for bound in bounds:
+        if type(bound) is not dict or type(bound.get('option')) is not str or bound['option'] not in USED_OPTIONS:
+            continue
+        response_fields(bound, ('option', 'minimum', 'maximum'))
+        if bound['option'] in seen:
+            raise ValueError('Pumas advertises the '+bound['option']+' bound more than once.')
+        seen.add(bound['option'])
+        if not _bound_number(bound['minimum']) or not _bound_number(bound['maximum']) or bound['minimum'] > bound['maximum']:
+            raise ValueError('Invalid typed Pumas option interval.')
+
+
 def validate_manifest(raw):
+    """Validate the fields Tuldok uses from `GET /v1/capabilities`.
+
+    Additive fields (for example `context_tokens`), unused capabilities such as
+    `multimodal_embedding` or `decision`, and unknown formats, reasons and option
+    names are accepted and ignored. The raw observation is retained unchanged.
+    """
     value = strict_json(raw)
-    object_fields(value, ('supported_contract_versions', 'model', 'profile', 'max_request_bytes',
-                         'max_response_bytes', 'max_stream_event_bytes', 'capabilities'))
+    response_fields(value, ('supported_contract_versions', 'model', 'profile', 'max_request_bytes',
+                            'max_response_bytes', 'capabilities'))
     versions = value['supported_contract_versions']
-    if type(versions) is not list or not 1 <= len(versions) <= 16 or any(type(v) is not int for v in versions) or 1 not in versions:
+    if type(versions) is not list or not any(type(version) is int and version == 1 for version in versions):
         raise ValueError('Pumas typed contract version 1 is unavailable.')
     alias(value['model'])
     if profile(value['profile']) is None:
         raise ValueError('Pumas must resolve an exact profile.')
-    for key, maximum in [('max_request_bytes', 32*1024*1024), ('max_response_bytes', 32*1024*1024), ('max_stream_event_bytes', 256*1024)]:
-        if type(value[key]) is not int or not 0 < value[key] <= maximum:
+    for key in ('max_request_bytes', 'max_response_bytes'):
+        if not _positive_int(value[key]):
             raise ValueError('Unsupported typed Pumas byte bounds.')
     entries = value['capabilities']
-    if type(entries) is not list or len(entries) > len(CAPABILITIES):
+    if type(entries) is not list:
         raise ValueError('Invalid typed Pumas capability list.')
     seen = set()
     for item in entries:
-        object_fields(item, ('capability', 'semantic_task', 'input_formats', 'output_formats', 'streaming', 'availability', 'option_bounds'))
-        name = item['capability']
-        if type(name) is not str or name not in CAPABILITIES or name in seen or item['semantic_task'] != CAPABILITIES[name] or type(item['streaming']) is not bool:
-            raise ValueError('Unsupported typed Pumas semantic capability.')
+        name = item.get('capability') if type(item) is dict else None
+        if type(name) is not str or name not in USED_CAPABILITIES:
+            continue
+        if name in seen:
+            raise ValueError('Pumas advertises '+name+' more than once for one serving.')
         seen.add(name)
-        for field, allowed in [('input_formats', {'messages_text', 'text', 'text_batch', 'pcm_s16le', 'pcm_f32le', 'png_base64', 'jpeg_base64', 'messages_image'}),
-                               ('output_formats', {'text', 'embeddings_float32', 'png_base64', 'labels'})]:
-            items = item[field]
-            if type(items) is not list or not 1 <= len(items) <= len(allowed) or any(type(v) is not str or v not in allowed for v in items) or len(set(items)) != len(items):
-                raise ValueError('Unsupported typed Pumas format.')
-        availability = item['availability']
-        object_fields(availability, ('state',), ('reason',))
-        if availability not in [{'state': 'available'}] and (availability.get('state') != 'unavailable' or
-                type(availability.get('reason')) is not str or availability.get('reason') not in {'unsupported_adapter', 'unqualified_audio_runtime', 'unknown_model_task', 'model_task_mismatch', 'runtime_unavailable'}):
-            raise ValueError('Invalid typed Pumas availability.')
-        bounds = item['option_bounds']
-        if type(bounds) is not list or len(bounds) > 13:
-            raise ValueError('Invalid typed Pumas option bounds.')
-        options = set()
-        for bound in bounds:
-            object_fields(bound, ('option', 'minimum', 'maximum'))
-            if type(bound['option']) is not str or bound['option'] not in {'max_tokens', 'temperature', 'top_p', 'dimensions', 'input_count', 'input_characters', 'width', 'height', 'seed', 'max_output_tokens', 'image_bytes', 'image_pixels', 'image_count'} or bound['option'] in options:
-                raise ValueError('Unsupported typed Pumas option.')
-            options.add(bound['option'])
-            if any(type(bound[k]) not in (int, float) or not -1e308 <= bound[k] <= 1e308 for k in ('minimum', 'maximum')) or bound['minimum'] > bound['maximum']:
-                raise ValueError('Invalid typed Pumas option interval.')
+        _descriptor(item)
     return {'capabilities': value, 'observed_sha256': hashlib.sha256(raw).hexdigest()}
 
 
@@ -144,7 +221,8 @@ def capabilities(base, model, exact_profile=None):
         query['profile'] = exact_profile
     try:
         observed = gateway_discovery.get_json(parts.hostname, parts.port, '/v1/capabilities?' + urlencode(query),
-            time.monotonic()+3, max_response=MAX_CAPABILITIES, decode=validate_manifest, require_complete=True)
+            time.monotonic()+3, max_response=MAX_CAPABILITIES, decode=validate_manifest, require_complete=True,
+            error=http_error)
     except (ValueError, OSError, http.client.HTTPException) as error:
         raise OperationError('Selected-model capabilities unavailable: '+str(error)) from None
     manifest = observed['capabilities']
@@ -153,37 +231,102 @@ def capabilities(base, model, exact_profile=None):
     return observed
 
 
+class _RouteMissing(ValueError):
+    pass
+
+
+def _listing(aliases):
+    rows = []
+    for name, profiles in aliases.items():
+        required = len(profiles) > 1
+        label = name + (' (profiles: ' + ', '.join(profiles) + '; choose one)' if required else '')
+        rows.append({'id': name, 'name': label, 'profiles': profiles, 'profile_required': required})
+    return rows
+
+
+def _served_models(raw):
+    """`GET /v1/served-models`: one entry per served (model, profile) pair."""
+    value = strict_json(raw)
+    response_fields(value, ('models',))
+    if type(value['models']) is not list:
+        raise ValueError('Invalid Pumas served-model listing.')
+    aliases = {}
+    for item in value['models']:
+        response_fields(item, ('model', 'profile'))
+        selected = profile(item['profile'])
+        if selected is None:
+            raise ValueError('Pumas served-model entry has no exact profile.')
+        profiles = aliases.setdefault(alias(item['model']), [])
+        if selected not in profiles:
+            profiles.append(selected)
+    return {'models': _listing(aliases), 'source': '/v1/served-models',
+            'qualification': 'Served (model, profile) pairs. Inspect the selected model capabilities before admission.'}
+
+
+def _openai_models(raw):
+    value = strict_json(raw)
+    entries = value.get('data') if type(value) is dict else None
+    if type(entries) is not list:
+        raise ValueError('Invalid bounded Pumas served model listing.')
+    aliases = {}
+    for item in entries:
+        if type(item) is not dict:
+            raise ValueError('Invalid model listing entry.')
+        profiles = aliases.setdefault(alias(item.get('id')), [])
+        # v0.8 lists each ID once with `profiles`; earlier gateways omit it.
+        listed = item.get('profiles')
+        for selected in listed if type(listed) is list else ():
+            if isinstance(selected, str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,128}', selected) and selected not in profiles:
+                profiles.append(selected)
+    return {'models': _listing(aliases), 'source': '/v1/models',
+            'qualification': 'Serving aliases only. Inspect the selected model capabilities before admission.'}
+
+
 def models(base):
+    """Prefer the typed served-model listing; fall back to `/v1/models` on gateways without it."""
     parts = urlsplit(endpoint(base))
-    def decode(raw):
-        value = strict_json(raw)
-        entries = value.get('data') if type(value) is dict else None
-        if type(entries) is not list or len(entries) > 512:
-            raise ValueError('Invalid bounded Pumas served model listing.')
-        names = []
-        for item in entries:
-            if type(item) is not dict:
-                raise ValueError('Invalid model listing entry.')
-            name = alias(item.get('id'))
-            # PR54 emits one catalog row per served profile and omits profile
-            # in these rows. Exact-profile capabilities remain admission authority.
-            if name not in names:
-                names.append(name)
-        return {'models': [{'id': name, 'name': name} for name in names],
-                'qualification': 'Serving aliases only. Inspect the selected model capabilities before admission.'}
+    def missing(status, raw):
+        if status == 404:
+            raise _RouteMissing()
+        http_error(status, raw)
+    try:
+        return gateway_discovery.get_json(parts.hostname, parts.port, '/v1/served-models', time.monotonic()+3,
+            max_response=MAX_SERVED_MODELS, decode=_served_models, require_complete=True, error=missing)
+    except _RouteMissing:
+        pass
     return gateway_discovery.get_json(parts.hostname, parts.port, '/v1/models', time.monotonic()+3,
-        max_response=1024*1024, decode=decode, require_complete=True)
+        max_response=1024*1024, decode=_openai_models, require_complete=True, error=http_error)
 
 
-def require(observed, name, input_format, output_format, options):
-    item = next((row for row in observed['capabilities']['capabilities'] if row['capability'] == name), None)
-    if (item is None or item['availability']['state'] != 'available' or input_format not in item['input_formats']
-            or output_format not in item['output_formats']):
-        raise OperationError('Selected model does not currently advertise the required '+name+' capability.')
-    bounds = {row['option']: row for row in item['option_bounds']}
+def descriptor(observed, name):
+    """Select a capability descriptor by name, never by position or count."""
+    return next((row for row in observed['capabilities']['capabilities']
+                 if type(row) is dict and row.get('capability') == name), None)
+
+
+def require(observed, name, input_format, output_format, options, advisory=()):
+    """Check live availability and bounds. `advisory` options are checked only when advertised."""
+    item = descriptor(observed, name)
+    if item is None:
+        raise OperationError('Selected model does not advertise the '+name+' capability.')
+    availability = item['availability']
+    if availability.get('state') != 'available':
+        reason = availability.get('reason')
+        raise OperationError('Selected model reports '+name+' unavailable'
+                             + (' ('+message_text(reason)+')' if isinstance(reason, str) else '') + '.')
+    if input_format not in item['input_formats'] or output_format not in item['output_formats']:
+        raise OperationError('Selected model does not advertise '+input_format+' to '+output_format+' for '+name+'.')
+    bounds = {row['option']: row for row in item['option_bounds']
+              if type(row) is dict and type(row.get('option')) is str and row['option'] in USED_OPTIONS}
     for key, value in options.items():
-        if key not in bounds or not bounds[key]['minimum'] <= value <= bounds[key]['maximum']:
-            raise OperationError('Selected model does not advertise the requested '+key+' bound.')
+        bound = bounds.get(key)
+        if bound is None:
+            if key in advisory:
+                continue
+            raise OperationError('Selected model does not advertise a '+key+' bound for '+name+'.')
+        if not bound['minimum'] <= value <= bound['maximum']:
+            raise OperationError(f"Requested {key} {value} is outside the selected model's {name} bound "
+                                 f"{bound['minimum']:g}–{bound['maximum']:g}.")
 
 
 def chat_request(job, user_text, max_tokens):
@@ -236,9 +379,8 @@ def exchange(base, payload, stop, max_bytes):
             try:
                 value = result(raw, payload['request_id'])
             except OperationError as error:
+                # The typed error's `outcome` is authoritative; HTTP status is evidence only.
                 error.provider_http_status = response.status
-                if error.provider_code and response.status not in (400, 413, 422, 502, 503):
-                    error.outcome = 'unknown'
                 raise
             if value['kind'] != {'text': 'text', 'png_base64': 'image'}.get(payload['output']):
                 raise OperationError('Typed result has the wrong output kind; no replay.', 'unknown', raw=raw)
@@ -259,35 +401,45 @@ def exchange(base, payload, stop, max_bytes):
 
 
 def result(raw, request_id):
+    """Decode a finite typed response. Unknown response fields are ignored."""
     try:
         value = strict_json(raw)
-        object_fields(value, ('contract_version', 'request_id'), ('result', 'error'))
-        if type(value['contract_version']) is not int or value['contract_version'] != 1 or value['request_id'] != request_id or ('result' in value) == ('error' in value):
-            raise ValueError('Wrong typed operation correlation.')
+        if type(value) is not dict or type(value.get('contract_version')) is not int or value['contract_version'] != 1:
+            raise ValueError('Typed response is not contract version 1.')
         if 'error' in value:
-            error = value['error']; object_fields(error, ('code', 'outcome'))
-            if type(error['code']) is not str or error['code'] not in ERROR_CODES or error['outcome'] not in ('not_admitted', 'unknown'):
-                raise ValueError('Invalid typed operation error.')
-            raise OperationError('Pumas '+error['code']+'; outcome '+error['outcome']+'. No automatic replay.', error['outcome'], error['code'], raw)
+            error = typed_error(value)
+            if error is None:
+                detail = message_text(value['error'].get('message')) if type(value['error']) is dict else ''
+                raise ValueError('Invalid typed operation error' + (': ' + detail if detail else '.'))
+            # A null request_id means Pumas could not read the body; it is still a typed rejection.
+            if value.get('request_id') not in (request_id, None):
+                raise ValueError('Typed error belongs to another request.')
+            raise OperationError(error_message(error), error['outcome'], error['code'], raw)
+        response_fields(value, ('request_id', 'result'))
+        if value['request_id'] != request_id:
+            raise ValueError('Typed result belongs to another request.')
         projected = value['result']
         if type(projected) is not dict:
             raise ValueError('Invalid typed result.')
         if projected.get('kind') == 'text':
-            object_fields(projected, ('kind', 'text', 'finish_reason'))
-            if not isinstance(projected['text'], str) or projected['finish_reason'] != 'stop':
-                raise ValueError('A complete stop-terminated text result is required.')
+            response_fields(projected, ('kind', 'text', 'finish_reason'))
+            if not isinstance(projected['text'], str):
+                raise ValueError('Invalid typed text result.')
+            if projected['finish_reason'] != 'stop':
+                raise ValueError('Text did not finish with stop; partial output is not applied.')
             projected['text'].encode('utf-8')
         elif projected.get('kind') == 'image':
-            object_fields(projected, ('kind', 'png_base64', 'seed'))
+            response_fields(projected, ('kind', 'png_base64', 'seed'))
             if not isinstance(projected['png_base64'], str) or type(projected['seed']) is not int or not 0 <= projected['seed'] <= 4294967295:
                 raise ValueError('Invalid typed image result.')
         else:
-            raise ValueError('Unsupported typed result format.')
+            raise ValueError('Unsupported typed result kind.')
         return projected
     except OperationError:
         raise
-    except (ValueError, UnicodeError, TypeError):
-        raise OperationError('Malformed or incomplete typed result; provider outcome unknown, no replay.', 'unknown', raw=raw) from None
+    except (ValueError, UnicodeError, TypeError) as error:
+        raise OperationError('Malformed or incomplete typed result; provider outcome unknown, no replay. '+str(error),
+                             'unknown', raw=raw) from None
 
 
 def image_dimensions(width, height):
