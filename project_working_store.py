@@ -19,6 +19,7 @@ lets Session, owners, artifacts and custody use either store.
 from contextlib import contextmanager, nullcontext
 import json
 import os
+from pathlib import Path
 import re
 import threading
 import uuid
@@ -311,6 +312,11 @@ class WorkingProjectStore:
         with self._locked():
             state = self._state()
             return {key: state[key] for key in ('project_id', 'name', 'checkpoint')}
+
+    def manifest_raw(self):
+        """Canonical project.json bytes of the working copy's current checkpoint."""
+        with self._locked():
+            return _manifest_raw(self._manifest(self._state(), self._inventory()))
 
     def dirty(self):
         """Whether the working copy has changes not yet saved to the folder."""
@@ -614,3 +620,15 @@ class WorkingProjectStore:
     def __exit__(self, *exc):
         self.close()
 
+
+def registered_schemas(control_path):
+    """Working-copy schemas registered by a workspace control directory."""
+    schemas = []
+    for path in sorted(Path(control_path).glob('.project-working/*.json')):
+        try:
+            identity = json.loads(path.read_bytes()).get('working_id')
+        except (OSError, ValueError, AttributeError):
+            continue
+        if type(identity) is str and WORKING_ID.fullmatch(identity):
+            schemas.append('working_' + identity)
+    return schemas

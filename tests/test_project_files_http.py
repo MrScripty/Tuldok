@@ -73,7 +73,11 @@ class ProjectFilesHTTP(unittest.TestCase):
             with psycopg.connect(connection_info(dsn), autocommit=True) as connection:
                 connection.execute(sql.SQL('DROP SCHEMA IF EXISTS {} CASCADE').format(sql.Identifier(schema)))
         # Projection manifests are physical identities, distinct from logical project IDs.
+        from project_working_store import registered_schemas
         for dsn, control in self.controls:
+            for schema in registered_schemas(control):
+                with psycopg.connect(connection_info(dsn), autocommit=True) as connection:
+                    connection.execute(sql.SQL('DROP SCHEMA IF EXISTS {} CASCADE').format(sql.Identifier(schema)))
             for manifest in control.rglob('.tuldok.json'):
                 value = json.loads(manifest.read_bytes())
                 schema = ('projection_' + value['projection_id'] if value['version'] == 2

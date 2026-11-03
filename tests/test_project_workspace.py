@@ -49,6 +49,8 @@ class ProjectWorkspaceTests(unittest.TestCase):
                 value = json.loads(manifest.read_bytes())
                 schemas.add('projection_' + value['projection_id'] if value['version'] == 2
                             else 'catalog_' + value['dataset_id'])
+            from project_working_store import registered_schemas
+            schemas.update(registered_schemas(control))
         with psycopg.connect(connection_info(), autocommit=True) as connection:
             for schema in schemas:
                 connection.execute(sql.SQL('DROP SCHEMA IF EXISTS {} CASCADE').format(sql.Identifier(schema)))
