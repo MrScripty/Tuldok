@@ -1,4 +1,4 @@
-"""Application acceptance of source-derived vision fixtures and actual DTO schema pins, not inference."""
+"""Application acceptance of source-derived v0.8 vision fixtures and actual DTO schema pins, not inference."""
 from auth_helpers import bind_owner
 import base64
 import copy
@@ -11,6 +11,7 @@ import unittest
 import uuid
 from unittest.mock import patch
 
+import jsonschema
 from PIL import Image
 from app import Dataset
 from fake_pumas_vision import FIXTURES, start
@@ -39,22 +40,74 @@ class VisionBoundaryTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256(raw).hexdigest(), digest, name)
             self.assertEqual(json.loads(raw)['$schema'], 'https://json-schema.org/draft/2020-12/schema')
         descriptor = json.loads((FIXTURES/'schemas/capability-descriptor.schema.json').read_text())
-        self.assertEqual(set(descriptor['$defs']['Capability']['enum']), set(pumas.CAPABILITIES))
+        # Documented capability variants export as `oneOf`; new ones are appended additively.
+        variants = descriptor['$defs']['Capability']['oneOf']
+        names = [name for row in variants for name in row.get('enum', [row.get('const')])]
+        self.assertTrue(set(pumas.USED_CAPABILITIES) <= set(names))
+        self.assertTrue({'multimodal_embedding', 'decision'} <= set(names))
+        error = json.loads((FIXTURES/'schemas/error-response.schema.json').read_text())
+        self.assertIn('message', error['$defs']['OperationError']['required'])
+        self.assertEqual(error['properties']['request_id']['type'], ['string', 'null'])
         for name in ('operation-request', 'modality-request'):
             schema = json.loads((FIXTURES/'schemas'/(name+'.schema.json')).read_text())
             self.assertFalse(schema['additionalProperties'])
             self.assertEqual(schema['$defs']['ImageEncoding']['enum'], ['png','jpeg'])
-    def test_seven_source_derived_descriptors_hash_reasons_and_closed_fields(self):
+    def test_source_derived_descriptors_validate_against_actual_schemas(self):
+        schemas = {name: json.loads((FIXTURES/'schemas'/(name+'.schema.json')).read_text()) for name in (
+            'capabilities-response', 'operation-request', 'modality-request', 'operation-response', 'error-response')}
+        def valid(name, value): jsonschema.Draft202012Validator(schemas[name]).validate(value)
+        valid('capabilities-response', json.loads((FIXTURES/'controlled-capabilities.json').read_bytes()))
+        valid('operation-request', vision.request(self.job(), image(), facade=False))
+        valid('operation-request', vision.request(self.job(), {'kind':'image_messages','messages':[{'role':'user','content':[image()]}]}, facade=False))
+        valid('modality-request', {key: value for key, value in vision.request(self.job(), image('jpeg')).items()})
+        valid('operation-response', {'contract_version':1,'request_id':'caption-17','result':{'kind':'text','text':'x','finish_reason':'stop'}})
+        valid('error-response', {'contract_version':1,'request_id':None,'error':{'code':'invalid_request','outcome':'not_admitted','message':'unreadable body'}})
+    def test_source_derived_descriptors_hash_and_select_by_name(self):
         raw = (FIXTURES/'controlled-capabilities.json').read_bytes()
         observed = pumas.validate_manifest(raw)
         self.assertEqual(observed['observed_sha256'],hashlib.sha256(raw).hexdigest())
-        self.assertEqual(set(row['capability']for row in observed['capabilities']['capabilities']),set(pumas.CAPABILITIES))
-        self.assertEqual(len(pumas.CAPABILITIES),7)
-        self.assertEqual(observed['capabilities']['capabilities'][4]['option_bounds'][0]['option'],'max_output_tokens')
-        for mutate in (lambda row:row.update(capability='image_understanding'),lambda row:row['input_formats'].append('image_url'),
-                       lambda row:row['option_bounds'][0].update(maximum=float('inf')),lambda row:row.update(semantic_task='chat_generation')):
-            value = copy.deepcopy(observed['capabilities']); mutate(value['capabilities'][-1])
-            with self.assertRaises(ValueError): pumas.validate_manifest(json.dumps(value).encode())
+        names = [row['capability'] for row in observed['capabilities']['capabilities']]
+        self.assertTrue({'multimodal_embedding','decision'} | set(pumas.USED_CAPABILITIES) <= set(names))
+        self.assertEqual(observed['capabilities']['context_tokens'], 8192)
+        self.assertEqual(pumas.descriptor(observed,'audio_transcription')['option_bounds'][0]['option'],'max_output_tokens')
+        vision_row = pumas.descriptor(observed,'image_to_text')
+        self.assertEqual(next(b for b in vision_row['option_bounds'] if b['option']=='max_tokens')['maximum'], 8192)
+    def test_additive_fields_capabilities_formats_options_and_reasons_are_ignored(self):
+        value = json.loads((FIXTURES/'controlled-capabilities.json').read_bytes())
+        value.update(future_field={'nested':True}, supported_contract_versions=[2,1])
+        value['capabilities'].reverse()
+        value['capabilities'].insert(3, {'capability':'image_understanding','semantic_task':'x','input_formats':[7],'availability':'odd'})
+        value['capabilities'].append('not even an object')
+        row = next(r for r in value['capabilities'] if type(r) is dict and r['capability']=='image_to_text')
+        row['input_formats'].append('image_url'); row['output_formats'].append('future'); row['future'] = 1
+        row['option_bounds'].insert(0, {'option':'future_option','minimum':'unbounded'})
+        row['option_bounds'].append({'option':'max_tokens_hint','minimum':1,'maximum':1})
+        for item in value['capabilities']:
+            if type(item) is dict and item.get('capability') == 'decision':
+                item['availability'] = {'state':'unavailable','reason':'future_reason'}
+        observed = pumas.validate_manifest(json.dumps(value).encode())
+        pumas.require(observed,'image_to_text','messages_image','text',{'max_tokens':4096,'image_count':1})
+        with self.assertRaises(pumas.OperationError) as caught:
+            pumas.require(observed,'image_to_text','messages_image','text',{'max_tokens':8193})
+        self.assertIn('8192', str(caught.exception))
+        with self.assertRaises(pumas.OperationError) as caught:
+            pumas.require(observed,'decision','decision','decisions',{})
+        self.assertIn('future_reason', str(caught.exception))
+        del value['context_tokens']; del value['max_stream_event_bytes']
+        pumas.validate_manifest(json.dumps(value).encode())
+    def test_used_descriptor_fields_are_still_validated(self):
+        observed = pumas.validate_manifest((FIXTURES/'controlled-capabilities.json').read_bytes())
+        def vision_row(value): return next(r for r in value['capabilities'] if r['capability']=='image_to_text')
+        for mutate in (lambda v:vision_row(v)['option_bounds'][0].update(maximum=float('inf')),
+                       lambda v:vision_row(v).update(semantic_task='chat_generation'),
+                       lambda v:vision_row(v).update(input_formats='messages_image'),
+                       lambda v:vision_row(v).update(availability={'state':'unavailable','reason':{}}),
+                       lambda v:vision_row(v)['option_bounds'].append({'option':'max_tokens','minimum':1,'maximum':2}),
+                       lambda v:v['capabilities'].append(copy.deepcopy(vision_row(v))),
+                       lambda v:v.update(supported_contract_versions=[2]),
+                       lambda v:v.update(profile=None), lambda v:v.pop('capabilities')):
+            value = copy.deepcopy(observed['capabilities']); mutate(value)
+            with self.subTest(value=value), self.assertRaises(ValueError): pumas.validate_manifest(json.dumps(value).encode())
     def test_named_and_facade_image_order_and_original_compressed_bytes(self):
         for encoding in ('png','jpeg'):
             part = image(encoding,progressive=encoding=='jpeg')
@@ -98,18 +151,40 @@ class VisionBoundaryTests(unittest.TestCase):
                 with self.assertRaises(ValueError): vision.request(self.job(),value)
         self.assertEqual((vision.MAX_IMAGE,vision.MAX_AGGREGATE,vision.MAX_REQUEST,vision.MAX_IMAGES),(8388608,16777216,33554432,4))
     def test_finite_options_and_correlated_typed_result_without_model(self):
-        for key,value in [('max_tokens',0),('max_tokens',2049),('max_tokens',True),('temperature',float('nan')),
+        for key,value in [('max_tokens',0),('max_tokens',2**32),('max_tokens',True),('temperature',float('nan')),
                           ('temperature',3),('top_p',float('inf')),('top_p',-1)]:
             with self.assertRaises(ValueError): vision.request(self.job(),image(),**{key:value})
-        request=vision.request(self.job(),image(),max_tokens=2048,temperature=2,top_p=1)
-        self.assertEqual(request['options'],{'kind':'text_generation','max_tokens':2048,'temperature':2,'top_p':1})
+        # No fixed 2048 cap: the live max_tokens bound follows the served context.
+        request=vision.request(self.job(),image(),max_tokens=8192,temperature=2,top_p=1)
+        self.assertEqual(request['options'],{'kind':'text_generation','max_tokens':8192,'temperature':2,'top_p':1})
         response={'contract_version':1,'request_id':'caption-17','result':{'kind':'text','text':'A blue rectangle.','finish_reason':'stop'}}
         self.assertEqual(pumas.result(encode(response).encode(),'caption-17')['text'],'A blue rectangle.')
-        for mutate in (lambda v:v.update(request_id='foreign'),lambda v:v.update(model='private'),
-                       lambda v:v['result'].update(finish_reason='length'),lambda v:v['result'].update(extra='private')):
+        for mutate in (lambda v:v.update(model='additive'),lambda v:v['result'].update(extra='additive')):
+            value=copy.deepcopy(response);mutate(value)
+            self.assertEqual(pumas.result(encode(value).encode(),'caption-17')['text'],'A blue rectangle.')
+        for mutate in (lambda v:v.update(request_id='foreign'),lambda v:v['result'].update(finish_reason='length'),
+                       lambda v:v.update(contract_version=2),lambda v:v['result'].update(kind='decisions')):
             value=copy.deepcopy(response);mutate(value)
             with self.assertRaises(pumas.OperationError)as caught:pumas.result(encode(value).encode(),'caption-17')
             self.assertEqual(caught.exception.outcome,'unknown')
+    def test_typed_errors_use_outcome_message_and_null_request_id(self):
+        def error(request_id='caption-17', **fields):
+            body={'code':'model_not_found','outcome':'not_admitted','message':'no served model is named "x"'}; body.update(fields)
+            return encode({'contract_version':1,'request_id':request_id,'error':body}).encode()
+        cases=[(error(),'not_admitted','model_not_found'),(error(None,code='invalid_request'),'not_admitted','invalid_request'),
+               (error(code='ambiguous_operation'),'not_admitted','ambiguous_operation'),
+               (error(code='future_code'),'not_admitted','future_code'),
+               (error(code='provider_failure',outcome='unknown'),'unknown','provider_failure'),
+               (error(outcome='future_outcome'),'unknown','model_not_found')]
+        for raw,outcome,code in cases:
+            with self.subTest(raw=raw),self.assertRaises(pumas.OperationError)as caught:pumas.result(raw,'caption-17')
+            self.assertEqual((caught.exception.outcome,caught.exception.provider_code),(outcome,code))
+            self.assertIn('no served model is named "x"',str(caught.exception))
+        for raw in (error('foreign'),error(code=7),encode({'contract_version':1,'request_id':'caption-17','error':'text'}).encode()):
+            with self.subTest(raw=raw),self.assertRaises(pumas.OperationError)as caught:pumas.result(raw,'caption-17')
+            self.assertEqual(caught.exception.outcome,'unknown')
+        with self.assertRaises(pumas.OperationError)as caught:pumas.result(error(message='x'*5000+'\nnext'),'caption-17')
+        self.assertLess(len(str(caught.exception)),800);self.assertNotIn('\n',str(caught.exception))
 
 
 class VisionApplicationTests(unittest.TestCase):
@@ -151,16 +226,24 @@ class VisionApplicationTests(unittest.TestCase):
         for mode in ('missing_build','unavailable','wrong_profile','wrong_model'):
             self.state['mode']=mode;job=self.generate()
             self.assertEqual(job['status'],'failed');self.assertEqual(job['provider_outcome'],'not_admitted')
+            if mode=='unavailable':self.assertIn('runtime_unavailable',job['error'])
         self.assertFalse(self.state['requests'])
         with self.assertRaises(ValueError):self.data.caption_proposals.start(self.body(seed=42))
     def test_http_refusals_outcomes_and_uncertain_failures_are_never_replayed(self):
-        for status in (400,413,422,503,502):
-            mode='unknown'if status==502 else'not_admitted'
-            self.state.update(mode=mode,refusal_status=status);body=self.body();job=self.generate(body)
-            self.assertEqual(job['provider_outcome'],mode);self.assertEqual(job['provider_http_status'],status)
+        # `outcome` is authoritative, not the HTTP status (404/409 are ordinary refusals).
+        cases=[(400,'not_admitted'),(404,'not_admitted'),(409,'not_admitted'),(413,'not_admitted'),(422,'not_admitted'),
+               (503,'not_admitted'),(502,'not_admitted'),(502,'unknown'),(500,'unknown'),(400,'unknown')]
+        for status,mode in cases:
+            self.state.update(mode=mode,refusal_status=status,error_message='reason for '+str(status));body=self.body();job=self.generate(body)
+            self.assertEqual(job['provider_outcome'],mode,status);self.assertEqual(job['provider_http_status'],status)
+            self.assertIn('reason for '+str(status),job['error'])
             self.data.caption_proposals.start(body)
-        self.assertEqual(len(self.state['requests']),5)
-        for mode in ('wrong_id','private','length','nonfinite','oversized','truncated','loss'):
+        self.state['mode']='unreadable';job=self.generate()
+        self.assertEqual(job['provider_outcome'],'not_admitted');self.assertEqual(job['provider_error_code'],'invalid_request')
+        self.assertIn('request body is not valid JSON',job['error'])
+        self.assertEqual(len(self.state['requests']),len(cases)+1)
+        self.state['mode']='additive';self.assertEqual(self.generate()['status'],'completed')
+        for mode in ('wrong_id','length','nonfinite','oversized','truncated','loss'):
             self.state['mode']=mode;body=self.body();before=len(self.state['requests']);job=self.generate(body)
             self.assertEqual(job['status'],'failed',mode);self.assertEqual(job['provider_outcome'],'unknown',mode)
             self.data.caption_proposals.start(body);self.assertEqual(len(self.state['requests']),before+1)

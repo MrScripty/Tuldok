@@ -117,7 +117,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("caption-proposal-seed").disabled'),true);
   await click('caption-proposal-capabilities');await until(()=>evaluate('document.getElementById("caption-proposal-capability-metadata").textContent.includes("image_to_text")'));
   const visionManifest=JSON.parse(await evaluate('document.getElementById("caption-proposal-capability-metadata").textContent'));
-  assert.equal(visionManifest.capabilities.capabilities.length,7);
+  // Pumas responses grow additively; require the capability this flow uses, not a fixed count.
+  assert.ok(visionManifest.capabilities.capabilities.some(d=>d.capability==='image_to_text'));
   await evaluate('document.getElementById("caption-proposal-form").requestSubmit()');
   const visionJob=await until(async()=> (await request('caption-proposals')).jobs.find(j=>j.source.id===visionSource.id && j.status==='completed'));
   const visionExact=await request('caption-proposals/'+visionJob.id);

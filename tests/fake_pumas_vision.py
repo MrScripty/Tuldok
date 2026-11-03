@@ -35,7 +35,16 @@ def start():
             value = json.loads((FIXTURES / 'controlled-capabilities.json').read_bytes())
             query = parse_qs(urlsplit(self.path).query)
             if query.get('profile', ['vision-cpu'])[0] != 'vision-cpu': return self.reply({},404)
-            if state['mode'] == 'unavailable': value['capabilities'][-1]['availability'] = {'state':'unavailable','reason':'runtime_unavailable'}
+            vision = next(row for row in value['capabilities'] if row['capability'] == 'image_to_text')
+            if state['mode'] == 'unavailable': vision['availability'] = {'state':'unavailable','reason':'runtime_unavailable'}
+            if state['mode'] == 'additive':
+                # v0.8 additive growth: new fields, capabilities, formats, options and reasons.
+                value['future_field'] = {'nested': True}
+                value['capabilities'].insert(0, {'capability':'future_capability','semantic_task':'future_task','input_formats':['future'],
+                    'output_formats':['future'],'streaming':False,'availability':{'state':'deferred'},'option_bounds':[],'extra':1})
+                vision['input_formats'].append('future_format'); vision['future'] = 'ignored'
+                vision['option_bounds'].insert(0, {'option':'future_option','minimum':0.0,'maximum':1.0,'step':1})
+                value['capabilities'][-1]['availability'] = {'state':'unavailable','reason':'future_reason'}
             if state['mode'] == 'wrong_profile': value['profile'] = 'foreign'
             if state['mode'] == 'wrong_model': value['model'] = 'foreign'
             return self.reply(value)
@@ -47,11 +56,15 @@ def start():
             if mode == 'loss': self.close_connection = True; return
             if mode in ('not_admitted','unknown'):
                 return self.reply({'contract_version':1,'request_id':body['request_id'],
-                    'error':{'code':'unsupported_modality' if mode=='not_admitted' else 'invalid_provider_result','outcome':mode}},state['refusal_status'])
+                    'error':{'code':state.get('error_code') or ('unsupported_modality' if mode=='not_admitted' else 'invalid_provider_result'),
+                             'outcome':mode,'message':state.get('error_message','fixture reason')}},state['refusal_status'])
+            if mode == 'unreadable':
+                return self.reply({'contract_version':1,'request_id':None,
+                    'error':{'code':'invalid_request','outcome':'not_admitted','message':'request body is not valid JSON'}},400)
             value = {'contract_version':1,'request_id':body['request_id'],
                      'result':{'kind':'text','text':state['content'],'finish_reason':'stop'}}
             if mode == 'wrong_id': value['request_id'] = 'foreign'
-            if mode == 'private': value['model'] = 'provider/private'
+            if mode == 'additive': value['future'] = {'x': 1}; value['result']['future'] = 'ignored'
             if mode == 'length': value['result']['finish_reason'] = 'length'
             if mode == 'nonfinite': value['extra'] = float('nan')
             if mode == 'oversized': value['result']['text'] = 'x'*300000

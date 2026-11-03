@@ -26,6 +26,12 @@ def start():
                 self.send_response(404);self.send_header('Content-Length','0');self.end_headers();return
             body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             requests.append((self.path,body,dict(self.headers)))
+            if body['model']=='pumas-conflict':
+                encoded=json.dumps({'error':{'message':'model corners-test is served by profiles a, b; select one','type':'pumas_error','code':'ambiguous_model'}}).encode()
+                self.send_response(409);self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded);return
+            if body['model']=='plain-conflict':
+                encoded=json.dumps({'error':{'message':'private upstream wording'}}).encode()
+                self.send_response(409);self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded);return
             if body['model']=='missing-projector':
                 encoded=json.dumps({'error':{'message':'image input is not supported - provide the mmproj'}}).encode()
                 self.send_response(500);self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded);return
