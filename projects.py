@@ -28,9 +28,13 @@ def closed(value, required, optional=()):
         raise WorkbenchError('Invalid project fields.')
 
 
+# Same code points as any(ord(c) < 32 or 0xD800 <= ord(c) <= 0xDFFF), scanned in C.
+_TEXT_FORBIDDEN = re.compile('[\x00-\x1f\ud800-\udfff]')
+
+
 def text(value, label, limit=160):
     if (not isinstance(value, str) or not value.strip() or len(value) > limit
-            or any(ord(c) < 32 or 0xD800 <= ord(c) <= 0xDFFF for c in value)):
+            or _TEXT_FORBIDDEN.search(value)):
         raise WorkbenchError(label + ' must be bounded, nonempty text without control characters.')
     return value
 

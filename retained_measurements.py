@@ -309,16 +309,31 @@ class MeasurementTable:
             fail('Filters must use declared dimensions and typed scalar values.')
         if type(offset) is not int or not 0<=offset<=2**53-1 or type(limit) is not int or not 1<=limit<=100:
             fail('Page bounds must be explicit finite integers.')
-        rows = [v for v in self._doc['observations'] if v['metric_id']==metric_id
-                and v['subject_id'] in selected
-                and all(self._row_dimensions(v)[k]==wanted for k,wanted in filters.items())]
+        # One pass over observations; set membership and per-subject grouping
+        # replace the former subjects x rows rescans. Output is unchanged:
+        # rows keep packet order and ties keep the first maximal observation.
+        chosen = set(selected)
+        rows = []
+        for v in self._doc['observations']:
+            if v['metric_id']!=metric_id or v['subject_id'] not in chosen:
+                continue
+            if filters:
+                dimensions = self._row_dimensions(v)
+                if not all(dimensions[k]==wanted for k,wanted in filters.items()):
+                    continue
+            rows.append(v)
+        grouped = {identity:{'count':0,'states':{state:0 for state in STATES},'maximum':None} for identity in selected}
+        for v in rows:
+            own = grouped[v['subject_id']]
+            own['count'] += 1
+            if v['state'] in own['states']:
+                own['states'][v['state']] += 1
+            if v['state']=='measured' and (own['maximum'] is None or v['value'] > own['maximum']['value']):
+                own['maximum'] = v
         summaries = []
         for identity in selected:
-            own = [v for v in rows if v['subject_id']==identity]
-            counts = {state:sum(v['state']==state for v in own) for state in STATES}
-            measured = [v for v in own if v['state']=='measured']
-            maximum = max(measured, key=lambda v:v['value']) if measured else None
-            summaries.append({'subject_id':identity,'count':len(own),'states':counts,
+            own = grouped[identity];maximum = own['maximum']
+            summaries.append({'subject_id':identity,'count':own['count'],'states':own['states'],
                 'maximum':None if maximum is None else {k:maximum[k] for k in ('id','case_id','value')}})
         result = {'format':'retained_measurement_query_v1','packet_sha256':self.sha256,
             'scope':copy.deepcopy(self._doc['scope']),'metric':copy.deepcopy(self._metrics[metric_id]),

@@ -19,6 +19,7 @@ from model_definitions import (decode_model_draft, decode_model_material, verify
                                reference, natural, retained_json, MAX_SOURCE_BYTES)
 from pipeline import decode_graph, decode_recipe_draft, decode_recipe_material, verify_recipe_closure, digest, execution_digest
 from project_store import ProjectStoreError
+from project_session import session_active, session_records_for
 
 FAMILIES = {
     'model_definition': 'model_definition_history_v1',
@@ -325,7 +326,9 @@ def _retained_value(get_documents, family, ref):
         raise WorkbenchError('Retained material is unavailable.', 'unavailable', 409)
     if document['value']['ref'] != ref:
         raise WorkbenchError('Retained material reference differs.', 'invalid', 400)
-    return copy.deepcopy(document['value'])
+    # Decoded retained values are plain JSON: an exact independent copy.
+    from project_store import copy_validated_json
+    return copy_validated_json(document['value'])
 
 
 class MaterialSnapshot:
@@ -360,7 +363,7 @@ class ProjectMaterial:
 
     def _documents(self):
         self.session.check_current()
-        return decode_records(self.session.snapshot['records'])
+        return decode_records(session_records_for(self.session, *FAMILIES, 'project_fork'))
 
     def read_view(self, records):
         """Own validated material facts from one guarded checkpoint read.
@@ -380,8 +383,8 @@ class ProjectMaterial:
         from project_fork import active_records
         from project_material_fork import is_intent
         documents = self._documents()
-        active = {(r['family'], r['id']) for r in active_records(
-            self.session.snapshot['records'], project_id=self.session.summary['project_id'])}
+        active = {(r['family'], r['id']) for r in session_active(self.session, 
+            *FAMILIES, project_id=self.session.summary['project_id'])}
         return [dict(family=family, id=locator, current=copy.deepcopy(doc['current']),
                      fork_origin=copy.deepcopy(doc['fork_origin']))
                 for (family, locator), doc in sorted(documents.items())
@@ -392,7 +395,7 @@ class ProjectMaterial:
         intents = self.intents()
         unresolved = {(r['family'],r['id']) for r in intents}
         from project_fork import active_records
-        active = active_records(self.session.snapshot['records'], project_id=self.session.summary['project_id'])
+        active = session_active(self.session, *EDITABLE, project_id=self.session.summary['project_id'])
         return dict(requires_reselection=[dict(family=r['family'],id=r['id'],fields=r['current']['required_reselection']) for r in intents],
                     editable=[dict(family=r['family'],id=r['id']) for r in active
                               if r['family'] in EDITABLE and (r['family'],r['id']) not in unresolved])
@@ -510,7 +513,7 @@ class ProjectMaterial:
             audit=copy.deepcopy([fact for fact in self.owner_access.facts
                 if fact['action']==('models.publish' if family=='model_material' else 'recipes.material')
                 and fact['target'] in (value['ref'].get('id'),value['ref']['sha256'])]) if self.owner_access else []))
-        prior=decode_records(self.session.snapshot['records']).get((family,record['id']))
+        prior=decode_records(session_records_for(self.session, *FAMILIES, 'project_fork')).get((family,record['id']))
         if prior is not None:
             if prior['value']!=record['document']['value'] or prior['artifacts']!=record['document']['artifacts']:
                 raise WorkbenchError('Retained immutable material changed.','invalid',400)
@@ -594,7 +597,7 @@ class ProjectMaterial:
         if type(raw) is not bytes or len(raw)>64*1024 or hashlib.sha256(raw).hexdigest()!=value['manifest_sha256'] or decode_retained_manifest(decode(raw))!=value['manifest']:
             raise WorkbenchError('Exact original project manifest bytes differ.')
         key=catalog_id+'.'+value['manifest_sha256']
-        prior=decode_records(self.session.snapshot['records']).get(('project_snapshot',key))
+        prior=decode_records(session_records_for(self.session, *FAMILIES, 'project_fork')).get(('project_snapshot',key))
         if prior is not None:
             original=prior['value']
             if any(original[field]!=value[field] for field in ('id','name','manifest_sha256','manifest')):
@@ -628,7 +631,7 @@ class ProjectMaterial:
         documents=self._documents();catalog_id=self.session.db.dataset_id
         from project_fork import active_records
         from project_material_fork import is_intent
-        active={(r['family'],r['id']) for r in active_records(self.session.snapshot['records'],project_id=catalog_id)}
+        active={(r['family'],r['id']) for r in session_active(self.session, *FAMILIES,project_id=catalog_id)}
         with self.session.db.transaction():
             for table in ('model_definition_drafts','workspace_graphs','workspace_recipe_drafts','model_materials','workspace_recipe_materials'):
                 self.session.db.execute('DELETE FROM '+table)
@@ -656,8 +659,7 @@ class ProjectMaterial:
         catalog_id = self.session.db.dataset_id
         from project_fork import active_records
         from project_material_fork import is_intent
-        active = {(r['family'], r['id']) for r in active_records(
-            self.session.snapshot['records'], project_id=catalog_id)}
+        active = {(r['family'], r['id']) for r in session_active(self.session, *FAMILIES, project_id=catalog_id)}
         with self.session.db.transaction():
             for (family, locator), doc in documents.items():
                 if (family, locator) not in active or doc['origin_catalog_id'] != catalog_id:

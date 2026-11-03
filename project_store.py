@@ -61,6 +61,9 @@ SUPPORTED_FORMATS = {
     'grounded_history': 'project_grounded_history_v1',
     'caption_proposal_history': 'project_caption_proposal_history_v1',
     'text_proposal_history': 'project_text_proposal_history_v1',
+    # Store-only: one shared retained runtime closure for compact Runs
+    # (project_record_dedupe); never visible to domain owners.
+    'run_runtime_closure': 'project_run_runtime_closure_v1',
 }
 MAX_RECORDS = 100_000
 # Scientific history can retain original runtime/file observations in hundreds
@@ -185,13 +188,41 @@ def _domain_format(value, family):
         _fail('Domain document requires a versioned format.')
     if value != SUPPORTED_FORMATS[family] and not (
             family == 'project_operation' and value == 'project_operation_v2'
-            or family == 'project_file' and value == 'project_file_v2'):
+            or family == 'project_file' and value == 'project_file_v2'
+            or family == 'run_history' and value == 'project_run_history_v2'):
         _fail('Unsupported domain document format.', 'unsupported', 422)
 
 
-def _records(records):
+def _compact(value):
+    # CPython's C encoder is used only without indent; it distinguishes 1, 1.0,
+    # True and 0.0/-0.0, which Python == equality does not.
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False,
+                      separators=(',', ':'))
+
+
+def _same_json(candidate, verified):
+    """Exact JSON value equality: same types, float bits and key sets."""
+    if candidate is verified:
+        return True
+    if candidate != verified:
+        return False
+    try:
+        return _compact(candidate) == _compact(verified)
+    except (TypeError, ValueError, RecursionError):
+        return False
+
+
+def _prepared_records(records, unchanged=None):
+    """Validate and canonically encode a complete candidate record set.
+
+    unchanged maps (family, id) -> (verified current document, inventory entry).
+    A candidate document equal to its verified current revision reuses that
+    revision's known canonical byte count and digest instead of re-encoding it;
+    its raw slot is None and the caller must not rewrite it.
+    """
     if type(records) is not list or len(records) > MAX_RECORDS:
         _fail('Project records must be a bounded list.')
+    unchanged = unchanged or {}
     result, seen, total = [], set(), 0
     for record in records:
         _keys(record, ('family', 'id', 'document'), 'Project record')
@@ -206,19 +237,205 @@ def _records(records):
         if type(document) is not dict:
             _fail('Domain document must be an object.')
         _domain_format(document.get('format'), family)
+        current = unchanged.get((family, identity))
+        if current is not None and _same_json(document, current[0]) \
+                and current[1]['format'] == document['format']:
+            # Exactly equal JSON values have identical canonical bytes; share the
+            # already verified current document (never handed out by alias).
+            total += current[1]['bytes']
+            if total > MAX_TOTAL_BYTES:
+                _fail('Project records exceed the synchronous byte limit.')
+            result.append((family, identity, current[0], None, current[1]))
+            continue
         document = copy.deepcopy(document)
         raw = _encode(document)
         total += len(raw)
         if len(raw) > MAX_RECORD_BYTES or total > MAX_TOTAL_BYTES:
             _fail('Project records exceed the synchronous byte limit.')
-        result.append((family, identity, document, raw))
+        result.append((family, identity, document, raw, None))
     return sorted(result, key=lambda item: (item[0], item[1]))
+
+
+_NESTED_DOCUMENT = b'\n' + b' ' * 4
+
+
+class _RecordsDigest:
+    """Incremental SHA256 of _encode([dict(family, id, document), ...]).
+
+    add() takes each record's own canonical _encode(document) bytes, in record
+    order. Canonical JSON never contains a literal newline inside a string, so
+    a document nested two levels deep differs from its standalone encoding only
+    by four extra spaces after each newline. The result is byte-identical to
+    hashing the complete re-encoded list, without re-encoding any document.
+    """
+    def __init__(self):
+        self._digest = hashlib.sha256()
+        self._first = True
+
+    def add(self, family, identity, raw):
+        if not raw.endswith(b'\n'):
+            _fail('Canonical record bytes must end with LF.')
+        self._digest.update(b'[\n  {\n    "document": ' if self._first else b',\n  {\n    "document": ')
+        self._first = False
+        self._digest.update(raw[:-1].replace(b'\n', _NESTED_DOCUMENT))
+        self._digest.update(b',\n    "family": ')
+        self._digest.update(json.dumps(family, ensure_ascii=False).encode('utf-8'))
+        self._digest.update(b',\n    "id": ')
+        self._digest.update(json.dumps(identity, ensure_ascii=False).encode('utf-8'))
+        self._digest.update(b'\n  }')
+
+    def hexdigest(self):
+        final = self._digest.copy()
+        final.update(b'[]\n' if self._first else b'\n]\n')
+        return final.hexdigest()
+
+
+def envelope_digest(family, identity, raw):
+    """SHA256 of _encode(dict(family, id, document)) from the document's canonical bytes.
+
+    Canonical JSON has no literal newline inside strings, so the document nested
+    one level deep differs from its standalone encoding only by two spaces after
+    each newline.
+    """
+    if not raw.endswith(b'\n'):
+        _fail('Canonical record bytes must end with LF.')
+    digest = hashlib.sha256(b'{\n  "document": ')
+    digest.update(raw[:-1].replace(b'\n', b'\n  '))
+    digest.update(b',\n  "family": ' + json.dumps(family, ensure_ascii=False).encode('utf-8'))
+    digest.update(b',\n  "id": ' + json.dumps(identity, ensure_ascii=False).encode('utf-8') + b'\n}\n')
+    return digest.hexdigest()
+
+
+def _records_digest(rows):
+    """Digest of (family, id, canonical raw) rows; see _RecordsDigest."""
+    digest = _RecordsDigest()
+    for family, identity, raw in rows:
+        digest.add(family, identity, raw)
+    return digest.hexdigest()
+
+
+def _records(records):
+    """Complete canonical encoding as (family, id, document, raw) tuples."""
+    return [(family, identity, document, raw)
+            for family, identity, document, raw, _entry in _prepared_records(records)]
+
+
+def _physical_candidates(records, logical, physical):
+    """Physical envelopes for a logical candidate record set.
+
+    A candidate equal to its current logical document reuses the current
+    physical document (so its verified revision is kept). Changed Runs are
+    compacted to a shared runtime closure when exactly reversible; every
+    referenced closure is included once. Returns (physical candidates, logical
+    result in record order) or (records, None) for malformed input, which
+    _prepared_records then rejects with its usual errors.
+    """
+    from project_record_dedupe import CLOSURE_FAMILY, RUN_FAMILY, compact, is_compact
+    if type(records) is not list or any(type(item) is not dict or set(item) != {'family', 'id', 'document'}
+                                        or type(item['family']) is not str or type(item['id']) is not str
+                                        for item in records):
+        return records, None
+    if any(item['family'] == CLOSURE_FAMILY for item in records):
+        _fail('Runtime closures are store-owned records.', 'unsupported', 422)
+    current_logical = {(item['family'], item['id']): item['document'] for item in logical}
+    current_physical = {(item['family'], item['id']): item['document'] for item in physical}
+    closures = {item['id']: item['document'] for item in physical if item['family'] == CLOSURE_FAMILY}
+    candidates, logical_out, referenced = [], [], set()
+    for item in records:
+        key = (item['family'], item['id'])
+        document = item['document']
+        if key in current_logical and _same_json(document, current_logical[key]):
+            stored = current_physical[key]
+            candidates.append(dict(family=key[0], id=key[1], document=stored))
+            logical_out.append(dict(family=key[0], id=key[1], document=current_logical[key]))
+            if is_compact(key[0], stored):
+                referenced.add(stored['runtime_closure']['id'])
+            continue
+        owned = copy.deepcopy(document)
+        logical_out.append(dict(family=key[0], id=key[1], document=owned))
+        compacted = compact(owned) if key[0] == RUN_FAMILY else None
+        if compacted is not None:
+            reduced, closure = compacted
+            identity = reduced['runtime_closure']['id']
+            closures.setdefault(identity, closure)
+            referenced.add(identity)
+            candidates.append(dict(family=key[0], id=key[1], document=reduced))
+        else:
+            candidates.append(dict(family=key[0], id=key[1], document=owned))
+    candidates.extend(dict(family=CLOSURE_FAMILY, id=identity, document=closures[identity]) for identity in sorted(referenced))
+    logical_out.sort(key=lambda item: (item['family'], item['id']))
+    return candidates, logical_out
 
 
 def _request(key, digest):
     if type(key) is not str or not REQUEST_KEY.fullmatch(key):
         _fail('Request key must contain 1–128 supported characters.')
     _digest(digest, 'Request body digest')
+
+
+def checked_manifest(raw):
+    """Decode and check a project checkpoint without reading any record file.
+
+    Verifies format, identity, the checkpoint digest, every inventory entry's
+    shape, ordering, rooted path and byte bounds, membership roots and receipt
+    structure. Record bytes and the latest receipt's records digest are checked
+    by whoever reads the records.
+    """
+    manifest = _decode(raw)
+    if type(manifest) is not dict:
+        _fail('Project checkpoint must be an object.')
+    if manifest.get('format') != FORMAT:
+        if type(manifest.get('format')) is str and re.fullmatch(r'tuldok_project_v[1-9][0-9]*', manifest['format']):
+            _fail('Unsupported project format.', 'unsupported', 422)
+        _fail('Invalid project format.')
+    _keys(manifest, ('format', 'project_id', 'name', 'checkpoint', 'roots', 'inventory', 'receipts'), 'Project checkpoint')
+    identity = manifest['project_id']
+    if type(identity) is not str or not re.fullmatch('[a-f0-9]{32}', identity):
+        _fail('Invalid project UUID.')
+    if type(manifest['name']) is not str or not manifest['name'].strip() or len(manifest['name']) > 200:
+        _fail('Invalid project display name.')
+    _digest(manifest['checkpoint'], 'Checkpoint')
+    core = {k: v for k, v in manifest.items() if k != 'checkpoint'}
+    if _sha(_encode(core)) != manifest['checkpoint']:
+        _fail('Project checkpoint digest does not match its contents.')
+    inventory = manifest['inventory']
+    if type(inventory) is not list or len(inventory) > MAX_RECORDS:
+        _fail('Invalid project inventory.')
+    roots, total, previous = [], 0, None
+    for entry in inventory:
+        _keys(entry, ('family', 'id', 'format', 'namespace', 'path', 'bytes', 'sha256'), 'Inventory entry')
+        family, record_id, digest = entry['family'], entry['id'], entry['sha256']
+        _identifier(family, 'Record family')
+        if family not in SUPPORTED_FORMATS:
+            _fail('Unsupported project record family.', 'unsupported', 422)
+        _identifier(record_id, 'Record ID')
+        _digest(digest, 'Record digest')
+        _domain_format(entry['format'], family)
+        key = (family, record_id)
+        if previous is not None and key <= previous:
+            _fail('Inventory must have unique sorted record identities.')
+        previous = key
+        if entry['namespace'] != identity or entry['path'] != f'records/{family}/{record_id}/{digest}.json':
+            _fail('Invalid inventory namespace or rooted record path.')
+        if type(entry['bytes']) is not int or not 0 < entry['bytes'] <= MAX_RECORD_BYTES:
+            _fail('Invalid inventory record byte count.')
+        total += entry['bytes']
+        if total > MAX_TOTAL_BYTES:
+            _fail('Project records exceed their total byte limit.')
+        roots.append(dict(family=family, id=record_id))
+    if manifest['roots'] != roots:
+        _fail('Project membership roots disagree with the inventory.')
+    if type(manifest['receipts']) is not list or not manifest['receipts']:
+        _fail('Project requires operation receipts.')
+    seen = set()
+    for receipt in manifest['receipts']:
+        _keys(receipt, ('request_key', 'request_sha256', 'records_sha256'), 'Operation receipt')
+        _request(receipt['request_key'], receipt['request_sha256'])
+        _digest(receipt['records_sha256'], 'Receipt records digest')
+        if receipt['request_key'] in seen:
+            _fail('Duplicate operation receipt key.')
+        seen.add(receipt['request_key'])
+    return manifest
 
 
 def _path_string(path):
@@ -471,8 +688,10 @@ class ProjectStore:
     revisions are never pruned. Callers validate domain semantics before commit
     and after Open; this owner validates only the generic JSON/inventory contract.
     """
-    def __init__(self, path, root_fd, origin_fd, relative_parts, origin_path):
+    def __init__(self, path, root_fd, origin_fd, relative_parts, origin_path, canonical_digests=None):
         self.path = Path(path)
+        # Optional private set of digests already proven canonical; see _load.
+        self._canonical_digests = canonical_digests
         self._root_fd = root_fd
         self._origin_fd = origin_fd
         self._relative_parts = relative_parts
@@ -482,6 +701,7 @@ class ProjectStore:
         self._read_cache = None
         self._mutex = threading.RLock()
         self._unknown = False
+        self._folder_mode = False
         try:
             fcntl.flock(root_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as exc:
@@ -578,7 +798,7 @@ class ProjectStore:
                 os.close(origin_fd)
 
     @classmethod
-    def open(cls, path):
+    def open(cls, path, *, canonical_digests=None):
         raw = _path_string(path)
         if type(raw) is not str or '\x00' in raw or '..' in raw.split('/'):
             _fail('Unsafe project root path.')
@@ -586,12 +806,12 @@ class ProjectStore:
         parent, leaf = os.path.split(absolute)
         _, parent_fd = _open_directory_path(parent)
         try:
-            return cls.open_at(parent_fd, leaf, root_path=parent)
+            return cls.open_at(parent_fd, leaf, root_path=parent, canonical_digests=canonical_digests)
         finally:
             os.close(parent_fd)
 
     @classmethod
-    def open_at(cls, trusted_root_fd, relative, *, root_path):
+    def open_at(cls, trusted_root_fd, relative, *, root_path, canonical_digests=None):
         """Open a descendant without following any configured-root or child alias."""
         parts = _relative_parts(relative)
         absolute = _verify_origin(trusted_root_fd, root_path)
@@ -600,7 +820,8 @@ class ProjectStore:
         try:
             fd = _walk(origin_fd, parts)
             owned_origin, origin_fd = origin_fd, None
-            store = cls(Path(absolute).joinpath(*parts), fd, owned_origin, parts, absolute)
+            store = cls(Path(absolute).joinpath(*parts), fd, owned_origin, parts, absolute,
+                        canonical_digests=canonical_digests)
             store._meta_fd = _directory(fd, '.tuldok')
             store._manifest, _ = store._load()
             return store
@@ -615,6 +836,115 @@ class ProjectStore:
         finally:
             if origin_fd is not None:
                 os.close(origin_fd)
+
+    # ---- Folder mode: the external project as an import source/export target.
+    # A folder-mode Store holds the writer lock and root binding but never
+    # loads the record set; the database working copy owns current records.
+
+    @classmethod
+    def open_folder_at(cls, trusted_root_fd, relative, *, root_path):
+        """Bind an existing external project folder without reading its records."""
+        parts = _relative_parts(relative)
+        absolute = _verify_origin(trusted_root_fd, root_path)
+        origin_fd = os.dup(trusted_root_fd)
+        store = None
+        try:
+            fd = _walk(origin_fd, parts)
+            owned_origin, origin_fd = origin_fd, None
+            store = cls(Path(absolute).joinpath(*parts), fd, owned_origin, parts, absolute)
+            store._meta_fd = _directory(fd, '.tuldok')
+            store._folder_mode = True
+            return store
+        except OSError as exc:
+            if store is not None:
+                store.close()
+            _io_error(exc, 'open project folder')
+        except BaseException:
+            if store is not None:
+                store.close()
+            raise
+        finally:
+            if origin_fd is not None:
+                os.close(origin_fd)
+
+    def folder_checkpoint(self):
+        """(raw bytes, checked manifest) of the folder's current project.json."""
+        with self._mutex:
+            self._binding()
+            try:
+                raw = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
+            except OSError as exc:
+                _io_error(exc, 'read project checkpoint')
+            return raw, checked_manifest(raw)
+
+    def folder_record(self, entry):
+        """One inventory entry's exact bytes after length/SHA256 verification."""
+        with self._mutex:
+            try:
+                raw = self._record_file(entry['family'], entry['id'], entry['sha256'])
+            except OSError as exc:
+                _io_error(exc, 'read project record')
+            if len(raw) != entry['bytes'] or _sha(raw) != entry['sha256']:
+                _fail('Canonical record bytes changed or are corrupt.')
+            return raw
+
+    def folder_has_record(self, entry):
+        """Whether the content-addressed revision file exists with its byte length."""
+        with self._mutex:
+            fds = []
+            try:
+                parent = self._meta_fd
+                for part in ('records', entry['family'], entry['id']):
+                    parent = _directory(parent, part)
+                    fds.append(parent)
+                info = os.stat(entry['sha256'] + '.json', dir_fd=parent, follow_symlinks=False)
+                return stat.S_ISREG(info.st_mode) and info.st_size == entry['bytes']
+            except FileNotFoundError:
+                return False
+            except OSError as exc:
+                _io_error(exc, 'inspect project record')
+            finally:
+                for fd in reversed(fds):
+                    os.close(fd)
+
+    def folder_write_record(self, family, record_id, digest, raw):
+        """Durably publish one immutable revision; existing bytes must be identical."""
+        with self._mutex:
+            try:
+                written = self._record_file(family, record_id, digest, raw)
+            except OSError as exc:
+                _io_error(exc, 'write project record')
+            if written != raw:
+                _fail('Immutable project revision already has different bytes.')
+
+    def folder_publish(self, raw, expected_raw):
+        """Atomically replace project.json only if it still has expected_raw.
+
+        expected_raw None means the folder has no checkpoint yet. Refuses to
+        overwrite a checkpoint someone else published since import/export.
+        """
+        if len(raw) > MAX_MANIFEST_BYTES:
+            _fail('Project checkpoint exceeds its byte limit.')
+        with self._mutex:
+            temporary = '.checkpoint-' + uuid.uuid4().hex + '.tmp'
+            replaced = False
+            try:
+                _write_file(self._meta_fd, temporary, raw)
+                self._binding()
+                try:
+                    current = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
+                except FileNotFoundError:
+                    current = None
+                if current != expected_raw:
+                    os.unlink(temporary, dir_fd=self._meta_fd)
+                    _fail('The external project changed since Tuldok last imported or saved it.', 'conflict', 409)
+                os.replace(temporary, 'project.json', src_dir_fd=self._meta_fd, dst_dir_fd=self._meta_fd)
+                replaced = True
+                os.fsync(self._meta_fd)
+                os.fsync(self._root_fd)
+            except OSError as exc:
+                self._unknown = replaced
+                _io_error(exc, 'publish checkpoint', unknown=replaced)
 
     def _binding(self):
         if self._root_fd is None:
@@ -656,82 +986,49 @@ class ProjectStore:
         raw = _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES)
         cached = self._read_cache
         if cached is not None and raw == cached[0]:
-            manifest, loaded = cached[1:]
-            # Reuse decoding only after checking every actual canonical file.
-            # Stat identity is not content identity; corruption still fails.
-            for entry in manifest['inventory']:
-                self._verified_record_bytes(entry)
-            if _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES) != raw:
-                _fail('Project checkpoint changed while reading.', 'stale', 409)
+            # Record files are content-addressed by their inventory digest and
+            # are never rewritten, and every one was length/SHA256 verified when
+            # this Store decoded it. Byte-identical checkpoint bytes therefore
+            # name the same verified record set; re-hashing every record on each
+            # freshness check is redundant. On-disk corruption after that point
+            # is still refused by Save (verify_records) and by every reopen.
             self._binding()
-            return manifest, loaded
-        manifest = _decode(raw)
-        if type(manifest) is not dict:
-            _fail('Project checkpoint must be an object.')
-        if manifest.get('format') != FORMAT:
-            if type(manifest.get('format')) is str and re.fullmatch(r'tuldok_project_v[1-9][0-9]*', manifest['format']):
-                _fail('Unsupported project format.', 'unsupported', 422)
-            _fail('Invalid project format.')
-        _keys(manifest, ('format', 'project_id', 'name', 'checkpoint', 'roots', 'inventory', 'receipts'), 'Project checkpoint')
-        identity = manifest['project_id']
-        if type(identity) is not str or not re.fullmatch('[a-f0-9]{32}', identity):
-            _fail('Invalid project UUID.')
-        if type(manifest['name']) is not str or not manifest['name'].strip() or len(manifest['name']) > 200:
-            _fail('Invalid project display name.')
-        _digest(manifest['checkpoint'], 'Checkpoint')
-        core = {k: v for k, v in manifest.items() if k != 'checkpoint'}
-        if _sha(_encode(core)) != manifest['checkpoint']:
-            _fail('Project checkpoint digest does not match its contents.')
-        inventory = manifest['inventory']
-        if type(inventory) is not list or len(inventory) > MAX_RECORDS:
-            _fail('Invalid project inventory.')
-        loaded, roots, total, previous = [], [], 0, None
-        for entry in inventory:
-            _keys(entry, ('family', 'id', 'format', 'namespace', 'path', 'bytes', 'sha256'), 'Inventory entry')
+            return cached[1], cached[2]
+        manifest = checked_manifest(raw)
+        loaded = []
+        records_digest = _RecordsDigest()
+        known = self._canonical_digests
+        proven = []
+        for entry in manifest['inventory']:
             family, record_id, digest = entry['family'], entry['id'], entry['sha256']
-            _identifier(family, 'Record family')
-            if family not in SUPPORTED_FORMATS:
-                _fail('Unsupported project record family.', 'unsupported', 422)
-            _identifier(record_id, 'Record ID')
-            _digest(digest, 'Record digest')
-            _domain_format(entry['format'], family)
-            key = (family, record_id)
-            if previous is not None and key <= previous:
-                _fail('Inventory must have unique sorted record identities.')
-            previous = key
-            if entry['namespace'] != identity or entry['path'] != f'records/{family}/{record_id}/{digest}.json':
-                _fail('Invalid inventory namespace or rooted record path.')
-            if type(entry['bytes']) is not int or not 0 < entry['bytes'] <= MAX_RECORD_BYTES:
-                _fail('Invalid inventory record byte count.')
-            total += entry['bytes']
-            if total > MAX_TOTAL_BYTES:
-                _fail('Project records exceed their total byte limit.')
             record_raw = self._verified_record_bytes(entry)
-            document = _decode(record_raw)
+            if known is not None and digest in known:
+                # These exact bytes (named by their verified SHA256) were already
+                # proven to be their value's canonical encoding, which excludes
+                # duplicate keys and non-finite numbers; a plain parse is exact.
+                document = json.loads(record_raw)
+            else:
+                document = _decode(record_raw)
+                proven.append(digest)
             if type(document) is not dict or document.get('format') != entry['format']:
                 _fail('Domain document format disagrees with its inventory.')
+            records_digest.add(family, record_id, record_raw)
             loaded.append(dict(family=family, id=record_id, document=document))
-            roots.append(dict(family=family, id=record_id))
-        if manifest['roots'] != roots:
-            _fail('Project membership roots disagree with the inventory.')
-        if type(manifest['receipts']) is not list or not manifest['receipts']:
-            _fail('Project requires operation receipts.')
-        seen = set()
-        for receipt in manifest['receipts']:
-            _keys(receipt, ('request_key', 'request_sha256', 'records_sha256'), 'Operation receipt')
-            _request(receipt['request_key'], receipt['request_sha256'])
-            _digest(receipt['records_sha256'], 'Receipt records digest')
-            if receipt['request_key'] in seen:
-                _fail('Duplicate operation receipt key.')
-            seen.add(receipt['request_key'])
-        if manifest['receipts'][-1]['records_sha256'] != _sha(_encode(loaded)):
+        # _decode proved each raw revision is its document's canonical encoding.
+        if manifest['receipts'][-1]['records_sha256'] != records_digest.hexdigest():
             _fail('Latest operation receipt disagrees with the current record set.')
         # A second pointer read detects checkout/replacement during closure validation.
         if _read(self._meta_fd, 'project.json', MAX_MANIFEST_BYTES) != raw:
             _fail('Project checkpoint changed while reading.', 'stale', 409)
         self._binding()
-        self._read_cache = (raw, manifest, loaded)
-        return manifest, loaded
+        if known is not None and proven:
+            known.add_many(proven)
+        # Domain owners see logical records: shared runtime closures hidden and
+        # compact Runs expanded to their exact original documents.
+        from project_record_dedupe import logical_records
+        logical = logical_records(loaded)
+        self._read_cache = (raw, manifest, logical, loaded)
+        return manifest, logical
 
     def _verified_record_bytes(self, entry):
         raw = self._record_file(entry['family'], entry['id'], entry['sha256'])
@@ -800,6 +1097,7 @@ class ProjectStore:
         except OSError as exc:
             self._unknown = replaced
             _io_error(exc, 'publish checkpoint', unknown=replaced)
+        return raw
         # Temporary/orphan files remain inert after failures and process interruption.
 
     def _snapshot(self, manifest, records):
@@ -815,8 +1113,24 @@ class ProjectStore:
         except OSError as exc:
             _io_error(exc, 'read project snapshot')
 
+    def verify_records(self):
+        """Re-read and SHA256-check every referenced canonical revision on disk.
+
+        Ordinary freshness checks compare checkpoint bytes only; this explicit
+        pass detects later same-length corruption of already-decoded revisions.
+        """
+        with self._mutex:
+            manifest, _records = self._current()
+            try:
+                for entry in manifest['inventory']:
+                    self._verified_record_bytes(entry)
+            except OSError as exc:
+                _io_error(exc, 'verify project records')
+            if self._current()[0] != manifest:
+                _fail('Project checkpoint changed during verification.', 'stale', 409)
+
     def summary(self):
-        """Return scalar metadata after the same complete freshness check."""
+        """Return scalar metadata after the checkpoint freshness check."""
         with self._mutex:
             manifest, _records = self._current()
             return {key: manifest[key] for key in ('project_id', 'name', 'checkpoint')}
@@ -841,14 +1155,27 @@ class ProjectStore:
     def commit(self, records, expected_checkpoint, request_key, request_sha256):
         _request(request_key, request_sha256)
         _digest(expected_checkpoint, 'Expected checkpoint')
-        prepared = _records(records)
-        normalized = [dict(family=f, id=i, document=d) for f, i, d, _ in prepared]
-        records_digest = _sha(_encode(normalized))
         with self._mutex:
             try:
                 current, loaded = self._load()
                 if current != self._manifest:
                     _fail('Project checkpoint changed; close and reopen.', 'stale', 409)
+                physical = self._read_cache[3]
+                # Unchanged records keep their verified canonical revision: no
+                # re-encoding, rewrite or read-back of identical immutable bytes.
+                entries = {(entry['family'], entry['id']): entry for entry in current['inventory']}
+                unchanged = {(item['family'], item['id']): (item['document'], entries[(item['family'], item['id'])])
+                             for item in physical}
+                candidates, logical_out = _physical_candidates(records, loaded, physical)
+                prepared = _prepared_records(candidates, unchanged)
+                if logical_out is None:
+                    logical_out = [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared]
+                digest_rows = _RecordsDigest()
+                for family, identity, _document, raw, entry in prepared:
+                    if raw is None:
+                        raw = self._verified_record_bytes(entry)
+                    digest_rows.add(family, identity, raw)
+                records_digest = digest_rows.hexdigest()
                 for receipt in current['receipts']:
                     if receipt['request_key'] == request_key:
                         if receipt['request_sha256'] != request_sha256 or receipt['records_sha256'] != records_digest:
@@ -858,13 +1185,16 @@ class ProjectStore:
                     _fail('Expected project checkpoint is stale.', 'stale', 409)
                 manifest = copy.deepcopy(current)
                 inventory = []
-                for family, identity, document, raw in prepared:
+                for family, identity, document, raw, entry in prepared:
+                    if raw is None:
+                        inventory.append(copy.deepcopy(entry))
+                        continue
                     digest = _sha(raw)
                     inventory.append(dict(family=family, id=identity, format=document['format'],
                         namespace=current['project_id'], path=f'records/{family}/{identity}/{digest}.json',
                         bytes=len(raw), sha256=digest))
                 manifest['inventory'] = inventory
-                manifest['roots'] = [dict(family=f, id=i) for f, i, _, _ in prepared]
+                manifest['roots'] = [dict(family=f, id=i) for f, i, _, _, _ in prepared]
                 manifest['receipts'].append(dict(request_key=request_key,
                     request_sha256=request_sha256, records_sha256=records_digest))
                 del manifest['checkpoint']
@@ -872,11 +1202,20 @@ class ProjectStore:
                 # Refuse before record staging. The final publication also
                 # rechecks this bound after the immutable files are durable.
                 _manifest_raw(manifest)
-                for family, identity, document, raw in prepared:
-                    self._record_file(family, identity, _sha(raw), raw)
-                self._publish(manifest)
+                for family, identity, document, raw, _entry in prepared:
+                    if raw is not None:
+                        self._record_file(family, identity, _sha(raw), raw)
+                published = self._publish(manifest)
                 self._manifest = manifest
-                return self._snapshot(manifest, normalized)
+                if self._canonical_digests is not None:
+                    # Freshly written revisions are canonical by construction.
+                    self._canonical_digests.add_many(
+                        [_sha(raw) for _f, _i, _d, raw, _e in prepared if raw is not None])
+                # Every committed revision is either freshly written and read
+                # back byte-for-byte or an unchanged verified revision.
+                self._read_cache = (published, manifest, logical_out,
+                                    [dict(family=f, id=i, document=d) for f, i, d, _, _ in prepared])
+                return self._snapshot(manifest, logical_out)
             except OSError as exc:
                 _io_error(exc, 'commit project records')
 
@@ -887,8 +1226,12 @@ class ProjectStore:
             if expected_checkpoint != snapshot['checkpoint']:
                 _fail('Expected project checkpoint is stale.', 'stale', 409)
             try:
+                # Save is the explicit durability and integrity boundary: sync and
+                # re-verify every referenced canonical revision's actual bytes.
                 for entry in self._manifest['inventory']:
-                    self._record_file(entry['family'], entry['id'], entry['sha256'], sync=True)
+                    raw = self._record_file(entry['family'], entry['id'], entry['sha256'], sync=True)
+                    if len(raw) != entry['bytes'] or _sha(raw) != entry['sha256']:
+                        _fail('Canonical record bytes changed or are corrupt.', 'stale', 409)
                 _sync_file(self._meta_fd, 'project.json')
                 os.fsync(self._meta_fd)
                 os.fsync(self._root_fd)

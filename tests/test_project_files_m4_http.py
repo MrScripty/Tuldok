@@ -47,7 +47,7 @@ class ProjectFilesM4HTTP(unittest.TestCase):
             items.append(dict(kind='note',path='notes/'+name,expected_revision=0,expected_sha256=hashlib.sha256(raw).hexdigest()))
         result=self.call('files_adopt',items=items)
         self.assertEqual(result['changed_count'],2);self.assertEqual(len(self.call('files_inspect')['items']),2)
-        with patch.object(self.workspace._store,'_snapshot',side_effect=AssertionError('Unrelated full graph copy')):
+        with patch.object(self.workspace._store,'snapshot',side_effect=AssertionError('Unrelated full graph copy')):
             self.assertEqual(len(self.call('files_inspect')['items']),2)
             selected=self.call('file_get',file_id=result['items'][0]['id'])
             self.assertEqual(selected['version']['text'].encode(),b'Exact first note\r\n')
@@ -133,16 +133,23 @@ class ProjectFilesM4HTTP(unittest.TestCase):
     def test_git_checkout_stale_projection_and_moved_folder_inert_reconstruction(self):
         self.create();root=self.external/'alpha'
         first=self.call('data_import_text',text='Git observation one',name='One',groups=['fixture'],rights='Owned')
+        self.action('save')
         def git(*args):return subprocess.check_output(['git','-C',str(root),*args],stderr=subprocess.STDOUT)
         git('init','-q');git('config','user.name','Disposable Fixture');git('config','user.email','fixture@example.invalid')
         git('add','.');git('commit','-qm','First authored checkpoint');old=git('rev-parse','HEAD').decode().strip()
         self.call('data_import_text',text='Git observation two',name='Two',groups=['fixture'],rights='Owned')
+        self.action('save')
         git('add','.');git('commit','-qm','Second authored checkpoint')
-        stale=self.state()
         git('checkout','-q',old)
-        state=self.state();self.assertEqual(state['state'],'recovery_required')
-        status,failure=self.transport('data_import_text',dict(self.envelope(stale),text='Must not overwrite',name='Blocked',groups=['fixture'],rights='Owned'))
-        self.assertEqual(status,503,failure)
+        # The database working copy stays the session's authority; Save refuses
+        # to overwrite the externally checked-out folder.
+        self.assertEqual(self.state()['state'],'open')
+        status,failure=self.transport('save',self.arguments('save'))
+        self.assertEqual(status,409,failure);self.assertEqual(failure['code'],'conflict')
+        self.assertEqual(git('rev-parse','HEAD').decode().strip(),old)
+        self.assertEqual(git('status','--porcelain').decode(),'')
+        # Reopening a clean working copy imports the checked-out revision.
+        self.action('close')
         self.action('open',root='fixture',directory='alpha')
         self.assertEqual([r['id'] for r in self.call('data_query')['items']],[first['id']])
         self.action('close');shutil.move(root,self.external/'moved')

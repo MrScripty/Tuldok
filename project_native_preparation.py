@@ -19,6 +19,7 @@ from pipeline import (adapter_for_graph, decode_graph, digest, execution_digest,
                       identifier, model_aware_graph, closed, decode_probe_observation)
 from project_session import operation_records
 from workbench import WorkbenchError, timestamp
+from project_session import session_operations
 
 
 OPERATIONS=frozenset(('native_preparation.intent','native_preparation.validate'))
@@ -352,7 +353,7 @@ class ProjectNativePreparation:
         self.access.require('edit','native_preparation.validation',graph_id,owner_only=True)
         self.access.require('execute','pipeline.probe_native',graph_id,owner_only=True)
         body=dict(graph_id=graph_id,revision=revision)
-        prior=operation_records(self.session.snapshot['records']).get(key)
+        prior=session_operations(self.session).get(key)
         if prior is not None:
             return self.session.mutate('native_preparation.validate',graph_id,body,expected_checkpoint,key,
                 lambda:(_ for _ in ()).throw(RuntimeError('Native validation replay launched a probe.')),
@@ -398,7 +399,7 @@ class ProjectNativePreparation:
         self.access.require('execute','pipeline.probe_native',graph_id,owner_only=True)
         body=dict(graph_id=graph_id,revision=revision,model=model_ref,reconcile_capture=False)
         operation='recipes.prepare_builtin_material'
-        if key in operation_records(self.session.snapshot['records']):
+        if key in session_operations(self.session):
             return self.session.mutate(operation,graph_id,body,expected_checkpoint,key,
                 lambda:(_ for _ in ()).throw(RuntimeError('Material replay launched a native probe.')),
                 lambda value,before:dict(records=[],result=value))

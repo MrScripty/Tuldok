@@ -83,7 +83,7 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
                 self.assertEqual(copied.stat().st_nlink, 1)
                 self.assertNotEqual(copied.stat().st_ino, self.payload(value).stat().st_ino)
 
-    def test_copy_group_rejects_source_canonical_corruption_before_success(self):
+    def test_copy_group_uses_verified_records_and_verification_rejects_later_corruption(self):
         value = declaration(b'present')
         self.artifacts.publish_bytes(b'present', value)
         self.commit([value])
@@ -96,7 +96,9 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
                 record.write_bytes(b'{"corrupt":true}\n')
                 return result
             with patch.object(destination, 'publish_fd', side_effect=corrupt_after_copy):
-                self.assert_code('stale', self.artifacts.copy_many_to, destination, [value])
+                # The copy uses the verified declaration, never the corrupt bytes.
+                self.artifacts.copy_many_to(destination, [value])
+        self.assert_code('stale', self.store.verify_records)
 
     def test_copy_group_prevalidates_inventory_and_preserves_missing_payload_failure(self):
         value, missing = declaration(b'present'), declaration(b'missing')
@@ -126,7 +128,7 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
         self.assertEqual(actual[0]['observed_sha256'], values[0]['sha256'])
         self.assertEqual(actual[2]['observed_sha256'], hashlib.sha256(b'changed').hexdigest())
 
-    def test_status_group_rejects_canonical_corruption_during_observation(self):
+    def test_status_group_uses_verified_records_and_verification_rejects_later_corruption(self):
         value = declaration(b'present')
         self.artifacts.publish_bytes(b'present', value)
         self.commit([value])
@@ -139,7 +141,8 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
                 yield source
             record.write_bytes(b'{"corrupt":true}\n')
         with patch.object(self.artifacts, '_source', side_effect=corrupt_after_observation):
-            self.assert_code('stale', self.artifacts.status_many, [value])
+            self.artifacts.status_many([value])
+        self.assert_code('stale', self.store.verify_records)
 
     def test_status_group_rejects_checkpoint_change_and_unsafe_aliases(self):
         value = declaration(b'present')
@@ -167,7 +170,7 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
         self.assertEqual(checks.call_count,2)
         self.assertTrue(all(v['observed_sha256'] is None for v in actual))
 
-    def test_presence_batch_detects_canonical_corruption_before_returning(self):
+    def test_presence_batch_uses_verified_records_and_verification_rejects_later_corruption(self):
         value=declaration(b'present')
         self.artifacts.publish_bytes(b'present',value)
         self.commit([value])
@@ -180,7 +183,8 @@ class ProjectArtifactTests(_ArtifactFixture, unittest.TestCase):
                 yield source
             record.write_bytes(b'{"corrupt":"outside canonical membership"}\n')
         with patch.object(self.artifacts,'_source',side_effect=corrupt_after_observation):
-            self.assert_code('stale',self.artifacts.inspect_many,[value])
+            self.artifacts.inspect_many([value])
+        self.assert_code('stale',self.store.verify_records)
 
     def test_presence_batch_detects_checkpoint_change_and_rejects_unsafe_aliases(self):
         value=declaration(b'present')

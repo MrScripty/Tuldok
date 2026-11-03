@@ -21,6 +21,7 @@ from pipeline import closed, digest, identifier
 from project_history import capture_run, declarations
 from project_session import operation_records
 from workbench import WorkbenchError
+from project_session import session_operations
 
 
 OPERATIONS = frozenset(('runs.submit_external', 'runs.submit', 'runs.retry', 'runs.cancel', 'runs.approve_external'))
@@ -527,10 +528,25 @@ class ProjectExecution:
             merged[identity] = record
         return list(merged.values())
 
+    def _capture_pending(self):
+        """Whether capture_dirty could return any record (see its owners)."""
+        if self._dirty_runs or self._pending_studies or any(self._pending_producers.values()) or self.native.has_dirty:
+            return True
+        study = self.study_execution
+        if study is not None and (study._dirty or study._package_records):
+            return True
+        producers = self.producer_execution
+        if producers is not None and (producers._runtime_data is not None or any(producers._dirty.values())):
+            return True
+        return False
+
     def before_commit(self):
         if self._reconstructing or self.session.foreground_publication:
             return
         if not self._dirty_runs and not self._pending_studies and not any(self._pending_producers.values()) and not self.native.has_dirty and self.study_execution is None and self.producer_execution is None:
+            return
+        if not self._capture_pending():
+            # Nothing can be captured; never materialize the record set.
             return
         snapshot = self.session.snapshot
         records = self.capture_dirty(snapshot['records'])
@@ -600,7 +616,7 @@ class ProjectExecution:
             graph_id,revision,expected_checkpoint,key)
 
     def _native_replay(self,operation,target,body,expected_checkpoint,key):
-        prior=operation_records(self.session.snapshot['records']).get(key)
+        prior=session_operations(self.session).get(key)
         if prior is None:return None
         if (prior['operation']!=operation or self.db.execute('SELECT id FROM workspace_runs WHERE id=%s',
                 (prior['result'].get('run_id'),)).fetchone() is None):
@@ -656,7 +672,7 @@ class ProjectExecution:
         authority = self.runtime_access.require_external_submission()
         with self.access.lock, self.session.lock, self.db.lock:
             self.session.check_current()
-            prior = operation_records(self.session.snapshot['records']).get(key)
+            prior = session_operations(self.session).get(key)
             if prior is None and expected_checkpoint != self.session.summary['checkpoint']:
                 raise WorkbenchError('Expected project checkpoint changed.', 'stale_project', 409)
             if prior is not None:
@@ -679,7 +695,7 @@ class ProjectExecution:
         authority = self.runtime_access.require('approve-execution', 'runs.approve_external', owner_only=True)
         with self.access.lock, self.session.lock, self.db.lock:
             self.session.check_current()
-            prior = operation_records(self.session.snapshot['records']).get(key)
+            prior = session_operations(self.session).get(key)
             if prior is None and expected_checkpoint != self.session.summary['checkpoint']:
                 raise WorkbenchError('Expected project checkpoint changed.', 'stale_project', 409)
             if prior is not None:

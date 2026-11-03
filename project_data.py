@@ -20,6 +20,7 @@ from project_text import decode_records as decode_text_records, SNAPSHOT_FIELDS
 from saved_searches import SavedSearches, criteria
 from saved_selections import SavedSelections
 from dataset_releases import Releases
+from project_session import session_active, session_records, session_records_for
 
 FAMILIES = {
     'workbench_record': 'workbench_record_v1',
@@ -971,11 +972,10 @@ class ProjectData:
         return captured
 
     def _sync_sources(self):
-        records = self.session.snapshot['records']
-        from project_fork import active_records
-        active = active_records(records, project_id=self.session.project_id)
-        self.context.project_sources = {r['id']: copy.deepcopy(r['document']['source']) for r in active if r['family'] == 'workbench_record'}
-        self._declarations = {r['id']: r['document'] for r in records if r['family'] == 'project_artifact'}
+        # Only the selected families are copied; fork history is still checked.
+        active = session_active(self.session, 'workbench_record')
+        self.context.project_sources = {r['id']: r['document']['source'] for r in active if r['family'] == 'workbench_record'}
+        self._declarations = {r['id']: r['document'] for r in session_records(self.session, 'project_artifact')}
 
     def _available(self, record_id):
         source = self.context.project_sources.get(record_id)
@@ -1005,9 +1005,8 @@ class ProjectData:
                     media_type=media_type, kind=kind, role=role, preservation='unique', required_for=['inspect', 'release'])
 
     def _require_record(self, record_id, *, extended=False):
-        from project_fork import active_records
-        snapshot = self.session.snapshot
-        for item in active_records(snapshot['records'], project_id=snapshot['project_id']):
+        # Only these families are inspected; fork history is still checked.
+        for item in session_active(self.session, 'workbench_record', 'workbench_text'):
             if item['id'] == record_id and item['family'] in ('workbench_record', 'workbench_text'):
                 if extended and item['family'] == 'workbench_text':
                     fail('This operation requires an explicitly converted data record.', 'unsupported', 409)
@@ -1047,9 +1046,8 @@ class ProjectData:
 
     def _legacy_replay(self, operation, target, body, key):
         """Retain M1 request meaning after the shared M2 session cutover."""
-        records = self.session.snapshot['records']
-        from project_fork import active_records
-        records = active_records(records, project_id=self.session.project_id)
+        # Only receipts and legacy text are inspected below.
+        records = session_active(self.session, 'project_operation', 'workbench_text')
         if any(r['family']=='project_operation' and r['document']['request_key']==key for r in records):
             return None
         if operation not in ('data.import_text','data.annotate'):
@@ -1291,7 +1289,8 @@ class ProjectData:
         for family, table, owner in (('saved_selection', 'saved_selections', self.selections), ('saved_search', 'saved_searches', self.searches)):
             live = {r[0] for r in self.db.execute('SELECT id FROM ' + table)}
             from project_fork import active_records
-            all_ids = live | {r['id'] for r in active_records(before_records, project_id=self.session.project_id) if r['family'] == family}
+            all_ids = live | {r['id'] for r in active_records(before_records, project_id=self.session.project_id,
+                                                               families=frozenset({family})) if r['family'] == family}
             for record_id in all_ids:
                 old = before.get((family, record_id))
                 current = owner._get(record_id) if record_id in live else copy.deepcopy(old['document']['current'])
@@ -1333,16 +1332,18 @@ class ProjectData:
         return {'records': list(unique.values()), 'result': copy.deepcopy(result)}
 
     def restore(self, snapshot=None):
-        snapshot = snapshot or self.session.snapshot
-        if snapshot != self.session.snapshot:
+        if snapshot is not None and snapshot != self.session.snapshot:
             fail('Data reconstruction snapshot is stale.', 'stale_project', 409)
-        owned = decode_data_records(snapshot['records'])
+        # The decoder reads its own families and project_fork overlays, and its
+        # fork validation needs every record identity; unrelated documents are
+        # shared read-only instead of copying unrelated Run history.
+        families = (*FAMILIES, 'workbench_text', 'project_artifact', 'project_fork')
+        owned = decode_data_records(session_records_for(self.session, *families))
         self._sync_sources()
         # Validate present source bytes through the existing semantic owners
         # before touching any selected SQL row. Missing bytes retain metadata.
         self._verify_sources(owned)
-        from project_fork import active_records
-        active = active_records(snapshot['records'], project_id=self.session.project_id)
+        active = session_active(self.session, *families)
         identities = {(r['family'], r['id']) for r in active}
         owned = [r for r in owned if (r['family'], r['id']) in identities]
         with self.db.lock, self.db.transaction():

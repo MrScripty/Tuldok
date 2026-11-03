@@ -33,13 +33,13 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         self.session._snapshot = copy.deepcopy(snapshot)
         self.session.available = True
 
-    def test_freshness_reads_all_records_without_copying_an_unused_graph(self):
+    def test_freshness_compares_checkpoint_without_rereading_or_copying_records(self):
         before = self.store.snapshot()
         with patch.object(self.store, '_snapshot', side_effect=AssertionError('Unused full snapshot')), \
                 patch.object(self.store, '_record_file', wraps=self.store._record_file) as reads:
             self.assertIsNone(self.session.check_current())
             self.assertIsNone(self.session.check_current())
-        self.assertEqual(reads.call_count, 4)
+        self.assertEqual(reads.call_count, 0)
         self.assertEqual(self.store.snapshot(), before)
 
     def test_changed_canonical_checkpoint_refuses_both_read_contracts(self):
@@ -62,7 +62,7 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
                     check()
                 self.assertEqual(caught.exception.code, 'projection_unavailable')
 
-    def test_same_length_corruption_with_restored_mtime_is_not_cached_as_fresh(self):
+    def test_same_length_corruption_is_never_served_and_explicit_verification_refuses_it(self):
         self.session.check_current()
         manifest = json.loads((self.root / '.tuldok/project.json').read_bytes())
         path = self.root / '.tuldok' / manifest['inventory'][0]['path']
@@ -73,11 +73,13 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         path.chmod(0o600)
         path.write_bytes(changed)
         os.utime(path, ns=(info.st_atime_ns, info.st_mtime_ns))
-        for check in (self.session.check_current, self.session.check,
-                      lambda: self.session.check_records('workbench_text')):
-            with self.assertRaises(ProjectStoreError) as caught:
-                check()
-            self.assertEqual(caught.exception.code, 'stale')
+        # Reads serve the verified in-memory value, never the corrupt bytes.
+        self.assertIsNone(self.session.check_current())
+        self.assertEqual(self.session.check()['records'][0]['document']['text'], 'Alpha one')
+        self.assertEqual(self.session.check_records('workbench_text')['records'], self.records)
+        with self.assertRaises(ProjectStoreError) as caught:
+            self.store.verify_records()
+        self.assertEqual(caught.exception.code, 'stale')
 
     def test_record_consumers_keep_independent_complete_snapshots(self):
         current = self.session.check()
@@ -108,13 +110,13 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
                 patch('project_session.copy', SimpleNamespace(deepcopy=observe)):
             selected = self.session.check_records('workbench_text')
         self.assertEqual(selected, expected)
-        self.assertEqual(reads.call_count, 3, 'Unselected actual records must still be read and hashed')
+        self.assertEqual(reads.call_count, 0, 'Verified immutable records are not re-read per request')
         self.assertEqual(len(copied), 1)
         selected['records'][0]['document']['text'] = 'Caller mutation'
         self.assertEqual(self.session.check_records('workbench_text'), expected)
         self.assertEqual(self.session.check_records('project_file')['records'], [])
 
-    def test_selected_read_rejects_corruption_in_an_unselected_family(self):
+    def test_explicit_verification_rejects_corruption_in_an_unselected_family(self):
         self.add_unrelated_record()
         self.session.check_records('workbench_text')
         manifest = json.loads((self.root / '.tuldok/project.json').read_bytes())
@@ -127,8 +129,9 @@ class ProjectSessionFreshnessTests(unittest.TestCase):
         path.chmod(0o600)
         path.write_bytes(changed)
         os.utime(path, ns=(info.st_atime_ns, info.st_mtime_ns))
+        self.assertEqual(self.session.check_records('workbench_text')['records'], self.records)
         with self.assertRaises(ProjectStoreError) as caught:
-            self.session.check_records('workbench_text')
+            self.store.verify_records()
         self.assertEqual(caught.exception.code, 'stale')
 
 

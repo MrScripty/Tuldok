@@ -107,6 +107,41 @@ class ProjectStoreTests(unittest.TestCase):
         committed['records'][0]['document']['text'] = 'Unchecked returned mutation'
         self.assertEqual(self.store.snapshot()['records'][0]['document']['text'], 'Notes preserve \r\n authored values')
 
+    def test_streamed_records_digest_equals_complete_canonical_encoding(self):
+        rows = [record('a'), record('b', 'Line\none "quoted" \\ ☃  '),
+                dict(family='workbench_text', id='c', document=dict(format='workbench_text_v1', text='',
+                     history=[], nested={'z': [1, 1.0, -0.0, None, True, {}], 'ü': {'k\n': []}}))]
+        expected = store_module._sha(store_module._encode(rows))
+        streamed = store_module._records_digest(
+            (row['family'], row['id'], store_module._encode(row['document'])) for row in rows)
+        self.assertEqual(streamed, expected)
+        self.assertEqual(store_module._records_digest([]), store_module._sha(store_module._encode([])))
+
+    def test_commit_reuses_unchanged_revisions_without_reencoding_them(self):
+        values = [record(str(index), 'Retained authored note %d' % index) for index in range(6)]
+        self.commit(values, key='initial-six')
+        changed = copy.deepcopy(values)
+        changed[2]['document']['text'] = 'Only this revision changes'
+        encode = store_module._encode
+        with patch.object(store_module, '_encode', wraps=encode) as encodes:
+            committed = self.commit(changed, key='change-one')
+        documents = [call.args[0] for call in encodes.call_args_list
+                     if type(call.args[0]) is dict and call.args[0].get('format') == 'workbench_text_v1']
+        self.assertEqual(documents, [changed[2]['document']])
+        self.assertEqual(self.reopen(), committed)
+
+    def test_python_equal_but_differently_typed_values_are_new_revisions(self):
+        for before, after in ((1, 1.0), (0.0, -0.0), (True, 1), (1.0, 1)):
+            with self.subTest(before=before, after=after):
+                original = dict(family='workbench_text', id='typed', document=dict(format='workbench_text_v1', value=before))
+                self.commit([original], key=f'typed-{before!r}-{after!r}-a'.replace('.', '_').replace('-', '_'))
+                updated = copy.deepcopy(original)
+                updated['document']['value'] = after
+                self.commit([updated], key=f'typed-{before!r}-{after!r}-b'.replace('.', '_').replace('-', '_'))
+                value = self.reopen()['records'][0]['document']['value']
+                self.assertIs(type(value), type(after))
+                self.assertEqual(repr(value), repr(after))
+
     def test_appending_one_record_does_not_rewrite_saved_immutable_revisions(self):
         values = [record(str(index), 'Retained authored note %d' % index) for index in range(8)]
         self.commit(values, key='initial-inventory')
@@ -127,7 +162,8 @@ class ProjectStoreTests(unittest.TestCase):
             first['name'] = 'Caller mutation'
             second = self.store.summary()
         self.assertEqual(second, expected)
-        self.assertEqual(reads.call_count, 4, 'Each summary must still read/hash both actual records')
+        self.assertEqual(reads.call_count, 0,
+            'Freshness compares checkpoint bytes; verified immutable revisions are not re-read')
         self.assertEqual(self.store.snapshot(), committed)
 
     def test_repeated_snapshot_and_root_reads_recheck_bytes_without_redecoding_identical_records(self):
@@ -142,7 +178,7 @@ class ProjectStoreTests(unittest.TestCase):
             with self.store.root_directory(verify_after=True) as descriptor:
                 self.assertTrue(os.fstat(descriptor).st_ino)
             self.assertEqual(self.store.snapshot(),expected)
-        self.assertEqual(read.call_count,8,'All two records must still be read in each of four checks')
+        self.assertEqual(read.call_count,0,'Byte-identical checkpoints reuse the verified immutable records')
         self.assertEqual(snapshot.call_count,2,'Root borrowing must not clone an unused public snapshot')
         decoded=[call for call in decode.call_args_list if call.args[0] in canonical_documents]
         self.assertEqual(len(decoded),0,'Byte-identical canonical records need no repeat decoding within one Store')
@@ -156,11 +192,13 @@ class ProjectStoreTests(unittest.TestCase):
         self.assertEqual(len(changed),len(raw));self.assertNotEqual(changed,raw)
         path.chmod(0o600);path.write_bytes(changed)
         os.utime(path,ns=(info.st_atime_ns,info.st_mtime_ns))
-        self.assert_code('stale',self.store.snapshot)
-        self.assert_code('stale',self.store.summary)
-        with self.assertRaises(ProjectStoreError) as caught:
-            with self.store.root_directory(verify_after=True):pass
-        self.assertEqual(caught.exception.code,'stale')
+        # Ordinary reads keep serving the already verified value, never the
+        # corrupt bytes; explicit verification, Save and reopen refuse them.
+        self.assertEqual(self.store.snapshot()['records'][0]['document']['text'],'Alpha\n')
+        self.assert_code('stale',self.store.verify_records)
+        self.assert_code('stale',self.store.save,self.store.summary()['checkpoint'])
+        self.store.close()
+        self.assert_code('invalid',ProjectStore.open,self.root)
 
     def test_reusing_an_unreferenced_revision_still_checks_bytes_and_syncs_it(self):
         first, second = record('first'), record('second')
@@ -171,7 +209,9 @@ class ProjectStoreTests(unittest.TestCase):
             with patch.object(store_module, '_sync_file', wraps=sync) as syncs:
                 committed = self.commit([first, second], key='reuse-first')
         self.assertFalse(any(call.args[1].startswith('.record-') for call in writes.call_args_list))
-        self.assertEqual(syncs.call_count, 2)
+        # Only the newly referenced unreferenced revision is checked and synced;
+        # the unchanged current revision is reused without rewrite or re-sync.
+        self.assertEqual(syncs.call_count, 1)
         self.assertEqual(self.reopen(), committed)
 
     def test_reusing_a_corrupt_unreferenced_revision_never_publishes_it(self):
@@ -190,7 +230,7 @@ class ProjectStoreTests(unittest.TestCase):
         self.commit([record()], key='initial')
         before = self.store.snapshot()
         with patch.object(store_module, '_sync_file', side_effect=OSError(errno.EIO, 'existing revision sync failed')):
-            self.assert_code('unavailable', self.commit, [record()], key='reuse-with-sync-error')
+            self.assert_code('unavailable', self.commit, [record(text='Changed revision')], key='new-revision-sync-error')
         self.assertEqual(self.reopen(), before)
 
     def test_fresh_copy_and_moved_folder_keep_identity_and_values(self):
@@ -308,7 +348,8 @@ except ProjectStoreError as exc:
         path = self.root / '.tuldok' / entry['path']
         raw = path.read_bytes()
         path.write_bytes(raw.replace(b'Unique', b'Broken'))
-        self.assert_code('stale', self.store.snapshot)
+        self.assertEqual(self.store.snapshot()['records'][0]['document']['history'][0]['note'], 'Unique annotation')
+        self.assert_code('stale', self.store.verify_records)
         self.store.close()
         self.assert_code('invalid', ProjectStore.open, self.root)
         path.unlink()

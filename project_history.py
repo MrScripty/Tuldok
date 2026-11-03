@@ -5,6 +5,7 @@ inserted into a worker, admission, grant or request replay table. The optional
 SQL connection is only a query engine for bounded supplied immutable JSON.
 """
 import base64
+from collections.abc import Mapping
 import copy
 import hashlib
 import re
@@ -25,6 +26,7 @@ from projects import relative_path
 from runs import (ACTIVE, TERMINAL, TEST_FILES, MAX_ARTIFACT_BYTES, validate_retained_run,
                   project_run_projection, public_run_projection, artifact_capture_source, validate_external_artifact_inventory)
 from workbench import WorkbenchError, timestamp
+from project_session import session_derived, session_operations, session_record, session_records, session_records_for
 
 FAMILY_FORMATS = {
     'study_history': 'project_study_history_v1',
@@ -562,6 +564,100 @@ def _decode_records(records, *, materials=None, artifacts=None):
     return facts
 
 
+def assemble_validated_facts(records, *, owned=False):
+    """Collect HistoryFacts from records whose complete validation is on record.
+
+    decode_records validates and collects exactly these values: each history
+    document (as a checked JSON copy), Run observations, and the policy and
+    reservation indexes taken from Study documents. Only for a checkpoint that
+    already passed complete domain validation (which runs decode_records over
+    these same records) may the collection be repeated without re-running the
+    validators. tests/test_project_history.py and the portfolio equivalence
+    check compare this against decode_records field by field. owned=True means
+    the caller supplies independent copies the facts may keep without recopying.
+    """
+    facts=HistoryFacts()
+    for record in records:
+        family=record.get('family')
+        if family not in FAMILY_FORMATS:continue
+        if family=='run_observation':
+            doc=_observation_document(record)
+            facts.observations[(doc['origin_catalog_id'],doc['run_id'],doc['sha256'])]=doc
+            continue
+        doc=record['document'] if owned else checked_json(record['document'],MAX_HISTORY_BYTES)
+        origin=doc['origin_catalog_id']
+        if family=='study_history':target,identity=facts.studies,doc['study']['id']
+        elif family=='trial_history':target,identity=facts.trials,doc['trial']['id']
+        elif family=='run_history':target,identity=facts.runs,doc['run']['id']
+        else:target,identity=facts.candidates,doc['candidate']['id']
+        target[(origin,identity)]=doc
+    for (origin,_identity),doc in facts.studies.items():
+        for item in doc['policies']:
+            ref=item['ref'];facts.policies[(origin,ref['id'],ref['revision'],ref['sha256'])]=item['policy']
+        for reservation in doc['reservations']:
+            facts.reservations[(origin,reservation.get('run_id'))]=reservation
+    return facts
+
+
+class _LazyRuns(Mapping):
+    """Validated Run history documents by (origin, run_id), loaded on first use.
+
+    Keys come from verified record identities (origin + '.' + run_id); each
+    document is read from the working copy once per checkpoint and shared like
+    every other fact (callers copy what they return).
+    """
+    def __init__(self, identities, load):
+        self._identities = identities
+        self._load = load
+        self._documents = {}
+
+    def __getitem__(self, key):
+        if key not in self._identities:
+            raise KeyError(key)
+        if key not in self._documents:
+            envelope = self._load(self._identities[key])
+            if envelope is None:
+                _invalid('Historical Run is unavailable.', 'unavailable')
+            self._documents[key] = envelope['document']
+        return self._documents[key]
+
+    def __iter__(self):
+        return iter(self._identities)
+
+    def __len__(self):
+        return len(self._identities)
+
+
+def checkpoint_facts(session, materials):
+    """Decoded history of the session's bound checkpoint, shared by its owners.
+
+    Decoded once per checkpoint; callers copy any part they return. When the
+    session records that this exact checkpoint passed complete validation,
+    the facts are collected without repeating the validators.
+    """
+    def compute():
+        validated=getattr(session,'validated_checkpoint',None)
+        if validated is not None and validated==session.summary['checkpoint'] and getattr(session,'_lazy',False):
+            # A working copy serves Run documents on demand: decode everything
+            # except Run history now, and keep only Run identities.
+            selected=('study_history','trial_history','run_observation','candidate_history')
+            view=session_records_for(session,*selected)
+            facts=assemble_validated_facts([r for r in view if r['family'] in selected],owned=True)
+            identities={}
+            for envelope in view:
+                if envelope['family']=='run_history':
+                    origin,run_id=envelope['id'].split('.',1)
+                    identities[(origin,run_id)]=envelope['id']
+            facts.runs=_LazyRuns(identities,lambda record_id:session_record(session,'run_history',record_id))
+            return facts
+        if validated is not None and validated==session.summary['checkpoint']:
+            # records_for returns independent copies of exactly these families.
+            return assemble_validated_facts(session_records_for(session,*FAMILY_FORMATS),owned=True)
+        records=session.snapshot['records']
+        return decode_records(records,materials=materials.read_view(records))
+    return session_derived(session, 'history_facts',compute)
+
+
 def decode_records(records, *, materials=None, artifacts=None):
     try:
         return _decode_records(records,materials=materials,artifacts=artifacts)
@@ -755,15 +851,18 @@ class ProjectHistory:
 
     def _facts(self):
         self.session.check_current()
+        # Current canonical bytes are guarded on every call. A ProjectSession
+        # shares decoded metadata per checkpoint with the Study owner; other
+        # snapshot views keep this owner's private per-checkpoint cache.
+        # Returned values and permissions remain each read's responsibility.
+        if callable(getattr(self.session,'derived',None)):
+            return checkpoint_facts(self.session,self.materials)
         summary=self.session.summary
         checkpoint=(summary['project_id'],summary['checkpoint'])
         if self._decoded_checkpoint==checkpoint:
             return self._decoded_facts
         records=self.session.snapshot['records']
         facts=decode_records(records,materials=self.materials.read_view(records),artifacts=self.artifacts)
-        # Current canonical bytes are guarded on every call. Only this owner's
-        # private decoded metadata is retained; returned values and permissions
-        # remain the responsibility of each read below.
         self._decoded_facts=facts
         self._decoded_checkpoint=checkpoint
         return facts
@@ -827,10 +926,12 @@ class ProjectHistory:
         """Discover original namespaces without inventing current project ancestry."""
         self._authorize('studies.lineage')
         natural(offset,'Origin offset');natural(limit,'Origin page limit',1,40)
-        facts=self._facts();origins={origin for origin,_ in facts.studies}|{origin for origin,_ in facts.trials}
-        items=[{'origin_catalog_id':origin,
-                'study_count':sum(namespace==origin for namespace,_ in facts.studies),
-                'trial_count':sum(namespace==origin for namespace,_ in facts.trials)} for origin in sorted(origins)]
+        facts=self._facts();counts={}
+        # One pass over Studies and Trials instead of origins x (studies+trials).
+        for namespace,_ in facts.studies:counts.setdefault(namespace,[0,0])[0]+=1
+        for namespace,_ in facts.trials:counts.setdefault(namespace,[0,0])[1]+=1
+        items=[{'origin_catalog_id':origin,'study_count':counts[origin][0],'trial_count':counts[origin][1]}
+               for origin in sorted(counts)]
         self._authorize('studies.lineage')
         return {'items':items[offset:offset+limit],'offset':offset,'limit':limit,'total':len(items)}
 
@@ -935,7 +1036,7 @@ class ProjectHistory:
     def disclosure_facts(self,run_id,*,origin_catalog_id=None):
         self._authorize('runs.get',run_id);origin=self._origin(origin_catalog_id)
         result=[]
-        for operation in operation_documents(self.session.snapshot['records']):
+        for operation in operation_documents(session_records(self.session, 'project_operation')):
             if operation['operation']!='history.disclose':continue
             value=validate_disclosure_fact(operation['result'])
             if value['origin_catalog_id']==origin and value['run_id']==run_id:result.append(value)
@@ -965,8 +1066,7 @@ class ProjectHistory:
     def dependencies(self,run_id,*,origin_catalog_id=None,offset=0,limit=100):
         self._authorize('runs.get',run_id);natural(offset,'Dependency offset');natural(limit,'Dependency limit',1,100)
         doc=self._record(self._facts().runs,run_id,origin_catalog_id);run=doc['run']
-        declarations_by_sha={item['document']['sha256']:item['document'] for item in self.session.snapshot['records']
-                             if item['family']=='project_artifact'}
+        declarations_by_sha={item['document']['sha256']:item['document'] for item in session_records(self.session, 'project_artifact')}
         required=[]
         for edge in doc['payloads']:
             required.append({'name':edge['name'],'sha256':edge['blob']['sha256'],'bytes':edge['blob']['bytes'],
@@ -1210,7 +1310,7 @@ class ProjectHistory:
         closed(body,('revision','material','replicate'));body=checked_json(body)
         natural(body['replicate'],'Replicate')
         self.access.require('edit','studies.prepare_trial',study_id)
-        if request_key not in operation_records(self.session.snapshot['records']):
+        if request_key not in session_operations(self.session):
             self.materials.recipe(body['material'],verify=True)
         def build(facts):
             origin=self.session.summary['project_id'];doc=copy.deepcopy(self._record(facts.studies,study_id,origin))
@@ -1239,7 +1339,7 @@ class ProjectHistory:
         origin=self.session.summary['project_id']
         self.access.require('edit','studies.select_candidate',study_id)
         evidence=(self.evidence(body['run_id'],{},origin_catalog_id=origin)
-                  if request_key not in operation_records(self.session.snapshot['records']) else None)
+                  if request_key not in session_operations(self.session) else None)
         def build(facts):
             doc=copy.deepcopy(self._record(facts.studies,study_id,origin));study=doc['study']
             if body['revision']!=study['revision']:_invalid('Study changed. Reload.','stale')

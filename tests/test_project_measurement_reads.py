@@ -54,12 +54,12 @@ class MeasurementReadTests(unittest.TestCase):
         self.assertEqual(self.owner._documents(), self.expected)
         self.assertEqual(self.session._snapshot, self.store.snapshot())
 
-    def test_lookup_reads_every_canonical_file_without_redecoding_adopted_material(self):
+    def test_lookup_reuses_verified_records_without_redecoding_adopted_material(self):
         with patch.object(self.store, '_record_file', wraps=self.store._record_file) as reads, \
                 patch.object(project_measurements, 'material_records',
                     side_effect=AssertionError('Read-only lookup redecoded adopted material')):
             self.assertEqual(self.owner._documents(), self.expected)
-        self.assertEqual(reads.call_count, len(self.records), 'All current files must still be read and hashed')
+        self.assertEqual(reads.call_count, 0, 'Verified immutable records are not re-read per lookup')
 
     def test_unavailable_projection_fails_before_any_store_read(self):
         self.session.available = False
@@ -76,7 +76,7 @@ class MeasurementReadTests(unittest.TestCase):
             self.owner._documents()
         self.assertEqual(caught.exception.code, 'stale_project')
 
-    def test_same_length_unselected_corruption_with_restored_mtime_is_rejected(self):
+    def test_same_length_unselected_corruption_is_never_served_and_verification_rejects_it(self):
         inventory = json.loads((self.root/'.tuldok/project.json').read_bytes())['inventory']
         entry = next(r for r in inventory if r['id'] == 'f'*64)
         path = self.root/'.tuldok'/entry['path']
@@ -87,8 +87,10 @@ class MeasurementReadTests(unittest.TestCase):
         path.chmod(0o600)
         path.write_bytes(changed)
         os.utime(path, ns=(info.st_atime_ns, info.st_mtime_ns))
+        # Reads keep serving verified values; explicit verification refuses.
+        self.assertEqual(self.owner._documents(), self.expected)
         with self.assertRaises(ProjectStoreError) as caught:
-            self.owner._documents()
+            self.store.verify_records()
         self.assertEqual(caught.exception.code, 'stale')
 
     def test_family_can_be_empty_and_returned_snapshot_contract_stays_complete(self):

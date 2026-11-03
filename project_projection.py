@@ -5,6 +5,7 @@ project-script import belongs here. The fixed codecs validate the same candidate
 checkpoint before reconstruction and before each canonical publication.
 """
 import copy
+import hashlib
 from datetime import datetime
 import re
 from types import SimpleNamespace
@@ -19,6 +20,7 @@ from project_material import ProjectMaterial, MaterialSnapshot, FAMILIES as MATE
 from project_material import validate_operation_result as validate_material_result
 from project_producers import ProjectProducers, FAMILIES as PRODUCER_FAMILIES
 from project_producers import decode_records as decode_producer_records
+from project_session import session_records_for
 from project_session import ProjectSession, operation_documents, operation_records
 from project_locks import ProjectLock
 from project_execution import ProjectExecution, validate_operation_result as validate_execution_result
@@ -38,6 +40,7 @@ from project_measurements import validate_operation_result as validate_measureme
 from project_measurements import receipt_validator as measurement_receipt_validator
 from workbench import WorkbenchError
 from workbench import timestamp
+from project_session import session_record
 
 
 def validate_artifact_resolution(operation, result, records):
@@ -62,7 +65,52 @@ def validate_artifact_resolution(operation, result, records):
 
 
 def validate_project_records(records, *, project_id, artifacts):
-    """Validate one inert candidate through every owning domain, without SQL reconstruction."""
+    """Validate one inert candidate through every owning domain, without SQL reconstruction.
+
+    Under an edit delta (project_validation_delta.edit_delta) the candidate is
+    a validated base checkpoint plus changed records; components and receipts
+    that cannot be affected are skipped. TULDOK_VALIDATION_CROSSCHECK=1 also
+    runs complete validation and requires the same outcome.
+    """
+    from project_validation_delta import current_delta
+    delta = current_delta()
+    if delta is None:
+        return _validate_project_records(records, project_id=project_id, artifacts=artifacts, delta=None)
+    import os
+    if os.environ.get('TULDOK_VALIDATION_CROSSCHECK') == '1':
+        full_error = scoped_error = None
+        try:
+            _validate_project_records(records, project_id=project_id, artifacts=artifacts, delta=None)
+        except Exception as error:
+            full_error = error
+        try:
+            _validate_project_records(records, project_id=project_id, artifacts=artifacts, delta=delta)
+        except Exception as error:
+            scoped_error = error
+        if (full_error is None) != (scoped_error is None):
+            raise AssertionError(f'Edit-scoped validation disagrees with complete validation: '
+                                 f'complete={full_error!r} scoped={scoped_error!r}')
+        if full_error is not None:
+            raise full_error
+        return None
+    return _validate_project_records(records, project_id=project_id, artifacts=artifacts, delta=delta)
+
+
+def _composition_members(records):
+    members = set()
+    for item in records:
+        if item['family'] != 'project_composition':
+            continue
+        for source in item['document'].get('sources', ()):
+            for family, entries in source.get('records', {}).items():
+                members.update((family, identity) for identity in entries)
+            members.update(('run_observation', sha) for sha in source.get('run_observations', {}).values())
+    return members
+
+
+def _validate_project_records(records, *, project_id, artifacts, delta):
+    def needed(component):
+        return delta is None or delta.touches(component)
     claimed = {'workbench_text', 'project_artifact', 'project_operation', 'project_file', 'project_fork', 'project_composition', 'project_extraction', NATIVE_FAMILY, MEASUREMENT_FAMILY} | set(DATA_FAMILIES) | set(
         MATERIAL_FAMILIES) | set(HISTORY_FAMILIES) | set(PRODUCER_FAMILIES)
     identities = set()
@@ -77,28 +125,62 @@ def validate_project_records(records, *, project_id, artifacts):
             if declaration['sha256'] != item['id']:
                 raise WorkbenchError('Artifact inventory identity differs.')
             declarations[item['id']] = declaration
-    decode_data_records(records)
+    if needed('data'):
+        decode_data_records(records)
     from project_fork import decode_fork
     decode_fork(records, project_id=project_id)
-    from project_composition import decode_records as decode_compositions
-    decode_compositions(records, project_id=project_id)
-    from project_transfer import decode_records as decode_extraction_records
-    decode_extraction_records(records)
+    if needed('composition') or (delta is not None and delta.changed & _composition_members(records)):
+        from project_composition import decode_records as decode_compositions
+        decode_compositions(records, project_id=project_id)
+    if needed('extraction'):
+        from project_transfer import decode_records as decode_extraction_records
+        decode_extraction_records(records)
     operation_records(records, project_id=project_id)
-    validate_file_receipt = file_receipt_validator(records)
-    decode_native_records(records,artifacts=artifacts)
-    materials = MaterialSnapshot(records)
-    for blob in materials.artifact_blobs():
-        if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
-            raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
+    if needed('native'):
+        decode_native_records(records,artifacts=artifacts)
+    material_cache = []
+    def materials():
+        if not material_cache:
+            material_cache.append(MaterialSnapshot(records))
+        return material_cache[0]
+    if needed('material'):
+        for blob in materials().artifact_blobs():
+            if declarations.get(blob['sha256']) != dict(format='project_artifact_v1', **blob):
+                raise WorkbenchError('Material artifact declaration is missing or inconsistent.')
     # Resolve every cross-owner reference against THIS candidate, rather
     # than a resolver that still sees the preceding committed checkpoint.
-    decode_producer_records(records, artifacts=artifacts)
-    decode_history_records(records, materials=materials, artifacts=artifacts)
-    validate_measurement_receipt = measurement_receipt_validator(records, artifacts=artifacts)
-    validate_source_receipt = source_receipt_validator(records)
+    if needed('producers'):
+        decode_producer_records(records, artifacts=artifacts)
+    if needed('history') or (delta is not None and delta.history_receipt_added()):
+        decode_history_records(records, materials=materials(), artifacts=artifacts)
+    validators = {}
+    def lazy(name, component, claims, build):
+        # claims(operation) is exactly what the built validator can accept;
+        # for any other operation it would return False, so it is not built.
+        def validate(operation, result):
+            if not claims(operation):
+                return False
+            if name not in validators:
+                validators[name] = build()
+            return validators[name](operation, result)
+        if delta is None or needed(component):
+            validators[name] = build()
+        return validate
+    validate_file_receipt = lazy('file', 'files', lambda op: op.startswith('files.'),
+                                 lambda: file_receipt_validator(records))
+    validate_measurement_receipt = lazy('measurement', 'measurements', lambda op: op == 'measurements.import',
+                                        lambda: measurement_receipt_validator(records, artifacts=artifacts))
+    validate_source_receipt = lazy('source', 'sources', lambda op: op == 'source.register',
+                                   lambda: source_receipt_validator(records))
+    from project_session import OPERATION_FAMILY
     for receipt in operation_documents(records):
         operation, result = receipt['operation'], receipt['result']
+        if delta is not None:
+            identity = (OPERATION_FAMILY, receipt['project_id'] + '.' + hashlib.sha256(receipt['request_key'].encode('utf-8')).hexdigest()
+                        if receipt.get('format') == 'project_operation_v2' else
+                        hashlib.sha256(receipt['request_key'].encode('utf-8')).hexdigest())
+            if not delta.receipt_needed(operation, identity):
+                continue
         if (validate_data_result(operation, result, records)
                 or validate_material_result(operation, result, records)
                 or validate_history_result(operation, result, records)
@@ -116,7 +198,8 @@ def validate_project_records(records, *, project_id, artifacts):
 
 
 class ProjectProjection:
-    def __init__(self, store, db, access, roots, *, custody=None, restore=True, runtime_sources=None):
+    def __init__(self, store, db, access, roots, *, custody=None, restore=True, runtime_sources=None,
+                 validation_cache=None):
         self.store, self.db, self.access = store, db, access
         self.custody = custody
         self.pending_original = []
@@ -129,7 +212,8 @@ class ProjectProjection:
         self._runtime_sources = copy.deepcopy(runtime_sources or {})
         try:
             self.session = ProjectSession(store, db, access, self.artifacts,
-                                          validate_records=self.validate_records)
+                                          validate_records=self.validate_records,
+                                          validation_cache=validation_cache)
             # Install before domain constructors retain their lock references.
             db.lock = ProjectLock(access.lock, self.session.lock, db.lock)
             self.producers = ProjectProducers(self.session)
@@ -139,7 +223,9 @@ class ProjectProjection:
             self.history = ProjectHistory(self.session, materials=self.materials,
                                           authorize_disclosure=self.authorize_disclosure)
             if restore:
-                self.producers.restore(self.session.snapshot)
+                # Producer restore reads its families, declarations and forks.
+                self.producers.restore(dict(records=session_records_for(
+                    self.session, *PRODUCER_FAMILIES, 'project_artifact', 'project_fork')))
                 self.data.restore()
                 self.materials.restore()
             # These owners create only disposable local directories. Their
@@ -195,8 +281,8 @@ class ProjectProjection:
         with self.access.lock, self.session.lock, self.db.lock:
             actor = self.access.require('edit', 'artifacts.resolve', body['sha256'], owner_only=True)
             self.session.check_current()
-            declaration = next((item['document'] for item in self.session.snapshot['records']
-                                if item['family'] == 'project_artifact' and item['id'] == body['sha256']), None)
+            declaration = session_record(self.session, 'project_artifact', body['sha256'])
+            declaration = None if declaration is None else declaration['document']
             if declaration is None:
                 raise WorkbenchError('Artifact is not declared by this project.', 'not_found', 404)
             def invoke():

@@ -9,6 +9,7 @@ import binascii
 import copy
 
 from workbench import WorkbenchError
+from project_session import session_records
 
 
 _BOUND_FIELDS = frozenset(('binding', 'checkpoint', 'expected_checkpoint', 'request_key'))
@@ -61,8 +62,7 @@ def _origin_items(items, arguments):
 
 
 def _declarations(projection):
-    return {item['id']: item['document'] for item in projection.session.snapshot['records']
-            if item['family'] == 'project_artifact'}
+    return {item['id']: item['document'] for item in session_records(projection.session, 'project_artifact')}
 
 
 def _artifact(projection, sha):

@@ -15,6 +15,7 @@ from project_producers import (FAMILIES, TABLES, ProjectProducers, _capture_job,
     _CapturedEvidence, _composed, _declarations, _referenced_artifacts, decode_records,
     identity, shape)
 from workbench import WorkbenchError
+from project_session import session_record, session_records
 
 KINDS = {'generation_history':'generation', 'grounded_history':'grounded',
          'caption_proposal_history':'caption', 'text_proposal_history':'text_proposal'}
@@ -81,7 +82,7 @@ class ProjectProducerExecution:
             # Imported science retains its physical ordering. A fresh local
             # authority table must allocate beyond those observed ordinals.
             table=TABLES[family]
-            observed=max((r['document']['ordinal'] for r in self.session.snapshot['records']
+            observed=max((r['document']['ordinal'] for r in session_records(self.session, family)
                           if r['family']==family and r['document']['origin_catalog_id']==self.db.dataset_id),default=0)
             current=self.db.execute('SELECT COALESCE(max(ordinal),0) FROM '+table).fetchone()[0]
             maximum=max(observed,current)
@@ -210,7 +211,8 @@ class ProjectProducerExecution:
             # Unknown acknowledgement fences authority. It never authorizes an
             # unacknowledged cancellation signal to a current worker.
         if outcome == 'committed':
-            records = self.session.snapshot['records']
+            from project_session import session_records
+            records = session_records(self.session, *FAMILIES, 'project_artifact')
             self.archive._records = copy.deepcopy([r for r in records if r['family'] in FAMILIES])
             declarations = _declarations(records)
             self.archive._artifacts = {sha:declarations[sha] for sha in _referenced_artifacts(self.archive._records)}
@@ -279,7 +281,7 @@ class ProjectProducerExecution:
         prepared = []
         def invoke():
             requested = body.get('request_id') if type(body) is dict else None
-            if requested is not None and any(r['family']==family and r['id']==self.db.dataset_id+'.'+requested for r in self.session.snapshot['records']):
+            if requested is not None and session_record(self.session, family,self.db.dataset_id+'.'+requested) is not None:
                 if self.db.execute('SELECT id FROM '+TABLES[family]+' WHERE id=%s',(requested,)).fetchone() is None:
                     raise WorkbenchError('A retained producer identity cannot acquire current admission. Start with a new identity.','unavailable',409)
             owner = self._owner(family)
