@@ -1,8 +1,10 @@
 # Implementation spec: milestone 3, results and charts
 
-This continues [spec-m1-m2.md](spec-m1-m2.md). Section 1 of that file (rules for implementers) applies unchanged, and so does its format section 2. The milestone has two parts: 3a adds results and charts to the new core and its command line, changing no existing Tuldok file; 3b serves the new core from the Tuldok app and gets its own section once 3a is accepted.
+This continues [spec-m1-m2.md](spec-m1-m2.md). Section 1 of that file (rules for implementers) applies unchanged, and so does its format section 2. This milestone adds results and charts to the new core and its command line, and a static report page. It changes no existing Tuldok file.
 
-**Done when (3a):** the lab folder opens into an empty database with every summary row of `results/*.csv` in the database; a chart is answered from the summary table without any result file being read; a copy of the lab folder alone, with no `runs/`, draws its charts; and after the lab's per-case values are imported locally, `save` rewrites every `results/*.csv` byte for byte as the lab's build script wrote it.
+**Serving the new core from the Tuldok app moves to milestone 7.** `app.py` routes every request through one handler that branches on the old modes, selects a pinned operation contract and binds the access layer; `agent_api.py` filters operations by profile and its contract fixtures are pinned. Threading a third mode through that is best done once, when every operation of the new core exists (plan, environments, build), so the contracts are registered and the fixtures regenerated a single time. Until then the command line and the report page are the ways to look at a project.
+
+**Done when:** the lab folder opens into an empty database with every summary row of `results/*.csv` in the database; a chart is answered from the summary table without any result file being read; a copy of the lab folder alone, with no `runs/`, draws its charts; and after the lab's per-case values are imported locally, `save` rewrites every `results/*.csv` byte for byte as the lab's build script wrote it.
 
 ## 1. What a benchmark run writes
 
@@ -115,6 +117,8 @@ Each point has `subject`, `title`, `recipe` (a reference or null), `value`, `cou
 - An axis is logarithmic when all its values are positive and the largest is at least 100 times the smallest; otherwise linear from a rounded minimum. Axes carry the metric's title and units. Numbers show three significant digits.
 - Missing subjects are counted in a one-line note under the chart. A chart with no points says so in place of the plot.
 
+`charts.render_report(project, *, theme='light') -> str` builds the report page from `summary()`, `definitions()`, `results_overview()`, `chart_data` and `render_svg`. The page has no scripts and no external references, embeds its style, uses the same design tokens, and reads top to bottom: where the project stands, then the charts, then the lists. The 205 earlier recipes make the lists long, so each kind's list is a closed `<details>` element with its count in the summary line.
+
 ## 6. Command line
 
 | Command | Does |
@@ -123,6 +127,7 @@ Each point has `subject`, `title`, `recipe` (a reference or null), `value`, `cou
 | `values FOLDER BENCHMARK --subject S [--metric M] [--limit N]` | per-case rows, or a sentence saying this machine holds none |
 | `import-values FOLDER FILE...` | imports values files; all are checked before any is imported |
 | `chart FOLDER CHART [--svg FILE] [--theme light|dark]` | prints the chart's data as text, or as JSON with `--json`; with `--svg` writes the drawing |
+| `report FOLDER --output FILE [--theme light|dark]` | writes one self-contained HTML page: the project's name, the counts per kind and state, every chart drawn, the results overview, and the definitions grouped by kind with their states |
 
 `save` and `status` report results as section 3 says. `--json` applies to `results`, `values` and `chart`.
 
@@ -131,7 +136,7 @@ Each point has `subject`, `title`, `recipe` (a reference or null), `value`, `cou
 | Slice | Files | Notes |
 | --- | --- | --- |
 | T7 results | `tuldok_project/result_rows.py` (new: the values-file check, the SQL for sections 2 to 4), hooks in `store.py` (tables, open, save, status, definition removal), `results`, `values` and `import-values` in `__main__.py`, `tests/test_tuldok_project_result_rows.py` | database tests |
-| T8 charts | `tuldok_project/charts.py` (new), `chart` in `__main__.py`, `tests/test_tuldok_project_charts.py`, and the results, values and chart sections of `docs/contracts/project-folder.md` | after T7 |
+| T8 charts and report | `tuldok_project/charts.py` (new), `chart` and `report` in `__main__.py`, `tests/test_tuldok_project_charts.py`, and the results, values, chart and report sections of `docs/contracts/project-folder.md` | after T7 |
 | L3 lab | `lab:scripts/build_tuldok_project.py`: results files hold the ungrouped row and one row per single group key and value; with `--values-output DIR` it also writes one `tuldok_results_v1` file per earlier benchmark and subject (outside Git, default `runs/tuldok-results/`); hand-written chart definitions under `lab:projects/surrogate-lab/charts/` | parallel with T7 |
 
 The fixture gains a values file for its benchmark under `tests/fixtures/tuldok_project/minimal/values/` and a `progression` and a `comparison` chart.
