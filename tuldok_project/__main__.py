@@ -6,15 +6,18 @@ status (0 done, 1 refused or failed, 2 usage error). `check` reads the folder
 alone (check.check_folder). Every other command works on the folder's database
 copy through store.open_project: it opens the project (importing what changed
 on disk), does its one piece of work and closes the Project before exiting, so
-the project's lock is never held past the command.
+the project's lock is never held past the command. `results` and `values` read
+benchmark results from the database only; `import-values` checks every values
+file before it imports any.
 """
 import argparse
+import dataclasses
 import json
 import os
 import sys
 import time
 
-from . import documents, folder as folder_reader
+from . import documents, folder as folder_reader, results as results_format
 from .check import check_folder
 
 DATABASE_VARIABLE = 'TULDOK_DATABASE_URL'
@@ -69,8 +72,30 @@ def _parser():
     removing = add('remove', [opening], 'remove a definition in the database (not saved to the folder)')
     removing.add_argument('reference', help='for example recipes/pilot-dense-k1')
     add('save', [reading], 'write the unsaved edits to the folder')
+    showing = add('results', [reading], "show the benchmarks' results, or one benchmark's summary rows")
+    showing.add_argument('benchmark', nargs='?', help='a benchmark name, for example rollout')
+    showing.add_argument('--subject', help='only this subject')
+    showing.add_argument('--metric', help='only this metric id')
+    showing.add_argument('--group', help="only this group key; '' for the ungrouped rows")
+    values = add('values', [reading], "show a subject's per-case values held on this machine")
+    values.add_argument('benchmark', help='a benchmark name, for example rollout')
+    values.add_argument('--subject', required=True, help='the subject')
+    values.add_argument('--metric', help='only this metric id')
+    values.add_argument('--limit', type=_positive, default=200, help='at most this many rows (default 200)')
+    importing = add('import-values', [reading], 'import tuldok_results_v1 values files; all are checked first')
+    importing.add_argument('files', nargs='+', metavar='FILE', help='values files')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
+
+
+def _positive(text):
+    try:
+        value = int(text)
+    except ValueError:
+        value = 0
+    if value < 1:
+        raise argparse.ArgumentTypeError(f'{text!r} is not a whole number of at least 1')
+    return value
 
 
 # ----------------------------------------------------------------- output
@@ -179,6 +204,7 @@ def _graph(project, arguments):
 _STATUS_WORDS = (
     ('unsaved', 'unsaved'), ('removed', 'removed'), ('added', 'added on disk'),
     ('changed', 'changed on disk'), ('missing', 'missing on disk'), ('irregular', 'not a definition file'),
+    ('results_unsaved', 'results unsaved'), ('results_changed', 'results changed on disk'),
 )
 
 
@@ -214,6 +240,8 @@ def _save(project, arguments):
         return 0
     rows = [('wrote', reference) for reference in saved['written']]
     rows += [('deleted', reference) for reference in saved['deleted']]
+    rows += [('wrote', f'results/{name}.csv') for name in saved['results_written']]
+    rows += [('deleted', f'results/{name}.csv') for name in saved['results_deleted']]
     if rows:
         _columns(rows)
     else:
@@ -221,8 +249,74 @@ def _save(project, arguments):
     return 0
 
 
+def _number(value):
+    return '-' if value is None else f'{value:.4g}'
+
+
+def _results(project, arguments):
+    if arguments.benchmark is None:
+        overview = project.results_overview()
+        if arguments.json:
+            _json(overview)
+            return 0
+        _columns([('benchmark', 'subjects', 'with values', 'rows', 'from file', 'from values', 'saved'),
+                  *((item['benchmark'], item['subjects_with_results'], item['subjects_with_values'], item['rows'],
+                     item['rows_file'], item['rows_values'], 'differs' if item['differs_from_file'] else 'yes' if item['rows'] else '-')
+                    for item in overview)])
+        return 0
+    stored = project.result_summaries(arguments.benchmark, subject=arguments.subject, metric=arguments.metric,
+                                      group=arguments.group)
+    if arguments.json:
+        _json([{**dataclasses.asdict(item.row), 'origin': item.origin} for item in stored])
+        return 0
+    if not stored:
+        print(f'benchmarks/{arguments.benchmark} has no summary rows that match.')
+        return 0
+    _columns([(*('subject', 'metric', 'group', 'count', 'unavailable'), *results_format.STATISTICS, 'produced', 'origin'),
+              *((item.row.subject, item.row.metric, item.row.group or '-', item.row.count, item.row.unavailable,
+                 *(_number(getattr(item.row, name)) for name in results_format.STATISTICS),
+                 item.row.produced, item.origin) for item in stored)])
+    return 0
+
+
+def _values(project, arguments):
+    held = project.result_values(arguments.benchmark, arguments.subject, metric=arguments.metric,
+                                 limit=arguments.limit)
+    if arguments.json:
+        _json(held)
+        return 0
+    if held['total'] == 0:
+        print(f'This machine holds no per-case values for {arguments.subject} in benchmarks/{arguments.benchmark}'
+              + (f' for metric {arguments.metric}' if arguments.metric else '') + '; import them with import-values.')
+        return 0
+    _columns([('case', 'metric', 'group', 'value'),
+              *((row['case'], row['metric'], row['group'] or '-',
+                 repr(row['value']) if row['value'] is not None else f'none ({row["reason"]})')
+                for row in held['values'])])
+    if held['total'] > len(held['values']):
+        print(f'{len(held["values"])} of {held["total"]} values shown; use --limit to see more.')
+    return 0
+
+
+def _import_values(project, arguments):
+    problems = [problem for path, text in arguments.texts for problem in project.check_values(text, path=path)]
+    if problems:
+        for problem in problems:
+            print(_problem_line(problem), file=sys.stderr)
+        print(f'Nothing was imported: {_plural(len(problems), "problem")} in the values files.', file=sys.stderr)
+        return 1
+    imported = [project.import_values(text, path=path) for path, text in arguments.texts]
+    if arguments.json:
+        _json(imported)
+    else:
+        _columns([(f'imported  benchmarks/{item["benchmark"]}', item['subject'], _plural(item['values'], 'value'),
+                   _plural(item['summaries'], 'summary row')) for item in imported])
+    return 0
+
+
 _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status,
-                   'set': _set, 'remove': _remove, 'save': _save}
+                   'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
+                   'import-values': _import_values}
 
 
 def _project_id(folder):
@@ -246,6 +340,27 @@ def _project_id(folder):
     return project_id
 
 
+def _read_values(path):
+    """The bytes of a values file, at most the size limit plus one so the check can report an oversize file."""
+    from .result_rows import VALUES_LIMIT
+
+    try:
+        with open(path, 'rb') as handle:
+            return handle.read(VALUES_LIMIT + 1)
+    except OSError as exc:
+        raise UsageError(f'{path} cannot be read: {exc.strerror}.') from None
+
+
+def _values_key(raw):
+    """(benchmark, subject) of a values file, or None when it cannot be read that far (the check will say why)."""
+    try:
+        document = documents.decode(raw)
+    except documents.DocumentError:
+        return None
+    key = (document.get('benchmark'), document.get('subject'))
+    return key if all(isinstance(part, str) for part in key) else None
+
+
 def _forget(arguments, dsn):
     from . import store
 
@@ -266,6 +381,13 @@ def _run_store(arguments, dsn):
             raise UsageError(f'{arguments.file} cannot be read: {exc.strerror}.') from None
         except UnicodeDecodeError as exc:
             raise UsageError(f'{arguments.file} is not UTF-8 text (bad byte at offset {exc.start}).') from None
+    if arguments.command == 'import-values':
+        arguments.texts = [(path, _read_values(path)) for path in arguments.files]
+        keys = [_values_key(text) for _, text in arguments.texts]
+        twice = [path for (path, _), key in zip(arguments.texts, keys) if key is not None and keys.count(key) > 1]
+        if twice:
+            raise UsageError('These files are for the same benchmark and subject; import one of them: '
+                             + ', '.join(twice) + '.')
     started = time.monotonic()
     project = store.open_project(arguments.folder, rebind=arguments.rebind, on_conflict=arguments.on_conflict,
                                  dsn=dsn)

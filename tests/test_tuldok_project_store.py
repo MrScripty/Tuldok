@@ -41,6 +41,10 @@ FIXTURE_STATES = {
     'steps/solver': 'not-built',
 }
 
+CLEAN_STATUS = {'unsaved': [], 'removed': [], 'added': [], 'changed': [], 'missing': [], 'irregular': [],
+                'results_unsaved': [], 'results_changed': []}
+
+
 
 def _fixture_documents():
     project = FIXTURE / 'project'
@@ -139,7 +143,7 @@ class StoreCase(unittest.TestCase):
         if connection.execute('SELECT 1 FROM pg_namespace WHERE nspname = %s', (self.schema,)).fetchone() is None:
             return None
         tables = {}
-        for table in ('state', 'definitions', 'edges'):
+        for table in ('state', 'definitions', 'edges', 'results_files', 'result_summaries', 'result_values'):
             query = psycopg.sql.SQL('SELECT * FROM {}.{} ORDER BY 1, 2').format(
                 psycopg.sql.Identifier(self.schema), psycopg.sql.Identifier(table))
             tables[table] = connection.execute(query).fetchall()
@@ -197,8 +201,7 @@ class Open(StoreCase):
         order = project.order()
         self.assertLess(order.index('steps/solver'), order.index('datasets/waves'))
         self.assertLess(order.index('recipes/stepper-k1'), order.index('recipes/stepper-k2'))
-        self.assertEqual(project.status(), {'unsaved': [], 'removed': [], 'added': [], 'changed': [],
-                                            'missing': [], 'irregular': []})
+        self.assertEqual(project.status(), CLEAN_STATUS)
 
     def test_second_open_of_unchanged_folder_does_not_run_the_checker(self):
         self.close(self.open())
@@ -423,13 +426,13 @@ class Save(StoreCase):
         self.project.set_definition('models/extra', extra)
         self.project.remove_definition('charts/speed-accuracy')
         result = self.project.save()
-        self.assertEqual(result, {'written': ['datasets/waves', 'models/extra'], 'deleted': ['charts/speed-accuracy']})
+        self.assertEqual(result, {'written': ['datasets/waves', 'models/extra'], 'deleted': ['charts/speed-accuracy'],
+                                  'results_written': [], 'results_deleted': []})
         self.assertEqual(self.read('datasets/waves'), waves)
         self.assertEqual(self.read('models/extra'), extra)
         self.assertFalse((self.folder / 'charts' / 'speed-accuracy.json').exists())
         self.assertEqual(sorted(p.name for p in (self.folder / 'datasets').iterdir()), ['waves.json'])
-        self.assertEqual(self.project.status(), {'unsaved': [], 'removed': [], 'added': [], 'changed': [],
-                                                 'missing': [], 'irregular': []})
+        self.assertEqual(self.project.status(), CLEAN_STATUS)
         self.assertTrue(check.check_folder(self.folder).ok)
         # What was saved is what the database records, so the next open attaches without a check.
         self.close(self.project)

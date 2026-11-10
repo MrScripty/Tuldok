@@ -1,0 +1,21 @@
+{
+  "format": "tuldok_results_v1",
+  "benchmark": "rollout",
+  "subject": "early-fit",
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "produced": "2026-11-02",
+  "values": [
+    {"case": "scene-01", "metric": "rmse", "value": 0.25, "group": {"horizon": 1}},
+    {"case": "scene-01", "metric": "rmse", "value": null, "reason": "diverged before step 8", "group": {"horizon": 8}},
+    {"case": "scene-01", "metric": "seconds", "value": 2.0},
+    {"case": "scene-02", "metric": "rmse", "value": 0.5, "group": {"horizon": 1}},
+    {"case": "scene-02", "metric": "rmse", "value": null, "reason": "diverged before step 8", "group": {"horizon": 8}},
+    {"case": "scene-02", "metric": "seconds", "value": null, "reason": "timer not recorded"},
+    {"case": "scene-03", "metric": "rmse", "value": 0.75, "group": {"horizon": 1}},
+    {"case": "scene-03", "metric": "rmse", "value": null, "reason": "diverged before step 8", "group": {"horizon": 8}},
+    {"case": "scene-03", "metric": "seconds", "value": 3.0},
+    {"case": "scene-04", "metric": "rmse", "value": 1.0, "group": {"horizon": 1}},
+    {"case": "scene-04", "metric": "rmse", "value": null, "reason": "diverged before step 8", "group": {"horizon": 8}},
+    {"case": "scene-04", "metric": "seconds", "value": null, "reason": "timer not recorded"}
+  ]
+}

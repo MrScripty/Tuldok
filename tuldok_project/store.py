@@ -11,6 +11,9 @@ database until save() writes them back. States are never stored: they are
 computed by graph.states from the documents. A Project keeps no copy of the
 definitions in memory and holds a session advisory lock on its project for as
 long as it is open, so one Project at a time owns a project's copy.
+Benchmark results (spec-m3.md) live in three more tables owned by result_rows:
+results files are part of what open compares and imports, and save writes
+them back when the database's summaries make a different text.
 """
 from dataclasses import dataclass
 import hashlib
@@ -24,7 +27,7 @@ from psycopg.types.json import Jsonb
 
 from metadata import connection_info
 
-from . import check, documents, folder as folder_reader, graph
+from . import check, documents, folder as folder_reader, graph, result_rows, results
 from .documents import Problem
 
 PROJECT_ID = re.compile(r'^[a-f0-9]{32}$')
@@ -48,6 +51,7 @@ _TABLES = (
            from_ref text NOT NULL, to_ref text NOT NULL, role text NOT NULL,
            PRIMARY KEY (from_ref, to_ref, role))''',
     'CREATE INDEX IF NOT EXISTS edges_to ON {schema}.edges (to_ref)',
+    *result_rows.TABLES,
 )
 # Later additive changes go here as ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
 _MIGRATIONS = ()
@@ -177,6 +181,38 @@ def _list_definitions(root):
     finally:
         os.close(root_fd)
     return DiskListing(files, tuple(irregular))
+
+
+def _list_results(root):
+    """The results files on disk: ({benchmark name: bytes}, paths that are not plain results files)."""
+    files, irregular = {}, []
+    root_fd = _open_root(root)
+    try:
+        top = dict(folder_reader.entries(root_fd))
+        if folder_reader.RESULTS not in top:
+            return files, ()
+        if top[folder_reader.RESULTS] != 'directory':
+            return files, (folder_reader.RESULTS,)
+        fd = os.open(folder_reader.RESULTS, folder_reader.DIRECTORY_FLAGS, dir_fd=root_fd)
+        try:
+            for name, entry_kind in folder_reader.entries(fd):
+                stem = name[:-len('.csv')] if name.endswith('.csv') else None
+                if entry_kind != 'file' or stem is None or not documents.is_name(stem):
+                    irregular.append(f'{folder_reader.RESULTS}/{name}')
+                    continue
+                try:
+                    files[stem] = folder_reader.read(fd, name, folder_reader.RESULTS_LIMIT)
+                except folder_reader.Unsafe:
+                    irregular.append(f'{folder_reader.RESULTS}/{name}')
+        finally:
+            os.close(fd)
+    finally:
+        os.close(root_fd)
+    return files, tuple(irregular)
+
+
+def _results_path(benchmark):
+    return f'{folder_reader.RESULTS}/{benchmark}.csv'
 
 
 def _notes(root):
@@ -312,22 +348,26 @@ class Project:
         if state is not None and state['folder'] != root and not rebind:
             raise ProjectError(f'This project is bound to {state["folder"]}, not {root}; '
                                'open it with rebind to move it here.', 'bound-elsewhere')
-        rows = {}
+        rows, recorded_results = {}, {}
         if exists:
             for reference, file_sha256, unsaved, removed in self._execute(
                     f'SELECT {_REFERENCE_SQL}, file_sha256, unsaved, removed FROM {{schema}}.definitions'):
                 rows[reference] = (file_sha256, unsaved or removed)
+            recorded_results = dict(self._execute('SELECT benchmark, file_sha256 FROM {schema}.results_files'))
         listing = _list_definitions(root)
+        results_on_disk, results_irregular = _list_results(root)
         on_disk = {reference: sha for reference, (sha, _) in rows.items() if sha is not None}
         code_root = project.get('code_root', '.')
         if (state is not None and not listing.irregular and listing.files == on_disk
+                and not results_irregular
+                and {name: _sha(raw) for name, raw in results_on_disk.items()} == recorded_results
                 and state['name'] == project['name'] and state['code_root'] == code_root):
             if state['folder'] != root:
                 self._execute('UPDATE {schema}.state SET folder = %s', (root,))
             return
-        self._import(root, rows, on_conflict)
+        self._import(root, rows, on_conflict, results_on_disk, recorded_results)
 
-    def _import(self, root, rows, on_conflict):
+    def _import(self, root, rows, on_conflict, results_on_disk, recorded_results):
         report = check.check_folder(root)
         if not report.ok:
             raise ProjectError(f'The project folder {root} has errors; fix them and open it again.', 'invalid',
@@ -369,6 +409,8 @@ class Project:
                 raise ProjectError('The folder no longer fits the unsaved edits held here; '
                                    'save or discard them first.', 'invalid', problems=problems)
 
+        changed_results, gone_results = self._results_to_import(disk, merged, results_on_disk, recorded_results)
+
         project = report.project
         with self._connection.transaction():
             self._create_schema()
@@ -386,12 +428,53 @@ class Project:
                                                  'WHERE directory = %s AND name = %s'),
                                        [(sha, *documents.parse_reference(reference)) for reference, sha in reseat])
             self._write_edges(graph.edges({reference: d.document for reference, d in merged.items()}))
+            for reference in delete:
+                directory, name = documents.parse_reference(reference)
+                if directory == 'benchmarks':
+                    result_rows.remove_benchmark(self._connection, self.schema, name)
+            for reference in take:
+                directory, name = documents.parse_reference(reference)
+                if directory == 'benchmarks' and reference in merged:
+                    result_rows.prune(self._connection, self.schema, name, merged[reference].document)
+            for name in gone_results:
+                result_rows.forget_file(self._connection, self.schema, name)
+            for name, text in changed_results.items():
+                result_rows.import_file(self._connection, self.schema, name, text,
+                                        merged[documents.reference('benchmarks', name)].document)
             self._execute('''INSERT INTO {schema}.state (singleton, project_id, name, folder, code_root, imported_at)
                              VALUES (true, %s, %s, %s, %s, now())
                              ON CONFLICT (singleton) DO UPDATE SET project_id = EXCLUDED.project_id,
                                  name = EXCLUDED.name, folder = EXCLUDED.folder,
                                  code_root = EXCLUDED.code_root, imported_at = EXCLUDED.imported_at''',
                           (self.project_id, project['name'], root, project.get('code_root', '.')))
+
+    def _results_to_import(self, disk, merged, results_on_disk, recorded_results):
+        """({benchmark: text} of new or changed results files, [benchmarks whose file is gone]).
+
+        The files were read after the checker ran, so each is checked again
+        against its benchmark; a file that changed in between and is now wrong
+        refuses the open. A file whose benchmark is removed in the database
+        (not yet saved) is not imported.
+        """
+        changed, problems = {}, []
+        for name, raw in sorted(results_on_disk.items()):
+            reference = documents.reference('benchmarks', name)
+            if _sha(raw) == recorded_results.get(name) or reference not in merged:
+                continue
+            found = [Problem(severity, _results_path(name), pointer, message)
+                     for severity, pointer, message in results.check_results(
+                         raw, disk[reference].document if reference in disk else None)]
+            if reference not in disk:
+                found.append(Problem('error', _results_path(name), '', f'There is no {reference}.json for this summary.'))
+            if _errors(found):
+                problems.extend(_errors(found))
+                continue
+            changed[name] = raw.decode('utf-8')
+        if problems:
+            raise ProjectError('A results file changed while the folder was being opened; open it again.', 'invalid',
+                               problems=problems)
+        gone = sorted(set(recorded_results) - set(results_on_disk))
+        return changed, gone
 
     # ------------------------------------------------------------ reading
 
@@ -445,18 +528,33 @@ class Project:
         return graph.order(self._documents(removed=False))
 
     def status(self):
-        """Unsaved and removed definitions, and files added, changed or missing on disk since the last import or save."""
+        """Unsaved and removed definitions, and files added, changed or missing on disk since the last import or save.
+
+        results_unsaved names the benchmarks whose summaries in the database
+        are not the results file as last imported or saved (save would write
+        or remove it); results_changed names the results files added, changed
+        or removed on disk since then.
+        """
         state = self._state()
         rows = self._execute(f'SELECT {_REFERENCE_SQL}, file_sha256, unsaved, removed FROM {{schema}}.definitions').fetchall()
         listing = _list_definitions(state['folder'])
         recorded = {reference: sha for reference, sha, _, _ in rows if sha is not None}
+        texts = result_rows.file_texts(self._connection, self.schema)
+        results_on_disk, results_irregular = _list_results(state['folder'])
+        results_recorded = {name: recorded_sha for name, (_, recorded_sha) in texts.items() if recorded_sha is not None}
+        results_changed = sorted(
+            _results_path(name) for name in set(results_on_disk) | set(results_recorded)
+            if (_sha(results_on_disk[name]) if name in results_on_disk else None) != results_recorded.get(name))
         return {'unsaved': sorted(reference for reference, _, unsaved, removed in rows if unsaved and not removed),
                 'removed': sorted(reference for reference, _, _, removed in rows if removed),
                 'added': sorted(set(listing.files) - set(recorded)),
                 'changed': sorted(reference for reference, sha in listing.files.items()
                                   if reference in recorded and recorded[reference] != sha),
                 'missing': sorted(set(recorded) - set(listing.files)),
-                'irregular': list(listing.irregular)}
+                'irregular': list(listing.irregular) + list(results_irregular),
+                'results_unsaved': [name for name, (text, recorded_sha) in texts.items()
+                                    if result_rows.differs(text, recorded_sha)],
+                'results_changed': results_changed}
 
     # ------------------------------------------------------------ editing
 
@@ -504,6 +602,8 @@ class Project:
                                            OR {schema}.definitions.text IS DISTINCT FROM EXCLUDED.text''',
                           (directory, name, candidate.kind, document['title'], text, Jsonb(document)))
             self._write_edges(graph.edges({reference: document}), [reference])
+            if directory == 'benchmarks':
+                result_rows.prune(self._connection, self.schema, name, document)
 
     def remove_definition(self, reference):
         """Mark a definition removed, to be deleted from disk by save(); refused while anything uses it."""
@@ -526,15 +626,22 @@ class Project:
                 self._execute('UPDATE {schema}.definitions SET removed = true WHERE directory = %s AND name = %s',
                               (directory, name))
             self._write_edges([], [reference])
+            if directory == 'benchmarks':
+                result_rows.remove_benchmark(self._connection, self.schema, name)
 
     def save(self):
-        """Write unsaved definitions to their files and delete the files of removed ones (4.4).
+        """Write unsaved definitions and changed results files, and delete the files of removed ones.
 
-        Before anything is written, every file to be replaced or deleted must
-        still have the SHA-256 recorded at import or last save (or already hold
-        exactly the text to be written, which is what an interrupted save
-        leaves). Otherwise nothing is written and ProjectError (code
-        changed-on-disk) names them. Returns the references written and deleted.
+        Definitions follow section 4.4 of spec-m1-m2.md; results/<benchmark>.csv
+        is written with results.write_results when the database's summaries
+        make a text other than the file on disk, and removed when the
+        benchmark has no summary rows (spec-m3.md section 3). Before anything
+        is written, every file to be replaced or deleted must still have the
+        SHA-256 recorded at import or last save (or already hold exactly what
+        is to be written, which is what an interrupted save leaves).
+        Otherwise nothing is written and ProjectError (code changed-on-disk)
+        names them. Returns the references written and deleted, and the
+        benchmarks whose results files were written and deleted.
         """
         root = self._state()['folder']
         rows = self._execute(f'SELECT {_REFERENCE_SQL}, text, file_sha256, removed FROM {{schema}}.definitions '
@@ -545,6 +652,17 @@ class Project:
             done = None if removed else _sha(text.encode('utf-8'))
             if current != file_sha256 and current != done:
                 changed.append(reference)
+        results_plan = []   # (benchmark, text to write or None to delete, whether the file must change)
+        for name, (text, recorded) in result_rows.file_texts(self._connection, self.schema).items():
+            current = _path_sha(root, folder_reader.RESULTS, f'{name}.csv', folder_reader.RESULTS_LIMIT)
+            target = None if text is None else result_rows.sha256_text(text)
+            if current == target:
+                if recorded != target:
+                    results_plan.append((name, text, False))
+            elif current != recorded:
+                changed.append(_results_path(name))
+            else:
+                results_plan.append((name, text, True))
         if changed:
             raise ProjectError('These files changed on disk since they were imported: ' + ', '.join(changed)
                                + '. Open the project again to take or keep the changes.', 'changed-on-disk',
@@ -557,7 +675,22 @@ class Project:
             else:
                 _write_file(root, reference, text.encode('utf-8'))
                 written.append(reference)
+        results_written, results_deleted = [], []
+        for name, text, must_change in results_plan:
+            if text is None:
+                if must_change:
+                    _delete_path(root, folder_reader.RESULTS, f'{name}.csv')
+                    results_deleted.append(name)
+            else:
+                if must_change:
+                    _write_path(root, folder_reader.RESULTS, f'{name}.csv', text.encode('utf-8'))
+                    results_written.append(name)
         with self._connection.transaction():
+            for name, text, _ in results_plan:
+                if text is None:
+                    result_rows.forget_file(self._connection, self.schema, name)
+                else:
+                    result_rows.record_file(self._connection, self.schema, name, result_rows.sha256_text(text))
             with self._connection.cursor() as cursor:
                 if written:
                     cursor.executemany(self._sql('UPDATE {schema}.definitions SET unsaved = false, '
@@ -567,7 +700,57 @@ class Project:
                 if deleted:
                     cursor.executemany(self._sql('DELETE FROM {schema}.definitions WHERE directory = %s AND name = %s'),
                                        [documents.parse_reference(reference) for reference in deleted])
-        return {'written': written, 'deleted': deleted}
+        return {'written': written, 'deleted': deleted,
+                'results_written': results_written, 'results_deleted': results_deleted}
+
+    # ------------------------------------------------------------ results
+
+    def _benchmark_document(self, name):
+        row = self._execute("SELECT document FROM {schema}.definitions "
+                            "WHERE directory = 'benchmarks' AND name = %s AND NOT removed", (name,)).fetchone()
+        return None if row is None else row[0]
+
+    def _require_benchmark(self, benchmark, subject=None):
+        document = self._benchmark_document(benchmark) if documents.is_name(benchmark) else None
+        if document is None:
+            raise ProjectError(f'There is no benchmark benchmarks/{benchmark}.', 'not-found',
+                               references=[f'benchmarks/{benchmark}'])
+        if subject is not None and subject not in {item.get('name') for item in document.get('subjects', [])}:
+            raise ProjectError(f'{subject!r} is not a subject of benchmarks/{benchmark}.', 'not-found',
+                               references=[f'benchmarks/{benchmark}'])
+        return document
+
+    def check_values(self, text, *, path=''):
+        """The problems of a tuldok_results_v1 values file against its benchmark (spec-m3.md section 1)."""
+        return result_rows.check_values(text, self._benchmark_document, path=path)[1]
+
+    def import_values(self, text, *, path=''):
+        """Check a values file, then replace its (benchmark, subject)'s values and summaries in one transaction.
+
+        Raises ProjectError (code invalid, with the problems) and changes
+        nothing when the file has any problem. Returns the benchmark, the
+        subject, and how many values and summary rows it now holds.
+        """
+        with self._connection.transaction():
+            found, problems = result_rows.check_values(text, self._benchmark_document, path=path)
+            if problems:
+                raise ProjectError(f'{path or "The values file"} cannot be imported; see the problems.', 'invalid',
+                                   problems=problems)
+            return result_rows.replace_values(self._connection, self.schema, found)
+
+    def result_summaries(self, benchmark, subject=None, metric=None, group=None):
+        """The summary rows of a benchmark as result_rows.StoredSummary (a results.SummaryRow and its origin)."""
+        self._require_benchmark(benchmark)
+        return result_rows.summaries(self._connection, self.schema, benchmark, subject, metric, group)
+
+    def result_values(self, benchmark, subject, metric=None, offset=0, limit=200):
+        """{'total', 'values'}: one page of a subject's per-case values; total 0 when this machine holds none."""
+        self._require_benchmark(benchmark, subject)
+        return result_rows.values(self._connection, self.schema, benchmark, subject, metric, offset, limit)
+
+    def results_overview(self):
+        """Per benchmark: subjects with results, subjects with values, rows, and whether it differs from its file."""
+        return result_rows.overview(self._connection, self.schema)
 
     def close(self):
         """Close the connection, which also releases the project's lock."""
@@ -585,6 +768,11 @@ class Project:
 def _file_sha(root, reference):
     """SHA-256 of the definition file on disk, None when it does not exist, 'unreadable' when it is not a plain file."""
     directory, name = documents.parse_reference(reference)
+    return _path_sha(root, directory, f'{name}.json', folder_reader.DEFINITION_LIMIT)
+
+
+def _path_sha(root, directory, filename, limit):
+    """SHA-256 of directory/filename on disk, None when it does not exist, 'unreadable' when it is not a plain file."""
     try:
         fd = os.open(os.path.join(root, directory), folder_reader.DIRECTORY_FLAGS)
     except FileNotFoundError:
@@ -592,9 +780,9 @@ def _file_sha(root, reference):
     except OSError:
         return 'unreadable'
     try:
-        return _sha(folder_reader.read(fd, f'{name}.json', folder_reader.DEFINITION_LIMIT))
+        return _sha(folder_reader.read(fd, filename, limit))
     except folder_reader.Unsafe:
-        if not os.path.lexists(os.path.join(root, directory, f'{name}.json')):
+        if not os.path.lexists(os.path.join(root, directory, filename)):
             return None
         return 'unreadable'
     finally:
@@ -602,18 +790,22 @@ def _file_sha(root, reference):
 
 
 def _write_file(root, reference, data):
-    """Replace the file atomically: a temporary file in the same directory, fsync, rename, fsync the directory."""
     directory, name = documents.parse_reference(reference)
+    _write_path(root, directory, f'{name}.json', data)
+
+
+def _write_path(root, directory, filename, data):
+    """Replace the file atomically: a temporary file in the same directory, fsync, rename, fsync the directory."""
     target_directory = os.path.join(root, directory)
     os.makedirs(target_directory, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(dir=target_directory, prefix=f'.{name}.', suffix='.tmp')
+    fd, temporary = tempfile.mkstemp(dir=target_directory, prefix=f'.{filename}.', suffix='.tmp')
     try:
         with os.fdopen(fd, 'wb') as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
         os.chmod(temporary, 0o644)
-        os.replace(temporary, os.path.join(target_directory, f'{name}.json'))
+        os.replace(temporary, os.path.join(target_directory, filename))
     except BaseException:
         if os.path.lexists(temporary):
             os.unlink(temporary)
@@ -623,9 +815,13 @@ def _write_file(root, reference, data):
 
 def _delete_file(root, reference):
     directory, name = documents.parse_reference(reference)
+    _delete_path(root, directory, f'{name}.json')
+
+
+def _delete_path(root, directory, filename):
     target_directory = os.path.join(root, directory)
     try:
-        os.unlink(os.path.join(target_directory, f'{name}.json'))
+        os.unlink(os.path.join(target_directory, filename))
     except FileNotFoundError:
         return
     _sync_directory(target_directory)

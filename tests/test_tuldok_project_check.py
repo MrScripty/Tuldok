@@ -549,7 +549,7 @@ class ResultsFiles(FixtureCopy):
 
     def test_problem_in_a_results_row_carries_the_file_path(self):
         path = self.project / 'results/rollout.csv'
-        path.write_text(path.read_text().replace('early-fit,rmse,horizon=1', 'nobody,rmse,horizon=1', 1))
+        path.write_text(path.read_text().replace('early-fit,rmse,,', 'nobody,rmse,,', 1))
         report = check_folder(self.project)
         problem = self.assertProblem(report, 'results/rollout.csv', 'line 2', alone=False)
         self.assertIn('nobody', ' '.join(p.message for p in report.problems))
