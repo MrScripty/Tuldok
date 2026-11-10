@@ -16,6 +16,7 @@ import sys
 import tempfile
 import unittest
 import uuid
+import xml.etree.ElementTree as ElementTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -117,19 +118,19 @@ class StoreCommands(FolderCase):
         self.assertRegex(lines[0], rf'^Opened Minimal surrogate project \({self.project_id}\) from .* in \d+\.\d\d s\.$')
         self.assertIn('kind         count', lines)
         self.assertIn('recipe       3', lines)
-        self.assertIn('total        10', lines)
+        self.assertIn('total        12', lines)
         self.assertIn('state           count', lines)
         self.assertIn('cannot-rebuild  1', lines)
         self.assertTrue(self.schema_exists())
         again = self.run_json('open', self.folder)
         self.assertEqual(again['project_id'], self.project_id)
         self.assertEqual(again['kinds']['recipe'], 3)
-        self.assertEqual(again['states'], {'cannot-rebuild': 1, 'none': 3, 'not-built': 5, 'not-set-up': 1})
+        self.assertEqual(again['states'], {'cannot-rebuild': 1, 'none': 5, 'not-built': 5, 'not-set-up': 1})
         self.assertIsInstance(again['seconds'], float)
 
     def test_list(self):
         lines = self.run_ok('list', self.folder).splitlines()
-        self.assertEqual(len(lines), 10)
+        self.assertEqual(len(lines), 12)
         self.assertEqual(lines[0].split(None, 2), ['benchmarks/rollout', 'not-built', 'Rollout error'])
         self.assertEqual(len({line.index('not-built') for line in lines if ' not-built ' in line}), 1)  # aligned
         rows = self.run_json('list', self.folder, '--kind', 'recipe')
@@ -158,10 +159,10 @@ class StoreCommands(FolderCase):
 
     def test_graph_and_order(self):
         nodes, edges = self.run_ok('graph', self.folder).split('\n\n')
-        self.assertEqual(len(nodes.splitlines()), 10)
-        self.assertIn('recipes/stepper-k2      input:start         recipes/stepper-k1', edges.splitlines())
+        self.assertEqual(len(nodes.splitlines()), 12)
+        self.assertIn('recipes/stepper-k2          input:start         recipes/stepper-k1', edges.splitlines())
         drawn = self.run_json('graph', self.folder)
-        self.assertEqual(len(drawn['nodes']), 10)
+        self.assertEqual(len(drawn['nodes']), 12)
         self.assertEqual(len(drawn['edges']), len(edges.splitlines()))
         order = [line.split() for line in self.run_ok('graph', self.folder, '--order').splitlines()]
         references = [reference for reference, _ in order]
@@ -246,7 +247,7 @@ class StoreCommands(FolderCase):
         done = run('list', moved / 'project')
         self.assertEqual(done.returncode, 1)
         self.assertIn('rebind', done.stderr)
-        self.assertEqual(len(self.run_json('list', moved / 'project', '--rebind')), 10)
+        self.assertEqual(len(self.run_json('list', moved / 'project', '--rebind')), 12)
 
     def test_open_elsewhere_is_busy_and_every_command_releases_the_lock(self):
         for arguments in (('open',), ('list',), ('show', 'models/stepper'), ('graph',), ('status',), ('save',)):
@@ -267,6 +268,87 @@ class StoreCommands(FolderCase):
         self.assertFalse(self.schema_exists())
         self.assertEqual(sorted(path.relative_to(self.folder) for path in self.folder.rglob('*')), files)
         self.assertIn('holds no copy', self.run_ok('forget', self.folder))  # forgetting twice is fine
+
+
+
+@unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
+class ChartCommands(FolderCase):
+    """chart and report, and the two ways of naming a benchmark or a chart."""
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(store.drop_project, self.project_id)
+
+    def test_chart_prints_its_data_as_text_or_json(self):
+        lines = self.run_ok('chart', self.folder, 'rollout-ranking').splitlines()
+        self.assertEqual(lines[0].split(), ['chart', 'charts/rollout-ranking', 'ranking'])
+        self.assertIn('metric     rmse: median Rollout RMSE (m/s), lower is better', lines)
+        self.assertIn('horizon = 8', lines)
+        self.assertEqual(lines[lines.index('horizon = 1') + 1].split(), ['rank', 'subject', 'value', 'count'])
+        self.assertEqual(lines[lines.index('horizon = 1') + 2].split(), ['1', 'stepper-k2', '0.3125', '4'])
+        self.assertEqual(lines[-1], '1 of 3 subjects has no value: early-fit.')
+        data = self.run_json('chart', self.folder, 'charts/speed-accuracy')
+        self.assertEqual([(item['subject'], item['frontier']) for item in data['series'][0]['points']],
+                         [('stepper-k2', True), ('stepper-k1', False), ('early-fit', False)])
+        progression = self.run_ok('chart', self.folder, 'charts/rollout-progression').splitlines()
+        self.assertIn(['0', 'early-fit', '0.625', '0.625', '2026-03-14'], [line.split() for line in progression])
+        comparison = self.run_ok('chart', self.folder, 'rollout-comparison').splitlines()
+        self.assertIn(['subject', 'rmse', 'seconds'], [line.split() for line in comparison])
+        self.assertEqual(comparison[-1], 'Every one of the 3 subjects has a value.')
+
+    def test_chart_svg_is_written_in_either_theme(self):
+        light, dark = self.temporary / 'light.svg', self.temporary / 'dark.svg'
+        output = self.run_ok('chart', self.folder, 'rollout-ranking', '--svg', light)
+        self.assertTrue(output.endswith(f'Wrote {light} ({light.stat().st_size} bytes).\n'))
+        data = self.run_json('chart', self.folder, 'rollout-ranking', '--svg', dark, '--theme', 'dark')
+        self.assertEqual(data['chart'], 'charts/rollout-ranking')  # stdout holds the JSON alone
+        for path in (light, dark):
+            root = ElementTree.fromstring(path.read_text(encoding='utf-8'))
+            self.assertEqual(root.find('{http://www.w3.org/2000/svg}title').text, 'Rollout error by subject')
+        self.assertIn('#171c22', dark.read_text(encoding='utf-8'))
+        self.assertNotEqual(light.read_bytes(), dark.read_bytes())
+        self.run_ok('chart', self.folder, 'charts/rollout-ranking', '--svg', self.temporary / 'again.svg')
+        self.assertEqual((self.temporary / 'again.svg').read_bytes(), light.read_bytes())
+        blocked = run('chart', self.folder, 'rollout-ranking', '--svg', self.temporary / 'absent' / 'x.svg')
+        self.assertEqual(blocked.returncode, 1)
+        self.assertIn('cannot be written', blocked.stderr)
+
+    def test_report_writes_one_page(self):
+        page = self.temporary / 'report.html'
+        output = self.run_ok('report', self.folder, '--output', page, '--theme', 'dark')
+        self.assertEqual(output, f'Wrote {page} (4 charts, {page.stat().st_size} bytes).\n')
+        text = page.read_text(encoding='utf-8')
+        self.assertTrue(text.startswith('<!DOCTYPE html>'))
+        self.assertEqual(text.count('<svg '), 4)
+        self.assertIn('color-scheme: dark', text)
+        self.assertEqual(run('report', self.folder).returncode, 2)  # --output is required
+
+    def test_benchmarks_and_charts_by_name_or_reference(self):
+        for command in (('results',), ('values', '--subject', 'stepper-k1')):
+            bare = self.run_json(command[0], self.folder, 'rollout', *command[1:])
+            self.assertEqual(self.run_json(command[0], self.folder, 'benchmarks/rollout', *command[1:]), bare)
+        self.assertEqual(len(self.run_json('results', self.folder, 'benchmarks/rollout')), 12)
+        self.assertIn('benchmarks/rollout has no summary rows', self.run_ok('results', self.folder, 'benchmarks/rollout',
+                                                                            '--subject', 'nobody'))
+        self.assertEqual(self.run_json('chart', self.folder, 'charts/speed-accuracy'),
+                         self.run_json('chart', self.folder, 'speed-accuracy'))
+        for arguments in (('results', 'recipes/early-fit'), ('values', 'charts/x', '--subject', 'a'),
+                          ('chart', 'benchmarks/rollout'), ('chart', 'Bad Name')):
+            done = run(arguments[0], self.folder, *arguments[1:])
+            self.assertEqual(done.returncode, 2, arguments)
+            self.assertIn('is not a name or a reference', done.stderr)
+        missing = run('chart', self.folder, 'nothing')
+        self.assertEqual(missing.returncode, 1)
+        self.assertEqual(missing.stderr, 'There is no chart charts/nothing.\n')
+
+    def test_chart_of_a_benchmark_without_results_is_empty(self):
+        (self.folder / 'results' / 'rollout.csv').unlink()
+        data = self.run_json('chart', self.folder, 'rollout-ranking')
+        self.assertEqual([series['points'] for series in data['series']], [])
+        self.assertEqual(data['missing'], ['stepper-k1', 'stepper-k2', 'early-fit'])
+        drawing = self.temporary / 'empty.svg'
+        self.run_ok('chart', self.folder, 'rollout-ranking', '--svg', drawing)
+        self.assertIn('No results yet: none of the 3 subjects of benchmarks/rollout', drawing.read_text(encoding='utf-8'))
 
 
 if __name__ == '__main__':

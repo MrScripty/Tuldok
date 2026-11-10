@@ -8,7 +8,9 @@ copy through store.open_project: it opens the project (importing what changed
 on disk), does its one piece of work and closes the Project before exiting, so
 the project's lock is never held past the command. `results` and `values` read
 benchmark results from the database only; `import-values` checks every values
-file before it imports any.
+file before it imports any. `chart` and `report` draw from the summary rows in
+the database (charts.py) and never read a results or values file. A benchmark
+or chart may be named bare (`rollout`) or as a reference (`benchmarks/rollout`).
 """
 import argparse
 import dataclasses
@@ -22,6 +24,7 @@ from .check import check_folder
 
 DATABASE_VARIABLE = 'TULDOK_DATABASE_URL'
 KINDS = tuple(sorted(documents.KINDS.values()))
+THEMES = ('light', 'dark')
 
 
 class UsageError(Exception):
@@ -73,17 +76,24 @@ def _parser():
     removing.add_argument('reference', help='for example recipes/pilot-dense-k1')
     add('save', [reading], 'write the unsaved edits to the folder')
     showing = add('results', [reading], "show the benchmarks' results, or one benchmark's summary rows")
-    showing.add_argument('benchmark', nargs='?', help='a benchmark name, for example rollout')
+    showing.add_argument('benchmark', nargs='?', help='a benchmark, for example rollout or benchmarks/rollout')
     showing.add_argument('--subject', help='only this subject')
     showing.add_argument('--metric', help='only this metric id')
     showing.add_argument('--group', help="only this group key; '' for the ungrouped rows")
     values = add('values', [reading], "show a subject's per-case values held on this machine")
-    values.add_argument('benchmark', help='a benchmark name, for example rollout')
+    values.add_argument('benchmark', help='a benchmark, for example rollout or benchmarks/rollout')
     values.add_argument('--subject', required=True, help='the subject')
     values.add_argument('--metric', help='only this metric id')
     values.add_argument('--limit', type=_positive, default=200, help='at most this many rows (default 200)')
     importing = add('import-values', [reading], 'import tuldok_results_v1 values files; all are checked first')
     importing.add_argument('files', nargs='+', metavar='FILE', help='values files')
+    drawing = add('chart', [reading], "print a chart's data from the summary rows, or write its drawing")
+    drawing.add_argument('chart', help='a chart, for example rollout-ranking or charts/rollout-ranking')
+    drawing.add_argument('--svg', metavar='FILE', help='write the drawing to this SVG file')
+    drawing.add_argument('--theme', choices=THEMES, default='light', help='colours of the drawing (default light)')
+    reporting = add('report', [opening], 'write one self-contained HTML page of the project and its charts')
+    reporting.add_argument('--output', required=True, metavar='FILE', help='the HTML file to write')
+    reporting.add_argument('--theme', choices=THEMES, default='light', help='colours of the page (default light)')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -253,6 +263,14 @@ def _number(value):
     return '-' if value is None else f'{value:.4g}'
 
 
+def _bare(text, directory):
+    """The name in a bare name or a <directory>/<name> reference; a usage error for anything else."""
+    name = text[len(directory) + 1:] if text.startswith(directory + '/') else text
+    if not documents.is_name(name):
+        raise UsageError(f'{text!r} is not a name or a reference such as {directory}/<name>.')
+    return name
+
+
 def _results(project, arguments):
     if arguments.benchmark is None:
         overview = project.results_overview()
@@ -314,9 +332,109 @@ def _import_values(project, arguments):
     return 0
 
 
+def _write_output(path, text):
+    """Write text to path through a temporary file in the same directory; the byte count, or None after printing why not."""
+    data = text.encode('utf-8')
+    directory = os.path.dirname(os.path.abspath(path))
+    temporary = os.path.join(directory, f'.{os.path.basename(path)}.{os.getpid()}.tmp')
+    try:
+        with open(temporary, 'wb') as handle:
+            handle.write(data)
+        os.replace(temporary, path)
+    except OSError as exc:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        print(f'{path} cannot be written: {exc.strerror}.', file=sys.stderr)
+        return None
+    return len(data)
+
+
+def _metric_words(metric, statistic):
+    units = f' ({metric["units"]})' if metric.get('units') else ''
+    better = {'lower': 'lower is better', 'higher': 'higher is better'}.get(metric['better'], 'no better direction')
+    return f'{metric["id"]}: {statistic} {metric["title"]}{units}, {better}'
+
+
+def _chart_lines(data):
+    """The rows of the text form of a chart's data."""
+    rows = [('chart', data['chart'], data['form']), ('title', data['title']), ('benchmark', data['benchmark']),
+            ('metric', _metric_words(data['metric'], data['statistic']))]
+    if data['metric_x']:
+        rows.append(('x metric', _metric_words(data['metric_x'], data['statistic'])))
+    if data['group']:
+        rows.append(('group', data['group']))
+    _columns(rows)
+    if data['form'] == 'comparison':
+        print()
+        ids = [metric['id'] for metric in data['metrics']]
+        grouped = bool(data['group'])
+        _columns([('subject', *(('group',) if grouped else ()), *ids),
+                  *((row['subject'], *((row['group'],) if grouped else ()), *(_number(row['values'][i]) for i in ids))
+                    for row in data['rows'])])
+    for series in data.get('series', []):
+        print()
+        if data['group']:
+            print(f'{data["group"]} = {series["group"]}')
+        if not series['points']:
+            print('No subject has a value.')
+            continue
+        head = {'ranking': ('rank', 'subject', 'value', 'count'),
+                'tradeoff': ('subject', 'x', 'value', 'frontier'),
+                'progression': ('position', 'subject', 'value', 'best so far', 'trained')}[data['form']]
+        lines = []
+        for index, point in enumerate(series['points']):
+            if data['form'] == 'ranking':
+                lines.append((index + 1, point['subject'], _number(point['value']), point['count']))
+            elif data['form'] == 'tradeoff':
+                lines.append((point['subject'], _number(point['x']), _number(point['value']),
+                              'yes' if point['frontier'] else '-'))
+            else:
+                lines.append((point['position'], point['subject'], _number(point['value']),
+                              _number(point['best_so_far']), point['trained_at'] or '-'))
+        _columns([head, *lines])
+    print()
+    if data['missing']:
+        print(f'{len(data["missing"])} of {data["subject_count"]} subjects '
+              + ('has' if len(data['missing']) == 1 else 'have') + ' no value: '
+              + ', '.join(data['missing']) + '.')
+    else:
+        print(f'Every one of the {data["subject_count"]} subjects has a value.')
+
+
+def _chart(project, arguments):
+    from . import charts
+
+    data = charts.chart_data(project, f'charts/{arguments.chart}')
+    if arguments.json:
+        _json(data)
+    else:
+        _chart_lines(data)
+    if arguments.svg:
+        written = _write_output(arguments.svg, charts.render_svg(data, theme=arguments.theme))
+        if written is None:
+            return 1
+        if not arguments.json:
+            print(f'Wrote {arguments.svg} ({written} bytes).')
+    return 0
+
+
+def _report(project, arguments):
+    from . import charts
+
+    page = charts.render_report(project, theme=arguments.theme)
+    written = _write_output(arguments.output, page)
+    if written is None:
+        return 1
+    count = len(project.definitions(kind='chart'))
+    print(f'Wrote {arguments.output} ({_plural(count, "chart")}, {written} bytes).')
+    return 0
+
+
 _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
-                   'import-values': _import_values}
+                   'import-values': _import_values, 'chart': _chart, 'report': _report}
 
 
 def _project_id(folder):
@@ -388,6 +506,10 @@ def _run_store(arguments, dsn):
         if twice:
             raise UsageError('These files are for the same benchmark and subject; import one of them: '
                              + ', '.join(twice) + '.')
+    if arguments.command in ('results', 'values') and arguments.benchmark is not None:
+        arguments.benchmark = _bare(arguments.benchmark, 'benchmarks')
+    if arguments.command == 'chart':
+        arguments.chart = _bare(arguments.chart, 'charts')
     started = time.monotonic()
     project = store.open_project(arguments.folder, rebind=arguments.rebind, on_conflict=arguments.on_conflict,
                                  dsn=dsn)

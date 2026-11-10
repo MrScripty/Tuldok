@@ -30,6 +30,8 @@ DATABASE = os.environ.get('TULDOK_DATABASE_URL')
 
 FIXTURE_STATES = {
     'benchmarks/rollout': 'not-built',  # its early-fit subject carries nothing
+    'charts/rollout-comparison': 'none',
+    'charts/rollout-progression': 'none',
     'charts/rollout-ranking': 'none',
     'charts/speed-accuracy': 'none',
     'datasets/waves': 'not-built',
@@ -178,13 +180,14 @@ class Open(StoreCase):
         self.assertEqual(summary['project_id'], self.project_id)
         self.assertEqual(summary['folder'], os.path.realpath(self.folder))
         self.assertEqual(summary['code_root'], '../code')
-        self.assertEqual(summary['kinds'], {'benchmark': 1, 'chart': 2, 'dataset': 1, 'environment': 1,
+        self.assertEqual(summary['kinds'], {'benchmark': 1, 'chart': 4, 'dataset': 1, 'environment': 1,
                                             'model': 1, 'recipe': 3, 'step': 1})
-        self.assertEqual(summary['states'], {'cannot-rebuild': 1, 'none': 3, 'not-built': 5, 'not-set-up': 1})
+        self.assertEqual(summary['states'], {'cannot-rebuild': 1, 'none': 5, 'not-built': 5, 'not-set-up': 1})
         rows = project.definitions()
         self.assertEqual({row['reference']: row['state'] for row in rows}, FIXTURE_STATES)
         self.assertEqual([row['reference'] for row in project.definitions(kind='chart')],
-                         ['charts/rollout-ranking', 'charts/speed-accuracy'])
+                         ['charts/rollout-comparison', 'charts/rollout-progression', 'charts/rollout-ranking',
+                          'charts/speed-accuracy'])
 
         shown = project.definition('datasets/waves')
         self.assertEqual(shown['text'], self.read('datasets/waves'))  # the exact file text
@@ -195,7 +198,7 @@ class Open(StoreCase):
         self.assertIn({'reference': 'benchmarks/rollout', 'role': 'cases'}, shown['used_by'])
 
         drawn = project.graph()
-        self.assertEqual(len(drawn['nodes']), 10)
+        self.assertEqual(len(drawn['nodes']), 12)
         self.assertIn({'from': 'recipes/stepper-k2', 'to': 'recipes/stepper-k1', 'role': 'input:start'}, drawn['edges'])
         self.assertEqual(len(drawn['edges']), len(check.check_folder(self.folder).edges))
         order = project.order()
@@ -210,7 +213,7 @@ class Open(StoreCase):
         project = self.open()
         checker.assert_not_called()
         self.assertEqual(self.dump(), before)
-        self.assertEqual(len(project.definitions()), 10)
+        self.assertEqual(len(project.definitions()), 12)
 
     def test_changed_added_and_removed_files_are_imported(self):
         self.close(self.open())
@@ -376,7 +379,7 @@ class Edit(StoreCase):
         self.assertTrue(row['removed'])
         self.assertNotIn('charts/speed-accuracy', [n['reference'] for n in self.project.graph()['nodes']])
         self.assertEqual(self.project.status()['removed'], ['charts/speed-accuracy'])
-        self.assertEqual(self.project.summary()['kinds']['chart'], 1)
+        self.assertEqual(self.project.summary()['kinds']['chart'], 3)
 
     def test_remove_refused_while_used(self):
         before = self.dump()
@@ -387,8 +390,8 @@ class Edit(StoreCase):
         self.assertEqual(self.dump(), before)
 
     def test_removing_a_user_frees_what_it_used(self):
-        self.project.remove_definition('charts/speed-accuracy')
-        self.project.remove_definition('charts/rollout-ranking')
+        for chart in ('speed-accuracy', 'rollout-ranking', 'rollout-progression', 'rollout-comparison'):
+            self.project.remove_definition(f'charts/{chart}')
         self.project.remove_definition('benchmarks/rollout')
         self.assertTrue({r['reference']: r for r in self.project.definitions()}['benchmarks/rollout']['removed'])
 

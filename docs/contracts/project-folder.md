@@ -2,7 +2,8 @@
 
 Owner: the package `tuldok_project/` (`folder.py` reads the folder, `documents.py`
 and `schemas/*.json` check single files, `check.py` applies every rule,
-`results.py` owns summary files). The format names are `tuldok_project_v1` for
+`results.py` owns summary files, `store.py` and `result_rows.py` the database
+copy and its results, `charts.py` charts and the report page). The format names are `tuldok_project_v1` for
 the folder and `tuldok_definition_v1` for each definition.
 
 A project folder describes a piece of research as a set of small JSON files that
@@ -587,7 +588,7 @@ Options:
 | Option | Commands | Meaning |
 | --- | --- | --- |
 | `--database-url URL` | all but `check` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
-| `--json` | `open`, `list`, `show`, `graph`, `status`, `save` | Print one JSON document with the same content as the text. |
+| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart` | Print one JSON document with the same content as the text. |
 | `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
 | `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
 | `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
@@ -611,12 +612,227 @@ datasets/waves cannot be set; see the problems.
 error  datasets/waves.json  /title  Add the required field 'title'.
 ```
 
+## Results in the database
+
+When a project is opened, every results file is imported into the database copy
+as summary rows, one row per line of the file. Each summary row has an origin:
+
+| Origin | Where the row comes from |
+| --- | --- |
+| `file` | the line of `results/<benchmark>.csv` |
+| `values` | computed from per-case values imported on this machine (see [Values files](#values-files)), with the statistics of [Results files](#results-files) |
+
+For one benchmark and subject, when the database holds per-case values, all of
+that subject's summary rows are computed from them and have origin `values`;
+otherwise they come from the results file. The computed rows are one row with an
+empty group over all of the subject's values of a metric, and one row for each
+single group key and value (`cells_per_metre=8`) over the values that carry it.
+There are no rows for combinations of keys.
+
+Opening notices a results file that is new, changed or gone, the same way it
+notices a changed definition file, and replaces that benchmark's `file` rows
+with the file's lines, except for subjects that have values here.
+
+`save` writes `results/<benchmark>.csv` from the summary rows of each benchmark
+whose rows differ from the file, and removes the file of a benchmark that has no
+rows left. Like definitions, it writes nothing when a results file changed on
+disk since it was imported. `status` lists `results unsaved` (benchmarks whose
+rows differ from their file) and `results changed on disk`. Removing a benchmark
+removes its summary rows and values; removing a subject from a benchmark removes
+that subject's rows.
+
+Charts and the report read only these rows. A copy of the folder with its
+`results/` files draws every chart; no run directory or values file is needed.
+
+## Values files
+
+A benchmark run writes one values file per benchmark and subject: the measured
+value of every case and metric. Values files are not part of the project folder;
+they stay on the machine that ran the benchmark, and `import-values` brings them
+into the database copy. Format `tuldok_results_v1`, strict JSON as in
+[JSON rules](#json-rules), at most 64 MiB:
+
+| Field | Rule |
+| --- | --- |
+| `format` | exactly `tuldok_results_v1` |
+| `benchmark` | the name of a benchmark of the project |
+| `subject` | one of that benchmark's subject names |
+| `commit` | 40 lowercase hexadecimal characters, or empty |
+| `produced` | a date `YYYY-MM-DD` or a time `YYYY-MM-DDTHH:MM:SSZ` |
+| `values` | a list of at least one value |
+
+Each value:
+
+| Field | Required | Rule |
+| --- | --- | --- |
+| `case` | yes | 1 to 200 characters |
+| `metric` | yes | a metric id of the benchmark |
+| `value` | yes | a finite number, or `null` for a value that was not measured |
+| `reason` | when `value` is `null`; otherwise not allowed | 1 to 400 characters: why there is no value |
+| `group` | no | an object whose keys are in the benchmark's `summary.group_by`; each value a string, number or boolean, without `;`, `=` or a line break |
+
+Group values are stored as text: strings as written, `true` and `false`, and
+numbers as Python's `repr` writes them (`8` stays `8`, `8.0` stays `8.0`).
+(`case`, `metric`, `group`) is unique within a file. Unknown fields are refused.
+
+Example, `rollout-stepper-k1.json`:
+
+```json
+{
+  "format": "tuldok_results_v1",
+  "benchmark": "rollout",
+  "subject": "stepper-k1",
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "produced": "2026-11-10",
+  "values": [
+    {"case": "scene-01", "metric": "rmse", "value": 0.25, "group": {"horizon": 1}},
+    {"case": "scene-01", "metric": "rmse", "value": 1.0, "group": {"horizon": 8}},
+    {"case": "scene-01", "metric": "seconds", "value": 1.0},
+    {"case": "scene-02", "metric": "rmse", "value": 0.5, "group": {"horizon": 1}},
+    {"case": "scene-02", "metric": "rmse", "value": null, "reason": "diverged before step 8", "group": {"horizon": 8}},
+    {"case": "scene-02", "metric": "seconds", "value": 1.5}
+  ]
+}
+```
+
+## Reading results
+
+| Command | Does |
+| --- | --- |
+| `results [BENCHMARK] [--subject S] [--metric M] [--group G]` | Without a benchmark, one line per benchmark: subjects with results, subjects with values on this machine, summary rows by origin, and whether the rows differ from the results file. With a benchmark, its summary rows; `--group` keeps the rows of one group key, and `--group ''` the rows over all cases. |
+| `values BENCHMARK --subject S [--metric M] [--limit N]` | The per-case values held on this machine for one subject, at most `N` (default 200), or a sentence saying there are none. |
+| `import-values FILE...` | Imports values files. Every file is checked first; if any has a problem, the problems are printed and nothing is imported. Each file replaces its subject's values and summary rows in one step. |
+
+`BENCHMARK` is a benchmark's name (`rollout`) or its reference
+(`benchmarks/rollout`). Anything else is a usage error. Example, with the values
+file above:
+
+```
+$ .venv/bin/python -m tuldok_project import-values FOLDER rollout-stepper-k1.json
+imported  benchmarks/rollout  stepper-k1  6 values  4 summary rows
+$ .venv/bin/python -m tuldok_project results FOLDER benchmarks/rollout --subject stepper-k1
+subject     metric   group      count  unavailable  mean    median  p10    p90    min   max  produced    origin
+stepper-k1  rmse     -          3      1            0.5833  0.5     0.3    0.9    0.25  1    2026-11-10  values
+stepper-k1  rmse     horizon=1  2      0            0.375   0.375   0.275  0.475  0.25  0.5  2026-11-10  values
+stepper-k1  rmse     horizon=8  1      1            1       1       1      1      1     1    2026-11-10  values
+stepper-k1  seconds  -          2      0            1.25    1.25    1.05   1.45   1     1.5  2026-11-10  values
+$ .venv/bin/python -m tuldok_project values FOLDER rollout --subject stepper-k1 --metric rmse
+case      metric  group      value
+scene-01  rmse    horizon=1  0.25
+scene-01  rmse    horizon=8  1.0
+scene-02  rmse    horizon=1  0.5
+scene-02  rmse    horizon=8  none (diverged before step 8)
+```
+
+A refused import prints each problem on standard error in the form `check`
+uses and exits with status 1:
+
+```
+error  bad.json  /values/0/reason  A null value needs a reason of 1 to 400 characters.
+Nothing was imported: 1 problem in the values files.
+```
+
+## Charts and the report
+
+| Command | Does |
+| --- | --- |
+| `chart CHART [--svg FILE] [--theme light\|dark]` | Prints the chart's data as text, or as JSON with `--json`. With `--svg`, also writes the drawing to `FILE`. |
+| `report --output FILE [--theme light\|dark]` | Writes one HTML page of the project to `FILE`. |
+
+`CHART` is a chart's name (`rollout-ranking`) or its reference
+(`charts/rollout-ranking`). `--theme` picks the light or the dark colours;
+the default is light.
+
+A chart is answered from the summary rows in the database and the definitions,
+never from a file. It uses the chart's `statistic` (default `median`) of each
+subject's rows for its `metric`, over all cases, or with `group` set one panel
+per value of that group key, ordered as numbers when every value is a number and
+as text otherwise. The subjects are the chart's `subjects`, or every subject of
+the benchmark. A subject with no row, with a row whose `count` is 0, or whose
+row lacks the statistic is not drawn; it is listed as missing, and the drawing
+says how many are missing and names them.
+
+"Best" follows the metric's `better`: `lower` and `none` put the lowest value
+first, `higher` the highest.
+
+| Form | What it shows |
+| --- | --- |
+| `ranking` | One horizontal bar per subject, best at the top, each labelled with the subject's title and its value. Ties are ordered by subject name. The drawing grows with the number of subjects. |
+| `tradeoff` | One point per subject at (`metric_x`, `metric`). A subject lacking either value is missing. The frontier is the set of subjects that no other subject is at least as good as on both metrics and better than on one; a step line joins them, and they carry labels where labels fit without overlapping. |
+| `progression` | The subjects in the order they were trained: by the `trained_at` label of the subject's recipe, earliest first, then the subjects without one by name. A step line shows the best value so far, and the subjects that set a new best carry labels where they fit. |
+| `comparison` | A table of numbers: one row per subject, one column per metric of the benchmark, the best value in each column marked. Rows follow the chart's `subjects`, or the ranking of `metric` when the chart has none. A subject with no value for any metric is missing. |
+
+An axis is logarithmic when all its values are positive and the largest is at
+least 100 times the smallest; otherwise it is linear (bars always start at
+zero). Axes carry the metric's title and units, and numbers show three
+significant digits, very small and very large ones as `2.43e-6`. A chart with
+no values says so in place of the plot.
+
+The drawing is one SVG document with no scripts and no links, the same bytes
+for the same data. Every bar, point and number carries the subject's full title
+and its value as a tooltip; long subject titles are cut with an ellipsis.
+
+Example:
+
+```
+$ .venv/bin/python -m tuldok_project chart FOLDER rollout-ranking --svg ranking.svg
+chart      charts/rollout-ranking  ranking
+title      Rollout error by subject
+benchmark  benchmarks/rollout
+metric     rmse: median Rollout RMSE (m/s), lower is better
+group      horizon
+
+horizon = 1
+rank  subject     value   count
+1     stepper-k2  0.3125  4
+2     stepper-k1  0.375   2
+3     early-fit   0.625   4
+
+horizon = 8
+rank  subject     value  count
+1     stepper-k1  1      1
+2     stepper-k2  1.25   4
+
+1 of 3 subjects has no value: early-fit.
+Wrote ranking.svg (6091 bytes).
+```
+
+With `--json`, `chart` prints one object:
+
+| Field | Meaning |
+| --- | --- |
+| `chart`, `title`, `description`, `form`, `benchmark`, `statistic`, `group` | from the chart definition; `group` is null without one |
+| `metric`, `metric_x` | `{"id", "title", "units", "better"}`; `metric_x` is null except for a `tradeoff` |
+| `subject_count` | how many subjects the chart covers |
+| `series` | all forms but `comparison`: one entry per group value (one entry with group `""` without a group), each `{"group", "points", "missing"}` |
+| `metrics`, `rows` | `comparison` only: every metric of the benchmark, and one row per subject `{"subject", "title", "recipe", "group", "values"}`, `values` mapping each metric id to its number or null |
+| `missing` | the names of the subjects not drawn, in the chart's subject order; with a group, those missing in any panel |
+
+A point is `{"subject", "title", "recipe", "value", "count", "unavailable",
+"produced"}`, where `recipe` is the subject's recipe reference or null. A
+`tradeoff` point adds `x` and `frontier`; a `progression` point adds `position`
+(from 0), `best_so_far` and `trained_at`.
+
+The report page, from `report`, reads top to bottom: the project's name, folder
+and id; how many definitions there are of each kind and in each state, and how
+many benchmarks have results; every chart with its title, a one-line note on
+what it shows and how many subjects are missing, and its drawing; the results
+overview; then the definitions of each kind with their states, each kind in a
+closed section that opens on a click. The page is one file with its style
+embedded and its charts drawn inline, no scripts and no links, so it can be
+sent or opened anywhere.
+
+```
+$ .venv/bin/python -m tuldok_project report FOLDER --output report.html --theme dark
+Wrote report.html (4 charts, 24626 bytes).
+```
+
 ## What the format does not do yet
 
-The folder is checked and can be opened, edited and saved through the database
-copy, nothing more. Tuldok does not yet run any command,
+The folder is checked, can be opened, edited and saved through the database
+copy, and its results can be read and drawn, nothing more. Tuldok does not yet run any command,
 estimate, install an environment, compare installed package versions, write
-settings files, import results files or read the contents of notes. The `run`, `resources`,
+settings files or read the contents of notes. The `run`, `resources`,
 `estimate`, `install` and `settings` fields record what a later Tuldok will use.
 
 Background: [the design notes for this format](../plans/definition-first-projects/).

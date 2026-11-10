@@ -406,8 +406,8 @@ class SaveAndStatus(ResultsCase):
 
     def test_removing_the_benchmark_removes_its_results_and_save_deletes_the_file(self):
         self.project.import_values(values_file())
-        self.project.remove_definition('charts/speed-accuracy')
-        self.project.remove_definition('charts/rollout-ranking')
+        for chart in ('speed-accuracy', 'rollout-ranking', 'rollout-progression', 'rollout-comparison'):
+            self.project.remove_definition(f'charts/{chart}')
         self.project.remove_definition('benchmarks/rollout')
         connection = self.database()
         for table in ('result_summaries', 'result_values'):
