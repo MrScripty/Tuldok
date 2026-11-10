@@ -175,3 +175,50 @@ def order(definitions):
 def users_of(definitions, reference):
     """Return the sorted edges whose target is reference: what uses it, and how."""
     return [edge for edge in edges(definitions) if edge.to_ref == reference]
+
+
+# ------------------------------------------------------------ states (4.3)
+
+# The two states that travel upward through input edges, worst last.
+_CARRIED = (None, 'needs-work', 'cannot-rebuild')
+_OWN_STATE = {'needs-work': 1, 'no': 2}  # earlier_work.rebuild -> index into _CARRIED
+_BASE_STATE = {'dataset': 'not-built', 'recipe': 'not-built', 'benchmark': 'not-built',
+               'step': 'not-built', 'environment': 'not-set-up', 'model': 'none', 'chart': 'none'}
+
+
+def _kind(reference, document):
+    parsed = documents.parse_reference(reference)
+    if parsed is not None:
+        return documents.KINDS[parsed[0]]
+    return document.get('kind') if isinstance(document, dict) else None
+
+
+def states(definitions):
+    """Return {reference: state} for every definition, by section 4.3 of the spec.
+
+    cannot-rebuild and needs-work come from a definition's own
+    earlier_work.rebuild or from anything it uses through input edges, directly
+    or further up; the worse of the two wins. Other edges (environment, model,
+    subjects, cases, chart) carry nothing. Otherwise the state follows the
+    kind. The table is read in order, so a model marked rebuild "no" is
+    cannot-rebuild, not none. Cycles are tolerated: the result is the fixed point.
+    """
+    severity = {}
+    for reference, document in definitions.items():
+        earlier = document.get('earlier_work') if isinstance(document, dict) else None
+        rebuild = earlier.get('rebuild') if isinstance(earlier, dict) else None
+        severity[reference] = _OWN_STATE.get(rebuild, 0)
+    users = {reference: [] for reference in definitions}
+    for edge in edges(definitions):
+        if edge.role.startswith('input:') and edge.to_ref in users:
+            users[edge.to_ref].append(edge.from_ref)
+    # Severity only rises, at most twice per definition, so this ends even on a cycle.
+    pending = [reference for reference, value in severity.items() if value]
+    while pending:
+        reference = pending.pop()
+        for user in users[reference]:
+            if severity[user] < severity[reference]:
+                severity[user] = severity[reference]
+                pending.append(user)
+    return {reference: _CARRIED[severity[reference]] or _BASE_STATE.get(_kind(reference, document), 'none')
+            for reference, document in definitions.items()}

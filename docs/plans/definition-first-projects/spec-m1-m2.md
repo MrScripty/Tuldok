@@ -283,6 +283,17 @@ Where the lab's command line cannot yet take a placeholder the format needs (for
 
 Tests: `lab:surrogate/tests/` is for the surrogate package; put the script's tests in `lab:scripts/tests/test_build_tuldok_project.py` and run them with the lab's `.venv/bin/python -m unittest`.
 
+### Slice L2: the earlier runs' code and the authored comparisons (lab repository)
+
+Decided by the owner on 2026-11-10: bring the earlier runs' code into the lab repository, and keep the authored comparisons.
+
+- **`lab:earlier-run-code/`** holds the code and settings files that earlier items name and that have no tracked copy elsewhere. A file from `runs/<rest>` is copied to `earlier-run-code/<rest>`. Each distinct content is copied once: its home is the first of its paths in sorted order, and every item that names an identical file refers to that home. A `README.md` there says what the folder is and that `scripts/build_tuldok_project.py` writes it.
+- **Copied:** Python code and settings files (the values a run was configured with).
+- **Not copied:** archives and arrays (`.zip`, `.npz`, `.npy`, weights), which are generated data; and files that are records about other files and not settings (checksum listings, source witnesses, receipts, qualification records). Those are treated like files the old Tuldok generated: left out of `sources`, and named in the `needs-work` reason of an item whose command reads them.
+- The script owns `earlier-run-code/` completely: it writes it, removes stale files, and `--check` covers it.
+- Labels are recomputed with these files counted as tracked.
+- **`notes/model-groups-and-comparisons.json`**, written by the script: the task groups and the comparisons between models from the old `notes/00-models.portfolio.json`, with each model named by its recipe reference.
+
 ## 4. Milestone 2: open and save
 
 **Done when:** with an empty database, `python -m tuldok_project open lab:projects/surrogate-lab` completes in under 10 seconds and `list` and `graph` show every definition with its links and state; a second `open` with nothing changed completes in under 1 second.
@@ -346,7 +357,24 @@ Only `input:` edges carry these states upward. A benchmark is not made `cannot-r
 - `project.remove_definition(reference)` refuses when another definition uses it; otherwise sets `removed = true`.
 - `project.save()` writes each unsaved definition to its file (temporary file in the same directory, `fsync`, rename) and deletes the files of removed ones. Before writing a file it checks the file on disk still has `file_sha256`; if any does not, it writes nothing and names them.
 
-### 4.5 Command line
+### 4.5 The `Project` object
+
+`store.open_project` returns a `Project` bound to one open connection. It reads from the database on demand and keeps no copy of the definitions in memory.
+
+| Member | Returns |
+| --- | --- |
+| `summary()` | project id, name, folder, code root, counts per kind, counts per state |
+| `definitions(kind=None)` | one row per definition: reference, kind, title, state, unsaved, removed |
+| `definition(reference)` | the text, the document, the state, what it uses and what uses it (each with its role) |
+| `graph()` | the nodes with their states, and the edges |
+| `order()` | the references in build order |
+| `status()` | unsaved and removed definitions; files added, changed or missing on disk since the last import |
+| `set_definition`, `remove_definition`, `save` | section 4.4 |
+| `close()` | closes the connection |
+
+`store.drop_project(project_id, dsn=None)` drops a project's schema; tests and the `forget` command use it. A `Project` holds a session advisory lock for as long as it is open, so one process at a time has a project open; every command closes its `Project` before it exits. States are computed by a pure function `graph.states(definitions)` so the checker, the store and later milestones agree.
+
+### 4.6 Command line
 
 `python -m tuldok_project <command> FOLDER`, with `--database-url` or `TULDOK_DATABASE_URL`, and `--json` on every reading command:
 
@@ -358,17 +386,18 @@ Only `input:` edges carry these states upward. A benchmark is not made `cannot-r
 | `graph [--order]` | nodes with state and edges; `--order` prints build order |
 | `status` | unsaved and removed definitions; files changed on disk since import |
 | `set REFERENCE FILE`, `remove REFERENCE`, `save` | 4.4 |
+| `forget` | drops this project's copy from the database (`store.drop_project`); the folder is not touched |
 
-### 4.6 Slices
+### 4.7 Slices
 
 | Slice | Files | Tests |
 | --- | --- | --- |
-| T3 store | `tuldok_project/store.py` (4.1, 4.2, 4.3) | `tests/test_tuldok_project_store.py`, database |
-| T4 edit and save | `store.py` additions (4.4) | same file, database |
-| T5 commands | `tuldok_project/__main__.py` additions (4.5) | `tests/test_tuldok_project_cli.py` |
+| T3 store | `tuldok_project/store.py` (4.1, 4.2, 4.5), `graph.states` in `tuldok_project/graph.py` (4.3) | `tests/test_tuldok_project_store.py`, database |
+| T4 edit and save | `store.py` (4.4) | same file, database |
+| T5 commands | `tuldok_project/__main__.py` additions (4.6) | `tests/test_tuldok_project_cli.py` |
 | T6 lab check | a timing run of the lab folder, recorded in `execution-ledger.md` | none |
 
-T3 comes first; T4 and T5 follow it and do not overlap.
+T3 and T4 are written together by one agent. T5 and T6 follow.
 
 ## 5. Not in milestones 1 and 2
 
