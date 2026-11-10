@@ -588,7 +588,7 @@ Options:
 | Option | Commands | Meaning |
 | --- | --- | --- |
 | `--database-url URL` | all but `check` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
-| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart` | Print one JSON document with the same content as the text. |
+| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan` | Print one JSON document with the same content as the text. |
 | `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
 | `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
 | `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
@@ -827,10 +827,166 @@ $ .venv/bin/python -m tuldok_project report FOLDER --output report.html --theme 
 Wrote report.html (4 charts, 24626 bytes).
 ```
 
+## Planning a build
+
+A plan says what has to be built on this machine to have one or more
+definitions, in what order, and what stands in the way. Making a plan runs
+nothing. It reads the database copy only: it starts no command, including a
+definition's `estimate` command, and opens no file of the folder or the code.
+The figures in a plan are the ones each definition declares in
+`run.resources`.
+
+| Command | Does |
+| --- | --- |
+| `plan TARGET... [--all]` | Prints the plan for the named definitions. `--all` plans every dataset, recipe, step and benchmark, together with any `TARGET` given. |
+
+`TARGET` is a reference such as `recipes/stepper-k2`. A plan that cannot be
+built is still a plan: the exit status is 0 whether or not it can be built.
+A target that is not a definition of the project exits with status 1 and the
+message `There is no definition datasets/nothing.`; no target and no `--all`
+is a usage error, status 2.
+
+### Which definitions are in a plan
+
+Starting from the targets, the plan follows these uses, again and again:
+
+| Use | Followed |
+| --- | --- |
+| `input:<name>` | yes |
+| `environment` | yes |
+| `subject:<name>` | only when the subject's recipe is not blocked |
+| `model`, `cases` | no; nothing is built for them |
+| `benchmark` | a chart target is replaced by its benchmark |
+
+A model or a chart is never a step. A model target adds nothing to the plan and
+a sentence saying that a model is not built, only the recipes that train it.
+
+Nothing is followed out of a blocked step: what it would use is not work anyone
+can do. Its causes are still found over the whole graph and reported with it,
+but they are not steps unless they are targets themselves. A skipped subject's
+recipe is named under the benchmark's subjects and is not a step either. So a
+plan lists every step that can and must be done, and each blocked target once.
+
+### Steps and their actions
+
+The steps are in build order, each after everything it uses (ties broken by
+reference), numbered from 1. Each step has one action:
+
+| Action | For |
+| --- | --- |
+| `set-up` | an environment (state `not-set-up`) |
+| `build` | a dataset, recipe, step or benchmark in state `not-built` |
+| `blocked` | a definition in state `cannot-rebuild` or `needs-work`, and a benchmark with no subject to run |
+
+A blocked step is explained by its causes: the definitions whose own
+`earlier_work.rebuild` is `no` or `needs-work`, among the step itself and
+everything it reaches through inputs, directly or further up. A definition
+that is blocked only because of what it uses is not a cause. At most five
+causes are listed, nearest first (fewest inputs away, then by reference), with
+a count of the rest.
+
+A benchmark runs once per subject. A subject whose recipe is blocked is
+skipped, with the reason; a subject with no recipe is run. The benchmark is
+`build` when at least one subject would run. It is never blocked because one of
+its subjects is; when no subject would run, it is `blocked` with no cause of
+its own.
+
+The plan can be built when no target is blocked. Blocked steps are listed but
+not counted in the totals.
+
+### Totals
+
+The totals count `build` steps only:
+
+- how many steps there are to build, and how many of them declare `gpu: true`;
+- the sum of the declared `disk_gb`, and how many build steps declare none;
+- the sum of the declared `wall_hours`, and how many build steps declare none.
+
+### Text output
+
+The text is one opening sentence (how many steps there are to build, to set up
+and blocked, and whether the targets can be built), then one line per step with
+its number, action, GPU (`yes` for `gpu: true`, otherwise `-`: a step that
+does not declare `gpu` needs none), disk and time as declared (`?` when not
+declared) and its reference. Under a step are what it uses (each input by name,
+with the named output in brackets), the environment it runs in, a benchmark's
+subjects, and for a blocked step what blocks it. Then come the causes of each
+blocked target with their reasons, and the totals last.
+
+```
+$ .venv/bin/python -m tuldok_project plan FOLDER recipes/stepper-k2
+4 steps to build, 1 to set up, 0 blocked: recipes/stepper-k2 can be built.
+
+#  action  gpu  disk    time   reference
+1  set-up  -    -       -      environments/lab-cpu
+2  build   -    ?       0.1 h  steps/solver
+                                 in environments/lab-cpu
+3  build   -    ?       ?      datasets/waves
+                                 solver: steps/solver (binary)
+                                 in environments/lab-cpu
+4  build   -    0.1 GB  0.5 h  recipes/stepper-k1
+                                 training: datasets/waves
+                                 in environments/lab-cpu
+5  build   -    ?       ?      recipes/stepper-k2
+                                 start: recipes/stepper-k1 (weights)
+                                 training: datasets/waves
+                                 in environments/lab-cpu
+
+To build: 4 steps, 0 on a GPU.
+Disk: 0.1 GB declared; 3 of 4 declare none.
+Time: 0.6 h declared; 2 of 4 declare none.
+Figures are as the definitions declare them; no command was run.
+$ .venv/bin/python -m tuldok_project plan FOLDER recipes/early-fit
+0 steps to build, 0 to set up, 1 blocked: recipes/early-fit cannot be built.
+
+#  action   gpu  disk  time  reference
+1  blocked  -    ?     ?     recipes/early-fit
+                               blocked: its own label is rebuild no
+
+recipes/early-fit cannot be built:
+  no  recipes/early-fit
+    Trained by the earlier study harness; its command and training data were
+    not recorded.
+
+Nothing would be built, so there are no totals.
+```
+
+### JSON output
+
+With `--json`, `plan` prints one object:
+
+| Field | Meaning |
+| --- | --- |
+| `targets` | the references planned, in the order given, with each chart replaced by its benchmark and repeats left out |
+| `every` | true with `--all` |
+| `buildable` | true when no target is blocked |
+| `blocked_targets` | the targets that are blocked |
+| `counts` | the number of steps of each action: `{"build", "set-up", "blocked"}` |
+| `gpu_steps` | how many build steps declare `gpu: true` |
+| `disk_gb`, `disk_unknown` | the sum of the declared `disk_gb` over build steps, and how many build steps declare none |
+| `wall_hours`, `wall_unknown` | the same for `wall_hours` |
+| `notes` | sentences about targets that are not built themselves: a model, or a chart replaced by its benchmark |
+| `steps` | the steps in order |
+
+Each step:
+
+| Field | Meaning |
+| --- | --- |
+| `number` | its place in the order, from 1 |
+| `reference`, `kind`, `title`, `state` | from the definition; the state as `list` shows it |
+| `action` | `build`, `set-up` or `blocked` |
+| `command`, `environment` | from `run`, placeholders not filled in; null when absent |
+| `inputs` | each input name to `{"reference", "output"}`; `output` is null for a whole product |
+| `resources` | `gpu`, `cpu_threads`, `memory_gb`, `wall_hours`, `disk_gb` as declared; null when not declared (a null `gpu` means no GPU is needed) |
+| `estimate` | always null: no estimate command is run |
+| `blocked_by` | for a blocked step, up to five causes, each `{"reference", "rebuild", "reason"}`; empty otherwise |
+| `blocked_by_more` | how many more causes there are |
+| `subjects` | benchmarks only: `run`, the subject names that would run, and `skipped`, each `{"name", "recipe", "reason"}` |
+
 ## What the format does not do yet
 
 The folder is checked, can be opened, edited and saved through the database
-copy, and its results can be read and drawn, nothing more. Tuldok does not yet run any command,
+copy, its results can be read and drawn, and a build can be planned, nothing more. Tuldok does not yet run any command,
 estimate, install an environment, compare installed package versions, write
 settings files or read the contents of notes. The `run`, `resources`,
 `estimate`, `install` and `settings` fields record what a later Tuldok will use.

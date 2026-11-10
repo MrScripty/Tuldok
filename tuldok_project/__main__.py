@@ -9,7 +9,8 @@ on disk), does its one piece of work and closes the Project before exiting, so
 the project's lock is never held past the command. `results` and `values` read
 benchmark results from the database only; `import-values` checks every values
 file before it imports any. `chart` and `report` draw from the summary rows in
-the database (charts.py) and never read a results or values file. A benchmark
+the database (charts.py) and never read a results or values file. `plan` lists
+what has to be built for some definitions (plan.py) and runs nothing. A benchmark
 or chart may be named bare (`rollout`) or as a reference (`benchmarks/rollout`).
 """
 import argparse
@@ -94,6 +95,9 @@ def _parser():
     reporting = add('report', [opening], 'write one self-contained HTML page of the project and its charts')
     reporting.add_argument('--output', required=True, metavar='FILE', help='the HTML file to write')
     reporting.add_argument('--theme', choices=THEMES, default='light', help='colours of the page (default light)')
+    planning = add('plan', [reading], 'list what has to be built, in order, to have these definitions; runs nothing')
+    planning.add_argument('targets', nargs='*', metavar='TARGET', help='references, for example recipes/pilot-dense-k1')
+    planning.add_argument('--all', action='store_true', help='plan every dataset, recipe, step and benchmark')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -432,9 +436,148 @@ def _report(project, arguments):
     return 0
 
 
+def _figure(value, unit):
+    return '?' if value is None else f'{value:.3g}{unit}'
+
+
+def _gpu(step):
+    if step['action'] == 'set-up':
+        return '-'
+    return 'yes' if step['resources']['gpu'] is True else '-'  # an absent gpu means none is needed
+
+
+def _step_figures(step):
+    if step['action'] == 'set-up':
+        return '-', '-', '-'
+    return _gpu(step), _figure(step['resources']['disk_gb'], ' GB'), _figure(step['resources']['wall_hours'], ' h')
+
+
+def _wrapped(text, indent, width=78):
+    import textwrap
+
+    return textwrap.wrap(text, width=width, initial_indent=indent, subsequent_indent=indent,
+                         break_long_words=False, break_on_hyphens=False) or [indent]
+
+
+def _step_details(step):
+    """The short lines under a step: what it uses, where it runs, its subjects, what blocks it."""
+    details = []
+    for name, given in step['inputs'].items():
+        output = f' ({given["output"]})' if given['output'] else ''
+        details.append(f'{name}: {given["reference"]}{output}')
+    if step['environment']:
+        details.append(f'in {step["environment"]}')
+    subjects = step.get('subjects')
+    if subjects is not None:
+        details.append(f'runs {_plural(len(subjects["run"]), "subject")}')
+        skipped = [subject['name'] for subject in subjects['skipped']]
+        if skipped:
+            shown = ', '.join(skipped[:3]) + (f' and {len(skipped) - 3} more' if len(skipped) > 3 else '')
+            details.append(f'skips {len(skipped)} whose recipe is blocked: {shown}')
+    if step['action'] == 'blocked':
+        own = [cause for cause in step['blocked_by'] if cause['reference'] == step['reference']]
+        others = [cause['reference'] for cause in step['blocked_by'] if cause['reference'] != step['reference']]
+        if own:
+            details.append(f'blocked: its own label is rebuild {own[0]["rebuild"]}')
+        if others:
+            more = step['blocked_by_more']
+            details.append(('also blocked by ' if own else 'blocked by ') + ', '.join(others) + (f' and {more} more' if more else ''))
+        elif not own and not step['blocked_by']:
+            details.append('blocked: no subject would run')
+    return details
+
+
+def _cause_lines(step):
+    """Why a blocked target cannot be built, causes spelled out with their reasons."""
+    lines = [f'{step["reference"]} cannot be built:']
+    if not step['blocked_by']:
+        subjects = step.get('subjects') or {'skipped': []}
+        lines += _wrapped('No subject would run: ' + (
+            f'each subject\'s recipe is blocked ({_plural(len(subjects["skipped"]), "subject")}).'
+            if subjects['skipped'] else 'the benchmark has no subjects.'), '  ')
+        return lines
+    for cause in step['blocked_by']:
+        lines.append(f'  {cause["rebuild"]}  {cause["reference"]}')
+        lines += _wrapped(cause['reason'] or 'No reason given.', '    ')
+    if step['blocked_by_more']:
+        lines.append(f'  and {step["blocked_by_more"]} more.')
+    return lines
+
+
+def _opening(plan):
+    """One sentence: the step counts first, so a long reference cannot push them away, then the verdict."""
+    counts, targets = plan['counts'], plan['targets']
+    if not plan['steps']:
+        return f'Nothing to build for {targets[0] if len(targets) == 1 else _plural(len(targets), "target")}.'
+    numbers = (f'{_plural(counts["build"], "step")} to build, {counts["set-up"]} to set up, '
+               f'{counts["blocked"]} blocked')
+    every = ' (every dataset, recipe, step and benchmark)' if plan['every'] else ''
+    blocked = len(plan['blocked_targets'])
+    if len(targets) == 1 and not every:
+        return f'{numbers}: {targets[0]} ' + ('can be built.' if plan['buildable'] else 'cannot be built.')
+    if plan['buildable']:
+        return f'{numbers}: all {len(targets)} targets{every} can be built.'
+    return f'{numbers}: {blocked} of {len(targets)} targets{every} cannot be built.'
+
+
+def _totals(plan):
+    build = plan['counts']['build']
+    if not build:
+        return ['Nothing would be built, so there are no totals.']
+
+    def declared(total, unknown, unit):
+        if unknown == build:
+            return 'no step declares it.'
+        none = ('every step declares it' if not unknown else
+                f'{unknown} of {build} declare' + ('s' if unknown == 1 else '') + ' none')
+        return f'{total:.3g}{unit} declared; {none}.'
+
+    return [f'To build: {_plural(build, "step")}, {plan["gpu_steps"]} on a GPU.',
+            'Disk: ' + declared(plan['disk_gb'], plan['disk_unknown'], ' GB'),
+            'Time: ' + declared(plan['wall_hours'], plan['wall_unknown'], ' h'),
+            'Figures are as the definitions declare them; no command was run.']
+
+
+def _plan_lines(plan):
+    """The text form of a plan, for a person deciding whether to start the build."""
+    lines = _wrapped(_opening(plan), '')
+    for note in plan['notes']:
+        lines += _wrapped(note, '')
+    if plan['steps']:
+        lines.append('')
+        rows = [('#', 'action', 'gpu', 'disk', 'time', 'reference')]
+        rows += [(step['number'], step['action'], *_step_figures(step), step['reference']) for step in plan['steps']]
+        widths = [max(len(str(row[index])) for row in rows) for index in range(5)]
+        indent = ' ' * (sum(widths) + 2 * 5 + 2)
+        for row, step in zip(rows, [None, *plan['steps']]):
+            lines.append('  '.join(str(cell).ljust(widths[index]) for index, cell in enumerate(row[:5]))
+                         + '  ' + str(row[5]))
+            if step is not None:
+                lines += [indent + detail for detail in _step_details(step)]
+    blocked = {step['reference']: step for step in plan['steps'] if step['action'] == 'blocked'}
+    for reference in plan['blocked_targets']:
+        lines.append('')
+        lines += _cause_lines(blocked[reference])
+    lines.append('')
+    lines += _totals(plan)
+    return lines
+
+
+def _plan(project, arguments):
+    from . import plan
+
+    made = plan.build_plan(project, arguments.targets, every=arguments.all)
+    if arguments.json:
+        _json(made)
+    else:
+        for line in _plan_lines(made):
+            print(line.rstrip())
+    return 0
+
+
 _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
-                   'import-values': _import_values, 'chart': _chart, 'report': _report}
+                   'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan}
 
 
 def _project_id(folder):
@@ -510,6 +653,8 @@ def _run_store(arguments, dsn):
         arguments.benchmark = _bare(arguments.benchmark, 'benchmarks')
     if arguments.command == 'chart':
         arguments.chart = _bare(arguments.chart, 'charts')
+    if arguments.command == 'plan' and not arguments.targets and not arguments.all:
+        raise UsageError('Name at least one definition to plan, or pass --all.')
     started = time.monotonic()
     project = store.open_project(arguments.folder, rebind=arguments.rebind, on_conflict=arguments.on_conflict,
                                  dsn=dsn)

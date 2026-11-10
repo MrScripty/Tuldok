@@ -122,3 +122,34 @@ The drawings were viewed as rendered images in both themes by the implementing a
 - The design tokens' "good" colour fails one of the palette validator's checks; it is always accompanied by a line, a label or a key.
 
 **Next:** milestone 4, the rebuild plan with estimates. It needs the lab's `surrogate.datasets plan` to print JSON.
+
+## 2026-11-10 — milestone 4, the rebuild plan
+
+**Owner instruction:** continue with milestone 4. Spec: [spec-m4.md](spec-m4.md).
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: spec `58cd0d14`, then the plan. Lab `reorg/reproducible-lab-20261102`: `plan --json` and declared disk `391d1e188`.
+
+| Slice | Files | Result |
+| --- | --- | --- |
+| T9 plan | `tuldok_project/plan.py`, `plan` in `__main__.py`, `tests/test_tuldok_project_plan.py`, the "Planning a build" contract section | 30 new tests, including one that makes process creation and file opening fail while a plan of every target is made |
+| L4 lab | `lab:surrogate/datasets/__main__.py` (`plan --json`), its test, and `resources.disk_gb` in the two new dataset definitions (1.4 GB and 135.2 GB) | the lab's 72 `surrogate` tests pass |
+
+Command for all Tuldok tests as before: 261 tests.
+
+**Acceptance, on the lab project:**
+
+- `plan recipes/pilot-dense-k1`: two environments to set up, then the reference solver, `datasets/sinusoidal-v1` (1.4 GB declared) and the recipe (GPU), in that order; nothing run.
+- `plan recipes/water-residual-linear-cuda-training--72953af8f73b705f`: one blocked step, with its two causes and their reasons (its own command needs adapting; its training set has no single command line).
+- `plan --all`: 17 steps to build, 2 to set up, 243 of 260 targets blocked; 137 GB of disk declared.
+
+**Settled during the milestone** (in the spec):
+
+- Making a plan never runs a definition's `estimate` command. A step's figures are those its definition declares; running estimates is an explicit action that arrives with environments.
+- Edges are not followed out of a blocked step, and a benchmark subject whose recipe is blocked is named as skipped without becoming a step. A plan lists work that can be done, and each blocked target once.
+- A benchmark with no subject that would run is blocked, with no cause listed.
+- An absent `resources.gpu` means no GPU is needed.
+- Targets and `--all` can be combined; giving neither is a usage error.
+
+**Follow-ups, none blocking:** `plan.py` reads all documents through the private `Project._documents`; a public accessor belongs with the other private-name cleanups. No lab definition declares `wall_hours`, so plans show no time.
+
+**Next:** milestone 5, environments. Its acceptance installs packages (about 1 GB for the CPU environment, several GB for the GPU one), which needs the owner's go-ahead.

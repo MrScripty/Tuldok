@@ -16,9 +16,11 @@ Start from the targets and follow these edges, repeatedly:
 | --- | --- |
 | `input:<name>` | yes |
 | `environment` | yes |
-| `subject:<name>` (a benchmark's subject recipe) | yes |
+| `subject:<name>` (a benchmark's subject recipe) | only when that recipe is not blocked; a skipped subject's recipe is named under `subjects.skipped` and is not a step |
 | `model`, `cases` | no; nothing is built for them |
 | `benchmark` (from a chart) | a chart target is replaced by its benchmark |
+
+Edges are not followed out of a blocked step: what it would need is not work anyone can do, and its causes are reported in `blocked_by`, which is worked out from the whole graph. So a plan lists every step that can and must be done, and each blocked target once, without the things that only a blocked step would use.
 
 A `model` or a `chart` is never a step. A target that is a model has an empty plan and a sentence saying a model is not built.
 
@@ -32,12 +34,12 @@ Steps are in `graph.order` (everything after what it uses), numbered from 1. Eac
 | `action` | `set-up` for an environment that is `not-set-up`; `build` for a `not-built` dataset, recipe, step or benchmark; `blocked` for `cannot-rebuild` or `needs-work` |
 | `command`, `environment` | from `run`, placeholders not filled in; null when absent |
 | `inputs` | for each input name, the reference that provides it and the named output if one is given |
-| `resources` | as declared: `gpu`, `cpu_threads`, `memory_gb`, `wall_hours`, `disk_gb` |
+| `resources` | as declared: `gpu`, `cpu_threads`, `memory_gb`, `wall_hours`, `disk_gb`. An absent `gpu` means the step needs none |
 | `estimate` | null in this milestone |
 | `blocked_by` | for a blocked step: the definitions that are the cause, each with its reference, its own `earlier_work.rebuild` label and its reason. A cause is the step itself or anything it reaches through `input:` edges whose own label is `no` or `needs-work`. At most five are listed, nearest first, with a count of the rest |
 | `subjects` | benchmarks only: `run`, the subject names the benchmark would run, and `skipped`, each with a name and a reason. A subject is skipped when its recipe is blocked. A subject with no recipe is run |
 
-A benchmark is `build` when it is `not-built` and at least one subject would run. It is never blocked by a subject.
+A benchmark is `build` when it is `not-built` and at least one subject would run. It is never blocked by a subject that has a blocked recipe; when no subject would run at all it is `blocked` with an empty `blocked_by` and the text says no subject would run.
 
 ## 4. Summary
 

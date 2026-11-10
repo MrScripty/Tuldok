@@ -351,5 +351,78 @@ class ChartCommands(FolderCase):
         self.assertIn('No results yet: none of the 3 subjects of benchmarks/rollout', drawing.read_text(encoding='utf-8'))
 
 
+@unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
+class PlanCommand(FolderCase):
+    """plan: the opening sentence, the steps in order, the causes, the totals; and --json."""
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(store.drop_project, self.project_id)
+
+    def test_a_buildable_plan_as_text(self):
+        lines = self.run_ok('plan', self.folder, 'benchmarks/rollout').splitlines()
+        self.assertEqual(lines[0], '5 steps to build, 1 to set up, 0 blocked: benchmarks/rollout can be built.')
+        self.assertEqual(lines[2].split(), ['#', 'action', 'gpu', 'disk', 'time', 'reference'])
+        rows = [line.split() for line in lines[3:] if line[:1].isdigit()]
+        self.assertEqual([row[:2] + row[-1:] for row in rows], [
+            ['1', 'set-up', 'environments/lab-cpu'], ['2', 'build', 'steps/solver'], ['3', 'build', 'datasets/waves'],
+            ['4', 'build', 'recipes/stepper-k1'], ['5', 'build', 'recipes/stepper-k2'],
+            ['6', 'build', 'benchmarks/rollout']])
+        self.assertIn(['4', 'build', '-', '0.1', 'GB', '0.5', 'h', 'recipes/stepper-k1'], rows)
+        self.assertIn(['2', 'build', '-', '?', '0.1', 'h', 'steps/solver'], rows)  # no gpu declared: none needed
+        reference_column = lines[2].index('reference')
+        self.assertTrue(all(line.index('environments/lab-cpu') == reference_column
+                            for line in lines if line.startswith('1 ')))
+        self.assertIn('start: recipes/stepper-k1 (weights)', [line.strip() for line in lines])
+        self.assertIn('skips 1 whose recipe is blocked: early-fit', [line.strip() for line in lines])
+        self.assertEqual(lines[-4:], ['To build: 5 steps, 0 on a GPU.',
+                                      'Disk: 0.1 GB declared; 4 of 5 declare none.',
+                                      'Time: 0.6 h declared; 3 of 5 declare none.',
+                                      'Figures are as the definitions declare them; no command was run.'])
+        self.assertTrue(all(len(line) <= 80 for line in lines), lines)
+
+    def test_a_blocked_target_names_its_cause_and_still_exits_0(self):
+        lines = self.run_ok('plan', self.folder, 'recipes/early-fit').splitlines()
+        self.assertEqual(lines[0], '0 steps to build, 0 to set up, 1 blocked: recipes/early-fit cannot be built.')
+        start = lines.index('recipes/early-fit cannot be built:')
+        self.assertEqual(lines[start + 1], '  no  recipes/early-fit')
+        self.assertEqual(' '.join(line.strip() for line in lines[start + 2:start + 4]),
+                         'Trained by the earlier study harness; its command and training data were not recorded.')
+        self.assertEqual(lines[-1], 'Nothing would be built, so there are no totals.')
+        made = self.run_json('plan', self.folder, 'recipes/early-fit')
+        self.assertFalse(made['buildable'])
+        self.assertEqual(made['steps'][0]['blocked_by'][0]['rebuild'], 'no')
+
+    def test_json_charts_models_and_all(self):
+        made = self.run_json('plan', self.folder, 'charts/rollout-ranking', 'models/stepper')
+        self.assertEqual(made['targets'], ['benchmarks/rollout', 'models/stepper'])
+        for field in ('buildable', 'counts', 'gpu_steps', 'disk_gb', 'disk_unknown', 'wall_hours', 'wall_unknown',
+                      'notes', 'steps'):
+            self.assertIn(field, made)
+        self.assertTrue(made['buildable'])
+        self.assertEqual(made['counts'], {'build': 5, 'set-up': 1, 'blocked': 0})
+        model = self.run_ok('plan', self.folder, 'models/stepper').splitlines()
+        self.assertEqual(model[0], 'Nothing to build for models/stepper.')
+        self.assertEqual(' '.join(model[1:3]),
+                         'models/stepper is a model; a model is not built, only the recipes that train it.')
+        self.assertEqual(model[-1], 'Nothing would be built, so there are no totals.')
+        both = self.run_ok('plan', self.folder, 'steps/solver', 'recipes/stepper-k1').splitlines()
+        self.assertEqual(both[0], '3 steps to build, 1 to set up, 0 blocked: all 2 targets can be built.')
+        self.assertIn('Time: 0.6 h declared; 1 of 3 declares none.', both)
+        alone = self.run_ok('plan', self.folder, 'datasets/waves').splitlines()
+        self.assertIn('Disk: no step declares it.', alone)
+        every = self.run_ok('plan', self.folder, '--all').splitlines()
+        self.assertEqual(every[:2], ['5 steps to build, 1 to set up, 1 blocked: 1 of 6 targets (every dataset,',
+                                     'recipe, step and benchmark) cannot be built.'])
+        self.assertFalse(self.run_json('plan', self.folder, '--all')['buildable'])
+
+    def test_unknown_references_and_usage(self):
+        done = run('plan', self.folder, 'steps/solver', 'datasets/nothing')
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (1, '', 'There is no definition datasets/nothing.\n'))
+        done = run('plan', self.folder)
+        self.assertEqual(done.returncode, 2)
+        self.assertIn('--all', done.stderr)
+
+
 if __name__ == '__main__':
     unittest.main()
