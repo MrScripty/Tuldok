@@ -34,3 +34,43 @@ Command for the Tuldok tests: `.venv/bin/python -m unittest discover -s tests -p
 **Lab changes the new-work definitions need** (for milestones 4 and 6): a `--json` option on `surrogate.datasets plan`; the benchmark result in Tuldok's results format; `spectral-composition` cannot run on a fresh clone; no lock file yet for the GPU environment; the reference solver needs Rust, which the format's environments do not describe.
 
 **Remaining in milestone 1:** slice D1, the format contract under `docs/contracts/`, after the owner has read the folder.
+
+## 2026-11-10 — milestone 1 follow-up and milestone 2, open and save
+
+**Owner decisions:** bring the earlier runs' code into the lab; keep the authored comparisons; commit on branches, no push and nothing on `main`; start milestone 2.
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: plan and spec `d55903f8`, checker and summaries `3297f8dd`, format contract `3e787e06`, store `e027ed3f`, then the commands. Lab `reorg/reproducible-lab-20261102`: folder and build script `d0df92180`, earlier run code and comparisons `89cac8b4d`.
+
+| Slice | Files | Result |
+| --- | --- | --- |
+| L2 earlier code (lab) | `lab:earlier-run-code/` (184 files, 1.6 MB), `lab:projects/surrogate-lab/notes/model-groups-and-comparisons.json`, build script and tests | 26 tests pass; `--check` passes; checker 0 errors, 8 warnings (sources of two recipes that are not on this machine) |
+| D1 contract | `docs/contracts/project-folder.md`, link in `docs/README.md` | every example in it passes the checker |
+| T3, T4 store | `tuldok_project/store.py`, `graph.states`, `tests/test_tuldok_project_store.py` | 37 tests. Independent check: bad edit refused, removal of a used definition refused, save refused after the file changed on disk, reopen with that conflict refused until told to discard, no schema left behind |
+| T5 commands | `tuldok_project/__main__.py`, `tests/test_tuldok_project_cli.py`; helpers shared with the store made public in `folder.py` and `check.py` | 16 tests |
+| T6 lab check | timing below | targets met |
+
+Command for all tests: `.venv/bin/python -m unittest discover -s tests -p 'test_tuldok_project_*.py'` with `TULDOK_DATABASE_URL` set to a disposable cluster (168 tests, 16 s; 45 are skipped without a database).
+
+**Milestone 2 acceptance, on the lab folder** (263 definitions, 2,266 edges):
+
+| Command | Whole process | Reported by `open` | Target |
+| --- | --- | --- | --- |
+| first `open`, empty database | 0.93 s | 0.72 s | under 10 s |
+| second `open`, nothing changed | 0.20 s | 0.01 s | under 1 s |
+| `list`, `graph --order` | 0.2 s each | | |
+
+States: 216 cannot be rebuilt, 27 need work, 17 not built, 2 environments not set up, 1 model.
+
+**Earlier models after L2.** With their code in Git, 158 of the 205 are `needs-work` on their own label and 47 are `no` (25 start from weights whose producing model is not identified, 18 miss only arrays or an archive, 2 have no command, 2 name scripts not on this machine). Carried through inputs, 27 need work and 178 cannot be rebuilt, because most read a training set that cannot be rebuilt.
+
+**Accepted as implemented:**
+
+- A `Project` holds a session advisory lock while open; a second open, or `forget`, is refused as busy.
+- The schema is created inside the import transaction, so a failed first open leaves nothing behind.
+- The unchanged-folder fast path compares SHA-256 of definition files only. It does not see changed `results/*.csv`, notes or stray entries; milestone 3 must add results files to it.
+- `keep` on a conflict keeps the database text and records the file's new digest, so the next save overwrites the file on purpose.
+- `save` accepts a file that already holds the text to be written, so an interrupted save can be retried.
+- Every command opens the project first, so the command-line `status` never shows pending disk changes; a conflict appears as a refusal. `Project.status()` remains meaningful for a long-lived process.
+- Two settings files copied into `earlier-run-code/` (`fine-tuning.json`, `distillation.json`) carry per-tensor checksums of starting or teacher weights. They are kept as settings; the owner can reverse this in the build script's table.
+
+**For milestone 3:** import `results/*.csv` into summary tables; result rows from runs; saved charts; the first changes to existing Tuldok files (`app.py`, `agent_api.py`) to serve the new core, with its own start-up flag, route prefix and agent profile.

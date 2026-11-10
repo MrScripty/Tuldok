@@ -54,7 +54,7 @@ def check_folder(folder, *, code=True):
     definitions = {definition.reference: definition for definition in read.definitions}
     for definition in read.definitions:
         if definition.document is not None:
-            _check_definition(definition, read.notes, add)
+            check_definition(definition, read.notes, add)
 
     # Single-file errors so far decide which benchmarks are sound enough to check results against.
     unsound = {problem.path for problem in problems if problem.severity == 'error'}
@@ -62,11 +62,11 @@ def check_folder(folder, *, code=True):
     code_root = _code_root(project, read.root, add) if code and project is not None else None
     for definition in read.definitions:
         if definition.document is not None:
-            _check_code_paths(definition, code_root, add)
+            check_code_paths(definition, code_root, add)
 
-    _check_references(definitions, add)
-    _check_charts(definitions, unsound, add)
-    _check_cycles(definitions, add)
+    check_references(definitions, add)
+    check_charts(definitions, unsound, add)
+    check_cycles(definitions, add)
     _check_results(read.results, definitions, unsound, add)
 
     problems.sort(key=lambda p: (p.path, p.pointer, _SEVERITY_ORDER.get(p.severity, 2), p.message))
@@ -76,7 +76,8 @@ def check_folder(folder, *, code=True):
 
 # ------------------------------------------------------- one definition
 
-def _check_definition(definition, notes, add):
+def check_definition(definition, notes, add):
+    """Report the single-file rules of one decoded definition: schema, kind, card, placeholders, benchmark rules."""
     document, path = definition.document, definition.path
     for pointer, message in documents.schema_problems(definition.kind, document):
         add('error', path, pointer, message)
@@ -198,7 +199,8 @@ def _code_paths(document):
         yield '/install/requirements', install['requirements']
 
 
-def _check_code_paths(definition, code_root, add):
+def check_code_paths(definition, code_root, add):
+    """Report code-root paths in one definition that are malformed, escape the code root or do not exist (None skips lookups)."""
     document, path = definition.document, definition.path
     missing = 'warning' if 'earlier_work' in document else 'error'
     for pointer, value in _code_paths(document):
@@ -219,7 +221,8 @@ def _check_code_paths(definition, code_root, add):
 
 # ----------------------------------------------------------- across files
 
-def _check_references(definitions, add):
+def check_references(definitions, add):
+    """Report references to missing definitions and named outputs their producer does not declare."""
     for definition in definitions.values():
         for use in graph.uses(definition.document):
             if not graph.is_wellformed(use):
@@ -247,7 +250,8 @@ def _sound_benchmark(chart, definitions, unsound):
     return target.document
 
 
-def _check_charts(definitions, unsound, add):
+def check_charts(definitions, unsound, add):
+    """Report chart metrics, subjects and groups missing from their benchmark (benchmarks whose path is in unsound are skipped)."""
     for definition in definitions.values():
         chart = definition.document
         if definition.kind != 'chart' or not isinstance(chart, dict):
@@ -276,7 +280,8 @@ def _check_charts(definitions, unsound, add):
                     f'{reference} does not group its summary by {chart["group"]!r}; use one of its summary.group_by.')
 
 
-def _check_cycles(definitions, add):
+def check_cycles(definitions, add):
+    """Report every definition that is part of a cycle of uses."""
     decoded = {reference: d.document for reference, d in definitions.items() if d.document is not None}
     for group in graph.cycles(decoded):
         members = set(group)

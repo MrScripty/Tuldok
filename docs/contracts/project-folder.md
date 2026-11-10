@@ -544,9 +544,77 @@ One mistake is reported once. A reference into the wrong directory is reported b
 the field's own rule and not again as a missing definition, and a chart is not
 compared with a benchmark that has errors of its own.
 
+## Working with the database copy
+
+Tuldok keeps a working copy of a project folder in Postgres: the exact text of
+every definition, the uses between them, and edits that are not yet written back
+to the folder. Each project has its own schema, `project_<id>`, named after the
+`id` in `tuldok.json`. These commands work on that copy:
+
+```sh
+.venv/bin/python -m tuldok_project COMMAND FOLDER [options]
+```
+
+| Command | Does |
+| --- | --- |
+| `open` | Imports the folder into the database, or attaches to the copy when no definition file changed. Prints the number of definitions of each kind and in each state, and how long opening took. |
+| `list [--kind K]` | Prints each definition's reference, state and title, one per line. `--kind` keeps one kind. |
+| `show REFERENCE` | Prints a definition's reference, title, kind and state, what it uses and what uses it (each with its role), then the definition's text. |
+| `graph [--order]` | Prints every definition with its kind and state, then every use as `from  role  to`. `--order` instead prints the build order: each definition after everything it uses, with its state. |
+| `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import. |
+| `set REFERENCE FILE` | Replaces or adds the definition at `REFERENCE` with the text of `FILE`, in the database only. The text is checked on its own and against the rest of the project; an edit with any error is refused and changes nothing. |
+| `remove REFERENCE` | Removes the definition in the database only. It is refused while another definition uses it. |
+| `save` | Writes every unsaved definition to its file and deletes the files of removed ones. It writes nothing when one of those files changed on disk since it was imported, and names them. |
+| `forget` | Drops the project's copy from the database, including unsaved edits. The folder is not touched. |
+
+Every command except `forget` opens the project first, which imports anything
+that changed on disk, so `list`, `show`, `graph` and `status` always describe the
+folder as it is now plus the unsaved edits. Opening runs the same check as
+`check`; a folder with errors is not imported and the database is left as it was.
+
+A state is worked out from the definitions, never stored in a file:
+
+| State | When |
+| --- | --- |
+| `cannot-rebuild` | its `earlier_work.rebuild` is `no`, or something it uses through an input, directly or further up, is `cannot-rebuild` |
+| `needs-work` | not `cannot-rebuild`, and its `earlier_work.rebuild` is `needs-work` or something it uses through an input is `needs-work` |
+| `not-built` | any other dataset, recipe, benchmark or step |
+| `not-set-up` | an environment |
+| `none` | a model or a chart |
+
+Options:
+
+| Option | Commands | Meaning |
+| --- | --- | --- |
+| `--database-url URL` | all but `check` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
+| `--json` | `open`, `list`, `show`, `graph`, `status`, `save` | Print one JSON document with the same content as the text. |
+| `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
+| `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
+| `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
+
+Without `--keep` or `--discard`, such a conflict is refused and names the
+definitions concerned.
+
+An open project holds a lock in the database, so one command at a time works on
+a project. Each command releases the lock before it exits. A command started
+while the project is open elsewhere is refused.
+
+The exit status is 0 when the command did its work, 1 when it was refused (the
+folder has errors, an edit is not valid, a definition is in use or missing, a
+conflict, a file changed on disk, the project is open elsewhere) or the database
+failed, and 2 for a usage error, including a missing database setting or a `set`
+file that cannot be read. A refusal is printed on standard error as one sentence,
+followed by any problems in the same form `check` prints them:
+
+```
+datasets/waves cannot be set; see the problems.
+error  datasets/waves.json  /title  Add the required field 'title'.
+```
+
 ## What the format does not do yet
 
-The folder is checked, nothing more. Tuldok does not yet run any command,
+The folder is checked and can be opened, edited and saved through the database
+copy, nothing more. Tuldok does not yet run any command,
 estimate, install an environment, compare installed package versions, write
 settings files, import results files or read the contents of notes. The `run`, `resources`,
 `estimate`, `install` and `settings` fields record what a later Tuldok will use.

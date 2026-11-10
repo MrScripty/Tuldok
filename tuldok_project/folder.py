@@ -25,7 +25,8 @@ OPTIONAL_FILES = ('README.md', '.gitignore')
 RESULTS = 'results'
 NOTES = 'notes'
 
-_DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+# Flags for opening a directory without following a symbolic link.
+DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
 _FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
 
 
@@ -64,24 +65,24 @@ class Folder:
     problems: list = field(default_factory=list)
 
 
-class _Unsafe(Exception):
+class Unsafe(Exception):
     """A file that the format does not allow; the message is one sentence for the owner."""
 
 
-def _read(directory_fd, name, limit):
+def read(directory_fd, name, limit):
     """Return the bytes of a regular file, refusing links, other file types and oversize files."""
     try:
         fd = os.open(name, _FILE_FLAGS, dir_fd=directory_fd)
     except OSError as exc:
         if exc.errno == errno.ELOOP:
-            raise _Unsafe('This is a symbolic link; replace it with a regular file.') from None
-        raise _Unsafe(f'The file cannot be opened: {exc.strerror}.') from None
+            raise Unsafe('This is a symbolic link; replace it with a regular file.') from None
+        raise Unsafe(f'The file cannot be opened: {exc.strerror}.') from None
     try:
         info = os.fstat(fd)
         if not stat.S_ISREG(info.st_mode):
-            raise _Unsafe('This is not a regular file; replace it with one.')
+            raise Unsafe('This is not a regular file; replace it with one.')
         if info.st_size > limit:
-            raise _Unsafe(f'The file is {info.st_size} bytes; the limit for this file is {limit} bytes.')
+            raise Unsafe(f'The file is {info.st_size} bytes; the limit for this file is {limit} bytes.')
         chunks, size = [], 0
         while size <= limit:
             chunk = os.read(fd, min(1024 * 1024, limit + 1 - size))
@@ -90,13 +91,13 @@ def _read(directory_fd, name, limit):
             chunks.append(chunk)
             size += len(chunk)
         if size > limit:
-            raise _Unsafe(f'The file grew past the limit of {limit} bytes while it was read.')
+            raise Unsafe(f'The file grew past the limit of {limit} bytes while it was read.')
         return b''.join(chunks)
     finally:
         os.close(fd)
 
 
-def _entries(directory_fd):
+def entries(directory_fd):
     """Return (name, kind) for each entry, sorted; kind is 'file', 'directory', 'link' or 'other'."""
     found = []
     with os.scandir(directory_fd) as listing:
@@ -122,8 +123,8 @@ def _wrong_type(kind, wanted):
 def _load(folder, directory_fd, name, path, limit, *, decode):
     """Read one file into a File, or record why not and return None."""
     try:
-        raw = _read(directory_fd, name, limit)
-    except _Unsafe as exc:
+        raw = read(directory_fd, name, limit)
+    except Unsafe as exc:
         folder.problems.append(Problem('error', path, '', str(exc)))
         return None
     digest = hashlib.sha256(raw).hexdigest()
@@ -143,7 +144,7 @@ def _load(folder, directory_fd, name, path, limit, *, decode):
 
 def _open_directory(folder, parent_fd, name, path):
     try:
-        return os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
+        return os.open(name, DIRECTORY_FLAGS, dir_fd=parent_fd)
     except OSError as exc:
         folder.problems.append(Problem('error', path, '', f'The directory cannot be opened: {exc.strerror}.'))
         return None
@@ -155,7 +156,7 @@ def _read_definitions(folder, root_fd, directory):
         return
     kind = documents.KINDS[directory]
     try:
-        for name, entry_kind in _entries(fd):
+        for name, entry_kind in entries(fd):
             path = f'{directory}/{name}'
             if entry_kind != 'file' or not name.endswith('.json'):
                 message = (_wrong_type(entry_kind, 'file') if entry_kind == 'link'
@@ -178,7 +179,7 @@ def _read_results(folder, root_fd):
     if fd is None:
         return
     try:
-        for name, entry_kind in _entries(fd):
+        for name, entry_kind in entries(fd):
             path = f'{RESULTS}/{name}'
             stem = name[:-len('.csv')] if name.endswith('.csv') else None
             if entry_kind != 'file' or stem is None or not documents.is_name(stem):
@@ -193,7 +194,7 @@ def _read_results(folder, root_fd):
         os.close(fd)
 
 
-def _read_notes(folder, root_fd):
+def read_notes(folder, root_fd):
     """Collect the relative paths of every regular file under notes/; contents are not read."""
     found = set()
     top = _open_directory(folder, root_fd, NOTES, NOTES)
@@ -203,7 +204,7 @@ def _read_notes(folder, root_fd):
     while pending:
         fd, prefix = pending.pop()
         try:
-            for name, entry_kind in _entries(fd):
+            for name, entry_kind in entries(fd):
                 path = f'{prefix}/{name}'
                 if entry_kind == 'file':
                     found.add(path)
@@ -228,8 +229,8 @@ def read_folder(path):
         folder.problems.append(Problem('error', '.', '', f'The project folder {root} cannot be opened: {exc.strerror}.'))
         return folder
     try:
-        entries = dict(_entries(root_fd))
-        for name, entry_kind in sorted(entries.items()):
+        top = dict(entries(root_fd))
+        for name, entry_kind in sorted(top.items()):
             if name == PROJECT_FILE or name in OPTIONAL_FILES:
                 # README.md and .gitignore are allowed but not read; a link is still refused.
                 if entry_kind != 'file':
@@ -242,12 +243,12 @@ def read_folder(path):
                 elif name == RESULTS:
                     _read_results(folder, root_fd)
                 elif name == NOTES:
-                    _read_notes(folder, root_fd)
+                    read_notes(folder, root_fd)
                 else:
                     _read_definitions(folder, root_fd, name)
             else:
                 folder.problems.append(Problem('error', name, '', 'This entry is not part of the project folder format; move it into notes/ or out of the folder.'))
-        if PROJECT_FILE not in entries:
+        if PROJECT_FILE not in top:
             folder.problems.append(Problem('error', PROJECT_FILE, '', 'The folder has no tuldok.json; add one with format, id and name.'))
     finally:
         os.close(root_fd)

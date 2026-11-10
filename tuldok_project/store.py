@@ -126,9 +126,9 @@ def _read_project_file(root):
     except OSError:
         return None
     try:
-        raw = folder_reader._read(root_fd, folder_reader.PROJECT_FILE, folder_reader.PROJECT_LIMIT)
+        raw = folder_reader.read(root_fd, folder_reader.PROJECT_FILE, folder_reader.PROJECT_LIMIT)
         document = documents.decode(raw)
-    except (folder_reader._Unsafe, documents.DocumentError):
+    except (folder_reader.Unsafe, documents.DocumentError):
         return None
     finally:
         os.close(root_fd)
@@ -151,24 +151,24 @@ def _list_definitions(root):
     files, irregular = {}, []
     root_fd = _open_root(root)
     try:
-        top = dict(folder_reader._entries(root_fd))
+        top = dict(folder_reader.entries(root_fd))
         for directory in documents.KINDS:
             if directory not in top:
                 continue
             if top[directory] != 'directory':
                 irregular.append(directory)
                 continue
-            fd = os.open(directory, folder_reader._DIRECTORY_FLAGS, dir_fd=root_fd)
+            fd = os.open(directory, folder_reader.DIRECTORY_FLAGS, dir_fd=root_fd)
             try:
-                for name, entry_kind in folder_reader._entries(fd):
+                for name, entry_kind in folder_reader.entries(fd):
                     path = f'{directory}/{name}'
                     stem = name[:-len('.json')] if name.endswith('.json') else None
                     if entry_kind != 'file' or stem is None or not documents.is_name(stem):
                         irregular.append(path)
                         continue
                     try:
-                        raw = folder_reader._read(fd, name, folder_reader.DEFINITION_LIMIT)
-                    except folder_reader._Unsafe:
+                        raw = folder_reader.read(fd, name, folder_reader.DEFINITION_LIMIT)
+                    except folder_reader.Unsafe:
                         irregular.append(path)
                         continue
                     files[documents.reference(directory, stem)] = _sha(raw)
@@ -188,7 +188,7 @@ def _notes(root):
         return frozenset()
     try:
         if os.path.isdir(os.path.join(root, folder_reader.NOTES)):
-            folder_reader._read_notes(found, root_fd)
+            folder_reader.read_notes(found, root_fd)
     finally:
         os.close(root_fd)
     return found.notes
@@ -201,9 +201,9 @@ def _cross_problems(merged, unsound=frozenset()):
     def add(severity, path, pointer, message):
         problems.append(Problem(severity, path, pointer, message))
 
-    check._check_references(merged, add)
-    check._check_charts(merged, set(unsound), add)
-    check._check_cycles(merged, add)
+    check.check_references(merged, add)
+    check.check_charts(merged, set(unsound), add)
+    check.check_cycles(merged, add)
     return problems
 
 
@@ -483,9 +483,9 @@ class Project:
         def add(severity, where, pointer, message):
             problems.append(Problem(severity, where, pointer, message))
 
-        check._check_definition(candidate, _notes(state['folder']), add)
+        check.check_definition(candidate, _notes(state['folder']), add)
         code_root = os.path.realpath(os.path.join(state['folder'], state['code_root']))
-        check._check_code_paths(candidate, code_root if os.path.isdir(code_root) else None, add)
+        check.check_code_paths(candidate, code_root if os.path.isdir(code_root) else None, add)
         alone = _errors(problems)
         with self._connection.transaction():
             merged = self._merged_definitions()
@@ -586,14 +586,14 @@ def _file_sha(root, reference):
     """SHA-256 of the definition file on disk, None when it does not exist, 'unreadable' when it is not a plain file."""
     directory, name = documents.parse_reference(reference)
     try:
-        fd = os.open(os.path.join(root, directory), folder_reader._DIRECTORY_FLAGS)
+        fd = os.open(os.path.join(root, directory), folder_reader.DIRECTORY_FLAGS)
     except FileNotFoundError:
         return None
     except OSError:
         return 'unreadable'
     try:
-        return _sha(folder_reader._read(fd, f'{name}.json', folder_reader.DEFINITION_LIMIT))
-    except folder_reader._Unsafe:
+        return _sha(folder_reader.read(fd, f'{name}.json', folder_reader.DEFINITION_LIMIT))
+    except folder_reader.Unsafe:
         if not os.path.lexists(os.path.join(root, directory, f'{name}.json')):
             return None
         return 'unreadable'
