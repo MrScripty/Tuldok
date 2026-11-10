@@ -12,6 +12,7 @@ Start with the [root README](../README.md) for installation and the Data → Pip
 - [Project manifests and read-only inspection](contracts/projects.md)
 - [External text project files and current milestone limits](contracts/project-files.md)
 - [Project command line](contracts/project-cli.md)
+- [Project folder format and checker](contracts/project-folder.md)
 
 ## Pipelines and execution
 
