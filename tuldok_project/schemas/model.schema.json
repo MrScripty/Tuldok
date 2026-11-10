@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/model.schema.json",
+  "title": "Tuldok model definition",
+  "description": "One model definition in models/<name>.json (tuldok_definition_v1). Rules JSON Schema cannot express are checked in tuldok_project/check.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "description": {
+      "$ref": "#/$defs/description"
+    },
+    "card": {
+      "$ref": "#/$defs/card"
+    },
+    "labels": {
+      "$ref": "#/$defs/labels"
+    },
+    "earlier_work": {
+      "$ref": "#/$defs/earlier_work"
+    },
+    "entry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "config": {
+      "type": "object"
+    },
+    "config_file": {
+      "$ref": "#/$defs/path"
+    },
+    "sources": {
+      "$ref": "#/$defs/sources"
+    }
+  },
+  "dependentSchemas": {
+    "config": {
+      "properties": {
+        "config_file": {
+          "not": {},
+          "description": "Use either config or config_file, not both; remove one."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "earlier_work": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rebuild"
+      ],
+      "properties": {
+        "rebuild": {
+          "enum": [
+            "yes",
+            "after-inputs",
+            "needs-work",
+            "no"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      },
+      "if": {
+        "required": [
+          "rebuild"
+        ],
+        "properties": {
+          "rebuild": {
+            "enum": [
+              "no",
+              "needs-work"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  }
+}

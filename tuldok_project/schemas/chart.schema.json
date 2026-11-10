@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/chart.schema.json",
+  "title": "Tuldok chart definition",
+  "description": "One chart definition in charts/<name>.json (tuldok_definition_v1). Rules JSON Schema cannot express are checked in tuldok_project/check.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title",
+    "benchmark",
+    "form",
+    "metric"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "description": {
+      "$ref": "#/$defs/description"
+    },
+    "card": {
+      "$ref": "#/$defs/card"
+    },
+    "labels": {
+      "$ref": "#/$defs/labels"
+    },
+    "benchmark": {
+      "type": "string",
+      "pattern": "^benchmarks/[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a reference to a benchmark, such as benchmarks/<name>"
+    },
+    "form": {
+      "enum": [
+        "ranking",
+        "tradeoff",
+        "progression",
+        "comparison"
+      ]
+    },
+    "metric": {
+      "$ref": "#/$defs/metric_id"
+    },
+    "metric_x": {
+      "$ref": "#/$defs/metric_id"
+    },
+    "statistic": {
+      "enum": [
+        "mean",
+        "median",
+        "p10",
+        "p90",
+        "min",
+        "max"
+      ]
+    },
+    "subjects": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/name"
+      }
+    },
+    "group": {
+      "$ref": "#/$defs/metric_id"
+    }
+  },
+  "if": {
+    "required": [
+      "form"
+    ],
+    "properties": {
+      "form": {
+        "const": "tradeoff"
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "metric_x"
+    ]
+  },
+  "else": {
+    "properties": {
+      "metric_x": {
+        "not": {},
+        "description": "metric_x is only allowed when form is tradeoff; remove it."
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a name of lowercase letters, digits, '.', '_' or '-' that starts with a letter or digit, at most 120 characters"
+    },
+    "metric_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "description": "an id of lowercase letters, digits and '_' that starts with a letter, at most 64 characters"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    }
+  }
+}

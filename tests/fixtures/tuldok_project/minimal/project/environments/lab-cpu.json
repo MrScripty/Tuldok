@@ -1,0 +1,9 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "environment",
+  "title": "Lab CPU",
+  "python": "3.12",
+  "device": "cpu",
+  "packages": {"numpy": "2.3.5"},
+  "install": {"requirements": "requirements.txt", "index_urls": ["https://pypi.org/simple"]}
+}

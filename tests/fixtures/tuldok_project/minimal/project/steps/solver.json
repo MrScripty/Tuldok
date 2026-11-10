@@ -1,0 +1,15 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "step",
+  "title": "Build the toy solver",
+  "run": {
+    "command": ["python", "tools/build_solver.py", "--out", "{output}"],
+    "environment": "environments/lab-cpu",
+    "outputs": {
+      "binary": {"path": "bin/solver", "role": "file"},
+      "log": {"path": "build.log", "role": "log"}
+    },
+    "resources": {"cpu_threads": 2, "wall_hours": 0.1},
+    "sources": ["tools/build_solver.py"]
+  }
+}

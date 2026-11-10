@@ -1,0 +1,11 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "chart",
+  "title": "Rollout error by subject",
+  "benchmark": "benchmarks/rollout",
+  "form": "ranking",
+  "metric": "rmse",
+  "statistic": "median",
+  "subjects": ["stepper-k1", "stepper-k2", "early-fit"],
+  "group": "horizon"
+}

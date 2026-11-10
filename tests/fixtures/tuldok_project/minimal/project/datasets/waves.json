@@ -1,0 +1,18 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Wave scenes",
+  "description": "Small wave scenes made with the toy solver.",
+  "labels": {"family": "waves"},
+  "run": {
+    "command": ["python", "tools/make_waves.py", "--solver", "{inputs.solver}", "--settings", "{settings}", "--out", "{output}"],
+    "environment": "environments/lab-cpu",
+    "inputs": {"solver": {"from": "steps/solver", "output": "binary"}},
+    "settings": {"scenes": 12, "seed": 7, "layout": {"grid": [16, 16]}},
+    "env": {"OMP_NUM_THREADS": "2"},
+    "outputs": {"scenes": {"path": "scenes", "role": "data"}},
+    "sources": ["tools/make_waves.py"],
+    "estimate": {"command": ["python", "tools/make_waves.py", "--plan", "--settings", "{settings}"]}
+  },
+  "splits": {"train": 8, "development": 4}
+}

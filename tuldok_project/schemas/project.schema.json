@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/project.schema.json",
+  "title": "Tuldok project folder: tuldok.json",
+  "description": "The tuldok.json file at the top of a project folder (tuldok_project_v1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "id",
+    "name"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_project_v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "description": "32 lowercase hexadecimal characters"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "code_root": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]",
+      "description": "a relative path from the project folder to the code root, never absolute"
+    }
+  }
+}

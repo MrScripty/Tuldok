@@ -1,0 +1,451 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/benchmark.schema.json",
+  "title": "Tuldok benchmark definition",
+  "description": "One benchmark definition in benchmarks/<name>.json (tuldok_definition_v1). Rules JSON Schema cannot express are checked in tuldok_project/check.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title",
+    "metrics",
+    "subjects"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "description": {
+      "$ref": "#/$defs/description"
+    },
+    "card": {
+      "$ref": "#/$defs/card"
+    },
+    "labels": {
+      "$ref": "#/$defs/labels"
+    },
+    "earlier_work": {
+      "$ref": "#/$defs/earlier_work"
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "better"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/metric_id"
+          },
+          "title": {
+            "$ref": "#/$defs/title"
+          },
+          "units": {
+            "type": "string"
+          },
+          "better": {
+            "enum": [
+              "lower",
+              "higher",
+              "none"
+            ]
+          }
+        }
+      }
+    },
+    "subjects": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/name"
+          },
+          "title": {
+            "$ref": "#/$defs/title"
+          },
+          "recipe": {
+            "type": "string",
+            "pattern": "^recipes/[a-z0-9][a-z0-9._-]{0,119}$",
+            "description": "a reference to a recipe, such as recipes/<name>"
+          },
+          "argument": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cases": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dataset": {
+          "type": "string",
+          "pattern": "^datasets/[a-z0-9][a-z0-9._-]{0,119}$",
+          "description": "a reference to a dataset, such as datasets/<name>"
+        },
+        "split": {
+          "type": "string",
+          "minLength": 1
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "group_by": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/metric_id"
+          }
+        },
+        "statistics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "mean",
+              "median",
+              "p10",
+              "p90",
+              "min",
+              "max"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "if": {
+    "required": [
+      "earlier_work"
+    ],
+    "properties": {
+      "earlier_work": {
+        "type": "object",
+        "required": [
+          "rebuild"
+        ],
+        "properties": {
+          "rebuild": {
+            "const": "no"
+          }
+        }
+      }
+    }
+  },
+  "else": {
+    "required": [
+      "run"
+    ]
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a name of lowercase letters, digits, '.', '_' or '-' that starts with a letter or digit, at most 120 characters"
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$",
+      "description": "a key of lowercase letters, digits and '_' that starts with a letter, at most 32 characters"
+    },
+    "metric_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "description": "an id of lowercase letters, digits and '_' that starts with a letter, at most 64 characters"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "string"
+      }
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "earlier_work": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rebuild"
+      ],
+      "properties": {
+        "rebuild": {
+          "enum": [
+            "yes",
+            "after-inputs",
+            "needs-work",
+            "no"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      },
+      "if": {
+        "required": [
+          "rebuild"
+        ],
+        "properties": {
+          "rebuild": {
+            "enum": [
+              "no",
+              "needs-work"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    },
+    "input_reference": {
+      "type": "string",
+      "pattern": "^(datasets|recipes|steps)/[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a reference to a definition in datasets/, recipes/ or steps/, such as datasets/<name>"
+    },
+    "input": {
+      "description": "a reference such as datasets/<name>, or {\"from\": <reference>, \"output\": <output name>}",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/input_reference"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "output"
+          ],
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/input_reference"
+            },
+            "output": {
+              "$ref": "#/$defs/key"
+            }
+          }
+        }
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command"
+      ],
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/command"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^environments/[a-z0-9][a-z0-9._-]{0,119}$",
+          "description": "a reference to an environment, such as environments/<name>"
+        },
+        "inputs": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {
+            "$ref": "#/$defs/key"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/input"
+          }
+        },
+        "settings": {
+          "type": "object"
+        },
+        "settings_file": {
+          "$ref": "#/$defs/path"
+        },
+        "env": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Z_][A-Z0-9_]*$",
+            "description": "an environment variable name of capital letters, digits and '_'"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/key"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "role"
+            ],
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/path"
+              },
+              "role": {
+                "enum": [
+                  "data",
+                  "weights",
+                  "results",
+                  "log",
+                  "report",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "gpu": {
+              "type": "boolean"
+            },
+            "cpu_threads": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "memory_gb": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "wall_hours": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "disk_gb": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "sources": {
+          "$ref": "#/$defs/sources"
+        },
+        "estimate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "$ref": "#/$defs/command"
+            }
+          }
+        }
+      },
+      "dependentSchemas": {
+        "settings": {
+          "properties": {
+            "settings_file": {
+              "not": {},
+              "description": "Use either settings or settings_file, not both; remove one."
+            }
+          }
+        }
+      },
+      "if": {
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "const": "python"
+              }
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "environment"
+        ]
+      }
+    }
+  }
+}

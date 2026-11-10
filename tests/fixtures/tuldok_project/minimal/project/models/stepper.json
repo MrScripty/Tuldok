@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "model",
+  "title": "Stepper",
+  "entry": "lab.model:Stepper",
+  "config_file": "configs/stepper.json",
+  "sources": ["lab/model.py"]
+}

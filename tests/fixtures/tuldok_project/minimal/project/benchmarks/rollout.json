@@ -1,0 +1,23 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "benchmark",
+  "title": "Rollout error",
+  "run": {
+    "command": ["python", "lab/bench.py", "--weights", "{subject}", "--name", "{subject.name}", "--cases", "{inputs.cases}", "--out", "{output}"],
+    "environment": "environments/lab-cpu",
+    "inputs": {"cases": "datasets/waves"},
+    "outputs": {"values": {"path": "values.jsonl", "role": "results"}},
+    "sources": ["lab/bench.py"]
+  },
+  "metrics": [
+    {"id": "rmse", "title": "Rollout RMSE", "units": "m/s", "better": "lower"},
+    {"id": "seconds", "title": "Time per scene", "units": "s", "better": "lower"}
+  ],
+  "subjects": [
+    {"name": "stepper-k1", "title": "Stepper k1", "recipe": "recipes/stepper-k1", "argument": "{recipe}/model.pt"},
+    {"name": "stepper-k2", "title": "Stepper k2", "recipe": "recipes/stepper-k2", "argument": "{recipe}/model.pt"},
+    {"name": "early-fit", "title": "Early fit (fit-0042)", "recipe": "recipes/early-fit", "argument": "{recipe}/model.pt"}
+  ],
+  "cases": {"dataset": "datasets/waves", "split": "development", "count": 4},
+  "summary": {"group_by": ["horizon"], "statistics": ["median", "p10", "p90"]}
+}

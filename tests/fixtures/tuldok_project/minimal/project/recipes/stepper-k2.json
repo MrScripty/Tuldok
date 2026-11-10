@@ -1,0 +1,17 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "recipe",
+  "title": "Stepper fine-tuned from k1",
+  "model": "models/stepper",
+  "run": {
+    "command": ["python", "lab/train.py", "--start", "{inputs.start}", "--data", "{inputs.training}", "--settings", "{settings}", "--out", "{output}"],
+    "environment": "environments/lab-cpu",
+    "inputs": {
+      "start": {"from": "recipes/stepper-k1", "output": "weights"},
+      "training": "datasets/waves"
+    },
+    "settings": {"epochs": 2, "learning_rate": 0.0005, "seed": 2},
+    "outputs": {"weights": {"path": "model.pt", "role": "weights"}},
+    "sources": ["lab/train.py", "lab/model.py"]
+  }
+}
