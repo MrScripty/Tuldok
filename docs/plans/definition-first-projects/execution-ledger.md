@@ -74,3 +74,51 @@ States: 216 cannot be rebuilt, 27 need work, 17 not built, 2 environments not se
 - Two settings files copied into `earlier-run-code/` (`fine-tuning.json`, `distillation.json`) carry per-tensor checksums of starting or teacher weights. They are kept as settings; the owner can reverse this in the build script's table.
 
 **For milestone 3:** import `results/*.csv` into summary tables; result rows from runs; saved charts; the first changes to existing Tuldok files (`app.py`, `agent_api.py`) to serve the new core, with its own start-up flag, route prefix and agent profile.
+
+## 2026-11-10 — milestone 3, results and charts
+
+**Owner instruction:** continue with milestone 3. Spec: [spec-m3.md](spec-m3.md).
+
+**Scope change.** Serving the new core from the Tuldok app moved from this milestone to milestone 7, where every operation of the new core is registered once and the pinned agent contract fixtures are regenerated once. In its place this milestone has a static report page. The plan's milestone table says so.
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: spec `5ce63364` and `1bc187b0`, results in the database `e297f5ee`, charts and report `f352f5ec`. Lab `reorg/reproducible-lab-20261102`: summary shape, values files and charts `06c254ee9`, subject titles `fff10a4a1`.
+
+| Slice | Files | Result |
+| --- | --- | --- |
+| T7 results | `tuldok_project/result_rows.py`, hooks in `store.py`, `results`, `values`, `import-values` | 39 new tests |
+| T8 charts and report | `tuldok_project/charts.py`, `chart`, `report`, contract sections | 24 new tests, including one that makes every file read fail while each chart is answered |
+| L3 lab | build script: one ungrouped row and one row per single group value; `--values-output`; eight chart definitions | 32 tests; `--check` passes |
+
+Command for all Tuldok tests as before: 231 tests, 30 s.
+
+**Acceptance, on the lab project:**
+
+| Check | Result |
+| --- | --- |
+| Open into an empty database imports every summary row | 4,716 rows from 16 results files; first open 1.1 s, second 0.01 s |
+| Import of the per-case values | 477 files, 478,660 values, 12 s; 296 MB in the local database |
+| `save` after that import rewrites `results/*.csv` byte for byte | Nothing to save; the lab folder unchanged in Git |
+| A chart is answered without reading a result file | proven by test; the lab's progression chart of 127 models answers from the summary table |
+| An export of the committed lab alone draws its charts | `check` 0 errors, `open` 0.8 s, `report` writes 8 charts (four with data, four for the new benchmarks that have no results yet) |
+
+The drawings were viewed as rendered images in both themes by the implementing agent and by the orchestrating session.
+
+**Accepted as implemented:**
+
+- Removing a benchmark keeps its `results_files` digest until `save` deletes the file, so the changed-on-disk check still applies.
+- Setting a benchmark also drops summary rows for removed metrics and removed group keys.
+- `status` gained `results_changed`; `save` returns `results_written` and `results_deleted`.
+- A values file must have all six top-level fields and at least one value.
+- A subject with no row, a count of 0, or no value for the chosen statistic is listed as missing and never drawn.
+- Ranking bars on a linear axis start at zero; on a logarithmic axis at the decade below the smallest value.
+- A metric's units of `1` are not shown.
+- The report shows the folder's name, not its absolute path.
+
+**Follow-ups, none blocking:**
+
+- `charts.py` and `result_rows.py` call a few private names of `store.py` and `results.py` (`Project._execute`, `results._COMMIT`, `_produced_is_valid`, `_benchmark_names`); make them public when those files are next touched.
+- The `result_values` table costs about 620 bytes a row with its two indexes; revisit if a project holds tens of millions of values.
+- Text widths in the drawings are estimated without font metrics.
+- The design tokens' "good" colour fails one of the palette validator's checks; it is always accompanied by a line, a label or a key.
+
+**Next:** milestone 4, the rebuild plan with estimates. It needs the lab's `surrogate.datasets plan` to print JSON.

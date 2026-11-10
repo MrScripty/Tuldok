@@ -247,7 +247,7 @@ Each milestone ends with a check against the lab. Sizes are relative.
 | 4 | Plan. The rebuild plan with estimates | Small | Planning the pilot model lists its steps in order with disk estimates and runs nothing |
 | 5 | Environments. Tuldok installs or connects an environment from its definition and checks it | Medium | On a machine without the lab's environments, Tuldok sets up the CPU and the GPU environment from their definitions and reports the versions it found. The GPU install is a multi-gigabyte download and needs the owner's go-ahead |
 | 6 | Build. Runs from a commit, per-definition limits, GPU, live progress, results published by the run | Large | On a fresh clone Tuldok builds one tiny dataset, trains one tiny model on the GPU with live progress, benchmarks it and charts it. This run needs the owner's go-ahead |
-| 7 | Agent operations and command line for all of the above | Medium | An agent repeats milestone 6 through the interface alone |
+| 7 | Serve the new core from the Tuldok app, with agent operations for all of the above | Medium | The app opens a project folder; an agent repeats milestone 6 through the interface alone |
 | 8 | Convert the lab for good, then retire the old code. Product archive, tracked export replaced, old project-files modules removed | Medium | The lab repository holds the new folder only; the clean-install test in the summary passes. Before any old module is deleted, a written check lists every capability of the old project-files mode as covered, moved or deliberately dropped, and the owner signs it off |
 
 The workspace redesign (the Map variant chosen on 2026-11-03) builds on milestones 2 and 3 and gets its own plan.
