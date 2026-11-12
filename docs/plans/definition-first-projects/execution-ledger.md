@@ -430,3 +430,32 @@ The clone was not built: that needs the reference solver and the dataset generat
 **Starting values to correct.** Kinds, parents and short labels were carried from the mockup, which inferred kinds and parents from card text: 128 models have a short label, 43 a parent (36 from C53, 4 from C37, 3 from C44). The group "Pressure proposal fits" has no model of its own, only child groups.
 
 **Next:** phase 2, the page, read-only.
+
+## 2026-11-12 — the Map workspace, phase 2: the page, read-only
+
+Spec: [spec-w2.md](spec-w2.md).
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: spec `e7eae194`; the shell, the map, the drawer and Overview `1f66f5a0`; Benchmarks, Train, Data and Analysis `50e73ddb`. Lab `reorg/reproducible-lab-20261102`: descriptions that lead with each model's purpose `7774816a5`.
+
+| Slice | What |
+| --- | --- |
+| T18 | `static/project-workspace.html` and `static/project-workspace/` (the adapter, the shell, the map, the charts helper, a Markdown renderer, the Map and Overview screens), Ubuntu Sans vendored with its licence, `description` on each model of `map`, the stand-in report page removed, `tests/browser_project_workspace.cjs` |
+| T19 | `static/project-workspace/tabs.js`: Benchmarks, Train, Data, Analysis; the charts by form; the browser check extended |
+| L7 | each earlier recipe's description leads with the Purpose paragraph of its card (205 of 205 cards have one) |
+
+Tuldok project tests: 561, about 4 minutes. The browser check passes on its fixture and on the lab folder: every tab in light and dark at 1440 by 900, no script error, no failed request, no sideways overflow, nothing added to the activity log.
+
+**Reviewed against the mockup** on the lab's 206 models, screenshot by screenshot: the top bar and tabs, the status strip, the map with its sections, the lanes "from C37" and "from C44", the minimap and the track, the list with short label, title, purpose, kind and bar, and the drawer with the card rendered, in light and dark.
+
+**Changed in review:**
+
+- A product with no declared outputs reported a size of zero, so the lab's adopted dataset directories read as empty on the Data tab. `products` now gives the size the run recorded; on the owner's project the 25 adopted datasets show 15.67 GB.
+- The label of the fastest end of the frontier was printed over the frontier line; it now sits on the side the line does not leave by.
+
+**Where the page differs from the mockup, on purpose:** no Layout switch; no control that changes anything (phase 3); the drawer's figures are the track metric, cases, benchmarks with results and state; the track scale fits the project's values; inputs are drawn only for the selected model; the Benchmarks picker chooses a benchmark where the mockup chose a population, and each chart definition is drawn by its own form; no studies, planned models, thumbnails, volume viewer or field slices.
+
+**Not verified:** the hairline and progress line of a run while it runs, and the two-second refresh during a build: no fixture has a running run with a progress event. They are checked in phase 3, whose acceptance runs a real build.
+
+**On the owner's machine.** A preview of the committed page runs from an export of the commit in `workspace/scratch/tuldok-preview` on port 8092, on the owner's database, catalog and project directory; the older page still runs on port 8091.
+
+**Next:** phase 3, acting from the page, after the owner has looked at phase 2.
