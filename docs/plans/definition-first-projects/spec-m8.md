@@ -123,3 +123,12 @@ Found while implementing; the code and its tests follow this section.
 - **`adopt` holds the project open for its whole run.** With links that is seconds. A failure partway leaves the entries before it adopted, and the command says so.
 - **Closing a project now releases its lock by a statement.** Closing the connection alone left the lock held until the server noticed, so a project opened again at once could be refused as already open. The full test run showed it once on a busy machine.
 - **The lab's manifest** has one entry per earlier recipe with a run (203) and per earlier dataset that an earlier recipe read (25). A dataset's directory is its one folder, or the deepest directory that holds all its folders.
+
+## 9. Part 2: the lab repository holds the new folder only
+
+- **The lab stops tracking `projects/rheon-model-portfolio-unified-04/`.** The folder stays on disk where it is, named in `.gitignore`: it is the converter's source and the origin of the adopted files. The orchestrating session removes it from the index; nothing on disk is deleted.
+- **`projects/surrogate-lab/` is the lab's Tuldok project from here on.** It is edited directly or through Tuldok and committed like any source. The converter is no longer what that folder must equal, so its equality check stops being a test. The converter stays as the record of how the folder was made, and as the writer of the adoption manifest and the values files; it runs only where the old folder is.
+- **The lab's README** says where the project is, how to open it, and that weights and data live in Tuldok's project directory on the machine and are adopted or rebuilt there, never committed. The paragraph that tells the reader to run the two scripts for the old format goes.
+- **Tests that need the old folder** skip when it is absent, so a fresh clone's tests pass.
+
+**Acceptance: the plan's test, on a fresh clone.** A new clone of the lab branch, opened by Tuldok into an empty database with an empty project directory: it opens in seconds; it lists the models, recipes and benchmarks; the report draws the result charts from `results/` alone; and `plan --all` lists the ordered steps for what can be built. The clone holds no old project folder.
