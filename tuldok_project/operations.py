@@ -1,0 +1,168 @@
+"""The operations a served project folder offers, as data: names, who may call them, arguments and results.
+
+Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md.
+Each Operation names one operation project.<name>, the rule its caller must
+satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
+its arguments and the result keys that are always present. service.py checks
+calls against it and agent_api.py publishes it; neither restates it. This
+module imports only the standard library.
+"""
+from dataclasses import dataclass
+
+WHO = ('inspect', 'edit', 'cancel', 'request', 'owner')
+REQUEST_STATES = ('awaiting-approval', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'declined', 'expired')
+KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart')
+TARGET_LIMIT = 50
+REASON_CHARACTERS = 400
+
+
+@dataclass(frozen=True)
+class Operation:
+    """One row of the table. arguments is a closed JSON Schema object; result is the tuple of required result keys."""
+    name: str
+    summary: str
+    who: str
+    mutation: bool
+    arguments: dict
+    result: tuple
+
+
+# ----------------------------------------------------------- argument schemas
+
+_REFERENCE = {'type': 'string', 'minLength': 1, 'maxLength': 200}
+_NAME = {'type': 'string', 'minLength': 1, 'maxLength': 200}   # a bare name or a <directory>/<name> reference
+_RUN = {'type': 'string', 'minLength': 6, 'maxLength': 128}
+_REQUEST = {'type': 'string', 'minLength': 6, 'maxLength': 128}
+_TEXT = {'type': 'string'}
+_FLAG = {'type': 'boolean'}
+_OFFSET = {'type': 'integer', 'minimum': 0}
+_THEME = {'type': 'string', 'enum': ['light', 'dark']}
+_TARGETS = {'type': 'array', 'items': _REFERENCE, 'maxItems': TARGET_LIMIT}
+
+
+def _limit(most):
+    return {'type': 'integer', 'minimum': 1, 'maximum': most}
+
+
+def _arguments(required=(), **properties):
+    return {'type': 'object', 'properties': properties, 'required': list(required), 'additionalProperties': False}
+
+
+# --------------------------------------------------------------- result keys
+
+SUMMARY = ('project_id', 'name', 'folder', 'code_root', 'kinds', 'states', 'worker')
+STATUS = ('unsaved', 'removed', 'added', 'changed', 'missing', 'irregular', 'results_unsaved', 'results_changed')
+DEFINITION = ('reference', 'kind', 'title', 'text', 'document', 'state', 'unsaved', 'removed', 'uses', 'used_by')
+PLAN = ('targets', 'every', 'buildable', 'blocked_targets', 'counts', 'gpu_steps', 'disk_gb', 'disk_unknown',
+        'wall_hours', 'wall_unknown', 'estimated_disk_gb', 'estimated_disk_steps', 'estimated_wall_hours',
+        'estimated_wall_steps', 'notes', 'steps')
+ENVIRONMENT = ('reference', 'title', 'state', 'python', 'device', 'packages', 'installable', 'origin', 'interpreter',
+               'recorded_at', 'checked_at', 'ok', 'found', 'problems')
+RUN = ('id', 'reference', 'subject', 'plan_id', 'state', 'scratch', 'commit', 'inputs', 'environment', 'argv',
+       'directory', 'owner_pid', 'owner_boot', 'queued_at', 'started_at', 'finished_at', 'exit_status', 'seconds',
+       'bytes', 'strays', 'problem', 'definition', 'settings', 'env_names', 'product', 'builder_alive')
+REQUEST = ('id', 'state', 'targets', 'every', 'scratch', 'covers', 'requested_at', 'requested_by', 'decided_at',
+           'decided_by', 'started_at', 'finished_at', 'plan_id', 'cancel_requested', 'result', 'problem',
+           'expires_at')
+SAVE = ('written', 'deleted', 'results_written', 'results_deleted')
+CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
+STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
+
+
+OPERATIONS = (
+    Operation('summary', "Read the project's name, folder, counts of definitions by kind and state, and whether "
+              'its build worker runs.', 'inspect', False, _arguments(), SUMMARY),
+    Operation('status', 'List the unsaved and removed definitions and the files changed on disk since the last '
+              'import or save.', 'inspect', False, _arguments(), STATUS),
+    Operation('check', 'Check the project folder on disk and list its errors and warnings, even when it does not '
+              'open.', 'inspect', False, _arguments(), ('ok', 'errors', 'warnings', 'problems')),
+    Operation('definitions', 'List the definitions, optionally of one kind, with their states.', 'inspect', False,
+              _arguments(kind={'type': 'string', 'enum': list(KINDS)}), ('definitions',)),
+    Operation('definition', 'Read one definition: its text, document, state, what it uses and what uses it.',
+              'inspect', False, _arguments(['reference'], reference=_REFERENCE), DEFINITION),
+    Operation('graph', 'Read every definition with its kind and state, and the edges between them.', 'inspect',
+              False, _arguments(), ('nodes', 'edges')),
+    Operation('results_overview', 'List, per benchmark, how many subjects have results and whether they differ '
+              'from the results file.', 'inspect', False, _arguments(), ('benchmarks',)),
+    Operation('results', "Read one page of a benchmark's summary rows, optionally for one subject, metric or group.",
+              'inspect', False,
+              _arguments(['benchmark'], benchmark=_NAME, subject=_TEXT, metric=_TEXT, group=_TEXT, offset=_OFFSET,
+                         limit=_limit(2000)), ('rows', 'total')),
+    Operation('values', "Read one page of a benchmark subject's per-case values.", 'inspect', False,
+              _arguments(['benchmark', 'subject'], benchmark=_NAME, subject=_TEXT, metric=_TEXT, offset=_OFFSET,
+                         limit=_limit(1000)), ('rows', 'total')),
+    Operation('chart', "Read a chart's data, and its SVG drawing when asked.", 'inspect', False,
+              _arguments(['chart'], chart=_NAME, svg=_FLAG, theme=_THEME), ('data',)),
+    Operation('report', 'Read the HTML report of the project: where it stands, every chart, the results and the '
+              'definitions.', 'inspect', False, _arguments(theme=_THEME), ('html',)),
+    Operation('plan', 'Plan building the targets (or every buildable definition) without running anything.',
+              'inspect', False, _arguments(['targets'], targets=_TARGETS, every=_FLAG), PLAN),
+    Operation('estimates', 'List the stored estimates of disk and time for the definitions as they now are.',
+              'inspect', False, _arguments(), ('estimates',)),
+    Operation('environments', 'List the environments with the interpreter recorded on this machine and their last '
+              'check.', 'inspect', False, _arguments(), ('environments',)),
+    Operation('environment', 'Read one environment with the interpreter recorded on this machine and its last check.',
+              'inspect', False, _arguments(['reference'], reference=_REFERENCE), ENVIRONMENT),
+    Operation('runs', 'List the runs, newest first, optionally of one definition.', 'inspect', False,
+              _arguments(reference=_REFERENCE, limit=_limit(500)), ('runs',)),
+    Operation('run', "Read one run's record, its product and whether its build is alive, without variable values.",
+              'inspect', False, _arguments(['run'], run=_RUN), RUN),
+    Operation('progress', "Read a run's latest progress event and its logs from the given offsets; to read on, pass each "
+              "log's returned offset back as stdout_offset and stderr_offset.",
+              'inspect', False, _arguments(['run'], run=_RUN, stdout_offset=_OFFSET, stderr_offset=_OFFSET),
+              ('run', 'event', 'stdout', 'stderr', 'ended')),
+    Operation('products', 'List the current products, optionally of one definition.', 'inspect', False,
+              _arguments(reference=_REFERENCE), ('products',)),
+    Operation('build_requests', 'List the build requests, newest first, optionally in one state.', 'inspect', False,
+              _arguments(state={'type': 'string', 'enum': list(REQUEST_STATES)}, limit=_limit(500)), ('requests',)),
+    Operation('build_request', 'Read one build request with what it covers and the runs of its build.', 'inspect',
+              False, _arguments(['request'], request=_REQUEST), REQUEST + ('runs',)),
+    Operation('activity', 'List the changes asked of this project through the interface, newest first, and how '
+              'each ended.', 'inspect', False, _arguments(offset=_OFFSET, limit=_limit(500)), ('items', 'total')),
+    Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
+              _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
+    Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',
+              'edit', True, _arguments(['reference'], reference=_REFERENCE), ('removed',)),
+    Operation('save', 'Write the unsaved edits and changed results files to the project folder.', 'edit', True,
+              _arguments(), SAVE),
+    Operation('resolve_conflict', 'Open a project whose files changed on disk where it has unsaved edits, keeping '
+              'or discarding those edits.', 'edit', True,
+              _arguments(['choice'], choice={'type': 'string', 'enum': ['keep', 'discard']}), SUMMARY),
+    Operation('import_values', "Import one per-case values file, replacing that subject's values and summaries.",
+              'edit', True, _arguments(['text'], text=_TEXT), ('benchmark', 'subject', 'values')),
+    Operation('check_environment', "Check an environment's recorded interpreter against its definition and keep "
+              'the result.', 'edit', True, _arguments(['reference'], reference=_REFERENCE), ENVIRONMENT),
+    Operation('connect_environment', 'Record an existing interpreter for an environment on this machine and check '
+              'it.', 'owner', True,
+              _arguments(['reference', 'interpreter'], reference=_REFERENCE,
+                         interpreter={'type': 'string', 'minLength': 1, 'maxLength': 4096}), ENVIRONMENT),
+    Operation('disconnect_environment', "Forget an environment's recorded interpreter on this machine; nothing is "
+              'deleted.', 'owner', True, _arguments(['reference'], reference=_REFERENCE), ('disconnected',)),
+    Operation('request_build', "Ask for a build of the targets: the owner's request is queued, an agent's waits for "
+              "the owner's approval (read build_request for its state), and a queued request not started by "
+              'its expires_at expires.', 'request', True,
+              _arguments(['targets'], targets=_TARGETS, every=_FLAG, scratch=_FLAG), REQUEST),
+    Operation('approve_build', 'Approve a build request awaiting approval, if what it covers is unchanged.', 'owner',
+              True, _arguments(['request'], request=_REQUEST), REQUEST),
+    Operation('decline_build', 'Decline a build request awaiting approval, with a reason.', 'owner', True,
+              _arguments(['request'], request=_REQUEST,
+                         reason={'type': 'string', 'maxLength': REASON_CHARACTERS}), REQUEST),
+    Operation('cancel_build', 'Cancel a build request, stopping its build when it is running.', 'cancel', True,
+              _arguments(['request'], request=_REQUEST), REQUEST),
+    Operation('cancel_run', 'Ask a queued or running run to stop.', 'cancel', True, _arguments(['run'], run=_RUN),
+              CANCEL_RUN),
+    Operation('stop_run', 'Kill what a run whose build is gone left running, and mark it unknown.', 'cancel', True,
+              _arguments(['run'], run=_RUN), STOP_RUN),
+)
+
+_BY_NAME = {operation.name: operation for operation in OPERATIONS}
+
+
+def by_name(name):
+    """The Operation called name (without the project. prefix), or None when there is none."""
+    return _BY_NAME.get(name)
+
+
+def error_status(code):
+    """The HTTP status of a refusal with this ProjectError code."""
+    return {'not-found': 404, 'invalid': 400, 'forbidden': 403}.get(code, 409)

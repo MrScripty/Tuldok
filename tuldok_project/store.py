@@ -22,6 +22,9 @@ What was built (spec-m6.md) lives in three more tables owned by builds: the
 states reported here take the build states (built, out-of-date, running,
 failed) from them, and a definition's runs and products records go when the
 definition does (the files on disk are left).
+The record of changes asked through the service (spec-m7.md section 5) lives
+in one more table owned by activity, and the build requests (section 4) in
+one owned by build_requests.
 """
 from dataclasses import dataclass
 import hashlib
@@ -35,7 +38,8 @@ from psycopg.types.json import Jsonb
 
 from metadata import connection_info
 
-from . import builds, check, documents, environments, folder as folder_reader, graph, result_rows, results
+from . import (activity, build_requests, builds, check, documents, environments, folder as folder_reader, graph,
+               result_rows, results)
 from .documents import Problem
 
 PROJECT_ID = re.compile(r'^[a-f0-9]{32}$')
@@ -319,7 +323,8 @@ class Project:
 
     def _create_schema(self):
         self._connection.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(self.schema)))
-        for statement in (*_TABLES, *environments.TABLES, *builds.TABLES, *_MIGRATIONS):
+        for statement in (*_TABLES, *environments.TABLES, *builds.TABLES, *activity.TABLES, *build_requests.TABLES,
+                          *_MIGRATIONS):
             self._execute(statement)
 
     def _state(self):

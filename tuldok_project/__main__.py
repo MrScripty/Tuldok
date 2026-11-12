@@ -24,6 +24,10 @@ prefix of it, while a build runs in another process: they open the project
 only for a moment (waiting while a build has it open) and read the run's logs
 with it closed. `estimate` runs the build steps' estimate commands, the one
 command besides `build` that runs project code; `plan` shows what it stored.
+`requests`, `approve` and `decline` work on the build requests asked through
+the app (build_requests.py); approving and declining act as the owner, as
+the actor "command line", and write an activity row each. An approved
+request is run by the app serving the folder, not here.
 """
 import argparse
 import dataclasses
@@ -38,6 +42,9 @@ from .check import check_folder
 DATABASE_VARIABLE = 'TULDOK_DATABASE_URL'
 KINDS = tuple(sorted(documents.KINDS.values()))
 THEMES = ('light', 'dark')
+REASON_CHARACTERS = 400
+COMMAND_LINE = {'actor_id': None, 'kind': 'owner', 'label': 'command line'}   # who approves and declines here
+OPEN_WAIT_SECONDS = 5.0     # how long a command waits for a project that the app or another command has open
 
 
 class UsageError(Exception):
@@ -151,6 +158,13 @@ def _parser():
                             help='run from the code root as it is, uncommitted changes included')
     estimating.add_argument('--env', action='append', default=[], metavar='NAME=VALUE',
                             help="add a variable to every command's environment; may be repeated")
+    add('requests', [reading], 'list the build requests asked through the app, newest first')
+    approving = add('approve', [opening], 'show what a build request covers, ask, then approve it')
+    approving.add_argument('request', help='a request id, or at least its first six characters')
+    approving.add_argument('--yes', action='store_true', help='do not ask for confirmation')
+    declining = add('decline', [opening], 'decline a build request awaiting approval')
+    declining.add_argument('request', help='a request id, or at least its first six characters')
+    declining.add_argument('--reason', default='', help=f'why, in at most {REASON_CHARACTERS} characters')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -974,6 +988,106 @@ def _build(arguments, dsn):
     return 1
 
 
+# ---------------------------------------------------------- build requests
+
+def _request_targets(row):
+    return ' '.join(row['targets']) + (' (all)' if row['every'] else '') if row['targets'] or row['every'] else '-'
+
+
+def _requests(project, arguments):
+    from . import build_requests
+
+    rows = build_requests.listing(project, limit=500)
+    if arguments.json:
+        _json(rows)
+        return 0
+    if not rows:
+        print('No build has been requested.')
+        return 0
+    _columns([('request', 'state', 'asked', 'by', 'targets'),
+              *((row['id'], row['state'], _when(row['requested_at']), row['requested_by'].get('label') or '-',
+                 _request_targets(row)) for row in rows)])
+    return 0
+
+
+def _covers_lines(shown):
+    covers = shown['covers']
+    asker = shown['requested_by']
+    code = ('the code root as it is (scratch)' if covers['scratch'] else
+            f'commit {covers["commit"][:12]}' if covers['commit'] else 'no commit (the code root is not in Git)')
+    lines = [f'Build request {shown["id"]}, {shown["state"]}',
+             f'asked by {asker.get("label") or "-"} ({asker.get("kind")}) at {_moment(shown["requested_at"])}',
+             f'targets: {_request_targets(shown)}', f'code: {code}', '',
+             f'It builds {_plural(len(covers["steps"]), "step")}, in this order:']
+    for step in covers['steps']:
+        lines.append(f'  {step["reference"]}' + (f'  subjects {", ".join(step["subjects"])}' if step['subjects'] else ''))
+    lines.append(f'and holds to the text of {_plural(len(covers["definitions"]), "definition")}: if any of them or '
+                 'the commit changes, it is not run.')
+    return lines
+
+
+def _record(project, operation, target, outcome, detail=''):
+    from . import activity
+
+    activity.record(project._connection, project.schema, COMMAND_LINE, operation, target, outcome, detail)
+
+
+def _decided(arguments, dsn, operation, decide, *, record_done=True):
+    """Run decide(project) with the project open for a moment, writing the activity row of section 5.
+
+    A refusal is always recorded; success only with record_done (approve
+    reads the request first, and records once, when it approves).
+    """
+    from . import builds
+    from .store import ProjectError
+
+    with builds.opened(arguments.folder, dsn, rebind=arguments.rebind, on_conflict=arguments.on_conflict) as project:
+        try:
+            done = decide(project)
+        except ProjectError as exc:
+            _record(project, operation, arguments.request, exc.code, str(exc))
+            raise
+        if record_done:
+            _record(project, operation, arguments.request, 'done')
+    return done
+
+
+def _approve(arguments, dsn):
+    from . import build_requests
+
+    shown = _decided(arguments, dsn, 'approve_build', lambda project: build_requests.show(project, arguments.request),
+                     record_done=False)
+    for line in _covers_lines(shown):
+        print(line)
+    if shown['state'] == 'awaiting-approval' and not arguments.yes:
+        print()
+        sys.stdout.write('Approve this? [y/N] ')
+        sys.stdout.flush()
+        answer = sys.stdin.readline().strip().lower()
+        if not sys.stdin.isatty():
+            print()
+        if answer not in ('y', 'yes'):
+            print('Nothing was approved.')
+            return 1
+    done = _decided(arguments, dsn, 'approve_build',
+                    lambda project: build_requests.approve(project, shown['id'], actor=COMMAND_LINE))
+    print(f'Approved: request {done["id"]} is queued. The app serving this folder runs it; '
+          'the approval expires after an hour.')
+    return 0
+
+
+def _decline(arguments, dsn):
+    from . import build_requests
+
+    if len(arguments.reason) > REASON_CHARACTERS:
+        raise UsageError(f'--reason is {len(arguments.reason)} characters long; at most {REASON_CHARACTERS} are kept.')
+    done = _decided(arguments, dsn, 'decline_build',
+                    lambda project: build_requests.decline(project, arguments.request, actor=COMMAND_LINE,
+                                                           reason=arguments.reason))
+    print(f'Declined: request {done["id"]}.')
+    return 0
+
+
 # ------------------------------------------------------------ environments
 
 def _when(value):
@@ -1124,7 +1238,8 @@ _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
                    'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan,
                    'environments': _environments, 'connect': _connect, 'check-environment': _check_environment,
-                   'set-up': _set_up, 'disconnect': _disconnect, 'runs': _runs, 'products': _products}
+                   'set-up': _set_up, 'disconnect': _disconnect, 'runs': _runs, 'products': _products,
+                   'requests': _requests}
 
 
 def _project_id(folder):
@@ -1179,7 +1294,7 @@ def _forget(arguments, dsn):
 
 
 def _run_store(arguments, dsn):
-    from . import store
+    from . import builds
 
     if arguments.command == 'set':
         try:
@@ -1206,14 +1321,12 @@ def _run_store(arguments, dsn):
         arguments.environments = ['environments/' + _bare(name, 'environments') for name in arguments.environments]
     if arguments.command == 'plan' and not arguments.targets and not arguments.all:
         raise UsageError('Name at least one definition to plan, or pass --all.')
+    # The app that serves a folder, and a build, open the project for a moment at a time: wait for them.
     started = time.monotonic()
-    project = store.open_project(arguments.folder, rebind=arguments.rebind, on_conflict=arguments.on_conflict,
-                                 dsn=dsn)
-    arguments.seconds = time.monotonic() - started
-    try:
+    with builds.opened(arguments.folder, dsn, rebind=arguments.rebind, on_conflict=arguments.on_conflict,
+                       wait=OPEN_WAIT_SECONDS) as project:
+        arguments.seconds = time.monotonic() - started
         return _STORE_COMMANDS[arguments.command](project, arguments)
-    finally:
-        project.close()
 
 
 def _database_command(arguments):
@@ -1236,6 +1349,10 @@ def _database_command(arguments):
             return _stop(arguments, dsn)
         if arguments.command == 'estimate':
             return _estimate(arguments, dsn)
+        if arguments.command == 'approve':
+            return _approve(arguments, dsn)
+        if arguments.command == 'decline':
+            return _decline(arguments, dsn)
         return _run_store(arguments, dsn)
     except UsageError as exc:
         print(str(exc), file=sys.stderr)

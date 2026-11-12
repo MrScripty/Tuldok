@@ -30,6 +30,7 @@ the SHA-256 of the definition text it was measured for; stored_estimates
 gives plan.py the ones whose definition is unchanged.
 """
 from contextlib import contextmanager
+import datetime
 import fcntl
 import hashlib
 import json
@@ -454,9 +455,9 @@ def _fill(text, values, missing, where):
 # -------------------------------------------------------------------- execute
 
 @contextmanager
-def opened(folder, dsn=None, *, rebind=False, on_conflict=None):
-    """Open the project for a moment, waiting while another command has it open."""
-    deadline = time.monotonic() + OPEN_WAIT_SECONDS
+def opened(folder, dsn=None, *, rebind=False, on_conflict=None, wait=None):
+    """Open the project for a moment, waiting up to wait seconds (OPEN_WAIT_SECONDS) while another command has it open."""
+    deadline = time.monotonic() + (OPEN_WAIT_SECONDS if wait is None else wait)
     while True:
         try:
             project = store.open_project(folder, dsn=dsn, rebind=rebind, on_conflict=on_conflict)
@@ -508,13 +509,14 @@ def _current_product(project, reference, subject=''):
 class _Build:
     """One execute(): the snapshot, the environments checked so far, and what each step did."""
 
-    def __init__(self, folder, plan, *, extra_env, scratch, dsn, on_event):
+    def __init__(self, folder, plan, *, extra_env, scratch, dsn, on_event, expect=None):
         self.folder = folder
         self.plan = plan
         self.extra_env = dict(extra_env or {})
         self.scratch = scratch
         self.dsn = dsn
         self.on_event = on_event or (lambda kind, item: None)
+        self.expect = expect     # a build request's covers, or None
         self.code = None
         self.environments = {}   # reference -> shown environment after a passing check in this build
         self.plan_id = uuid.uuid4().hex
@@ -559,6 +561,8 @@ class _Build:
             raise store.ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
         text, document = row
         run = _run_block(document)
+        if self.expect is not None and not estimate:
+            self._check_expected(project, reference, text, run, subject)
         run_id = uuid.uuid4().hex
         run_directory = os.path.join(local.home(project.project_id), ESTIMATES if estimate else RUNS, run_id)
         output = os.path.join(run_directory, OUTPUT)
@@ -664,6 +668,23 @@ class _Build:
         prepared['kind'] = _kind(reference)
         prepared['inline_settings'] = 'settings' in run
         return prepared
+
+    def _check_expected(self, project, reference, text, run, subject):
+        """Refuse (stale) a step when a definition it reads to run is not the text whose SHA-256 expect holds.
+
+        Those are the step's own definition (text, just read), its
+        environment and, for a benchmark subject, the subject's recipe.
+        """
+        others = [used for used in (run.get('environment'), (subject or {}).get('recipe')) if isinstance(used, str)]
+        texts = dict(project._execute(f'SELECT {store._REFERENCE_SQL}, text FROM {{schema}}.definitions '
+                                      f'WHERE NOT removed AND {store._REFERENCE_SQL} = ANY(%s)', (others,)).fetchall())
+        texts[reference] = text
+        expected = self.expect.get('definitions') or {}
+        for used in [reference, *others]:
+            if texts.get(used) is None or _sha256_text(texts[used]) != expected.get(used):
+                step = reference + (f' (subject {subject["name"]})' if subject else '')
+                raise store.ProjectError(f'{used} is not what the build was approved with, so {step} was not '
+                                         'started; ask for the build again.', 'stale', references=[used])
 
     def _insert(self, project, prepared, state):
         project._execute('''INSERT INTO {schema}.runs (id, reference, subject, plan_id, state, scratch, commit,
@@ -797,7 +818,8 @@ def _snapshot_error(exc):
     return store.ProjectError(str(exc), exc.code, files=exc.files)
 
 
-def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn=None, on_event=None):
+def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn=None, on_event=None, expect=None,
+            stop=None):
     """Run the build steps of plan (plan.build_plan's result) in order; return what was done.
 
     Refuses (ProjectError, before confirm is called) a plan with a blocked
@@ -808,6 +830,16 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
     stops at the first step that does not succeed, and at an environment that
     is not ready (ProjectError not-ready). on_event(kind, item) is called with
     'start' before each command and 'end' after each step.
+
+    For a build request (spec-m7.md section 4): expect is the request's
+    covers. After the code is prepared, a commit other than expect['commit']
+    (when that is not None) is refused (stale) before confirm is called; before
+    each step, a definition it reads to run (its own, its environment, a
+    benchmark subject's recipe) whose text does not have the SHA-256 in
+    expect['definitions'] stops the build with ProjectError stale, naming it.
+    stop() is called before each step (each subject of a benchmark); when it
+    returns true the build ends there with ok false. Without them nothing
+    differs.
 
     Returns {plan_id, confirmed, ok, steps: [{reference, subject, run_id,
     state, problem, seconds}], skipped: [references already built]}.
@@ -821,7 +853,7 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
     if running:
         raise store.ProjectError('Another build is running ' + ', '.join(running) + '; wait for it to end.',
                                  'running', references=running)
-    build = _Build(folder, plan, extra_env=extra_env, scratch=scratch, dsn=dsn, on_event=on_event)
+    build = _Build(folder, plan, extra_env=extra_env, scratch=scratch, dsn=dsn, on_event=on_event, expect=expect)
     if to_build:
         with opened(folder, dsn) as project:
             state = project._state()
@@ -832,6 +864,10 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
             build.code = snapshot.prepare(code_root, code_paths, home=home, scratch=scratch)
         except snapshot.SnapshotError as exc:
             raise _snapshot_error(exc) from None
+        approved = (expect or {}).get('commit')
+        if approved is not None and build.code.commit != approved:
+            raise store.ProjectError(f'The code is at commit {build.code.commit[:12] or "(none)"}, not at '
+                                     f'{approved[:12]} as approved; ask for the build again.', 'stale')
     result = {'plan_id': build.plan_id, 'confirmed': False, 'ok': False, 'steps': build.done, 'skipped': []}
     if not confirm(plan):
         return result
@@ -861,6 +897,8 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
         else:
             subjects = [None]
         for subject in subjects:
+            if stop is not None and stop():
+                return result
             item = build.run_one(reference, subject)
             build.done.append(item)
             build.on_event('end', item)
@@ -1067,8 +1105,9 @@ def _sha256_text(text):
 
 
 def stored_estimates(project):
-    """{reference: {disk_bytes, wall_seconds, items, measured_at (ISO 8601 text)}} for the definitions' current text.
+    """{reference: {disk_bytes, wall_seconds, items, measured_at}} for the definitions' current text.
 
+    measured_at is ISO 8601 text in UTC.
     An estimate measured for another text of the definition is left out.
     """
     rows = project._execute('''SELECT e.reference, e."values", e.measured_at
@@ -1076,7 +1115,7 @@ def stored_estimates(project):
                                  ON d.directory || '/' || d.name = e.reference AND NOT d.removed
                                WHERE e.definition_sha256 = encode(sha256(convert_to(d.text, 'UTF8')), 'hex')''')
     return {reference: {**{field: values.get(field) for field in ESTIMATE_FIELDS},
-                        'measured_at': measured_at.isoformat(timespec='seconds')}
+                        'measured_at': measured_at.astimezone(datetime.timezone.utc).isoformat(timespec='seconds')}
             for reference, values, measured_at in rows.fetchall()}
 
 
