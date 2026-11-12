@@ -1,7 +1,8 @@
 """The launcher (spec-m6.md section 3): run, strays, stop_strays and progress.
 
-Stand-in commands are small Python scripts run by the test interpreter. The
-module's intervals are shortened so the file runs in seconds. Every test
+Stand-in commands are small Python scripts run by the test interpreter under
+the real custodian process. The module's intervals are shortened (run() hands
+them to the custodian) so the file runs in seconds. Every test
 kills whatever carries its run id when it ends, pass or fail, using its own
 /proc scan rather than the code under test, and the run tests check that the
 test process is left with no zombie child.
@@ -20,7 +21,8 @@ import unittest
 from unittest import mock
 import uuid
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from tuldok_project import launcher  # noqa: E402
 
@@ -61,8 +63,8 @@ def _kill_run(run_id):
         time.sleep(0.02)
 
 
-def _zombie_children():
-    zombies = []
+def _children(*, zombies=False):
+    found = []
     for name in os.listdir('/proc'):
         if not name.isdigit():
             continue
@@ -71,9 +73,13 @@ def _zombie_children():
                 fields = file.read().rsplit(b')', 1)[1].split()
         except OSError:
             continue
-        if fields[0] == b'Z' and int(fields[1]) == os.getpid():
-            zombies.append(int(name))
-    return zombies
+        if int(fields[1]) == os.getpid() and (fields[0] == b'Z') == zombies:
+            found.append(int(name))
+    return found
+
+
+def _zombie_children():
+    return _children(zombies=True)
 
 
 def _alive(pid):
@@ -115,6 +121,8 @@ class LauncherCase(unittest.TestCase):
         self.assertEqual(_zombie_children(), [], 'run() left a zombie child')
         self.assertEqual((signal.getsignal(signal.SIGINT), signal.getsignal(signal.SIGTERM)),
                          self.handlers, 'signal handlers were not restored')
+        self.assertFalse((self.directory / launcher.DESCRIPTION_FILE).exists(),
+                         'the description file outlived the run')
         return outcome
 
     def log(self, name):
@@ -303,27 +311,144 @@ class RunTests(LauncherCase):
         self.assertEqual((outcome.state, outcome.strays), ('succeeded', 0))
         self.assertIsNone(neighbour.poll())
 
-    def test_prctl_failure_refuses_to_run(self):
-        def failing(option, argument):
-            raise OSError(1, 'refused')
-        with mock.patch.object(launcher, '_prctl', failing):
-            with self.assertRaises(OSError):
-                launcher.run([sys.executable, '-c', 'print(1)'], cwd=str(self.scratch), env=self.env(),
-                             run_id=self.run_id, directory=str(self.directory), limits=GENEROUS)
+    def custodian_with_failing_prctl(self, option, argument):
+        """Run the custodian in a process whose prctl(option, argument) fails; return run()'s result."""
+        description = self.directory / launcher.DESCRIPTION_FILE
+        launcher._write_description(str(description), [sys.executable, '-c', 'print(1)'],
+                                    str(self.scratch), self.env(), self.run_id, str(self.directory), GENEROUS)
+        subprocess.run([sys.executable, '-c', textwrap.dedent(f'''
+            import sys
+            sys.path.insert(0, {str(ROOT)!r})
+            from tuldok_project import launcher
+            real = launcher._prctl
+            def failing(option, argument):
+                if (option, argument) == ({option}, {argument}):
+                    raise OSError(1, 'refused')
+                return real(option, argument)
+            launcher._prctl = failing
+            sys.exit(launcher._custodian_main([{str(description)!r}]))
+        ''')], check=True, timeout=30)
+        self.assertFalse(description.exists())
+        return launcher._read_outcome(str(self.directory / launcher.OUTCOME_FILE), 0, self.run_id,
+                                      str(self.directory), time.monotonic())
+
+    def test_subreaper_failure_refuses_to_run(self):
+        with self.assertRaisesRegex(OSError, 'refused'):
+            self.custodian_with_failing_prctl(launcher.PR_SET_CHILD_SUBREAPER, 1)
         self.assertFalse((self.directory / 'stdout.log').exists())
 
-    def test_pdeathsig_failure_in_child_raises(self):
-        real = launcher._prctl
+    def test_pdeathsig_failure_in_command_raises(self):
+        with self.assertRaises(subprocess.SubprocessError):
+            self.custodian_with_failing_prctl(launcher.PR_SET_PDEATHSIG, int(signal.SIGKILL))
+        self.assertEqual(self.log('stdout'), '')
+        self.assertEqual(_carriers(self.run_id), [])
 
-        def failing_pdeathsig(option, argument):
-            if option == launcher.PR_SET_PDEATHSIG:
-                raise OSError(1, 'refused')
-            return real(option, argument)
-        with mock.patch.object(launcher, '_prctl', failing_pdeathsig):
-            with self.assertRaises(subprocess.SubprocessError):
-                launcher.run([sys.executable, '-c', 'print(1)'], cwd=str(self.scratch), env=self.env(),
-                             run_id=self.run_id, directory=str(self.directory), limits=GENEROUS)
+    def test_missing_program_raises(self):
+        with self.assertRaises(FileNotFoundError):
+            launcher.run([str(self.scratch / 'no-such-program')], cwd=str(self.scratch), env=self.env(),
+                         run_id=self.run_id, directory=str(self.directory), limits=GENEROUS)
         self.assertEqual(_zombie_children(), [])
+        self.assertFalse((self.directory / launcher.DESCRIPTION_FILE).exists())
+
+    def test_description_file_is_private(self):
+        path = self.scratch / 'description.json'
+        launcher._write_description(str(path), ['true'], str(self.scratch), {'SECRET': 'x'},
+                                    self.run_id, str(self.directory), GENEROUS)
+        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_exited_double_fork_intermediate_leaves_no_zombie(self):
+        daemon_file, background_file = self.scratch / 'daemon', self.scratch / 'background'
+        outcome = self.run_script(f'''
+            import os, time
+            if os.fork() == 0:          # the intermediate: leaves the session, forks, exits at once
+                os.setsid()
+                if os.fork() == 0:
+                    open({str(daemon_file)!r} + '.tmp', 'w').write(str(os.getpid()))
+                    os.rename({str(daemon_file)!r} + '.tmp', {str(daemon_file)!r})
+                    time.sleep(30)
+                os._exit(0)
+            if os.fork() == 0:          # a plain background child
+                open({str(background_file)!r} + '.tmp', 'w').write(str(os.getpid()))
+                os.rename({str(background_file)!r} + '.tmp', {str(background_file)!r})
+                time.sleep(30)
+                os._exit(0)
+            while not (os.path.exists({str(daemon_file)!r}) and os.path.exists({str(background_file)!r})):
+                time.sleep(0.01)
+        ''')  # the intermediate is never waited for: it is a zombie when the command exits
+        self.assertEqual((outcome.state, outcome.strays), ('succeeded', 2))
+        self.assertFalse(_alive(int(daemon_file.read_text())))
+        self.assertFalse(_alive(int(background_file.read_text())))
+
+    def test_callers_own_child_keeps_its_exit_status(self):
+        own = subprocess.Popen([sys.executable, '-c', 'import time, sys; time.sleep(0.3); sys.exit(7)'])
+        self.addCleanup(own.kill)
+        outcome = launcher.run([sys.executable, '-c', 'import time; time.sleep(1.0)'],
+                               cwd=str(self.scratch), env=self.env(), run_id=self.run_id,
+                               directory=str(self.directory), limits=GENEROUS)
+        self.assertEqual(outcome.state, 'succeeded')
+        self.assertEqual(_zombie_children(), [own.pid])  # exited during the run, and still ours to wait on
+        self.assertEqual(own.wait(5), 7)
+        self.assertEqual(_zombie_children(), [])
+
+    def test_caller_killed_mid_run_is_stopped_by_custodian(self):
+        started_file = self.scratch / 'started'
+        command = self.script(f'''
+            import time
+            open({str(started_file)!r}, 'w').write('1')
+            time.sleep(30)
+        ''')
+        caller = subprocess.Popen([sys.executable, '-c', textwrap.dedent(f'''
+            import sys
+            sys.path.insert(0, {str(ROOT)!r})
+            from tuldok_project import launcher
+            for name, value in {FAST!r}.items():
+                setattr(launcher, name, value)
+            launcher.run([sys.executable, {str(command)!r}], cwd={str(self.scratch)!r},
+                         env={self.env()!r}, run_id={self.run_id!r}, directory={str(self.directory)!r},
+                         limits={GENEROUS!r})
+        ''')])
+        self.addCleanup(caller.wait)
+        self.addCleanup(caller.kill)
+        deadline = time.monotonic() + 20
+        while not started_file.exists():
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(0.01)
+        caller.kill()
+        caller.wait()
+        outcome_file = self.directory / launcher.OUTCOME_FILE
+        while not outcome_file.exists():
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(0.02)
+        self.assertEqual(json.loads(outcome_file.read_text())['state'], 'cancelled')
+        self.assertEqual(_carriers(self.run_id), [])
+
+    def test_custodian_killed_mid_run(self):
+        pid_file = self.scratch / 'pid'
+
+        def kill_custodian(elapsed):
+            if elapsed > 0.3 and pid_file.exists():
+                for pid in _children():
+                    try:
+                        with open(f'/proc/{pid}/cmdline', 'rb') as file:
+                            if b'tuldok_project.launcher' in file.read():
+                                os.kill(pid, signal.SIGKILL)
+                    except OSError:
+                        pass
+        outcome = self.run_script(f'''
+            import os, time
+            if os.fork() == 0:
+                os.setsid()  # out of the group, and with no parent-death signal of its own
+                open({str(pid_file)!r} + '.tmp', 'w').write(str(os.getpid()))
+                os.rename({str(pid_file)!r} + '.tmp', {str(pid_file)!r})
+                time.sleep(30)
+                os._exit(0)
+            time.sleep(30)
+        ''', on_tick=kill_custodian)
+        self.assertEqual(outcome.state, 'unknown')
+        self.assertIsNone(outcome.exit_status)
+        self.assertIn('custodian ended without an outcome', outcome.problem)
+        self.assertGreaterEqual(outcome.strays, 1)
+        self.assertFalse(_alive(int(pid_file.read_text())))
 
     def test_bad_arguments(self):
         good = dict(cwd=str(self.scratch), env=self.env(), run_id=self.run_id,
