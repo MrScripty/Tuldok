@@ -459,3 +459,57 @@ Tuldok project tests: 561, about 4 minutes. The browser check passes on its fixt
 **On the owner's machine.** A preview of the committed page runs from an export of the commit in `workspace/scratch/tuldok-preview` on port 8092, on the owner's database, catalog and project directory; the older page still runs on port 8091.
 
 **Next:** phase 3, acting from the page, after the owner has looked at phase 2.
+
+## 2026-11-12 — the Map workspace, phase 3: acting from the page
+
+Spec: [spec-w3.md](spec-w3.md). The owner looked at phase 2 and said to continue ("its ok so far, continue").
+
+**Commits** (none pushed), Tuldok `feat/definition-first-projects`: spec `b15c979d`; the core additions `0864c98c`; the build controls `a7ed05ea`; the editor, branching, the idle refresh and the acceptance script `597452df`.
+
+| Slice | What |
+| --- | --- |
+| T20 | operations `draft_branch` (writes a new recipe from one of the project's, storing nothing, with the parent's settings file carried as its own settings and the problems keeping it would find) and `revert_definition` (the folder's file back in place of an unsaved edit or a removal; a definition never saved is dropped); `map` says which models are unsaved and dates a model without a `trained_at` label by the run of its current product; commands `branch` and `revert`; 41 operations |
+| T21 | `static/project-workspace/actions.js`: who may use a control, one way to call a changing operation (waiting, the two-press state, typed text and the refusal survive every redraw), the plan view, the conflict panel, Needs you and the strip's Save; Train: Plan build, a request's Approve, Decline with a reason and Cancel, a run's Cancel and Stop, an environment's Check again, Connect and Disconnect; the live run (hairline, progress line, both logs read on) |
+| T22 | `static/project-workspace/editor.js`: the editor (text for every kind, form for recipes), Pick on the map, Branch from here with drafts kept in the page and drawn hollow and dashed, the steps from draft to built, the Overview's list of every definition; Train's Planned section |
+
+Tuldok project tests: 585 (561 before), about 4 minutes; the kept agent interface tests 44 pass (4 skipped). The pinned digests did not change: none of them is of the `project_folder` profile, which is checked against the operations table.
+
+**Browser checks.** `tests/browser_project_workspace_actions.cjs` (new, about 1 min 45 s): on a fixture copy in a Git repository of its own with stand-in commands, every control of the spec's section 4 as the owner, fourteen refusals provoked on purpose, and with a credential that may only inspect no control drawn. `tests/browser_project_workspace.cjs` (the read-only check) now signs the browser in with an inspect-only credential, because the owner's page has controls its assertions forbid; its assertions are unchanged, and it passes on its fixture and on the lab folder.
+
+**Acceptance run** (`tests/acceptance_project_workspace.cjs`, on a committed copy of `examples/tiny-project`, the owner's two interpreters, a throwaway database, a headless browser; everything after start-up done on the page):
+
+| Step | Result |
+| --- | --- |
+| Connect `environments/cpu` and `environments/gpu` from Train | ready: Python 3.12.3 and 3.14.7 |
+| Plan everything buildable, Request build | 4 runs succeeded; while `small-net-a` trained the hairline of the strip and of the run drawer stood between 3 % and 19 % with "train: 200 of 6000" and the like |
+| Branch from here on `small-net-a`, title, kind, description | a draft on the map after its parent, hollow and dashed, its form holding the parent's settings copied from `settings/small-net-a.json` |
+| Updates 6000 to 3000 in the form, Keep, Save | `recipes/small-net-3-000-updates.json` in the folder with `derived_from`, `change` and `settings.updates` 3000 as a number |
+| Plan build, Request build | trained on the GPU with its progress on the page; the model drawn built with its line from the parent, without a reload, dated by its run |
+| The benchmark edited in the text view (a third subject), Keep, Save from the strip | the file is the text typed, byte for byte |
+| An agent asks for `benchmarks/held-out` | the idle page counted it in Needs you by itself after 13 s; Approve there; 3 runs succeeded |
+| Results | median error 0.0376 (6,000 updates), 0.0407 (3,000 updates), 0.871 (predict zero); all three on the Benchmarks tab |
+| The whole run | no script error, no failed request; 1 min 40 s; two small trainings and three benchmark runs on the GPU |
+
+Screenshots: `build/qa/project-workspace-acceptance/final/` (21) and, for the owner's view of the lab folder at full size against the throwaway database with nothing kept or saved, `build/qa/project-workspace-acceptance/lab-owner-view/`: the map opens in 0.6 s, the editor of C53 in 0.2 s, a draft branched from C53 in 0.4 s, the lab's activity log empty afterwards and its folder unchanged.
+
+**Found at the acceptance run and changed:**
+
+- An idle page read again only when the window regained focus, so a build an agent asked for while the owner was looking at the page did not reach Needs you. The page now also asks again every fifteen seconds while nothing builds (summary, runs, build requests, status, environments: 13 to 60 ms each on the lab folder).
+- Between two steps of a running build the strip said the request was queued. It now says a build is between two of its steps.
+- A field with a hint beside one without (Short label and Group) stood at different heights.
+
+**Deviations from the spec, kept:**
+
+- `branch` does not take the other commands' `--keep` and `--discard` for a conflict; its own `--keep` stores the draft.
+- Reverting a removed benchmark imports its results file again when it is still the file last imported; otherwise the next save would have deleted the file.
+- A model that names a parent and has no date is drawn in the lane of its parent's branches, right after the parent, when it is in the parent's group.
+- A never-built node is outlined in its kind's colour, not the accent, so the kind stays readable; a draft is labelled "new".
+- Models branched and kept in this browser tab keep their steps list after they are built.
+- The form writes the whole document again with the text's indentation: values and key order are kept, compact one-line objects are spread over lines.
+- Environments on Train open a drawer for their controls; Decline takes two steps because its reason field opens on the first.
+
+**Not verified:** Stop what a run left running (it needs a run whose builder died); Save refused `changed-on-disk` (the opening import reports a changed file as a conflict first); widths other than 1440 by 900. The read-only check once stopped early on the lab folder while the full test suite ran beside it, and passed the next four times: it presses before a view has painted when the machine is loaded.
+
+**Seen, not Tuldok's:** this machine's zone is America/Vancouver, which the system clock gives as UTC−7 in November; the headless browser and Node carry older zone data and show times an hour earlier. A browser with current zone data shows the right hour.
+
+**Next:** the owner looks at phase 3 on the lab project. Then the capability check can be signed and the old project mode deleted (milestone 8, part 3).
