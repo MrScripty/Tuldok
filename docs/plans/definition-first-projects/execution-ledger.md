@@ -301,3 +301,59 @@ All Tuldok project tests: 482, about 3 minutes. The 14 existing agent and contra
 - Carried over: the values file's `commit` is empty; nothing is ever deleted from the local home; installing an environment and measuring estimates are command-line only; the catalog queue does not take the GPU lock (spec section 9).
 
 **Next:** milestone 8, converting the lab for good and retiring the old project-files code. It needs the owner's two open decisions (where the product archive for the earlier weights goes; which earlier models to drop) and sign-off of the written capability check before any old module is deleted.
+
+## 2026-11-12 — milestone 8, part 1: where products live, and adopting the earlier ones
+
+**Owner decisions:** "The model weights can stay with tuldok on the loca system. Tuldok should have an internal proj dir to store per project data including the weights. We do not want the weights in the git repo." Then: "yes make orangcream tuldoks project location." Then: "continue". No product archive is built. Spec: [spec-m8.md](spec-m8.md); the [capability check](capability-check.md) was written the same day and is not signed.
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: the decision and the capability check `5a52bed5`; spec `1a9b9e73`; the setting, `new` and `adopt` `3af6b6a6`. Lab `reorg/reproducible-lab-20261102`: the adoption manifest `6dac9a160`.
+
+| Slice | What | Tests |
+| --- | --- | --- |
+| T16 | `tuldok_project/local.py` (the saved setting), `adoption.py`, the adopted rule in `builds.py` and `plan.py`, the commands `home`, `new`, `adopt` | 24 |
+| L4 | `lab:scripts/build_tuldok_project.py --adoption-output` | 40 in the lab's converter tests |
+
+All Tuldok project tests: 507, about 4.5 minutes.
+
+**Changed in review:**
+
+- A definition that is built on this machine no longer carries `cannot-rebuild` or `needs-work` to what uses it. As implemented first, a new recipe could not use an adopted dataset as its input, which is what adoption is for.
+- Closing a project now releases its lock by a statement. A full test run on a busy machine failed once with "already open" straight after a close; the lock had been left to the server to release when it noticed the session end.
+- One existing test read the machine's settings file. The whole suite was then run with a decoy settings file in the environment: every test passed and nothing was written to the decoy directory, so no test can write into the real project directory.
+- The spec was widened during the work: a definition that declares no outputs can be adopted as a whole directory. The lab's manifest showed why: the earlier weights are 0.8 GB, and 15 GB of the old folder is training data of 25 earlier datasets, which declare no outputs.
+
+**What the old folder holds** (`projects/rheon-model-portfolio-unified-04/artifacts/sha256/`, 8,734 files, 16.5 GB, ignored by Git), by the lab's manifest:
+
+| Part | Files | Size |
+| --- | --- | --- |
+| Outputs of 203 earlier recipes (weights, histories, receipts) | 2,264 distinct | 0.79 GB |
+| Training data of 25 earlier datasets | 177 distinct, 34 of them also a recipe's output | 15.08 GB |
+| Named by no entry: old-format records, staged code, custody proofs, outputs of runs with no recipe | 6,327 | 0.69 GB |
+
+Every declared output of the 203 recipes was found at its recorded size; no dataset path was claimed by two different files. Two earlier recipes have no run and five earlier datasets were read by no recipe, so those seven have nothing to adopt.
+
+**Acceptance on a throwaway database**, with a throwaway project directory on the OrangeCream disk:
+
+| Step | Result |
+| --- | --- |
+| `adopt --dry-run` | would adopt 228 entries, 3,841 files, 16.9 GB, all to be linked; nothing changed |
+| `adopt` | 228 adopted in 1.6 s; free space on the disk fell by 2.8 MB |
+| The files | all 3,841 are hard links to files of the old folder, 2,407 distinct |
+| States | before: 216 cannot rebuild, 27 need work, 17 not built. After: 228 built, 23 cannot rebuild, 9 not built |
+| `plan --all` | before: 17 to build, 243 blocked. After: 9 to build, 23 blocked, 228 built |
+| A second `adopt` | skipped all 228 |
+| Removing the throwaway directory | the old folder still has its 8,734 files and 16,541,094,986 bytes, each with one link again |
+
+**On the owner's machine** (done after the acceptance, on "continue"):
+
+- `home --set` saved `/media/jeremy/OrangeCream/Linux Software/workspace/runtime-data/tuldok/projects` in `~/.local/share/tuldok/settings.json`. The path follows the disk's own layout notes, which put app data under `workspace/runtime-data/`. Before, the default was on the system disk with 16.5 GB free.
+- The owner's Tuldok database was started, the lab project opened in it for the first time (0.9 s), both environments connected and ready, and the same 228 entries adopted in 0.7 s by link. The database was then stopped again, as it was found.
+- The lab project there: 228 built (203 recipes, 25 datasets), 23 cannot rebuild (16 earlier benchmarks, 5 datasets, 2 recipes), 9 to build (the new datasets, the pilot recipe, its two benchmarks and four steps), 2 environments ready.
+
+**Not verified:** adoption by copy across disks beyond its test; `home --set` when a previous directory holds projects, beyond its test.
+
+**Known gaps:** no command rebuilds or sets aside an adopted product; the 0.69 GB the manifest does not name exists only in the old folder; the earlier weights and training data are single copies on this machine.
+
+**Machine note:** the machine restarted during this work, which emptied `/tmp`: the throwaway database was made again, and the screenshots and chart from the milestone 7 acceptance, which were only there, are gone.
+
+**Next:** part 2, the lab repository stops tracking the old project folder; then the deletion of the old project mode, which waits for the capability check to be signed.
