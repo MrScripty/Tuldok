@@ -244,3 +244,60 @@ Command for all Tuldok tests as before: 423 tests, about 2.5 minutes.
 **Known gaps:** leftover `.partial-*` snapshot directories from a crashed build are never removed; nothing is ever deleted from the local home (runs, old products, snapshots), so a `prune` command is needed before long use; the values file's `commit` is whatever the benchmark's command writes, since the command is not told its commit.
 
 **Next:** milestone 7, serving the new core from the Tuldok app with agent operations; then milestone 8, converting the lab for good and retiring the old project-files code, which needs the owner's two open decisions (where the product archive goes; which earlier models to drop) and sign-off of the capability check.
+
+## 2026-11-12 — milestone 7, the app and the agent interface
+
+**Owner instruction:** continue, after the milestone 6 report said the next step was this milestone's spec and its implementation in the same way. Spec: [spec-m7.md](spec-m7.md); its section 12 lists where the code differs from the sections before it.
+
+**Commits** (none pushed), Tuldok `feat/definition-first-projects`: spec `1b633ffb`; the operations table, the service, build requests and the worker `2e1f21d9`; the app, the agent contracts and the page `3f8f0f4b`.
+
+| Slice | What | Tests |
+| --- | --- | --- |
+| T13 service | `tuldok_project/operations.py` (36 operations as data), `service.py`, `activity.py` | 25 |
+| T14 build requests | `tuldok_project/build_requests.py`, the worker in `service.py`, `expect` and `stop` on `builds.execute`, the commands `requests`, `approve`, `decline` | 18 |
+| T15 app | `tuldok_project/host.py`, additive blocks in `app.py` (59 lines), `agent_api.py` (59 lines) and `mcp_stdio.py` (4 lines), the page, the "Serving a project" contract section | 16 |
+
+All Tuldok project tests: 482, about 3 minutes. The 14 existing agent and contract test modules named in the spec: 173 tests pass with 31 skipped, before the milestone and on its final code (run from the repository root with `PYTHONPATH=tests`).
+
+**Nothing published changed.** The `catalog` profile (115 operations), the old `project` profile (152 operations) and the legacy discovery document have the SHA-256 digests they had before the milestone; a test pins the three. No pinned contract fixture was regenerated: the earlier note that they would need it was wrong, because they record earlier contracts and this milestone only adds.
+
+**Changed in review:**
+
+- `ERROR_STATUS` became `error_status`.
+- The worker logs a failure that repeats every pass once, not every second.
+- The page's sign-in bar and dialog kept their light colours in a dark browser; they now follow the page.
+- Found in the acceptance run: a command such as `requests` failed at once with "already open" when the app had the project open for a moment. The store commands now wait up to 5 seconds, as `build` and `progress` already did.
+- From the acceptance agent's remarks: a request has `expires_at` while it is queued, and the descriptions of `progress` and `request_build` say how to read on and where to see the state.
+
+**One change outside the listed blocks:** `agent_api.AgentClient` accepted only refusal codes without hyphens, so every refusal of the new core reached an agent as a transport error. For a `project.*` selection it now passes on the code, `problems`, `references` and `files`. No existing line changed.
+
+**Acceptance run, `examples/tiny-project/project`** (throwaway catalog and database, local home in a scratch directory, port 8197):
+
+| Step | Result |
+| --- | --- |
+| `python app.py --project-folder ...` | serving in under a second |
+| the owner signs in with a one-time code and issues an agent credential over HTTP | owner session; agent credential with `inspect`, `edit`, `execute`, `cancel` |
+| the owner connects both environments with `ProjectFolderOwnerClient` | both ready; 36 operations offered |
+| an agent given only the agent credential and `agent_api.AgentClient`, told to learn the operations from their descriptions | read the summary and the plan (3 steps to build), requested `benchmarks/held-out`: `awaiting-approval` |
+| the owner's side: `approve` on the command line | showed who asked, the commit, the 3 steps and the 5 definitions held to; queued, then started within a second |
+| the build | `succeeded` 23 s after approval: dataset 0.3 s, training 14.8 s on the GPU, benchmark 2.2 s and 1.3 s |
+| the agent's polling of `progress` during training | 9 distinct events, from update 650 to 6,000 of 6,000, loss 0.0023 to 0.0006 |
+| the agent's reading of the results and the ranking chart | `small-net-a` median error 0.0376, `predict-zero` 0.871, 400 cases each; the SVG saved |
+| the agent's second request | refused 409 `nothing-to-build`; no request made |
+| `activity` | four rows: two connects by the owner, the agent's request, the approval from the command line; then the refused second request |
+| the page, in a headless browser as the signed-in owner | name, folder and the report with both charts, in light and dark, no script error, no sideways overflow |
+| afterwards | the app stopped on `SIGINT` with exit status 0; no process carrying a run id; the GPU idle; the example unchanged in Git |
+
+**The lab project through the app** (271 definitions, 18 benchmarks, results from `results/*.csv` only): `summary`, `definitions`, `graph`, `results_overview`, one benchmark's 1,125 summary rows and each chart with its drawing answered in 0.02 to 0.09 s; `report` in 0.18 s; `plan` for everything in 0.09 s; `check` in 0.5 s. A request to build everything was refused as `blocked` and made no request. Nothing of the lab was run.
+
+**Not verified:** the MCP bridge with `--project-folder-owner` (the `mcp` and `anyio` packages are not installed here; the change is the flag and the client choice); the sign-in dialog typed by hand (the browser check was given the session cookie); a browser other than headless Chromium; cancelling a real long training through `cancel_build`; two apps on one project beyond the test of the worker lock.
+
+**Known gaps:**
+
+- While a build checks an environment, which takes a few seconds for the GPU one, every other operation waits. The agent saw one 4 second poll and so never observed `queued`.
+- A request has no history of its states, and its runs appear in two shapes (`result` and `runs`).
+- `context.get` and `identity.get` keep their generic descriptions; they are part of the pinned legacy discovery document.
+- The example's benchmark reports one timing spread over its 400 cases, so `time_ms` has no spread.
+- Carried over: the values file's `commit` is empty; nothing is ever deleted from the local home; installing an environment and measuring estimates are command-line only; the catalog queue does not take the GPU lock (spec section 9).
+
+**Next:** milestone 8, converting the lab for good and retiring the old project-files code. It needs the owner's two open decisions (where the product archive for the earlier weights goes; which earlier models to drop) and sign-off of the written capability check before any old module is deleted.
