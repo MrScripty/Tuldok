@@ -143,6 +143,14 @@ async function settled(label) {
   await until(() => evaluate(`(() => { const reading = e => [...e.querySelectorAll('.note')].some(n => n.textContent === 'Reading…'); return !reading(document.getElementById('main')) && !reading(document.getElementById('aside')) && !document.getElementById('main').hasAttribute('aria-busy') && !document.querySelector('.act-group [aria-busy]'); })()`), label);
   await pause(150);
 }
+/** Replaces the whole value of a field (a number field too): select all, delete, then the text. */
+async function replace(selector, text) {
+  await press(selector);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2, commands: ['selectAll'] });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2 });
+  await key('Delete', 'Delete', 46);
+  if (text) await send('Input.insertText', { text });
+}
 async function drawerText() { return evaluate(`document.getElementById('aside').innerText`); }
 const drawerState = () => evaluate(`[...document.querySelectorAll('#aside header .state')].map(e => e.textContent.trim()).join(' ')`);
 
@@ -175,9 +183,12 @@ for step in range(1, 241):
 with open(os.path.join(out, 'weights.json'), 'w') as handle:
     json.dump({'constant': 2.0}, handle)
 `);
-  const recipe = (title, script, extra) => JSON.stringify({ format: 'tuldok_definition_v1', kind: 'recipe', title, ...extra,
-    run: { command: ['python', script, '--out', '{output}'], environment: 'environments/test-python', outputs: { weights: { path: 'weights.json', role: 'weights' } }, sources: [script] } }, null, 2) + '\n';
-  fs.writeFileSync(path.join(folder, 'recipes', 'slow.json'), recipe('Slow fit, four seconds', 'slow.py', { labels: { short: 'SLOW' }, change: 'refinement', derived_from: 'recipes/fit-a' }));
+  const recipe = (title, script, extra, settingsFile) => JSON.stringify({ format: 'tuldok_definition_v1', kind: 'recipe', title, ...extra,
+    run: { command: ['python', script].concat(settingsFile ? ['--settings', '{settings}'] : [], ['--out', '{output}']), environment: 'environments/test-python', ...(settingsFile ? { settings_file: settingsFile } : {}),
+      outputs: { weights: { path: 'weights.json', role: 'weights' } }, sources: [script] } }, null, 2) + '\n';
+  // The slow recipe reads its settings from a file holding a JSON object, so a branch of it carries them inline (T22).
+  fs.writeFileSync(path.join(code, 'slow-settings.json'), JSON.stringify({ steps: 8, rate: 0.001, label: 'slow', schedule: [1, 2] }) + '\n');
+  fs.writeFileSync(path.join(folder, 'recipes', 'slow.json'), recipe('Slow fit, four seconds', 'slow.py', { labels: { short: 'SLOW' }, change: 'refinement', derived_from: 'recipes/fit-a' }, 'slow-settings.json'));
   fs.writeFileSync(path.join(folder, 'recipes', 'hold.json'), recipe('Held fit, runs until cancelled', 'hold_run.py', { labels: { short: 'HOLD' }, change: 'training-policy' }));
   const git = ['-c', 'user.name=Tuldok Test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'init.defaultBranch=main', '-C', path.join(temporary, 'fixture')];
   execFileSync('git', [...git, 'init', '-q']); execFileSync('git', [...git, 'add', '-A']); execFileSync('git', [...git, 'commit', '-q', '-m', 'The fixture.']);
@@ -425,6 +436,267 @@ with open(os.path.join(out, 'weights.json'), 'w') as handle:
   await inspect('conflict resolved');
   check('A conflict on recipes/fit-a: the panel named it; Keep my edits kept "Fit a, my edit" unsaved; a second one, Take the files ("' + takeWords + '"), took "Fit a, changed on disk again"');
 
+  // ==== Editing and branching (spec-w3 section 3.2, slice T22) ===========================================
+  const projectId = JSON.parse(fs.readFileSync(path.join(folder, 'tuldok.json'), 'utf8')).id;
+  const stored = () => evaluate(`JSON.parse(sessionStorage.getItem(${JSON.stringify('tuldok-drafts:' + projectId)}) || '{"drafts": []}').drafts`);
+  const onDisk = name => fs.existsSync(path.join(folder, name)) ? fs.readFileSync(path.join(folder, name), 'utf8') : null;
+  const stripUnsaved = () => evaluate(`(() => { const c = document.querySelector('#strip .unsaved .count'); return c ? c.textContent : ''; })()`);
+  const mapNodes = () => evaluate(`[...document.querySelectorAll('.tree-map .node')].map(g => { const c = g.querySelector('circle'); return { id: g.dataset.id, x: +c.getAttribute('cx'), y: +c.getAttribute('cy'), cls: g.getAttribute('class'), dash: getComputedStyle(c).strokeDasharray, fill: getComputedStyle(c).fill, label: (g.querySelector('text') || {}).textContent || '' }; })`);
+  const listRows = () => evaluate(`[...document.querySelectorAll('.tree-list .trow')].map(b => ({ id: b.dataset.id, chip: b.querySelector('.chip').textContent, mark: b.querySelector('.umark').textContent, cls: b.className }))`);
+  const editorValue = name => evaluate(`(() => { const e = [...document.querySelectorAll('#aside [data-key]')].find(e => e.dataset.key === ${JSON.stringify(name)}); return e ? e.value : null; })()`);
+  const refusalText = () => evaluate(`(() => { const r = document.querySelector('#aside .refusal'); return r && r.innerText; })()`);
+
+  // ---- Branch a built model: the draft on the map, after its parent; it survives a reload -----------------
+  await hash('map/recipes%2Fslow');
+  assert.equal(await drawerState(), 'built');
+  await press(byKey('modelact:recipes/slow:branch'));
+  await until(() => evaluate(`location.hash === '#map/branch%3Arecipes%2Fslow' && !!document.querySelector('#aside .branch')`), 'the branch form');
+  const branchKinds = await evaluate(`[...document.querySelectorAll('#aside .branch input[type="radio"]')].filter(r => r.checked).map(r => r.value)`);
+  assert.deepEqual(branchKinds, ['refinement'], 'The kind of change is the parent\'s to begin with');
+  // Create without a title is refused in place.
+  await press(byKey('branch:recipes/slow:create'));
+  assert.match(await until(refusalText, 'the title refusal'), /needs a title/);
+  await type(byKey('branch:recipes/slow:field:title'), 'Slow fit, a faster rate');
+  await type(byKey('branch:recipes/slow:field:description'), 'Doubles the rate of the slow fit.');
+  await shots('branch-form');
+  await press(byKey('branch:recipes/slow:create'));
+  const draftRef = 'recipes/slow-fit-a-faster-rate';
+  await until(() => evaluate(`location.hash === '#map/' + encodeURIComponent(${JSON.stringify(draftRef)}) && !!document.querySelector('#aside .editor')`), 'the draft selected, its drawer the editor'); await settled('draft');
+  const placeDraft = async () => {
+    const nodes = await mapNodes(), rows = await listRows(), slow = nodes.find(n => n.id === 'recipes/slow'), draft = nodes.find(n => n.id === draftRef);
+    assert.ok(draft, 'The draft is on the map');
+    assert.equal(rows.findIndex(r => r.id === draftRef), rows.findIndex(r => r.id === 'recipes/slow') + 1, 'The draft is listed right after its parent');
+    assert.equal(Math.min(...nodes.filter(n => n.x > slow.x).map(n => n.x)), draft.x, 'The draft is drawn right after its parent');
+    assert.notEqual(draft.y, slow.y, 'The draft is in the lane of its parent\'s branches');
+    assert.ok(await evaluate(`!!document.querySelector('.tree-map .der[data-family="recipes/slow"]')`), 'Its line from the parent');
+    assert.equal(new Set(nodes.map(n => n.x + ',' + n.y)).size, nodes.length, 'No node is drawn on another');
+    assert.match(draft.cls, /\bplanned\b/); assert.match(draft.cls, /\bdraft\b/); assert.notEqual(draft.dash, 'none', 'dashed'); assert.equal(draft.label, 'new');
+    assert.equal(rows.find(r => r.id === draftRef).chip, 'draft');
+    return { draft, slow, rows: rows.length };
+  };
+  const placed = await placeDraft();
+  const drawerForm = await evaluate(`({ view: [...document.querySelectorAll('#aside .seg button')].map(b => b.textContent + '=' + b.getAttribute('aria-pressed')), inlined: [...document.querySelectorAll('#aside p.note')].map(p => p.textContent).find(t => t.includes('copied from')) || '', steps: [...document.querySelectorAll('#aside .new-steps li')].map(li => li.dataset.step + ':' + li.className), buttons: [...document.querySelectorAll('#aside .act-group button')].map(b => b.textContent) })`);
+  assert.deepEqual(drawerForm.view, ['Form=true', 'Text=false']); assert.match(drawerForm.inlined, /slow-settings\.json/);
+  assert.deepEqual(drawerForm.steps, ['Kept:todo', 'Saved:todo', 'Build requested:todo', 'Running:todo', 'Built:todo']); assert.deepEqual(drawerForm.buttons, ['Keep', 'Discard']);
+  assert.equal((await stored()).map(d => d.reference).join(), draftRef);
+  await open('map/' + encodeURIComponent(draftRef));
+  await until(() => evaluate(`!!document.querySelector('#aside .editor')`), 'the draft drawer after a reload'); await settled('reloaded');
+  await placeDraft();
+  check('Branched recipes/slow ("' + drawerForm.inlined + '"): the draft ' + draftRef + ' is drawn hollow and dashed, labelled new, right after its parent (x ' + placed.slow.x + ' → ' + placed.draft.x + ', lane below), listed after it with the chip "draft", its drawer the form with the steps ' + drawerForm.steps.join(', ') + '; still there after a reload');
+
+  // ---- Change a setting (a number stays a number), keep, save ------------------------------------------------------
+  assert.equal(await editorValue('editor:' + draftRef + ':setting-rate'), '0.001');
+  await replace(byKey('editor:' + draftRef + ':setting-rate'), '0.002');
+  await until(async () => /"rate": 0\.002\b/.test((await stored())[0].text), 'the setting in the draft text');
+  const draftText = (await stored())[0].text;
+  assert.equal(JSON.parse(draftText).run.settings.rate, 0.002); assert.equal(JSON.parse(draftText).run.settings.steps, 8);
+  assert.match(draftText, /\n  "run": \{\n    "command"/, 'Written with the indentation the text had'); assert.ok(draftText.endsWith('}\n'));
+  await evaluate(`document.querySelector('#aside .new-steps').scrollIntoView({ block: 'end' })`);
+  await shots('draft-on-map');
+  await press(byKey('draft:' + draftRef + ':keep'));
+  await until(async () => (await stripUnsaved()) === '1 definition unsaved', 'the strip says 1 unsaved'); await settled('kept');
+  const keptView = await evaluate(`({ steps: [...document.querySelectorAll('#aside .new-steps li')].map(li => li.dataset.step + ':' + li.className), next: [...document.querySelectorAll('#aside .new-steps .act-group button')].map(b => b.textContent), mark: document.querySelector('#aside header .umark').textContent, node: !!document.querySelector('.tree-map .node[data-id="${draftRef}"] .unsaved-dot'), row: [...document.querySelectorAll('.tree-list .trow')].find(b => b.dataset.id === '${draftRef}').querySelector('.umark').textContent })`);
+  assert.deepEqual(keptView.steps.slice(0, 2), ['Kept:done', 'Saved:todo']); assert.deepEqual(keptView.next, ['Save', 'Discard']);
+  assert.equal(keptView.mark, 'unsaved'); assert.ok(keptView.node, 'The unsaved mark on the map node'); assert.equal(keptView.row, 'unsaved');
+  assert.deepEqual(await stored(), [], 'A kept draft is no longer a draft');
+  await press(byKey('model:' + draftRef + ':save'));
+  await until(async () => (await stripUnsaved()) === '', 'nothing unsaved after Save'); await settled('saved branch');
+  const savedBranch = JSON.parse(onDisk('recipes/slow-fit-a-faster-rate.json'));
+  assert.equal(savedBranch.derived_from, 'recipes/slow'); assert.equal(savedBranch.run.settings.rate, 0.002); assert.equal(savedBranch.title, 'Slow fit, a faster rate');
+  assert.equal(savedBranch.labels, undefined); assert.equal(savedBranch.card, undefined); assert.equal(savedBranch.run.settings_file, undefined);
+  check('Changed the rate in the form (0.001 → 0.002, a number; steps stays 8), kept it (the strip said 1 unsaved; the drawer, list row and node marked unsaved; next step ' + keptView.next[0] + '), saved: ' + draftRef + '.json has derived_from, the setting and the title, and no labels or card');
+
+  // ---- Plan build, request it: the model drawn built with its line, without a reload -------------------------------
+  await evaluate(`window.__noReload = 2`);
+  await press(byKey('model:' + draftRef + ':plan'));
+  await until(() => evaluate(`location.hash === '#map/' + encodeURIComponent('plan:${draftRef}') && !!document.querySelector('#aside .plan-view')`), 'the plan view of the branch'); await settled('plan branch');
+  await press(byKey('request:plan:' + draftRef + ':request'));
+  await until(() => evaluate(`location.hash.startsWith('#train/request%3A')`), 'the branch request opened');
+  const branchRequest = decodeURIComponent(await evaluate(`location.hash`)).slice('#train/request:'.length);
+  await hash('map/' + encodeURIComponent(draftRef));
+  await until(async () => { const n = (await mapNodes()).find(x => x.id === draftRef); return n && !/\bplanned\b/.test(n.cls) && n.dash === 'none'; }, 'the branch drawn built', 400);
+  await until(() => evaluate(`!!document.querySelector('#aside .new-steps li[data-step="Built"].done')`), 'its steps say Built', 200); await settled('branch built');
+  assert.equal(await evaluate(`window.__noReload`), 2, 'The page was not reloaded');
+  assert.equal((await api('build_request', { request: branchRequest })).state, 'succeeded');
+  assert.ok(await evaluate(`!!document.querySelector('.tree-map .der[data-family="recipes/slow"]')`), 'Its line from the parent');
+  const builtSteps = await evaluate(`[...document.querySelectorAll('#aside .new-steps li')].map(li => li.dataset.step + ':' + li.className).join(', ')`);
+  await shots('branch-built');
+  check('Planned and requested the branch (' + branchRequest.slice(0, 8) + '); without a reload it is drawn built (solid) with its line from recipes/slow, and its steps read ' + builtSteps);
+
+  // ---- A draft discarded is gone from the map, the list and sessionStorage ----------------------------------------------
+  await hash('map/branch:recipes%2Fslow');
+  await type(byKey('branch:recipes/slow:field:title'), 'A branch to throw away');
+  await press(byKey('branch:recipes/slow:create'));
+  const throwaway = 'recipes/a-branch-to-throw-away';
+  await until(() => evaluate(`location.hash === '#map/' + encodeURIComponent('${throwaway}')`), 'the second draft'); await settled('second draft');
+  assert.ok((await mapNodes()).some(n => n.id === throwaway));
+  await press(byKey('draft:' + throwaway + ':discard'));
+  const dropWords = await evaluate(`document.querySelector('#aside .confirm-words').textContent`);
+  await press(byKey('draft:' + throwaway + ':discard:confirm'));
+  await until(async () => !(await mapNodes()).some(n => n.id === throwaway), 'the draft gone from the map'); await settled('discarded');
+  assert.ok(!(await listRows()).some(r => r.id === throwaway)); assert.deepEqual(await stored(), []);
+  check('A second draft, discarded with two presses ("' + dropWords + '"), is gone from the map, the list and sessionStorage');
+
+  // ---- A branch whose draft has errors: the problems, and Keep refused with them ------------------------------------------
+  await hash('map/branch:recipes%2Fearly-fit');
+  await type(byKey('branch:recipes/early-fit:field:title'), 'Early fit, run again');
+  await press(byKey('branch:recipes/early-fit:create'));
+  const broken = 'recipes/early-fit-run-again';
+  await until(() => evaluate(`location.hash === '#map/' + encodeURIComponent('${broken}') && !!document.querySelector('#aside .editor')`), 'the earlier-work draft'); await settled('broken draft');
+  const problems = await evaluate(`document.querySelector('#aside .problems').innerText`);
+  assert.match(problems, /run/);
+  const keepRefused = allow(/\/api\/project\/set_definition$/, 400);
+  await press(byKey('draft:' + broken + ':keep'));
+  const keepRefusal = await until(refusalText, 'Keep refused'); close(keepRefused);
+  assert.ok(!(await api('definitions', { kind: 'recipe' })).definitions.some(d => d.reference === broken), 'Nothing stored');
+  check('A branch of earlier work without run opens with its problems ("' + problems.replace(/\n/g, ' ').slice(0, 120) + '…"); Keep was refused with them ("' + keepRefusal.replace(/\n/g, ' ').slice(0, 120) + '…") and nothing was stored');
+
+  // ---- Edit an existing recipe in the form; leave and come back; keep; discard the edit ---------------------------------
+  const k1File = onDisk('recipes/stepper-k1.json');
+  await hash('map/recipes%2Fstepper-k1');
+  await press(byKey('modelact:recipes/stepper-k1:edit'));
+  await until(() => evaluate(`location.hash === '#map/edit%3Arecipes%2Fstepper-k1' && !!document.querySelector('#aside .editor-form')`), 'the editor of stepper-k1'); await settled('editor k1');
+  await type(byKey('editor:recipes/stepper-k1:description'), 'Trained again with a recorded command.');
+  await until(() => evaluate(`document.querySelector('#aside header .umark').textContent === 'not kept yet'`), 'not kept yet in the header');
+  await shots('editor-form');
+  await hash('train'); await hash('map/edit%3Arecipes%2Fstepper-k1');
+  const back = await evaluate(`({ value: document.querySelector('#aside [data-key="editor:recipes/stepper-k1:description"]').value, header: document.querySelector('#aside header .umark').textContent, row: [...document.querySelectorAll('.tree-list .trow')].find(b => b.dataset.id === 'recipes/stepper-k1').querySelector('.umark').textContent })`);
+  assert.deepEqual(back, { value: 'Trained again with a recorded command.', header: 'not kept yet', row: 'not kept yet' });
+  await press(byKey('edit:recipes/stepper-k1:keep'));
+  await until(async () => (await api('definition', { reference: 'recipes/stepper-k1' })).unsaved, 'stepper-k1 kept'); await settled('k1 kept');
+  assert.equal((await api('definition', { reference: 'recipes/stepper-k1' })).document.description, 'Trained again with a recorded command.');
+  assert.equal(await evaluate(`document.querySelector('#aside header .umark').textContent`), 'unsaved');
+  await press(byKey('edit:recipes/stepper-k1:discard'));
+  const revertWords = await evaluate(`document.querySelector('#aside .confirm-words').textContent`);
+  await press(byKey('edit:recipes/stepper-k1:discard:confirm'));
+  await until(async () => !(await api('definition', { reference: 'recipes/stepper-k1' })).unsaved, 'stepper-k1 reverted'); await settled('k1 reverted');
+  assert.equal((await api('definition', { reference: 'recipes/stepper-k1' })).text, k1File, 'The definition is the file again');
+  check('Edited stepper-k1\'s description in the form; after Train and back the typing was there, marked "not kept yet" in the drawer and its row; kept (unsaved), then Discard edit with two presses ("' + revertWords + '") put the file back');
+
+  // ---- Change a kind of change, keep, save --------------------------------------------------------------------------------
+  await hash('map/edit%3Arecipes%2Fstepper-k2');
+  await press(byKey('editor:recipes/stepper-k2:change-architecture'));
+  await press(byKey('edit:recipes/stepper-k2:keep'));
+  await until(async () => (await api('definition', { reference: 'recipes/stepper-k2' })).document.change === 'architecture', 'k2 kept'); await settled('k2 kept');
+  await press(byKey('edit:recipes/stepper-k2:save'));
+  await until(async () => (await stripUnsaved()) === '', 'k2 saved'); await settled('k2 saved');
+  const k2 = JSON.parse(onDisk('recipes/stepper-k2.json'));
+  assert.equal(k2.change, 'architecture'); assert.equal(k2.labels.short, 'K2'); assert.equal(k2.run.settings.learning_rate, 0.0005);
+  const k2Node = (await mapNodes()).find(n => n.id === 'recipes/stepper-k2');
+  assert.match(k2Node.cls, /\barchitecture\b/); assert.doesNotMatch(k2Node.cls, /\brefinement\b/);
+  check('Changed stepper-k2\'s kind of change to Architecture, kept and saved: the file says "change": "architecture" (its other fields as they were) and its node is ' + k2Node.cls);
+
+  // ---- The text view: invalid JSON refused with the problem, nothing kept; then a valid change kept --------------------------
+  const fitBDef = await api('definition', { reference: 'recipes/fit-b' });
+  await hash('map/edit%3Arecipes%2Ffit-b');
+  await press(byKey('editor:recipes/fit-b:view-text'));
+  await until(() => evaluate(`!!document.querySelector('#aside textarea.code')`), 'the text view');
+  await replace(byKey('editor:recipes/fit-b:text'), fitBDef.text.replace('"title": "Fit b, saved from the strip",', '"title": "Fit b, broken",,'));
+  const invalidRefused = allow(/\/api\/project\/set_definition$/, 400);
+  await press(byKey('edit:recipes/fit-b:keep'));
+  const invalidRefusal = await until(refusalText, 'the invalid JSON refused'); close(invalidRefused);
+  assert.match(invalidRefusal, /not valid|JSON/i);
+  assert.equal((await api('definition', { reference: 'recipes/fit-b' })).text, fitBDef.text, 'Nothing was kept');
+  await evaluate(`document.querySelector('#aside .refusal').scrollIntoView({ block: 'center' })`);
+  await shots('text-problem');
+  await replace(byKey('editor:recipes/fit-b:text'), fitBDef.text.replace('"Fit b, saved from the strip"', '"Fit b, from the text view"'));
+  await press(byKey('edit:recipes/fit-b:keep'));
+  await until(async () => (await api('definition', { reference: 'recipes/fit-b' })).title === 'Fit b, from the text view', 'the text kept'); await settled('text kept');
+  check('In the text view, invalid JSON was refused with the problem shown ("' + invalidRefusal.replace(/\n/g, ' ').slice(0, 120) + '") and nothing kept; then a valid change was kept');
+
+  // ---- Pick on the map: Escape leaves the state; a pick sets the parent; its line is drawn -------------------------------------
+  await hash('map/edit%3Arecipes%2Fhold');
+  await press(byKey('editor:recipes/hold:pick'));
+  await until(() => evaluate(`!!document.querySelector('#aside .picking')`), 'the picking state');
+  const pickWords = await evaluate(`document.querySelector('#aside .picking p').textContent`);
+  await shots('picking');
+  await key('Escape', 'Escape', 27);
+  await until(() => evaluate(`!document.querySelector('#aside .picking') && document.getElementById('drawer').classList.contains('open')`), 'Escape left the picking state, not the drawer');
+  await press(byKey('editor:recipes/hold:pick'));
+  await until(() => evaluate(`!!document.querySelector('#aside .picking')`), 'the picking state again');
+  await press('.tree-map .node[data-id="recipes/hold"]');
+  assert.match(await until(() => evaluate(`(() => { const p = document.querySelector('#aside .picking .warnline'); return p && p.textContent; })()`), 'itself refused'), /not derived from itself/);
+  await press('.tree-map .node[data-id="recipes/fit-b"]');
+  await until(() => evaluate(`!document.querySelector('#aside .picking') && document.querySelector('#aside .derived-name').textContent.includes('Fit b')`), 'fit-b as the parent'); await settled('picked');
+  assert.equal(await evaluate(`location.hash`), '#map/edit%3Arecipes%2Fhold');
+  await press(byKey('edit:recipes/hold:keep'));
+  await until(async () => (await api('definition', { reference: 'recipes/hold' })).document.derived_from === 'recipes/fit-b', 'hold kept with its parent'); await settled('hold kept');
+  await until(() => evaluate(`!!document.querySelector('.tree-map .der[data-family="recipes/fit-b"]')`), 'the derivation line from fit-b');
+  await press('#strip ' + byKey('save:save')); await until(async () => (await stripUnsaved()) === '', 'saved'); await settled('saved hold');
+  check('Pick on the map ("' + pickWords + '"): Escape left it; pressing hold itself was refused in place; pressing fit-b made it the parent, kept, with its line drawn');
+
+  // ---- Remove: one nothing uses, and one in use (the refusal names its users) ------------------------------------------------
+  await hash('overview');
+  await until(() => evaluate(`!!document.querySelector('#main .ov-defs .row.def')`), 'the list of every definition');
+  const listed = await evaluate(`[...document.querySelectorAll('#main .ov-defs h3')].map(e => e.textContent)`);
+  await evaluate(`document.querySelector('#main .ov-defs').scrollIntoView({ block: 'start' })`);
+  await shots('overview-list');
+  await press(byKey('open-edit:charts/rollout-ranking'));
+  await until(() => evaluate(`location.hash === '#overview/edit%3Acharts%2Frollout-ranking' && !!document.querySelector('#aside textarea.code')`), 'the chart in the text view'); await settled('chart editor');
+  const chartText = (await api('definition', { reference: 'charts/rollout-ranking' })).text;
+  await replace(byKey('editor:charts/rollout-ranking:text'), chartText.replace('"Rollout error by subject"', '"Rollout error, each subject"'));
+  await press(byKey('edit:charts/rollout-ranking:keep'));
+  await until(async () => (await api('definition', { reference: 'charts/rollout-ranking' })).title === 'Rollout error, each subject', 'the chart kept'); await settled('chart kept');
+  await press(byKey('edit:charts/rollout-ranking:remove'));
+  const removeWords = await evaluate(`document.querySelector('#aside .confirm-words').textContent`);
+  await press(byKey('edit:charts/rollout-ranking:remove:confirm'));
+  await until(async () => (await api('definition', { reference: 'charts/rollout-ranking' })).removed, 'the chart marked removed'); await settled('removed');
+  assert.equal(await evaluate(`[...document.querySelectorAll('#main .ov-defs .row.def')].find(r => r.dataset.ref === 'charts/rollout-ranking').querySelector('.umark').textContent`), 'removed');
+  await press(byKey('open-edit:datasets/waves'));
+  await until(() => evaluate(`location.hash === '#overview/edit%3Adatasets%2Fwaves' && !!document.querySelector('#aside textarea.code')`), 'the waves dataset'); await settled('waves');
+  const inUse = allow(/\/api\/project\/remove_definition$/, 409);
+  await press(byKey('edit:datasets/waves:remove')); await press(byKey('edit:datasets/waves:remove:confirm'));
+  const usedBy = await until(refusalText, 'the in-use refusal'); close(inUse);
+  assert.match(usedBy, /recipes\/stepper-k1/);
+  assert.equal((await api('definition', { reference: 'datasets/waves' })).removed, false);
+  await hash('overview/edit%3Acharts%2Frollout-ranking');
+  await press(byKey('edit:charts/rollout-ranking:discard')); await press(byKey('edit:charts/rollout-ranking:discard:confirm'));
+  await until(async () => { const d = await api('definition', { reference: 'charts/rollout-ranking' }); return !d.removed && !d.unsaved; }, 'the chart back'); await settled('chart back');
+  check('Overview lists every definition by kind (' + listed.join(', ') + '); a chart edited in the text view and kept, then removed with two presses ("' + removeWords + '") and put back; removing datasets/waves was refused naming its users ("' + usedBy.replace(/\n/g, ' ').slice(0, 140) + '")');
+
+  // ---- Edit a dataset from the Data tab, in the text view --------------------------------------------------------------------
+  await hash('data/datasets%2Fnumbers');
+  await press(byKey('dataedit:datasets/numbers:edit'));
+  await until(() => evaluate(`location.hash === '#data/edit%3Adatasets%2Fnumbers' && !!document.querySelector('#aside textarea.code')`), 'the dataset in the text view'); await settled('dataset editor');
+  const numbersText = (await api('definition', { reference: 'datasets/numbers' })).text;
+  await replace(byKey('editor:datasets/numbers:text'), numbersText.replace('"A few numbers"', '"A few numbers, renamed"'));
+  await press(byKey('edit:datasets/numbers:keep'));
+  await until(async () => (await api('definition', { reference: 'datasets/numbers' })).title === 'A few numbers, renamed', 'the dataset kept'); await settled('dataset kept');
+  await press(byKey('edit:datasets/numbers:discard')); await press(byKey('edit:datasets/numbers:discard:confirm'));
+  await until(async () => (await api('definition', { reference: 'datasets/numbers' })).text === numbersText, 'the dataset back'); await settled('dataset back');
+  await inspect('dataset back');
+  check('Edited datasets/numbers from the Data tab in the text view, kept it, and discarded the edit');
+
+  // ---- Typed text and focus outlive the refresh while a build runs, and the end of that build -----------------------------------
+  const holdAgain = await api('request_build', { targets: ['recipes/hold'] });
+  await until(async () => (await api('build_request', { request: holdAgain.id })).state === 'running', 'hold running again', 300);
+  await hash('map/edit%3Arecipes%2Ffit-a');
+  await press(byKey('editor:recipes/fit-a:description'));
+  await send('Input.insertText', { text: 'Typed while a build runs' });
+  await pause(4500);
+  const kept1 = await evaluate(`({ key: document.activeElement.dataset.key, value: document.activeElement.value, caret: document.activeElement.selectionStart })`);
+  assert.deepEqual(kept1, { key: 'editor:recipes/fit-a:description', value: 'Typed while a build runs', caret: 24 }, 'Typing and focus outlive the two-second refresh');
+  await api('cancel_build', { request: holdAgain.id });
+  await until(async () => !['queued', 'running'].includes((await api('build_request', { request: holdAgain.id })).state), 'hold cancelled');
+  await pause(3000);
+  await send('Input.insertText', { text: '.' });
+  const kept2 = await evaluate(`({ key: document.activeElement.dataset.key, value: document.activeElement.value })`);
+  assert.deepEqual(kept2, { key: 'editor:recipes/fit-a:description', value: 'Typed while a build runs.' }, 'Typing and focus outlive the end of the build');
+  await press(byKey('edit:recipes/fit-a:discard')); await press(byKey('edit:recipes/fit-a:discard:confirm'));
+  await until(() => evaluate(`document.querySelector('#aside [data-key="editor:recipes/fit-a:description"]').value === '' && document.querySelector('#aside header .umark').textContent === ''`), 'the typing discarded'); await settled('typing discarded');
+  check('Typed into fit-a\'s description while a build ran: the text, focus and caret outlived two refreshes and the end of the build; Discard edit dropped the typing');
+
+  // ---- Train: Planned first ---------------------------------------------------------------------------------------------------
+  await hash('train');
+  const planned = await evaluate(`[...document.querySelectorAll('#main .rows.planned > li')].map(li => li.innerText.replace(/\\n/g, ' '))`);
+  assert.ok(planned.some(t => t.includes('Early fit, run again') && t.includes('draft')), 'The draft is planned: ' + JSON.stringify(planned));
+  const toBuild = await evaluate(`[...document.querySelectorAll('#main .sect h2')].map(e => e.textContent)`);
+  assert.equal(toBuild[0], 'Planned'); assert.equal(toBuild[1], 'To build');
+  const twice = await evaluate(`(() => { const keys = [...document.querySelectorAll('#main .row.todo')].map(b => b.dataset.key); return keys.filter((k, i) => keys.indexOf(k) !== i); })()`);
+  assert.deepEqual(twice, [], 'No model listed twice');
+  await shots('train-planned');
+  check('Train lists Planned first: ' + planned.map(t => t.slice(0, 50)).join(' | '));
+
   // ---- A session that may only inspect: no control is drawn ---------------------------------------------
   await send('Page.navigate', { url: 'about:blank' });
   await send('Network.clearBrowserCookies');
@@ -433,12 +705,15 @@ with open(os.path.join(out, 'weights.json'), 'w') as handle:
   const cookies = (await send('Network.getCookies', { urls: [origin + '/'] })).cookies.filter(c => c.name === 'tuldok_session');
   assert.deepEqual(cookies.map(c => c.value === inspector), [true], 'The browser holds the inspector\'s credential alone');
   const seen = [];
-  for (const place of ['map/recipes%2Ffit-b', 'train', 'train/request:' + fitAsk.id, 'train/request:' + holdId, 'train/run:' + holdRun.id, 'train/env:environments%2Flab-cpu', 'train/plan:recipes%2Ffit-b', 'overview']) {
+  for (const place of ['map/recipes%2Ffit-b', 'map/edit:recipes%2Ffit-b', 'map/branch:recipes%2Fslow', 'map/' + encodeURIComponent(broken), 'data/edit:datasets%2Fnumbers', 'overview/edit:charts%2Frollout-ranking', 'train', 'train/request:' + fitAsk.id, 'train/request:' + holdId, 'train/run:' + holdRun.id, 'train/env:environments%2Flab-cpu', 'train/plan:recipes%2Ffit-b', 'overview']) {
     await open(place);
     assert.equal(await evaluate(`document.getElementById('session-identity').textContent`), 'A browser check inspector · agent');
     if (place === 'train') { await press('#needs-btn'); await until(() => evaluate(`!document.getElementById('needs-panel').hidden`), 'Needs you'); }
     const drawn = await evaluate(`[...document.querySelectorAll('button.act, #aside input[type="checkbox"], .act-field')].filter(e => e.offsetParent !== null || e.closest('#needs-panel')).map(b => b.textContent || b.type)`);
     assert.deepEqual(drawn, [], 'No control for an inspector on ' + place);
+    // T22: no editor, no branch form, no draft, no Edit, Branch from here, Keep, Save or Remove, and a list that opens nothing.
+    const editing = await evaluate(`({ editor: !!document.querySelector('#aside .editor, #aside .branch'), labels: [...document.querySelectorAll('button')].filter(b => b.offsetParent !== null).map(b => b.textContent).filter(t => ['Edit', 'Branch from here', 'Keep', 'Save', 'Remove', 'Discard edit', 'Discard', 'Create', 'Pick on the map'].includes(t)), drafts: document.querySelectorAll('.tree-map .node.draft').length, rows: document.querySelectorAll('#main .ov-defs button.row').length })`);
+    assert.deepEqual(editing, { editor: false, labels: [], drafts: 0, rows: 0 }, 'No editing for an inspector on ' + place);
     seen.push(place);
   }
   await shot('light-inspector-overview');

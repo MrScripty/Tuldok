@@ -75,10 +75,12 @@ window.TuldokProject = (() => {
    * sections (one per group that has models, the group tree read depth
    * first in authored order, then one section "Not in a group" when a model
    * names no group), models in section order and, within a section, in the
-   * map's order (training date, then those without one), inputs as lines,
-   * comparisons and the track with its scale.
+   * map's order (training date, then those without one) except that one
+   * without a date naming a parent comes right after it (placed()), inputs
+   * as lines, comparisons and the track with its scale. The page's drafts
+   * (editor.js) are models too, marked draft.
    */
-  function shapeMap(raw) {
+  function shapeMap(raw, drafts = []) {
     const groups = new Map(raw.groups.map(g => [g.id, g]));
     const children = new Map(), roots = [];
     for (const g of raw.groups) {
@@ -93,16 +95,25 @@ window.TuldokProject = (() => {
       id: m.reference, title: m.title, short: m.short, description: m.description || '',
       group: groups.has(m.group) ? m.group : null, kind: kinds.has(m.change) ? m.change : UNSET,
       parent: m.derived_from || null, trainedAt: m.trained_at, state: m.state, adopted: m.adopted, card: m.card,
-      value: m.value, count: m.count, benchmarks: m.benchmarks
+      value: m.value, count: m.count, benchmarks: m.benchmarks, unsaved: !!m.unsaved,
+      // Never built: drawn hollow and dashed (spec-w3 section 3.2).
+      planned: m.state === 'not-built' && !m.adopted && !m.trained_at
     }));
+    // A draft (editor.js) is a model of the page only, after its parent's models.
+    for (const d of drafts) models.push({
+      id: d.reference, title: d.title, short: d.short || null, description: d.description || '',
+      group: groups.has(d.group) ? d.group : null, kind: kinds.has(d.change) ? d.change : UNSET,
+      parent: d.parent, trainedAt: null, state: 'draft', adopted: false, card: null,
+      value: null, count: null, benchmarks: 0, unsaved: false, planned: true, draft: true
+    });
     const byId = new Map(models.map(m => [m.id, m]));
     for (const m of models) if (m.parent && !byId.has(m.parent)) m.parent = null;
     const sections = [];
     for (const { group, up } of order) {
-      const list = models.filter(m => m.group === group.id);
+      const list = placed(models.filter(m => m.group === group.id));
       if (list.length) sections.push({ id: group.id, title: group.title, up, description: group.description, models: list });
     }
-    const loose = models.filter(m => m.group === null);
+    const loose = placed(models.filter(m => m.group === null));
     if (loose.length) sections.push({ id: null, title: 'Not in a group', up: [], loose: true, models: loose });
     for (const s of sections) for (const m of s.models) m.groupTitle = s.title;
     const derived = new Set(raw.edges.filter(e => e.kind === 'derived').map(e => e.from + ' ' + e.to));
@@ -113,10 +124,40 @@ window.TuldokProject = (() => {
     const trackScale = track ? window.LabCharts.scale(models.map(m => m.value), track.metric.better) : null;
     return { sections, models: sections.flatMap(s => s.models), byId, inputs, comparisons, track, trackScale, groups: raw.groups };
   }
-  let mapRaw = null, mapShaped = null;
+  /**
+   * One section's models in the map's order, except that a model without a
+   * date naming a parent in the same section comes right after that parent,
+   * after the parent's earlier such children (spec-w3 section 3.2). Linear.
+   */
+  function placed(list) {
+    const here = new Set(list.map(m => m.id)), after = new Map(), moved = new Set();
+    for (const m of list) if (!m.trainedAt && m.parent && m.parent !== m.id && here.has(m.parent)) {
+      if (!after.has(m.parent)) after.set(m.parent, []);
+      after.get(m.parent).push(m); moved.add(m.id);
+    }
+    if (!moved.size) return list;
+    const out = [], seen = new Set();
+    const emit = m => { if (seen.has(m.id)) return; seen.add(m.id); out.push(m); for (const c of after.get(m.id) || []) emit(c); };
+    for (const m of list) if (!moved.has(m.id)) emit(m);
+    for (const m of list) emit(m);   // a loop of parents without dates (never stored): kept, in the map's order
+    return out;
+  }
+  // The drafts of the page (editor.js): drawn on the map, never sent anywhere. A draft
+  // whose parent is gone, or whose reference the project now has, is dropped
+  // (onDrop tells editor.js); a session that may not edit draws none.
+  let drafts = [], draftsVersion = 0, onDrop = () => {};
+  function setDrafts(list, dropped) { drafts = list.slice(); draftsVersion++; if (dropped) onDrop = dropped; }
+  let mapRaw = null, mapShaped = null, mapKey = '';
   async function map() {
     const raw = await read('map');
-    if (raw !== mapRaw) { mapRaw = raw; mapShaped = shapeMap(raw); }
+    const editing = !!(window.LabActions && window.LabActions.may('edit')), key = draftsVersion + ' ' + editing;
+    if (raw !== mapRaw || key !== mapKey) {
+      const refs = new Set(raw.models.map(m => m.reference));
+      const gone = drafts.filter(d => !refs.has(d.parent) || refs.has(d.reference));
+      const shown = editing ? drafts.filter(d => !gone.includes(d)) : [];
+      mapRaw = raw; mapKey = key; mapShaped = shapeMap(raw, shown);
+      if (gone.length) onDrop(gone);
+    }
     return mapShaped;
   }
   const trackName = track => track ? track.metric.title + ' · ' + track.statistic : '';
@@ -131,14 +172,15 @@ window.TuldokProject = (() => {
    * model states and, once read, the runs and build requests.
    */
   function standing(shaped, runs, requests) {
-    const count = s => shaped.models.filter(m => s.includes(m.state)).length;
+    const models = shaped.models.filter(m => !m.draft), count = s => models.filter(m => s.includes(m.state)).length;
     const built = count(['built']), toBuild = count(['not-built', 'out-of-date', 'failed']), cannot = count(['cannot-rebuild']), work = count(['needs-work']);
     const parts = [(built ? built : 'none') + ' built', toBuild + ' to build', cannot + ' cannot be rebuilt'];
     if (work) parts.push(work + (work === 1 ? ' needs' : ' need') + ' work');
-    let text = plural(shaped.models.length, 'model', 'models') + ': ' + parts.join(', ') + '.';
+    let text = plural(models.length, 'model', 'models') + ': ' + parts.join(', ') + '.';
     const running = (runs || []).filter(r => r.state === 'running'), queued = (requests || []).filter(r => r.state === 'queued' || r.state === 'running');
     let tone = 'good', word = 'Idle';
     if (running.length) { tone = 'pending'; word = 'Building'; text += ' Running ' + running.map(r => titleOf(shaped, r.reference) + (r.subject ? ' (' + r.subject + ')' : '')).join(', ') + '.'; }
+    else if (queued.some(r => r.state === 'running')) { tone = 'pending'; word = 'Building'; text += ' A build is between two of its steps.'; }   // a request runs, none of its runs does at this moment
     else if (queued.length) { tone = 'pending'; word = 'Queued'; text += ' ' + plural(queued.length, 'build request is', 'build requests are') + ' queued.'; }
     else if (runs && requests) text += ' Nothing is running.';
     return { tone, word, text };
@@ -174,5 +216,5 @@ window.TuldokProject = (() => {
     return out;
   }
 
-  return { KINDS, UNSET, kindLabel, stateWord, call, read, forget, forgetAll, map, trackName, better, units, standing, needs, titleOf, day };
+  return { KINDS, UNSET, kindLabel, stateWord, call, read, forget, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day };
 })();

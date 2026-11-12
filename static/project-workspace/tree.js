@@ -12,7 +12,7 @@ window.LabTree = (() => {
   const P = window.TuldokProject, C = window.LabCharts, el = C.el, h = C.h;
   const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const SHORT = 16;   // characters of a short label shown on the map (spec-w1 section 1)
-  const shortOf = m => m.short ? m.short.slice(0, SHORT) : null;
+  const shortOf = m => m.draft ? 'new' : m.short ? m.short.slice(0, SHORT) : null;
   const nameOf = m => (m.short ? m.short + ' · ' : '') + m.title;
   const refName = m => m.short || (m.title.length > 24 ? m.title.slice(0, 23) + '…' : m.title);
   // A short run of highlights from the previous selection to the new one, so
@@ -72,6 +72,8 @@ window.LabTree = (() => {
     const seqOut = new Set(edges.filter(e => e.kind === 'sequence').map(e => e.from));
     return { nodes, byId, edges, sections, families, laneCount: laneLast.length, seqIn, seqOut, seqSpan, track: shaped.track, scale: shaped.trackScale };
   }
+  /** The mark after a model's name: "unsaved" for an unsaved edit; editor.js writes "not kept yet" into it (data-ref). */
+  function mark(m) { const s = h('span', 'umark', m.unsaved ? 'unsaved' : ''); s.dataset.ref = m.id; if (m.unsaved) s.dataset.unsaved = '1'; if (m.draft) s.dataset.draft = '1'; return s; }
   function related(graph, id) { const out = new Set(); for (const e of graph.edges) if (e.kind !== 'sequence' && (e.from === id || e.to === id)) out.add(e.from === id ? e.to : e.from); return out; }
   function comparisons(graph, id) { return graph.edges.filter(e => e.kind === 'comparison' && (e.from === id || e.to === id)).map(e => ({ other: e.from === id ? e.to : e.from, explanation: e.explanation, excerpt: e.excerpt })); }
   function matches(m, q) {
@@ -107,7 +109,7 @@ window.LabTree = (() => {
       li.appendChild(head); ul.appendChild(li);
       for (const m of list) {
         shown++;
-        const row = h('li'); const b = h('button', 'trow'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', 'false'); b.dataset.id = m.id;
+        const row = h('li'); const b = h('button', 'trow' + (m.planned ? ' planned' : '') + (m.draft ? ' draft' : '')); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', 'false'); b.dataset.id = m.id;
         const svg = el('svg', { width: gw, height: rowH, 'aria-hidden': 'true' });
         const x0 = laneX(0), mid = rowH / 2;
         if (graph.seqSpan[m.t]) svg.appendChild(el('line', { x1: x0, y1: 0, x2: x0, y2: rowH, class: 'lane0' }));
@@ -118,12 +120,13 @@ window.LabTree = (() => {
           svg.appendChild(el('line', { x1: x, y1: 0, x2: x, y2: isChild && m.t === f.end ? mid : rowH, class: k }));
         }
         for (const f of graph.families.filter(f => f.parent === m.id)) { const x = laneX(f.lane), k = 'lanek lk-' + graph.byId.get(f.children[0]).kind; svg.appendChild(el('path', { d: `M${laneX(m.lane)},${mid} C${laneX(m.lane)},${rowH} ${x},${mid} ${x},${rowH}`, class: k })); }
-        const dot = el('circle', { cx: laneX(m.lane), cy: mid, r: 5, class: 'dot ' + m.kind });
+        const dot = el('circle', { cx: laneX(m.lane), cy: mid, r: 5, class: 'dot ' + m.kind + (m.planned ? ' planned' : '') });
         svg.appendChild(dot); b.appendChild(svg);
         b.appendChild(h('span', 'ck', shortOf(m) || '—'));
-        b.appendChild(h('span', 'nm', m.title));
+        // The name, with the mark of an unsaved edit (or, from editor.js, of typing not kept yet).
+        const nm = h('span', 'nm'); nm.appendChild(document.createTextNode(m.title)); nm.appendChild(mark(m)); b.appendChild(nm);
         b.appendChild(h('span', 'pu', m.description));
-        b.appendChild(h('span', 'chip ' + m.kind, P.kindLabel(m.kind)));
+        b.appendChild(h('span', 'chip ' + m.kind + (m.draft ? ' draft' : ''), m.draft ? 'draft' : P.kindLabel(m.kind)));
         const bar = h('span', 'mbar' + (m.value == null ? ' none' : ''));
         if (m.value != null && graph.scale) { const fill = h('i'); fill.style.width = Math.round(graph.scale.good(m.value) * 100) + '%'; bar.appendChild(fill); }
         bar.title = graph.track ? P.trackName(graph.track) + ': ' + trackText(graph, m) : 'The project names no track';
@@ -206,7 +209,7 @@ window.LabTree = (() => {
     const showTip = (m, ev) => {
       const rows = [{ b: nameOf(m) }];
       rows.push(graph.track ? { v: m.value == null ? '—' : C.fmtSci(m.value) + P.units(graph.track), l: P.trackName(graph.track) } : { l: 'The project names no track' });
-      rows.push({ l: m.trainedAt ? 'trained ' + P.day(m.trainedAt) : 'no training date' });
+      rows.push({ l: m.draft ? 'a draft, not kept yet' : m.trainedAt ? 'trained ' + P.day(m.trainedAt) : m.planned ? 'never built' : 'no training date' });
       rows.push({ v: P.kindLabel(m.kind), l: m.parent ? 'from ' + refName(graph.byId.get(m.parent)) : '' });
       const [px, py] = at(ev); tip.show(px, py, rows);
     };
@@ -219,11 +222,12 @@ window.LabTree = (() => {
       if (last === undefined || x(m) - w / 2 >= last + 14) { labelled.add(m.id); laneLabelEnd.set(m.lane, x(m) + w / 2); }
     }
     for (const m of graph.nodes) {
-      const g = el('g', { class: 'node ' + m.kind + (visible(m) ? '' : ' dim'), tabindex: 0, role: 'button', 'aria-label': nameOf(m), 'data-id': m.id });
+      const g = el('g', { class: 'node ' + m.kind + (m.planned ? ' planned' : '') + (m.draft ? ' draft' : '') + (visible(m) ? '' : ' dim'), tabindex: 0, role: 'button', 'aria-label': nameOf(m) + (m.draft ? ', a draft' : m.planned ? ', never built' : '') + (m.unsaved ? ', unsaved' : ''), 'data-id': m.id });
       g.appendChild(el('rect', { x: x(m) - 14, y: y(m) - 14, width: 28, height: 28, class: 'hitr' }));
       g.appendChild(el('circle', { cx: x(m), cy: y(m), r: 5.5 }));
+      if (m.unsaved) { const u = el('circle', { cx: x(m) + 7, cy: y(m) - 7, r: 2.5, class: 'unsaved-dot' }); u.appendChild(el('title', {}, 'unsaved')); g.appendChild(u); }
       const text = shortOf(m);
-      const lbl = text ? el('text', { x: x(m), y: y(m) + 18, class: 'nl' + (labelled.has(m.id) ? '' : ' off') }, text) : null;
+      const lbl = text ? el('text', { x: x(m), y: y(m) + 18, class: 'nl' + (labelled.has(m.id) || m.draft ? '' : ' off') }, text) : null;
       if (lbl) g.appendChild(lbl);
       g.addEventListener('click', () => onSelect(m.id));
       g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); onSelect(m.id); } });
@@ -250,7 +254,7 @@ window.LabTree = (() => {
           const m = graph.byId.get(mid), on = mid === id;
           n.g.classList.toggle('sel', on); n.g.querySelector('circle').setAttribute('r', on ? 7 : 5.5);
           const fam = !!sel && (m.parent === id || mid === sel.parent || (!!sel.parent && m.parent === sel.parent));
-          if (n.lbl) n.lbl.classList.toggle('off', !(on || fam || labelled.has(mid)));
+          if (n.lbl) n.lbl.classList.toggle('off', !(on || fam || labelled.has(mid) || m.draft));
           n.g.classList.toggle('kin', fam && !on);
         }
         for (const p of svg.querySelectorAll('.der')) p.classList.toggle('hot', !!sel && (p.dataset.family === id || p.dataset.family === sel.parent));
@@ -276,5 +280,5 @@ window.LabTree = (() => {
     };
     api.select(selected); return api;
   }
-  return { build, renderList, renderMap, related, comparisons, matches, nameOf, refName };
+  return { build, renderList, renderMap, related, comparisons, matches, nameOf, refName, mark };
 })();

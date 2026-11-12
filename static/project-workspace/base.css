@@ -485,7 +485,7 @@ textarea { font: inherit; resize: vertical; }
 .form { display: grid; gap: 10px; }
 .form label { display: grid; gap: 3px; font-size: 12.5px; color: var(--ink-2); }
 .form select, .form input[type="text"], .form textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 5px 8px; }
-.form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }   /* a field with a hint beside one without: both start at the top */
 .form .hint, .act-field .hint { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
 .form .radio { display: flex; flex-wrap: wrap; gap: 6px; }
 .form .radio label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--ink); cursor: pointer; }
@@ -536,3 +536,61 @@ textarea { font: inherit; resize: vertical; }
 .conflict-refs { margin: 0; padding-left: 18px; }
 .plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .warnline { color: var(--warn); }
+
+/* ---- Editing and branching (editor.js, spec-w3 section 3.2). ---- */
+/* A model never built: hollow and dashed, in its kind's colour; a draft is labelled "new" (the mockup's planned model). */
+.tree-map .node.planned circle { fill: var(--surface); stroke: var(--k-component); stroke-dasharray: 3 2; stroke-width: 2; }
+.tree-map .node.planned.training-policy circle { stroke: var(--k-training-policy); }
+.tree-map .node.planned.architecture circle { stroke: var(--k-architecture); }
+.tree-map .node.planned.refinement circle { stroke: var(--k-refinement); }
+.tree-map .node.planned.unset circle { stroke: var(--ink-3); }
+.tree-map .node.planned.sel circle { stroke: var(--accent); stroke-width: 3; }
+.tree-map .node.draft text.nl { fill: var(--accent); font-weight: 600; }
+.tree-map .unsaved-dot { fill: var(--warn); stroke: var(--surface); stroke-width: 1; }
+.tree-list .dot.planned { fill: var(--surface); stroke: var(--k-component); stroke-dasharray: 3 2; stroke-width: 2; }
+.tree-list .dot.planned.training-policy { stroke: var(--k-training-policy); }
+.tree-list .dot.planned.architecture { stroke: var(--k-architecture); }
+.tree-list .dot.planned.refinement { stroke: var(--k-refinement); }
+.tree-list .dot.planned.unset { stroke: var(--ink-3); }
+.tree-list .dot.planned.sel { stroke: var(--accent); }
+.tree-list .trow.draft .nm, .tree-list .trow.draft .ck { color: var(--accent); }
+.chip.draft { color: var(--accent); font-weight: 500; }
+.chip.draft::before { background: transparent; box-shadow: none; border: 1.5px dashed var(--accent); width: 6px; height: 6px; }
+/* The unsaved mark, and "not kept yet" where something typed is not kept. */
+.umark { font-size: 11.5px; color: var(--warn); font-weight: 500; white-space: nowrap; }
+.umark:empty { display: none; }
+.umark.typed { color: var(--accent); }
+.tree-list .trow .nm .umark, .row .title .umark { margin-left: 8px; }
+/* The editor. */
+.editor .seg { align-self: flex-start; }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 4px 12px; font: inherit; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line-strong); }
+.seg button[aria-pressed="true"] { background: var(--accent-wash); color: var(--ink); }
+.code-field { display: grid; gap: 4px; min-width: 0; }
+textarea.code { width: 100%; min-width: 0; font: 12px/1.5 var(--mono); white-space: pre; overflow: auto; tab-size: 2; padding: 8px; }
+.form input[type="number"] { width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 5px 8px; min-height: 30px; }
+.form .two > * { min-width: 0; }
+.form .radio label.chip-radio { padding: 3px 9px; }
+.form .radio label.chip-radio .chip { color: var(--ink); }
+.form .derived { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.form .derived-name { color: var(--ink); font-size: 13px; flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; }
+.form .settings { display: grid; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.form .settings h3 { margin: 0; }
+.form .settings .note { font-size: 12.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.problems { display: grid; gap: 4px; padding: 8px 10px; border-radius: var(--radius); font-size: 13px; }
+.problems ul { margin: 0; padding-left: 18px; }
+.problems.warnings { border: 1px solid var(--warn); background: var(--warn-wash); }
+.picking { display: grid; gap: 6px; justify-items: start; padding: 8px 10px; border: 1px dashed var(--accent); border-radius: var(--radius); background: var(--accent-wash); }
+.picking p:first-child { font-weight: 500; color: var(--ink); }
+.new-steps { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.new-steps h3 { margin: 0; }
+.steps-box:empty { display: none; }
+/* The Overview's list of every definition, and Train's Planned. */
+.ov-defs { margin: 28px 0; }
+.ov-defs h3.ov-kind { font-size: 13px; color: var(--ink-2); margin: 14px 0 4px; }
+.row.def { grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr) 150px 90px; }
+.row.def .name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.def > .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+div.row.def { cursor: default; }
+@media (max-width: 900px) { .row.def { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 110px; } .row.def .umark { display: none; } }

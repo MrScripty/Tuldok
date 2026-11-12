@@ -48,6 +48,7 @@ WORKSPACE_FILES = {
     '/project-workspace/tree.js': 'text/javascript',
     '/project-workspace/screens.js': 'text/javascript',
     '/project-workspace/actions.js': 'text/javascript',
+    '/project-workspace/editor.js': 'text/javascript',
     '/project-workspace/tabs.js': 'text/javascript',
     '/project-workspace/app.js': 'text/javascript',
     '/static/vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf': 'font/ttf',

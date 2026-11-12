@@ -4,6 +4,8 @@
 // has something to show there, and returns whether the drawer is open. It
 // reads the project only through window.TuldokProject. Rule: the chrome holds
 // no project words; names, groups, metrics and text come from the project.
+// The editor, the branch form, a draft's drawer, the steps of a new model and
+// the Overview's list of every definition are editor.js's (window.LabEditor).
 window.LabScreens = (() => {
   const P = window.TuldokProject, Tree = window.LabTree, C = window.LabCharts, h = C.h;
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -44,9 +46,10 @@ window.LabScreens = (() => {
   let graph = null, graphOf = null;
   function graphFor(shaped) { if (graphOf !== shaped) { graph = Tree.build(shaped); graphOf = shaped; } return graph; }
   function map(main, aside, state, act, data) {
-    // A selection 'plan:<targets>' is the plan view in the drawer, with its first target selected on the map.
-    const shaped = data.map, g = graphFor(shaped), raw = state.sel.map || '', planSel = raw.startsWith('plan:') ? raw : null;
-    const focus = planSel ? planSel.slice(5).split(',')[0] : raw, sel = focus && g.byId.has(focus) ? focus : null;
+    // A selection 'plan:<targets>' is the plan view in the drawer, with its first target selected on the map;
+    // 'edit:<reference>' and 'branch:<reference>' are the editor and the branch form (editor.js), with that model selected.
+    const shaped = data.map, g = graphFor(shaped), raw = state.sel.map || '', planSel = raw.startsWith('plan:') ? raw : null, E = window.LabEditor;
+    const focus = planSel ? planSel.slice(5).split(',')[0] : E ? E.subject(raw) : raw, sel = focus && g.byId.has(focus) ? focus : null;
     const kinds = P.KINDS.map(k => k.id).concat(g.nodes.some(m => m.kind === P.UNSET) ? [P.UNSET] : []);
     const withValue = g.nodes.filter(m => m.value != null).length;
     const buildBar = () => {
@@ -63,7 +66,8 @@ window.LabScreens = (() => {
     if (!g.nodes.length) { main.textContent = ''; main._tree = null; main.appendChild(h('p', 'empty', 'This project has no recipes, so there are no models to map.')); aside.textContent = ''; return false; }
     const sig = JSON.stringify([state.kinds ? [...state.kinds] : null, state.query || '', state.zoom || 1, !!state.track]);
     const prev = main._tree;
-    const common = { onSelect: id => act.select(id), kinds: state.kinds, query: state.query };
+    // While a parent is being picked (editor.js), the next model pressed is the parent instead.
+    const common = { onSelect: id => { if (!(E && E.picked(id, act))) act.select(id); }, kinds: state.kinds, query: state.query };
     if (prev && prev.sig === sig && prev.shaped === shaped && main.contains(prev.bar)) {
       if (sel && sel !== prev.sel) { prev.map.scrollTo(sel, true); prev.list.scrollTo(sel, true); }
       prev.map.select(sel); prev.list.select(sel); prev.sel = sel;
@@ -78,7 +82,9 @@ window.LabScreens = (() => {
       if (focused !== null) { const q = bar.querySelector('input[type="search"]'); q.focus(); q.setSelectionRange(focused, focused); }
       main._tree = inst;
     }
+    if (E) E.decorate(main);
     if (planSel) { window.LabActions.planView(aside, planSel, act.go, sel ? () => act.select(sel) : null); return true; }
+    if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'map'); return true; }
     if (sel) { inspectorModel(aside, sel, act, data); return true; }
     aside.textContent = ''; aside._for = null; return false;
   }
@@ -86,18 +92,30 @@ window.LabScreens = (() => {
   // ---- Drawer: one model ---------------------------------------------------
   const TO_BUILD = ['not-built', 'out-of-date', 'failed'];
   function inspectorModel(aside, id, act, data) {
+    const E = window.LabEditor, A = window.LabActions;
+    if (E && E.isDraft(id)) return E.drawer(aside, id, act, data, 'map');   // a draft's drawer is the editor
     if (aside._for === id) return;
     aside._for = id; aside.textContent = '';
     const g = graphFor(data.map), m = g.byId.get(id);
     const ins = h('div', 'inspector');
     const hd = h('header');
     hd.appendChild(h('span', 'kicker', (m.short ? m.short + ' · ' : '') + (m.groupTitle || '')));
-    hd.appendChild(h('h2', null, m.title));
+    const t = h('h2', null, m.title); t.tabIndex = -1; hd.appendChild(t);
     const meta = h('div', 'ins-meta'); meta.appendChild(h('span', 'chip ' + m.kind, P.kindLabel(m.kind))); meta.appendChild(modelState(m.state));
-    meta.appendChild(h('span', 'small faint', m.trainedAt ? 'trained ' + P.day(m.trainedAt) : 'no training date'));
+    meta.appendChild(h('span', 'small faint', m.trainedAt ? 'trained ' + P.day(m.trainedAt) : m.planned ? 'never built' : 'no training date'));
+    meta.appendChild(Tree.mark(m));
     hd.appendChild(meta); ins.appendChild(hd);
-    // Plan build, for a model to build (spec-w3 section 3.1): the plan view, never a request from here.
-    if (TO_BUILD.includes(m.state)) ins.appendChild(window.LabActions.group('model:' + m.id, [{ id: 'plan', label: 'Plan build', cls: 'btn primary', who: 'request', onClick: () => act.select('plan:' + m.id) }]));
+    if (E) E.decorate(hd);
+    // Plan build, for a model to build (spec-w3 section 3.1): the plan view, never a request from here. A model
+    // never built that is not earlier work has the steps of a new model instead (editor.js), whose next step it is.
+    const planGroup = () => A.group('model:' + m.id, [{ id: 'plan', label: 'Plan build', cls: 'btn primary', who: 'request', onClick: () => act.select('plan:' + m.id) }]);
+    if (E && E.followsSteps(m)) { const box = h('div', 'steps-box'); box.appendChild(h('p', 'note', 'Reading…')); ins.appendChild(box); E.steps(box, m, act, data, planGroup); }
+    else if (TO_BUILD.includes(m.state)) ins.appendChild(planGroup());
+    // Edit and Branch from here (spec-w3 section 3.2), for a session that may edit.
+    ins.appendChild(A.group('modelact:' + m.id, [
+      { id: 'edit', label: 'Edit', cls: 'btn sm', who: 'edit', onClick: () => act.go('map', 'edit:' + m.id) },
+      { id: 'branch', label: 'Branch from here', cls: 'btn sm', who: 'edit', onClick: () => act.go('map', 'branch:' + m.id) }
+    ], { inline: true }));
     // Lineage: what it was derived from, what derives from it, what it takes as input.
     const lin = h('div', 'actions');
     const jump = (target, text) => { const b = h('button', 'btn sm ghost'); b.type = 'button'; b.appendChild(icon('branch')); b.appendChild(document.createTextNode(' ' + text)); b.addEventListener('click', () => act.select(target.id)); return b; };
@@ -166,8 +184,10 @@ window.LabScreens = (() => {
   // ---- Overview --------------------------------------------------------------
   // Read once and built off the page (tabs.js's paint), so the refresh while a build runs keeps the place.
   function overview(main, aside, state, act, data) {
-    aside.textContent = ''; aside._for = null;
-    if (state.sel.overview === 'report') { main.textContent = ''; main._painted = null; return report(main, data); }
+    const E = window.LabEditor, sel = state.sel.overview || '';
+    if (sel === 'report') { aside.textContent = ''; aside._for = null; main.textContent = ''; main._painted = null; return report(main, data); }
+    const editing = !!(E && E.owns(sel, data));
+    if (editing) E.drawer(aside, sel, act, data, 'overview'); else { aside.textContent = ''; aside._for = null; }
     S.paint(main, () => Promise.all([P.read('definitions'), P.read('environments'), P.read('activity', { limit: 12 })].map(p => p.then(v => ({ v }), error => ({ error })))), (frag, [d, e, a]) => {
       const standing = data.standing;
       const top = h('section', 'ov-status');
@@ -187,6 +207,8 @@ window.LabScreens = (() => {
       const defs = h('section'); defs.appendChild(sect('Definitions', String(Object.values(s.kinds).reduce((x, y) => x + y, 0)))); cols.appendChild(defs);
       const envs = h('section'); envs.appendChild(sect('Environments', String(s.kinds.environment || 0))); cols.appendChild(envs);
       frag.appendChild(cols);
+      // Every definition by kind, each opening the editor (editor.js) for a session that may edit.
+      const every = h('section', 'ov-defs'); frag.appendChild(every);
       const act2 = h('section', 'ov-history'); act2.appendChild(sect('Latest activity')); frag.appendChild(act2);
       const fill = (b, got, build) => { if (got.error) failure(b, got.error); else build(b, got.v); };
       fill(defs, d, (b, d) => {
@@ -197,6 +219,7 @@ window.LabScreens = (() => {
         const tb = h('tbody'); for (const k of kinds) { const tr = h('tr'); tr.appendChild(h('td', null, k)); const mine = d.definitions.filter(x => x.kind === k); for (const st of states) { const n = mine.filter(x => x.state === st).length; tr.appendChild(h('td', 'n' + (n ? '' : ' faint'), n ? String(n) : '·')); } tr.appendChild(h('td', 'n', String(mine.length))); tb.appendChild(tr); } t.appendChild(tb);
         const wrap = h('div'); wrap.style.overflowX = 'auto'; wrap.appendChild(t); b.appendChild(wrap);
       });
+      fill(every, d, (b, d) => { if (E) E.definitionList(b, d.definitions, sel, act); });
       fill(envs, e, (b, e) => {
         if (!e.environments.length) { b.appendChild(h('p', 'empty', 'The project defines no environment.')); return; }
         const ul = h('ul', 'rows'); for (const env of e.environments) { const li = h('li'); const r = h('div', 'row ov-env'); const t = h('span'); t.appendChild(h('span', 'title', env.title)); t.appendChild(h('span', 'sub', ['Python ' + env.python, env.device, Object.keys(env.packages || {}).length + ' packages', env.checked_at ? 'checked ' + P.day(env.checked_at) : 'never checked'].filter(Boolean).join(' · '))); r.appendChild(t); r.appendChild(modelState(env.state)); li.appendChild(r); ul.appendChild(li); } b.appendChild(ul);
@@ -206,8 +229,9 @@ window.LabScreens = (() => {
         const ul = h('ul', 'rows'); for (const it of a.items) { const li = h('li'); const r = h('div', 'row ov-act'); r.appendChild(h('span', 'sub num', time(it.at))); const t = h('span'); t.appendChild(h('span', 'title', it.operation + (it.target ? ' · ' + it.target : ''))); t.appendChild(h('span', 'sub', [(it.actor && (it.actor.label || it.actor.kind)) || '', it.detail].filter(Boolean).join(' · '))); r.appendChild(t); r.appendChild(stateEl(it.outcome === 'done' ? 'good' : 'serious', it.outcome)); li.appendChild(r); ul.appendChild(li); }
         b.appendChild(ul); if (a.total > a.items.length) b.appendChild(h('p', 'note', (a.total - a.items.length) + ' earlier entries are not shown.'));
       });
+      if (E) E.decorate(frag);
     });
-    return false;
+    return editing;
   }
   function report(main, data) {
     const bar = h('div', 'report-bar'); const back = h('a', 'btn sm ghost', '← Overview'); back.href = '#overview'; bar.appendChild(back); bar.appendChild(h('h2', null, 'Report')); main.appendChild(bar);

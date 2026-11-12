@@ -50,7 +50,7 @@ The contract document gains both operations, the `map` additions and the two com
 | A model's drawer (Map) | **Plan build** when the model is not built, out of date or failed |
 | Conflict | When a read is refused `conflict`, the main area shows the server's sentence, the definitions named, and **Keep my edits** and **Take the files** (`resolve_conflict` with `keep` or `discard`); then everything is read again |
 
-While a build request is queued or running the page asks again every two seconds, as in phase 2, and now also for the open run's progress and logs and for `map` when a run ends, so a model turns to built without a reload.
+While a build request is queued or running the page asks again every two seconds, as in phase 2, and now also for the open run's progress and logs and for `map` when a run ends, so a model turns to built without a reload. While nothing is queued or running it asks again every fifteen seconds for the build requests, runs, status and environments, so a build an agent asks for reaches Needs you while the page is open. *Added at the acceptance run:* phase 2 read again only when the window regained focus.
 
 ### 3.2 Editing and branching (slice T22)
 

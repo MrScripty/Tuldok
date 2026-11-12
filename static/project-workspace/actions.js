@@ -43,7 +43,9 @@ window.LabActions = (() => {
   /**
    * A group of controls bound to key: an element that draws its items from
    * the group's state whenever it changes and on every re-render. An item is
-   * { id, label, cls, who, op, args(slot) -> arguments, busy (the words while
+   * { id, label, cls, who, op, args(slot) -> arguments (or run(slot), a step
+   * of the page that throws to refuse; with local, nothing is read again
+   * after it), busy (the words while
    * waiting), confirm (words: the item takes two presses), input ({name,
    * label, placeholder, max, always}: a field shown always, or in the
    * confirm state), done(result), extra(error) (more under a refusal),
@@ -123,15 +125,18 @@ window.LabActions = (() => {
     if (it.confirm && !confirmed) { s.confirming = it.id; s.refusal = null; refill(key); focusKey(key + ':' + (it.input && !it.input.always ? 'field:' + it.input.name : it.id + ':confirm')); return; }
     s.busy = it.id; s.refusal = null; refill(key);
     let result, error = null;
-    try { result = await P.call(it.op, it.args ? it.args(s) : {}); } catch (e) { error = e; }
+    // run(slot): a step of the page itself (editor.js), which may call operations; it throws to refuse.
+    try { result = it.run ? await it.run(s) : await P.call(it.op, it.args ? it.args(s) : {}); } catch (e) { error = e; }
     s.busy = null;
     if (error) {
       s.refusal = { error, item: it.id }; refill(key);
       focusKey(key + ':' + it.id) || focusKey(key + ':' + it.id + ':confirm');
-      await hooks.refused({ key, item: it, error });
+      if (!it.local) await hooks.refused({ key, item: it, error });
       return;
     }
     s.confirming = null; s.text = {}; refill(key);
+    // local: nothing in the project changed, so nothing is read again.
+    if (it.local) { if (it.done) it.done(result); return; }
     P.forgetAll();
     if (it.done) it.done(result);
     await hooks.changed({ key, item: it, result, focus: key + ':' + it.id });

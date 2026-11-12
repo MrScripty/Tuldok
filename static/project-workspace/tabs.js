@@ -8,7 +8,9 @@
 // only read. Train draws the controls of spec-w3.md section 3.1 (actions.js):
 // Plan build, a build request's Approve, Decline and Cancel, a run's Cancel
 // run and Stop, an environment's Check again, Connect and Disconnect, and it
-// shows a running run live. Rule: the chrome holds no project words; titles,
+// shows a running run live; it lists first what is planned (the page's drafts
+// and the models never built, spec-w3 section 3.2). Data's drawer has Edit;
+// the editor itself is editor.js's. Rule: the chrome holds no project words; titles,
 // metrics and text come from the project.
 (() => {
   const S = window.LabScreens, P = window.TuldokProject, Tree = window.LabTree, C = window.LabCharts, h = C.h, A = window.LabActions;
@@ -344,23 +346,32 @@
       return { recipes: recipes.definitions, runs: runs.runs, requests: requests.requests, envs: envs.environments, progress };
     }, (frag, { recipes, runs, requests, envs, progress }) => {
       const g = graphFor(data.map), deviceOf = new Map(envs.map(e => [e.reference, e.device]));
-      // Models not built yet.
-      const todo = recipes.filter(d => !d.removed && TO_BUILD.includes(d.state));
-      const th = sect('To build', todo.length + ' of ' + plural(recipes.length, 'model')); th.appendChild(h('span', 'spacer'));
+      // Planned (spec-w3 section 3.2): the drafts of this page, then the models never built.
+      const E = window.LabEditor, drafts = g.nodes.filter(m => m.draft);
+      const never = recipes.filter(d => !d.removed && d.state === 'not-built' && (!g.byId.has(d.reference) || g.byId.get(d.reference).planned));
+      const neverRefs = new Set(never.map(d => d.reference));
+      frag.appendChild(sect('Planned', String(drafts.length + never.length)));
+      if (!drafts.length && !never.length) frag.appendChild(h('p', 'empty', 'Nothing is planned. Branch from a model on the map to plan a new one.'));
+      else {
+        const ul = h('ul', 'rows planned');
+        for (const m of drafts) {
+          const li = h('li'), b = button('row todo'); b.dataset.key = 'open-' + m.id; b.dataset.draft = m.id;
+          b.appendChild(S.stateEl('neutral', 'not kept yet')); const t = h('span'); t.appendChild(h('span', 'title', m.title)); t.appendChild(h('span', 'sub', 'from ' + (g.byId.has(m.parent) ? Tree.nameOf(g.byId.get(m.parent)) : m.parent) + ' · on the map until it is kept')); b.appendChild(t);
+          b.appendChild(h('span', 'chip ' + m.kind + ' draft', 'draft'));
+          b.addEventListener('click', () => act.go('map', m.id)); li.appendChild(b); ul.appendChild(li);
+        }
+        for (const d of never) ul.appendChild(todoRow(d, g, sel, act));
+        frag.appendChild(ul);
+      }
+      // Models to build again: out of date or failed.
+      const todo = recipes.filter(d => !d.removed && TO_BUILD.includes(d.state) && !neverRefs.has(d.reference));
+      const th = sect('To build', todo.length + ' of ' + plural(recipes.length, 'model')); th.classList.add('gap'); th.appendChild(h('span', 'spacer'));
       th.appendChild(A.group('train:every', [{ id: 'plan', label: 'Plan everything buildable', cls: 'btn sm', who: 'request', onClick: () => act.select('plan:*') }], { inline: true }));
       frag.appendChild(th);
-      if (!todo.length) frag.appendChild(h('p', 'empty', 'Every model is built, or cannot be rebuilt from its definition.'));
+      if (!todo.length) frag.appendChild(h('p', 'empty', 'No model is out of date or failed.'));
       else {
         const ul = h('ul', 'rows');
-        for (const d of todo) {
-          const m = g.byId.get(d.reference), li = h('li'), b = button('row todo'); b.setAttribute('aria-pressed', String(d.reference === sel)); b.dataset.key = 'open-' + d.reference;
-          b.appendChild(modelState(d.state)); const t = h('span'); t.appendChild(h('span', 'title', m ? Tree.nameOf(m) : d.title)); t.appendChild(h('span', 'sub', m ? m.groupTitle + (m.description ? ' · ' + m.description : '') : d.reference)); b.appendChild(t);
-          b.appendChild(m ? h('span', 'chip ' + m.kind, P.kindLabel(m.kind)) : h('span'));
-          b.addEventListener('click', () => act.select(d.reference === sel ? null : d.reference)); li.appendChild(b);
-          const plan = A.group('todo:' + d.reference, [{ id: 'plan', label: 'Plan build', cls: 'btn sm', who: 'request', onClick: () => act.select('plan:' + d.reference) }], { inline: true });
-          if (!plan.hidden) { li.classList.add('with-act'); li.appendChild(plan); }
-          ul.appendChild(li);
-        }
+        for (const d of todo) ul.appendChild(todoRow(d, g, sel, act));
         frag.appendChild(ul);
       }
       // Build requests.
@@ -427,9 +438,21 @@
     else if (sel.startsWith('request:')) requestDrawer(aside, sel, act, data);
     else if (sel.startsWith('plan:')) A.planView(aside, sel, act.go, () => { const one = sel.slice(5); act.select(data.map.byId.has(one) ? one : null); });
     else if (sel.startsWith('env:')) envDrawer(aside, sel, act, data);
+    else if (window.LabEditor && window.LabEditor.owns(sel, data)) window.LabEditor.drawer(aside, sel, act, data, 'train');
     else if (data.map.byId.has(sel)) S.inspectorModel(aside, sel, act, data);
     else { aside.textContent = ''; aside._for = sel; aside.appendChild(h('p', 'empty', 'There is no ' + sel + ' here.')); }
     return true;
+  }
+  /** A row of a model to build, opening its drawer, with Plan build. */
+  function todoRow(d, g, sel, act) {
+    const m = g.byId.get(d.reference), li = h('li'), b = button('row todo'); b.setAttribute('aria-pressed', String(d.reference === sel)); b.dataset.key = 'open-' + d.reference;
+    b.appendChild(modelState(d.state)); const t = h('span'); const title = h('span', 'title', m ? Tree.nameOf(m) : d.title); if (m) title.appendChild(Tree.mark(m)); t.appendChild(title); t.appendChild(h('span', 'sub', m ? m.groupTitle + (m.description ? ' · ' + m.description : '') : d.reference)); b.appendChild(t);
+    b.appendChild(m ? h('span', 'chip ' + m.kind, P.kindLabel(m.kind)) : h('span'));
+    b.addEventListener('click', () => act.select(d.reference === sel ? null : d.reference)); li.appendChild(b);
+    const plan = A.group('todo:' + d.reference, [{ id: 'plan', label: 'Plan build', cls: 'btn sm', who: 'request', onClick: () => act.select('plan:' + d.reference) }], { inline: true });
+    if (!plan.hidden) { li.classList.add('with-act'); li.appendChild(plan); }
+    if (window.LabEditor) window.LabEditor.decorate(li);
+    return li;
   }
   const tail = (text, lines) => { const all = text.replace(/\n$/, '').split('\n'); return (all.length > lines ? '…\n' : '') + all.slice(-lines).join('\n'); };
   /** A definition's value in one line: a list of words as a command line, an object as key: value pairs. */
@@ -551,7 +574,7 @@
 
   // ---- Data -----------------------------------------------------------------------
   function data_(main, aside, state, act, data) {
-    const sel = state.sel.data || null;
+    const E = window.LabEditor, raw = state.sel.data || null, sel = raw && E ? E.subject(raw) : raw;
     paint(main, () => Promise.all([P.read('definitions', { kind: 'dataset' }), P.read('products'), P.read('graph')]), (frag, [defs, products, graph]) => {
       const sets = defs.definitions.filter(d => !d.removed), byRef = new Map();
       for (const p of products.products) { if (!byRef.has(p.reference)) byRef.set(p.reference, []); byRef.get(p.reference).push(p); }
@@ -581,9 +604,13 @@
       frag.appendChild(grid);
     });
     if (!sel) return closeDrawer(aside);
+    if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'data'); return true; }
     drawer(aside, sel, () => Promise.all([P.read('definition', { reference: sel }), P.read('products', { reference: sel })]), (ins, [d, p]) => {
-      const hd = h('header'); hd.appendChild(h('span', 'kicker', d.reference)); hd.appendChild(h('h2', null, d.title));
-      const meta = h('div', 'ins-meta'); meta.appendChild(p.products.some(x => x.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state)); if (d.unsaved) meta.appendChild(h('span', 'small faint', 'unsaved edit')); hd.appendChild(meta); ins.appendChild(hd);
+      const hd = h('header'); hd.appendChild(h('span', 'kicker', d.reference)); const t2 = h('h2', null, d.title); t2.tabIndex = -1; hd.appendChild(t2);
+      const meta = h('div', 'ins-meta'); meta.appendChild(p.products.some(x => x.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state)); meta.appendChild(Tree.mark({ id: d.reference, unsaved: d.unsaved })); hd.appendChild(meta); ins.appendChild(hd);
+      // Edit (spec-w3 section 3.2): the editor, in the text view.
+      ins.appendChild(A.group('dataedit:' + d.reference, [{ id: 'edit', label: 'Edit', cls: 'btn sm', who: 'edit', onClick: () => act.select('edit:' + d.reference) }]));
+      if (E) E.decorate(hd);
       const doc = d.document || {};
       ins.appendChild(block('Description', doc.description ? h('p', null, doc.description) : h('p', 'note', 'The definition has no description.')));
       const su = setup(); const skip = new Set(['format', 'kind', 'title', 'description']);

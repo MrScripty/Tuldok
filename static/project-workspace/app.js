@@ -8,16 +8,18 @@
 // queued or running the strip asks again every two seconds for what can
 // change, the open run reads on its progress and logs, and when a run ends
 // the map and everything else is read again, so a model turns to built
-// without a reload. A read refused conflict shows the conflict panel.
+// without a reload. While nothing builds it asks again every fifteen seconds,
+// so a build an agent asks for shows in Needs you while the page is open.
+// A read refused conflict shows the conflict panel.
 (() => {
   const P = window.TuldokProject, S = window.LabScreens, A = window.LabActions;
   const TABS = [['map', 'Map'], ['data', 'Data'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['overview', 'Overview']];
-  const POLL_MS = 2000;
+  const POLL_MS = 2000, IDLE_MS = 15000;   // how often the page asks again while something builds, and while nothing does
   const ACTIVE_RUN = ['queued', 'running'], ACTIVE_REQUEST = ['queued', 'running'];
   const $ = id => document.getElementById(id);
   const state = { screen: 'map', sel: {}, kinds: null, query: '', zoom: 1, track: false, ui: {}, benchmark: null, cmp: [] };
   const data = { summary: null, map: null, standing: null, needs: null, status: null, readAt: '', polling: false };
-  let failed = null, conflict = null, mapText = null, pollTimer = null, states = null, opener = null;
+  let failed = null, conflict = null, mapText = null, pollTimer = null, pollFast = false, states = null, opener = null;
   const clock = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   function parse() {
@@ -46,7 +48,11 @@
     toggleCompare: id => { const i = state.cmp.indexOf(id); if (i >= 0) state.cmp.splice(i, 1); else if (state.cmp.length < 3) state.cmp.push(id); address(); render(); },
     clearCompare: () => { state.cmp = []; address(); render(); },
     /** Reads everything again (a control's answer came, or a view asks for it). */
-    refresh: () => changed()
+    refresh: () => changed(),
+    /** Draws the map again from what is read (the page's drafts changed, editor.js); the drawer is kept. */
+    redraw: async () => { try { data.map = await P.map(); } catch (error) { fail(error); } strip(); render(); },
+    /** Draws the drawer afresh. */
+    reopen: () => { $('aside')._for = null; render(); }
   };
   /** Writes the benchmark and compare set into the address without reloading, so the view can be shared. */
   function address() {
@@ -109,7 +115,7 @@
       drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); main.classList.remove('with-drawer'); aside.textContent = ''; aside._for = null;
       return;
     }
-    const wasMap = main.classList.contains('map'), view = state.screen + '/' + (state.screen === 'overview' ? state.sel.overview || '' : '');   // a selection elsewhere opens the drawer and keeps the place
+    const wasMap = main.classList.contains('map'), view = state.screen + '/' + (state.screen === 'overview' && state.sel.overview === 'report' ? 'report' : '');   // a selection opens the drawer and keeps the place; the report is its own view
     main.className = state.screen === 'map' ? 'map' : 'content';
     if (state.screen !== 'map' && wasMap) main._tree = null;
     if (main._view !== view) { main.scrollTop = 0; main.scrollLeft = 0; main._view = view; }   // a new screen starts at its top
@@ -124,6 +130,7 @@
     try {
       data.summary = await P.read('summary');
       $('projname').textContent = data.summary.name;
+      if (window.LabEditor) window.LabEditor.load(data.summary.project_id);   // the drafts of this project, kept for this tab
       data.map = await P.map(); mapText = JSON.stringify(await P.read('map'));
       data.standing = P.standing(data.map, null, null); data.readAt = clock(); failed = null; conflict = null;
     } catch (error) { fail(error); }
@@ -157,10 +164,11 @@
       }
       states = now;
       const busy = runs.runs.some(r => ACTIVE_RUN.includes(r.state)) || requests.requests.some(r => ACTIVE_REQUEST.includes(r.state));
-      if (busy && !pollTimer) pollTimer = setTimeout(poll, POLL_MS);
+      later(busy);
     } catch (error) {
       if (error.code === 'conflict') { fail(error); strip(); render(); return; }
       data.needs = null; data.standing = Object.assign({}, data.standing, { text: data.standing.text + ' ' + error.message });
+      later(false);
     }
     const aside = $('aside');
     if (ended) {
@@ -178,9 +186,14 @@
     strip();
     if (redraw || ['overview', 'train'].includes(state.screen)) render();
   }
+  /** Asks again later: in two seconds while something builds, otherwise in fifteen, so a request an agent makes or an edit made elsewhere shows without the window losing and regaining focus. */
+  function later(busy) {
+    if (pollTimer && busy && !pollFast) { clearTimeout(pollTimer); pollTimer = null; }
+    if (!pollTimer) { pollFast = busy; pollTimer = setTimeout(poll, busy ? POLL_MS : IDLE_MS); }
+  }
   async function poll() {
     pollTimer = null;
-    P.forget(['summary', 'runs', 'build_requests']);
+    P.forget(['summary', 'runs', 'build_requests'].concat(pollFast ? [] : ['status', 'environments']));
     try { data.summary = await P.read('summary'); } catch (error) { /* the strip says what failed below */ }
     await standing();
     if (S.tick) await S.tick();
@@ -225,13 +238,14 @@
     window.addEventListener('keydown', e => {
       if (e.key !== 'Escape') return;
       if (A.escape()) return;
+      if (window.LabEditor && window.LabEditor.escape()) return;
       if (!$('needs-panel').hidden) { $('needs-panel').hidden = true; const b = $('needs-btn'); if (b) { b.setAttribute('aria-expanded', 'false'); b.focus(); } return; }
       if ($('drawer').classList.contains('open') && state.sel[state.screen]) go(state.screen);
     });
     window.addEventListener('hashchange', () => { parse(); render(); });
     window.addEventListener('focus', () => { if (data.summary || failed) again(); });
     // Who may use a control comes from the session: draw the controls again when it changes.
-    window.addEventListener('tuldok-session', () => { if (failed) again(); else { $('aside')._for = null; strip(); render(); } });
+    window.addEventListener('tuldok-session', () => { if (failed) again(); else { $('aside')._for = null; if (data.map) act.redraw(); else { strip(); render(); } } });
     { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, 3); }
     parse(); strip(); render(); first();
   }
