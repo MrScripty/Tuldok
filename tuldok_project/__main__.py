@@ -24,6 +24,9 @@ prefix of it, while a build runs in another process: they open the project
 only for a moment (waiting while a build has it open) and read the run's logs
 with it closed. `estimate` runs the build steps' estimate commands, the one
 command besides `build` that runs project code; `plan` shows what it stored.
+`branch` prints a new recipe branched from one (workspace.draft_branch) and,
+with --keep, stores it as an unsaved edit; `revert` puts a definition's file
+back in place of its unsaved edit or removal.
 `map` prints the project's map (workspace.py): its groups with how many
 models of each kind of change they hold, the lines, the comparisons and the
 track, from the database only. `note` prints one file under notes/, read
@@ -41,6 +44,7 @@ import sys
 import time
 
 from . import documents, folder as folder_reader, results as results_format
+from .operations import CHANGES
 from .check import check_folder
 
 DATABASE_VARIABLE = 'TULDOK_DATABASE_URL'
@@ -115,6 +119,21 @@ def _parser():
     setting.add_argument('file', help='the file holding the new definition text')
     removing = add('remove', [opening], 'remove a definition in the database (not saved to the folder)')
     removing.add_argument('reference', help='for example recipes/pilot-dense-k1')
+    # Not [reading]: there --keep keeps unsaved edits in a conflict; here it keeps the branch (spec-w3.md section 2).
+    branching = add('branch', [database], "print a new recipe branched from a recipe, with its name and problems")
+    branching.set_defaults(on_conflict=None)
+    branching.add_argument('--rebind', action='store_true',
+                           help='take the copy over from the folder it is bound to and bind it to this one')
+    branching.add_argument('--json', action='store_true', help="print the draft as one JSON document")
+    branching.add_argument('recipe', help='the parent, for example pilot-dense-k1 or recipes/pilot-dense-k1')
+    branching.add_argument('--title', required=True, help='the title of the new recipe, 1 to 200 characters')
+    branching.add_argument('--name', help='its name; by default one made from the title')
+    branching.add_argument('--change', choices=CHANGES, help="its kind of change; by default the parent's")
+    branching.add_argument('--description', help='what the new model changes, at most 4,000 characters')
+    branching.add_argument('--keep', action='store_true',
+                           help='store it as an unsaved edit when it has no error (not saved to the folder)')
+    reverting = add('revert', [reading], "put a definition's file back in place of its unsaved edit or removal")
+    reverting.add_argument('reference', help='for example recipes/pilot-dense-k1')
     add('save', [reading], 'write the unsaved edits to the folder')
     showing = add('results', [reading], "show the benchmarks' results, or one benchmark's summary rows")
     showing.add_argument('benchmark', nargs='?', help='a benchmark, for example rollout or benchmarks/rollout')
@@ -341,6 +360,45 @@ def _remove(project, arguments):
     return 0
 
 
+def _branch(project, arguments):
+    from . import workspace
+    from .documents import Problem
+
+    draft = workspace.draft_branch(project, arguments.recipe, arguments.title, name=arguments.name,
+                                   change=arguments.change, description=arguments.description)
+    problems = [Problem(**problem) for problem in draft['problems']]
+    errors = [problem for problem in problems if problem.severity == 'error']
+    kept = arguments.keep and not errors
+    if kept:
+        project.set_definition(draft['reference'], draft['text'])
+    if arguments.json:
+        _json(draft)
+    else:
+        print(f'{draft["reference"]}, branched from {draft["parent"]}'
+              + (f', with the settings of {draft["inlined"]} copied in' if draft['inlined'] else '') + '.')
+        for problem in problems:
+            print(_problem_line(problem))
+        print()
+        sys.stdout.write(draft['text'])
+    if kept and not arguments.json:
+        print(f'Kept {draft["reference"]} in the database; run save to write it to the folder.')
+    if arguments.keep and not kept:
+        print(f'{draft["reference"]} was not kept: it has {_plural(len(errors), "error")}.', file=sys.stderr)
+        return 1
+    return 0
+
+
+def _revert(project, arguments):
+    done = project.revert_definition(arguments.reference)
+    if arguments.json:
+        _json(done)
+    elif done['dropped']:
+        print(f'Dropped {done["reference"]} from the database: the folder holds no file for it.')
+    else:
+        print(f'Reverted {done["reference"]} to its file in the folder.')
+    return 0
+
+
 def _save(project, arguments):
     saved = project.save()
     if arguments.json:
@@ -518,9 +576,6 @@ def _chart(project, arguments):
     return 0
 
 
-_CHANGES = ('training-policy', 'architecture', 'refinement', 'component')
-
-
 def _map(project, arguments):
     from . import workspace
 
@@ -530,11 +585,11 @@ def _map(project, arguments):
         return 0
 
     def counted(title, models):
-        kinds = [sum(1 for model in models if model['change'] == kind) for kind in _CHANGES]
+        kinds = [sum(1 for model in models if model['change'] == kind) for kind in CHANGES]
         return (title, len(models), *kinds, len(models) - sum(kinds))
 
     models = drawn['models']
-    rows = [('group', 'models', *_CHANGES, 'no kind')]
+    rows = [('group', 'models', *CHANGES, 'no kind')]
     rows += [counted(group['title'], [model for model in models if model['group'] == group['id']])
              for group in drawn['groups']]
     known = {group['id'] for group in drawn['groups']}
@@ -1442,7 +1497,7 @@ def _adopt(project, arguments):
 
 
 _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status, 'map': _map,
-                   'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
+                   'set': _set, 'remove': _remove, 'branch': _branch, 'revert': _revert, 'save': _save, 'results': _results, 'values': _values,
                    'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan,
                    'environments': _environments, 'connect': _connect, 'check-environment': _check_environment,
                    'set-up': _set_up, 'disconnect': _disconnect, 'runs': _runs, 'products': _products,
@@ -1522,6 +1577,8 @@ def _run_store(arguments, dsn):
         arguments.benchmark = _bare(arguments.benchmark, 'benchmarks')
     if arguments.command == 'chart':
         arguments.chart = _bare(arguments.chart, 'charts')
+    if arguments.command == 'branch':
+        arguments.recipe = 'recipes/' + _bare(arguments.recipe, 'recipes')
     if arguments.command in ('connect', 'set-up', 'disconnect'):
         arguments.environment = 'environments/' + _bare(arguments.environment, 'environments')
     if arguments.command == 'check-environment':

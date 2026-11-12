@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 39)  # the rows of spec-m7.md section 2 and of spec-w1.md section 2
+        self.assertEqual(len(names), 41)  # the rows of spec-m7.md section 2 and of section 2 of spec-w1.md and spec-w3.md
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -76,7 +76,7 @@ class Table(unittest.TestCase):
 
     def test_mutations_and_owner_rows(self):
         mutations = {operation.name for operation in operations.OPERATIONS if operation.mutation}
-        self.assertEqual(mutations, {'set_definition', 'remove_definition', 'save', 'resolve_conflict',
+        self.assertEqual(mutations, {'set_definition', 'remove_definition', 'revert_definition', 'save', 'resolve_conflict',
                                      'import_values', 'check_environment', 'connect_environment',
                                      'disconnect_environment', 'request_build', 'approve_build', 'decline_build',
                                      'cancel_build', 'cancel_run', 'stop_run'})
@@ -204,6 +204,7 @@ class Reads(ServiceCase):
             'environment': {'reference': 'environments/test-python'}, 'runs': {'limit': 2},
             'run': {'run': run_id}, 'progress': {'run': run_id[:8]}, 'products': {}, 'activity': {},
             'map': {}, 'note': {'path': 'missing.md'}, 'recipe_results': {'recipe': 'recipes/fit-a'},
+            'draft_branch': {'recipe': 'recipes/fit-a', 'title': 'Fit c'},
         }
         reads = [operation for operation in operations.OPERATIONS if not operation.mutation]
         arguments['build_requests'] = {'state': 'queued', 'limit': 5}
@@ -299,6 +300,30 @@ class Changes(ServiceCase):
         page = self.call('activity', {'offset': 1, 'limit': 2})
         self.assertEqual((page['total'], [item['operation'] for item in page['items']]),
                          (5, ['set_definition', 'save']))
+
+    def test_revert(self):
+        before = self.call('definition', {'reference': 'recipes/fit-b'})
+        text = self.edited('recipes/fit-b', lambda document: document.update(title='Fit b, edited'))
+        self.call('set_definition', {'reference': 'recipes/fit-b', 'text': text})
+        self.assertEqual(self.refused('revert_definition', {'reference': 'recipes/fit-b'}, actor=agent('inspect')).code,
+                         'forbidden')
+        self.assertEqual(self.call('revert_definition', {'reference': 'recipes/fit-b'}, actor=agent('edit')),
+                         {'reference': 'recipes/fit-b', 'dropped': False})
+        self.assertEqual(self.call('definition', {'reference': 'recipes/fit-b'}), before)
+        self.assertEqual(self.refused('revert_definition', {'reference': 'recipes/fit-b'}).code, 'nothing-to-revert')
+        self.assertEqual(self.refused('revert_definition', {'reference': 'recipes/none'}).code, 'not-found')
+        draft = self.call('draft_branch', {'recipe': 'fit-a', 'title': 'Fit c'}, actor=agent('inspect'))
+        self.assertEqual(draft['problems'], [])
+        self.call('set_definition', {'reference': draft['reference'], 'text': draft['text']})
+        self.assertEqual(self.call('revert_definition', {'reference': draft['reference']}),
+                         {'reference': 'recipes/fit-c', 'dropped': True})
+        rows = [(row['operation'], row['target'], row['outcome'], row['actor']['kind']) for row in self.activity()]
+        self.assertEqual(rows, [('revert_definition', 'recipes/fit-c', 'done', 'owner'),
+                                ('set_definition', 'recipes/fit-c', 'done', 'owner'),
+                                ('revert_definition', 'recipes/none', 'not-found', 'owner'),
+                                ('revert_definition', 'recipes/fit-b', 'nothing-to-revert', 'owner'),
+                                ('revert_definition', 'recipes/fit-b', 'done', 'agent'),
+                                ('set_definition', 'recipes/fit-b', 'done', 'owner')])
 
     def refused_detail(self, reference):
         return f'{reference} is used by benchmarks/score, recipes/fit-a, recipes/fit-b; change those first.'

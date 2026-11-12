@@ -9,6 +9,9 @@ operations through Service.call and the two commands, and one build of the
 buildable fixture (BuildCase) with comparisons and a derivation added, which
 must build exactly as without them. Anything that could reach the local
 project home points TULDOK_PROJECT_HOME at a temporary directory.
+Section 2 of spec-w3.md is tested here too: the map's unsaved and trained_at
+fallback (MapAdditions), draft_branch (Branch, Operations) and the branch and
+revert commands; revert_definition itself is tested in the store's tests.
 """
 import copy
 import json
@@ -50,14 +53,14 @@ FIXTURE_MAP = {
          'description': 'A stepper trained before this format; only its weights and measurements remain.',
          'short': 'F42', 'group': 'steppers',
          'change': 'architecture', 'derived_from': None, 'trained_at': '2026-03-14', 'state': 'cannot-rebuild',
-         'adopted': False, 'card': 'notes/fits/early-fit.md', 'value': 0.625, 'count': 4, 'benchmarks': 1},
+         'unsaved': False, 'adopted': False, 'card': 'notes/fits/early-fit.md', 'value': 0.625, 'count': 4, 'benchmarks': 1},
         {'reference': 'recipes/stepper-k1', 'title': 'Stepper on wave scenes', 'description': None, 'short': 'K1',
          'group': 'steppers',
          'change': 'training-policy', 'derived_from': 'recipes/early-fit', 'trained_at': None, 'state': 'not-built',
-         'adopted': False, 'card': None, 'value': 0.875, 'count': 8, 'benchmarks': 1},
+         'unsaved': False, 'adopted': False, 'card': None, 'value': 0.875, 'count': 8, 'benchmarks': 1},
         {'reference': 'recipes/stepper-k2', 'title': 'Stepper fine-tuned from k1', 'description': None, 'short': 'K2',
          'group': 'fine-tuned', 'change': 'refinement', 'derived_from': 'recipes/stepper-k1', 'trained_at': None,
-         'state': 'not-built', 'adopted': False, 'card': None, 'value': 0.5, 'count': 8, 'benchmarks': 1},
+         'state': 'not-built', 'unsaved': False, 'adopted': False, 'card': None, 'value': 0.5, 'count': 8, 'benchmarks': 1},
     ],
     'edges': [
         {'from': 'recipes/stepper-k1', 'to': 'recipes/early-fit', 'kind': 'derived'},
@@ -504,6 +507,203 @@ class Map(store_base.StoreCase):
         self.assertEqual(workspace.recipe_results(project, 'recipes/stepper-k3'), {'rows': [], 'benchmarks': []})
 
 
+def _record_product(project, reference, finished_at, *, state='succeeded'):
+    """A run and the current product it made for reference, written straight into the tables builds.py owns."""
+    run_id = f'run-{reference.split("/")[1]}-0000'
+    text = project.definition(reference)['text']
+    project._execute("""INSERT INTO {schema}.runs (id, reference, subject, plan_id, state, scratch, commit, definition,
+                                                    inputs, argv, env, directory, queued_at, started_at, finished_at)
+                        VALUES (%s, %s, '', 'plan-0000', %s, true, '', %s, '{{}}', '[]', '{{}}', '/nonexistent',
+                                %s, %s, %s)""", (run_id, reference, state, text, finished_at, finished_at, finished_at))
+    project._execute("""INSERT INTO {schema}.products (run_id, reference, subject, directory, outputs, current)
+                        VALUES (%s, %s, '', '/nonexistent', '{{}}', true)""", (run_id, reference))
+
+
+@unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
+class MapAdditions(store_base.StoreCase):
+    """The map's unsaved and the trained_at fallback (spec-w3.md section 2)."""
+
+    def test_unsaved(self):
+        project = self.open()
+        text = (self.folder / 'recipes' / 'stepper-k2.json').read_text(encoding='utf-8')
+        project.set_definition('recipes/stepper-k2', text.replace('Stepper fine-tuned from k1', 'Edited'))
+        models = {model['reference']: model for model in workspace.project_map(project)['models']}
+        self.assertEqual({reference: model['unsaved'] for reference, model in models.items()},
+                         {'recipes/early-fit': False, 'recipes/stepper-k1': False, 'recipes/stepper-k2': True})
+
+    def test_trained_at_falls_back_to_the_finish_of_the_current_product(self):
+        project = self.open()
+        _record_product(project, 'recipes/stepper-k1', '2026-01-02T03:04:05+00:00')
+        _record_product(project, 'recipes/stepper-k2', '2025-01-01T00:00:00+00:00', state='adopted')
+        _record_product(project, 'recipes/early-fit', '2025-01-01T00:00:00+00:00')   # its label wins
+        found = workspace.project_map(project)
+        models = {model['reference']: model for model in found['models']}
+        self.assertEqual(models['recipes/stepper-k1']['trained_at'], '2026-01-02T03:04:05+00:00')
+        self.assertEqual((models['recipes/stepper-k2']['trained_at'], models['recipes/stepper-k2']['adopted']),
+                         (None, True))
+        self.assertEqual(models['recipes/early-fit']['trained_at'], '2026-03-14')
+        self.assertEqual([model['reference'] for model in found['models']],
+                         ['recipes/stepper-k1', 'recipes/early-fit', 'recipes/stepper-k2'])
+
+    def test_the_number_of_queries_is_the_same_with_products(self):
+        project = self.open()
+        counting = _Counting(project._connection)
+        workspace.project_map(project)
+        without = counting.count
+        _record_product(project, 'recipes/stepper-k1', '2026-01-02T03:04:05+00:00')
+        _record_product(project, 'recipes/stepper-k2', '2026-01-03T03:04:05+00:00')
+        counting = _Counting(project._connection)
+        workspace.project_map(project)
+        # builds.status asks more once any run exists; neither it nor the map asks per recipe or product.
+        with_runs = counting.count
+        _record_product(project, 'recipes/early-fit', '2026-01-04T03:04:05+00:00')
+        counting = _Counting(project._connection)
+        workspace.project_map(project)
+        self.assertEqual(counting.count, with_runs)
+        self.assertGreater(without, 0)
+
+
+@unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
+class Branch(store_base.StoreCase):
+    """draft_branch (spec-w3.md section 2)."""
+
+    def setUp(self):
+        super().setUp()
+        self.code = self.base / 'code'
+
+    def draft(self, recipe='recipes/stepper-k1', title='Stepper k1, more epochs!', **options):
+        project = self.open()
+        before = self.dump()
+        found = workspace.draft_branch(project, recipe, title, **options)
+        self.assertEqual(self.dump(), before)   # nothing is stored
+        self.close(project)
+        json.dumps(found, allow_nan=False)
+        return found
+
+    def test_a_branch_of_a_recipe_with_a_settings_file(self):
+        found = self.draft()
+        self.assertEqual(set(found), {'reference', 'text', 'parent', 'inlined', 'problems'})
+        self.assertEqual((found['reference'], found['parent'], found['inlined'], found['problems']),
+                         ('recipes/stepper-k1-more-epochs', 'recipes/stepper-k1', 'configs/train-k1.json', []))
+        parent = json.loads((self.folder / 'recipes' / 'stepper-k1.json').read_text(encoding='utf-8'))
+        document = json.loads(found['text'])
+        self.assertEqual(list(document), ['format', 'kind', 'title', 'model', 'group', 'change', 'derived_from', 'run'])
+        self.assertEqual((document['title'], document['change'], document['derived_from'], document['group']),
+                         ('Stepper k1, more epochs!', 'training-policy', 'recipes/stepper-k1', 'steppers'))
+        settings = json.loads((self.code / 'configs' / 'train-k1.json').read_text(encoding='utf-8'))
+        expected_run = {('settings' if key == 'settings_file' else key): (settings if key == 'settings_file' else value)
+                        for key, value in parent['run'].items()}
+        self.assertEqual(document['run'], expected_run)
+        self.assertEqual(list(document['run']), list(expected_run))   # the parent's order of keys
+        self.assertEqual(found['text'], json.dumps(document, indent=2, ensure_ascii=False) + '\n')
+        project = self.open()
+        project.set_definition(found['reference'], found['text'])   # it can be kept as it is
+        self.assertTrue(project.definition(found['reference'])['unsaved'])
+
+    def test_what_is_and_is_not_carried(self):
+        found = self.draft('recipes/early-fit', 'Again', change='component', description='Retrained.')
+        document = json.loads(found['text'])
+        self.assertEqual(document, {'format': 'tuldok_definition_v1', 'kind': 'recipe', 'title': 'Again',
+                                    'description': 'Retrained.', 'model': 'models/stepper', 'group': 'steppers',
+                                    'change': 'component', 'derived_from': 'recipes/early-fit'})
+        self.assertIsNone(found['inlined'])
+        # Without run and earlier_work it does not check yet: the caller is told so.
+        self.assertEqual([(p['severity'], p['path'], p['pointer']) for p in found['problems']],
+                         [('error', 'recipes/again.json', '/run')])
+        self.assertEqual(json.loads(self.draft('recipes/stepper-k2', 'K3')['text'])['change'], 'refinement')
+
+    def test_inline_settings_and_indentation_are_kept(self):
+        found = self.draft('recipes/stepper-k2', 'K3')
+        self.assertIsNone(found['inlined'])
+        self.assertEqual(json.loads(found['text'])['run']['settings'], {'epochs': 2, 'learning_rate': 0.0005, 'seed': 2})
+        path = self.folder / 'recipes' / 'stepper-k2.json'
+        document = json.loads(path.read_text(encoding='utf-8'))
+        for indent, expected in ((4, '    '), ('\t', '\t'), (None, '  ')):
+            with self.subTest(indent=indent):
+                path.write_text(json.dumps(document, indent=indent), encoding='utf-8')
+                text = self.draft('recipes/stepper-k2', 'K3')['text']
+                self.assertEqual(text, json.dumps(json.loads(text), indent=expected, ensure_ascii=False) + '\n')
+
+    def test_names(self):
+        self.assertEqual(self.draft(title='  Héllo, World!! ')['reference'], 'recipes/h-llo-world')
+        self.assertEqual(self.draft(title='!!!')['reference'], 'recipes/recipe')
+        long = self.draft(title='a' * 79 + ' b' + 'c' * 100)['reference']
+        self.assertEqual(long, 'recipes/' + 'a' * 79)   # cut to 80, then trimmed of the '-' it ends with
+        self.assertEqual(self.draft(title='Stepper K1')['reference'], 'recipes/stepper-k1-2')
+        _add_recipe(self.folder, 'stepper-k1-2')
+        self.assertEqual(self.draft(title='Stepper K1')['reference'], 'recipes/stepper-k1-3')
+        self.assertEqual(self.draft(title='x', name='chosen')['reference'], 'recipes/chosen')
+
+    def test_a_name_that_is_wrong_or_taken_is_refused(self):
+        _add_recipe(self.folder, 'spare')
+        project = self.open()
+        project.remove_definition('recipes/spare')
+        for name in ('Upper', '-dash', 'a' * 121, 'stepper-k1', 'spare'):
+            with self.subTest(name=name):
+                with self.assertRaises(ProjectError) as caught:
+                    workspace.draft_branch(project, 'recipes/stepper-k1', 'x', name=name)
+                self.assertEqual(caught.exception.code, 'invalid')
+        self.assertEqual(workspace.draft_branch(project, 'recipes/stepper-k1', 'Spare')['reference'],
+                         'recipes/spare-2')   # a removed definition's name is not free
+
+    def test_an_unknown_or_removed_recipe_is_not_found(self):
+        _add_recipe(self.folder, 'spare')
+        project = self.open()
+        project.remove_definition('recipes/spare')
+        for recipe in ('recipes/missing', 'recipes/spare', 'models/stepper', 'nonsense'):
+            with self.subTest(recipe=recipe):
+                with self.assertRaises(ProjectError) as caught:
+                    workspace.draft_branch(project, recipe, 'x')
+                self.assertEqual(caught.exception.code, 'not-found')
+
+    def replace_settings(self, make):
+        """Replace stepper-k1's settings file in the code root with what make(path) puts there."""
+        path = self.code / 'configs' / 'train-k1.json'
+        if path.is_dir() and not path.is_symlink():
+            path.rmdir()
+        elif path.exists() or path.is_symlink():
+            path.unlink()
+        make(path)
+
+    def test_settings_that_are_not_carried(self):
+        self.close(self.open())   # imported once: later opens attach without looking at the code root
+        outside = self.temporary / 'outside.json'
+        outside.write_text('{"secret": 1}', encoding='utf-8')
+        cases = {
+            'a list': lambda path: path.write_text('[1, 2]', encoding='utf-8'),
+            'not JSON': lambda path: path.write_text('{"a": ', encoding='utf-8'),
+            'a key twice': lambda path: path.write_text('{"a": 1, "a": 2}', encoding='utf-8'),
+            'over the limit': lambda path: path.write_text(
+                '{"a": "' + 'x' * (workspace.SETTINGS_LIMIT - 8) + '"}', encoding='utf-8'),
+            'a link out of the code root': lambda path: path.symlink_to(outside),
+            'a directory': lambda path: path.mkdir(),
+            'missing': lambda path: None,
+        }
+        for case, make in cases.items():
+            with self.subTest(case=case):
+                self.replace_settings(make)
+                found = self.draft()
+                run = json.loads(found['text'])['run']
+                self.assertIsNone(found['inlined'])
+                self.assertEqual(run['settings_file'], 'configs/train-k1.json')
+                self.assertNotIn('settings', run)
+                if case in ('a link out of the code root', 'missing'):
+                    self.assertIn('/run/settings_file', [problem['pointer'] for problem in found['problems']])
+
+    def test_settings_carried_through_a_link_inside_the_code_root_and_at_the_limit(self):
+        self.close(self.open())
+        real = self.code / 'configs' / 'real.json'
+        real.write_text('{"epochs": 9}', encoding='utf-8')
+        self.replace_settings(lambda path: path.symlink_to(real))
+        found = self.draft()
+        self.assertEqual((found['inlined'], json.loads(found['text'])['run']['settings']),
+                         ('configs/train-k1.json', {'epochs': 9}))
+        exact = '{"a": "' + 'x' * (workspace.SETTINGS_LIMIT - 9) + '"}'
+        self.assertEqual(len(exact.encode()), workspace.SETTINGS_LIMIT)
+        self.replace_settings(lambda path: path.write_text(exact, encoding='utf-8'))
+        self.assertEqual(self.draft()['inlined'], 'configs/train-k1.json')
+
+
 @unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
 class Operations(store_base.StoreCase):
     """The three operations through Service.call, for an inspect credential."""
@@ -551,10 +751,35 @@ class Operations(store_base.StoreCase):
         self.assertEqual(self.refused('recipe_results', {'recipe': 'recipes/missing'}), 'not-found')
         self.assertEqual(self.refused('recipe_results', {}), 'invalid')
 
+    def test_draft_branch(self):
+        found = self.call('draft_branch', {'recipe': 'stepper-k1', 'title': 'More epochs', 'change': 'refinement',
+                                           'description': 'Twice the epochs.'})
+        self.assertEqual((found['reference'], found['parent'], found['inlined'], found['problems']),
+                         ('recipes/more-epochs', 'recipes/stepper-k1', 'configs/train-k1.json', []))
+        self.assertEqual(json.loads(found['text'])['change'], 'refinement')
+        self.assertEqual(self.call('draft_branch', {'recipe': 'recipes/stepper-k1', 'title': 'x', 'name': 'k9'})
+                         ['reference'], 'recipes/k9')
+        self.assertEqual(self.call('definitions', {'kind': 'recipe'})['definitions'][-1]['reference'],
+                         'recipes/stepper-k2')   # nothing was stored
+        self.assertEqual(self.refused('draft_branch', {'recipe': 'recipes/missing', 'title': 'x'}), 'not-found')
+        self.assertEqual(self.refused('draft_branch', {'recipe': 'stepper-k1', 'title': 'x', 'name': 'stepper-k2'}),
+                         'invalid')
+        for wrong in ({'recipe': 'stepper-k1'}, {'recipe': 'stepper-k1', 'title': ''},
+                      {'recipe': 'stepper-k1', 'title': 'x' * 201}, {'recipe': 'stepper-k1', 'title': 'x', 'change': 'big'},
+                      {'recipe': 'stepper-k1', 'title': 'x', 'description': 'x' * 4001},
+                      {'recipe': 'stepper-k1', 'title': 'x', 'keep': True}):
+            with self.subTest(arguments=wrong):
+                self.assertEqual(self.refused('draft_branch', wrong), 'invalid')
+        self.assertEqual(self.refused('draft_branch', {'recipe': 'stepper-k1', 'title': 'x'}, NOBODY), 'forbidden')
+
+    def test_revert_needs_edit(self):
+        self.assertEqual(self.refused('revert_definition', {'reference': 'recipes/stepper-k1'}), 'forbidden')
+
     def test_none_writes_activity(self):
         self.call('map', {})
         self.call('note', {'path': 'decisions.md'})
         self.call('recipe_results', {'recipe': 'recipes/early-fit'})
+        self.call('draft_branch', {'recipe': 'recipes/early-fit', 'title': 'x'})
         self.assertEqual(self.service.call('activity', {}, INSPECTOR)['total'], 0)
 
 
@@ -581,6 +806,53 @@ class Commands(store_base.StoreCase):
                       'lower is better; 3 of 3 models have a value.', done.stdout)
         shown = _run('map', self.folder, '--json', home=self.temporary / 'home')
         self.assertEqual(json.loads(shown.stdout), FIXTURE_MAP)
+
+    def test_branch(self):
+        home = self.temporary / 'home'
+        done = _run('branch', self.folder, 'stepper-k1', '--title', 'More epochs', home=home)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        first, *rest = done.stdout.splitlines()
+        self.assertEqual(first, 'recipes/more-epochs, branched from recipes/stepper-k1, with the settings of '
+                                'configs/train-k1.json copied in.')
+        shown = _run('branch', self.folder, 'recipes/stepper-k1', '--title', 'More epochs', '--json', home=home)
+        found = json.loads(shown.stdout)
+        self.assertEqual(done.stdout.split('\n', 2)[2], found['text'])   # the text after the line and a blank one
+        self.assertFalse((self.folder / 'recipes' / 'more-epochs.json').exists())
+
+        kept = _run('branch', self.folder, 'stepper-k1', '--title', 'More epochs', '--change', 'component', '--keep',
+                    home=home)
+        self.assertEqual(kept.returncode, 0, kept.stderr)
+        self.assertIn('Kept recipes/more-epochs in the database; run save to write it to the folder.', kept.stdout)
+        status = _run('status', self.folder, '--json', home=home)
+        self.assertEqual(json.loads(status.stdout)['unsaved'], ['recipes/more-epochs'])
+
+        refused = _run('branch', self.folder, 'early-fit', '--title', 'Again', '--keep', home=home)
+        self.assertEqual(refused.returncode, 1)
+        self.assertIn('error  recipes/again.json  /run', refused.stdout)
+        self.assertIn('recipes/again was not kept: it has 1 error.', refused.stderr)
+        missing = _run('branch', self.folder, 'missing', '--title', 'x', home=home)
+        self.assertEqual(missing.returncode, 1)
+        self.assertIn('There is no recipe recipes/missing to branch from.', missing.stderr)
+        self.assertEqual(_run('branch', self.folder, 'stepper-k1', home=home).returncode, 2)   # --title is required
+
+        reverted = _run('revert', self.folder, 'recipes/more-epochs', '--json', home=home)
+        self.assertEqual(json.loads(reverted.stdout), {'reference': 'recipes/more-epochs', 'dropped': True})
+        again = _run('revert', self.folder, 'recipes/more-epochs', home=home)
+        self.assertEqual(again.returncode, 1)
+        self.assertIn('There is no definition recipes/more-epochs.', again.stderr)
+
+    def test_revert(self):
+        home = self.temporary / 'home'
+        path = self.folder / 'recipes' / 'stepper-k2.json'
+        edited = self.temporary / 'edited.json'
+        edited.write_text(path.read_text(encoding='utf-8').replace('Stepper fine-tuned from k1', 'Edited'),
+                          encoding='utf-8')
+        self.assertEqual(_run('set', self.folder, 'recipes/stepper-k2', edited, home=home).returncode, 0)
+        done = _run('revert', self.folder, 'recipes/stepper-k2', home=home)
+        self.assertEqual((done.returncode, done.stdout), (0, 'Reverted recipes/stepper-k2 to its file in the folder.\n'))
+        nothing = _run('revert', self.folder, 'recipes/stepper-k2', home=home)
+        self.assertEqual(nothing.returncode, 1)
+        self.assertIn('there is nothing to revert', nothing.stderr)
 
     def test_note(self):
         done = _run('note', self.folder, 'fits/early-fit.md', home=self.temporary / 'home')

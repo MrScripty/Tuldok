@@ -529,6 +529,112 @@ class Conflict(StoreCase):
         self.assertNotIn('charts/speed-accuracy', [r['reference'] for r in project.definitions()])
 
 
+class Revert(StoreCase):
+    """revert_definition and definition_problems (spec-w3.md section 2)."""
+
+    def setUp(self):
+        super().setUp()
+        self.project = self.open()
+
+    def dump(self):
+        """Every row, in an order that does not depend on the order rows were written."""
+        return {table: sorted(rows, key=repr) for table, rows in super().dump().items()}
+
+    def refused(self, reference, code):
+        before = self.dump()
+        with self.assertRaises(ProjectError) as caught:
+            self.project.revert_definition(reference)
+        self.assertEqual(caught.exception.code, code)
+        self.assertEqual(self.dump(), before)
+        return caught.exception
+
+    def test_an_unsaved_edit_gives_way_to_the_file(self):
+        before = self.dump()
+        self.project.set_definition('recipes/stepper-k2', self.edited('recipes/stepper-k2', lambda d: d.update(
+            title='Edited', change='component', derived_from='recipes/early-fit')))
+        self.assertNotEqual(self.dump(), before)
+        self.assertEqual(self.project.revert_definition('recipes/stepper-k2'),
+                         {'reference': 'recipes/stepper-k2', 'dropped': False})
+        self.assertEqual(self.dump(), before)   # text, document, title, kind, file digest, flags and edges
+        self.assertEqual(self.project.status(), CLEAN_STATUS)
+
+    def test_a_removed_definition_comes_back(self):
+        before = self.dump()
+        self.project.remove_definition('charts/speed-accuracy')
+        self.project.revert_definition('charts/speed-accuracy')
+        self.assertEqual(self.dump(), before)
+        self.assertIn('charts/speed-accuracy', [node['reference'] for node in self.project.graph()['nodes']])
+
+    def test_the_file_as_it_is_now_on_disk_is_taken(self):
+        self.project.remove_definition('charts/speed-accuracy')
+        text = self.edited('charts/speed-accuracy', lambda d: d.update(title='Changed on disk'))
+        self.write('charts/speed-accuracy', text)
+        self.project.revert_definition('charts/speed-accuracy')
+        shown = self.project.definition('charts/speed-accuracy')
+        self.assertEqual((shown['text'], shown['title'], shown['unsaved'], shown['removed']),
+                         (text, 'Changed on disk', False, False))
+        self.assertEqual(self.project.status()['changed'], [])   # its digest is the file's now
+
+    def test_a_removed_benchmark_gets_its_result_rows_back(self):
+        self.close(self.project)
+        project_file = self.folder / 'tuldok.json'
+        document = json.loads(project_file.read_text(encoding='utf-8'))
+        del document['map']
+        project_file.write_text(json.dumps(document, indent=2) + '\n', encoding='utf-8')
+        self.project = self.open()
+        before = self.dump()
+        for chart in ('speed-accuracy', 'rollout-ranking', 'rollout-progression', 'rollout-comparison'):
+            self.project.remove_definition(f'charts/{chart}')
+        self.project.remove_definition('benchmarks/rollout')
+        self.assertEqual(self.dump()['result_summaries'], [])
+        self.project.revert_definition('benchmarks/rollout')
+        for chart in ('speed-accuracy', 'rollout-ranking', 'rollout-progression', 'rollout-comparison'):
+            self.project.revert_definition(f'charts/{chart}')
+        self.assertEqual(self.dump(), before)
+        self.assertEqual(self.project.status(), CLEAN_STATUS)
+
+    def test_a_definition_never_saved_is_dropped(self):
+        extra = json.dumps({'format': 'tuldok_definition_v1', 'kind': 'model', 'title': 'Extra'})
+        self.project.set_definition('models/extra', extra)
+        user = self.edited('recipes/stepper-k1', lambda d: d.update(model='models/extra'))
+        self.project.set_definition('recipes/stepper-k1', user)
+        refused = self.refused('models/extra', 'in-use')
+        self.assertEqual(refused.references, ['recipes/stepper-k1'])
+        self.project.revert_definition('recipes/stepper-k1')
+        self.assertEqual(self.project.revert_definition('models/extra'), {'reference': 'models/extra', 'dropped': True})
+        self.assertNotIn('models/extra', [row['reference'] for row in self.project.definitions()])
+        self.assertEqual(self.project.status(), CLEAN_STATUS)
+
+    def test_a_file_that_no_longer_checks_is_refused(self):
+        self.project.set_definition('recipes/stepper-k2', self.edited('recipes/stepper-k2', lambda d: d.update(
+            title='Edited')))
+        self.write('recipes/stepper-k2', self.edited('recipes/stepper-k2', lambda d: d.update(model='models/missing')))
+        refused = self.refused('recipes/stepper-k2', 'invalid')
+        self.assertIn(('recipes/stepper-k2.json', '/model'), [(p.path, p.pointer) for p in refused.problems])
+        self.write('recipes/stepper-k2', '{"format": ')
+        self.assertEqual(self.refused('recipes/stepper-k2', 'invalid').problems[0].path, 'recipes/stepper-k2.json')
+        (self.folder / 'recipes' / 'stepper-k2.json').unlink()
+        (self.folder / 'recipes' / 'stepper-k2.json').symlink_to(self.folder / 'recipes' / 'stepper-k1.json')
+        self.refused('recipes/stepper-k2', 'invalid')
+
+    def test_nothing_to_revert_and_not_found(self):
+        self.refused('recipes/stepper-k1', 'nothing-to-revert')
+        self.refused('recipes/missing', 'not-found')
+        self.refused('things/waves', 'not-found')
+
+    def test_definition_problems_stores_nothing_and_has_warnings(self):
+        before = self.dump()
+        text = self.edited('recipes/early-fit', lambda d: d.update(run={
+            'command': ['sh', 'missing.sh'], 'sources': ['missing.sh']}))
+        problems = self.project.definition_problems('recipes/early-fit', text)
+        self.assertEqual([(p.severity, p.pointer) for p in problems], [('warning', '/run/sources/0')])
+        problems = self.project.definition_problems('recipes/new', self.edited('recipes/stepper-k1', lambda d: d.update(
+            model='models/missing')))
+        self.assertEqual([(p.severity, p.path, p.pointer) for p in problems], [('error', 'recipes/new.json', '/model')])
+        self.assertEqual(self.project.definition_problems('recipes/new', '{')[0].path, 'recipes/new.json')
+        self.assertEqual(self.dump(), before)
+
+
 class Drop(StoreCase):
 
     def test_drop_project(self):

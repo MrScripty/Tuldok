@@ -596,6 +596,8 @@ to the folder. Each project has its own schema, `project_<id>`, named after the
 | `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import. |
 | `set REFERENCE FILE` | Replaces or adds the definition at `REFERENCE` with the text of `FILE`, in the database only. The text is checked on its own and against the rest of the project; an edit with any error is refused and changes nothing. |
 | `remove REFERENCE` | Removes the definition in the database only. It is refused while another definition uses it, or while it is the chart `tuldok.json` names in `map.chart`. |
+| `revert REFERENCE` | Undoes the unsaved edit or the removal of a definition, in the database only: the file in the folder takes its place again. A definition the folder has no file for is dropped instead (refused while another definition uses it). A file that no longer checks is refused, and a definition with neither an unsaved edit nor a removal has nothing to revert (exit status 1). |
+| `branch RECIPE --title TITLE [--name NAME] [--change KIND] [--description TEXT] [--keep]` | Prints a new recipe branched from `RECIPE` (a bare name or `recipes/<name>`), as the operation `draft_branch` writes it: its reference, its problems in the form `check` prints them, and its text. Nothing is stored, unless `--keep` is given and the text has no error: then it is kept as an unsaved edit, as `set` keeps one. With `--keep` and an error, exit status 1. Here `--keep` keeps the branch; `branch` takes no `--keep` or `--discard` for a conflict. |
 | `map` | Prints the project's map: per group in order, its title, how many models (recipes) it has and how many of each kind of change, then the models in no group and the totals, then how many lines (`derived_from`, and recipes used as inputs by recipes) and comparisons there are, and the track. Reads the database only, never a results file, values file or note. |
 | `save` | Writes every unsaved definition to its file and deletes the files of removed ones. It writes nothing when one of those files changed on disk since it was imported, and names them. |
 | `forget` | Drops the project's copy from the database, including unsaved edits. The folder is not touched. |
@@ -627,10 +629,10 @@ Options:
 | Option | Commands | Meaning |
 | --- | --- | --- |
 | `--database-url URL` | all but `check` and `note` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
-| `--json` | `open`, `list`, `show`, `graph`, `map`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up`, `runs`, `run`, `progress`, `cancel`, `stop`, `products`, `estimate` | Print one JSON document with the same content as the text. |
+| `--json` | `open`, `list`, `show`, `graph`, `map`, `status`, `revert`, `branch`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up`, `runs`, `run`, `progress`, `cancel`, `stop`, `products`, `estimate` | Print one JSON document with the same content as the text. |
 | `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
-| `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
-| `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
+| `--keep` | all that open but `branch` | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
+| `--discard` | all that open but `branch` | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
 
 Without `--keep` or `--discard`, such a conflict is refused and names the
 definitions concerned.
@@ -1863,8 +1865,10 @@ and result keys of each operation are in its contract.
 | `map` | inspect | Read the map of the project: its groups, every recipe as a model with its group, kind of change, state and track value, the lines between them and the comparisons. |
 | `note` | inspect | Read one file under the notes directory of the project folder, given relative to it. |
 | `recipe_results` | inspect | Read the summary rows of every benchmark subject made from one recipe, ungrouped or for one group. |
+| `draft_branch` | inspect | Write the text of a new recipe branched from one of the project's, with its name and what keeping it would find wrong; nothing is stored. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
+| `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
 | `save` | edit | Write the unsaved edits and changed results files to the project folder. |
 | `resolve_conflict` | edit | Open a project whose files changed on disk where it has unsaved edits, keeping or discarding those edits. |
 | `import_values` | edit | Import one per-case values file, replacing that subject's values and summaries. |
@@ -1880,21 +1884,77 @@ and result keys of each operation are in its contract.
 
 `map` answers `groups` (in their order, each with `id`, `title`, `parent`,
 `description` and `models`, the number of recipes naming it), `models` (one per
-recipe, by the label `trained_at` and then by name: `reference`, `title`,
-`short`, `group`, `change`, `derived_from`, `trained_at`, `state`, `adopted`,
-`card`, `value` and `count`, `benchmarks`), `edges` (`{from, to, kind}`,
+recipe, by `trained_at` and then by name: `reference`, `title`,
+`short`, `group`, `change`, `derived_from`, `trained_at`, `state`, `unsaved`
+(whether the definition has an unsaved edit), `adopted`, `card`, `value` and
+`count`, `benchmarks`), `edges` (`{from, to, kind}`,
 `derived` or `input`), `comparisons` (`{from, to, explanation, excerpt}` as
 authored) and `track` (null, or `{chart, benchmark, metric, statistic}` from
 `map.chart`). A model's `value` and `count` are the track's statistic on the
 ungrouped row of its subject and how many cases it summarises; when a recipe
 is the subject under several names, the best by the metric's `better` is
-taken. `map` runs the same few queries whatever the number of recipes and
-reads no file. `note` takes `path`, relative to `notes/`, and reads it from
+taken. A model's `trained_at` is its label `trained_at`; without the label,
+the time the run that made its current product finished (ISO 8601 in UTC),
+and null when it has no product or its product was adopted. Models with a
+`trained_at` come first, earliest first. `map` runs the same few queries
+whatever the number of recipes and reads no file. `note` takes `path`, relative to `notes/`, and reads it from
 the folder without opening the project; anything it refuses is `not-found`.
 `recipe_results` takes `recipe` and an optional `group` (absent: the
 ungrouped rows only) and answers `rows`, each as in `results` with
 `benchmark` added, ordered by benchmark, subject and metric, and
 `benchmarks`, the benchmarks with a subject made from that recipe.
+
+`draft_branch` takes `recipe` (the parent, a bare name or `recipes/<name>`),
+`title` (1 to 200 characters) and optionally `name`, `change` (one of the four
+kinds of change) and `description` (at most 4,000 characters). It stores
+nothing and answers `reference`, `text`, `parent`, `inlined` and `problems`:
+
+- `reference` is `recipes/<name>`. A given `name` must follow the name rule and
+  be free, and a removed definition's name is not free; otherwise the call is
+  refused `invalid`. Without `name` it is made from the title: lowercase, each
+  run of characters outside `[a-z0-9]` one `-`, trimmed of `-` at both ends and
+  to 80 characters (`recipe` when nothing is left), then `-2`, `-3` and so on
+  until it is free.
+- `text` is the new recipe, written from the parent's text as it is in the
+  working copy: `format`, `kind`, `title`, `description` when given, the
+  parent's `model` and `group` when it has them, `change` (the argument, else
+  the parent's), `derived_from` naming the parent, and the parent's `run` when
+  it has one. `card`, `labels`, `earlier_work` and `compared_with` are not
+  carried. It is JSON indented as the parent's text is (two spaces when the
+  parent's has no indentation) and ends with a newline.
+- When the parent's `run` has `settings_file` and that file, read from the code
+  root as it is on disk, is a regular file holding one JSON object of at most
+  256 KiB, the new `run` carries that object as `settings` in place of
+  `settings_file`, and `inlined` is the file's path. A file reached through a
+  link that leaves the code root is not read. Otherwise `inlined` is null and
+  `run` is carried as it is.
+- `problems` is what `set_definition` would find in `text` at `reference`,
+  errors and warnings, each `{severity, path, pointer, message}`. A branch of a
+  model without `run`, or whose code paths are missing, comes back with those
+  errors for the caller to fix before keeping it.
+
+A `recipe` that is not a recipe of the project, or is removed, is refused
+`not-found`.
+
+`revert_definition` takes `reference` and answers `{reference, dropped}`. It
+applies to a definition with an unsaved edit or marked removed:
+
+- When the folder holds its file, the file's text takes its place as an import
+  of that file would put it (text, title, kind, the file's digest and the uses
+  it makes), and it is neither unsaved nor removed; `dropped` is false. The text
+  is checked as `set_definition` checks it, and a file that no longer checks, or
+  that cannot be read, is refused `invalid` with its problems and nothing
+  changes. A benchmark's summary rows are kept to what fits it, as
+  `set_definition` keeps them; when its results file on disk is still the one
+  last imported, that file is imported again, so a benchmark whose removal is
+  reverted has the rows of its results file back (per-case values imported
+  from values files went with the removal and are not).
+- When the folder holds no file for it, it is dropped as `remove_definition`
+  drops a definition never saved, and `dropped` is true; this is refused
+  `in-use` while another definition uses it.
+
+A definition with neither an unsaved edit nor the removed mark is refused
+`nothing-to-revert`, and an unknown one `not-found`.
 
 Installing an environment (`set-up`), measuring estimates (`estimate`),
 variables passed to a build (`build --env`), rebinding and forgetting a

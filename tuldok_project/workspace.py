@@ -9,9 +9,19 @@ folder.py reads: through directory descriptors that refuse links, a
 regular file of at most NOTE_LIMIT bytes, strict UTF-8; it opens no project.
 recipe_results reads the summary rows of every benchmark subject made from
 one recipe.
+draft_branch (spec-w3.md section 2) writes the text of a new recipe branched
+from one of the project's, names it, and says what set_definition would say
+of it, storing nothing. Its settings file, when it has one, is read from the
+code root as it is on disk, never through a link that leaves the code root.
+The map also says which models have unsaved edits and, for a model with no
+trained_at label, when the run of its current product finished.
 """
+import copy
 import dataclasses
+import datetime
+import json
 import os
+import re
 
 from psycopg import sql
 
@@ -20,6 +30,10 @@ from .store import ProjectError, _REFERENCE_SQL
 
 NOTE_LIMIT = 1024 * 1024
 DESCRIPTION_LIMIT = 300   # characters of a recipe's description on the map (spec-w2.md section 2)
+SETTINGS_LIMIT = 256 * 1024   # bytes of a settings file a branch carries as its own settings (spec-w3.md section 2)
+SLUG_LENGTH = 80              # characters of a branch's name made from its title, before any -2, -3, ...
+_NOT_SLUG = re.compile(r'[^a-z0-9]+')
+_INDENT = re.compile(r'\n([ \t]+)\S')
 
 
 def _labels(document):
@@ -90,12 +104,30 @@ def _track(project, chart_reference, definitions):
     return track, values
 
 
+def _product_finish_times(project):
+    """{reference: when the run that made its current product finished, as ISO 8601 text in UTC}, one query.
+
+    A product that was adopted, or whose run has no finish time, is left out.
+    """
+    found = {}
+    for reference, finished_at, state in project._execute(
+            "SELECT p.reference, r.finished_at, r.state FROM {schema}.products p "
+            "JOIN {schema}.runs r ON r.id = p.run_id WHERE p.current AND p.subject = ''"):
+        if finished_at is not None and state != builds.ADOPTED:
+            found[reference] = finished_at.astimezone(datetime.timezone.utc).isoformat()
+    return found
+
+
 def project_map(project):
-    """The map of an open project (spec-w1.md section 2): groups, models, edges, comparisons and the track."""
-    rows = project._execute(f'SELECT {_REFERENCE_SQL}, kind, title, document FROM {{schema}}.definitions '
+    """The map of an open project (spec-w1.md section 2): groups, models, edges, comparisons and the track.
+
+    Each model also says whether it is unsaved, and its trained_at falls back
+    to its current product's finish time (spec-w3.md section 2).
+    """
+    rows = project._execute(f'SELECT {_REFERENCE_SQL}, kind, title, document, unsaved FROM {{schema}}.definitions '
                             'WHERE NOT removed').fetchall()
-    definitions = {reference: {'kind': kind, 'title': title, 'document': document}
-                   for reference, kind, title, document in rows}
+    definitions = {reference: {'kind': kind, 'title': title, 'document': document, 'unsaved': unsaved}
+                   for reference, kind, title, document, unsaved in rows}
     documents_by_reference = {reference: item['document'] for reference, item in definitions.items()}
     state = project._state()
     tuldok = state['project'] or {}
@@ -118,6 +150,8 @@ def project_map(project):
         if recipe is not None:
             with_rows.setdefault(recipe, set()).add(benchmark)
 
+    finished = _product_finish_times(project)
+
     recipes = sorted(reference for reference, item in definitions.items() if item['kind'] == 'recipe')
     models = []
     for reference in recipes:
@@ -128,8 +162,9 @@ def project_map(project):
             'description': _description(document), 'short': _text(_labels(document).get('short')),
             'group': _text(document.get('group')), 'change': _text(document.get('change')),
             'derived_from': _text(document.get('derived_from')),
-            'trained_at': _text(_labels(document).get('trained_at')),
-            'state': states[reference], 'adopted': bool((status.get(reference) or {}).get('adopted')),
+            'trained_at': _text(_labels(document).get('trained_at')) or finished.get(reference),
+            'state': states[reference], 'unsaved': definitions[reference]['unsaved'],
+            'adopted': bool((status.get(reference) or {}).get('adopted')),
             'card': _text(document.get('card')), 'value': value, 'count': count,
             'benchmarks': len(with_rows.get(reference, ())),
         })
@@ -231,3 +266,107 @@ def recipe_results(project, recipe, group=None):
         stored = result_rows._stored(record[1:])
         rows.append({'benchmark': record[0], **dataclasses.asdict(stored.row), 'origin': stored.origin})
     return {'rows': rows, 'benchmarks': sorted({benchmark for benchmark, _ in pairs})}
+
+
+# ------------------------------------------------------------ branching
+
+def _branch_name(title, taken):
+    """A free name from title: lowercase, each run outside [a-z0-9] one '-', trimmed, then -2, -3, ... when taken."""
+    base = _NOT_SLUG.sub('-', title.lower()).strip('-')[:SLUG_LENGTH].strip('-') or 'recipe'
+    name, number = base, 1
+    while name in taken:
+        number += 1
+        name = f'{base}-{number}'
+    return name
+
+
+def _indent(text):
+    """The indentation of the first indented line of a definition's text; two spaces when it has none."""
+    match = _INDENT.search(text)
+    return match.group(1) if match else '  '
+
+
+def _settings_object(code_root, path):
+    """The JSON object in the settings file path under code_root, or None when it cannot be carried.
+
+    The file is read as it is on disk: its real path must stay inside the
+    code root (a link inside the code root is followed, one out of it is
+    not), it must be a regular file of at most SETTINGS_LIMIT bytes, and it
+    must hold one strict JSON object.
+    """
+    if documents.relative_path_problem(path) or not os.path.isdir(code_root):
+        return None
+    target = os.path.realpath(os.path.join(code_root, path))
+    if os.path.commonpath([code_root, target]) != code_root or target == code_root:
+        return None
+    try:
+        fd = os.open(os.path.dirname(target), folder_reader.DIRECTORY_FLAGS)
+    except OSError:
+        return None
+    try:
+        raw = folder_reader.read(fd, os.path.basename(target), SETTINGS_LIMIT)
+        return documents.decode(raw)
+    except (folder_reader.Unsafe, documents.DocumentError):
+        return None
+    finally:
+        os.close(fd)
+
+
+def draft_branch(project, recipe, title, *, name=None, change=None, description=None):
+    """{reference, text, parent, inlined, problems}: a new recipe branched from recipe, stored nowhere (spec-w3.md).
+
+    The text carries the parent's model, group and run, its kind of change
+    unless change is given, and derived_from naming the parent; not its card,
+    labels, earlier_work or comparisons. A run whose settings_file is a JSON
+    object under the code root carries it as settings, and inlined names the
+    file. problems are the errors and warnings set_definition would find in
+    the text at reference, as dicts. Raises ProjectError not-found for a
+    recipe that is not one of the project's, and invalid for a name that
+    breaks the name rule or is taken (a removed definition's name included).
+    """
+    parsed = documents.parse_reference(recipe)
+    row = project._execute("SELECT text FROM {schema}.definitions WHERE directory = 'recipes' "
+                           'AND name = %s AND NOT removed', (parsed[1],)).fetchone() \
+        if parsed and parsed[0] == 'recipes' else None
+    if row is None:
+        raise ProjectError(f'There is no recipe {recipe} to branch from.', 'not-found', references=[recipe])
+    parent_text = row[0]
+    parent = documents.decode(parent_text)   # from the text, not the jsonb column, to keep the order of its keys
+    taken = {taken_name for (taken_name,) in project._execute(
+        "SELECT name FROM {schema}.definitions WHERE directory = 'recipes'")}
+    if name is not None:
+        if not documents.is_name(name):
+            raise ProjectError(f'{name!r} is not a name: use 1 to 120 lowercase letters, digits, ".", "_" or "-", '
+                               'starting with a letter or digit.', 'invalid', references=[f'recipes/{name}'])
+        if name in taken:
+            raise ProjectError(f'recipes/{name} is taken (a removed definition keeps its name until the project '
+                               'is saved); choose another name.', 'invalid', references=[f'recipes/{name}'])
+    else:
+        name = _branch_name(title, taken)
+    reference = documents.reference('recipes', name)
+
+    document = {'format': parent['format'], 'kind': 'recipe', 'title': title}
+    if description is not None:
+        document['description'] = description
+    for field in ('model', 'group'):
+        if field in parent:
+            document[field] = parent[field]
+    if change is not None or 'change' in parent:
+        document['change'] = change if change is not None else parent['change']
+    document['derived_from'] = recipe
+    inlined = None
+    if isinstance(parent.get('run'), dict):
+        run = copy.deepcopy(parent['run'])
+        path = run.get('settings_file')
+        if isinstance(path, str) and 'settings' not in run:
+            state = project._state()
+            settings = _settings_object(os.path.realpath(os.path.join(state['folder'], state['code_root'])), path)
+            if settings is not None:
+                run = {('settings' if key == 'settings_file' else key): (settings if key == 'settings_file' else value)
+                       for key, value in run.items()}
+                inlined = path
+        document['run'] = run
+    text = json.dumps(document, indent=_indent(parent_text), ensure_ascii=False) + '\n'
+    problems = project.definition_problems(reference, text)
+    return {'reference': reference, 'text': text, 'parent': recipe, 'inlined': inlined,
+            'problems': [problem.as_dict() for problem in problems]}

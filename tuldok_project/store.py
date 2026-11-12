@@ -28,6 +28,9 @@ one owned by build_requests.
 The state row also keeps tuldok.json as last imported (spec-w1.md: the map's
 groups and track are read from it); a change to it alone imports the folder
 again, and the chart its map.chart names cannot be removed.
+revert_definition (spec-w3.md section 2) undoes an unsaved edit or a removed
+mark from the folder's file, and definition_problems says what set_definition
+would say of a text without storing it; both check with set_definition's code.
 """
 from dataclasses import dataclass
 import hashlib
@@ -87,7 +90,8 @@ class ProjectError(Exception):
 
     code is one of: invalid (the folder or the edit breaks the format; problems
     lists why), conflict (files changed on disk where the database has unsaved
-    edits), bound-elsewhere, busy, in-use, changed-on-disk, not-found; and for
+    edits), bound-elsewhere, busy, in-use, changed-on-disk, not-found,
+    nothing-to-revert (revert_definition); and for
     environments (environments.py): not-set-up (nothing is recorded for it),
     no-install, no-installer, target-exists, install-failed; and for builds
     (builds.py): blocked, running, not-ready, and a snapshot.SnapshotError's
@@ -602,23 +606,20 @@ class Project:
 
     # ------------------------------------------------------------ editing
 
-    def set_definition(self, reference, text):
-        """Validate text as the definition at reference and store it as an unsaved edit (4.4).
+    def _text_problems(self, reference, text, state):
+        """(document, problems): every error and warning set_definition finds in text at reference.
 
-        It is checked alone (strict JSON, schema, kind against directory, card,
-        placeholders, paths into the code root) and against the project as it
-        would then be (references, named outputs, charts, cycles). Raises
-        ProjectError with code 'invalid' and the problems, changing nothing,
-        when any error is found.
+        document is None when text is not a strict JSON object (problems then
+        holds that one error). It is checked alone (strict JSON, schema, kind
+        against directory, card, placeholders, paths into the code root) and
+        against the project as it would then be (references, named outputs,
+        charts, cycles); the caller holds the transaction that reads the project.
         """
-        directory, name = _split(reference)
         path = f'{reference}.json'
         try:
             document = documents.decode(text)
         except documents.DocumentError as exc:
-            raise ProjectError(f'{reference} is not valid: {exc}', 'invalid',
-                               problems=[Problem('error', path, '', str(exc))]) from None
-        state = self._state()
+            return None, [Problem('error', path, '', str(exc))]
         candidate = _definition(reference, text, document)
         problems = []
 
@@ -628,11 +629,31 @@ class Project:
         check.check_definition(candidate, _notes(state['folder']), add)
         code_root = os.path.realpath(os.path.join(state['folder'], state['code_root']))
         check.check_code_paths(candidate, code_root if os.path.isdir(code_root) else None, add)
-        alone = _errors(problems)
+        alone = bool(_errors(problems))
+        merged = self._merged_definitions()
+        merged[reference] = candidate
+        return document, problems + _cross_problems(merged, {path} if alone else (), state['project'])
+
+    def definition_problems(self, reference, text):
+        """The errors and warnings set_definition would find in text at reference; nothing is stored."""
+        _split(reference)
+        state = self._state()
         with self._connection.transaction():
-            merged = self._merged_definitions()
-            merged[reference] = candidate
-            errors = alone + _errors(_cross_problems(merged, {path} if alone else (), state['project']))
+            return self._text_problems(reference, text, state)[1]
+
+    def set_definition(self, reference, text):
+        """Validate text as the definition at reference and store it as an unsaved edit (4.4).
+
+        It is checked by _text_problems. Raises ProjectError with code
+        'invalid' and the errors, changing nothing, when any error is found.
+        """
+        directory, name = _split(reference)
+        state = self._state()
+        with self._connection.transaction():
+            document, problems = self._text_problems(reference, text, state)
+            errors = _errors(problems)
+            if document is None:
+                raise ProjectError(f'{reference} is not valid: {errors[0].message}', 'invalid', problems=errors)
             if errors:
                 raise ProjectError(f'{reference} cannot be set; see the problems.', 'invalid', problems=errors,
                                    references=[reference])
@@ -644,7 +665,7 @@ class Project:
                                  document = EXCLUDED.document, removed = false,
                                  unsaved = {schema}.definitions.unsaved OR {schema}.definitions.removed
                                            OR {schema}.definitions.text IS DISTINCT FROM EXCLUDED.text''',
-                          (directory, name, candidate.kind, document['title'], text, Jsonb(document)))
+                          (directory, name, documents.KINDS[directory], document['title'], text, Jsonb(document)))
             self._write_edges(graph.edges({reference: document}), [reference])
             if directory == 'benchmarks':
                 result_rows.prune(self._connection, self.schema, name, document)
@@ -665,26 +686,115 @@ class Project:
                                 (directory, name)).fetchone()
             if row is None:
                 raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
-            users = [source for (source,) in self._execute(
-                'SELECT DISTINCT from_ref FROM {schema}.edges WHERE to_ref = %s ORDER BY 1', (reference,))]
-            project = self._state()['project'] or {}
-            if isinstance(project.get('map'), dict) and project['map'].get('chart') == reference:
-                users.append(folder_reader.PROJECT_FILE)  # its map.chart (spec-w1.md section 1)
-            if users:
-                raise ProjectError(f'{reference} is used by {", ".join(users)}; change those first.', 'in-use',
-                                   references=users)
+            self._refuse_in_use(reference)
             if row[0] is None:
                 # Never written to disk: there is no file for save() to delete.
-                self._execute('DELETE FROM {schema}.definitions WHERE directory = %s AND name = %s', (directory, name))
+                self._drop(reference)
             else:
                 self._execute('UPDATE {schema}.definitions SET removed = true WHERE directory = %s AND name = %s',
                               (directory, name))
-            self._write_edges([], [reference])
-            builds.forget(self._connection, self.schema, reference)
+                self._forget(reference)
+
+    def _refuse_in_use(self, reference):
+        """Raise ProjectError in-use naming what uses reference; the chart in map.chart counts as used."""
+        users = [source for (source,) in self._execute(
+            'SELECT DISTINCT from_ref FROM {schema}.edges WHERE to_ref = %s ORDER BY 1', (reference,))]
+        project = self._state()['project'] or {}
+        if isinstance(project.get('map'), dict) and project['map'].get('chart') == reference:
+            users.append(folder_reader.PROJECT_FILE)  # its map.chart (spec-w1.md section 1)
+        if users:
+            raise ProjectError(f'{reference} is used by {", ".join(users)}; change those first.', 'in-use',
+                               references=users)
+
+    def _drop(self, reference):
+        """Delete a definition's row outright (there is no file for save() to delete) and forget its records."""
+        self._execute('DELETE FROM {schema}.definitions WHERE directory = %s AND name = %s',
+                      documents.parse_reference(reference))
+        self._forget(reference)
+
+    def _forget(self, reference):
+        """Drop what a definition that is gone leaves: its edges, runs and products, results, environment record."""
+        directory, name = documents.parse_reference(reference)
+        self._write_edges([], [reference])
+        builds.forget(self._connection, self.schema, reference)
+        if directory == 'benchmarks':
+            result_rows.remove_benchmark(self._connection, self.schema, name)
+        if directory == environments.DIRECTORY:
+            environments.forget(self._connection, self.schema, name)
+
+    def revert_definition(self, reference):
+        """Undo a definition's unsaved edit or removed mark (spec-w3.md section 2); returns {reference, dropped}.
+
+        When the folder holds the definition's file, its text takes the row's
+        place as an import of that file would put it (text, document, title,
+        kind, file digest, edges), checked as set_definition checks; a file that
+        no longer checks, or cannot be read, is refused invalid with nothing
+        changed. A benchmark's result rows are pruned as set_definition prunes
+        them, and its results file is imported again when it is still the file
+        last imported, since removing the benchmark dropped its rows. When the
+        folder holds no file, the row is dropped as remove_definition drops one
+        never saved (refused in-use while anything uses it). Refused
+        nothing-to-revert for a definition with neither, not-found for none.
+        """
+        directory, name = _split(reference)
+        state = self._state()
+        with self._connection.transaction():
+            row = self._execute('SELECT unsaved, removed FROM {schema}.definitions '
+                                'WHERE directory = %s AND name = %s FOR UPDATE', (directory, name)).fetchone()
+            if row is None:
+                raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
+            if not (row[0] or row[1]):
+                raise ProjectError(f'{reference} has no unsaved edit and is not marked removed; there is nothing '
+                                   'to revert.', 'nothing-to-revert', references=[reference])
+            path = f'{reference}.json'
+            try:
+                raw = _read_path(state['folder'], directory, f'{name}.json', folder_reader.DEFINITION_LIMIT)
+            except folder_reader.Unsafe as exc:
+                raise ProjectError(f'{reference} cannot be reverted: its file cannot be read.', 'invalid',
+                                   problems=[Problem('error', path, '', str(exc))], references=[reference]) from None
+            if raw is None:
+                self._refuse_in_use(reference)
+                self._drop(reference)
+                return {'reference': reference, 'dropped': True}
+            try:
+                text = raw.decode('utf-8')
+            except UnicodeDecodeError as exc:
+                raise ProjectError(f'{reference} cannot be reverted: its file is not UTF-8 text.', 'invalid',
+                                   problems=[Problem('error', path, '', f'The file is not UTF-8 text (bad byte at '
+                                                                        f'offset {exc.start}).')],
+                                   references=[reference]) from None
+            document, problems = self._text_problems(reference, text, state)
+            errors = _errors(problems)
+            if errors:
+                raise ProjectError(f'{reference} cannot be reverted: its file in the folder no longer checks; see '
+                                   'the problems.', 'invalid', problems=errors, references=[reference])
+            self._execute('''UPDATE {schema}.definitions SET kind = %s, title = %s, text = %s, document = %s,
+                                 file_sha256 = %s, unsaved = false, removed = false
+                             WHERE directory = %s AND name = %s''',
+                          (documents.KINDS[directory], document['title'], text, Jsonb(document), _sha(raw),
+                           directory, name))
+            self._write_edges(graph.edges({reference: document}), [reference])
             if directory == 'benchmarks':
-                result_rows.remove_benchmark(self._connection, self.schema, name)
-            if directory == environments.DIRECTORY:
-                environments.forget(self._connection, self.schema, name)
+                result_rows.prune(self._connection, self.schema, name, document)
+                self._import_results_again(name, document)
+        return {'reference': reference, 'dropped': False}
+
+    def _import_results_again(self, benchmark, document):
+        """Import results/<benchmark>.csv again when it is still the file last imported and fits the benchmark."""
+        recorded = self._execute('SELECT file_sha256 FROM {schema}.results_files WHERE benchmark = %s',
+                                 (benchmark,)).fetchone()
+        if recorded is None:
+            return
+        try:
+            raw = _read_path(self._state()['folder'], folder_reader.RESULTS, f'{benchmark}.csv',
+                             folder_reader.RESULTS_LIMIT)
+        except folder_reader.Unsafe:
+            return
+        if raw is None or _sha(raw) != recorded[0]:
+            return  # gone or changed on disk: the next open takes it as it takes any results file
+        if any(severity == 'error' for severity, _, _ in results.check_results(raw, document)):
+            return
+        result_rows.import_file(self._connection, self.schema, benchmark, raw.decode('utf-8'), document)
 
     def save(self):
         """Write unsaved definitions and changed results files, and delete the files of removed ones.
@@ -841,17 +951,26 @@ def _file_sha(root, reference):
 def _path_sha(root, directory, filename, limit):
     """SHA-256 of directory/filename on disk, None when it does not exist, 'unreadable' when it is not a plain file."""
     try:
+        raw = _read_path(root, directory, filename, limit)
+    except folder_reader.Unsafe:
+        return 'unreadable'
+    return None if raw is None else _sha(raw)
+
+
+def _read_path(root, directory, filename, limit):
+    """The bytes of directory/filename on disk; None when it does not exist, folder.Unsafe when not a plain file."""
+    try:
         fd = os.open(os.path.join(root, directory), folder_reader.DIRECTORY_FLAGS)
     except FileNotFoundError:
         return None
-    except OSError:
-        return 'unreadable'
+    except OSError as exc:
+        raise folder_reader.Unsafe(f'The directory {directory} cannot be opened: {exc.strerror}.') from None
     try:
-        return _sha(folder_reader.read(fd, filename, limit))
+        return folder_reader.read(fd, filename, limit)
     except folder_reader.Unsafe:
         if not os.path.lexists(os.path.join(root, directory, filename)):
             return None
-        return 'unreadable'
+        raise
     finally:
         os.close(fd)
 

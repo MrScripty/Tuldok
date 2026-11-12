@@ -1,7 +1,8 @@
 """The operations a served project folder offers, as data: names, who may call them, arguments and results.
 
 Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md, with the three
-rows of section 2 of spec-w1.md (map, note, recipe_results).
+rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
+section 2 of spec-w3.md (draft_branch, revert_definition).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -13,6 +14,7 @@ from dataclasses import dataclass
 WHO = ('inspect', 'edit', 'cancel', 'request', 'owner')
 REQUEST_STATES = ('awaiting-approval', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'declined', 'expired')
 KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart')
+CHANGES = ('training-policy', 'architecture', 'refinement', 'component')   # a recipe's kind of change
 TARGET_LIMIT = 50
 REASON_CHARACTERS = 400
 
@@ -129,10 +131,21 @@ OPERATIONS = (
     Operation('recipe_results', "Read the summary rows of every benchmark subject made from one recipe, ungrouped "
               'or for one group.', 'inspect', False, _arguments(['recipe'], recipe=_REFERENCE, group=_TEXT),
               ('rows', 'benchmarks')),
+    Operation('draft_branch', 'Write the text of a new recipe branched from one of the project\'s, with its name '
+              'and what keeping it would find wrong; nothing is stored.', 'inspect', False,
+              _arguments(['recipe', 'title'], recipe=_REFERENCE,
+                         title={'type': 'string', 'minLength': 1, 'maxLength': 200},
+                         name={'type': 'string', 'minLength': 1, 'maxLength': 120},
+                         change={'type': 'string', 'enum': list(CHANGES)},
+                         description={'type': 'string', 'maxLength': 4000}),
+              ('reference', 'text', 'parent', 'inlined', 'problems')),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',
               'edit', True, _arguments(['reference'], reference=_REFERENCE), ('removed',)),
+    Operation('revert_definition', 'Put back the file in the folder in place of a definition\'s unsaved edit or '
+              'removal, or drop a definition the folder has no file for.', 'edit', True,
+              _arguments(['reference'], reference=_REFERENCE), ('reference', 'dropped')),
     Operation('save', 'Write the unsaved edits and changed results files to the project folder.', 'edit', True,
               _arguments(), SAVE),
     Operation('resolve_conflict', 'Open a project whose files changed on disk where it has unsaved edits, keeping '

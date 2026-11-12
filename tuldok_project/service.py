@@ -417,6 +417,12 @@ class Service:
         with self._open() as project:
             return workspace.recipe_results(project, recipe, arguments.get('group'))
 
+    def _draft_branch(self, arguments, actor):
+        recipe = 'recipes/' + _bare(arguments['recipe'], 'recipes')
+        with self._open() as project:
+            return workspace.draft_branch(project, recipe, arguments['title'], name=arguments.get('name'),
+                                          change=arguments.get('change'), description=arguments.get('description'))
+
     # ------------------------------------------------------------- changes
 
     def _set_definition(self, arguments, actor):
@@ -428,6 +434,10 @@ class Service:
         with self._open() as project:
             project.remove_definition(arguments['reference'])
         return {'removed': arguments['reference']}
+
+    def _revert_definition(self, arguments, actor):
+        with self._open() as project:
+            return project.revert_definition(arguments['reference'])
 
     def _save(self, arguments, actor):
         with self._open() as project:
