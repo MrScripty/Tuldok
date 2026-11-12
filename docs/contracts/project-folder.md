@@ -84,6 +84,8 @@ holding one JSON object. The checker refuses:
 | `name` | yes | 1 to 120 characters |
 | `code_root` | no | the path from the project folder to the root of the code that commands run in; default `.`; not empty and not absolute; may contain `..` |
 | `code_paths` | no | 1 to 64 paths relative to the code root, in normal form (no `..`, no empty or `.` parts, no trailing `/`), each listed once and each existing under the code root; default: the whole code root |
+| `groups` | no | 0 to 200 objects, in the order their sections are shown on the map. Each: `id` (1 to 64 characters, `[A-Za-z0-9][A-Za-z0-9_.-]*`, each id once), `title` (1 to 200 characters), `parent` (optional: the `id` of another group; a group is never its own ancestor), `description` (optional, at most 2,000 characters); no other field |
+| `map` | no | `{"chart": <reference to charts/>}`, no other field: a chart of the form `progression`, whose benchmark, metric and statistic are the map's track |
 
 `code_paths` names the parts of the repository a run needs: a run sees a
 read-only copy of only those paths at the commit it runs from, and only
@@ -275,6 +277,15 @@ A recipe trains a model; its product is weights.
 | --- | --- | --- |
 | `run` | unless `earlier_work.rebuild` is `no` | see the `run` block |
 | `model` | no | reference to `models/` |
+| `group` | no | the `id` of one of the project's `groups` in `tuldok.json`: the section of the map it is shown in |
+| `change` | no | `training-policy`, `architecture`, `refinement` or `component`: the kind of change this model makes |
+| `derived_from` | no | reference to another recipe in `recipes/`: the model this one was branched from. Never the recipe itself, and following `derived_from` never comes back to where it started |
+| `compared_with` | no | at most 50 objects, each `recipe` (reference to another recipe, each once in the list), `explanation` (1 to 2,000 characters) and `excerpt` (optional, at most 2,000 characters); no other field |
+
+The label `short`, when a recipe has it, is the text of its node on the map
+(at most 16 characters are shown). `derived_from` and `compared_with` say how
+recipes relate on the map; they are not inputs, so building never follows
+them, and a comparison may run both ways.
 
 Example, `recipes/pilot-dense-k1.json`:
 
@@ -506,9 +517,22 @@ pilot-dense-k1,velocity_error_final,cells_per_metre=8,4,0,0.195,0.175,0.129,0.27
    | a benchmark's `cases.dataset` | `cases` |
    | a chart's `benchmark` | `benchmark` |
 
+   Two more fields of a recipe are edges with a role, shown in a definition's
+   uses and used-by, but are not uses in this sense: they may run both ways,
+   carry no state, and the plan and the build order do not follow them.
+
+   | Field | Role of the edge |
+   | --- | --- |
+   | a recipe's `derived_from` | `derived` |
+   | a recipe's `compared_with[].recipe` | `compared` |
+
 4. A chart's `metric`, `metric_x`, `subjects` and `group` exist in its benchmark.
 5. Code paths exist under the code root (see the `run` block).
 6. Every results file has its benchmark and follows the rules above.
+7. A recipe's `group` is a group of `tuldok.json`; a group's `parent` is another
+   group and no group is its own ancestor; a recipe is never derived from or
+   compared with itself; following `derived_from` never comes back to where it
+   started; `map.chart` is a chart of the form `progression`.
 
 ## Checking a folder
 
@@ -571,9 +595,16 @@ to the folder. Each project has its own schema, `project_<id>`, named after the
 | `graph [--order]` | Prints every definition with its kind and state, then every use as `from  role  to`. `--order` instead prints the build order: each definition after everything it uses, with its state. |
 | `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import. |
 | `set REFERENCE FILE` | Replaces or adds the definition at `REFERENCE` with the text of `FILE`, in the database only. The text is checked on its own and against the rest of the project; an edit with any error is refused and changes nothing. |
-| `remove REFERENCE` | Removes the definition in the database only. It is refused while another definition uses it. |
+| `remove REFERENCE` | Removes the definition in the database only. It is refused while another definition uses it, or while it is the chart `tuldok.json` names in `map.chart`. |
+| `map` | Prints the project's map: per group in order, its title, how many models (recipes) it has and how many of each kind of change, then the models in no group and the totals, then how many lines (`derived_from`, and recipes used as inputs by recipes) and comparisons there are, and the track. Reads the database only, never a results file, values file or note. |
 | `save` | Writes every unsaved definition to its file and deletes the files of removed ones. It writes nothing when one of those files changed on disk since it was imported, and names them. |
 | `forget` | Drops the project's copy from the database, including unsaved edits. The folder is not touched. |
+
+`note FOLDER PATH` prints one file under the folder's `notes/` directory,
+`PATH` being relative to `notes/` (for example `fits/early-fit.md`). Like
+`check`, it needs no database: it reads the folder on disk, refusing a path
+not in normal form, a link anywhere on the way, a file that is not regular,
+larger than 1 MiB or not UTF-8 (exit status 1).
 
 Every command except `forget` opens the project first, which imports anything
 that changed on disk, so `list`, `show`, `graph` and `status` always describe the
@@ -595,8 +626,8 @@ Options:
 
 | Option | Commands | Meaning |
 | --- | --- | --- |
-| `--database-url URL` | all but `check` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
-| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up`, `runs`, `run`, `progress`, `cancel`, `stop`, `products`, `estimate` | Print one JSON document with the same content as the text. |
+| `--database-url URL` | all but `check` and `note` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
+| `--json` | `open`, `list`, `show`, `graph`, `map`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up`, `runs`, `run`, `progress`, `cancel`, `stop`, `products`, `estimate` | Print one JSON document with the same content as the text. |
 | `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
 | `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
 | `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
@@ -1829,6 +1860,9 @@ and result keys of each operation are in its contract.
 | `build_requests` | inspect | List the build requests, newest first, optionally in one state. |
 | `build_request` | inspect | Read one build request with what it covers and the runs of its build. |
 | `activity` | inspect | List the changes asked of this project through the interface, newest first, and how each ended. |
+| `map` | inspect | Read the map of the project: its groups, every recipe as a model with its group, kind of change, state and track value, the lines between them and the comparisons. |
+| `note` | inspect | Read one file under the notes directory of the project folder, given relative to it. |
+| `recipe_results` | inspect | Read the summary rows of every benchmark subject made from one recipe, ungrouped or for one group. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `save` | edit | Write the unsaved edits and changed results files to the project folder. |
@@ -1843,6 +1877,24 @@ and result keys of each operation are in its contract.
 | `cancel_build` | cancel | Cancel a build request, stopping its build when it is running. |
 | `cancel_run` | cancel | Ask a queued or running run to stop. |
 | `stop_run` | cancel | Kill what a run whose build is gone left running, and mark it unknown. |
+
+`map` answers `groups` (in their order, each with `id`, `title`, `parent`,
+`description` and `models`, the number of recipes naming it), `models` (one per
+recipe, by the label `trained_at` and then by name: `reference`, `title`,
+`short`, `group`, `change`, `derived_from`, `trained_at`, `state`, `adopted`,
+`card`, `value` and `count`, `benchmarks`), `edges` (`{from, to, kind}`,
+`derived` or `input`), `comparisons` (`{from, to, explanation, excerpt}` as
+authored) and `track` (null, or `{chart, benchmark, metric, statistic}` from
+`map.chart`). A model's `value` and `count` are the track's statistic on the
+ungrouped row of its subject and how many cases it summarises; when a recipe
+is the subject under several names, the best by the metric's `better` is
+taken. `map` runs the same few queries whatever the number of recipes and
+reads no file. `note` takes `path`, relative to `notes/`, and reads it from
+the folder without opening the project; anything it refuses is `not-found`.
+`recipe_results` takes `recipe` and an optional `group` (absent: the
+ungrouped rows only) and answers `rows`, each as in `results` with
+`benchmark` added, ordered by benchmark, subject and metric, and
+`benchmarks`, the benchmarks with a subject made from that recipe.
 
 Installing an environment (`set-up`), measuring estimates (`estimate`),
 variables passed to a build (`build --env`), rebinding and forgetting a

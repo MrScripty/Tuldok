@@ -127,6 +127,7 @@ class Layout(FixtureCopy):
 
     def test_definition_directory_may_be_absent(self):
         shutil.rmtree(self.project / 'charts')
+        self.edit('tuldok.json', '/map', DELETE)  # map.chart names a chart (spec-w1.md)
         self.assertClean(check_folder(self.project))
 
     def test_definition_directory_holds_only_json(self):
@@ -144,7 +145,11 @@ class Layout(FixtureCopy):
     def test_definition_directory_must_be_a_directory(self):
         shutil.rmtree(self.project / 'charts')
         self.write('charts', 'x')
-        self.assertProblem(check_folder(self.project), 'charts', '')
+        report = check_folder(self.project)
+        self.assertProblem(report, 'charts', '', alone=False)
+        # tuldok.json's map.chart names a chart, which is then not there (spec-w1.md).
+        self.assertProblem(report, 'tuldok.json', '/map/chart', alone=False)
+        self.assertEqual(len(report.problems), 2)
 
     def test_definition_file_may_not_be_a_symbolic_link(self):
         os.symlink('speed-accuracy.json', self.project / 'charts/copy.json')
@@ -153,7 +158,11 @@ class Layout(FixtureCopy):
     def test_definition_directory_may_not_be_a_symbolic_link(self):
         shutil.move(self.project / 'charts', self.base / 'charts')
         os.symlink(self.base / 'charts', self.project / 'charts')
-        self.assertProblem(check_folder(self.project), 'charts', '')
+        report = check_folder(self.project)
+        self.assertProblem(report, 'charts', '', alone=False)
+        # tuldok.json's map.chart names a chart, which is then not there (spec-w1.md).
+        self.assertProblem(report, 'tuldok.json', '/map/chart', alone=False)
+        self.assertEqual(len(report.problems), 2)
 
     def test_project_file_may_not_be_a_symbolic_link(self):
         shutil.move(self.project / 'tuldok.json', self.base / 'tuldok.json')
@@ -640,6 +649,8 @@ class Graph(unittest.TestCase):
     def test_users_of(self):
         users = graph.users_of(self.definitions, 'recipes/stepper-k1')
         self.assertEqual(users, [graph.Edge('benchmarks/rollout', 'recipes/stepper-k1', 'subject:stepper-k1'),
+                                 graph.Edge('recipes/stepper-k2', 'recipes/stepper-k1', 'compared'),
+                                 graph.Edge('recipes/stepper-k2', 'recipes/stepper-k1', 'derived'),
                                  graph.Edge('recipes/stepper-k2', 'recipes/stepper-k1', 'input:start')])
 
     def test_cycles_and_order_refuses_them(self):

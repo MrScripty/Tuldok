@@ -1,6 +1,7 @@
 """The operations a served project folder offers, as data: names, who may call them, arguments and results.
 
-Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md.
+Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md, with the three
+rows of section 2 of spec-w1.md (map, note, recipe_results).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -119,6 +120,15 @@ OPERATIONS = (
               False, _arguments(['request'], request=_REQUEST), REQUEST + ('runs',)),
     Operation('activity', 'List the changes asked of this project through the interface, newest first, and how '
               'each ended.', 'inspect', False, _arguments(offset=_OFFSET, limit=_limit(500)), ('items', 'total')),
+    Operation('map', 'Read the map of the project: its groups, every recipe as a model with its group, kind of '
+              'change, state and track value, the lines between them and the comparisons.', 'inspect', False,
+              _arguments(), ('groups', 'models', 'edges', 'comparisons', 'track')),
+    Operation('note', 'Read one file under the notes directory of the project folder, given relative to it.',
+              'inspect', False, _arguments(['path'], path={'type': 'string', 'minLength': 1, 'maxLength': 1024}),
+              ('path', 'text')),
+    Operation('recipe_results', "Read the summary rows of every benchmark subject made from one recipe, ungrouped "
+              'or for one group.', 'inspect', False, _arguments(['recipe'], recipe=_REFERENCE, group=_TEXT),
+              ('rows', 'benchmarks')),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',

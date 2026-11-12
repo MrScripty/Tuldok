@@ -32,7 +32,9 @@ DIRECTORIES = {
 KINDS = {directory: kind for kind, directory in DIRECTORIES.items()}
 
 # Which directories each reference-taking field accepts (2.6, 2.7). The keys
-# are the edge roles of 2.9 without their ":<name>" suffix.
+# are the edge roles of 2.9 without their ":<name>" suffix, and the two roles
+# of a recipe's place on the map (spec-w1.md section 1): derived_from and
+# compared_with.
 ACCEPTS = {
     'input': ('datasets', 'recipes', 'steps'),
     'environment': ('environments',),
@@ -40,6 +42,8 @@ ACCEPTS = {
     'subject': ('recipes',),
     'cases': ('datasets',),
     'benchmark': ('benchmarks',),
+    'derived': ('recipes',),
+    'compared': ('recipes',),
 }
 
 STATISTICS = ('mean', 'median', 'p10', 'p90', 'min', 'max')

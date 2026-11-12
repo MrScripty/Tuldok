@@ -3,6 +3,13 @@
   "kind": "recipe",
   "title": "Stepper on wave scenes",
   "model": "models/stepper",
+  "labels": {"short": "K1"},
+  "group": "steppers",
+  "change": "training-policy",
+  "derived_from": "recipes/early-fit",
+  "compared_with": [
+    {"recipe": "recipes/early-fit", "explanation": "Same stepper, trained again with a recorded command and data."}
+  ],
   "run": {
     "command": ["python", "lab/train.py", "--data", "{inputs.training}", "--settings", "{settings}", "--out", "{output}"],
     "environment": "environments/lab-cpu",

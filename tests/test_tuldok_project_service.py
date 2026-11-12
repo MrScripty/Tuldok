@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 36)  # the rows of spec-m7.md section 2
+        self.assertEqual(len(names), 39)  # the rows of spec-m7.md section 2 and of spec-w1.md section 2
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -203,6 +203,7 @@ class Reads(ServiceCase):
             'plan': {'targets': ['benchmarks/score']}, 'estimates': {}, 'environments': {},
             'environment': {'reference': 'environments/test-python'}, 'runs': {'limit': 2},
             'run': {'run': run_id}, 'progress': {'run': run_id[:8]}, 'products': {}, 'activity': {},
+            'map': {}, 'note': {'path': 'missing.md'}, 'recipe_results': {'recipe': 'recipes/fit-a'},
         }
         reads = [operation for operation in operations.OPERATIONS if not operation.mutation]
         arguments['build_requests'] = {'state': 'queued', 'limit': 5}
@@ -211,6 +212,9 @@ class Reads(ServiceCase):
             with self.subTest(operation.name):
                 if operation.name == 'build_request':  # tested with a request in test_tuldok_project_build_requests
                     self.assertEqual(self.refused(operation.name, {'request': 'abcdef12'}).code, 'not-found')
+                    continue
+                if operation.name == 'note':  # this fixture has no notes; read in test_tuldok_project_workspace
+                    self.assertEqual(self.refused(operation.name, arguments['note']).code, 'not-found')
                     continue
                 result = self.call(operation.name, arguments[operation.name], actor=agent('inspect'))
                 self.assertTrue(set(operation.result) <= set(result), set(operation.result) - set(result))

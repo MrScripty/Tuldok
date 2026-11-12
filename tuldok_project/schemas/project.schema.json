@@ -40,6 +40,59 @@
         "minLength": 1,
         "maxLength": 1024
       }
+    },
+    "groups": {
+      "type": "array",
+      "maxItems": 200,
+      "description": "0 to 200 groups, in the order their sections are shown",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/group_id"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "parent": {
+            "$ref": "#/$defs/group_id"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      }
+    },
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chart"
+      ],
+      "properties": {
+        "chart": {
+          "type": "string",
+          "pattern": "^charts/[a-z0-9][a-z0-9._-]{0,119}$",
+          "description": "a reference to a chart of the form progression, such as charts/<name>"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "group_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+      "description": "a group id of letters, digits, '_', '.' or '-' that starts with a letter or digit, at most 64 characters"
     }
   }
 }

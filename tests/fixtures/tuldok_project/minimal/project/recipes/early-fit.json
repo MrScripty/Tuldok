@@ -4,7 +4,9 @@
   "title": "Early fit (fit-0042)",
   "description": "A stepper trained before this format; only its weights and measurements remain.",
   "card": "notes/fits/early-fit.md",
-  "labels": {"fit_id": "fit-0042", "trained_at": "2026-03-14", "device": "cuda"},
+  "labels": {"fit_id": "fit-0042", "trained_at": "2026-03-14", "device": "cuda", "short": "F42"},
   "earlier_work": {"rebuild": "no", "reason": "Trained by the earlier study harness; its command and training data were not recorded."},
-  "model": "models/stepper"
+  "model": "models/stepper",
+  "group": "steppers",
+  "change": "architecture"
 }

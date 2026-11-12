@@ -25,6 +25,9 @@ definition does (the files on disk are left).
 The record of changes asked through the service (spec-m7.md section 5) lives
 in one more table owned by activity, and the build requests (section 4) in
 one owned by build_requests.
+The state row also keeps tuldok.json as last imported (spec-w1.md: the map's
+groups and track are read from it); a change to it alone imports the folder
+again, and the chart its map.chart names cannot be removed.
 """
 from dataclasses import dataclass
 import hashlib
@@ -66,7 +69,8 @@ _TABLES = (
     *result_rows.TABLES,
 )
 # Later additive changes go here as ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
-_MIGRATIONS = ()
+# state.project: tuldok.json as last imported, for the map's groups and track (spec-w1.md).
+_MIGRATIONS = ('ALTER TABLE {schema}.state ADD COLUMN IF NOT EXISTS project jsonb',)
 
 _UPSERT = '''INSERT INTO {schema}.definitions
                  (directory, name, kind, title, text, document, file_sha256, unsaved, removed)
@@ -247,8 +251,11 @@ def _notes(root):
     return found.notes
 
 
-def _cross_problems(merged, unsound=frozenset()):
-    """Problems across files (references, named outputs, charts, cycles) for {reference: Definition}."""
+def _cross_problems(merged, unsound=frozenset(), project=None):
+    """Problems across files (references, named outputs, charts, cycles, the map's fields) for {reference: Definition}.
+
+    project is the decoded tuldok.json; without it the map rules that need it are skipped.
+    """
     problems = []
 
     def add(severity, path, pointer, message):
@@ -257,6 +264,7 @@ def _cross_problems(merged, unsound=frozenset()):
     check.check_references(merged, add)
     check.check_charts(merged, set(unsound), add)
     check.check_cycles(merged, add)
+    check.check_map(project, merged, add)
     return problems
 
 
@@ -328,10 +336,11 @@ class Project:
             self._execute(statement)
 
     def _state(self):
-        row = self._execute('SELECT project_id, name, folder, code_root, imported_at FROM {schema}.state').fetchone()
+        row = self._execute('SELECT project_id, name, folder, code_root, imported_at, project '
+                            'FROM {schema}.state').fetchone()
         if row is None:
             return None
-        return dict(zip(('project_id', 'name', 'folder', 'code_root', 'imported_at'), row))
+        return dict(zip(('project_id', 'name', 'folder', 'code_root', 'imported_at', 'project'), row))
 
     def _documents(self, *, removed=True):
         """{reference: document} for every row (with removed=False, only rows not removed)."""
@@ -390,7 +399,8 @@ class Project:
         if (state is not None and not listing.irregular and listing.files == on_disk
                 and not results_irregular
                 and {name: _sha(raw) for name, raw in results_on_disk.items()} == recorded_results
-                and state['name'] == project['name'] and state['code_root'] == code_root):
+                and state['name'] == project['name'] and state['code_root'] == code_root
+                and state['project'] == project):
             if state['folder'] != root:
                 self._execute('UPDATE {schema}.state SET folder = %s', (root,))
             return
@@ -433,7 +443,7 @@ class Project:
             else:
                 merged[reference] = _definition(reference, text, documents.decode(text))
         if kept:
-            problems = _errors(_cross_problems(merged))
+            problems = _errors(_cross_problems(merged, project=report.project))
             if problems:
                 raise ProjectError('The folder no longer fits the unsaved edits held here; '
                                    'save or discard them first.', 'invalid', problems=problems)
@@ -473,12 +483,14 @@ class Project:
             for name, text in changed_results.items():
                 result_rows.import_file(self._connection, self.schema, name, text,
                                         merged[documents.reference('benchmarks', name)].document)
-            self._execute('''INSERT INTO {schema}.state (singleton, project_id, name, folder, code_root, imported_at)
-                             VALUES (true, %s, %s, %s, %s, now())
+            self._execute('''INSERT INTO {schema}.state (singleton, project_id, name, folder, code_root, imported_at,
+                                                         project)
+                             VALUES (true, %s, %s, %s, %s, now(), %s)
                              ON CONFLICT (singleton) DO UPDATE SET project_id = EXCLUDED.project_id,
                                  name = EXCLUDED.name, folder = EXCLUDED.folder,
-                                 code_root = EXCLUDED.code_root, imported_at = EXCLUDED.imported_at''',
-                          (self.project_id, project['name'], root, project.get('code_root', '.')))
+                                 code_root = EXCLUDED.code_root, imported_at = EXCLUDED.imported_at,
+                                 project = EXCLUDED.project''',
+                          (self.project_id, project['name'], root, project.get('code_root', '.'), Jsonb(project)))
 
     def _results_to_import(self, disk, merged, results_on_disk, recorded_results):
         """({benchmark: text} of new or changed results files, [benchmarks whose file is gone]).
@@ -620,7 +632,7 @@ class Project:
         with self._connection.transaction():
             merged = self._merged_definitions()
             merged[reference] = candidate
-            errors = alone + _errors(_cross_problems(merged, {path} if alone else ()))
+            errors = alone + _errors(_cross_problems(merged, {path} if alone else (), state['project']))
             if errors:
                 raise ProjectError(f'{reference} cannot be set; see the problems.', 'invalid', problems=errors,
                                    references=[reference])
@@ -640,6 +652,8 @@ class Project:
     def remove_definition(self, reference):
         """Mark a definition removed, to be deleted from disk by save(); refused while anything uses it.
 
+        The chart that tuldok.json names in map.chart counts as used.
+
         Removing an environment also drops its record on this machine (an
         installed directory is left where it is); removing anything drops its
         runs and products records (their directories are left where they are).
@@ -653,6 +667,9 @@ class Project:
                 raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
             users = [source for (source,) in self._execute(
                 'SELECT DISTINCT from_ref FROM {schema}.edges WHERE to_ref = %s ORDER BY 1', (reference,))]
+            project = self._state()['project'] or {}
+            if isinstance(project.get('map'), dict) and project['map'].get('chart') == reference:
+                users.append(folder_reader.PROJECT_FILE)  # its map.chart (spec-w1.md section 1)
             if users:
                 raise ProjectError(f'{reference} is used by {", ".join(users)}; change those first.', 'in-use',
                                    references=users)

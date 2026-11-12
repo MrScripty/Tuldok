@@ -24,6 +24,10 @@ prefix of it, while a build runs in another process: they open the project
 only for a moment (waiting while a build has it open) and read the run's logs
 with it closed. `estimate` runs the build steps' estimate commands, the one
 command besides `build` that runs project code; `plan` shows what it stored.
+`map` prints the project's map (workspace.py): its groups with how many
+models of each kind of change they hold, the lines, the comparisons and the
+track, from the database only. `note` prints one file under notes/, read
+from the folder on disk without the database.
 `requests`, `approve` and `decline` work on the build requests asked through
 the app (build_requests.py); approving and declining act as the owner, as
 the actor "command line", and write an activity row each. An approved
@@ -73,6 +77,10 @@ def _parser():
     new.add_argument('--code-root', default='.', metavar='PATH',
                      help="the code root, relative to the folder (default '.')")
     new.add_argument('--json', action='store_true', help='print one JSON document')
+    note = commands.add_parser('note', help='print one file under the notes directory of a project folder',
+                               description='Print one file under the notes directory of a project folder.')
+    note.add_argument('folder', help='the project folder (the one holding tuldok.json)')
+    note.add_argument('path', help='the path relative to notes/, for example fits/early-fit.md')
 
     database = argparse.ArgumentParser(add_help=False)
     database.add_argument('folder', help='the project folder (the one holding tuldok.json)')
@@ -101,6 +109,7 @@ def _parser():
     graph = add('graph', [reading], 'print the definitions with their state and the uses between them')
     graph.add_argument('--order', action='store_true', help='print the build order instead')
     add('status', [reading], 'list unsaved edits and files changed on disk since the last import')
+    add('map', [reading], 'print the groups with their models by kind of change, the lines, comparisons and track')
     setting = add('set', [opening], 'replace or add a definition in the database (not saved to the folder)')
     setting.add_argument('reference', help='for example recipes/pilot-dense-k1')
     setting.add_argument('file', help='the file holding the new definition text')
@@ -506,6 +515,58 @@ def _chart(project, arguments):
             return 1
         if not arguments.json:
             print(f'Wrote {arguments.svg} ({written} bytes).')
+    return 0
+
+
+_CHANGES = ('training-policy', 'architecture', 'refinement', 'component')
+
+
+def _map(project, arguments):
+    from . import workspace
+
+    drawn = workspace.project_map(project)
+    if arguments.json:
+        _json(drawn)
+        return 0
+
+    def counted(title, models):
+        kinds = [sum(1 for model in models if model['change'] == kind) for kind in _CHANGES]
+        return (title, len(models), *kinds, len(models) - sum(kinds))
+
+    models = drawn['models']
+    rows = [('group', 'models', *_CHANGES, 'no kind')]
+    rows += [counted(group['title'], [model for model in models if model['group'] == group['id']])
+             for group in drawn['groups']]
+    known = {group['id'] for group in drawn['groups']}
+    outside = [model for model in models if model['group'] not in known]
+    if outside:
+        rows.append(counted('(no group)', outside))
+    rows.append(counted('total', models))
+    _columns(rows)
+    print()
+    derived = sum(1 for edge in drawn['edges'] if edge['kind'] == 'derived')
+    print(f'{_plural(len(drawn["edges"]), "line")} ({derived} derived, {len(drawn["edges"]) - derived} input), '
+          f'{_plural(len(drawn["comparisons"]), "comparison")}.')
+    track = drawn['track']
+    if track is None:
+        print('No track: tuldok.json names no chart of the form progression in map.chart.')
+    else:
+        valued = sum(1 for model in models if model['value'] is not None)
+        print(f'Track {track["chart"]} on {track["benchmark"]}: {_metric_words(track["metric"], track["statistic"])}; '
+              f'{valued} of {_plural(len(models), "model")} have a value.')
+    return 0
+
+
+def _note(arguments):
+    from . import workspace
+    from .store import ProjectError
+
+    try:
+        shown = workspace.read_note(os.path.realpath(arguments.folder), arguments.path)
+    except ProjectError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    sys.stdout.write(shown['text'] if shown['text'].endswith('\n') or not shown['text'] else shown['text'] + '\n')
     return 0
 
 
@@ -1380,7 +1441,7 @@ def _adopt(project, arguments):
     return 0
 
 
-_STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status,
+_STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status, 'map': _map,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
                    'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan,
                    'environments': _environments, 'connect': _connect, 'check-environment': _check_environment,
@@ -1536,6 +1597,8 @@ def main(argv=None):
     arguments = _parser().parse_args(argv)  # exits with status 2 on a usage error
     if arguments.command == 'check':
         return _check(arguments)
+    if arguments.command == 'note':
+        return _note(arguments)
     if arguments.command in ('home', 'new'):
         from .local import SettingsError
 

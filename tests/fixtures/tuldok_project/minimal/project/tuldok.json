@@ -2,5 +2,10 @@
   "format": "tuldok_project_v1",
   "id": "3f9c2a1b7d4e4f60a8b1c2d3e4f50617",
   "name": "Minimal surrogate project",
-  "code_root": "../code"
+  "code_root": "../code",
+  "groups": [
+    {"id": "steppers", "title": "Steppers", "description": "Every stepper trained on wave scenes."},
+    {"id": "fine-tuned", "title": "Fine-tuned steppers", "parent": "steppers"}
+  ],
+  "map": {"chart": "charts/rollout-progression"}
 }

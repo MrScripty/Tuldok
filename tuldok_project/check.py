@@ -5,8 +5,10 @@ docs/plans/definition-first-projects/spec-m1-m2.md are applied and the rules
 that are neither layout (folder.py), single-field syntax (documents.py and the
 schemas) nor summary-file content (results.py): kind against directory, cards,
 placeholders in context, benchmark uniqueness rules, references and named
-outputs, charts against their benchmark, cycles, and paths into the code root
-(in definitions and in the code_paths of tuldok.json).
+outputs, charts against their benchmark, cycles, paths into the code root
+(in definitions and in the code_paths of tuldok.json), and the map's fields
+(spec-w1.md section 1): groups, a recipe's group, derived_from and
+compared_with, and map.chart.
 Problems are collected, never raised, so one bad file never hides another.
 """
 from dataclasses import dataclass, field
@@ -70,6 +72,7 @@ def check_folder(folder, *, code=True):
     check_references(definitions, add)
     check_charts(definitions, unsound, add)
     check_cycles(definitions, add)
+    check_map(project, definitions, add)
     _check_results(read.results, definitions, unsound, add)
 
     problems.sort(key=lambda p: (p.path, p.pointer, _SEVERITY_ORDER.get(p.severity, 2), p.message))
@@ -313,9 +316,86 @@ def check_cycles(definitions, add):
         listed = ', '.join(group)
         for reference in group:
             definition = definitions[reference]
-            pointer = next((use.pointer for use in graph.uses(definition.document) if use.target in members), '')
+            pointer = next((use.pointer for use in graph.uses(definition.document)
+                            if use.target in members and use.role not in graph.MAP_ROLES), '')
             add('error', definition.path, pointer,
                 f'This definition is in a cycle of uses ({listed}); remove one of the references to break it.')
+
+
+def _group_problems(groups, add):
+    """Report repeated group ids, unknown parents and groups that are their own ancestor; return the ids."""
+    parents, ids = {}, set()
+    for index, group in enumerate(groups):
+        if not isinstance(group, dict) or not isinstance(group.get('id'), str):
+            continue
+        if group['id'] in ids:
+            add('error', folder_reader.PROJECT_FILE, documents.pointer('groups', index, 'id'),
+                f'The group id {group["id"]!r} is used more than once; give each group its own id.')
+            continue
+        ids.add(group['id'])
+        if isinstance(group.get('parent'), str):
+            parents[group['id']] = (index, group['parent'])
+    for group_id, (index, parent) in parents.items():
+        where = documents.pointer('groups', index, 'parent')
+        if parent not in ids:
+            add('error', folder_reader.PROJECT_FILE, where,
+                f'The parent {parent!r} is not a group of this project; use the id of another group or remove parent.')
+            continue
+        seen, current = set(), parent
+        while current != group_id and current in parents and current not in seen:
+            seen.add(current)
+            current = parents[current][1]
+        if current == group_id:
+            add('error', folder_reader.PROJECT_FILE, where,
+                f'The group {group_id!r} is its own ancestor through parent; change a parent to break the loop.')
+    return ids
+
+
+def check_map(project, definitions, add):
+    """Report the map's fields (spec-w1.md section 1): groups, recipe group, derived_from, compared_with, map.chart.
+
+    project is the decoded tuldok.json, or None, in which case the rules that
+    need it (groups, a recipe's group, map.chart) are skipped. A reference to
+    a missing recipe is check_references' problem.
+    """
+    groups = project.get('groups') if isinstance(project, dict) else None
+    ids = _group_problems(groups, add) if isinstance(groups, list) else set()
+    for reference, definition in definitions.items():
+        document = definition.document
+        if definition.kind != 'recipe' or not isinstance(document, dict):
+            continue
+        group = document.get('group')
+        if project is not None and isinstance(group, str) and group not in ids:
+            add('error', definition.path, '/group',
+                f'{group!r} is not a group of this project; use the id of a group in tuldok.json or add the group there.')
+        if document.get('derived_from') == reference:
+            add('error', definition.path, '/derived_from',
+                'A recipe cannot be derived from itself; name the recipe it was branched from or remove derived_from.')
+        compared = document.get('compared_with')
+        if isinstance(compared, list):
+            for index, value in _first_repeats(compared, 'recipe'):
+                add('error', definition.path, documents.pointer('compared_with', index, 'recipe'),
+                    f'{value} is compared more than once; keep one entry for it.')
+            for index, item in enumerate(compared):
+                if isinstance(item, dict) and item.get('recipe') == reference:
+                    add('error', definition.path, documents.pointer('compared_with', index, 'recipe'),
+                        'A recipe cannot be compared with itself; name another recipe or remove the entry.')
+    decoded = {reference: d.document for reference, d in definitions.items() if d.document is not None}
+    for loop in graph.derived_loops(decoded):
+        listed = ', '.join(loop)
+        for reference in loop:
+            add('error', definitions[reference].path, '/derived_from',
+                f'Following derived_from from here comes back here ({listed}); remove one derived_from to break the loop.')
+    chart = project.get('map', {}).get('chart') if isinstance(project, dict) and isinstance(project.get('map'), dict) else None
+    if isinstance(chart, str) and documents.parse_reference(chart) is not None and chart.startswith('charts/'):
+        target = definitions.get(chart)
+        if target is None:
+            add('error', folder_reader.PROJECT_FILE, '/map/chart',
+                f'{chart} does not exist; name a chart of the form progression or add {chart}.json.')
+        elif isinstance(target.document, dict) and target.document.get('form') != 'progression':
+            add('error', folder_reader.PROJECT_FILE, '/map/chart',
+                f'{chart} has the form {target.document.get("form")!r}, not progression; '
+                'name a chart of the form progression.')
 
 
 def _check_results(files, definitions, unsound, add):

@@ -3,6 +3,14 @@
   "kind": "recipe",
   "title": "Stepper fine-tuned from k1",
   "model": "models/stepper",
+  "labels": {"short": "K2"},
+  "group": "fine-tuned",
+  "change": "refinement",
+  "derived_from": "recipes/stepper-k1",
+  "compared_with": [
+    {"recipe": "recipes/stepper-k1", "explanation": "Fine-tuning lowers the rollout error at both horizons.",
+     "excerpt": "k2 halves the median error at horizon 1."}
+  ],
   "run": {
     "command": ["python", "lab/train.py", "--start", "{inputs.start}", "--data", "{inputs.training}", "--settings", "{settings}", "--out", "{output}"],
     "environment": "environments/lab-cpu",

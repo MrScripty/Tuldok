@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tuldok_project import check, result_rows, results  # noqa: E402
 from tuldok_project.results import SummaryRow  # noqa: E402
 from tuldok_project.store import ProjectError  # noqa: E402
+from tuldok_project.store import ProjectError  # noqa: E402
 from test_tuldok_project_store import FIXTURE, StoreCase  # noqa: E402
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -405,6 +406,16 @@ class SaveAndStatus(ResultsCase):
         self.assertNotEqual(self.read('datasets/waves'), waves)  # nothing at all was written
 
     def test_removing_the_benchmark_removes_its_results_and_save_deletes_the_file(self):
+        # tuldok.json's map.chart uses charts/rollout-progression (spec-w1.md): drop it first.
+        with self.assertRaises(ProjectError) as caught:
+            self.project.remove_definition('charts/rollout-progression')
+        self.assertEqual((caught.exception.code, caught.exception.references), ('in-use', ['tuldok.json']))
+        self.close(self.project)
+        project_file = self.folder / 'tuldok.json'
+        document = json.loads(project_file.read_text(encoding='utf-8'))
+        del document['map']
+        project_file.write_text(json.dumps(document, indent=2) + '\n', encoding='utf-8')
+        self.project = self.open()
         self.project.import_values(values_file())
         for chart in ('speed-accuracy', 'rollout-ranking', 'rollout-progression', 'rollout-comparison'):
             self.project.remove_definition(f'charts/{chart}')

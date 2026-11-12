@@ -390,6 +390,13 @@ class Edit(StoreCase):
         self.assertEqual(self.dump(), before)
 
     def test_removing_a_user_frees_what_it_used(self):
+        # tuldok.json's map.chart uses charts/rollout-progression (spec-w1.md): drop it first.
+        self.close(self.project)
+        project_file = self.folder / 'tuldok.json'
+        document = json.loads(project_file.read_text(encoding='utf-8'))
+        del document['map']
+        project_file.write_text(json.dumps(document, indent=2) + '\n', encoding='utf-8')
+        self.project = self.open()
         for chart in ('speed-accuracy', 'rollout-ranking', 'rollout-progression', 'rollout-comparison'):
             self.project.remove_definition(f'charts/{chart}')
         self.project.remove_definition('benchmarks/rollout')

@@ -34,7 +34,7 @@ import jsonschema
 import psycopg
 
 from . import (activity, build_requests, builds, charts, check, environments, launcher, local, operations, plan,
-               store)
+               store, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
@@ -404,6 +404,18 @@ class Service:
         with self._open() as project:
             return activity.items(project._connection, project.schema, arguments.get('offset', 0),
                                   arguments.get('limit', 100))
+
+    def _map(self, arguments, actor):
+        with self._open() as project:
+            return workspace.project_map(project)
+
+    def _note(self, arguments, actor):
+        return workspace.read_note(self.folder, arguments['path'])  # from disk; the project is not opened
+
+    def _recipe_results(self, arguments, actor):
+        recipe = 'recipes/' + _bare(arguments['recipe'], 'recipes')
+        with self._open() as project:
+            return workspace.recipe_results(project, recipe, arguments.get('group'))
 
     # ------------------------------------------------------------- changes
 

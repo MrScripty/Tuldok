@@ -5,12 +5,19 @@ Every function is pure and takes `definitions`, a mapping of reference (such as
 'datasets/x') to decoded document. Documents need not be valid: fields of the
 wrong type are skipped, so the graph can be read even from a folder with problems.
 Edges whose target is not in `definitions` are kept by edges() and uses() but
-ignored by order() and cycles().
+ignored by order() and cycles(). The two roles of a recipe's place on the map
+(spec-w1.md section 1), derived and compared, are edges like the others for
+uses(), edges() and users_of(), but say nothing about building: order() and
+cycles() ignore them (a comparison may run both ways) and states() carries
+nothing over them.
 """
 from dataclasses import dataclass
 import heapq
 
 from . import documents
+
+# Roles that record how recipes relate on the map, not what a build needs.
+MAP_ROLES = ('derived', 'compared')
 
 
 @dataclass(frozen=True, order=True)
@@ -55,6 +62,12 @@ def uses(document):
     kind = document.get('kind')
     if kind == 'recipe' and isinstance(document.get('model'), str):
         found.append(Use('model', '/model', document['model']))
+    if kind == 'recipe' and isinstance(document.get('derived_from'), str):
+        found.append(Use('derived', '/derived_from', document['derived_from']))
+    if kind == 'recipe' and isinstance(document.get('compared_with'), list):
+        for index, item in enumerate(document['compared_with']):
+            if isinstance(item, dict) and isinstance(item.get('recipe'), str):
+                found.append(Use('compared', documents.pointer('compared_with', index, 'recipe'), item['recipe']))
     if kind == 'benchmark':
         subjects = document.get('subjects')
         if isinstance(subjects, list):
@@ -86,10 +99,10 @@ def edges(definitions):
 
 
 def _adjacency(definitions):
-    """Return {reference: sorted targets} restricted to references present in definitions."""
+    """Return {reference: sorted targets} restricted to references present in definitions, map roles left out."""
     adjacency = {reference: set() for reference in definitions}
     for edge in edges(definitions):
-        if edge.to_ref in adjacency:
+        if edge.to_ref in adjacency and edge.role not in MAP_ROLES:
             adjacency[edge.from_ref].add(edge.to_ref)
     return {reference: sorted(targets) for reference, targets in adjacency.items()}
 
@@ -143,6 +156,29 @@ def cycles(definitions):
                 if len(group) > 1 or node in adjacency[node]:
                     groups.append(tuple(sorted(group)))
     return sorted(groups)
+
+
+def derived_loops(definitions):
+    """Return each loop of derived_from among definitions (two or more recipes), as sorted tuples, sorted.
+
+    A recipe that names itself is not a loop here: the checker reports it on its own.
+    """
+    parent = {}
+    for edge in edges(definitions):
+        if edge.role == 'derived' and edge.to_ref in definitions and edge.to_ref != edge.from_ref:
+            parent[edge.from_ref] = edge.to_ref
+    done, loops = set(), []
+    for start in sorted(parent):
+        path, position = [], {}
+        current = start
+        while current in parent and current not in done and current not in position:
+            position[current] = len(path)
+            path.append(current)
+            current = parent[current]
+        if current in position:
+            loops.append(tuple(sorted(path[position[current]:])))
+        done.update(path)
+    return sorted(loops)
 
 
 def order(definitions):
