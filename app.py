@@ -561,6 +561,32 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                 configuration, _parameters = pipeline.recipe_contract.graph_parameters(graph)
                 self._snapshot_contract_access(configuration['project_id'], operation, version, scope)
 
+        def _project_folder_post(self, path):
+            # A served project folder (spec-m7.md, section 6): POST /api/project/<name> and nothing else.
+            if not getattr(dataset, 'project_folder_mode', False):
+                return self.reply({'error': 'Start Tuldok with --project-folder to use this.', 'code': 'unavailable'}, 409)
+            selected = self._select_contract()
+            if not path.startswith('/api/project/'):
+                return self.reply({'error': 'This Tuldok serves one project folder; use /api/project/<operation>.',
+                                   'code': 'unavailable'}, 409)
+            name = path.removeprefix('/api/project/')
+            agent_api.require_selection(selected, 'project.' + name)
+            if urlsplit(self.path).query or self.headers.get_content_type() != 'application/json':
+                raise agent_api.AgentAPIError('Send a JSON object body and no query.', 'contract_mismatch', 409)
+            raw = self.rfile.read(int(self.headers['Content-Length']))  # framing checked by _select_contract
+            observe_request_bytes(observer, getattr(self, '_observation', None), len(raw))
+            body = agent_api.decode(raw)
+            if not isinstance(body, dict):
+                raise agent_api.AgentAPIError('Send a JSON object body and no query.', 'contract_mismatch', 409)
+            self._observe_dispatch(body)
+            try:
+                status, result = dataset.dispatch(name, body)
+            except (access.AccessError, CatalogBusy, CommitOutcomeUnknown, psycopg.Error):
+                raise
+            except Exception as error:
+                result, status = {'error': 'The operation failed: ' + type(error).__name__ + '.', 'code': 'internal'}, 500
+            return self.reply(result, status)
+
         def do_GET(self):
             return self._observe_request(self._handle_GET)
 
@@ -619,6 +645,9 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                     except access.AccessError as error:
                         dataset.access.denial(error, 'http.post', path)
                         raise
+                    if path.startswith('/api/project/') or (getattr(dataset, 'project_folder_mode', False)
+                                                            and not path.startswith('/api/access/')):
+                        return self._project_folder_post(path)
                     self._select_contract()
                     if path == '/api/access/logout':
                         self._access_body()
@@ -651,6 +680,16 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
         def _get(self):
             path = urlsplit(self.path).path
             try:
+                if getattr(dataset, 'project_folder_mode', False) and path.startswith('/api/'):
+                    # A served project folder answers its capabilities and context; its operations are POSTs.
+                    if path == '/api/agent/capabilities':
+                        return self.reply(dataset.capabilities())
+                    if path == '/api/workspace/context':
+                        return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
+                                           'project_folder': True})
+                    if path != '/api/agent/operations':
+                        return self.reply({'error': 'This Tuldok serves one project folder; use /api/project/<operation>.',
+                                           'code': 'unavailable'}, 409)
                 if path == '/api/agent/operations':
                     return self.reply(agent_api.discovery())
                 if path == '/api/agent/capabilities':
@@ -945,6 +984,11 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                 })
                 if getattr(dataset, 'project_files_mode', False) and path in ('/', '/workspaces', '/workbench'):
                     path = '/project-files'
+                assets.update({'/project-folder': ('project-folder.html', 'text/html'),
+                               '/project-folder.js': ('project-folder.js', 'text/javascript'),
+                               '/project-folder.css': ('project-folder.css', 'text/css')})
+                if getattr(dataset, 'project_folder_mode', False) and path in ('/', '/workspaces', '/workbench'):
+                    path = '/project-folder'
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -1370,6 +1414,8 @@ def main():
                         help='Enable explicit stopped extraction from this existing legacy controller into a separate local authority host.')
     parser.add_argument('--project-transfer-root', action='append', default=[], metavar='ALIAS=PATH',
                         help='Configure backup and destination roots for explicit legacy extraction; requires --project-transfer-control.')
+    parser.add_argument('--project-folder', type=Path, metavar='PATH',
+                        help='Serve this definition-first project folder and nothing else.')
     args = parser.parse_args()
     roots = {}
     for binding in args.project_root:
@@ -1379,7 +1425,19 @@ def main():
         roots[alias] = location
     transfer_controller = control_workspace = None
     try:
-        if args.project_files_root:
+        if args.project_folder is not None:
+            if (roots or args.project_files_root or args.project_runtime_source or args.project_transfer_control
+                    or args.project_transfer_root):
+                parser.error('--project-folder serves one folder; it cannot be combined with other project options.')
+            from tuldok_project.host import ProjectHost, refusal
+            from tuldok_project.store import ProjectError
+            try:
+                dataset = ProjectHost(args.data, args.project_folder)
+            except ProjectError as error:
+                problems = ''.join('  ' + ' '.join(part for part in (item['path'], item['pointer']) if part)
+                                   + ': ' + item['message'] + '\n' for item in refusal(error)[1].get('problems', [])[:10])
+                parser.exit(2, str(error) + '\n' + problems)
+        elif args.project_files_root:
             if roots or args.project_transfer_control or args.project_transfer_root:
                 parser.error('Choose project-file mode or legacy snapshot inspection roots, not both.')
             file_roots = {}

@@ -416,6 +416,8 @@ def main(argv=None):
                                help='Explicit current owner credential; expose only finite project-file operations')
     owner_profile.add_argument('--project-transfer-owner', action='store_true',
                                help='Explicit current host owner; expose only the five project-transfer operations')
+    owner_profile.add_argument('--project-folder-owner', action='store_true',
+                               help='Explicit owner of a served project folder; expose only the project folder operations')
     parser.add_argument('--observe-v2-database', help='Explicit operator opt-in to a fresh private v2 interface store')
     parser.add_argument('--observe-database', help='Opt in to operator-only SQLite in an existing private directory')
     parser.add_argument('--observe-max-calls')
@@ -429,7 +431,8 @@ def main(argv=None):
         import jsonschema  # noqa: F401
         import agent_api
         client_type = (agent_api.ProjectFilesOwnerClient if args.project_files_owner else
-                       agent_api.ProjectTransferOwnerClient if args.project_transfer_owner else agent_api.AgentClient)
+                       agent_api.ProjectTransferOwnerClient if args.project_transfer_owner else
+                       agent_api.ProjectFolderOwnerClient if args.project_folder_owner else agent_api.AgentClient)
         client = client_type.from_config(args.config)
         client.bootstrap()
         if args.observe_database is not None or args.observe_v2_database is not None:

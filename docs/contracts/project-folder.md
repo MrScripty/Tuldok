@@ -1716,14 +1716,144 @@ and in hours above that. With `--json`, `estimate` prints `{"targets",
 "scratch", "commit", "steps"}`, each step `{"reference", "result"`
 (`measured`, `skipped` or `failed`), `"reason", "values", "seconds"}`.
 
+## Serving a project
+
+The Tuldok app can serve one project folder to its owner and to agents:
+
+```
+python app.py --data CATALOG --project-folder FOLDER
+```
+
+`--data` names the catalog directory, which holds the credentials; the
+database is the one `TULDOK_DATABASE_URL` names. One app serves one folder and
+nothing else: `--project-folder` cannot be combined with `--project-root`,
+`--project-files-root`, `--project-runtime-source`,
+`--project-transfer-control` or `--project-transfer-root`. A folder that
+does not open stops start-up with the message and its first problems, exit
+status 2. The app opens the project only for each operation, as the commands
+do, so files changed on disk are imported before an operation answers and
+the command line keeps working beside the app.
+
+The page at `/` shows the project's name and folder and its report, in the
+theme the browser prefers. It has no editing and no approval buttons.
+
+### Signing in and issuing an agent credential
+
+The owner makes a one-time code and enters it in the page's sign-in bar:
+
+```
+python access.py login --data CATALOG --out /private/owner-code
+```
+
+(`bootstrap` instead of `login` the first time a catalog has no owner.) Signed
+in, the owner issues an agent credential with `POST /api/access/credentials`
+and the body `{"label": ..., "scopes": [...], "ttl_seconds": ...}` (60 seconds
+to 30 days, one hour by default). The answer holds the token once; keep it
+in a file only the agent's user can read. An agent credential must include
+`inspect`, may include `edit`, `execute` and `cancel`, and can never approve.
+
+### Connecting an agent
+
+An agent uses `agent_api.AgentClient` with its credential, or the MCP bridge
+on the same private configuration file (`endpoint`, `catalog_id`, `token_file`
+and optional `timeout`; see [agent operations](agent-operations.md)):
+
+```python
+import agent_api
+client = agent_api.AgentClient.from_config('/private/agent.json')
+client.call('project.summary', {})
+client.call('project.plan', {'targets': ['benchmarks/held-out']})
+```
+
+```
+python mcp_stdio.py --config /private/agent.json
+```
+
+The owner uses `agent_api.ProjectFolderOwnerClient`, or `mcp_stdio.py
+--project-folder-owner`, with an owner credential. `catalog_id` is the
+`dataset_id` that `GET /api/workspace/context` answers.
+
+Every operation is `POST /api/project/<name>` with a JSON object of its
+arguments, and must name its contract in the `Tuldok-Operation-Contract`
+header, as `GET /api/agent/capabilities` lists it; the clients do this. A
+call answers its result object, or a refusal `{"error", "code"}` with
+`problems`, `references` and `files` when there are any. The status is 404
+for `not-found`, 400 for `invalid`, 403 for `forbidden` and 409 for every
+other code. Other `/api/` routes answer 409 `unavailable`, except sign-in,
+credentials, `GET /api/agent/capabilities`, `GET /api/agent/operations` and
+`GET /api/workspace/context`.
+
+### Requests and approval
+
+Nothing runs without the owner's approval. A build asked for with
+`request_build` is a **build request**. The owner's own request is queued at
+once. An agent's waits as `awaiting-approval` until the owner approves it
+(`approve_build`, or `python -m tuldok_project approve FOLDER REQUEST`) or
+declines it. The approval covers exactly what the request showed: the commit
+and the text of every definition in its plan. If either changed, approving
+is refused (`stale`) and the request is declined. The app runs queued
+requests one at a time; an approval not started within an hour expires. An
+agent may request a build only when its credential includes `execute`.
+
+### Operations
+
+**Who** is the rule for the caller: `inspect`, `edit` or `cancel` means any
+credential with that scope; `request` means the owner, or an agent whose
+credential includes `execute`; `owner` means the owner only. The arguments
+and result keys of each operation are in its contract.
+
+| Operation | Who | Does |
+| --- | --- | --- |
+| `summary` | inspect | Read the project's name, folder, counts of definitions by kind and state, and whether its build worker runs. |
+| `status` | inspect | List the unsaved and removed definitions and the files changed on disk since the last import or save. |
+| `check` | inspect | Check the project folder on disk and list its errors and warnings, even when it does not open. |
+| `definitions` | inspect | List the definitions, optionally of one kind, with their states. |
+| `definition` | inspect | Read one definition: its text, document, state, what it uses and what uses it. |
+| `graph` | inspect | Read every definition with its kind and state, and the edges between them. |
+| `results_overview` | inspect | List, per benchmark, how many subjects have results and whether they differ from the results file. |
+| `results` | inspect | Read one page of a benchmark's summary rows, optionally for one subject, metric or group. |
+| `values` | inspect | Read one page of a benchmark subject's per-case values. |
+| `chart` | inspect | Read a chart's data, and its SVG drawing when asked. |
+| `report` | inspect | Read the HTML report of the project: where it stands, every chart, the results and the definitions. |
+| `plan` | inspect | Plan building the targets (or every buildable definition) without running anything. |
+| `estimates` | inspect | List the stored estimates of disk and time for the definitions as they now are. |
+| `environments` | inspect | List the environments with the interpreter recorded on this machine and their last check. |
+| `environment` | inspect | Read one environment with the interpreter recorded on this machine and its last check. |
+| `runs` | inspect | List the runs, newest first, optionally of one definition. |
+| `run` | inspect | Read one run's record, its product and whether its build is alive, without variable values. |
+| `progress` | inspect | Read a run's latest progress event and its logs from the given offsets; to read on, pass each log's returned offset back as `stdout_offset` and `stderr_offset`. |
+| `products` | inspect | List the current products, optionally of one definition. |
+| `build_requests` | inspect | List the build requests, newest first, optionally in one state. |
+| `build_request` | inspect | Read one build request with what it covers and the runs of its build. |
+| `activity` | inspect | List the changes asked of this project through the interface, newest first, and how each ended. |
+| `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
+| `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
+| `save` | edit | Write the unsaved edits and changed results files to the project folder. |
+| `resolve_conflict` | edit | Open a project whose files changed on disk where it has unsaved edits, keeping or discarding those edits. |
+| `import_values` | edit | Import one per-case values file, replacing that subject's values and summaries. |
+| `check_environment` | edit | Check an environment's recorded interpreter against its definition and keep the result. |
+| `connect_environment` | owner | Record an existing interpreter for an environment on this machine and check it. |
+| `disconnect_environment` | owner | Forget an environment's recorded interpreter on this machine; nothing is deleted. |
+| `request_build` | request | Ask for a build of the targets: the owner's request is queued, an agent's waits for the owner's approval (read `build_request` for its state), and a queued request not started by its `expires_at` expires. |
+| `approve_build` | owner | Approve a build request awaiting approval, if what it covers is unchanged. |
+| `decline_build` | owner | Decline a build request awaiting approval, with a reason. |
+| `cancel_build` | cancel | Cancel a build request, stopping its build when it is running. |
+| `cancel_run` | cancel | Ask a queued or running run to stop. |
+| `stop_run` | cancel | Kill what a run whose build is gone left running, and mark it unknown. |
+
+Installing an environment (`set-up`), measuring estimates (`estimate`),
+variables passed to a build (`build --env`), rebinding and forgetting a
+project stay command-line actions.
+
 ## What the format does not do yet
 
 The folder is checked, can be opened, edited and saved through the database
 copy, its results can be read and drawn, its environments can be connected,
 checked and installed, and its definitions can be planned, estimated and
-built on this machine, one build at a time per step, from the command line.
-Tuldok does not yet build from the Tuldok app or in the background, delete
-old products or run directories, use `cpu_threads` or `memory_gb` (they are
-shown, not enforced), or read the contents of notes.
+built on this machine, one build at a time per step, from the command line
+or, through build requests, by the Tuldok app that serves the folder. Tuldok
+does not yet install an environment or measure estimates from the app,
+delete old products, run directories or code snapshots, use `cpu_threads` or
+`memory_gb` (they are shown, not enforced), or read the contents of notes.
 
 Background: [the design notes for this format](../plans/definition-first-projects/).

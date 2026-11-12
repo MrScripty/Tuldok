@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project · Tuldok</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/auth.css">
+  <link rel="stylesheet" href="/project-folder.css">
+  <script defer src="/auth.js"></script>
+  <script defer src="/project-folder.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Tuldok / project folder</p>
+      <h1 id="project-name">Project</h1>
+      <p id="project-folder" class="folder"></p>
+      <button id="project-reload" type="button">Reload</button>
+    </header>
+    <p id="project-status" role="status" aria-live="polite">Reading the project…</p>
+    <p id="project-error" role="alert" hidden></p>
+    <iframe id="project-report" title="Project report" sandbox></iframe>
+  </main>
+</body>
+</html>

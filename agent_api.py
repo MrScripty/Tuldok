@@ -1468,6 +1468,24 @@ for _action,_method,_suffix,_fields,_needed,_output,_mutation in (
 _MODEL_RECEIPT_IDS.add('project_transfer.extract')
 
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
+# A served definition-first project folder (spec-m7.md, section 7): one contract
+# per row of tuldok_project.operations, offered only by the project_folder profile.
+from tuldok_project import operations as _project_folder_table
+_PROJECT_FOLDER_SCOPES = {'inspect': ('inspect',), 'edit': ('inspect', 'edit'), 'cancel': ('inspect', 'cancel'),
+                          'request': ('inspect', 'execute'), 'owner': ('inspect', 'approve-execution')}
+_PROJECT_FOLDER_REFUSAL = obj({'error': text(1000), 'code': text(120),
+    'problems': array({'type': 'object'}, 50), 'references': {'type': 'array', 'items': {'type': 'string'}},
+    'files': {'type': 'array', 'items': {'type': 'string'}}}, required=['error'])
+for _row in _project_folder_table.OPERATIONS:
+    _name = 'project.' + _row.name
+    register(_name, 'POST', '/api/project/' + _row.name, schema=copy.deepcopy(_row.arguments),
+             scopes=_PROJECT_FOLDER_SCOPES[_row.who], mutation=_row.mutation, description=_row.summary)
+    _OPERATIONS[-1]['outputSchema'] = {'type': 'object', 'oneOf': [
+        obj({'status': integer(200, 299), 'result': {'type': 'object', 'required': list(_row.result)}}),
+        obj({'status': integer(400, 599), 'result': copy.deepcopy(_PROJECT_FOLDER_REFUSAL)})]}
+    if _row.who == 'owner':
+        _OWNER_OPERATION_IDS.add(_name)
+PROJECT_FOLDER_OPERATIONS = frozenset('project.' + _row.name for _row in _project_folder_table.OPERATIONS)
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
@@ -1791,13 +1809,30 @@ def contract(name, version=1):
     return public
 
 
+def _project_folder_capabilities(catalog_id):
+    """The project_folder profile: every project.* operation, context.get and identity.get, all available."""
+    names = ['context.get', 'identity.get'] + ['project.' + row.name for row in _project_folder_table.OPERATIONS]
+    operations = [{'id': name, 'contracts': [contract(name, version) for version in sorted(_CONTRACTS[name])],
+                   'availability': 'available'} for name in names]
+    value = {'format': 'agent_capabilities_v1', 'envelope_version': 1, 'catalog_id': catalog_id,
+             'operations': operations, 'limits': {'request_bytes': REQUEST_LIMIT,
+                  'response_bytes': RESPONSE_LIMIT, 'max_operations': MAX_OPERATIONS}}
+    if len(encoded(value)) > CAPABILITIES_LIMIT:
+        raise AgentAPIError('Capabilities exceed the manifest byte bound.', 'registry_invalid', 503)
+    return value
+
+
 def capabilities(catalog_id, profile='catalog'):
     if type(catalog_id) is not str or not re.fullmatch('[a-f0-9]{32}', catalog_id):
         raise AgentAPIError('Invalid capability catalog identity.', 'registry_invalid', 503)
+    if profile == 'project_folder':
+        return _project_folder_capabilities(catalog_id)
     if profile not in ('catalog','project'):
         raise AgentAPIError('Unsupported capability profile.','registry_invalid',503)
     operations = []
     for name, versions in _CONTRACTS.items():
+        if name in PROJECT_FOLDER_OPERATIONS:
+            continue
         if (profile=='catalog' and name.startswith('project_files.')
                 or profile=='project' and not name.startswith(('project_files.','project_transfer.')) and name not in ('context.get','identity.get')):
             continue
@@ -2544,6 +2579,13 @@ class AgentClient:
             if response.status >= 400:
                 if not isinstance(value, dict) or not isinstance(value.get('error'), str):
                     raise AgentAPIError('Malformed HTTP error response.', 'transport', 502)
+                if selection is not None and selection[0] in PROJECT_FOLDER_OPERATIONS:
+                    # A project folder's refusal codes have hyphens (not-found) and carry its problems.
+                    if (type(value.get('code')) is not str or not re.fullmatch('[a-z][a-z0-9_-]{0,79}', value['code'])
+                            or self._token in json.dumps(value, ensure_ascii=False)):
+                        raise AgentAPIError('Malformed project refusal.', 'transport', 502)
+                    return {'status': response.status, 'result': {key: value[key] for key in
+                            ('error', 'code', 'problems', 'references', 'files') if key in value}}
                 code = value.get('code', 'http_error')
                 if (type(code) is not str or not re.fullmatch('[a-z][a-z0-9_]{0,79}', code)
                         or self._token in code):
@@ -3184,6 +3226,23 @@ class PublicationOwnerClient(AgentClient):
     def call(self, name, arguments, **kwargs):
         if name not in self.OPERATIONS:
             raise AgentAPIError('Owner publication client only supports explicit publication operations.', 'operation_unsupported', 409)
+        return super().call(name, arguments, **kwargs)
+
+
+class ProjectFolderOwnerClient(AgentClient):
+    """The owner of a served project folder: the project.* operations only."""
+    OPERATIONS = PROJECT_FOLDER_OPERATIONS
+
+    def bootstrap(self):
+        result = self._bootstrap('owner')
+        self._selected = {name: version for name, version in self._selected.items() if name in self.OPERATIONS}
+        result['operations'] = sorted(self._selected)
+        return result
+
+    def call(self, name, arguments, **kwargs):
+        # MCP names (project_summary) are aliases of the operation IDs (project.summary).
+        if name not in _LOOKUP or _LOOKUP[name]['operation_id'] not in self.OPERATIONS:
+            raise AgentAPIError('Owner project folder client only supports project folder operations.', 'operation_unsupported', 409)
         return super().call(name, arguments, **kwargs)
 
 
