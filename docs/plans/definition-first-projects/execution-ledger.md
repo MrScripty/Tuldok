@@ -193,3 +193,54 @@ Command for all Tuldok tests as before: 302 tests, 71 s.
 **Open:** the lab has no lock file for the GPU environment, so `cuda-torch` can be connected but not installed. Running a definition's `estimate` command moved to milestone 6.
 
 **Next:** milestone 6, build: runs from a commit, the launcher and queue, products, live progress, results published by the run. Its acceptance trains one tiny model on the GPU, which needs the owner's go-ahead.
+
+## 2026-11-12 — milestone 6, build
+
+**Owner decision:** spec, code and tests, and one tiny real end-to-end build on the GPU as the acceptance run. Spec: [spec-m6.md](spec-m6.md). No implementing agent used the GPU; the acceptance run was done by the orchestrating session.
+
+**Commits** (none pushed), Tuldok `feat/definition-first-projects`: spec `fe2dd56a` and `b9d32e9a`; snapshot `4191d46f`; launcher `e49635b9`, then its custodian `35fdafc6`; builds `f8367c17`; run commands and estimates `419d6ed2`; the example project `d3340b5f`.
+
+| Slice | Files | Result |
+| --- | --- | --- |
+| T11 launcher | `tuldok_project/launcher.py` | 37 tests |
+| T12 snapshot | `tuldok_project/snapshot.py`, `code_paths` in `tuldok.json` | 30 tests |
+| T13 builds | `tuldok_project/builds.py`, the states, `build`, `runs`, `products`, the `buildable` fixture | 30 tests |
+| T14 run commands and estimates | `run`, `progress`, `cancel`, `stop`, `estimate`, estimates in `plan`, the "Building" contract section | 17 tests |
+| T15 example | `examples/tiny-project/` | checker 0 errors; scripts smoke-tested on the CPU |
+
+Command for all Tuldok tests as before: 423 tests, about 2.5 minutes.
+
+**Design change found in review.** The first launcher made the calling process a child subreaper. An independent test (a command that double-forks a daemon and leaves a background child) showed everything was stopped, but one zombie per run was left in the caller, and the same mechanism could take the exit status of a caller's unrelated child. Each run now has its own custodian process (`python -m tuldok_project.launcher`), which is the subreaper, reaps everything it adopts and writes the outcome. Repeating the test, with the daemon also clearing its environment: nothing alive, no zombie in the caller, and the caller's unrelated child reported its true exit status.
+
+**Independent checks of the builds slice** (the `buildable` fixture in a scratch Git repository): first build, 4 runs; second build, nothing run; a committed settings change made the recipe and its benchmark out of date with the reason and rebuilt only those; an uncommitted change was refused without `--scratch`; with `code_paths` the snapshot held exactly the named files and a step whose script was not named failed; a failing step stopped the build; no process left carrying a run id.
+
+**Acceptance run, `examples/tiny-project`** (throwaway database, local home in a scratch directory, the owner's two existing interpreters connected):
+
+| Step | Result |
+| --- | --- |
+| `connect cpu`, `connect gpu` | both ready |
+| `build benchmarks/held-out --yes` | exit 0 in 23.4 s: dataset 0.3 s, training 13.9 s on the GPU, benchmark 3.1 s and 1.7 s for its two subjects |
+| progress read from another process while training ran | six observations, from update 1,300 to 6,000 of 6,000, loss falling from 0.0020 to 0.0006 |
+| the training run's record | from the snapshot of commit `d3340b5f`, exit 0, 0 strays, outputs `model.pt` (349 KB) and `log.json` |
+| `chart held-out-ranking` | `small-net-a` median error 0.0376, `predict-zero` 0.871, 400 cases each, from the results the benchmark runs published |
+| `chart held-out-tradeoff`, `report` | drawn; the tradeoff drawing was viewed as a rendered image |
+| second `build` | nothing run: everything built |
+| an uncommitted change to the recipe's settings | the recipe and the benchmark show out of date with the reason; built again after the change was reverted |
+| afterwards | no process carrying a run id; the GPU idle with no compute process of the run; the example unchanged in Git |
+
+**Accepted as implemented:**
+
+- A definition is also out of date when something it uses is out of date, so one build settles a change.
+- A benchmark records its subject's recipe among the run's inputs, and rebuilds only the subjects that are not built.
+- `running` takes precedence over every state; a current product over `cannot-rebuild` and `needs-work`.
+- The snapshot is prepared before confirmation, so a dirty tree is refused without asking.
+- An environment is checked once per build, and only when a step being built uses it. The project stays open during that check.
+- `Outcome` has a `problem` text; a launcher that cannot start the command makes the step `failed`.
+- Estimates: only `build` steps are measured; a benchmark's estimate command may not use `{subject}`; the disk limit is 100 MB; no GPU lock is taken; the throwaway directory is removed afterwards.
+- `stop` refuses only while the run is `queued` or `running` and its builder is alive.
+
+**Not verified:** cancellation and the disk limit through `build` on a real long run; a real interrupted build beyond a hand check with `SIGINT`; behaviour with Git submodules (not included in snapshots); the GPU lock with two real GPU builds.
+
+**Known gaps:** leftover `.partial-*` snapshot directories from a crashed build are never removed; nothing is ever deleted from the local home (runs, old products, snapshots), so a `prune` command is needed before long use; the values file's `commit` is whatever the benchmark's command writes, since the command is not told its commit.
+
+**Next:** milestone 7, serving the new core from the Tuldok app with agent operations; then milestone 8, converting the lab for good and retiring the old project-files code, which needs the owner's two open decisions (where the product archive goes; which earlier models to drop) and sign-off of the capability check.
