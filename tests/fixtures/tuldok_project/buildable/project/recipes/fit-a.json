@@ -8,6 +8,7 @@
     "inputs": {"data": {"from": "datasets/numbers", "output": "data"}},
     "settings_file": "settings/fit-a.json",
     "outputs": {"weights": {"path": "weights.json", "role": "weights"}},
-    "sources": ["train.py", "common.py"]
+    "sources": ["train.py", "common.py"],
+    "estimate": {"command": ["python", "estimate.py", "--data", "{inputs.data}", "--settings", "{settings}", "--out", "{output}"]}
   }
 }

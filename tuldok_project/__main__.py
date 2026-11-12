@@ -19,6 +19,11 @@ work with the interpreters that fulfil environments on this machine
 --dry-run` runs nothing. `build` makes the plan, closes the project, asks
 for confirmation and runs the plan with builds.execute, which opens the
 project only between commands; `runs` and `products` list what was built.
+`run`, `progress`, `cancel` and `stop` work on one run, named by its id or a
+prefix of it, while a build runs in another process: they open the project
+only for a moment (waiting while a build has it open) and read the run's logs
+with it closed. `estimate` runs the build steps' estimate commands, the one
+command besides `build` that runs project code; `plan` shows what it stored.
 """
 import argparse
 import dataclasses
@@ -129,6 +134,23 @@ def _parser():
     listing_runs.add_argument('reference', nargs='?', help='only the runs of this definition')
     listing_products = add('products', [reading], 'list the current products')
     listing_products.add_argument('reference', nargs='?', help='only the products of this definition')
+    showing_run = add('run', [reading], 'show one run: its row, its outputs and its last progress event')
+    showing_run.add_argument('run', help='a run id, or at least its first six characters')
+    watching = add('progress', [reading], "show a run's last progress event and the end of its logs")
+    watching.add_argument('run', help='a run id, or at least its first six characters')
+    watching.add_argument('--follow', action='store_true',
+                          help='look again every two seconds, printing what is new, until the run ends')
+    cancelling = add('cancel', [reading], 'ask a queued or running run to stop; does not wait')
+    cancelling.add_argument('run', help='a run id, or at least its first six characters')
+    stopping = add('stop', [reading], 'for a run whose build is gone: kill what it left running and mark it unknown')
+    stopping.add_argument('run', help='a run id, or at least its first six characters')
+    estimating = add('estimate', [reading], "run the estimate commands of what would be built, and store what they print")
+    estimating.add_argument('targets', nargs='*', metavar='TARGET', help='references, for example recipes/pilot-dense-k1')
+    estimating.add_argument('--all', action='store_true', help='estimate every dataset, recipe, step and benchmark')
+    estimating.add_argument('--scratch', action='store_true',
+                            help='run from the code root as it is, uncommitted changes included')
+    estimating.add_argument('--env', action='append', default=[], metavar='NAME=VALUE',
+                            help="add a variable to every command's environment; may be repeated")
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -477,10 +499,26 @@ def _gpu(step):
     return 'yes' if step['resources']['gpu'] is True else '-'  # an absent gpu means none is needed
 
 
+def _duration(seconds):
+    """A measured time in the unit that reads best: seconds, minutes or hours."""
+    if seconds < 100:
+        return f'{seconds:.3g} s'
+    if seconds < 6000:
+        return f'{seconds / 60:.3g} min'
+    return f'{seconds / 3600:.3g} h'
+
+
 def _step_figures(step):
+    """GPU, disk and time of a step: the declared figure, then any estimate marked '~... est.'."""
     if step['action'] in ('set-up', 'ready'):
         return '-', '-', '-'
-    return _gpu(step), _figure(step['resources']['disk_gb'], ' GB'), _figure(step['resources']['wall_hours'], ' h')
+    disk, time_ = _figure(step['resources']['disk_gb'], ' GB'), _figure(step['resources']['wall_hours'], ' h')
+    measured = step.get('estimate') or {}
+    if measured.get('disk_bytes') is not None:
+        disk += f' ~{_size(round(measured["disk_bytes"]))} est.'
+    if measured.get('wall_seconds') is not None:
+        time_ += f' ~{_duration(measured["wall_seconds"])} est.'
+    return _gpu(step), disk, time_
 
 
 def _wrapped(text, indent, width=78):
@@ -571,10 +609,21 @@ def _totals(plan):
                 f'{unknown} of {build} declare' + ('s' if unknown == 1 else '') + ' none')
         return f'{total:.3g}{unit} declared; {none}.'
 
-    return [f'To build: {_plural(build, "step")}, {plan["gpu_steps"]} on a GPU.',
-            'Disk: ' + declared(plan['disk_gb'], plan['disk_unknown'], ' GB'),
-            'Time: ' + declared(plan['wall_hours'], plan['wall_unknown'], ' h'),
-            'Figures are as the definitions declare them; no command was run.']
+    lines = [f'To build: {_plural(build, "step")}, {plan["gpu_steps"]} on a GPU.',
+             'Disk: ' + declared(plan['disk_gb'], plan['disk_unknown'], ' GB'),
+             'Time: ' + declared(plan['wall_hours'], plan['wall_unknown'], ' h')]
+    disk_steps, wall_steps = plan.get('estimated_disk_steps', 0), plan.get('estimated_wall_steps', 0)
+    if not (disk_steps or wall_steps):
+        return lines + ['Figures are as the definitions declare them; no command was run.']
+    parts = []
+    if disk_steps:
+        parts.append(f'disk ~{_size(round(plan["estimated_disk_gb"] * 1000 ** 3))} ({disk_steps} of {build} steps)')
+    if wall_steps:
+        parts.append(f'time ~{_duration(plan["estimated_wall_hours"] * 3600)} ({wall_steps} of {build} steps)')
+    return lines + ['Estimated: ' + '; '.join(parts) + '.',
+                    *_wrapped('Declared figures are as the definitions declare them; figures marked est. are what '
+                              'their estimate commands printed when estimate last ran them. No command was run '
+                              'now.', '')]
 
 
 def _plan_lines(plan):
@@ -657,6 +706,204 @@ def _products(project, arguments):
               *((row['reference'], row['subject'] or '-', row['run_id'], _size(row['bytes']),
                  'scratch' if row['scratch'] else '-', row['directory']) for row in rows)])
     return 0
+
+
+def _moment(value):
+    return '-' if value is None else value.astimezone().strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _event_words(event):
+    """A progress event in a few words: stage, completed of total, and the metrics."""
+    if event is None:
+        return 'none yet'
+    share = f' ({100 * event["completed"] / event["total"]:.0f}%)' if event['total'] else ''
+    metrics = ''.join(f'  {name}={value:.4g}' for name, value in event['metrics'].items())
+    return f'{event["stage"]} {event["completed"]} of {event["total"]}{share}{metrics}'
+
+
+def _run_name(row):
+    return row['reference'] + (f' {row["subject"]}' if row['subject'] else '')
+
+
+def _show_run(row, event):
+    import shlex
+
+    code = ('scratch run, the code root as it was' + (f' at commit {row["commit"][:12]}' if row['commit'] else '')
+            if row['scratch'] else f'commit {row["commit"][:12]}, from its snapshot')
+    builder = '-' if row['owner_pid'] is None else (
+        f'process {row["owner_pid"]}' + (' (running)' if row['builder_alive'] else ''))
+    environment = row['environment']
+    rows = [('run', row['id']), ('reference', row['reference']), ('subject', row['subject'] or '-'),
+            ('state', row['state']), ('plan', row['plan_id']), ('code', code),
+            ('environment', f'{environment["reference"]}  {environment["interpreter"]}' if environment else '-'),
+            ('command', shlex.join(row['argv'])), ('directory', row['directory']), ('builder', builder),
+            ('queued', _moment(row['queued_at'])), ('started', _moment(row['started_at'])),
+            ('finished', _moment(row['finished_at'])),
+            ('exit status', '-' if row['exit_status'] is None else row['exit_status']),
+            ('seconds', _seconds(row['seconds'])), ('size', '-' if row['bytes'] is None else _size(row['bytes'])),
+            ('strays', '-' if row['strays'] is None else row['strays'])]
+    for name, used in sorted((row['inputs'] or {}).items()):
+        label = 'subject recipe' if name == '{recipe}' else f'input {name}'
+        output = f' ({used["output"]})' if used.get('output') else ''
+        rows.append((label, f'{used["reference"]}{output}, run {used["run_id"]}'))
+    product = row['product']
+    if product is not None:
+        rows.append(('product', product['directory'] + ('' if product['current'] else '  (no longer current)')))
+        for name, output in sorted(product['outputs'].items()):
+            rows.append((f'output {name}', f'{output["path"]}  {output["role"]}  {_size(output["bytes"])}'))
+    rows.append(('progress', _event_words(event)))
+    _columns(rows)
+    if row['problem']:
+        print()
+        for line in _wrapped(row['problem'], ''):
+            print(line)
+
+
+def _log_section(name, text, size):
+    if size is None:
+        print(f'{name}.log: not written')
+        return
+    if not size:
+        print(f'{name}.log: empty')
+        return
+    shown = len(text.encode('utf-8'))
+    print(f'{name}.log: {_size(size)}' + (', the last part:' if size > shown else ':'))
+    for line in text.rstrip('\n').split('\n'):
+        print('  ' + line)
+
+
+def _show_progress(found):
+    _columns([('run', found['id']), ('reference', _run_name(found)), ('state', found['state']),
+              ('progress', _event_words(found['event']))])
+    for name in ('stdout', 'stderr'):
+        _log_section(name, found[name], found[f'{name}_bytes'])
+
+
+def _follow_pass(item, first):
+    run = item['run']
+    if first:
+        print(f'run {run["id"]}  {_run_name(run)}  {run["state"]}', flush=True)
+    for name, mark in (('stdout', 'out'), ('stderr', 'err')):
+        if item[f'skipped_{name}'] and not first:
+            print(f'{mark}  ... {_size(item[f"skipped_{name}"])} not shown')
+        for line in item[name].rstrip('\n').split('\n') if item[name] else ():
+            print(f'{mark}  {line}')
+    if item['new_event'] and item['event'] is not None:
+        print(f'progress  {_event_words(item["event"])}')
+    if item['ended']:
+        print(f'Run {run["id"]} ended {run["state"]}' + (f' after {_seconds(run["seconds"])}.'
+                                                         if run['seconds'] is not None else '.'))
+        if run['problem']:
+            for line in _wrapped(run['problem'], ''):
+                print(line)
+    sys.stdout.flush()
+
+
+def _single_run(arguments, dsn):
+    """run, progress and cancel: open the project for a moment, close it, then read the run's files."""
+    from . import builds, launcher
+
+    options = {'rebind': arguments.rebind, 'on_conflict': arguments.on_conflict}
+    if arguments.command == 'progress' and arguments.follow:
+        first = True
+        for item in builds.follow(arguments.folder, arguments.run, dsn=dsn, **options):
+            if arguments.json:
+                print(json.dumps(item, ensure_ascii=False, default=str), flush=True)
+            else:
+                _follow_pass(item, first)
+            first = False
+        return 0
+    with builds.opened(arguments.folder, dsn, **options) as project:
+        if arguments.command == 'cancel':
+            done = builds.cancel(project, arguments.run)
+        else:
+            row = builds.run_details(project, arguments.run)
+    if arguments.command == 'cancel':
+        if arguments.json:
+            _json(done)
+        elif done['already_asked']:
+            print(f'Run {done["id"]} ({_run_name(done)}) was already asked to stop; its cancel file is there.')
+        else:
+            print(f'Asked run {done["id"]} ({_run_name(done)}) to stop: its build stops it within a second or so '
+                  'and records it as cancelled.')
+        return 0
+    found = launcher.progress(row['directory'])
+    if arguments.command == 'run':
+        if arguments.json:
+            _json({**row, 'event': found['event']})
+        else:
+            _show_run(row, found['event'])
+        return 0
+    shown = {**builds.run_summary(row), **found}
+    if arguments.json:
+        _json(shown)
+    else:
+        _show_progress(shown)
+    return 0
+
+
+def _stop(arguments, dsn):
+    from . import builds
+
+    done = builds.stop(arguments.folder, arguments.run, dsn=dsn, rebind=arguments.rebind,
+                       on_conflict=arguments.on_conflict)
+    if arguments.json:
+        _json(done)
+        return 1 if done['remaining'] else 0
+    def processes(count):
+        return f'{count} process' + ('' if count == 1 else 'es')
+
+    killed = ('No process of the run was left running' if not done['killed'] else
+              f'Killed {processes(done["killed"])} of the run')
+    print(f'{killed}: run {done["id"]} ({_run_name(done)}).')
+    if done['remaining']:
+        print(f'{processes(len(done["remaining"]))} could not be stopped: '
+              + ', '.join(map(str, done['remaining'])) + '.')
+    if done['marked_unknown']:
+        print(f'It was {done["was"]}; it is now unknown, and is never restarted.')
+    else:
+        print(f'Its state, {done["state"]}, is unchanged.')
+    return 1 if done['remaining'] else 0
+
+
+def _estimate(arguments, dsn):
+    from . import builds
+
+    if not arguments.targets and not arguments.all:
+        raise UsageError('Name at least one definition to estimate, or pass --all.')
+    extra_env = _extra_env(arguments.env)
+    done = builds.estimate(arguments.folder, arguments.targets, every=arguments.all, scratch=arguments.scratch,
+                           extra_env=extra_env, dsn=dsn)
+    failed = sum(item['result'] == 'failed' for item in done['steps'])
+    if arguments.json:
+        _json(done)
+        return 1 if failed else 0
+    if not done['steps']:
+        print('Nothing would be built, so there is nothing to estimate.')
+        return 0
+    if done['commit'] is not None:
+        print(('Ran from the code root as it is (scratch)' if done['scratch'] else
+               f'Ran from the code at commit {done["commit"][:12]}') + '.')
+        print()
+    rows = [('step', 'estimate', 'disk', 'time', 'items')]
+    for item in done['steps']:
+        values = item['values'] or {}
+        rows.append((item['reference'], item['result'],
+                     '-' if values.get('disk_bytes') is None else _size(round(values['disk_bytes'])),
+                     '-' if values.get('wall_seconds') is None else _duration(values['wall_seconds']),
+                     '-' if values.get('items') is None else f'{values["items"]:g}'))
+    widths = [max(len(row[index]) for row in rows) for index in range(4)]
+    for row, item in zip(rows, [None, *done['steps']]):
+        print(('  '.join(cell.ljust(widths[index]) for index, cell in enumerate(row[:4])) + '  ' + row[4]).rstrip())
+        if item is not None and item['reason']:
+            for line in _wrapped(item['reason'], '  '):
+                print(line)
+    counts = {result: sum(item['result'] == result for item in done['steps'])
+              for result in ('measured', 'skipped', 'failed')}
+    print()
+    print(f'{counts["measured"]} measured, {counts["skipped"]} skipped, {counts["failed"]} failed. '
+          'plan shows each estimate while its definition is unchanged.')
+    return 1 if failed else 0
 
 
 def _extra_env(pairs):
@@ -983,6 +1230,12 @@ def _database_command(arguments):
             return _forget(arguments, dsn)
         if arguments.command == 'build':
             return _build(arguments, dsn)
+        if arguments.command in ('run', 'progress', 'cancel'):
+            return _single_run(arguments, dsn)
+        if arguments.command == 'stop':
+            return _stop(arguments, dsn)
+        if arguments.command == 'estimate':
+            return _estimate(arguments, dsn)
         return _run_store(arguments, dsn)
     except UsageError as exc:
         print(str(exc), file=sys.stderr)

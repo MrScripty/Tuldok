@@ -11,7 +11,11 @@ step by its root causes, found over the whole graph (definitions whose own earli
 needs-work), and adds up the figures the build steps declare in
 run.resources. build_plan reads the definitions from a Project's database copy
 and the recorded environment states and calls it. Making a plan runs nothing and opens no file: no command, no
-estimate command, nothing on disk; an estimate is always null here.
+estimate command, nothing on disk. A step's estimate is what the estimate
+command printed when `estimate` last ran it (spec-m6.md section 7), read from
+the database and given only while the definition's text is the one it was
+measured for; otherwise null. The totals add up those estimates beside the
+declared figures, never mixing the two.
 With what was built on this machine (spec-m6.md section 5), a step that is
 built has the action built and is not work; one that is out-of-date or failed
 is built again, and its reasons say why. build_plan reads those states from
@@ -162,7 +166,14 @@ def _total(steps, field):
     return round(math.fsum(numbers), 6), len(declared) - len(numbers)
 
 
-def make_plan(definitions, targets, *, every=False, local=None, built=None):
+def _estimated(steps, field, scale):
+    """(sum of the estimated field over build steps that have one, divided by scale; how many have one)."""
+    values = [step['estimate'][field] for step in steps
+              if step['action'] == 'build' and step['estimate'] and step['estimate'].get(field) is not None]
+    return math.fsum(values) / scale, len(values)
+
+
+def make_plan(definitions, targets, *, every=False, local=None, built=None, estimates=None):
     """The plan for targets over {reference: document}, as section 3 and 4 of spec-m4.md describe it.
 
     local is graph.states' mapping of references to the state recorded on
@@ -170,6 +181,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None):
     built. built is builds.status' mapping of reference to {causes, scratch};
     each step's reasons are its causes (why it is out of date, failed or
     running) and scratch says whether its current product is a scratch one.
+    estimates is builds.stored_estimates' mapping of reference to the
+    current estimate ({disk_bytes, wall_seconds, items, measured_at}).
 
     every adds every dataset, recipe, step and benchmark to the targets. A
     chart target is replaced by its benchmark; a model target adds nothing
@@ -209,7 +222,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None):
         step = {'number': number, 'reference': reference, 'kind': kind, 'title': document.get('title'),
                 'state': states[reference], 'action': action,
                 'command': run.get('command'), 'environment': run.get('environment'),
-                'inputs': _inputs(document), 'resources': _resources(document), 'estimate': None,
+                'inputs': _inputs(document), 'resources': _resources(document),
+                'estimate': (estimates or {}).get(reference),
                 'blocked_by': [], 'blocked_by_more': 0,
                 'reasons': list((built or {}).get(reference, {}).get('causes', [])),
                 'scratch': bool((built or {}).get(reference, {}).get('scratch', False))}
@@ -227,6 +241,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None):
     blocked = {step['reference'] for step in steps if step['action'] == 'blocked'}
     disk_gb, disk_unknown = _total(steps, 'disk_gb')
     wall_hours, wall_unknown = _total(steps, 'wall_hours')
+    estimated_disk_gb, estimated_disk_steps = _estimated(steps, 'disk_bytes', 1000 ** 3)
+    estimated_wall_hours, estimated_wall_steps = _estimated(steps, 'wall_seconds', 3600)
     return {'targets': resolved, 'every': every,
             'buildable': not any(reference in blocked for reference in resolved),
             'blocked_targets': [reference for reference in resolved if reference in blocked],
@@ -234,6 +250,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None):
             'gpu_steps': sum(step['action'] == 'build' and step['resources']['gpu'] is True for step in steps),
             'disk_gb': disk_gb, 'disk_unknown': disk_unknown,
             'wall_hours': wall_hours, 'wall_unknown': wall_unknown,
+            'estimated_disk_gb': estimated_disk_gb, 'estimated_disk_steps': estimated_disk_steps,
+            'estimated_wall_hours': estimated_wall_hours, 'estimated_wall_steps': estimated_wall_steps,
             'notes': notes, 'steps': steps}
 
 
@@ -255,4 +273,5 @@ def build_plan(project, targets, *, every=False):
     built = builds.status(project)
     local = {**environments.recorded_states(project._connection, project.schema),
              **{reference: entry['state'] for reference, entry in built.items()}}
-    return make_plan(definitions, targets, every=every, local=local, built=built)
+    return make_plan(definitions, targets, every=every, local=local, built=built,
+                     estimates=builds.stored_estimates(project))

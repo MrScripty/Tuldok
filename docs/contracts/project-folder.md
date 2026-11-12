@@ -3,7 +3,9 @@
 Owner: the package `tuldok_project/` (`folder.py` reads the folder, `documents.py`
 and `schemas/*.json` check single files, `check.py` applies every rule,
 `results.py` owns summary files, `store.py` and `result_rows.py` the database
-copy and its results, `charts.py` charts and the report page). The format names are `tuldok_project_v1` for
+copy and its results, `charts.py` charts and the report page, `plan.py`
+plans, `environments.py` environments, and `builds.py`, `launcher.py` and
+`snapshot.py` building). The format names are `tuldok_project_v1` for
 the folder and `tuldok_definition_v1` for each definition.
 
 A project folder describes a piece of research as a set of small JSON files that
@@ -585,6 +587,7 @@ A state is worked out from the definitions, never stored in a file:
 | `cannot-rebuild` | its `earlier_work.rebuild` is `no`, or something it uses through an input, directly or further up, is `cannot-rebuild` |
 | `needs-work` | not `cannot-rebuild`, and its `earlier_work.rebuild` is `needs-work` or something it uses through an input is `needs-work` |
 | `not-built` | any other dataset, recipe, benchmark or step |
+| `running`, `built`, `out-of-date`, `failed` | a dataset, recipe, benchmark or step, by what was built on this machine (see [Build states](#build-states)) |
 | `not-set-up`, `ready`, `failing` | an environment, by what this machine records for it (see [Environments](#environments)) |
 | `none` | a model or a chart |
 
@@ -593,7 +596,7 @@ Options:
 | Option | Commands | Meaning |
 | --- | --- | --- |
 | `--database-url URL` | all but `check` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
-| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up` | Print one JSON document with the same content as the text. |
+| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up`, `runs`, `run`, `progress`, `cancel`, `stop`, `products`, `estimate` | Print one JSON document with the same content as the text. |
 | `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
 | `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
 | `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
@@ -837,9 +840,11 @@ Wrote report.html (4 charts, 24626 bytes).
 A plan says what has to be built on this machine to have one or more
 definitions, in what order, and what stands in the way. Making a plan runs
 nothing. It reads the database copy only: it starts no command, including a
-definition's `estimate` command, and opens no file of the folder or the code.
-The figures in a plan are the ones each definition declares in
-`run.resources`.
+definition's `estimate` command, and opens no file of the folder; it asks Git
+what changed in the code only when something was built (see
+[Build states](#build-states)). The figures in a plan are the ones each
+definition declares in `run.resources`, and beside them the ones its estimate
+command printed when `estimate` last ran it (see [Estimates](#estimates)).
 
 | Command | Does |
 | --- | --- |
@@ -881,7 +886,8 @@ reference), numbered from 1. Each step has one action:
 | --- | --- |
 | `set-up` | an environment in state `not-set-up`, or `failing` (the text says its last check failed) |
 | `ready` | an environment in state `ready`; it is not counted as something to set up |
-| `build` | a dataset, recipe, step or benchmark in state `not-built` |
+| `build` | a dataset, recipe, step or benchmark in state `not-built`, `out-of-date`, `failed` or `running` (the text says why under the step; `build` refuses a step that is running) |
+| `built` | a dataset, recipe, step or benchmark in state `built`; it is not counted as work |
 | `blocked` | a definition in state `cannot-rebuild` or `needs-work`, and a benchmark with no subject to run |
 
 A blocked step is explained by its causes: the definitions whose own
@@ -906,7 +912,10 @@ The totals count `build` steps only:
 
 - how many steps there are to build, and how many of them declare `gpu: true`;
 - the sum of the declared `disk_gb`, and how many build steps declare none;
-- the sum of the declared `wall_hours`, and how many build steps declare none.
+- the sum of the declared `wall_hours`, and how many build steps declare none;
+- when any build step has an estimate, the sum of the estimated bytes and
+  seconds, and how many build steps each sum covers. Declared and estimated
+  figures are never added together.
 
 ### Text output
 
@@ -968,10 +977,12 @@ With `--json`, `plan` prints one object:
 | `every` | true with `--all` |
 | `buildable` | true when no target is blocked |
 | `blocked_targets` | the targets that are blocked |
-| `counts` | the number of steps of each action: `{"build", "set-up", "blocked", "ready"}` |
+| `counts` | the number of steps of each action: `{"build", "set-up", "blocked", "ready", "built"}` |
 | `gpu_steps` | how many build steps declare `gpu: true` |
 | `disk_gb`, `disk_unknown` | the sum of the declared `disk_gb` over build steps, and how many build steps declare none |
 | `wall_hours`, `wall_unknown` | the same for `wall_hours` |
+| `estimated_disk_gb`, `estimated_disk_steps` | the sum of the estimated `disk_bytes` over build steps, in units of 10^9 bytes, and how many build steps have one |
+| `estimated_wall_hours`, `estimated_wall_steps` | the same for the estimated `wall_seconds`, in hours |
 | `notes` | sentences about targets that are not built themselves: a model, or a chart replaced by its benchmark |
 | `steps` | the steps in order |
 
@@ -981,11 +992,13 @@ Each step:
 | --- | --- |
 | `number` | its place in the order, from 1 |
 | `reference`, `kind`, `title`, `state` | from the definition; the state as `list` shows it |
-| `action` | `build`, `set-up`, `blocked` or `ready` |
+| `action` | `build`, `set-up`, `blocked`, `ready` or `built` |
 | `command`, `environment` | from `run`, placeholders not filled in; null when absent |
 | `inputs` | each input name to `{"reference", "output"}`; `output` is null for a whole product |
 | `resources` | `gpu`, `cpu_threads`, `memory_gb`, `wall_hours`, `disk_gb` as declared; null when not declared (a null `gpu` means no GPU is needed) |
-| `estimate` | always null: no estimate command is run |
+| `estimate` | the stored estimate, `{"disk_bytes", "wall_seconds", "items", "measured_at"}` with null for a figure the command did not print, while the definition's text is the one it was measured for; otherwise null |
+| `reasons` | why a `build` step is out of date, failed or running; empty otherwise |
+| `scratch` | true when the step's current product was made by a scratch run |
 | `blocked_by` | for a blocked step, up to five causes, each `{"reference", "rebuild", "reason"}`; empty otherwise |
 | `blocked_by_more` | how many more causes there are |
 | `subjects` | benchmarks only: `run`, the subject names that would run, and `skipped`, each `{"name", "recipe", "reason"}` |
@@ -1193,13 +1206,524 @@ With the environment ready, the same plan begins
 `1 step to build, 0 to set up, 0 blocked, 1 ready: steps/solver can be built.`
 and the environment's line has the action `ready`.
 
+## Building
+
+`build` runs the commands of a plan on this machine and records what they
+made. What a command writes is a **product**; it stays on this machine, in the
+project's local home, and is never written to the folder. Each command that is
+started is a **run**, recorded in the project's database schema with its
+state, its command line, the code and inputs it used and how it ended.
+
+### What a build does
+
+1. It makes the plan for its targets, as `plan` does, and prints it.
+2. It refuses the plan, before asking anything, when a target is blocked or
+   when another build is running one of its steps.
+3. When something is to be built, it prepares the code the runs will see (see
+   below). A tree with uncommitted changes is refused here.
+4. It asks `Build this? [y/N]`, unless `--yes` is given or nothing is to be
+   built. Any answer but `y` or `yes` builds nothing.
+5. It records the plan, then takes the steps in order:
+   - an environment that a step to build runs in is checked again, once per
+     build; one that is not ready stops the build, with a message saying to
+     set it up or connect an interpreter;
+   - a step whose action is `built` is skipped;
+   - a step whose action is `build` is run, once for each subject of a
+     benchmark that would run and is not built already.
+6. For each run, it fills the placeholders, records the run with state
+   `running`, and runs the command. The project is closed while the command
+   runs, so `list`, `plan`, `runs`, `run`, `progress` and the other commands
+   work during a build; `build` waits up to a minute when another command has
+   the project open.
+7. When the command ends with exit status 0, every declared output must exist
+   under the output directory, and a benchmark's results are imported. Then
+   the output directory becomes the definition's current product (one per
+   subject for a benchmark).
+8. A run that does not succeed stops the build. Later steps are not run.
+
+A step whose command cannot even be started (a program that is not found, an
+input with no current product, a settings file that cannot be read) is
+recorded as a `failed` run with the reason, and its run directory is not made.
+
+### The code a run sees
+
+The code root must be inside a Git work tree. A run uses the commit that
+`HEAD` names, and the tree is **clean** when no tracked file under the code
+paths (`code_paths` in `tuldok.json`, or the whole code root) differs from that
+commit, staged or not. Untracked files do not count. A tree that is not clean
+is refused, naming up to ten changed files.
+
+For a clean tree, the run sees a read-only copy of the commit, the
+**snapshot**, made once with `git archive` and shared by every run at that
+commit:
+
+| Code | Snapshot directory |
+| --- | --- |
+| the whole code root | `<local home>/code/<commit>/` |
+| `code_paths` | `<local home>/code/<commit>-<digest>/`, where the digest is the first 12 hexadecimal characters of the SHA-256 of the sorted paths, one per line |
+
+The snapshot keeps the repository's layout, so the command's working
+directory is the code root's place inside it. A settings file named by
+`settings_file` is read from the snapshot too.
+
+A **scratch** run, asked for with `--scratch`, uses the code root in place,
+uncommitted changes included, and is allowed outside Git. It records the
+commit when there is one. Its product is marked as a scratch product and never
+becomes out of date because of the code.
+
+### The run directory
+
+Each run has its own directory, `<local home>/runs/<run id>/`, where the run id
+is 32 hexadecimal characters:
+
+| Entry | Content |
+| --- | --- |
+| `output/` | what `{output}` names, made empty before the command starts; a succeeded run's `output/` is its product |
+| `settings.json` | the inline `settings` as the run saw them, when the definition has them |
+| `stdout.log`, `stderr.log` | the command's standard output and error |
+| `cancel` | present when cancellation was asked for |
+| `outcome.json` | how the command ended, written when every process of the run is gone |
+
+A product stays where its run wrote it. A newer product of the same definition
+(and subject) becomes the current one and the earlier one is kept, no longer
+current. Tuldok deletes no run directory and no product. Removing a definition
+drops its runs, products and estimate from the database and leaves the
+directories on disk.
+
+### The command and its environment
+
+The command is `run.command` with its placeholders filled. When its first word
+is `python`, it is the interpreter recorded for the run's environment. A first
+word containing `/` is an executable file under the code root. Any other first
+word is looked up on `PATH`.
+
+The command's environment holds exactly these variables, later ones replacing
+earlier ones:
+
+1. `PATH`, `HOME`, `USER`, `LOGNAME`, `LANG`, `LC_ALL` and `TZ`, from `build`'s
+   own environment where they are set;
+2. `PYTHONDONTWRITEBYTECODE=1` and `PYTHONUNBUFFERED=1`;
+3. `CUDA_VISIBLE_DEVICES` set to the empty string, unless the step declares
+   `gpu: true`, in which case it is passed on as `build` has it (and left
+   unset when `build` has none);
+4. the definition's `env`, with its placeholders filled;
+5. every `--env NAME=VALUE` given to `build`;
+6. `TULDOK_RUN_ID`, the run id. Every process the command starts inherits it,
+   which is how Tuldok finds anything a run left behind.
+
+The working directory is the code root in the snapshot (or the code root
+itself for a scratch run). Standard input is `/dev/null`; standard output and
+error are appended to the two logs.
+
+### Placeholders at run time
+
+| Placeholder | Filled with |
+| --- | --- |
+| `{output}` | `<run directory>/output` |
+| `{settings}` | `<run directory>/settings.json` for inline `settings`; the settings file's path in the snapshot for `settings_file` |
+| `{inputs.<name>}` | the input's current product directory; for `{"from", "output"}`, the path of that output inside it |
+| `{subject.name}` | the subject's name |
+| `{subject}` | the subject's `argument`, with `{recipe}` replaced by the current product directory of the subject's recipe; the subject's name when it has no `argument` |
+
+An input or a subject's recipe with no current product fails the run before it
+starts; the plan puts what it needs earlier, so this happens only when that
+earlier step was not built.
+
+### Limits
+
+| Limit | From | Default |
+| --- | --- | --- |
+| wall time | `resources.wall_hours` | 24 hours |
+| disk | `resources.disk_gb`, in units of 10^9 bytes, for the whole run directory | 50 GB |
+
+The wall time is looked at every half second and the size of the run
+directory every five seconds, and once more when the command has ended. A
+run past either limit, a run whose `cancel` file appears, and a run whose
+`build` receives `SIGINT` (Ctrl-C) or `SIGTERM` is stopped: `SIGTERM` to every
+process of the run, up to ten seconds of grace, then `SIGKILL`. After the
+command has ended, however it ended, every process of this user that still
+carries the run's `TULDOK_RUN_ID` is killed; such a process does not change a
+zero exit status into a failure, but the count is recorded as the run's
+strays.
+
+### The GPU lock
+
+A step that declares `gpu: true` holds an exclusive lock on
+`$TULDOK_PROJECT_HOME/gpu.lock` while its command runs. The lock is shared by
+every project on this machine, so two GPU steps never run at the same time; a
+build that finds the lock taken waits for it. Steps without `gpu: true` take no
+lock.
+
+### Results published by a benchmark
+
+A benchmark's output with role `results` must be a values file (see
+[Values files](#values-files)) for that benchmark and the subject that was
+run. After the command succeeds, the file is checked and imported, replacing
+that subject's values and summary rows in the database. A file that fails the
+check makes the run `failed`; its problem names the first five problems, and
+nothing is imported. `save` writes the new summaries to `results/` like any
+others.
+
+### Run states
+
+| State | Meaning |
+| --- | --- |
+| `queued` | recorded and not started yet |
+| `running` | its command is running |
+| `succeeded` | exit status 0, every declared output written, and a benchmark's results imported |
+| `failed` | a non-zero exit status, a missing output, a refused results file, or a command that could not be started |
+| `timed-out` | stopped at its wall-time limit |
+| `over-disk` | stopped at, or ended over, its disk limit |
+| `cancelled` | stopped because cancellation was asked for, with `cancel` or by a signal to `build` |
+| `unknown` | how it ended is not known: its build is gone, or a process of the run could not be stopped |
+
+### Build states
+
+What was built gives datasets, recipes, steps and benchmarks four more states,
+in the place of `not-built`:
+
+| State | When |
+| --- | --- |
+| `running` | it has a `queued` or `running` run |
+| `built` | it has a current product and nothing makes it out of date |
+| `out-of-date` | it has a current product, and one of the causes below holds |
+| `failed` | it has no current product, and its latest run ended `failed`, `timed-out`, `over-disk` or `unknown` |
+
+A current product is **out of date** when:
+
+- the definition's text differs from the text its run used;
+- its `settings_file` reads differently now from what the run used;
+- an input, or a benchmark subject's recipe, has a different current product
+  than the one the run used, or none, or is itself out of date;
+- the run was not a scratch run, and one of the definition's `sources` (or a
+  file under one) changed since the run's commit: in a later commit or as an
+  uncommitted change to a tracked file. When Git no longer has that commit,
+  the code is taken to have changed.
+
+A benchmark has a product per subject. It is `built` when every subject that
+would run has a current product that is not out of date, and `out-of-date`
+when one of them is out of date or only some have a product. When none has a
+product it is `not-built`, or `failed` when its latest run ended badly. A product built by a scratch run is `built`, and
+`plan` notes that it is a scratch product. A definition with a current product
+is `built` or `out-of-date` even when its label would make it
+`cannot-rebuild` or `needs-work`; those take precedence only when there is no
+current product. A `cancelled` run never makes a definition `failed`, and a
+definition with a current product keeps it.
+
+In a plan, `built` is the action `built` and is not counted as work;
+`out-of-date`, `failed` and `running` are `build`, and the plan says why under
+the step. A step another build is running is refused by `build`.
+
+### When a builder dies
+
+A run is watched by a small custodian process that `build` starts for each
+command. When `build` dies, even by `SIGKILL`, the custodian notices, stops
+the run and kills every process that carries its run id. Its row in the
+database still says `running`. The next time builds are looked at (`list`,
+`plan`, `runs`, `run` and the others), a `queued` or `running` run whose build
+process is not running on this boot becomes `unknown`, with a problem saying
+so. It is never restarted; build again to make the product.
+
+`stop` is for a run whose build is gone: it kills every process of this user
+that carries the run's id, whatever is left after the custodian, and marks the
+run `unknown` when it was still `queued` or `running`. It is refused while the
+run's build is alive; use `cancel` for that.
+
+### Commands
+
+| Command | Does |
+| --- | --- |
+| `build TARGET... [--all] [--scratch] [--yes] [--env NAME=VALUE]...` | Prints the plan, asks to proceed unless `--yes`, and runs it. Prints a line when each run starts and ends, with the run id, and a closing line. |
+| `runs [REFERENCE]` | The runs, newest first: run id, reference, subject, state, when it started and how long it took. |
+| `run RUN` | One run: its row (state, plan, code, environment, command, directory, build process, times, exit status, seconds, size, strays), what it used, its product and outputs when it made one, its last progress event and its problem. |
+| `progress RUN [--follow]` | The run's state, its last progress event and the last 8 KiB of each log. `--follow` looks again every two seconds and prints what is new, until the run is no longer `queued` or `running`. |
+| `cancel RUN` | Asks a `queued` or `running` run to stop by creating its `cancel` file. The build running it stops it within a second or so and records it as `cancelled`; `cancel` does not wait. |
+| `stop RUN` | For a run whose build is gone: kills the processes it left and marks it `unknown`. |
+| `products [REFERENCE]` | The current products: reference, subject, run id, size of the declared outputs, whether a scratch run made it, and the directory. |
+| `estimate TARGET... [--all] [--scratch] [--env NAME=VALUE]...` | Runs the estimate commands of the steps the plan would build and stores what they print (see [Estimates](#estimates)). |
+
+`RUN` is a run id or a prefix of at least six of its characters that no other
+run's id starts with. A prefix that matches several runs is refused, and the
+matching runs are listed. `run`, `progress`, `cancel` and `stop` open the
+project only for a moment to find the run, waiting while a build has it open,
+and read the logs with the project closed, so they work while another process
+builds. `progress --follow` does not hold the project open between passes.
+
+Options:
+
+| Option | Commands | Meaning |
+| --- | --- | --- |
+| `--all` | `build`, `estimate` | every dataset, recipe, step and benchmark, together with any `TARGET` given |
+| `--scratch` | `build`, `estimate` | run from the code root as it is, uncommitted changes included |
+| `--yes` | `build` | do not ask for confirmation |
+| `--env NAME=VALUE` | `build`, `estimate` | add a variable to every command's environment; may be repeated |
+| `--follow` | `progress` | repeat until the run ends |
+| `--json` | `runs`, `run`, `progress`, `cancel`, `stop`, `products`, `estimate` | print one JSON document; `progress --follow --json` prints one JSON object per line, one per pass |
+
+Exit statuses:
+
+| Command | 0 | 1 |
+| --- | --- | --- |
+| `build` | every step succeeded or was built already | refused (a blocked target, a step being built elsewhere, uncommitted changes, an environment that is not ready), not confirmed, or a run did not succeed |
+| `run`, `progress`, `runs`, `products` | shown | no such run, or a prefix that matches several |
+| `cancel` | the `cancel` file was made, or was there already | the run is not `queued` or `running`, or no such run |
+| `stop` | nothing of the run is left running | its build is alive, a process could not be stopped, or no such run |
+| `estimate` | every estimate that ran was measured | an estimate failed, or the code was refused |
+
+Every command exits with status 2 on a usage error, such as `build` or
+`estimate` without a target or an `--env` that is not `NAME=VALUE`.
+
+In these examples `FOLDER` is a committed copy of Tuldok's test project
+`tests/fixtures/tuldok_project/buildable`, whose environment is connected to
+Tuldok's own `.venv/bin/python`. `LOCAL` is the project's local home and
+`VENV` that `.venv`.
+
+```
+$ .venv/bin/python -m tuldok_project build FOLDER benchmarks/score --yes
+3 steps to build, 0 to set up, 0 blocked, 1 ready: benchmarks/score can be
+built.
+
+#  action  gpu  disk     time    reference
+1  ready   -    -        -       environments/test-python
+2  build   -    0.01 GB  0.05 h  datasets/numbers
+                                   in environments/test-python
+3  build   -    ?        ?       recipes/fit-a
+                                   data: datasets/numbers (data)
+                                   in environments/test-python
+4  build   -    ?        ?       benchmarks/score
+                                   data: datasets/numbers (data)
+                                   in environments/test-python
+                                   runs 2 subjects
+
+To build: 3 steps, 0 on a GPU.
+Disk: 0.01 GB declared; 2 of 3 declare none.
+Time: 0.05 h declared; 2 of 3 declare none.
+Figures are as the definitions declare them; no command was run.
+start  datasets/numbers  run 8064e90ac31441bfb72ae1a892fde0b8
+end    datasets/numbers  run 8064e90ac31441bfb72ae1a892fde0b8  succeeded  0.0 s
+start  recipes/fit-a  run a14415f556a645d8aa209af956504b82
+end    recipes/fit-a  run a14415f556a645d8aa209af956504b82  succeeded  0.0 s
+start  benchmarks/score fit-a  run aeef824dfaad4c9eb0d95bc684738444
+end    benchmarks/score fit-a  run aeef824dfaad4c9eb0d95bc684738444  succeeded  0.0 s
+start  benchmarks/score zero  run 9916ff56c61e471b840157155b4bdf83
+end    benchmarks/score zero  run 9916ff56c61e471b840157155b4bdf83  succeeded  0.0 s
+Done: 4 runs succeeded, 0 already built.
+$ .venv/bin/python -m tuldok_project runs FOLDER
+run                               reference         subject  state      started           seconds
+9916ff56c61e471b840157155b4bdf83  benchmarks/score  zero     succeeded  2026-11-12 01:26  0.0 s
+aeef824dfaad4c9eb0d95bc684738444  benchmarks/score  fit-a    succeeded  2026-11-12 01:26  0.0 s
+a14415f556a645d8aa209af956504b82  recipes/fit-a     -        succeeded  2026-11-12 01:26  0.0 s
+8064e90ac31441bfb72ae1a892fde0b8  datasets/numbers  -        succeeded  2026-11-12 01:26  0.0 s
+$ .venv/bin/python -m tuldok_project products FOLDER
+reference         subject  run                               size   scratch  directory
+benchmarks/score  fit-a    aeef824dfaad4c9eb0d95bc684738444  955 B  -        LOCAL/runs/aeef824dfaad4c9eb0d95bc684738444/output
+benchmarks/score  zero     9916ff56c61e471b840157155b4bdf83  910 B  -        LOCAL/runs/9916ff56c61e471b840157155b4bdf83/output
+datasets/numbers  -        8064e90ac31441bfb72ae1a892fde0b8  74 B   -        LOCAL/runs/8064e90ac31441bfb72ae1a892fde0b8/output
+recipes/fit-a     -        a14415f556a645d8aa209af956504b82  66 B   -        LOCAL/runs/a14415f556a645d8aa209af956504b82/output
+$ .venv/bin/python -m tuldok_project run FOLDER a14415
+run             a14415f556a645d8aa209af956504b82
+reference       recipes/fit-a
+subject         -
+state           succeeded
+plan            e7bf709a3f2f44b9a743401873dc34ae
+code            commit 51eb0263cdd0, from its snapshot
+environment     environments/test-python  VENV/bin/python
+command         VENV/bin/python train.py --data LOCAL/runs/8064e90ac31441bfb72ae1a892fde0b8/output/numbers.json --settings LOCAL/code/51eb0263cdd0954fd47e700e718043887939d6c7/code/settings/fit-a.json --out LOCAL/runs/a14415f556a645d8aa209af956504b82/output
+directory       LOCAL/runs/a14415f556a645d8aa209af956504b82
+builder         process 1362748
+queued          2026-11-12 01:26:54
+started         2026-11-12 01:26:54
+finished        2026-11-12 01:26:54
+exit status     0
+seconds         0.0 s
+size            532 B
+strays          0
+input data      datasets/numbers (data), run 8064e90ac31441bfb72ae1a892fde0b8
+product         LOCAL/runs/a14415f556a645d8aa209af956504b82/output
+output weights  weights.json  weights  66 B
+progress        fit 4 of 4 (100%)  guess=-0.1727
+$ .venv/bin/python -m tuldok_project progress FOLDER a14415
+run        a14415f556a645d8aa209af956504b82
+reference  recipes/fit-a
+state      succeeded
+progress   fit 4 of 4 (100%)  guess=-0.1727
+stdout.log: 466 B:
+  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 1, "total": 4, "metrics": {"guess": -0.09211366666666666}}
+  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 2, "total": 4, "metrics": {"guess": -0.1381705}}
+  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 3, "total": 4, "metrics": {"guess": -0.16119891666666666}}
+  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 4, "total": 4, "metrics": {"guess": -0.172713125}}
+stderr.log: empty
+```
+
+The command line in `run` is quoted so it can be pasted into a shell. The
+progress event is the last complete line of standard output, within the last
+8 KiB, that is exactly one JSON object of this form, at most 4,096 bytes:
+
+```json
+{"format": "tuldok_progress_v1", "stage": "fit", "completed": 3, "total": 4, "metrics": {"guess": -0.16}}
+```
+
+`stage` and each metric name match `[A-Za-z0-9][A-Za-z0-9_.-]{0,63}`;
+`completed` and `total` are whole numbers with `0 <= completed <= total <=
+1000000`; `metrics` holds up to eight finite numbers. Any other line is just
+output. Invalid bytes in a log are shown replaced, and control characters
+other than tab and newline are left out.
+`run --json` prints every column of the run's row, including the definition
+text and the environment it ran with, plus `product`, `builder_alive` and
+`event`.
+
+While a build runs in another terminal, `progress --follow` prints the run's
+first line, then each new line of the logs as it is written (`out` for
+standard output, `err` for standard error), a `progress` line when the event
+changes, and a last line when the run ends:
+
+```
+$ .venv/bin/python -m tuldok_project progress FOLDER 3b4a4509 --follow
+run 3b4a45097c0f44b3a651763d599289aa  recipes/fit-a  running
+out  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 1, "total": 4, "metrics": {"guess": -0.09211366666666666}}
+out  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 2, "total": 4, "metrics": {"guess": -0.1381705}}
+out  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 3, "total": 4, "metrics": {"guess": -0.16119891666666666}}
+out  {"format": "tuldok_progress_v1", "stage": "fit", "completed": 4, "total": 4, "metrics": {"guess": -0.172713125}}
+progress  fit 4 of 4 (100%)  guess=-0.1727
+Run 3b4a45097c0f44b3a651763d599289aa ended succeeded after 4.3 s.
+$ .venv/bin/python -m tuldok_project stop FOLDER 3b4a4509
+Run 3b4a45097c0f44b3a651763d599289aa (recipes/fit-a) is still being run by its build (process 1365836); use cancel to stop it.
+```
+
+(`stop` above was run while the build was still going.) Cancelling a running
+build, and what the build prints:
+
+```
+$ .venv/bin/python -m tuldok_project cancel FOLDER 4cc81737
+Asked run 4cc81737b8b04686942a24d60e39c9bc (recipes/fit-a) to stop: its build stops it within a second or so and records it as cancelled.
+```
+
+```
+start  recipes/fit-a  run 4cc81737b8b04686942a24d60e39c9bc
+end    recipes/fit-a  run 4cc81737b8b04686942a24d60e39c9bc  cancelled  1.1 s
+       It was cancelled.
+Stopped: recipes/fit-a did not succeed; later steps were not run.
+```
+
+```
+$ .venv/bin/python -m tuldok_project cancel FOLDER 4cc81737
+Run 4cc81737b8b04686942a24d60e39c9bc (recipes/fit-a) is cancelled; only a queued or running run can be cancelled.
+```
+
+After the build running `48856079` was killed with `SIGKILL`:
+
+```
+$ .venv/bin/python -m tuldok_project stop FOLDER 48856079
+No process of the run was left running: run 48856079a1694a8391a8083fafe7fbb1 (recipes/fit-a).
+It was running; it is now unknown, and is never restarted.
+```
+
+### Estimates
+
+A definition's `run.estimate.command` says how big and how long its build will
+be without doing it. `estimate` runs it; `plan` and `build` never do, because
+it is project code. For each step the plan would build:
+
+- a step without an estimate command is skipped;
+- the estimate command runs from the same code as a build (a clean commit's
+  snapshot, or the code root with `--scratch`), with the child environment and
+  working directory a build step gets, in a throwaway directory
+  `<local home>/estimates/<id>/` that is removed afterwards;
+- `{output}` names a path that does not exist, `{settings}` and
+  `{inputs.<name>}` are filled as for a build, and `{subject}` and
+  `{subject.name}` cannot be used, since an estimate is made once per
+  definition;
+- a step whose estimate command or `env` names an input with no current
+  product is skipped, with that reason;
+- the command has five minutes and may write 100 MB (10^8 bytes) in its
+  directory; it takes no GPU lock.
+
+The command's standard output must be exactly one JSON object, at most 64 KiB,
+with any of these fields; other fields are ignored:
+
+| Field | Meaning |
+| --- | --- |
+| `disk_bytes` | how many bytes the build will write |
+| `wall_seconds` | how many seconds the build will take |
+| `items` | how many items it will make or read, for example cases or examples |
+
+Each one present must be a number of at least 0, and at least one must be
+present. A command that fails, runs out of time, prints anything else or a
+value of the wrong kind is a failed estimate for that step, reported with the
+reason; the other steps still run, and an earlier estimate of that step is
+kept. A measured estimate replaces the step's earlier one.
+
+An estimate is stored in the database with the SHA-256 of the definition's
+text it was measured for, and `plan` shows it only while the definition's text
+is that one. In the text of a plan, the declared figure comes first and the
+estimate follows it marked `~... est.`; the totals keep the declared sums and
+add a line with the estimated sums, saying how many steps they cover.
+
+```
+$ .venv/bin/python -m tuldok_project estimate FOLDER recipes/fit-a
+Ran from the code at commit 51eb0263cdd0.
+
+step              estimate  disk  time  items
+datasets/numbers  skipped   -     -     -
+  It has no estimate command.
+recipes/fit-a     skipped   -     -     -
+  It needs {inputs.data}, but its input data (datasets/numbers) has no current
+  product.
+
+0 measured, 2 skipped, 0 failed. plan shows each estimate while its definition is unchanged.
+```
+
+Once `datasets/numbers` is built and `recipes/fit-a` declares
+`wall_hours: 0.1`:
+
+```
+$ .venv/bin/python -m tuldok_project estimate FOLDER recipes/fit-a
+Ran from the code at commit 060271be67fe.
+
+step           estimate  disk    time  items
+recipes/fit-a  measured  4.8 KB  2 s   6
+
+1 measured, 0 skipped, 0 failed. plan shows each estimate while its definition is unchanged.
+$ .venv/bin/python -m tuldok_project plan FOLDER benchmarks/score
+2 steps to build, 0 to set up, 0 blocked, 1 ready, 1 built: benchmarks/score
+can be built.
+
+#  action  gpu  disk            time             reference
+1  ready   -    -               -                environments/test-python
+2  built   -    0.01 GB         0.05 h           datasets/numbers
+                                                   in environments/test-python
+3  build   -    ? ~4.8 KB est.  0.1 h ~2 s est.  recipes/fit-a
+                                                   data: datasets/numbers (data)
+                                                   in environments/test-python
+                                                   out of date: its definition changed since run a14415f556a6
+4  build   -    ?               ?                benchmarks/score
+                                                   data: datasets/numbers (data)
+                                                   in environments/test-python
+                                                   runs 2 subjects
+                                                   out of date: subject fit-a: the recipe recipes/fit-a of its subject is out of date
+
+To build: 2 steps, 0 on a GPU.
+Disk: no step declares it.
+Time: 0.1 h declared; 1 of 2 declares none.
+Estimated: disk ~4.8 KB (1 of 2 steps); time ~2 s (1 of 2 steps).
+Declared figures are as the definitions declare them; figures marked est. are
+what their estimate commands printed when estimate last ran them. No command
+was run now.
+```
+
+A measured time reads in seconds below 100 s, in minutes below 100 minutes,
+and in hours above that. With `--json`, `estimate` prints `{"targets",
+"scratch", "commit", "steps"}`, each step `{"reference", "result"`
+(`measured`, `skipped` or `failed`), `"reason", "values", "seconds"}`.
+
 ## What the format does not do yet
 
 The folder is checked, can be opened, edited and saved through the database
-copy, its results can be read and drawn, a build can be planned, and its
-environments can be connected, checked and installed, nothing more. Tuldok
-does not yet run any definition's command or `estimate` command, write
-settings files or read the contents of notes. The `run`, `resources`,
-`estimate` and `settings` fields record what a later Tuldok will use.
+copy, its results can be read and drawn, its environments can be connected,
+checked and installed, and its definitions can be planned, estimated and
+built on this machine, one build at a time per step, from the command line.
+Tuldok does not yet build from the Tuldok app or in the background, delete
+old products or run directories, use `cpu_threads` or `memory_gb` (they are
+shown, not enforced), or read the contents of notes.
 
 Background: [the design notes for this format](../plans/definition-first-projects/).

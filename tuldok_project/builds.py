@@ -13,13 +13,31 @@ needs and to write its run row, closed while the command runs under
 launcher.run (so other commands can open it), and opened again to check the
 outputs, import a benchmark's results and record the product. A run left
 queued or running by a builder that is gone becomes unknown whenever builds
-are looked at; nothing is ever restarted. Files are never deleted here.
+are looked at; nothing is ever restarted. Files are never deleted here,
+except an estimate's throwaway directory.
+
+What a person needs while and after a build runs (sections 7 and 8): a run is
+named by its id or an unambiguous prefix of it (find_run); run_details reads
+its row, and its logs are read after the project is closed again (read_log,
+launcher.progress), so looking works during a build in another process;
+follow repeats that until the run ends; cancel writes a running run's cancel
+file, which its builder's launcher acts on; stop kills what a
+run whose builder is gone left running and marks it unknown. estimate runs
+the build steps' estimate commands from the same snapshot a build would use,
+each under the launcher with small limits in a throwaway directory, and
+stores what they print in a fourth table, estimates, keyed by reference and
+the SHA-256 of the definition text it was measured for; stored_estimates
+gives plan.py the ones whose definition is unchanged.
 """
 from contextlib import contextmanager
 import fcntl
+import hashlib
 import json
+import math
 import os
+import re
 import shutil
+import stat
 import time
 import uuid
 
@@ -43,6 +61,13 @@ PASSED_VARIABLES = ('PATH', 'HOME', 'USER', 'LOGNAME', 'LANG', 'LC_ALL', 'TZ')
 RECIPE_INPUT = '{recipe}'   # the inputs key of a benchmark subject's recipe; never a valid input name
 OPEN_WAIT_SECONDS = 60      # how long execute waits for a project another command has open
 PROBLEMS_SHOWN = 5
+RUN_PREFIX_MINIMUM = 6      # a run may be named by at least this many of its first characters
+FOLLOW_SECONDS = 2.0        # how often progress --follow looks again
+ESTIMATES = 'estimates'     # <local home>/estimates/<id>/: an estimate's throwaway directory
+ESTIMATE_LIMITS = {'wall_seconds': 300.0, 'disk_bytes': 100 * 1000 ** 2}
+ESTIMATE_OUTPUT_LIMIT = 64 * 1024   # bytes of standard output an estimate may print
+ESTIMATE_FIELDS = ('disk_bytes', 'wall_seconds', 'items')
+_RUN_TEXT = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}')
 
 TABLES = (
     '''CREATE TABLE IF NOT EXISTS {schema}.plans (
@@ -69,11 +94,15 @@ TABLES = (
            directory text NOT NULL, outputs jsonb NOT NULL,
            current boolean NOT NULL)''',
     'CREATE UNIQUE INDEX IF NOT EXISTS products_current ON {schema}.products (reference, subject) WHERE current',
+    '''CREATE TABLE IF NOT EXISTS {schema}.estimates (
+           reference text PRIMARY KEY, definition_sha256 text NOT NULL,
+           "values" jsonb NOT NULL, measured_at timestamptz NOT NULL)''',
 )
 
 _RUN_COLUMNS = ('id', 'reference', 'subject', 'plan_id', 'state', 'scratch', 'commit', 'inputs', 'environment',
                 'argv', 'directory', 'owner_pid', 'owner_boot', 'queued_at', 'started_at', 'finished_at',
                 'exit_status', 'seconds', 'bytes', 'strays', 'problem')
+_DETAIL_COLUMNS = _RUN_COLUMNS + ('definition', 'settings', 'env')
 
 
 def _q(schema, template):
@@ -96,9 +125,10 @@ def _short(run_id):
 # ----------------------------------------------------------- the store's hooks
 
 def forget(connection, schema, reference):
-    """Drop the runs and products records of a definition that is gone; their files are left where they are."""
+    """Drop the runs, products and estimate records of a definition that is gone; their files are left where they are."""
     connection.execute(_q(schema, 'DELETE FROM {schema}.products WHERE reference = %s'), (reference,))
     connection.execute(_q(schema, 'DELETE FROM {schema}.runs WHERE reference = %s'), (reference,))
+    connection.execute(_q(schema, 'DELETE FROM {schema}.estimates WHERE reference = %s'), (reference,))
 
 
 def boot_id():
@@ -376,6 +406,10 @@ class StepProblem(Exception):
     """A step that cannot be started as its definition stands; it fails before anything runs."""
 
 
+class MissingInput(StepProblem):
+    """An estimate command (or the env) names an input that has no current product: the estimate is skipped."""
+
+
 def fill(text, values):
     """text with every {name} replaced from values; '{{' and '}}' become literal braces.
 
@@ -408,8 +442,11 @@ def _fill(text, values, missing, where):
         return fill(text, values)
     except KeyError as exc:
         name = exc.args[0]
-        reason = missing.get(name, f'{{{name}}} cannot be filled here')
-        raise StepProblem(f'{where} uses {{{name}}}, but {reason}.') from None
+        if name in missing and name.startswith('inputs.'):
+            raise MissingInput(f'It needs {{{name}}}, but {missing[name]}.') from None
+        if name in missing:
+            raise StepProblem(f'{where} uses {{{name}}}, but {missing[name]}.') from None
+        raise StepProblem(f'{where} uses {{{name}}}, but {{{name}}} cannot be filled here.') from None
     except ValueError as exc:
         raise StepProblem(f'{where} {exc}.') from None
 
@@ -417,12 +454,12 @@ def _fill(text, values, missing, where):
 # -------------------------------------------------------------------- execute
 
 @contextmanager
-def _opened(folder, dsn):
+def opened(folder, dsn=None, *, rebind=False, on_conflict=None):
     """Open the project for a moment, waiting while another command has it open."""
     deadline = time.monotonic() + OPEN_WAIT_SECONDS
     while True:
         try:
-            project = store.open_project(folder, dsn=dsn)
+            project = store.open_project(folder, dsn=dsn, rebind=rebind, on_conflict=on_conflict)
             break
         except store.ProjectError as exc:
             if exc.code != 'busy' or time.monotonic() > deadline:
@@ -506,8 +543,15 @@ class _Build:
 
     # ---------------------------------------------------------------- prepare
 
-    def _resolve(self, project, reference, subject):
-        """Everything a run needs, with the project open: (row values, argv, env, cwd, limits, gpu)."""
+    def _resolve(self, project, reference, subject, *, estimate=False):
+        """Everything a run needs, with the project open: (row values, argv, env, cwd, limits, gpu).
+
+        With estimate, the command is run.estimate.command, the directory is a
+        throwaway one under <local home>/estimates/, {output} names a path that
+        does not exist, the limits are ESTIMATE_LIMITS, and an input with no
+        current product is a problem only when a placeholder names it
+        (prepared['skipped'] is then true).
+        """
         directory_name, name = documents.parse_reference(reference)
         row = project._execute('SELECT text, document FROM {schema}.definitions '
                                'WHERE directory = %s AND name = %s AND NOT removed', (directory_name, name)).fetchone()
@@ -516,8 +560,10 @@ class _Build:
         text, document = row
         run = _run_block(document)
         run_id = uuid.uuid4().hex
-        run_directory = os.path.join(local.home(project.project_id), RUNS, run_id)
+        run_directory = os.path.join(local.home(project.project_id), ESTIMATES if estimate else RUNS, run_id)
         output = os.path.join(run_directory, OUTPUT)
+        estimate_block = run.get('estimate') if isinstance(run.get('estimate'), dict) else {}
+        command = list(estimate_block.get('command') or []) if estimate else list(run.get('command') or [])
         values, missing, recorded = {'output': output}, {}, {}
 
         environment_record = None
@@ -528,15 +574,18 @@ class _Build:
 
         prepared = {'id': run_id, 'reference': reference, 'subject': subject['name'] if subject else '',
                     'definition': text, 'settings': None, 'environment': environment_record,
-                    'directory': run_directory, 'argv': list(run.get('command') or []), 'env': {},
-                    'problem': None}
+                    'directory': run_directory, 'argv': list(command), 'env': {},
+                    'problem': None, 'skipped': False}
         try:
-            if not run.get('command'):
-                raise StepProblem(f'{reference} has no run.command, so it cannot be built.')
+            if not command:
+                raise StepProblem(f'{reference} has no run.estimate.command.' if estimate else
+                                  f'{reference} has no run.command, so it cannot be built.')
             for input_name, (used, output_name) in _declared_inputs(document).items():
                 product = _current_product(project, used)
                 if product is None:
-                    missing[f'inputs.{input_name}'] = f'{used} has no current product'
+                    missing[f'inputs.{input_name}'] = f'its input {input_name} ({used}) has no current product'
+                    if estimate:
+                        continue
                     raise StepProblem(f'Its input {input_name} ({used}) has no current product; build it first.')
                 path = product['directory']
                 if output_name is not None:
@@ -561,6 +610,9 @@ class _Build:
                                               'output': None}
                 values['subject'] = (_fill(argument, recipe_values, {}, f'The argument of subject {subject["name"]}')
                                      if isinstance(argument, str) else subject['name'])
+            elif estimate:
+                for name in ('subject', 'subject.name'):
+                    missing[name] = "an estimate is made once for the whole benchmark, not per subject"
             if 'settings' in run:
                 values['settings'] = os.path.join(run_directory, SETTINGS_FILE)
                 prepared['settings'] = settings_text(document, self.code.code_root)
@@ -570,8 +622,8 @@ class _Build:
                 if prepared['settings'] is None:
                     raise StepProblem(f'Its settings file {run["settings_file"]} cannot be read in the code '
                                       f'at commit {self.code.commit[:12] or "(none)"}.')
-            argv = [_fill(part, values, missing, f'The command word {part!r}') for part in run['command']]
-            if run['command'][0] == 'python':
+            argv = [_fill(part, values, missing, f'The command word {part!r}') for part in command]
+            if command[0] == 'python':
                 if environment_record is None:
                     raise StepProblem('The command starts with python but the run names no environment.')
                 argv[0] = environment_record['interpreter']
@@ -601,9 +653,12 @@ class _Build:
             wall_hours = resources.get('wall_hours') or DEFAULT_WALL_HOURS
             disk_gb = resources.get('disk_gb') or DEFAULT_DISK_GB
             prepared['limits'] = {'wall_seconds': float(wall_hours) * 3600, 'disk_bytes': int(float(disk_gb) * GB)}
+            if estimate:
+                prepared['limits'] = dict(ESTIMATE_LIMITS)
             prepared['gpu'] = gpu
         except StepProblem as exc:
             prepared['problem'] = str(exc)
+            prepared['skipped'] = isinstance(exc, MissingInput)
         prepared['inputs'] = recorded
         prepared['outputs'] = run.get('outputs') if isinstance(run.get('outputs'), dict) else {}
         prepared['kind'] = _kind(reference)
@@ -627,7 +682,7 @@ class _Build:
 
     def run_one(self, reference, subject=None):
         """Run one step (one subject of a benchmark); return the item reported for it."""
-        with _opened(self.folder, self.dsn) as project:
+        with opened(self.folder, self.dsn) as project:
             prepared = self._resolve(project, reference, subject)
             item = {'reference': reference, 'subject': prepared['subject'], 'run_id': prepared['id'],
                     'directory': prepared['directory']}
@@ -650,14 +705,14 @@ class _Build:
             outcome = launcher.Outcome('failed', None, 0.0, 0, _size(prepared['directory']))
             started_problem = str(exc) or f'The command could not be started ({type(exc).__name__}).'
         except BaseException:
-            with _opened(self.folder, self.dsn) as project:
+            with opened(self.folder, self.dsn) as project:
                 project._execute("UPDATE {schema}.runs SET state = 'unknown', finished_at = now(), "
                                  "problem = 'The build was interrupted while the command ran.' WHERE id = %s",
                                  (prepared['id'],))
             raise
         else:
             started_problem = None
-        with _opened(self.folder, self.dsn) as project:
+        with opened(self.folder, self.dsn) as project:
             state, problem = self._finish(project, prepared, outcome, started_problem)
         item.update(state=state, problem=problem, seconds=outcome.seconds)
         return item
@@ -768,7 +823,7 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
                                  'running', references=running)
     build = _Build(folder, plan, extra_env=extra_env, scratch=scratch, dsn=dsn, on_event=on_event)
     if to_build:
-        with _opened(folder, dsn) as project:
+        with opened(folder, dsn) as project:
             state = project._state()
             code_paths = (store._read_project_file(state['folder']) or {}).get('code_paths')
             code_root = _code_root(project)
@@ -781,7 +836,7 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
     if not confirm(plan):
         return result
     result['confirmed'] = True
-    with _opened(folder, dsn) as project:
+    with opened(folder, dsn) as project:
         project._execute('INSERT INTO {schema}.plans (id, created_at, targets, steps, scratch) '
                          'VALUES (%s, now(), %s, %s, %s)',
                          (build.plan_id, Jsonb(plan['targets']), Jsonb(plan['steps']), scratch))
@@ -790,14 +845,14 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
         reference = step['reference']
         if step['kind'] == 'environment':
             if reference in needed_environments:
-                with _opened(folder, dsn) as project:
+                with opened(folder, dsn) as project:
                     build.environment(project, reference)
             continue
         if step['action'] != 'build':
             result['skipped'].append(reference)
             continue
         if step['kind'] == 'benchmark':
-            with _opened(folder, dsn) as project:
+            with opened(folder, dsn) as project:
                 document = project.definition(reference)['document']
                 entry = status(project).get(reference) or {}
             built = {name for name, item in (entry.get('subjects') or {}).items() if item['state'] == 'built'}
@@ -813,3 +868,349 @@ def execute(project_folder, plan, *, confirm, extra_env=None, scratch=False, dsn
                 return result
     result['ok'] = True
     return result
+
+
+# --------------------------------------------------------- one run, by name
+
+def find_run(project, text):
+    """The id of the run named by text: its id, or an unambiguous prefix of at least RUN_PREFIX_MINIMUM characters.
+
+    Raises ProjectError: not-found when nothing matches (or the prefix is too
+    short), ambiguous when a prefix matches several runs, with them listed.
+    """
+    if not isinstance(text, str) or not _RUN_TEXT.fullmatch(text):
+        raise store.ProjectError(f'{text!r} is not a run id.', 'not-found')
+    if project._execute('SELECT 1 FROM {schema}.runs WHERE id = %s', (text,)).fetchone() is not None:
+        return text
+    if len(text) < RUN_PREFIX_MINIMUM:
+        raise store.ProjectError(f'There is no run {text}; name a run by its id or at least its first '
+                           f'{RUN_PREFIX_MINIMUM} characters.', 'not-found')
+    rows = project._execute('SELECT id, reference, subject, state FROM {schema}.runs '
+                            'WHERE left(id, %s) = %s ORDER BY queued_at DESC, id', (len(text), text)).fetchall()
+    if not rows:
+        raise store.ProjectError(f'There is no run {text}.', 'not-found')
+    if len(rows) > 1:
+        listed = '\n'.join(f'  {run_id}  {reference}  {subject or "-"}  {state}'
+                           for run_id, reference, subject, state in rows)
+        raise store.ProjectError(f'{text} is the start of {len(rows)} runs; give more of the id:\n{listed}', 'ambiguous',
+                           references=[run_id for run_id, *_ in rows])
+    return rows[0][0]
+
+
+def _row(project, run_id):
+    row = project._execute('SELECT ' + ', '.join(_DETAIL_COLUMNS) + ' FROM {schema}.runs WHERE id = %s',
+                           (run_id,)).fetchone()
+    return dict(zip(_DETAIL_COLUMNS, row))
+
+
+def builder_alive(row):
+    """Whether the build process recorded in a run's row is still running on this boot."""
+    return bool(row['owner_pid']) and row['owner_boot'] == boot_id() and _alive(row['owner_pid'])
+
+
+def run_details(project, text):
+    """One run's row (every column), its product when it made one, and whether its builder is alive.
+
+    Orphaned runs are marked unknown first. The logs are not read here: the
+    caller reads them from row['directory'] after closing the project.
+    """
+    run_id = find_run(project, text)
+    reap_orphans(project._connection, project.schema)
+    row = _row(project, run_id)
+    product = project._execute('SELECT directory, outputs, current FROM {schema}.products WHERE run_id = %s',
+                               (run_id,)).fetchone()
+    row['product'] = None if product is None else dict(zip(('directory', 'outputs', 'current'), product))
+    row['builder_alive'] = row['state'] in ACTIVE and builder_alive(row)
+    return row
+
+
+def read_log(directory, name, offset, *, final=False):
+    """What a run's <name>.log holds from offset on: {text, offset, size, skipped}.
+
+    At most launcher.LOG_TAIL bytes are read; when more were written since
+    offset, the earlier ones are skipped (counted in skipped) and the first,
+    cut line is dropped. Unless final, only complete lines are taken, so a
+    line is never printed in two pieces. Links are not followed; a missing
+    log reads as empty.
+    """
+    empty = {'text': '', 'offset': offset, 'size': None, 'skipped': 0}
+    try:
+        directory_fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    except OSError:
+        return empty
+    try:
+        try:
+            descriptor = os.open(f'{name}.log', os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+                                 dir_fd=directory_fd)
+        except OSError:
+            return empty
+        try:
+            status = os.fstat(descriptor)
+            if not stat.S_ISREG(status.st_mode):
+                return empty
+            size = status.st_size
+            offset = min(offset, size)
+            start = max(offset, size - launcher.LOG_TAIL)
+            data = os.pread(descriptor, size - start, start)
+        finally:
+            os.close(descriptor)
+    finally:
+        os.close(directory_fd)
+    if not final:
+        data = data[:data.rfind(b'\n') + 1]
+    end = start + len(data)
+    if start > offset:
+        cut = data.find(b'\n')
+        data = data[cut + 1:] if cut >= 0 else b''
+    text = launcher._CONTROL.sub('', data.decode('utf-8', errors='replace'))
+    return {'text': text, 'offset': end, 'size': size, 'skipped': start - offset}
+
+
+def run_summary(row):
+    """The few fields of a run's row that progress shows beside its logs."""
+    return {name: row[name] for name in ('id', 'reference', 'subject', 'state', 'directory', 'started_at',
+                                         'finished_at', 'seconds', 'problem')}
+
+
+def follow(folder, text, *, dsn=None, interval=None, rebind=False, on_conflict=None):
+    """Yield one pass every interval seconds (FOLLOW_SECONDS) until the run is no longer queued or running.
+
+    Each pass opens the project only to read the run's row, then reads the
+    logs with it closed: {run (id, reference, subject, state, ...), event (the
+    latest progress event), new_event (true when it differs from the last
+    pass), stdout, stderr (text written since the last pass), skipped_stdout,
+    skipped_stderr (bytes not shown because more was written than one pass
+    shows), ended}. The first pass shows the last part of each log.
+    """
+    interval = FOLLOW_SECONDS if interval is None else interval
+    offsets = {name: 0 for name in launcher.LOGS}
+    last_event, run_id = None, text
+    while True:
+        with opened(folder, dsn, rebind=rebind, on_conflict=on_conflict) as project:
+            row = run_details(project, run_id)
+        run_id = row['id']
+        ended = row['state'] not in ACTIVE
+        found = launcher.progress(row['directory'])
+        item = {'run': run_summary(row), 'event': found['event'], 'new_event': found['event'] != last_event,
+                'ended': ended}
+        last_event = found['event']
+        for name in launcher.LOGS:
+            read = read_log(row['directory'], name, offsets[name], final=ended)
+            offsets[name] = read['offset']
+            item[name], item[f'skipped_{name}'] = read['text'], read['skipped']
+        yield item
+        if ended:
+            return
+        time.sleep(interval)
+
+
+def cancel(project, text):
+    """Ask a queued or running run to stop by creating its cancel file; its builder's launcher does the stopping.
+
+    Raises ProjectError (not-active) for a run in any other state. Does not
+    wait. Returns {id, reference, subject, state, cancel_file, already_asked}.
+    """
+    row = run_details(project, text)
+    if row['state'] not in ACTIVE:
+        hint = (' Its build is gone; stop kills anything it left running.' if row['state'] == 'unknown' else '')
+        raise store.ProjectError(f'Run {row["id"]} ({row["reference"]}) is {row["state"]}; only a queued or running run '
+                           f'can be cancelled.{hint}', 'not-active', references=[row['reference']])
+    os.makedirs(row['directory'], exist_ok=True)  # a queued run's directory may not be made yet
+    path = os.path.join(row['directory'], launcher.CANCEL_FILE)
+    already = os.path.lexists(path)
+    if not already:
+        try:
+            os.close(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o644))
+        except FileExistsError:
+            already = True
+    return {'id': row['id'], 'reference': row['reference'], 'subject': row['subject'], 'state': row['state'],
+            'cancel_file': path, 'already_asked': already}
+
+
+def stop(folder, text, *, dsn=None, rebind=False, on_conflict=None):
+    """For a run whose builder is gone: kill every process that carries its run id, and mark it unknown.
+
+    Refused (ProjectError builder-alive) while the run is queued or running
+    and the build process recorded in its row still runs on this boot: that
+    run is stopped with cancel. The project is closed while the processes are
+    stopped. Returns {id, reference, subject, was, state, killed, remaining,
+    marked_unknown}; remaining lists the pids that could not be stopped.
+    """
+    with opened(folder, dsn, rebind=rebind, on_conflict=on_conflict) as project:
+        row = _row(project, find_run(project, text))
+    if row['state'] in ACTIVE and builder_alive(row):
+        raise store.ProjectError(f'Run {row["id"]} ({row["reference"]}) is still being run by its build (process '
+                           f'{row["owner_pid"]}); use cancel to stop it.', 'builder-alive',
+                           references=[row['reference']])
+    result = launcher.stop_strays(row['id'])
+    marked = False
+    with opened(folder, dsn, rebind=rebind, on_conflict=on_conflict) as project:
+        if row['state'] in ACTIVE:
+            problem = (f'Stopped with stop: the build that ran it (process {row["owner_pid"]}) was gone; '
+                       f'{result["killed"]} stray process' + ('' if result['killed'] == 1 else 'es')
+                       + ' killed.')
+            marked = project._execute('''UPDATE {schema}.runs SET state = 'unknown', problem = %s,
+                                             finished_at = coalesce(finished_at, now()),
+                                             strays = coalesce(strays, 0) + %s
+                                         WHERE id = %s AND state = ANY(%s) RETURNING id''',
+                                      (problem, result['killed'], row['id'], list(ACTIVE))).fetchone() is not None
+        reap_orphans(project._connection, project.schema)
+        state = project._execute('SELECT state FROM {schema}.runs WHERE id = %s', (row['id'],)).fetchone()[0]
+    return {'id': row['id'], 'reference': row['reference'], 'subject': row['subject'], 'was': row['state'],
+            'state': state, 'killed': result['killed'], 'remaining': result['remaining'], 'marked_unknown': marked}
+
+
+# ------------------------------------------------------------------ estimates
+
+def _sha256_text(text):
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+
+def stored_estimates(project):
+    """{reference: {disk_bytes, wall_seconds, items, measured_at (ISO 8601 text)}} for the definitions' current text.
+
+    An estimate measured for another text of the definition is left out.
+    """
+    rows = project._execute('''SELECT e.reference, e."values", e.measured_at
+                               FROM {schema}.estimates e JOIN {schema}.definitions d
+                                 ON d.directory || '/' || d.name = e.reference AND NOT d.removed
+                               WHERE e.definition_sha256 = encode(sha256(convert_to(d.text, 'UTF8')), 'hex')''')
+    return {reference: {**{field: values.get(field) for field in ESTIMATE_FIELDS},
+                        'measured_at': measured_at.isoformat(timespec='seconds')}
+            for reference, values, measured_at in rows.fetchall()}
+
+
+def _first_line(directory, name):
+    text = read_log(directory, name, 0, final=True)['text'].strip()
+    return text.splitlines()[-1][:400] if text else ''
+
+
+def _estimate_values(outcome, directory):
+    """(values, None) from what a finished estimate command printed, or (None, why it is not an estimate)."""
+    if outcome.state != 'succeeded':
+        said = _first_line(directory, 'stderr')
+        reason = {'failed': f'The estimate command exited with status {outcome.exit_status}',
+                  'timed-out': f'The estimate command ran past its limit of '
+                               f'{ESTIMATE_LIMITS["wall_seconds"] / 60:g} minutes and was stopped',
+                  'over-disk': f'The estimate command wrote more than '
+                               f'{ESTIMATE_LIMITS["disk_bytes"] / 1000 ** 2:g} MB and was stopped',
+                  'cancelled': 'The estimate command was stopped'}.get(
+                      outcome.state, 'A process of the estimate command could not be stopped')
+        return None, reason + (f'; its last error line: {said}' if said else '.')
+    try:
+        with open(os.path.join(directory, 'stdout.log'), 'rb') as handle:
+            raw = handle.read(ESTIMATE_OUTPUT_LIMIT + 1)
+    except OSError:
+        raw = b''
+    if len(raw) > ESTIMATE_OUTPUT_LIMIT:
+        return None, f'It printed more than {ESTIMATE_OUTPUT_LIMIT // 1024} KiB; it must print one JSON object.'
+    if not raw.strip():
+        return None, 'It printed nothing; it must print one JSON object.'
+    try:
+        document = launcher._decode_json(raw.decode('utf-8'))
+    except UnicodeDecodeError:
+        return None, 'Its standard output is not UTF-8 text; it must print one JSON object.'
+    except (ValueError, RecursionError) as exc:
+        return None, f'Its standard output is not one JSON object ({exc}).'
+    if not isinstance(document, dict):
+        return None, f'Its standard output is a JSON {type(document).__name__}, not an object.'
+    values = {}
+    for field in ESTIMATE_FIELDS:
+        if field not in document:
+            continue
+        value = document[field]
+        if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+            return None, f'Its {field} is {json.dumps(value)}; it must be a number of at least 0.'
+        values[field] = value
+    if not values:
+        return None, 'Its object has none of ' + ', '.join(ESTIMATE_FIELDS) + '.'
+    return values, None
+
+
+def estimate(project_folder, targets, *, every=False, scratch=False, extra_env=None, dsn=None, on_event=None):
+    """Run the estimate command of each build step in the plan for targets, and store what each prints (section 7).
+
+    The code is the snapshot a build would use (ProjectError with the
+    SnapshotError's code when it cannot be prepared: dirty, not-in-git, ...).
+    Each command runs through launcher.run in <local home>/estimates/<id>/,
+    removed afterwards, with ESTIMATE_LIMITS, the child environment a build
+    step would get and {output} naming a path that does not exist. A step
+    without an estimate command, or whose estimate command or env names an
+    input with no current product, is skipped; one whose command fails or
+    prints anything but one JSON object fails, and the next step still runs.
+    on_event(item) is called after each step.
+
+    Returns {targets, scratch, commit, steps: [{reference, result (measured,
+    skipped or failed), reason, values, seconds}]}.
+    """
+    from . import plan as planning
+
+    folder = os.fspath(project_folder)
+    on_event = on_event or (lambda item: None)
+    with opened(folder, dsn) as project:
+        made = planning.build_plan(project, targets, every=every)
+        state = project._state()
+        code_paths = (store._read_project_file(state['folder']) or {}).get('code_paths')
+        code_root = _code_root(project)
+        home = local.home(project.project_id, create=True)
+        documents_ = project._documents(removed=False)
+    build = _Build(folder, made, extra_env=extra_env, scratch=scratch, dsn=dsn, on_event=None)
+    result = {'targets': made['targets'], 'scratch': scratch, 'commit': None, 'steps': []}
+    to_build = [step['reference'] for step in made['steps'] if step['action'] == 'build']
+    with_command = [reference for reference in to_build
+                    if (_run_block(documents_[reference]).get('estimate') or {}).get('command')]
+    if with_command:
+        try:
+            build.code = snapshot.prepare(code_root, code_paths, home=home, scratch=scratch)
+        except snapshot.SnapshotError as exc:
+            raise _snapshot_error(exc) from None
+        result['commit'] = build.code.commit
+    for reference in to_build:
+        item = {'reference': reference, 'result': 'skipped', 'reason': None, 'values': None, 'seconds': None}
+        if reference not in with_command:
+            item['reason'] = 'It has no estimate command.'
+        else:
+            _estimate_one(build, reference, item)
+        result['steps'].append(item)
+        on_event(item)
+    return result
+
+
+def _estimate_one(build, reference, item):
+    with opened(build.folder, build.dsn) as project:
+        try:
+            prepared = build._resolve(project, reference, None, estimate=True)
+        except store.ProjectError as exc:
+            if exc.code != 'not-ready':
+                raise
+            item.update(result='failed', reason=str(exc).replace('then build again', 'then estimate again'))
+            return
+    if prepared['problem'] is not None:
+        item.update(result='skipped' if prepared['skipped'] else 'failed', reason=prepared['problem'])
+        return
+    directory = prepared['directory']
+    os.makedirs(directory)
+    try:
+        if prepared['inline_settings']:
+            with open(os.path.join(directory, SETTINGS_FILE), 'w', encoding='utf-8') as handle:
+                handle.write(prepared['settings'])
+        try:
+            outcome = launcher.run(prepared['argv'], cwd=build.code.code_root, env=prepared['env'],
+                                   run_id=prepared['id'], directory=directory, limits=prepared['limits'])
+        except Exception as exc:  # launcher.run raises only before the command has started
+            item.update(result='failed', reason=str(exc) or f'The command could not be started ({type(exc).__name__}).')
+            return
+        item['seconds'] = outcome.seconds
+        values, reason = _estimate_values(outcome, directory)
+    finally:
+        snapshot._remove(directory)
+    if values is None:
+        item.update(result='failed', reason=reason)
+        return
+    with opened(build.folder, build.dsn) as project:
+        project._execute('''INSERT INTO {schema}.estimates (reference, definition_sha256, "values", measured_at)
+                            VALUES (%s, %s, %s, now())
+                            ON CONFLICT (reference) DO UPDATE SET definition_sha256 = EXCLUDED.definition_sha256,
+                                "values" = EXCLUDED."values", measured_at = EXCLUDED.measured_at''',
+                         (reference, _sha256_text(prepared['definition']), Jsonb(values)))
+    item.update(result='measured', values=values)
