@@ -357,3 +357,32 @@ Every declared output of the 203 recipes was found at its recorded size; no data
 **Machine note:** the machine restarted during this work, which emptied `/tmp`: the throwaway database was made again, and the screenshots and chart from the milestone 7 acceptance, which were only there, are gone.
 
 **Next:** part 2, the lab repository stops tracking the old project folder; then the deletion of the old project mode, which waits for the capability check to be signed.
+
+## 2026-11-12 — milestone 8, part 2: the lab repository holds the new folder only
+
+**Owner instruction:** "continue". Spec: section 9 of [spec-m8.md](spec-m8.md).
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: spec `b202fce6`. Lab `reorg/reproducible-lab-20261102`: README, `.gitignore`, the converter's docstring and the removed equality test `076b04c98`; the old folder out of the index `fd18d8202`.
+
+**What changed in the lab:**
+
+- `projects/rheon-model-portfolio-unified-04/` is no longer tracked: 55,865 files left the index. All 63,133 files of the folder are still on disk (17 GB), now ignored. The lab tracks 6,987 files, and under `projects/` only `surrogate-lab` (495 files, 12 MB).
+- `projects/surrogate-lab/` is the lab's Tuldok project from here on, edited directly or through Tuldok. The test that required it to equal the converter's output is removed; the converter's other 39 tests, all on synthetic folders, pass.
+- The README says where the project is, how to check, open, report and plan it, and that weights, datasets and run logs live in Tuldok's project directory on the machine.
+
+**Acceptance: the plan's test on fresh clones** (a local clone of the lab branch and of the Tuldok branch into a scratch directory, the Tuldok clone's code run with the existing interpreter, an empty database, an empty project directory):
+
+| Step | Result |
+| --- | --- |
+| The lab clone | 254 MB working tree, no old project folder, no `runs/` |
+| `check` | 0 errors, 81 warnings. 73 of them are earlier recipes naming source files under `runs/`, which only the original machine has; the other 8 are the two recipes already known |
+| `open` | 1.4 s |
+| `list` | 271 definitions: 206 recipes, 32 datasets, 18 benchmarks, 8 charts, 4 steps, 2 environments, 1 model |
+| `report` | 0.5 s; 172 KiB with 8 charts drawn from `results/` alone; no script and no external reference |
+| `plan --all` | 0.3 s; 17 steps to build in order, 3 on a GPU, 137 GB of disk declared |
+
+The clone was not built: that needs the reference solver and the dataset generation, which the owner has not approved. Rheon was not cloned; nothing before a build needs it.
+
+**Left as they are:** `scripts/track_project_results.py` and `scripts/extract_model_recipes.py`, which served the old format and which nothing current refers to; the historical plans and the migration scripts under `experiments/model-portfolio-migration-v1/` that name the old folder; the README's link to the older `tuldok/` folder, which a reader may confuse with the project.
+
+**Next:** deleting the old project mode from Tuldok. It waits for the owner to sign the [capability check](capability-check.md).
