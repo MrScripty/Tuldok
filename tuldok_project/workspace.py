@@ -19,6 +19,7 @@ from . import builds, charts, documents, environments, folder as folder_reader, 
 from .store import ProjectError, _REFERENCE_SQL
 
 NOTE_LIMIT = 1024 * 1024
+DESCRIPTION_LIMIT = 300   # characters of a recipe's description on the map (spec-w2.md section 2)
 
 
 def _labels(document):
@@ -28,6 +29,22 @@ def _labels(document):
 
 def _text(value):
     return value if isinstance(value, str) and value else None
+
+
+def _description(document):
+    """The first DESCRIPTION_LIMIT characters of a recipe's description, cut at a word; None when it has none.
+
+    Whitespace runs become one space. A description longer than the limit is
+    cut after the last whole word that fits and ends with an ellipsis (the
+    ellipsis counts in the limit); a first word longer than the limit is cut
+    at the limit.
+    """
+    text = ' '.join(document.get('description').split()) if isinstance(document.get('description'), str) else ''
+    if len(text) <= DESCRIPTION_LIMIT:
+        return text or None
+    head = text[:DESCRIPTION_LIMIT]   # the ellipsis replaces the character after the last whole word
+    cut = head.rfind(' ')
+    return (head[:cut] if cut > 0 else head[:DESCRIPTION_LIMIT - 1]).rstrip(' ,;:') + '…'
 
 
 def _better(metric, value, best):
@@ -108,7 +125,7 @@ def project_map(project):
         value, count = values.get(reference, (None, None))
         models.append({
             'reference': reference, 'title': definitions[reference]['title'],
-            'short': _text(_labels(document).get('short')),
+            'description': _description(document), 'short': _text(_labels(document).get('short')),
             'group': _text(document.get('group')), 'change': _text(document.get('change')),
             'derived_from': _text(document.get('derived_from')),
             'trained_at': _text(_labels(document).get('trained_at')),

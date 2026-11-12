@@ -46,13 +46,16 @@ FIXTURE_MAP = {
         {'id': 'fine-tuned', 'title': 'Fine-tuned steppers', 'parent': 'steppers', 'description': None, 'models': 1},
     ],
     'models': [
-        {'reference': 'recipes/early-fit', 'title': 'Early fit (fit-0042)', 'short': 'F42', 'group': 'steppers',
+        {'reference': 'recipes/early-fit', 'title': 'Early fit (fit-0042)',
+         'description': 'A stepper trained before this format; only its weights and measurements remain.',
+         'short': 'F42', 'group': 'steppers',
          'change': 'architecture', 'derived_from': None, 'trained_at': '2026-03-14', 'state': 'cannot-rebuild',
          'adopted': False, 'card': 'notes/fits/early-fit.md', 'value': 0.625, 'count': 4, 'benchmarks': 1},
-        {'reference': 'recipes/stepper-k1', 'title': 'Stepper on wave scenes', 'short': 'K1', 'group': 'steppers',
+        {'reference': 'recipes/stepper-k1', 'title': 'Stepper on wave scenes', 'description': None, 'short': 'K1',
+         'group': 'steppers',
          'change': 'training-policy', 'derived_from': 'recipes/early-fit', 'trained_at': None, 'state': 'not-built',
          'adopted': False, 'card': None, 'value': 0.875, 'count': 8, 'benchmarks': 1},
-        {'reference': 'recipes/stepper-k2', 'title': 'Stepper fine-tuned from k1', 'short': 'K2',
+        {'reference': 'recipes/stepper-k2', 'title': 'Stepper fine-tuned from k1', 'description': None, 'short': 'K2',
          'group': 'fine-tuned', 'change': 'refinement', 'derived_from': 'recipes/stepper-k1', 'trained_at': None,
          'state': 'not-built', 'adopted': False, 'card': None, 'value': 0.5, 'count': 8, 'benchmarks': 1},
     ],
@@ -350,6 +353,40 @@ class _Counting:
                 return super().executemany(*arguments, **options)
 
         connection.cursor_factory = Cursor
+
+
+class Description(unittest.TestCase):
+    """A model's description on the map (spec-w2.md section 2): the first 300 characters, cut at a word."""
+
+    def test_a_short_description_is_whole_with_its_spaces_made_single(self):
+        self.assertEqual(workspace._description({'description': '  One  line,\n\tthen  another. '}),
+                         'One line, then another.')
+
+    def test_none_when_absent_or_blank(self):
+        self.assertIsNone(workspace._description({}))
+        self.assertIsNone(workspace._description({'description': '   '}))
+
+    def test_exactly_the_limit_is_not_cut(self):
+        text = ('word ' * 60)[:300]
+        self.assertEqual(len(text), 300)
+        self.assertEqual(workspace._description({'description': text}), text.strip())
+
+    def test_a_long_description_is_cut_after_the_last_whole_word(self):
+        words = [f'w{index:03d}' for index in range(100)]   # 4 characters and a space each
+        shown = workspace._description({'description': ' '.join(words)})
+        self.assertLessEqual(len(shown), 300)
+        self.assertTrue(shown.endswith('…'))
+        kept = shown[:-1].split(' ')
+        self.assertEqual(kept, words[:len(kept)])
+        self.assertEqual(len(kept), 60)   # 60 words are 299 characters; the ellipsis makes 300
+
+    def test_a_cut_drops_the_punctuation_before_the_ellipsis(self):
+        shown = workspace._description({'description': 'a' * 296 + ', then more words follow here'})
+        self.assertEqual(shown, 'a' * 296 + '…')
+
+    def test_one_word_longer_than_the_limit_is_cut_at_the_limit(self):
+        shown = workspace._description({'description': 'x' * 400})
+        self.assertEqual(shown, 'x' * 299 + '…')
 
 
 @unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')

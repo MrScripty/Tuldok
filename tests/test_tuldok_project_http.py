@@ -39,6 +39,21 @@ PUBLISHED = {
 DISCOVERY = '9c02284ed750bce31c53100d4657deaf40b519c9d17d5e3165b6b6342930b660'
 PROJECT_NAMES = {'project.' + operation.name for operation in operations.OPERATIONS}
 AGENT_SCOPES = ['inspect', 'edit', 'execute', 'cancel']
+# The files of the project workspace page and their media types (app.py serves each with '; charset=utf-8').
+WORKSPACE_FILES = {
+    '/project-workspace/base.css': 'text/css',
+    '/project-workspace/adapter.js': 'text/javascript',
+    '/project-workspace/charts.js': 'text/javascript',
+    '/project-workspace/markdown.js': 'text/javascript',
+    '/project-workspace/tree.js': 'text/javascript',
+    '/project-workspace/screens.js': 'text/javascript',
+    '/project-workspace/app.js': 'text/javascript',
+    '/static/vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf': 'font/ttf',
+    '/static/vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf': 'font/ttf',
+    '/static/vendor/ubuntu-sans/UbuntuSansMono[wght].ttf': 'font/ttf',
+    '/static/vendor/ubuntu-sans/UbuntuSansMono-Italic[wght].ttf': 'font/ttf',
+    '/static/vendor/ubuntu-sans/LICENCE.txt': 'text/plain',
+}
 
 
 def digest(value):
@@ -231,23 +246,46 @@ class Routes(Served):
         self.assertEqual(status, 201, value)
 
     def test_the_page(self):
-        for path in ('/', '/workspaces', '/workbench'):
+        """The project workspace (spec-w2.md): served for /, /workspaces and /workbench with each of its files."""
+        page = (REPOSITORY / 'static' / 'project-workspace.html').read_bytes()
+        for path in ('/', '/workspaces', '/workbench', '/project-workspace'):
             status, kind, data = self.http(path, raw=True)
             self.assertEqual((status, kind), (200, 'text/html; charset=utf-8'))
-            self.assertIn(b'/project-folder.js', data)
-            self.assertIn(b'/project-folder.css', data)
-            self.assertIn(b'/auth.js', data)
-        for path, expected in (('/project-folder.js', 'text/javascript'), ('/project-folder.css', 'text/css'),
-                               ('/auth.js', 'text/javascript')):
-            status, kind, data = self.http(path, raw=True)
-            self.assertEqual((status, kind), (200, expected + '; charset=utf-8'))
-            self.assertTrue(data)
-        script = (REPOSITORY / 'static' / 'project-folder.js').read_text(encoding='utf-8')
-        self.assertIn('/api/agent/capabilities', script)
-        self.assertNotRegex(script, '[a-f0-9]{64}')
+            self.assertEqual(data, page)
+        self.assertIn(b'/auth.js', page)
+        for path, expected in WORKSPACE_FILES.items():
+            with self.subTest(path):
+                status, kind, data = self.http(path, raw=True)
+                self.assertEqual((status, kind), (200, expected + '; charset=utf-8'))
+                source = path.removeprefix('/static/').removeprefix('/')
+                self.assertEqual(data, (REPOSITORY / 'static' / source).read_bytes())
+                if not path.startswith('/static/vendor/'):
+                    self.assertIn(path.encode(), page)
+        for path in ('/project-folder', '/project-folder.js', '/project-folder.css'):
+            status, value = self.http(path)
+            self.assertEqual((status, value), (404, {'error': 'Not found.'}))
         for name in ('project-folder.html', 'project-folder.js', 'project-folder.css'):
-            self.assertNotRegex((REPOSITORY / 'static' / name).read_text(encoding='utf-8'), r'https?://')
-        self.assertIn('prefers-color-scheme:dark', (REPOSITORY / 'static' / 'project-folder.css').read_text())
+            self.assertFalse((REPOSITORY / 'static' / name).exists())
+
+    def test_the_page_files_follow_the_page_rules(self):
+        """No external reference, no pinned contract, no markup from text, no inline script or handler."""
+        files = {path: (REPOSITORY / 'static' / path.lstrip('/')).read_text(encoding='utf-8')
+                 for path in WORKSPACE_FILES if path.endswith(('.js', '.css'))}
+        files['/project-workspace.html'] = (REPOSITORY / 'static' / 'project-workspace.html').read_text(encoding='utf-8')
+        for path, text in files.items():
+            with self.subTest(path):
+                self.assertNotRegex(text, r'https?://(?!www\.w3\.org/2000/svg)')
+                self.assertNotRegex(text, '[a-f0-9]{64}')
+                self.assertNotRegex(text, r'innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function')
+        self.assertIn('/api/agent/capabilities', files['/project-workspace/adapter.js'])
+        self.assertNotRegex(files['/project-workspace.html'], r'<script(?![^>]*\bsrc=)|\son[a-z]+=|style=')
+        self.assertIn("default-src 'self'", files['/project-workspace.html'])
+        css = files['/project-workspace/base.css']
+        self.assertIn('prefers-color-scheme: dark', css)
+        self.assertIn('[data-theme="dark"]', css)
+        licence = (REPOSITORY / 'static' / 'vendor' / 'ubuntu-sans' / 'LICENCE.txt').read_text(encoding='utf-8')
+        self.assertIn('UBUNTU FONT LICENCE Version 1.0', licence)
+        self.assertIn('Canonical Ltd', licence)
 
     def test_a_folder_that_does_not_open_ends_start_up(self):
         (self.folder / 'datasets' / 'numbers.json').write_text('{"format": ', encoding='utf-8')

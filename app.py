@@ -984,11 +984,21 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                 })
                 if getattr(dataset, 'project_files_mode', False) and path in ('/', '/workspaces', '/workbench'):
                     path = '/project-files'
-                assets.update({'/project-folder': ('project-folder.html', 'text/html'),
-                               '/project-folder.js': ('project-folder.js', 'text/javascript'),
-                               '/project-folder.css': ('project-folder.css', 'text/css')})
+                assets.update({'/project-workspace': ('project-workspace.html', 'text/html'),
+                               '/project-workspace/base.css': ('project-workspace/base.css', 'text/css'),
+                               '/project-workspace/adapter.js': ('project-workspace/adapter.js', 'text/javascript'),
+                               '/project-workspace/charts.js': ('project-workspace/charts.js', 'text/javascript'),
+                               '/project-workspace/markdown.js': ('project-workspace/markdown.js', 'text/javascript'),
+                               '/project-workspace/tree.js': ('project-workspace/tree.js', 'text/javascript'),
+                               '/project-workspace/screens.js': ('project-workspace/screens.js', 'text/javascript'),
+                               '/project-workspace/app.js': ('project-workspace/app.js', 'text/javascript'),
+                               '/static/vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf': ('vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf', 'font/ttf'),
+                               '/static/vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf': ('vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf', 'font/ttf'),
+                               '/static/vendor/ubuntu-sans/UbuntuSansMono[wght].ttf': ('vendor/ubuntu-sans/UbuntuSansMono[wght].ttf', 'font/ttf'),
+                               '/static/vendor/ubuntu-sans/UbuntuSansMono-Italic[wght].ttf': ('vendor/ubuntu-sans/UbuntuSansMono-Italic[wght].ttf', 'font/ttf'),
+                               '/static/vendor/ubuntu-sans/LICENCE.txt': ('vendor/ubuntu-sans/LICENCE.txt', 'text/plain')})
                 if getattr(dataset, 'project_folder_mode', False) and path in ('/', '/workspaces', '/workbench'):
-                    path = '/project-folder'
+                    path = '/project-workspace'
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')

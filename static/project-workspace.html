@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<title>Map · Tuldok</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/auth.css">
+<link rel="stylesheet" href="/project-workspace/base.css">
+<script defer src="/auth.js"></script>
+<script defer src="/project-workspace/adapter.js"></script>
+<script defer src="/project-workspace/charts.js"></script>
+<script defer src="/project-workspace/markdown.js"></script>
+<script defer src="/project-workspace/tree.js"></script>
+<script defer src="/project-workspace/screens.js"></script>
+<script defer src="/project-workspace/app.js"></script>
+</head>
+<body class="shell">
+<a class="sr-only" href="#main">Skip to content</a>
+<header class="top">
+  <a class="brand" href="#map"><span class="mark">t.</span>Tuldok</a>
+  <h1 id="projname"></h1>
+  <nav class="tabs" aria-label="Stages" id="tabs"></nav>
+  <div class="right" id="top-right"><button id="theme" class="btn sm ghost" type="button"></button></div>
+</header>
+<div class="strip" id="strip" role="status"></div>
+<div class="stage">
+  <main id="main" tabindex="-1"></main>
+  <aside id="drawer" class="drawer" aria-label="Inspector" aria-hidden="true"><button class="btn sm ghost close" id="close" type="button" aria-label="Close inspector"></button><div id="aside"></div></aside>
+  <div id="needs-panel" hidden></div>
+</div>
+</body>
+</html>
