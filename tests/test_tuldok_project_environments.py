@@ -231,13 +231,13 @@ class States(unittest.TestCase):
         made = plan.make_plan(self.documents, ['steps/solver'], local={'environments/lab-cpu': 'ready'})
         self.assertEqual([(step['reference'], step['state'], step['action']) for step in made['steps']],
                          [('environments/lab-cpu', 'ready', 'ready'), ('steps/solver', 'not-built', 'build')])
-        self.assertEqual(made['counts'], {'build': 1, 'set-up': 0, 'blocked': 0, 'ready': 1})
+        self.assertEqual(made['counts'], {'build': 1, 'set-up': 0, 'blocked': 0, 'ready': 1, 'built': 0})
 
     def test_a_failing_environment_is_set_up(self):
         made = plan.make_plan(self.documents, ['steps/solver'], local={'environments/lab-cpu': 'failing'})
         self.assertEqual(made['steps'][0]['action'], 'set-up')
         self.assertEqual(made['steps'][0]['state'], 'failing')
-        self.assertEqual(made['counts'], {'build': 1, 'set-up': 1, 'blocked': 0, 'ready': 0})
+        self.assertEqual(made['counts'], {'build': 1, 'set-up': 1, 'blocked': 0, 'ready': 0, 'built': 0})
 
 
 class Local(unittest.TestCase):

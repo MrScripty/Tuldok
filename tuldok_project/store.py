@@ -18,6 +18,10 @@ Which interpreter fulfils each environment on this machine (spec-m5.md) lives
 in one more table owned by environments; the states reported here take the
 environments' stored check results, and an environment's record goes when
 its definition does.
+What was built (spec-m6.md) lives in three more tables owned by builds: the
+states reported here take the build states (built, out-of-date, running,
+failed) from them, and a definition's runs and products records go when the
+definition does (the files on disk are left).
 """
 from dataclasses import dataclass
 import hashlib
@@ -31,7 +35,7 @@ from psycopg.types.json import Jsonb
 
 from metadata import connection_info
 
-from . import check, documents, environments, folder as folder_reader, graph, result_rows, results
+from . import builds, check, documents, environments, folder as folder_reader, graph, result_rows, results
 from .documents import Problem
 
 PROJECT_ID = re.compile(r'^[a-f0-9]{32}$')
@@ -77,15 +81,18 @@ class ProjectError(Exception):
     lists why), conflict (files changed on disk where the database has unsaved
     edits), bound-elsewhere, busy, in-use, changed-on-disk, not-found; and for
     environments (environments.py): not-set-up (nothing is recorded for it),
-    no-install, no-installer, target-exists, install-failed.
+    no-install, no-installer, target-exists, install-failed; and for builds
+    (builds.py): blocked, running, not-ready, and a snapshot.SnapshotError's
+    code (dirty, not-in-git, ...), whose files names the changed files.
     references names the definitions concerned.
     """
 
-    def __init__(self, message, code, *, problems=(), references=()):
+    def __init__(self, message, code, *, problems=(), references=(), files=()):
         super().__init__(message)
         self.code = code
         self.problems = list(problems)
         self.references = list(references)
+        self.files = list(files)
 
 
 # ------------------------------------------------------------ small helpers
@@ -312,7 +319,7 @@ class Project:
 
     def _create_schema(self):
         self._connection.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(self.schema)))
-        for statement in (*_TABLES, *environments.TABLES, *_MIGRATIONS):
+        for statement in (*_TABLES, *environments.TABLES, *builds.TABLES, *_MIGRATIONS):
             self._execute(statement)
 
     def _state(self):
@@ -328,8 +335,12 @@ class Project:
         return dict(rows)
 
     def _local_states(self):
-        """{reference: state} of the environments recorded on this machine, for graph.states(local=...)."""
-        return environments.recorded_states(self._connection, self.schema)
+        """{reference: state} recorded on this machine, for graph.states(local=...).
+
+        The environments' check results, and the build states of datasets,
+        recipes, steps and benchmarks (builds.local_states).
+        """
+        return {**environments.recorded_states(self._connection, self.schema), **builds.local_states(self)}
 
     def _states(self, *, removed=True):
         return graph.states(self._documents(removed=removed), self._local_states())
@@ -443,6 +454,7 @@ class Project:
             self._write_edges(graph.edges({reference: d.document for reference, d in merged.items()}))
             for reference in delete:
                 directory, name = documents.parse_reference(reference)
+                builds.forget(self._connection, self.schema, reference)
                 if directory == 'benchmarks':
                     result_rows.remove_benchmark(self._connection, self.schema, name)
                 if directory == environments.DIRECTORY:
@@ -624,7 +636,8 @@ class Project:
         """Mark a definition removed, to be deleted from disk by save(); refused while anything uses it.
 
         Removing an environment also drops its record on this machine (an
-        installed directory is left where it is).
+        installed directory is left where it is); removing anything drops its
+        runs and products records (their directories are left where they are).
         """
         directory, name = _split(reference)
         with self._connection.transaction():
@@ -645,6 +658,7 @@ class Project:
                 self._execute('UPDATE {schema}.definitions SET removed = true WHERE directory = %s AND name = %s',
                               (directory, name))
             self._write_edges([], [reference])
+            builds.forget(self._connection, self.schema, reference)
             if directory == 'benchmarks':
                 result_rows.remove_benchmark(self._connection, self.schema, name)
             if directory == environments.DIRECTORY:

@@ -1,0 +1,9 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "chart",
+  "title": "Error by subject",
+  "benchmark": "benchmarks/score",
+  "form": "ranking",
+  "metric": "error",
+  "statistic": "mean"
+}

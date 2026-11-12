@@ -12,6 +12,11 @@ needs-work), and adds up the figures the build steps declare in
 run.resources. build_plan reads the definitions from a Project's database copy
 and the recorded environment states and calls it. Making a plan runs nothing and opens no file: no command, no
 estimate command, nothing on disk; an estimate is always null here.
+With what was built on this machine (spec-m6.md section 5), a step that is
+built has the action built and is not work; one that is out-of-date or failed
+is built again, and its reasons say why. build_plan reads those states from
+builds.status, which looks at the code root's Git history only when some
+product exists.
 """
 from collections import deque
 import math
@@ -20,7 +25,7 @@ from . import documents, graph
 from .store import ProjectError
 
 BUILT_KINDS = ('dataset', 'recipe', 'step', 'benchmark')
-ACTIONS = ('build', 'set-up', 'blocked', 'ready')
+ACTIONS = ('build', 'set-up', 'blocked', 'ready', 'built')
 RESOURCES = ('gpu', 'cpu_threads', 'memory_gb', 'wall_hours', 'disk_gb')
 CAUSE_LIMIT = 5
 _CAUSE_LABELS = ('no', 'needs-work')
@@ -141,8 +146,10 @@ def _subjects(document, states):
 def _action(kind, state):
     if kind == 'environment':
         return 'ready' if state == 'ready' else 'set-up'  # not-set-up, or failing its last check
-    if state == 'not-built':
-        return 'build'
+    if state in ('not-built', 'out-of-date', 'failed', 'running'):
+        return 'build'  # a running step is refused by builds.execute, never started twice
+    if state == 'built':
+        return 'built'
     if state in ('cannot-rebuild', 'needs-work'):
         return 'blocked'
     return None
@@ -155,11 +162,14 @@ def _total(steps, field):
     return round(math.fsum(numbers), 6), len(declared) - len(numbers)
 
 
-def make_plan(definitions, targets, *, every=False, local=None):
+def make_plan(definitions, targets, *, every=False, local=None, built=None):
     """The plan for targets over {reference: document}, as section 3 and 4 of spec-m4.md describe it.
 
-    local is graph.states' mapping of environment references to the state
-    recorded on this machine; without it every environment is not-set-up.
+    local is graph.states' mapping of references to the state recorded on
+    this machine; without it every environment is not-set-up and nothing is
+    built. built is builds.status' mapping of reference to {causes, scratch};
+    each step's reasons are its causes (why it is out of date, failed or
+    running) and scratch says whether its current product is a scratch one.
 
     every adds every dataset, recipe, step and benchmark to the targets. A
     chart target is replaced by its benchmark; a model target adds nothing
@@ -200,7 +210,9 @@ def make_plan(definitions, targets, *, every=False, local=None):
                 'state': states[reference], 'action': action,
                 'command': run.get('command'), 'environment': run.get('environment'),
                 'inputs': _inputs(document), 'resources': _resources(document), 'estimate': None,
-                'blocked_by': [], 'blocked_by_more': 0}
+                'blocked_by': [], 'blocked_by_more': 0,
+                'reasons': list((built or {}).get(reference, {}).get('causes', [])),
+                'scratch': bool((built or {}).get(reference, {}).get('scratch', False))}
         if kind == 'benchmark':
             step['subjects'] = _subjects(document, states)
             if action == 'build' and not step['subjects']['run']:
@@ -229,8 +241,10 @@ def build_plan(project, targets, *, every=False):
     """The plan for targets in an open Project, from its database copy alone.
 
     Raises ProjectError (code not-found) naming the first target that is not a
-    definition of the project. Holds no state; runs and opens nothing.
+    definition of the project. Holds no state; runs nothing and opens no file
+    unless something was built (then Git is asked what changed, section 5).
     """
+    from . import builds, environments
     definitions = project._documents(removed=False)
     for reference in targets:
         if documents.parse_reference(reference) is None:
@@ -238,4 +252,7 @@ def build_plan(project, targets, *, every=False):
                                references=[reference])
         if reference not in definitions:
             raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
-    return make_plan(definitions, targets, every=every, local=project._local_states())
+    built = builds.status(project)
+    local = {**environments.recorded_states(project._connection, project.schema),
+             **{reference: entry['state'] for reference, entry in built.items()}}
+    return make_plan(definitions, targets, every=every, local=local, built=built)

@@ -1,0 +1,21 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "benchmark",
+  "title": "Error on the numbers",
+  "run": {
+    "command": ["python", "score.py", "--subject", "{subject}", "--name", "{subject.name}", "--data", "{inputs.data}", "--out", "{output}"],
+    "environment": "environments/test-python",
+    "inputs": {"data": {"from": "datasets/numbers", "output": "data"}},
+    "outputs": {"results": {"path": "values.json", "role": "results"}},
+    "sources": ["score.py", "common.py"]
+  },
+  "metrics": [
+    {"id": "error", "title": "Absolute error", "better": "lower"},
+    {"id": "seconds", "title": "Time per case", "units": "s", "better": "lower"}
+  ],
+  "subjects": [
+    {"name": "fit-a", "title": "Fit a", "recipe": "recipes/fit-a", "argument": "{recipe}/weights.json"},
+    {"name": "zero", "title": "Always zero", "argument": "constant:0"}
+  ],
+  "cases": {"dataset": "datasets/numbers", "split": "test", "count": 6}
+}

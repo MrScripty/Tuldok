@@ -1,0 +1,15 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "A few numbers",
+  "run": {
+    "command": ["python", "make_data.py", "--settings", "{settings}", "--out", "{output}"],
+    "environment": "environments/test-python",
+    "settings": {"count": 6, "seed": 3},
+    "env": {"BUILDABLE_LABEL": "numbers in {output}"},
+    "outputs": {"data": {"path": "numbers.json", "role": "data"}},
+    "resources": {"wall_hours": 0.05, "disk_gb": 0.01},
+    "sources": ["make_data.py", "common.py"]
+  },
+  "splits": {"test": 6}
+}

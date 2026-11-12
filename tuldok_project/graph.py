@@ -184,6 +184,9 @@ _CARRIED = (None, 'needs-work', 'cannot-rebuild')
 _OWN_STATE = {'needs-work': 1, 'no': 2}  # earlier_work.rebuild -> index into _CARRIED
 _BASE_STATE = {'dataset': 'not-built', 'recipe': 'not-built', 'benchmark': 'not-built',
                'step': 'not-built', 'environment': 'not-set-up', 'model': 'none', 'chart': 'none'}
+_BUILT = ('dataset', 'recipe', 'step', 'benchmark')
+_ENVIRONMENT_STATES = ('ready', 'failing', 'not-set-up')
+_BUILD_STATES = ('running', 'built', 'out-of-date', 'failed')
 
 
 def _kind(reference, document):
@@ -196,10 +199,14 @@ def _kind(reference, document):
 def states(definitions, local=None):
     """Return {reference: state} for every definition, by section 4.3 of the spec.
 
-    local, when given, maps environment references to the state this machine
-    records for them (ready, failing or not-set-up; spec-m5.md section 2) and
-    replaces the not-set-up computed for those environments. It applies to
-    environments only; no other definition's state depends on one.
+    local, when given, maps references to the state this machine records for
+    them, and is applied last. For an environment it is ready, failing or
+    not-set-up (spec-m5.md section 2) and replaces the computed state. For a
+    dataset, recipe, step or benchmark it is a build state (spec-m6.md
+    section 5): running, built or out-of-date replace whatever was computed;
+    failed replaces not-built only, since cannot-rebuild and needs-work take
+    precedence when there is no current product. A local state that is not a
+    state of that kind is ignored, and local states are never carried upward.
 
     cannot-rebuild and needs-work come from a definition's own
     earlier_work.rebuild or from anything it uses through input edges, directly
@@ -228,6 +235,13 @@ def states(definitions, local=None):
     found = {reference: _CARRIED[severity[reference]] or _BASE_STATE.get(_kind(reference, document), 'none')
              for reference, document in definitions.items()}
     for reference, state in (local or {}).items():
-        if reference in found and _kind(reference, definitions[reference]) == 'environment':
+        if reference not in found:
+            continue
+        kind = _kind(reference, definitions[reference])
+        if kind == 'environment' and state in _ENVIRONMENT_STATES:
+            found[reference] = state
+        elif kind in _BUILT and state in _BUILD_STATES:
+            if state == 'failed' and found[reference] in _CARRIED[1:]:
+                continue
             found[reference] = state
     return found

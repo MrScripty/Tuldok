@@ -15,8 +15,10 @@ or chart may be named bare (`rollout`) or as a reference (`benchmarks/rollout`).
 `environments`, `connect`, `check-environment`, `set-up` and `disconnect`
 work with the interpreters that fulfil environments on this machine
 (environments.py); an environment may be named bare too. Only
-`check-environment`, `connect` and `set-up` run anything, and `set-up
---dry-run` runs nothing.
+`check-environment`, `connect`, `set-up` and `build` run anything, and `set-up
+--dry-run` runs nothing. `build` makes the plan, closes the project, asks
+for confirmation and runs the plan with builds.execute, which opens the
+project only between commands; `runs` and `products` list what was built.
 """
 import argparse
 import dataclasses
@@ -115,6 +117,18 @@ def _parser():
     setting_up.add_argument('--replace', action='store_true', help='remove an existing target first')
     disconnecting = add('disconnect', [opening], "forget an environment's interpreter; an installed one is not deleted")
     disconnecting.add_argument('environment', help='for example lab-cpu or environments/lab-cpu')
+    building = add('build', [opening], 'print the plan for these definitions, ask, then build them')
+    building.add_argument('targets', nargs='*', metavar='TARGET', help='references, for example recipes/pilot-dense-k1')
+    building.add_argument('--all', action='store_true', help='build every dataset, recipe, step and benchmark')
+    building.add_argument('--scratch', action='store_true',
+                          help='run from the code root as it is, uncommitted changes included; marks the products')
+    building.add_argument('--yes', action='store_true', help='do not ask for confirmation')
+    building.add_argument('--env', action='append', default=[], metavar='NAME=VALUE',
+                          help="add a variable to every command's environment; may be repeated")
+    listing_runs = add('runs', [reading], 'list the runs, newest first')
+    listing_runs.add_argument('reference', nargs='?', help='only the runs of this definition')
+    listing_products = add('products', [reading], 'list the current products')
+    listing_products.add_argument('reference', nargs='?', help='only the products of this definition')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -493,6 +507,11 @@ def _step_details(step):
         if skipped:
             shown = ', '.join(skipped[:3]) + (f' and {len(skipped) - 3} more' if len(skipped) > 3 else '')
             details.append(f'skips {len(skipped)} whose recipe is blocked: {shown}')
+    if step['action'] == 'built' and step.get('scratch'):
+        details.append('built by a scratch run')
+    if step['action'] == 'build' and step['state'] in ('out-of-date', 'failed', 'running'):
+        word = {'out-of-date': 'out of date', 'failed': 'failed', 'running': 'running'}[step['state']]
+        details += [f'{word}: {reason}' for reason in step.get('reasons', [])] or [word]
     if step['action'] == 'blocked':
         own = [cause for cause in step['blocked_by'] if cause['reference'] == step['reference']]
         others = [cause['reference'] for cause in step['blocked_by'] if cause['reference'] != step['reference']]
@@ -529,7 +548,8 @@ def _opening(plan):
     if not plan['steps']:
         return f'Nothing to build for {targets[0] if len(targets) == 1 else _plural(len(targets), "target")}.'
     numbers = (f'{_plural(counts["build"], "step")} to build, {counts["set-up"]} to set up, '
-               f'{counts["blocked"]} blocked' + (f', {counts["ready"]} ready' if counts['ready'] else ''))
+               f'{counts["blocked"]} blocked' + (f', {counts["ready"]} ready' if counts['ready'] else '')
+               + (f', {counts["built"]} built' if counts.get('built') else ''))
     every = ' (every dataset, recipe, step and benchmark)' if plan['every'] else ''
     blocked = len(plan['blocked_targets'])
     if len(targets) == 1 and not every:
@@ -592,6 +612,119 @@ def _plan(project, arguments):
         for line in _plan_lines(made):
             print(line.rstrip())
     return 0
+
+
+# ----------------------------------------------------------------- builds
+
+def _seconds(value):
+    return '-' if value is None else f'{value:.1f} s'
+
+
+def _runs(project, arguments):
+    from . import builds
+
+    rows = builds.runs(project, arguments.reference)
+    if arguments.json:
+        _json(rows)
+        return 0
+    if not rows:
+        print('Nothing has been run' + (f' for {arguments.reference}.' if arguments.reference else '.'))
+        return 0
+    _columns([('run', 'reference', 'subject', 'state', 'started', 'seconds'),
+              *((row['id'], row['reference'], row['subject'] or '-', row['state'], _when(row['started_at']),
+                 _seconds(row['seconds'])) for row in rows)])
+    return 0
+
+
+def _size(count):
+    for unit in ('B', 'KB', 'MB', 'GB'):
+        if count < 1000 or unit == 'GB':
+            return f'{count} {unit}' if unit == 'B' else f'{count:.3g} {unit}'
+        count /= 1000
+
+
+def _products(project, arguments):
+    from . import builds
+
+    rows = builds.products(project, arguments.reference)
+    if arguments.json:
+        _json(rows)
+        return 0
+    if not rows:
+        print('Nothing is built' + (f' for {arguments.reference}.' if arguments.reference else '.'))
+        return 0
+    _columns([('reference', 'subject', 'run', 'size', 'scratch', 'directory'),
+              *((row['reference'], row['subject'] or '-', row['run_id'], _size(row['bytes']),
+                 'scratch' if row['scratch'] else '-', row['directory']) for row in rows)])
+    return 0
+
+
+def _extra_env(pairs):
+    import re
+
+    found = {}
+    for pair in pairs:
+        name, equals, value = pair.partition('=')
+        if not equals or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name):
+            raise UsageError(f'--env {pair!r} is not NAME=VALUE.')
+        found[name] = value
+    return found
+
+
+def _ask(plan):
+    print()
+    sys.stdout.write('Build this? [y/N] ')
+    sys.stdout.flush()
+    answer = sys.stdin.readline().strip().lower()
+    if not sys.stdin.isatty():
+        print()  # the answer was not echoed: end the question's line
+    if answer not in ('y', 'yes'):
+        print('Nothing was built.')
+        return False
+    return True
+
+
+def _build_event(kind, item):
+    subject = f' {item["subject"]}' if item['subject'] else ''
+    if kind == 'start':
+        print(f'start  {item["reference"]}{subject}  run {item["run_id"]}', flush=True)
+        return
+    print(f'end    {item["reference"]}{subject}  run {item["run_id"]}  {item["state"]}  {_seconds(item["seconds"])}',
+          flush=True)
+    if item['problem']:
+        for line in _wrapped(item['problem'], '       '):
+            print(line)
+
+
+def _build(arguments, dsn):
+    from . import builds, plan, store
+
+    if not arguments.targets and not arguments.all:
+        raise UsageError('Name at least one definition to build, or pass --all.')
+    extra_env = _extra_env(arguments.env)
+    project = store.open_project(arguments.folder, rebind=arguments.rebind, on_conflict=arguments.on_conflict,
+                                 dsn=dsn)
+    try:
+        made = plan.build_plan(project, arguments.targets, every=arguments.all)
+    finally:
+        project.close()
+    for line in _plan_lines(made):
+        print(line.rstrip())
+    nothing = made['counts']['build'] == 0
+    confirm = (lambda _plan: True) if arguments.yes or nothing else _ask
+    done = builds.execute(arguments.folder, made, confirm=confirm, extra_env=extra_env, scratch=arguments.scratch,
+                          dsn=dsn, on_event=_build_event)
+    if not done['confirmed']:
+        return 1
+    ran = len(done['steps'])
+    if done['ok'] and nothing:
+        print('Nothing was run: everything asked for is built.')
+        return 0
+    if done['ok']:
+        print(f'Done: {_plural(ran, "run")} succeeded, {len(done["skipped"])} already built.')
+        return 0
+    print(f'Stopped: {done["steps"][-1]["reference"]} did not succeed; later steps were not run.')
+    return 1
 
 
 # ------------------------------------------------------------ environments
@@ -744,7 +877,7 @@ _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
                    'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan,
                    'environments': _environments, 'connect': _connect, 'check-environment': _check_environment,
-                   'set-up': _set_up, 'disconnect': _disconnect}
+                   'set-up': _set_up, 'disconnect': _disconnect, 'runs': _runs, 'products': _products}
 
 
 def _project_id(folder):
@@ -848,6 +981,8 @@ def _database_command(arguments):
     try:
         if arguments.command == 'forget':
             return _forget(arguments, dsn)
+        if arguments.command == 'build':
+            return _build(arguments, dsn)
         return _run_store(arguments, dsn)
     except UsageError as exc:
         print(str(exc), file=sys.stderr)
@@ -859,6 +994,8 @@ def _database_command(arguments):
         print(str(exc), file=sys.stderr)
         for problem in exc.problems:
             print(_problem_line(problem), file=sys.stderr)
+        for path in exc.files:
+            print(f'changed  {path}', file=sys.stderr)
         return 1
     except psycopg.Error as exc:
         print(f'The database failed: {str(exc).strip() or type(exc).__name__}', file=sys.stderr)
