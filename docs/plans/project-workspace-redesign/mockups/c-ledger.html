@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger · Rheon Surrogate Lab · Tuldok</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  .top { display: flex; align-items: center; gap: 18px; padding: 0 24px; height: 44px; border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+  .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); }
+  .brand .mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 5px; background: var(--ink); color: var(--page); font-family: var(--mono); font-size: 13px; }
+  .top .right { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+  .doc { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 40px; max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+  .toc { position: sticky; top: 64px; align-self: start; font-size: 13px; }
+  .toc h1 { font-size: 16px; margin-bottom: 4px; }
+  .toc .sub { color: var(--ink-2); font-size: 12.5px; margin-bottom: 14px; display: block; }
+  .toc ul { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--line); }
+  .toc a { display: block; padding: 5px 12px; color: var(--ink-2); margin-left: -1px; border-left: 2px solid transparent; }
+  .toc a:hover { color: var(--ink); text-decoration: none; }
+  .toc a.cur { color: var(--ink); border-left-color: var(--accent); }
+  .toc .n { float: right; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  article > section { padding: 22px 0 30px; border-top: 1px solid var(--line); scroll-margin-top: 60px; }
+  article > section:first-child { border-top: 0; padding-top: 0; }
+  article h2.sh { font-size: 18px; margin-bottom: 14px; }
+  article .lede { color: var(--ink-2); font-size: 13.5px; margin-bottom: 14px; }
+  .body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .body.has { grid-template-columns: minmax(0, 1fr) 360px; }
+  .inline { align-self: start; position: sticky; top: 64px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  .inline:empty { display: none; }
+  .ov-status { margin-bottom: 12px; } .ov-line { display: flex; gap: 12px; align-items: baseline; } .ov-line .state { font-size: 14px; font-weight: 600; } .ov-text { font-size: 17px; line-height: 1.4; max-width: 70ch; }
+  .ov-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 22px 0; } .ov-stage { grid-template-columns: 110px 1fr; } .ov-study { grid-template-columns: 20px 1fr auto; }
+  .ref { grid-template-columns: 1fr 140px 70px; } .ev { grid-template-columns: 1fr 1fr; } .study { grid-template-columns: 90px 1fr 110px 90px; }
+  .evgrp { margin-top: 14px; } .evgrp h3 { margin: 0 0 4px; font-size: 13px; color: var(--ink-2); }
+  .evtext { white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px/1.5 var(--mono); padding: 10px; background: var(--surface-2); border-radius: var(--radius); }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; } .steps li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; } .steps .title { display: block; font-weight: 500; } .steps .sub { display: block; font-size: 12.5px; color: var(--ink-2); } .steps .todo .title { color: var(--ink-2); }
+  .ins-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .annot-example { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 12px; margin-top: 18px; } .annot-example > div { border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 14px; min-height: 120px; }
+  .sect-overview .ov-cols { grid-template-columns: 1fr; }
+  .sect-overview .ov-cols > section:first-child { display: none; }
+  .tree-host { max-height: 640px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  .tree-list .tsect { top: 0; }
+  .sect-models .filters .pop { flex-basis: 100%; margin-left: 0; }
+  @media (max-width: 960px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .body.has { grid-template-columns: 1fr; } .inline { position: static; } .ov-cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="sr-only" href="#s-overview">Skip to content</a>
+<header class="top"><a class="brand" href="index.html"><span class="mark">t.</span>Tuldok</a><div class="right"><div id="layouts"></div><button id="theme" class="btn sm ghost" type="button"></button></div></header>
+<div class="doc">
+  <nav class="toc" aria-label="Sections"><h1 id="projname"></h1><span class="sub" id="projsub"></span><ul id="toc"></ul></nav>
+  <article id="article"></article>
+</div>
+<script src="shared/data.js"></script>
+<script src="shared/tree.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/screens.js"></script>
+<script>
+(() => {
+  const S = window.LabScreens;
+  const SECTIONS = [['overview', 'Status'], ['data', 'Data'], ['models', 'Models'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['annotate', 'Annotate']];
+  const LEDE = { overview: 'What the producer last published, and what needs you.', data: 'Declared references and evidence, measured on open.', models: 'Every recorded fit in checkpoint order. Select one to read it beside the list.', train: 'Finite studies; approval and admission stay explicit.', benchmarks: 'Comparable GPU benchmarks for pressure fits.', analysis: 'Decisions and the evidence behind them.', annotate: 'Record annotation, when a project has records.' };
+  const state = { screen: 'models', sel: {}, view: 'list', kinds: null, query: '', frontierOnly: false, metric: 'worstP', table: false, zoom: 1, cmp: new Set(), pop: 'pressure', sort: { key: 'n', dir: 1 }, caseN: 1, slice: 8, fit: null, newTrain: null, planned: [], plannedSeq: 0, track: false, dataAction: {}, ui: {}, annotations: {}, draft: null };
+  document.getElementById('projname').textContent = window.LAB.project.name;
+  document.getElementById('projsub').textContent = window.LAB.project.root + '/' + window.LAB.project.manifest;
+  S.theme.init(document.getElementById('theme'));
+  state.cur = 'overview';
+  window.mockRoute = () => ({ screen: state.cur });
+  S.layoutSwitch(document.getElementById('layouts'), 'c-ledger.html');
+  const slots = {};
+  const article = document.getElementById('article'), toc = document.getElementById('toc');
+  for (const [id, label] of SECTIONS) {
+    const sec = document.createElement('section'); sec.id = 's-' + id; sec.className = 'sect-' + id; sec.setAttribute('aria-labelledby', 'h-' + id);
+    const hh = document.createElement('h2'); hh.className = 'sh'; hh.id = 'h-' + id; hh.textContent = label; sec.appendChild(hh);
+    const body = document.createElement('div'); body.className = 'body'; const main = document.createElement('div'); main.className = 'main'; const aside = document.createElement('aside'); aside.className = 'inline'; aside.setAttribute('aria-label', label + ' inspector'); body.appendChild(main); body.appendChild(aside); sec.appendChild(body); article.appendChild(sec);
+    slots[id] = { body, main, aside };
+    const li = document.createElement('li'); const a = document.createElement('a'); a.href = '#s-' + id; a.textContent = label; const n = document.createElement('span'); n.className = 'n'; a.appendChild(n); li.appendChild(a); toc.appendChild(li); slots[id].tocn = n; slots[id].toca = a;
+  }
+  function counts() { const c = { overview: window.LAB.project.needs.length, data: window.LAB.project.data.length, models: window.LAB.models.length, train: window.LAB.project.studies.length, benchmarks: window.LAB.models.filter(m => m.worstP != null && m.ms != null && m.group !== 'full_state_generator').length, analysis: window.LAB.project.evidence.reduce((n, g) => n + g.items.length, 0), annotate: 0 }; for (const id in c) slots[id].tocn.textContent = c[id] || ''; }
+  function go(screen, id) { if (id) state.sel[screen] = id; render(screen); document.getElementById('s-' + screen).scrollIntoView({ block: 'start' }); }
+  function actFor(screen) { return {
+    go, select: id => { state.sel[screen] = (!id || state.sel[screen] === id) ? undefined : id; render(screen); },
+    setQuery: q => { state.query = q; render('models'); }, setView: () => {}, setYMode: () => {}, zoom: () => {},
+    toggleKind: k => { if (!state.kinds) state.kinds = new Set([k]); else if (state.kinds.has(k)) { state.kinds.delete(k); if (!state.kinds.size) state.kinds = null; } else { state.kinds.add(k); if (state.kinds.size === S.KINDS.length) state.kinds = null; } render('models'); render('benchmarks'); },
+    toggleFrontier: () => { state.frontierOnly = !state.frontierOnly; render('benchmarks'); }, toggleTable: () => { state.table = !state.table; render('benchmarks'); }, setMetric: m => { state.metric = m; render('benchmarks'); },
+    toggleCompare: id => { if (state.cmp.has(id)) state.cmp.delete(id); else if (state.cmp.size < 3) state.cmp.add(id); render('benchmarks'); }, clearCompare: () => { state.cmp = new Set(); render('benchmarks'); },
+    setPop: v => { state.pop = v; render('benchmarks'); }, setSort: key => { state.sort = state.sort && state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: 1 }; render('benchmarks'); },
+    setCase: n => { state.caseN = Math.max(1, n); render('analysis'); }, setSlice: z => { state.slice = z; render('analysis'); }, setFit: id => { state.fit = id; render('analysis'); },
+    toggleTrack: () => { state.track = !state.track; render('models'); },
+    branch: parentId => { const id = 'planned-' + (++state.plannedSeq); state.planned.push({ id, parent: parentId, kind: 'refinement', name: '', setup: { recipe: 'run-study', data: 'water-capture', runtime: 'managed-torch-cuda', attempts: 2, wall: 90, prepared: false } }); S.setPlanned(state.planned); state.sel.models = id; render('models'); render('train'); },
+    setPlan: (id, k, v) => { const pl = state.planned.find(x => x.id === id); if (!pl) return; if (k === 'name' || k === 'kind') pl[k] = v; else pl.setup[k] = v; S.setPlanned(state.planned); render('models'); render('train'); },
+    discardPlan: id => { state.planned = state.planned.filter(x => x.id !== id); S.setPlanned(state.planned); for (const k in state.sel) if (state.sel[k] === id) delete state.sel[k]; render('models'); render('train'); },
+    setDataAction: (k, v) => { state.dataAction = Object.assign({}, state.dataAction || {}, { [k]: v }); render('data'); },
+    setUI: (k, v) => { state.ui[k] = v; render(screen); },
+    saveAnnotation: (dsId, rec, draft) => { const store = state.annotations[dsId] || (state.annotations[dsId] = {}); const prev = store[rec] || {}; store[rec] = Object.assign({}, prev, draft, { revisions: (prev.revisions || []).concat([{ at: 'now', label: draft.label, tags: draft.tags, review: draft.review }]) }); state.draft = null; state.ui['ann:rec'] = rec + 1; render('annotate'); }
+  }; }
+  function render(only) {
+    for (const [id] of SECTIONS) {
+      if (only && only !== id) continue;
+      const s = slots[id]; const fn = S[id]; const prev = state.screen; state.screen = id;
+      const has = fn(s.main, s.aside, state, actFor(id), { views: ['list'] });
+      s.body.classList.toggle('has', !!has); if (!has) s.aside.textContent = '';
+      state.screen = prev;
+    }
+    counts();
+  }
+  const obs = new IntersectionObserver(entries => { for (const e of entries) if (e.isIntersecting) { for (const id in slots) slots[id].toca.classList.toggle('cur', 's-' + id === e.target.id); state.cur = e.target.id.slice(2); } }, { rootMargin: '-40% 0px -55% 0px' });
+  render(); for (const [id] of SECTIONS) obs.observe(document.getElementById('s-' + id));
+})();
+</script>
+</body>
+</html>

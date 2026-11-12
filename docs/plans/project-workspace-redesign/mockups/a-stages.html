@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stages · Rheon Surrogate Lab · Tuldok</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  body { height: 100vh; display: grid; grid-template-rows: 44px 1fr; overflow: hidden; }
+  .top { display: flex; align-items: center; gap: 18px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
+  .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); }
+  .brand .mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 5px; background: var(--ink); color: var(--page); font-family: var(--mono); font-size: 13px; }
+  .top .proj { color: var(--ink-2); }
+  .top .proj b { color: var(--ink); font-weight: 500; }
+  .top .right { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+  .top .local { font-size: 12.5px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .top .local::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+  .frame { display: grid; grid-template-columns: 220px minmax(0, 1fr) 380px; min-height: 0; }
+  .frame.no-aside { grid-template-columns: 220px minmax(0, 1fr); }
+  .rail { border-right: 1px solid var(--line); background: var(--surface); padding: 12px 8px; overflow: auto; }
+  .rail ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rail a { display: block; padding: 7px 10px; border-radius: var(--radius); color: var(--ink); }
+  .rail a:hover { background: var(--surface-2); text-decoration: none; }
+  .rail a[aria-current="page"] { background: var(--accent-wash); box-shadow: inset 3px 0 0 var(--accent); }
+  .rail .lbl { display: block; font-weight: 500; }
+  .rail .sum { display: block; font-size: 12px; color: var(--ink-2); }
+  .rail .sep { height: 1px; background: var(--line); margin: 8px 6px; }
+  .rail .foot { padding: 10px; font-size: 12px; color: var(--ink-3); }
+  main { overflow: auto; padding: 22px 28px 40px; }
+  main > .filters { position: sticky; top: -22px; z-index: 3; background: var(--page); padding: 10px 0; margin-top: -10px; }
+  .aside { border-left: 1px solid var(--line); background: var(--surface); padding: 20px 20px 40px; overflow: auto; }
+  .ov-status { margin-bottom: 28px; }
+  .ov-line { display: flex; gap: 12px; align-items: baseline; }
+  .ov-line .state { font-size: 14px; font-weight: 600; }
+  .ov-text { font-size: 17px; line-height: 1.4; max-width: 70ch; }
+  .ov-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 28px 0; }
+  .ov-stage { grid-template-columns: 110px 1fr; }
+  .ov-study { grid-template-columns: 20px 1fr auto; }
+  .ref { grid-template-columns: 1fr 140px 70px; }
+  .ev { grid-template-columns: 1fr 1fr; }
+  .study { grid-template-columns: 90px 1fr 110px 90px; }
+  .evgrp { margin-top: 14px; } .evgrp h3 { margin: 0 0 4px; font-size: 13px; color: var(--ink-2); }
+  .evtext { white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px/1.5 var(--mono); padding: 10px; background: var(--surface-2); border-radius: var(--radius); }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .steps li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; }
+  .steps .title { display: block; font-weight: 500; } .steps .sub { display: block; font-size: 12.5px; color: var(--ink-2); }
+  .steps .todo .title { color: var(--ink-2); }
+  .ins-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .annot-example { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 12px; margin-top: 18px; }
+  .annot-example > div { border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 14px; min-height: 160px; }
+  .tree-map { height: auto; max-height: calc(100vh - 150px); border: 1px solid var(--line); }
+  @media (max-width: 1100px) { .frame, .frame.no-aside { grid-template-columns: 56px minmax(0, 1fr); } .rail .sum, .rail .foot { display: none; } .rail .lbl { font-size: 11px; } .aside { position: fixed; right: 0; top: 44px; bottom: 0; width: min(380px, 92vw); } .ov-cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="sr-only" href="#main">Skip to content</a>
+<header class="top">
+  <a class="brand" href="index.html"><span class="mark">t.</span>Tuldok</a>
+  <span class="proj">Project <b id="projname"></b></span>
+  <div class="right"><div id="layouts"></div><span class="local">Local</span><button id="theme" class="btn sm ghost" type="button"></button></div>
+</header>
+<div class="frame" id="frame">
+  <nav class="rail" aria-label="Stages"><ul id="rail"></ul></nav>
+  <main id="main" tabindex="-1"></main>
+  <aside id="aside" class="aside" aria-label="Inspector"></aside>
+</div>
+<script src="shared/data.js"></script>
+<script src="shared/tree.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/screens.js"></script>
+<script>
+(() => {
+  const S = window.LabScreens;
+  const state = { screen: 'overview', sel: {}, view: 'list', kinds: null, query: '', frontierOnly: false, metric: 'worstP', table: false, zoom: 1, cmp: new Set(), pop: 'pressure', sort: { key: 'n', dir: 1 }, caseN: 1, slice: 8, fit: null, newTrain: null, planned: [], plannedSeq: 0, track: false, dataAction: {}, ui: {}, annotations: {}, draft: null };
+  document.getElementById('projname').textContent = window.LAB.project.name;
+  S.theme.init(document.getElementById('theme'));
+  window.mockRoute = () => ({ screen: state.screen, id: state.sel[state.screen] });
+  S.layoutSwitch(document.getElementById('layouts'), 'a-stages.html');
+  const rail = document.getElementById('rail');
+  function parse() { const [screen, id] = location.hash.replace(/^#/, '').split('/'); state.screen = screen || 'overview'; if (id) state.sel[state.screen] = decodeURIComponent(id); }
+  function go(screen, id) { const next = '#' + screen + (id ? '/' + encodeURIComponent(id) : ''); if (location.hash === next) { parse(); render(); } else location.hash = next; }
+  const act = {
+    go, select: id => go(state.screen, id || undefined),
+    setQuery: q => { state.query = q; render(); }, setView: v => { state.view = v; render(); }, setYMode: v => { state.yMode = v; render(); }, zoom: d => { state.zoom = Math.min(1.6, Math.max(0.5, (state.zoom || 1) + d)); render(); },
+    toggleKind: k => { const all = new Set(S.KINDS); if (!state.kinds) { state.kinds = new Set([k]); } else if (state.kinds.has(k)) { state.kinds.delete(k); if (!state.kinds.size) state.kinds = null; } else { state.kinds.add(k); if (state.kinds.size === all.size) state.kinds = null; } render(); },
+    toggleFrontier: () => { state.frontierOnly = !state.frontierOnly; render(); }, toggleTable: () => { state.table = !state.table; render(); }, setMetric: m => { state.metric = m; render(); },
+    toggleCompare: id => { if (state.cmp.has(id)) state.cmp.delete(id); else if (state.cmp.size < 3) state.cmp.add(id); render(); }, clearCompare: () => { state.cmp = new Set(); render(); },
+    setPop: v => { state.pop = v; render(); }, setSort: key => { state.sort = state.sort && state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: 1 }; render(); },
+    setCase: n => { state.caseN = Math.max(1, n); render(); }, setSlice: z => { state.slice = z; render(); }, setFit: id => { state.fit = id; render(); },
+    toggleTrack: () => { state.track = !state.track; render(); },
+    branch: parentId => { const id = 'planned-' + (++state.plannedSeq); state.planned.push({ id, parent: parentId, kind: 'refinement', name: '', setup: { recipe: 'run-study', data: 'water-capture', runtime: 'managed-torch-cuda', attempts: 2, wall: 90, prepared: false } }); S.setPlanned(state.planned); go('models', id); },
+    setPlan: (id, k, v) => { const pl = state.planned.find(x => x.id === id); if (!pl) return; if (k === 'name' || k === 'kind') pl[k] = v; else pl.setup[k] = v; S.setPlanned(state.planned); render(); },
+    discardPlan: id => { const pl = state.planned.find(x => x.id === id); state.planned = state.planned.filter(x => x.id !== id); S.setPlanned(state.planned); for (const k in state.sel) if (state.sel[k] === id) delete state.sel[k]; go(state.screen === 'models' ? 'models' : 'train', state.screen === 'models' && pl ? pl.parent : undefined); render(); },
+    setDataAction: (k, v) => { state.dataAction = Object.assign({}, state.dataAction || {}, { [k]: v }); render(); },
+    setUI: (k, v) => { state.ui[k] = v; render(); },
+    saveAnnotation: (dsId, rec, draft) => { const store = state.annotations[dsId] || (state.annotations[dsId] = {}); const prev = store[rec] || {}; store[rec] = Object.assign({}, prev, draft, { revisions: (prev.revisions || []).concat([{ at: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), label: draft.label, tags: draft.tags, review: draft.review }]) }); state.draft = null; const ds = window.LAB.project.data.find(x => x.id === dsId); state.ui['ann:rec'] = Math.min((ds ? ds.records : 1) - 1, rec + 1); render(); }
+  };
+  function render() {
+    rail.textContent = '';
+    for (const g of S.stageSummaries()) { const li = document.createElement('li'); const a = document.createElement('a'); a.href = '#' + g.id; if (g.id === state.screen) a.setAttribute('aria-current', 'page'); const l = document.createElement('span'); l.className = 'lbl'; l.textContent = g.label; const s = document.createElement('span'); s.className = 'sum'; s.textContent = g.sum; a.appendChild(l); a.appendChild(s); li.appendChild(a); rail.appendChild(li); }
+    const main = document.getElementById('main'), aside = document.getElementById('aside');
+    const fn = S[state.screen] || S.overview;
+    const has = fn(main, aside, state, act, { views: ['list', 'map'], scrollToSelected: true });
+    document.getElementById('frame').classList.toggle('no-aside', !has && state.screen === 'overview');
+    document.title = { overview: 'Overview', data: 'Data', annotate: 'Annotate', models: 'Models', train: 'Train', benchmarks: 'Benchmarks', analysis: 'Analysis' }[state.screen] + ' · ' + window.LAB.project.name + ' · Tuldok';
+  }
+  window.addEventListener('hashchange', () => { const before = state.screen; parse(); render(); if (before !== state.screen) document.getElementById('main').scrollTop = 0; });
+  { const br = new URLSearchParams(location.search).get('branch'); if (br) { const id = 'planned-' + (++state.plannedSeq); state.planned.push({ id, parent: br, kind: 'refinement', name: '', setup: { recipe: 'run-study', data: 'water-capture', runtime: 'managed-torch-cuda', attempts: 2, wall: 90, prepared: true, change: 'Try four corrections with the targeted bank' } }); S.setPlanned(state.planned); } }
+  { const c = new URLSearchParams(location.search).get('cmp'); if (c) for (const id of c.split(',')) if (state.cmp.size < 3) state.cmp.add(id); }
+  parse(); render();
+})();
+</script>
+</body>
+</html>
