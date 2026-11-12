@@ -1770,8 +1770,11 @@ status 2. The app opens the project only for each operation, as the commands
 do, so files changed on disk are imported before an operation answers and
 the command line keeps working beside the app.
 
-The page at `/` shows the project's name and folder and its report, in the
-theme the browser prefers. It has no editing and no approval buttons.
+The page at `/` is the Map workspace: the tabs Map, Data, Train, Benchmarks,
+Analysis and Overview over the project, read through the operations below.
+Each of its controls calls one operation and is drawn only for a session that
+may call it, so a credential that may only inspect sees a page that changes
+nothing. The report is linked from the Overview tab.
 
 ### Signing in and issuing an agent credential
 

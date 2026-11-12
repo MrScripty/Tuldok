@@ -27,10 +27,16 @@ window.LabScreens = (() => {
   const bytes = b => b == null ? '—' : b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b >= 1e6 ? (b / 1e6).toFixed(1) + ' MB' : b >= 1e3 ? Math.round(b / 1e3) + ' KB' : b + ' B';
   const failure = (parent, error) => { parent.appendChild(h('p', 'failure', error.message || String(error))); };
   const NEEDS_ICON = { approval: 'clock', changed: 'alert', missing: 'triangle' };
-  function needsList(items) {
+  /** What needs the person, one sentence each; controls(item) gives the controls drawn under a sentence. */
+  function needsList(items, controls) {
     const ul = h('ul', 'needs');
     if (!items.length) { ul.appendChild(h('li', 'empty', 'Nothing needs you.')); return ul; }
-    for (const n of items) { const li = h('li', n.kind); li.appendChild(icon(NEEDS_ICON[n.kind])); li.appendChild(h('span', null, n.text)); ul.appendChild(li); }
+    for (const n of items) {
+      const li = h('li', n.kind); li.appendChild(icon(NEEDS_ICON[n.kind]));
+      const body = h('div', 'need'); body.appendChild(h('span', null, n.text));
+      const c = controls ? controls(n) : null; if (c) body.appendChild(c);
+      li.appendChild(body); ul.appendChild(li);
+    }
     return ul;
   }
 
@@ -38,7 +44,9 @@ window.LabScreens = (() => {
   let graph = null, graphOf = null;
   function graphFor(shaped) { if (graphOf !== shaped) { graph = Tree.build(shaped); graphOf = shaped; } return graph; }
   function map(main, aside, state, act, data) {
-    const shaped = data.map, g = graphFor(shaped), sel = state.sel.map && g.byId.has(state.sel.map) ? state.sel.map : null;
+    // A selection 'plan:<targets>' is the plan view in the drawer, with its first target selected on the map.
+    const shaped = data.map, g = graphFor(shaped), raw = state.sel.map || '', planSel = raw.startsWith('plan:') ? raw : null;
+    const focus = planSel ? planSel.slice(5).split(',')[0] : raw, sel = focus && g.byId.has(focus) ? focus : null;
     const kinds = P.KINDS.map(k => k.id).concat(g.nodes.some(m => m.kind === P.UNSET) ? [P.UNSET] : []);
     const withValue = g.nodes.filter(m => m.value != null).length;
     const buildBar = () => {
@@ -70,11 +78,13 @@ window.LabScreens = (() => {
       if (focused !== null) { const q = bar.querySelector('input[type="search"]'); q.focus(); q.setSelectionRange(focused, focused); }
       main._tree = inst;
     }
+    if (planSel) { window.LabActions.planView(aside, planSel, act.go, sel ? () => act.select(sel) : null); return true; }
     if (sel) { inspectorModel(aside, sel, act, data); return true; }
     aside.textContent = ''; aside._for = null; return false;
   }
 
   // ---- Drawer: one model ---------------------------------------------------
+  const TO_BUILD = ['not-built', 'out-of-date', 'failed'];
   function inspectorModel(aside, id, act, data) {
     if (aside._for === id) return;
     aside._for = id; aside.textContent = '';
@@ -86,6 +96,8 @@ window.LabScreens = (() => {
     const meta = h('div', 'ins-meta'); meta.appendChild(h('span', 'chip ' + m.kind, P.kindLabel(m.kind))); meta.appendChild(modelState(m.state));
     meta.appendChild(h('span', 'small faint', m.trainedAt ? 'trained ' + P.day(m.trainedAt) : 'no training date'));
     hd.appendChild(meta); ins.appendChild(hd);
+    // Plan build, for a model to build (spec-w3 section 3.1): the plan view, never a request from here.
+    if (TO_BUILD.includes(m.state)) ins.appendChild(window.LabActions.group('model:' + m.id, [{ id: 'plan', label: 'Plan build', cls: 'btn primary', who: 'request', onClick: () => act.select('plan:' + m.id) }]));
     // Lineage: what it was derived from, what derives from it, what it takes as input.
     const lin = h('div', 'actions');
     const jump = (target, text) => { const b = h('button', 'btn sm ghost'); b.type = 'button'; b.appendChild(icon('branch')); b.appendChild(document.createTextNode(' ' + text)); b.addEventListener('click', () => act.select(target.id)); return b; };
@@ -152,45 +164,48 @@ window.LabScreens = (() => {
   }
 
   // ---- Overview --------------------------------------------------------------
+  // Read once and built off the page (tabs.js's paint), so the refresh while a build runs keeps the place.
   function overview(main, aside, state, act, data) {
-    main.textContent = ''; aside.textContent = ''; aside._for = null;
-    if (state.sel.overview === 'report') return report(main, data);
-    const standing = data.standing;
-    const top = h('section', 'ov-status');
-    const line = h('div', 'ov-line'); line.appendChild(stateEl(standing.tone, standing.word)); line.appendChild(h('p', 'ov-text', standing.text)); top.appendChild(line);
-    top.appendChild(h('p', 'small faint', 'Read at ' + data.readAt));
-    main.appendChild(top);
-    const row = h('div', 'ov-row');
-    const needs = h('section'); needs.appendChild(sect('Needs you', data.needs ? String(data.needs.length) : '…'));
-    if (data.needs) needs.appendChild(needsList(data.needs)); else needs.appendChild(h('p', 'note', 'Reading…'));
-    row.appendChild(needs);
-    const facts = h('section'); facts.appendChild(sect('Project'));
-    const dl = h('dl', 'facts'), s = data.summary;
-    for (const [k, v, c] of [['Folder', s.folder, 'mono'], ['Code root', s.code_root, 'mono'], ['Project', s.project_id, 'mono'], ['Build worker', s.worker]]) { dl.appendChild(h('dt', null, k)); dl.appendChild(h('dd', c || '', v)); }
-    dl.appendChild(h('dt', null, 'Report')); const dd = h('dd'); const a = h('a', null, 'Open the report'); a.href = '#overview/report'; dd.appendChild(a); dl.appendChild(dd);
-    facts.appendChild(dl); row.appendChild(facts); main.appendChild(row);
-    const cols = h('div', 'ov-cols');
-    const defs = h('section'); defs.appendChild(sect('Definitions', String(Object.values(s.kinds).reduce((a, b) => a + b, 0)))); cols.appendChild(defs);
-    const envs = h('section'); envs.appendChild(sect('Environments', String(s.kinds.environment || 0))); cols.appendChild(envs);
-    main.appendChild(cols);
-    const act2 = h('section', 'ov-history'); act2.appendChild(sect('Latest activity')); main.appendChild(act2);
-    const pending = (b, promise, build) => { const note = h('p', 'note', 'Reading…'); b.appendChild(note); promise.then(v => { note.remove(); build(b, v); }, error => { note.remove(); failure(b, error); }); };
-    pending(defs, P.read('definitions'), (b, d) => {
-      const states = [...new Set(d.definitions.map(x => x.state))].sort();
-      const kinds = [...new Set(d.definitions.map(x => x.kind))].sort();
-      if (!kinds.length) { b.appendChild(h('p', 'empty', 'The project has no definitions.')); return; }
-      const t = h('table', 'tv kinds'), th = h('thead'), hr = h('tr'); hr.appendChild(h('th', null, 'Kind')); for (const st of states) hr.appendChild(h('th', 'n', P.stateWord(st)[0])); hr.appendChild(h('th', 'n', 'All')); th.appendChild(hr); t.appendChild(th);
-      const tb = h('tbody'); for (const k of kinds) { const tr = h('tr'); tr.appendChild(h('td', null, k)); const mine = d.definitions.filter(x => x.kind === k); for (const st of states) { const n = mine.filter(x => x.state === st).length; tr.appendChild(h('td', 'n' + (n ? '' : ' faint'), n ? String(n) : '·')); } tr.appendChild(h('td', 'n', String(mine.length))); tb.appendChild(tr); } t.appendChild(tb);
-      const wrap = h('div'); wrap.style.overflowX = 'auto'; wrap.appendChild(t); b.appendChild(wrap);
-    });
-    pending(envs, P.read('environments'), (b, e) => {
-      if (!e.environments.length) { b.appendChild(h('p', 'empty', 'The project defines no environment.')); return; }
-      const ul = h('ul', 'rows'); for (const env of e.environments) { const li = h('li'); const r = h('div', 'row ov-env'); const t = h('span'); t.appendChild(h('span', 'title', env.title)); t.appendChild(h('span', 'sub', ['Python ' + env.python, env.device, Object.keys(env.packages || {}).length + ' packages', env.checked_at ? 'checked ' + P.day(env.checked_at) : 'never checked'].filter(Boolean).join(' · '))); r.appendChild(t); r.appendChild(modelState(env.state)); li.appendChild(r); ul.appendChild(li); } b.appendChild(ul);
-    });
-    pending(act2, P.read('activity', { limit: 12 }), (b, a) => {
-      if (!a.items.length) { b.appendChild(h('p', 'empty', 'Nothing has been asked of this project through Tuldok yet.')); return; }
-      const ul = h('ul', 'rows'); for (const it of a.items) { const li = h('li'); const r = h('div', 'row ov-act'); r.appendChild(h('span', 'sub num', time(it.at))); const t = h('span'); t.appendChild(h('span', 'title', it.operation + (it.target ? ' · ' + it.target : ''))); t.appendChild(h('span', 'sub', [(it.actor && (it.actor.label || it.actor.kind)) || '', it.detail].filter(Boolean).join(' · '))); r.appendChild(t); r.appendChild(stateEl(it.outcome === 'done' ? 'good' : 'serious', it.outcome)); li.appendChild(r); ul.appendChild(li); }
-      b.appendChild(ul); if (a.total > a.items.length) b.appendChild(h('p', 'note', (a.total - a.items.length) + ' earlier entries are not shown.'));
+    aside.textContent = ''; aside._for = null;
+    if (state.sel.overview === 'report') { main.textContent = ''; main._painted = null; return report(main, data); }
+    S.paint(main, () => Promise.all([P.read('definitions'), P.read('environments'), P.read('activity', { limit: 12 })].map(p => p.then(v => ({ v }), error => ({ error })))), (frag, [d, e, a]) => {
+      const standing = data.standing;
+      const top = h('section', 'ov-status');
+      const line = h('div', 'ov-line'); line.appendChild(stateEl(standing.tone, standing.word)); line.appendChild(h('p', 'ov-text', standing.text)); top.appendChild(line);
+      top.appendChild(h('p', 'small faint', 'Read at ' + data.readAt));
+      frag.appendChild(top);
+      const row = h('div', 'ov-row');
+      const needs = h('section'); needs.appendChild(sect('Needs you', data.needs ? String(data.needs.length) : '…'));
+      if (data.needs) needs.appendChild(needsList(data.needs, n => window.LabActions.needControls(n, act.go))); else needs.appendChild(h('p', 'note', 'Reading…'));
+      row.appendChild(needs);
+      const facts = h('section'); facts.appendChild(sect('Project'));
+      const dl = h('dl', 'facts'), s = data.summary;
+      for (const [k, v, c] of [['Folder', s.folder, 'mono'], ['Code root', s.code_root, 'mono'], ['Project', s.project_id, 'mono'], ['Build worker', s.worker]]) { dl.appendChild(h('dt', null, k)); dl.appendChild(h('dd', c || '', v)); }
+      dl.appendChild(h('dt', null, 'Report')); const dd = h('dd'); const link = h('a', null, 'Open the report'); link.href = '#overview/report'; dd.appendChild(link); dl.appendChild(dd);
+      facts.appendChild(dl); row.appendChild(facts); frag.appendChild(row);
+      const cols = h('div', 'ov-cols');
+      const defs = h('section'); defs.appendChild(sect('Definitions', String(Object.values(s.kinds).reduce((x, y) => x + y, 0)))); cols.appendChild(defs);
+      const envs = h('section'); envs.appendChild(sect('Environments', String(s.kinds.environment || 0))); cols.appendChild(envs);
+      frag.appendChild(cols);
+      const act2 = h('section', 'ov-history'); act2.appendChild(sect('Latest activity')); frag.appendChild(act2);
+      const fill = (b, got, build) => { if (got.error) failure(b, got.error); else build(b, got.v); };
+      fill(defs, d, (b, d) => {
+        const states = [...new Set(d.definitions.map(x => x.state))].sort();
+        const kinds = [...new Set(d.definitions.map(x => x.kind))].sort();
+        if (!kinds.length) { b.appendChild(h('p', 'empty', 'The project has no definitions.')); return; }
+        const t = h('table', 'tv kinds'), th = h('thead'), hr = h('tr'); hr.appendChild(h('th', null, 'Kind')); for (const st of states) hr.appendChild(h('th', 'n', P.stateWord(st)[0])); hr.appendChild(h('th', 'n', 'All')); th.appendChild(hr); t.appendChild(th);
+        const tb = h('tbody'); for (const k of kinds) { const tr = h('tr'); tr.appendChild(h('td', null, k)); const mine = d.definitions.filter(x => x.kind === k); for (const st of states) { const n = mine.filter(x => x.state === st).length; tr.appendChild(h('td', 'n' + (n ? '' : ' faint'), n ? String(n) : '·')); } tr.appendChild(h('td', 'n', String(mine.length))); tb.appendChild(tr); } t.appendChild(tb);
+        const wrap = h('div'); wrap.style.overflowX = 'auto'; wrap.appendChild(t); b.appendChild(wrap);
+      });
+      fill(envs, e, (b, e) => {
+        if (!e.environments.length) { b.appendChild(h('p', 'empty', 'The project defines no environment.')); return; }
+        const ul = h('ul', 'rows'); for (const env of e.environments) { const li = h('li'); const r = h('div', 'row ov-env'); const t = h('span'); t.appendChild(h('span', 'title', env.title)); t.appendChild(h('span', 'sub', ['Python ' + env.python, env.device, Object.keys(env.packages || {}).length + ' packages', env.checked_at ? 'checked ' + P.day(env.checked_at) : 'never checked'].filter(Boolean).join(' · '))); r.appendChild(t); r.appendChild(modelState(env.state)); li.appendChild(r); ul.appendChild(li); } b.appendChild(ul);
+      });
+      fill(act2, a, (b, a) => {
+        if (!a.items.length) { b.appendChild(h('p', 'empty', 'Nothing has been asked of this project through Tuldok yet.')); return; }
+        const ul = h('ul', 'rows'); for (const it of a.items) { const li = h('li'); const r = h('div', 'row ov-act'); r.appendChild(h('span', 'sub num', time(it.at))); const t = h('span'); t.appendChild(h('span', 'title', it.operation + (it.target ? ' · ' + it.target : ''))); t.appendChild(h('span', 'sub', [(it.actor && (it.actor.label || it.actor.kind)) || '', it.detail].filter(Boolean).join(' · '))); r.appendChild(t); r.appendChild(stateEl(it.outcome === 'done' ? 'good' : 'serious', it.outcome)); li.appendChild(r); ul.appendChild(li); }
+        b.appendChild(ul); if (a.total > a.items.length) b.appendChild(h('p', 'note', (a.total - a.items.length) + ' earlier entries are not shown.'));
+      });
     });
     return false;
   }
@@ -216,5 +231,6 @@ window.LabScreens = (() => {
 
   // The Data, Train, Benchmarks and Analysis screens are added by tabs.js, which builds with these parts.
   const parts = { sect, cell, block, time, bytes, failure, modelState, graphFor };
-  return { map, overview, inspectorModel, needsList, icon, stateEl, theme, parts };
+  const S = { map, overview, inspectorModel, needsList, icon, stateEl, theme, parts };
+  return S;
 })();

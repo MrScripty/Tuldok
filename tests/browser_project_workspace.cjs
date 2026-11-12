@@ -10,8 +10,10 @@
 // the kind and text filters, the track, the status strip and Needs you; on Benchmarks picks a benchmark, hovers
 // and focuses a point, sorts the table and makes a compare set of two that the address keeps; opens a run and a
 // build request on Train, a dataset on Data, picks a metric on Analysis; and fails on any script error, failed
-// request, sideways overflow or empty main area. Nothing may be asked of the project that changes it: its
-// activity log gains nothing while the page is open and the fixture copy is unchanged byte for byte.
+// request, sideways overflow or empty main area. The page is signed in with a credential that may only inspect, so
+// it draws no control (spec-w3.md section 1); browser_project_workspace_actions.cjs checks the controls. Nothing may
+// be asked of the project that changes it: its activity log gains nothing while the page is open and the fixture
+// copy is unchanged byte for byte.
 //   node tests/browser_project_workspace.cjs [--lab-root <project folder>]
 const assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path'), crypto = require('node:crypto');
 const { spawn, execFileSync } = require('node:child_process'), { once } = require('node:events');
@@ -290,7 +292,11 @@ assert service.Service(sys.argv[1]).call('request_build', {'targets': ['recipes/
   evaluate = async expression => { const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); if (result.exceptionDetails) throw Error(JSON.stringify(result.exceptionDetails)); return result.result.value; };
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable'); await send('Log.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false });
-  await auth.browser(send, origin);
+  // The page is signed in with a credential that may only inspect: it draws no control that changes the project
+  // (spec-w3.md section 1), so this check sees the page of phase 2. The check's own calls stay the owner's.
+  const issued = await auth.fetch(origin + '/api/access/credentials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'A read-only browser check', scopes: ['inspect'], ttl_seconds: 3600 }) });
+  const inspector = await issued.json(); assert.equal(issued.status, 201, JSON.stringify(inspector));
+  assert.notEqual((await send('Network.setCookie', { name: 'tuldok_session', value: inspector.token, url: origin + '/', httpOnly: true, sameSite: 'Strict', path: '/' })).success, false);
 
   for (const theme of ['light', 'dark']) {
     await open(theme, 'map');

@@ -92,13 +92,15 @@ button { cursor: pointer; }
   border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); color: var(--ink);
 }
 .btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.05); }
 .btn.ghost { border-color: transparent; background: transparent; }
 .btn.ghost:hover { background: var(--surface-2); }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 .btn svg { width: 14px; height: 14px; flex: none; }
 .btn.sm { min-height: 26px; padding: 2px 8px; font-size: 13px; }
 .btn[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent); }
-input[type="search"], input[type="text"], select {
+input[type="search"], input[type="text"], select, textarea {
   min-height: 30px; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius);
   background: var(--surface); color: var(--ink);
 }
@@ -390,7 +392,7 @@ table.cases-t { margin-top: 8px; }
 @media (max-width: 1100px) { .row.run { grid-template-columns: 90px minmax(0, 1fr) 70px 130px; } .row.run > .chip { display: none; } }
 
 /* ---- The shell: top bar, tabs, status strip, stage, drawer (b-map.html). ---- */
-body.shell { height: 100vh; display: grid; grid-template-rows: 48px auto 1fr; overflow: clip; }   /* clip: not even a script or scrollIntoView can scroll the shell */
+body.shell { height: 100vh; display: grid; grid-template-rows: 48px auto auto 1fr; overflow: clip; }   /* clip: not even a script or scrollIntoView can scroll the shell */
 .top { display: flex; align-items: center; gap: 22px; padding: 0 20px; border-bottom: 1px solid var(--line); background: var(--surface); min-width: 0; }
 .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); flex: none; }
 .brand:hover { text-decoration: none; }
@@ -476,3 +478,61 @@ table.tv.kinds td, table.tv.kinds th { white-space: nowrap; }
 .card-md th { color: var(--ink-2); font-weight: 500; }
 .card-md .link { color: var(--ink); text-decoration: underline dotted var(--ink-3); }
 .card-md .link .href { color: var(--ink-3); font-family: var(--mono); font-size: 11.5px; }
+
+/* ---- Controls that change the project (actions.js, spec-w3 section 3.1). ---- */
+/* From the mockup's base.css and b-map.html: forms, radios, two columns, steps. */
+textarea { font: inherit; resize: vertical; }
+.form { display: grid; gap: 10px; }
+.form label { display: grid; gap: 3px; font-size: 12.5px; color: var(--ink-2); }
+.form select, .form input[type="text"], .form textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 5px 8px; }
+.form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form .hint, .act-field .hint { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+.form .radio { display: flex; flex-wrap: wrap; gap: 6px; }
+.form .radio label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--ink); cursor: pointer; }
+.form .radio input { margin: 0; }
+.form .radio label:has(input:checked) { background: var(--accent-wash); border-color: var(--accent); }
+.form label.check { display: flex; align-items: flex-start; gap: 8px; color: var(--ink); font-size: 13px; }
+.form label.check input { margin: 3px 0 0; flex: none; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.steps li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; }
+.steps li > .state { align-self: start; margin-top: 2px; }
+.steps .title { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.steps .sub { display: block; font-size: 12.5px; color: var(--ink-2); overflow-wrap: anywhere; }
+.steps .sub.mono { font-size: 11.5px; color: var(--ink-3); }
+.steps .done .title { color: var(--ink-2); }
+.steps .blocked .title { color: var(--serious); }
+.act-group { display: grid; gap: 8px; min-width: 0; }
+.act-group .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.act-group.inline { display: inline-flex; gap: 8px; align-items: center; }
+.act-group.inline > .actions { flex-wrap: nowrap; }
+.act-field { display: grid; gap: 3px; font-size: 12.5px; color: var(--ink-2); flex: 1 1 220px; min-width: 0; }
+.act-field input, .act-field textarea { width: 100%; min-width: 0; }
+.confirm-words { font-size: 13px; color: var(--ink); max-width: 60ch; }
+.btn[aria-busy="true"] { cursor: progress; }
+.refusal { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--serious); border-radius: var(--radius); background: var(--serious-wash); color: var(--ink); font-size: 13px; }
+.refusal > p:first-child { color: var(--serious); font-weight: 500; }
+.refusal ul { margin: 0; padding-left: 18px; color: var(--ink); }
+.refusal .actions { margin-top: 4px; }
+.rows > li.with-act { display: flex; align-items: center; gap: 8px; }
+.rows > li.with-act > .row { flex: 1 1 auto; min-width: 0; }
+.rows > li.with-act > .act-group { flex: none; margin-right: 8px; }
+.sect .act-group { align-self: center; }
+.hair { position: relative; display: inline-block; width: 120px; height: 2px; background: var(--grid); flex: none; vertical-align: middle; }
+.hair i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.progress-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.progress-line .hair { width: 160px; }
+.live-note { margin-top: -8px; }
+.need { display: grid; gap: 8px; min-width: 0; }
+.need .act-group .actions { gap: 6px; }
+.strip .unsaved { display: inline-flex; align-items: center; gap: 8px; flex: none; color: var(--warn); font-size: 12.5px; white-space: nowrap; }
+.strip .unsaved + .needs-btn { margin-left: 0; }
+.strip .unsaved { margin-left: auto; }
+.strip-note:not(:empty) { padding: 8px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.strip-note .refusal { max-width: 900px; }
+.reason { padding: 8px 10px; border-left: 3px solid var(--line-strong); background: var(--surface-2); border-radius: 0 var(--radius) var(--radius) 0; font-size: 13.5px; }
+.plan-lead { font-size: 14px; color: var(--ink); }
+.conflict { display: grid; gap: 14px; max-width: 760px; }
+.conflict h2 { font-size: 17px; }
+.conflict-refs { margin: 0; padding-left: 18px; }
+.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.warnline { color: var(--warn); }

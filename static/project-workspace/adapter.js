@@ -4,7 +4,10 @@
 // /api/agent/capabilities (never pinned here), keeps each answer until it is
 // read again, and shapes what the screens read: the map's sections, models
 // and lines, the sentence of where the project stands, and what needs the
-// person. It only reads: no operation that changes the project is called.
+// person. It reads on its own; an operation that changes the project is
+// called only by a control the person pressed (actions.js), after which every
+// kept answer is forgotten. A refusal is thrown as an Error carrying the
+// server's code, problems, references and files.
 window.TuldokProject = (() => {
   // Kinds of change, by the project format's names, with the brief's labels.
   const KINDS = [
@@ -30,7 +33,8 @@ window.TuldokProject = (() => {
   async function json(response) {
     let value;
     try { value = await response.json(); } catch (e) { throw Error('The server answered ' + response.status + ' without JSON.'); }
-    if (!response.ok) throw Object.assign(Error(value.error || 'The request was refused.'), { code: value.code });
+    if (!response.ok) throw Object.assign(Error(value.error || 'The request was refused.'), { code: value.code, status: response.status,
+      problems: Array.isArray(value.problems) ? value.problems : [], references: Array.isArray(value.references) ? value.references : [], files: Array.isArray(value.files) ? value.files : [] });
     return value;
   }
   async function selection(name) {
@@ -63,6 +67,7 @@ window.TuldokProject = (() => {
     return kept.get(key);
   }
   function forget(names) { for (const key of [...kept.keys()]) if (names.includes(key.split(' ')[0])) kept.delete(key); }
+  function forgetAll() { kept.clear(); }
 
   // ---- The map ------------------------------------------------------------
   /**
@@ -151,23 +156,23 @@ window.TuldokProject = (() => {
     const out = [];
     for (const r of requests) if (r.state === 'awaiting-approval') {
       const who = r.requested_by && (r.requested_by.label || r.requested_by.kind) || 'someone';
-      out.push({ kind: 'approval', text: 'A build of ' + (r.every ? 'everything buildable' : listed(r.targets || [])) + ', asked by ' + who + ' on ' + day(r.requested_at) + ', awaits your approval.' });
+      out.push({ kind: 'approval', key: 'request:' + r.id, request: r, text: 'A build of ' + (r.every ? 'everything buildable' : listed(r.targets || [])) + ', asked by ' + who + ' on ' + day(r.requested_at) + ', awaits your approval.' });
     }
-    if (status.unsaved.length) out.push({ kind: 'changed', text: plural(status.unsaved.length, 'definition has', 'definitions have') + ' unsaved edits: ' + listed(status.unsaved.map(String)) + '.' });
-    if (status.removed.length) out.push({ kind: 'changed', text: plural(status.removed.length, 'definition is', 'definitions are') + ' marked removed and not yet saved: ' + listed(status.removed.map(String)) + '.' });
+    if (status.unsaved.length) out.push({ kind: 'changed', key: 'unsaved', save: true, references: status.unsaved.map(String), text: plural(status.unsaved.length, 'definition has', 'definitions have') + ' unsaved edits: ' + listed(status.unsaved.map(String)) + '.' });
+    if (status.removed.length) out.push({ kind: 'changed', key: 'removed', save: true, references: status.removed.map(String), text: plural(status.removed.length, 'definition is', 'definitions are') + ' marked removed and not yet saved: ' + listed(status.removed.map(String)) + '.' });
     const disk = [].concat(status.added, status.changed, status.missing).map(String);
     if (disk.length) out.push({ kind: 'changed', text: plural(disk.length, 'file changed', 'files changed') + ' on disk since the project was last read: ' + listed(disk) + '.' });
     if (status.irregular.length) out.push({ kind: 'missing', text: plural(status.irregular.length, 'file is', 'files are') + ' not regular files and are not read: ' + listed(status.irregular.map(String)) + '.' });
     const results = [].concat(status.results_unsaved, status.results_changed).map(String);
     if (results.length) out.push({ kind: 'changed', text: 'Results differ from their files: ' + listed(results) + '.' });
-    for (const e of environments) if (e.state !== 'ready') out.push({ kind: e.state === 'failing' ? 'missing' : 'changed', text: 'The environment ' + e.title + (e.state === 'failing' ? ' failed its last check.' : ' is not set up on this machine.') });
+    for (const e of environments) if (e.state !== 'ready') out.push({ kind: e.state === 'failing' ? 'missing' : 'changed', key: 'env:' + e.reference, environment: e, text: 'The environment ' + e.title + (e.state === 'failing' ? ' failed its last check.' : ' is not set up on this machine.') });
     const last = new Map();
     for (const r of runs) if (!last.has(r.reference)) last.set(r.reference, r);   // runs come newest first
-    for (const [reference, r] of last) if (ENDED_BADLY[r.state]) out.push({ kind: 'missing', text: 'The last run of ' + titleOf(shaped, reference) + ' ' + ENDED_BADLY[r.state] + (r.finished_at ? ' on ' + day(r.finished_at) : '') + '.' });
+    for (const [reference, r] of last) if (ENDED_BADLY[r.state]) out.push({ kind: 'missing', key: 'run:' + r.id, run: r, reference, text: 'The last run of ' + titleOf(shaped, reference) + ' ' + ENDED_BADLY[r.state] + (r.finished_at ? ' on ' + day(r.finished_at) : '') + '.' });
     if (summary.worker === 'stopped') out.push({ kind: 'changed', text: 'The build worker is stopped: queued builds will not start.' });
     if (summary.worker === 'elsewhere') out.push({ kind: 'changed', text: 'Another Tuldok process runs the builds of this project.' });
     return out;
   }
 
-  return { KINDS, UNSET, kindLabel, stateWord, call, read, forget, map, trackName, better, units, standing, needs, titleOf, day };
+  return { KINDS, UNSET, kindLabel, stateWord, call, read, forget, forgetAll, map, trackName, better, units, standing, needs, titleOf, day };
 })();

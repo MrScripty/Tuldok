@@ -4,11 +4,14 @@
 // (main, aside, state, act, data): it shows "Reading…" the first time, reads
 // what it needs through window.TuldokProject, then builds its content off the
 // page and swaps it in, so a re-render (a sort, a filter, the refresh while a
-// build runs) keeps the scroll and the focus. Every one of them only reads;
-// none draws a control that would change the project. Rule: the chrome holds
-// no project words; titles, metrics and text come from the project.
+// build runs) keeps the scroll and the focus. Data, Benchmarks and Analysis
+// only read. Train draws the controls of spec-w3.md section 3.1 (actions.js):
+// Plan build, a build request's Approve, Decline and Cancel, a run's Cancel
+// run and Stop, an environment's Check again, Connect and Disconnect, and it
+// shows a running run live. Rule: the chrome holds no project words; titles,
+// metrics and text come from the project.
 (() => {
-  const S = window.LabScreens, P = window.TuldokProject, Tree = window.LabTree, C = window.LabCharts, h = C.h;
+  const S = window.LabScreens, P = window.TuldokProject, Tree = window.LabTree, C = window.LabCharts, h = C.h, A = window.LabActions;
   const { sect, cell, block, time, bytes, failure, modelState, graphFor } = S.parts;
   const fmt = C.fmtSci;
   const STATISTICS = ['median', 'mean', 'p10', 'p90', 'min', 'max'];
@@ -343,7 +346,9 @@
       const g = graphFor(data.map), deviceOf = new Map(envs.map(e => [e.reference, e.device]));
       // Models not built yet.
       const todo = recipes.filter(d => !d.removed && TO_BUILD.includes(d.state));
-      frag.appendChild(sect('To build', todo.length + ' of ' + plural(recipes.length, 'model')));
+      const th = sect('To build', todo.length + ' of ' + plural(recipes.length, 'model')); th.appendChild(h('span', 'spacer'));
+      th.appendChild(A.group('train:every', [{ id: 'plan', label: 'Plan everything buildable', cls: 'btn sm', who: 'request', onClick: () => act.select('plan:*') }], { inline: true }));
+      frag.appendChild(th);
       if (!todo.length) frag.appendChild(h('p', 'empty', 'Every model is built, or cannot be rebuilt from its definition.'));
       else {
         const ul = h('ul', 'rows');
@@ -351,7 +356,10 @@
           const m = g.byId.get(d.reference), li = h('li'), b = button('row todo'); b.setAttribute('aria-pressed', String(d.reference === sel)); b.dataset.key = 'open-' + d.reference;
           b.appendChild(modelState(d.state)); const t = h('span'); t.appendChild(h('span', 'title', m ? Tree.nameOf(m) : d.title)); t.appendChild(h('span', 'sub', m ? m.groupTitle + (m.description ? ' · ' + m.description : '') : d.reference)); b.appendChild(t);
           b.appendChild(m ? h('span', 'chip ' + m.kind, P.kindLabel(m.kind)) : h('span'));
-          b.addEventListener('click', () => act.select(d.reference === sel ? null : d.reference)); li.appendChild(b); ul.appendChild(li);
+          b.addEventListener('click', () => act.select(d.reference === sel ? null : d.reference)); li.appendChild(b);
+          const plan = A.group('todo:' + d.reference, [{ id: 'plan', label: 'Plan build', cls: 'btn sm', who: 'request', onClick: () => act.select('plan:' + d.reference) }], { inline: true });
+          if (!plan.hidden) { li.classList.add('with-act'); li.appendChild(plan); }
+          ul.appendChild(li);
         }
         frag.appendChild(ul);
       }
@@ -402,7 +410,8 @@
       else {
         const ul = h('ul', 'rows');
         for (const e of envs) {
-          const li = h('li'), r = h('div', 'row env'); r.appendChild(modelState(e.state));
+          const li = h('li'), key = 'env:' + e.reference, r = button('row env'); r.appendChild(modelState(e.state)); r.setAttribute('aria-pressed', String(key === sel)); r.dataset.key = 'open-' + key; r.dataset.env = e.reference;
+          r.addEventListener('click', () => act.select(key === sel ? null : key));
           const t = h('span'); t.appendChild(h('span', 'title', e.title));
           const asks = ['asks Python ' + (e.python || '—'), e.device, plural(Object.keys(e.packages || {}).length, 'package')].filter(Boolean).join(', ');
           const found = e.found ? 'found Python ' + (e.found.python || '?') + ', ' + plural(Object.keys(e.found.packages || {}).length, 'package') : e.interpreter ? 'not checked' : 'no interpreter recorded here';
@@ -416,6 +425,8 @@
     if (!sel) return closeDrawer(aside);
     if (sel.startsWith('run:')) runDrawer(aside, sel, act, data);
     else if (sel.startsWith('request:')) requestDrawer(aside, sel, act, data);
+    else if (sel.startsWith('plan:')) A.planView(aside, sel, act.go, () => { const one = sel.slice(5); act.select(data.map.byId.has(one) ? one : null); });
+    else if (sel.startsWith('env:')) envDrawer(aside, sel, act, data);
     else if (data.map.byId.has(sel)) S.inspectorModel(aside, sel, act, data);
     else { aside.textContent = ''; aside._for = sel; aside.appendChild(h('p', 'empty', 'There is no ' + sel + ' here.')); }
     return true;
@@ -424,13 +435,38 @@
   /** A definition's value in one line: a list of words as a command line, an object as key: value pairs. */
   const brief = v => v == null ? '—' : typeof v !== 'object' ? String(v) : Array.isArray(v) ? (v.every(x => typeof x === 'string') ? v.join(' ') : v.map(brief).join(', ')) : Object.entries(v).map(([k, x]) => k + ': ' + (x && typeof x === 'object' && !Array.isArray(x) ? '{' + brief(x) + '}' : brief(x))).join(', ');
   const json = v => { if (typeof v === 'string') { try { v = JSON.parse(v); } catch (e) { return v; } } return brief(v); };
+  const ACTIVE = ['queued', 'running'];
+  const LOG_LINES = 200;   // lines of each log kept on the page while a run is read live
+  const hairOf = ev => { const hair = h('span', 'hair'); const i = h('i'); i.style.width = Math.round(100 * ev.completed / Math.max(1, ev.total)) + '%'; hair.appendChild(i); hair.setAttribute('role', 'progressbar'); hair.setAttribute('aria-valuemin', '0'); hair.setAttribute('aria-valuemax', String(ev.total)); hair.setAttribute('aria-valuenow', String(ev.completed)); return hair; };
+  const eventText = ev => ev.stage + ': ' + ev.completed + ' of ' + ev.total + Object.entries(ev.metrics).map(([k, v]) => ' · ' + k + ' ' + fmt(v)).join('');
+  let live = null;   // the open run read live: {key, run, offsets, update(progress)}
+  /** One step of the live run (app.js calls it every two seconds while a build runs): its progress and its logs from the offsets. */
+  S.tick = async () => {
+    const aside = document.getElementById('aside');
+    if (!live || aside._for !== live.key) { live = null; return; }
+    const mine = live;
+    try {
+      const pr = await P.call('progress', { run: mine.run, stdout_offset: mine.offsets.stdout, stderr_offset: mine.offsets.stderr });
+      if (live !== mine || aside._for !== mine.key) return;
+      mine.update(pr);
+      if (pr.ended) { live = null; aside._for = null; mine.ended(); }
+    } catch (error) { /* the next tick asks again; the strip says what fails */ }
+  };
   function runDrawer(aside, key, act, data) {
     const id = key.slice(4);
     drawer(aside, key, () => Promise.all([P.read('run', { run: id }), P.call('progress', { run: id })]), (ins, [r, pr]) => {
       const m = graphFor(data.map).byId.get(r.reference);
-      const hd = h('header'); hd.appendChild(h('span', 'kicker', 'run ' + r.id)); hd.appendChild(h('h2', null, (m ? Tree.nameOf(m) : r.reference) + (r.subject ? ' · ' + r.subject : '')));
+      const hd = h('header'); hd.appendChild(h('span', 'kicker', 'run ' + r.id)); const t2 = h('h2', null, (m ? Tree.nameOf(m) : r.reference) + (r.subject ? ' · ' + r.subject : '')); t2.tabIndex = -1; hd.appendChild(t2);
       const meta = h('div', 'ins-meta'); if (m) meta.appendChild(h('span', 'chip ' + m.kind, P.kindLabel(m.kind))); meta.appendChild(runState(r.state)); if (r.scratch) meta.appendChild(h('span', 'small faint', 'from the code as it is')); hd.appendChild(meta); ins.appendChild(hd);
       if (m) { const acts = h('div', 'actions'); acts.appendChild(button('btn sm ghost', 'On the map', () => act.go('map', m.id))); acts.appendChild(button('btn sm ghost', 'Its model', () => act.select(m.id))); ins.appendChild(acts); }
+      // Cancel run while it is queued or running; Stop what it left running when its build is gone.
+      const active = ACTIVE.includes(r.state), orphan = active && r.builder_alive === false;
+      ins.appendChild(A.group('run:' + r.id, [
+        { id: 'cancel', label: 'Cancel run', cls: 'btn', who: 'cancel', op: 'cancel_run', args: () => ({ run: r.id }), busy: 'Cancelling…', hidden: !active || orphan,
+          confirm: 'Ask this run to stop. It ends cancelled and leaves no product.' },
+        { id: 'stop', label: 'Stop what it left running', cls: 'btn', who: 'cancel', op: 'stop_run', args: () => ({ run: r.id }), busy: 'Stopping…', hidden: !orphan,
+          confirm: 'Kill every process this run left behind and mark it unknown; its build is gone.' }
+      ]));
       const su = setup();
       su.put('Definition', r.reference, 'mono');
       if (r.subject) su.put('Subject', r.subject);
@@ -447,11 +483,33 @@
       else su.put('Product', 'none');
       if (r.bytes != null) su.put('Size', bytes(r.bytes));
       if (r.problem) su.put('Problem', r.problem);
-      ins.appendChild(su.dl);
-      if (pr.event) { const ev = pr.event; const p = h('p', 'small'); p.textContent = ev.stage + ': ' + ev.completed + ' of ' + ev.total + Object.entries(ev.metrics).map(([k, v]) => ' · ' + k + ' ' + fmt(v)).join(''); ins.appendChild(block('Latest progress', p)); }
+      // The latest progress: a hairline and its line, kept current while the run is read live.
+      const prog = h('div', 'progress-line');
+      const showEvent = ev => { prog.textContent = ''; if (ev) { prog.appendChild(hairOf(ev)); prog.appendChild(h('span', 'small', eventText(ev))); } else prog.appendChild(h('p', 'note', active ? 'No progress reported yet.' : 'No progress was reported.')); };
+      showEvent(pr.event);
+      const progBlock = block('Latest progress', prog); if (!pr.event && !active) progBlock.hidden = true;
+      // A run read live shows its progress and logs first; an ended one its record first.
+      ins.appendChild(progBlock);
+      if (!active) ins.appendChild(su.dl);
+      const logs = {};
       for (const [name, title] of [['stdout', 'Standard output'], ['stderr', 'Standard error']]) {
-        const log = pr[name] || { text: '' };
-        ins.appendChild(block(title + (log.size != null ? ' · ' + bytes(log.size) : ''), log.text ? h('pre', 'evtext', tail(log.text, 40)) : h('p', 'note', log.size == null ? 'No log on this machine.' : 'Empty.')));
+        const log = pr[name] || { text: '' }, b = h('div'), head = h('h3', null, title + (log.size != null ? ' · ' + bytes(log.size) : ''));
+        b.appendChild(head);
+        const pre = h('pre', 'evtext'); pre.dataset.log = name; let lines = log.text ? log.text.replace(/\n$/, '').split('\n').slice(-LOG_LINES) : [];
+        const note = h('p', 'note', log.size == null ? 'No log on this machine.' : 'Empty.');
+        const paintLog = () => { pre.textContent = (lines.length >= LOG_LINES ? '…\n' : '') + lines.join('\n'); pre.hidden = !lines.length; note.hidden = !!lines.length; pre.scrollTop = pre.scrollHeight; };
+        b.appendChild(pre); b.appendChild(note); paintLog(); ins.appendChild(b);
+        logs[name] = { head, title, add: text => { if (!text) return; lines = lines.concat(text.replace(/\n$/, '').split('\n')).slice(-LOG_LINES); paintLog(); } };
+      }
+      if (active) ins.appendChild(su.dl);
+      if (active) {
+        live = { key, run: r.id, offsets: { stdout: (pr.stdout || {}).offset || 0, stderr: (pr.stderr || {}).offset || 0 },
+          update: p => {
+            showEvent(p.event); progBlock.hidden = false;
+            for (const name of ['stdout', 'stderr']) { const log = p[name]; if (!log) continue; logs[name].add(log.text); live.offsets[name] = log.offset; if (log.size != null) logs[name].head.textContent = logs[name].title + ' · ' + bytes(log.size); }
+          },
+          ended: () => act.refresh() };
+        ins.appendChild(h('p', 'note live-note', 'Read live every two seconds while it runs.'));
       }
     });
   }
@@ -460,13 +518,24 @@
     drawer(aside, key, () => P.read('build_request', { request: id }), (ins, r) => {
       const hd = h('header'); hd.appendChild(h('span', 'kicker', 'build request ' + r.id)); hd.appendChild(h('h2', null, 'A build of ' + covering(r)));
       const meta = h('div', 'ins-meta'); meta.appendChild(requestState(r.state)); hd.appendChild(meta); ins.appendChild(hd);
+      if (r.state === 'declined' && r.problem) ins.appendChild(h('p', 'reason', 'Declined: ' + r.problem));
+      // Approve and Decline while it awaits approval; Cancel while it awaits approval, is queued or runs.
+      const waiting = r.state === 'awaiting-approval', cancellable = ['awaiting-approval', 'queued', 'running'].includes(r.state);
+      ins.appendChild(A.group('request:' + r.id, [
+        { id: 'approve', label: 'Approve', cls: 'btn primary', who: 'owner', op: 'approve_build', args: () => ({ request: r.id }), busy: 'Approving…', hidden: !waiting },
+        Object.assign(A.declineItem(r.id), { cls: 'btn', hidden: !waiting }),
+        { id: 'cancel', label: 'Cancel', cls: 'btn ghost', who: 'cancel', op: 'cancel_build', args: () => ({ request: r.id }), busy: 'Cancelling…', hidden: !cancellable,
+          confirm: r.state === 'running' ? 'Cancel this build: its running step is asked to stop and nothing after it runs.' : 'Cancel this build request; nothing of it runs.' }
+      ]));
       const su = setup();
       su.put('Asked by', who(r.requested_by) + ' · ' + time(r.requested_at));
+      su.put('Targets', r.every ? 'everything buildable' + ((r.targets || []).length ? ', and ' + r.targets.join(', ') : '') : (r.targets || []).join(', ') || '—', 'mono');
       if (r.decided_at) su.put('Decided by', who(r.decided_by) + ' · ' + time(r.decided_at));
       if (r.started_at) su.put('Started', time(r.started_at)); if (r.finished_at) su.put('Finished', time(r.finished_at));
       if (r.expires_at) su.put('Expires', time(r.expires_at));
-      su.put('Code', r.scratch ? 'as it is, uncommitted changes included' : (r.covers && r.covers.commit ? 'commit ' + r.covers.commit : 'committed'), 'mono');
-      if (r.problem) su.put('Problem', r.problem);
+      su.put('Code', r.scratch ? 'as it is on disk, uncommitted changes included; the product is marked scratch' : (r.covers && r.covers.commit ? 'commit ' + r.covers.commit : 'committed'), 'mono');
+      if (r.covers && r.covers.definitions) su.put('Definitions', plural(Object.keys(r.covers.definitions).length, 'definition') + ', as they stand when it is asked');
+      if (r.problem) su.put(r.state === 'declined' ? 'Reason' : 'Problem', r.problem);
       if (r.result) su.put('Result', json(r.result), 'mono');
       ins.appendChild(su.dl);
       const steps = (r.covers && r.covers.steps) || [];
@@ -595,5 +664,37 @@
     return closeDrawer(aside);
   }
 
+  /** An environment: what it asks, what was found on this machine, and Check again, Connect and Disconnect. */
+  function envDrawer(aside, key, act, data) {
+    const ref = key.slice(4);
+    drawer(aside, key, () => P.read('environment', { reference: ref }), (ins, e) => {
+      const hd = h('header'); hd.appendChild(h('span', 'kicker', 'environment · ' + e.reference)); const t = h('h2', null, e.title); t.tabIndex = -1; hd.appendChild(t);
+      const meta = h('div', 'ins-meta'); meta.appendChild(modelState(e.state)); if (e.origin) meta.appendChild(h('span', 'small faint', e.origin)); hd.appendChild(meta); ins.appendChild(hd);
+      const su = setup();
+      su.put('Asks', ['Python ' + (e.python || '—'), e.device, plural(Object.keys(e.packages || {}).length, 'package')].filter(Boolean).join(', '));
+      if (Object.keys(e.packages || {}).length) su.put('Packages', Object.entries(e.packages).map(([k, v]) => k + ' ' + v).join(', '), 'mono');
+      su.put('Interpreter', e.interpreter || 'none recorded on this machine', e.interpreter ? 'mono' : null);
+      if (e.found) su.put('Found', 'Python ' + (e.found.python || '?') + ', ' + plural(Object.keys(e.found.packages || {}).length, 'package'));
+      su.put('Checked', e.checked_at ? time(e.checked_at) + (e.ok === false ? ', failed' : e.ok ? ', passed' : '') : 'never');
+      if (e.recorded_at) su.put('Recorded', time(e.recorded_at));
+      ins.appendChild(su.dl);
+      if (e.problems && e.problems.length) { const ul = h('ul', 'plain'); for (const p of e.problems) ul.appendChild(h('li', 'small warnline', typeof p === 'string' ? p : p.message || JSON.stringify(p))); ins.appendChild(block('What the check found', ul)); }
+      const connected = !!e.interpreter;
+      ins.appendChild(A.group('envcheck:' + ref, [Object.assign(A.checkItem(ref), { cls: 'btn', hidden: !connected })]));
+      if (A.may('owner')) {
+        const d = h('div'); d.appendChild(h('h3', null, connected ? 'Connect another interpreter' : 'Connect an interpreter'));
+        d.appendChild(h('p', 'note', 'An existing Python on this machine, by its absolute path; Tuldok records it for this project and checks it. Nothing is installed.'));
+        const f = h('div', 'form');
+        f.appendChild(A.group('envconnect:' + ref, [{ id: 'connect', label: 'Connect', cls: 'btn', who: 'owner', op: 'connect_environment', busy: 'Connecting…',
+          input: { name: 'interpreter', label: 'Interpreter (absolute path)', placeholder: '/path/to/python', max: 4096, always: true },
+          args: s => ({ reference: ref, interpreter: (s.text.interpreter || '').trim() }) }]));
+        d.appendChild(f); ins.appendChild(d);
+        if (connected) ins.appendChild(A.group('envdisconnect:' + ref, [{ id: 'disconnect', label: 'Disconnect', cls: 'btn ghost', who: 'owner', op: 'disconnect_environment', args: () => ({ reference: ref }), busy: 'Disconnecting…',
+          confirm: 'Forget the interpreter recorded for ' + e.title + ' on this machine; nothing is deleted.' }]));
+      }
+    });
+  }
+
+  S.paint = paint;
   Object.assign(S, { benchmarks, train, data: data_, analysis });
 })();
