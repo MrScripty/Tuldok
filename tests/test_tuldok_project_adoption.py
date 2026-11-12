@@ -134,6 +134,9 @@ class Adopting(AdoptionCase):
         self.assertEqual((entry['outputs'], entry['missing']), ({}, []))
         total = self.numbers.stat().st_size + 7
         self.assertEqual(self.runs('datasets/numbers')[0]['bytes'], total)
+        # The product of a definition with no declared outputs is the directory: its size is the run's.
+        listed = [item for item in self.products() if item['reference'] == 'datasets/numbers']
+        self.assertEqual([item['bytes'] for item in listed], [total])
         product = self.products('datasets/numbers')[0]
         self.assertEqual((product['outputs'], product['adopted']), ({}, True))
         self.assertTrue((Path(entry['directory']) / 'any' / 'where' / 'notes.txt').is_file())

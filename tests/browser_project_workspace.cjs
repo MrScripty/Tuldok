@@ -1,11 +1,17 @@
 'use strict';
-// The project workspace (docs/plans/definition-first-projects/spec-w2.md, slice T18) in a headless browser:
-// Tuldok started with --project-folder on a copy of the minimal fixture, or with --lab-root on a real project
-// folder (opened in place, read only: opening imports it into the disposable database named by
-// TULDOK_DATABASE_URL). Signs in, opens every built tab in light and dark at 1440 by 900, opens a model and its
-// card, hovers a map node, uses the kind and text filters, the track, the status strip and Needs you, and fails on
-// any script error, failed request, sideways overflow or empty main area. Nothing may be asked of the project
-// that changes it: its activity log stays empty and the fixture copy is unchanged byte for byte.
+// The project workspace (docs/plans/definition-first-projects/spec-w2.md, slices T18 and T19) in a headless
+// browser: Tuldok started with --project-folder on a copy of the minimal fixture, or with --lab-root on a real
+// project folder (opened in place, read only: opening imports it into the disposable database named by
+// TULDOK_DATABASE_URL). The fixture copy also gets the buildable fixture's definitions and stand-in commands
+// (which finish in a second and train nothing), and before Tuldok starts the command line builds some of them,
+// lets one fail, imports per-case values, and an agent asks for a build that waits for approval: so the Train,
+// Data and Analysis tabs have runs, products, a request and values to show.
+// Signs in, opens every tab in light and dark at 1440 by 900, opens a model and its card, hovers a map node, uses
+// the kind and text filters, the track, the status strip and Needs you; on Benchmarks picks a benchmark, hovers
+// and focuses a point, sorts the table and makes a compare set of two that the address keeps; opens a run and a
+// build request on Train, a dataset on Data, picks a metric on Analysis; and fails on any script error, failed
+// request, sideways overflow or empty main area. Nothing may be asked of the project that changes it: its
+// activity log gains nothing while the page is open and the fixture copy is unchanged byte for byte.
 //   node tests/browser_project_workspace.cjs [--lab-root <project folder>]
 const assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path'), crypto = require('node:crypto');
 const { spawn, execFileSync } = require('node:child_process'), { once } = require('node:events');
@@ -21,7 +27,6 @@ if (fs.existsSync(path.join(venv, 'python'))) process.env.PATH = venv + path.del
 const python = fs.existsSync(path.join(venv, 'python')) ? path.join(venv, 'python') : 'python3';
 const WIDTH = 1440, HEIGHT = 900;
 const TABS = ['map', 'data', 'train', 'benchmarks', 'analysis', 'overview'];
-const BUILT = ['map', 'overview'];
 
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tuldok-workspace-browser-'));
 const report = qaDirectory(root, labRoot ? 'project-workspace-lab' : 'project-workspace');
@@ -110,6 +115,127 @@ async function centre(selector) {
 }
 async function press(selector) { const { x, y } = await centre(selector); await mouse(x, y, true); }
 
+/** Waits until neither the main area nor the drawer is still reading. */
+async function settled(label) {
+  await until(() => evaluate(`(() => { const reading = e => [...e.querySelectorAll('.note')].some(n => n.textContent === 'Reading…'); return !reading(document.getElementById('main')) && !reading(document.getElementById('aside')) && !document.getElementById('main').hasAttribute('aria-busy'); })()`), label);
+  await pause(150);
+}
+async function choose(selector, value) {
+  await evaluate(`(() => { const s = document.querySelector(${JSON.stringify(selector)}); s.value = ${JSON.stringify(value)}; s.dispatchEvent(new Event('change')); })()`);
+  await settled('the choice ' + value);
+}
+async function tipShown() { return until(() => evaluate(`(() => { const t = [...document.querySelectorAll('#main .tip')].find(t => !t.hidden); return t && t.innerText; })()`), 'a chart tip'); }
+async function drawerOpen() { await until(() => evaluate(`document.getElementById('drawer').classList.contains('open')`), 'the drawer'); await settled('the drawer filled'); assert.deepEqual(await evaluate(`[...document.querySelectorAll('#aside .failure')].map(e => e.textContent)`), [], 'The drawer reads without failure'); }
+async function scrollTo(selector) { await evaluate(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); const m = document.getElementById('main'); m.scrollTop += e.getBoundingClientRect().top - m.getBoundingClientRect().top - 8; })()`); }
+
+/** The Benchmarks, Train, Data and Analysis tabs, with what can be done on them, in both themes. */
+async function otherTabs(map) {
+  const overview = await api('results_overview'), charts = (await api('definitions', { kind: 'chart' })).definitions;
+  const chartBench = {};
+  for (const c of charts) { const d = await api('definition', { reference: c.reference }); chartBench[c.reference] = { benchmark: String(d.document.benchmark).replace(/^benchmarks\//, ''), form: d.document.form }; }
+  // The benchmark with the most chart forms (the fixture's rollout has all four).
+  const forms = name => new Set(Object.values(chartBench).filter(c => c.benchmark === name).map(c => c.form)).size;
+  const bench = overview.benchmarks.slice().sort((a, b) => forms(b.benchmark) - forms(a.benchmark) || b.subjects_with_results - a.subjects_with_results)[0].benchmark;
+  const runs = (await api('runs')).runs, requests = (await api('build_requests')).requests, products = (await api('products')).products;
+  for (const theme of ['light', 'dark']) {
+    // Benchmarks: pick, hover and focus a point, sort, compare two, open one.
+    await open(theme, 'benchmarks'); await settled('benchmarks');
+    await choose('#main select[data-key="benchmark"]', bench);
+    const drawn = await evaluate(`({ charts: document.querySelectorAll('#main .bench-chart').length, svgs: document.querySelectorAll('#main .bench-chart svg').length, rows: document.querySelectorAll('#main .bench-all tbody tr').length, coverage: document.querySelector('#main .coverage').innerText, heads: [...document.querySelectorAll('#main .bench-chart .sect')].map(e => e.innerText.replace(/\\n/g, ' ')) })`);
+    assert.equal(drawn.charts, Object.values(chartBench).filter(c => c.benchmark === bench).length, 'One section per chart of ' + bench);
+    assert.ok(drawn.rows > 0, 'The all-subjects table has rows');
+    await inspect(theme + ' benchmarks ' + bench); await shot(theme + '-benchmarks-picked');
+    for (let i = 1; i < Math.min(drawn.charts, 4); i++) { await scrollTo(`#main .bench-chart:nth-of-type(${i + 1})`); await shot(theme + '-benchmarks-chart-' + (i + 1)); }
+    await evaluate(`document.getElementById('main').scrollTop = 0`);
+    if (drawn.svgs) {
+      const hit = await evaluate(`(() => { const e = document.querySelector('#main .bench-chart .hit'); return e.getAttribute('aria-label'); })()`);
+      const { x, y } = await centre('#main .bench-chart .hit'); await mouse(x, y);
+      const tip = await tipShown(); assert.ok(tip.length > 0, 'The hovered point has a tip');
+      await shot(theme + '-benchmarks-hover');
+      await mouse(5, 5);
+      await evaluate(`document.querySelectorAll('#main .bench-chart .hit')[1]?.focus() ?? document.querySelector('#main .bench-chart .hit').focus()`);
+      const focused = await tipShown(); assert.ok(focused.length > 0, 'A focused point has a tip');
+      await evaluate(`document.activeElement.blur()`);
+      check(theme + ' Benchmarks ' + bench + ': ' + drawn.charts + ' charts (' + drawn.heads.join(' | ') + '); "' + drawn.coverage.replace(/\n/g, ' ') + '"; hovered "' + hit + '" and focused a point, each with a tip');
+    } else check(theme + ' Benchmarks ' + bench + ': no chart drawn; "' + drawn.coverage.replace(/\n/g, ' ') + '"');
+    // Sort by subject, then the other way.
+    await press('#main .bench-all th button[data-key="sort-full"]'); await settled('sorted');
+    const names = async () => evaluate(`[...document.querySelectorAll('#main .bench-all tbody td:nth-child(3)')].map(e => e.textContent)`);
+    const up = await names(); assert.deepEqual(up, up.slice().sort((a, b) => a.localeCompare(b)), 'Sorted by subject');
+    assert.equal(await evaluate(`document.querySelector('#main .bench-all th button[data-key="sort-full"]').getAttribute('aria-sort')`), 'ascending');
+    await press('#main .bench-all th button[data-key="sort-full"]'); await settled('sorted back');
+    assert.deepEqual(await names(), up.slice().reverse(), 'Sorted by subject, descending');
+    await scrollTo('#main .bench-all'); await shot(theme + '-benchmarks-sorted');
+    // A compare set of two, kept by the address.
+    await press('#main .bench-all tbody tr:nth-child(1) input[type="checkbox"]'); await settled('compare one');
+    await press('#main .bench-all tbody tr:nth-child(2) input[type="checkbox"]'); await settled('compare two');
+    const cmp = await evaluate(`({ chips: document.querySelectorAll('#main .bench-cmp .cmp-chips .c').length, cols: document.querySelectorAll('#main .bench-cmp thead th').length, search: location.search })`);
+    assert.equal(cmp.chips, 2); assert.equal(cmp.cols, 3); assert.match(cmp.search, /[?&]cmp=[^&,]+,[^&,]+/); assert.match(cmp.search, new RegExp('[?&]benchmark=' + bench));
+    await scrollTo('#main .bench-cmp'); await inspect(theme + ' benchmarks compare'); await shot(theme + '-benchmarks-compare');
+    // Open a subject in the drawer.
+    await press('#main .bench-all tbody tr:nth-child(1) .linkish'); await drawerOpen();
+    const opened = await evaluate(`({ title: document.querySelector('#aside h2').textContent, compare: !!document.querySelector('#aside .bench-acts'), hash: location.hash })`);
+    assert.ok(opened.compare, 'The drawer offers Compare');
+    await inspect(theme + ' benchmarks drawer'); await shot(theme + '-benchmarks-drawer');
+    // The address alone gives the same compare set.
+    const shared = origin + '/' + cmp.search + '#benchmarks';
+    await send('Page.navigate', { url: shared }); await until(() => evaluate(`!!document.querySelector('#main .bench-cmp')`), 'the shared compare set');
+    assert.equal(await evaluate(`document.querySelectorAll('#main .bench-cmp .cmp-chips .c').length`), 2);
+    // The table view of the charts.
+    await settled('shared'); if (drawn.svgs) { await press('#main .filters button[data-key="tables"]'); await settled('tables'); assert.ok(await evaluate(`document.querySelectorAll('#main table.pts').length > 0`)); await scrollTo('#main table.pts'); await shot(theme + '-benchmarks-tables'); await inspect(theme + ' benchmarks tables'); await press('#main .filters button[data-key="tables"]'); }
+    check(theme + ' Benchmarks: table sorted both ways, a compare set of two (' + cmp.search + ') that the address restores, ' + opened.title + ' opened in the drawer (' + opened.hash + ')');
+
+    // Train: open a run and a build request.
+    await open(theme, 'train'); await settled('train');
+    const train = await evaluate(`({ runs: document.querySelectorAll('#main .row.run').length, requests: document.querySelectorAll('#main .row.request').length, todo: document.querySelectorAll('#main .row.todo').length, envs: document.querySelectorAll('#main .row.env').length, text: document.getElementById('main').innerText })`);
+    assert.equal(train.runs, Math.min(100, runs.length)); assert.equal(train.requests, requests.length);
+    let trained = theme + ' Train: ' + train.todo + ' to build, ' + train.requests + ' build requests, ' + train.runs + ' runs, ' + train.envs + ' environments';
+    if (runs.length) {
+      const run = runs.find(r => r.state === 'failed') || runs[0];
+      await press(`#main .row.run[data-run="${run.id}"]`); await drawerOpen();
+      const shown = await evaluate(`({ blocks: [...document.querySelectorAll('#aside h3')].map(e => e.textContent), command: [...document.querySelectorAll('#aside .setup dt')].some(e => e.textContent === 'Command'), logs: [...document.querySelectorAll('#aside pre.evtext')].map(e => e.textContent.length) })`);
+      assert.ok(shown.command, 'The run shows its command'); assert.ok(shown.blocks.some(b => b.startsWith('Standard error')), 'The run shows its logs');
+      await inspect(theme + ' train run'); await shot(theme + '-train-run');
+      trained += '; run ' + run.id.slice(0, 8) + ' (' + run.state + ') opened: ' + shown.blocks.join(', ');
+    }
+    if (requests.length) {
+      await press('#main .row.request'); await drawerOpen();
+      const req = await evaluate(`({ title: document.querySelector('#aside h2').textContent, buttons: [...document.querySelectorAll('#aside button')].map(b => b.textContent) })`);
+      assert.ok(!req.buttons.some(t => /approve|decline|cancel/i.test(t)), 'No control that changes the project: ' + req.buttons.join(', '));
+      await shot(theme + '-train-request');
+      trained += '; request opened: ' + req.title;
+    } else await shot(theme + '-train-empty');
+    check(trained);
+
+    // Data: open a dataset (one with files when there is one).
+    await open(theme, 'data'); await settled('data');
+    const withFiles = products.find(p => p.reference.startsWith('datasets/'));
+    const pick = withFiles ? withFiles.reference : await evaluate(`document.querySelector('#main .ds-card').dataset.ref`);
+    await press(`#main .ds-card[data-ref="${pick}"]`); await drawerOpen();
+    const ds = await evaluate(`({ cards: document.querySelectorAll('#main .ds-card').length, blocks: [...document.querySelectorAll('#aside h3')].map(e => e.textContent), files: [...document.querySelectorAll('#aside .setup dd.mono')].map(e => e.textContent).filter(t => t.includes('/')).length })`);
+    assert.deepEqual(ds.blocks.slice(0, 4), ['Description', 'Definition', 'Files', 'Used by']);
+    if (withFiles) assert.ok(ds.files > 0, 'The dataset shows its files\' paths');
+    await inspect(theme + ' data drawer'); await shot(theme + '-data-dataset');
+    check(theme + ' Data: ' + ds.cards + ' cards; ' + pick + ' opened with ' + ds.files + ' paths');
+
+    // Analysis: pick a metric; hover a case when there are values.
+    await open(theme, 'analysis'); await settled('analysis');
+    const metrics = await evaluate(`[...document.querySelectorAll('#main select[data-key="ana-metric"] option')].map(o => o.value)`);
+    if (metrics.length > 1) await choose('#main select[data-key="ana-metric"]', metrics[1]);
+    const ana = await evaluate(`({ marks: document.querySelectorAll('#main .cases .b').length, rows: document.querySelectorAll('#main table.cases-t tbody tr').length, none: document.querySelector('#main .ana-none')?.innerText || '' })`);
+    if (ana.marks) {
+      assert.equal(ana.marks, ana.rows);
+      const { x, y } = await centre('#main .cases .hit'); await mouse(x, y); const tip = await tipShown();
+      await inspect(theme + ' analysis'); await shot(theme + '-analysis-metric');
+      check(theme + ' Analysis: metric ' + (metrics[1] || metrics[0]) + ', ' + ana.marks + ' cases, a hovered case reads "' + tip.replace(/\n/g, ' ') + '"');
+    } else {
+      assert.ok(ana.none.length > 0, 'Without per-case values a sentence says so');
+      await inspect(theme + ' analysis'); await shot(theme + '-analysis-metric');
+      check(theme + ' Analysis: no per-case values: "' + ana.none + '"');
+    }
+  }
+}
+
 (async () => {
   let folder;
   if (labRoot) folder = labRoot;
@@ -118,17 +244,35 @@ async function press(selector) { const { x, y } = await centre(selector); await 
     folder = path.join(temporary, 'fixture', 'project');
     // One more model with no group, no kind of change, no training date and no result, to show each absence.
     fs.writeFileSync(path.join(folder, 'recipes', 'loose.json'), JSON.stringify({ format: 'tuldok_definition_v1', kind: 'recipe', title: 'A recipe with nothing set', description: 'Neither grouped, nor kinded, nor dated, nor measured.', earlier_work: { rebuild: 'no', reason: 'A browser check fixture.' }, model: 'models/stepper' }, null, 2) + '\n');
+    // The buildable fixture's definitions and stand-in commands, beside the minimal fixture's (no name is shared).
+    const buildable = path.join(root, 'tests', 'fixtures', 'tuldok_project', 'buildable');
+    for (const kind of ['environments', 'datasets', 'recipes', 'benchmarks', 'charts']) for (const name of fs.readdirSync(path.join(buildable, 'project', kind))) fs.copyFileSync(path.join(buildable, 'project', kind, name), path.join(folder, kind, name));
+    for (const name of fs.readdirSync(path.join(buildable, 'code'))) fs.cpSync(path.join(buildable, 'code', name), path.join(temporary, 'fixture', 'code', name), { recursive: true });
+    const git = ['-c', 'user.name=Tuldok Test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'init.defaultBranch=main', '-C', path.join(temporary, 'fixture')];
+    execFileSync('git', [...git, 'init', '-q']); execFileSync('git', [...git, 'add', '-A']); execFileSync('git', [...git, 'commit', '-q', '-m', 'The fixture.']);
   }
-  const before = labRoot ? null : snapshot(folder);
   const home = path.join(temporary, 'home'), catalog = path.join(temporary, 'catalog'); fs.mkdirSync(home);
   owned = [folder, catalog]; dropOwned(folder, catalog);
+  if (!labRoot) {   // runs, products, a failed run, per-case values and a request awaiting approval, before Tuldok starts
+    const cli = (...args) => execFileSync(python, ['-m', 'tuldok_project', ...args], { cwd: root, env: { ...process.env, TULDOK_PROJECT_HOME: home }, stdio: ['ignore', 'pipe', 'pipe'] }).toString();
+    cli('connect', folder, 'test-python', python);
+    cli('build', folder, 'datasets/numbers', 'recipes/fit-a', 'benchmarks/score', '--yes');
+    try { cli('build', folder, 'recipes/fit-b', '--yes', '--env', 'BUILDABLE_FAIL=train'); assert.fail('The build of recipes/fit-b was to fail'); } catch (error) { if (error.code === 'ERR_ASSERTION') throw error; }
+    cli('import-values', folder, ...fs.readdirSync(path.join(temporary, 'fixture', 'values')).map(name => path.join(temporary, 'fixture', 'values', name)));
+    execFileSync(python, ['-c', `import sys
+from tuldok_project import service
+agent = {'actor_id': 'agent-browser-check', 'kind': 'agent', 'label': 'A browser check agent', 'scopes': ['inspect', 'execute']}
+assert service.Service(sys.argv[1]).call('request_build', {'targets': ['recipes/fit-b']}, agent)['state'] == 'awaiting-approval'
+`, folder], { cwd: root, env: { ...process.env, TULDOK_PROJECT_HOME: home }, stdio: ['ignore', 'pipe', 'pipe'] });
+  }
+  const before = labRoot ? null : snapshot(folder);
   let output = '';
   server = launch(python, ['-u', 'app.py', '--port', '0', '--data', catalog, '--project-folder', folder], { cwd: root, env: { ...process.env, TULDOK_PROJECT_HOME: home }, stdio: ['ignore', 'pipe', 'pipe'] });
   server.stdout.on('data', chunk => { output += chunk; }); server.stderr.on('data', chunk => { serverErrors += chunk; });
   const port = await until(() => { if (server.exitCode !== null) throw Error('Tuldok exited: ' + serverErrors); return output.match(/127\.0\.0\.1:(\d+)/)?.[1]; }, 'Tuldok start-up', 1800);
   origin = 'http://127.0.0.1:' + port;
   auth = authenticatedFixture(); await auth.register(origin, catalog, root);
-  const map = await api('map'), summary = await api('summary');
+  const map = await api('map'), summary = await api('summary'), activityBefore = (await api('activity')).total;
   check('Tuldok serves ' + summary.name + ' with ' + map.models.length + ' models, ' + map.groups.length + ' groups, ' + map.edges.filter(e => e.kind === 'derived').length + ' derivations, ' + map.comparisons.length + ' comparisons and ' + map.models.filter(m => m.value != null).length + ' track values');
 
   const browser = launch(findBrowser(), ['--headless', '--no-sandbox', '--disable-gpu', '--no-first-run', '--hide-scrollbars', '--remote-debugging-port=0', `--window-size=${WIDTH},${HEIGHT}`, '--user-data-dir=' + path.join(temporary, 'browser'), 'about:blank'], { stdio: 'ignore', env: { ...process.env, XDG_CONFIG_HOME: temporary, XDG_CACHE_HOME: temporary } });
@@ -154,7 +298,7 @@ async function press(selector) { const { x, y } = await centre(selector); await 
     for (const name of TABS) {
       await tab(name);
       await inspect(theme + ' ' + name);
-      if (!BUILT.includes(name)) assert.match(await evaluate(`document.getElementById('main').innerText`), /is not built yet\.$/);
+      assert.doesNotMatch(await evaluate(`document.getElementById('main').innerText`), /is not built yet/);
       await shot(theme + '-' + name);
       if (name === 'map') {   // the rest of a wide map, and the end of the list
         const wide = await evaluate(`(() => { const m = document.querySelector('.tree-map'); return m.scrollWidth > m.clientWidth + 10; })()`);
@@ -165,7 +309,7 @@ async function press(selector) { const { x, y } = await centre(selector); await 
         }
       }
     }
-    check('Every tab in ' + theme + ' at ' + WIDTH + ' by ' + HEIGHT + ': no overflow, no empty main area; the four tabs of the next slice say they are not built yet');
+    check('Every tab in ' + theme + ' at ' + WIDTH + ' by ' + HEIGHT + ': no overflow, no empty main area');
   }
   const fonts = await evaluate(`document.fonts.ready.then(() => [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.style))`);
   assert.ok(fonts.some(f => /Ubuntu Sans"? normal/.test(f)) && fonts.some(f => /Ubuntu Sans Mono"? normal/.test(f)), 'The vendored faces load: ' + JSON.stringify(fonts));
@@ -274,11 +418,12 @@ async function press(selector) { const { x, y } = await centre(selector); await 
   const frameBox = await evaluate(`(() => { const r = document.querySelector('iframe.report-frame').getBoundingClientRect(), b = document.querySelector('.report-bar').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), Math.round(b.left), Math.round(b.top)]; })()`);
   check('The Overview links to the report, shown in a sandboxed frame at ' + frameBox.join(','));
 
+  await otherTabs(map);
   const activity = await api('activity');
-  assert.equal(activity.total, 0, 'Nothing was asked of the project: ' + JSON.stringify(activity.items));
+  assert.equal(activity.total, activityBefore, 'Nothing was asked of the project while the page was open: ' + JSON.stringify(activity.items));
   if (before) assert.deepEqual(snapshot(folder), before, 'The fixture copy is unchanged');
   assert.deepEqual(errors, [], 'Script errors'); assert.deepEqual(failedRequests, [], 'Failed requests');
-  check('No script error, no failed request, an empty activity log' + (before ? ', the folder unchanged' : ''));
+  check('No script error, no failed request, nothing added to the activity log (' + activityBefore + ' entries from the set-up)' + (before ? ', the folder unchanged' : ''));
   fs.writeFileSync(path.join(report, 'receipt.json'), JSON.stringify({ status: 'pass', folder, checks, bounds }, null, 2) + '\n');
   console.log('Screenshots and receipt in ' + report);
 })().catch(async error => {
@@ -292,5 +437,6 @@ async function press(selector) { const { x, y } = await centre(selector); await 
   try { session?.close(); } catch (_) { /* closed */ }
   for (const child of children.reverse()) await stop(child);
   if (owned) try { dropOwned(...owned); } catch (error) { console.error('Dropping the disposable schemas failed:', error.message); process.exitCode = 1; }
+  try { execFileSync('chmod', ['-R', 'u+w', temporary]); } catch (_) { /* nothing was made read-only */ }   // finished runs leave their directories read-only
   fs.rmSync(temporary, { recursive: true, force: true });
 });

@@ -394,10 +394,10 @@ def runs(project, reference=None):
 
 
 def products(project, reference=None):
-    """The current products, by reference and subject: run, size of the declared outputs, directory, scratch, adopted."""
+    """The current products, by reference and subject: run, size (of the declared outputs, or of the whole directory when none is declared), directory, scratch, adopted."""
     reap_orphans(project._connection, project.schema)
     query = '''SELECT p.reference, p.subject, p.run_id, p.directory, p.outputs, r.scratch, r.commit, r.finished_at,
-                      r.state
+                      r.state, r.bytes
                FROM {schema}.products p JOIN {schema}.runs r ON r.id = p.run_id WHERE p.current'''
     parameters = ()
     if reference is not None:
@@ -405,10 +405,12 @@ def products(project, reference=None):
         parameters = (reference,)
     query += ' ORDER BY p.reference, p.subject'
     found = []
-    for reference_, subject, run_id, directory, outputs, scratch, commit, finished, state in project._execute(
+    for reference_, subject, run_id, directory, outputs, scratch, commit, finished, state, run_bytes in project._execute(
             query, parameters).fetchall():
+        # A product with no declared outputs is its directory as a whole: its size is what the run recorded.
+        size = sum(item.get('bytes') or 0 for item in outputs.values()) if outputs else (run_bytes or 0)
         found.append({'reference': reference_, 'subject': subject, 'run_id': run_id, 'directory': directory,
-                      'outputs': outputs, 'bytes': sum(item.get('bytes') or 0 for item in outputs.values()),
+                      'outputs': outputs, 'bytes': size,
                       'scratch': scratch, 'commit': commit, 'finished_at': finished, 'adopted': state == ADOPTED})
     return found
 

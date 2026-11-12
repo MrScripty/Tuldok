@@ -11,7 +11,7 @@
   const TABS = [['map', 'Map'], ['data', 'Data'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['overview', 'Overview']];
   const POLL_MS = 2000;
   const $ = id => document.getElementById(id);
-  const state = { screen: 'map', sel: {}, kinds: null, query: '', zoom: 1, track: false };
+  const state = { screen: 'map', sel: {}, kinds: null, query: '', zoom: 1, track: false, ui: {}, benchmark: null, cmp: [] };
   const data = { summary: null, map: null, standing: null, needs: null, readAt: '', polling: false };
   let failed = null, mapText = null, pollTimer = null;
   const clock = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -28,8 +28,21 @@
     setQuery: q => { state.query = q; render(); },
     zoom: d => { state.zoom = Math.round(Math.min(1.6, Math.max(0.5, (state.zoom || 1) + d)) * 10) / 10; render(); },
     toggleKind: (k, all) => { if (!state.kinds) state.kinds = new Set([k]); else if (state.kinds.has(k)) { state.kinds.delete(k); if (!state.kinds.size) state.kinds = null; } else { state.kinds.add(k); if (state.kinds.size === all.length) state.kinds = null; } render(); },
-    toggleTrack: () => { state.track = !state.track; render(); }
+    toggleTrack: () => { state.track = !state.track; render(); },
+    // The other tabs: their own settings (state.ui), and the benchmark and compare set, which the address keeps (?benchmark=, ?cmp=).
+    setUI: (k, v) => { state.ui[k] = v; render(); },
+    setBenchmark: name => { state.benchmark = name; state.cmp = []; address(); render(); },
+    toggleCompare: id => { const i = state.cmp.indexOf(id); if (i >= 0) state.cmp.splice(i, 1); else if (state.cmp.length < 3) state.cmp.push(id); address(); render(); },
+    clearCompare: () => { state.cmp = []; address(); render(); }
   };
+  /** Writes the benchmark and compare set into the address without reloading, so the view can be shared. */
+  function address() {
+    const q = new URLSearchParams(location.search);
+    if (state.benchmark) q.set('benchmark', state.benchmark); else q.delete('benchmark');
+    if (state.cmp.length) q.set('cmp', state.cmp.join(',')); else q.delete('cmp');
+    const text = q.toString().replace(/%2C/g, ',').replace(/%2F/g, '/');   // references read as they are
+    history.replaceState(null, '', location.pathname + (text ? '?' + text : '') + location.hash);
+  }
 
   // ---- The status strip and Needs you ---------------------------------------
   function strip() {
@@ -63,7 +76,7 @@
       drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); main.classList.remove('with-drawer');
       return;
     }
-    const wasMap = main.classList.contains('map'), view = state.screen + '/' + (state.screen === 'map' ? '' : state.sel[state.screen] || '');
+    const wasMap = main.classList.contains('map'), view = state.screen + '/' + (state.screen === 'overview' ? state.sel.overview || '' : '');   // a selection elsewhere opens the drawer and keeps the place
     main.className = state.screen === 'map' ? 'map' : 'content';
     if (state.screen !== 'map' && wasMap) main._tree = null;
     if (main._view !== view) { main.scrollTop = 0; main.scrollLeft = 0; main._view = view; }   // a new screen starts at its top
@@ -96,7 +109,7 @@
       if (busy && !pollTimer) pollTimer = setTimeout(poll, POLL_MS);
     } catch (error) { data.needs = null; data.standing = Object.assign({}, data.standing, { text: data.standing.text + ' ' + error.message }); }
     strip();
-    if (state.screen === 'overview') render();
+    if (state.screen === 'overview' || state.screen === 'train') render();
   }
   async function poll() {
     pollTimer = null;
@@ -107,12 +120,13 @@
   /** Everything again, when the window regains focus; the map is redrawn only when it changed. */
   async function again() {
     if (failed) { P.forget(['summary', 'map']); return first(); }
-    P.forget(['summary', 'status', 'build_requests', 'environments', 'runs', 'map', 'activity', 'definitions', 'definition', 'recipe_results', 'products', 'note']);
+    P.forget(['summary', 'status', 'build_requests', 'environments', 'runs', 'map', 'activity', 'definitions', 'definition', 'recipe_results', 'products', 'note',
+      'graph', 'results_overview', 'results', 'chart', 'values', 'build_request', 'run']);
     try {
       data.summary = await P.read('summary');
       const text = JSON.stringify(await P.read('map'));
       if (text !== mapText) { mapText = text; data.map = await P.map(); $('aside')._for = null; render(); }
-      else if (state.screen === 'overview') render();
+      else if (state.screen !== 'map') render();
     } catch (error) { failed = error.message; render(); }
     await standing();
   }
@@ -131,6 +145,7 @@
     window.addEventListener('hashchange', () => { parse(); render(); });
     window.addEventListener('focus', () => { if (data.summary || failed) again(); });
     window.addEventListener('tuldok-session', () => { if (failed) again(); });
+    { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, 3); }
     parse(); strip(); render(); first();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();

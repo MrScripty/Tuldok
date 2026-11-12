@@ -991,6 +991,7 @@ def make_handler(dataset, observer=None, *, transfer_controller=None):
                                '/project-workspace/markdown.js': ('project-workspace/markdown.js', 'text/javascript'),
                                '/project-workspace/tree.js': ('project-workspace/tree.js', 'text/javascript'),
                                '/project-workspace/screens.js': ('project-workspace/screens.js', 'text/javascript'),
+                               '/project-workspace/tabs.js': ('project-workspace/tabs.js', 'text/javascript'),
                                '/project-workspace/app.js': ('project-workspace/app.js', 'text/javascript'),
                                '/static/vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf': ('vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf', 'font/ttf'),
                                '/static/vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf': ('vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf', 'font/ttf'),

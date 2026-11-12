@@ -319,6 +319,76 @@ table.tv td.nowrap, table.tv td.ck { white-space: nowrap; }
 .cases .b { fill: var(--mark); } .cases .b.sel { fill: var(--accent); }
 .cases .base { stroke: var(--line-strong); }
 
+/* The Benchmarks, Train, Data and Analysis tabs (tabs.js), from the mockup's base.css. */
+.chart .pt { fill: var(--k-component); }
+.chart .pt.other { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.5; }
+.chart g:hover > .pt, .chart g:focus-within > .pt { stroke: var(--ink); }
+.chart .best { fill: none; stroke: var(--good); stroke-width: 1.5; stroke-dasharray: 5 3; }
+.chart .stem { stroke: var(--line-strong); stroke-width: 1; }
+.chart .rk { fill: var(--ink); font-size: 12.5px; font-family: var(--font); }
+.chart .rk.on { font-weight: 600; }
+.chart .rv { fill: var(--ink-2); font-size: 12px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+.chart .hit.band { fill: transparent; }
+.chart .hit.band:hover, .chart .hit.band:focus-visible { fill: var(--surface-2); }
+.legend .chip.other::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-2); }
+.chart.cases svg { height: auto; }
+.cases .b.none { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+.cases g:hover > .b, .cases g:focus-within > .b { fill: var(--ink); }
+.chart .hit ~ * { pointer-events: none; }   /* the marks over a hit area never take the pointer from it */
+.bench-chart { margin-top: 22px; }
+.bench-chart h3.panel { font-size: 13px; color: var(--ink-2); margin: 14px 0 4px; }
+.bench-desc { margin: -4px 0 8px; }
+.bench-note { margin: 0 0 12px; }
+.bench-cmp, .bench-all { margin-top: 28px; }
+.tv-wrap { overflow-x: auto; max-width: 100%; }
+table.tv th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: inherit; }
+table.tv th button[aria-sort="ascending"]::after { content: " ↑"; color: var(--ink-3); }
+table.tv th button[aria-sort="descending"]::after { content: " ↓"; color: var(--ink-3); }
+table.tv tr.is-sel td { background: var(--accent-wash); }
+table.tv tr.rowbtn { cursor: pointer; }
+table.tv tr.rowbtn:hover td { background: var(--surface-2); }
+table.tv td .linkish { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+table.tv td.grp { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+table.tv td.best { color: var(--good); font-weight: 600; }
+table.tv.pts { margin-top: 8px; }
+.cmp-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cmp-chips .c { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px 2px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 12.5px; background: var(--surface); max-width: 100%; }
+.cmp-chips .c i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.cmp-chips .c button { border: 0; background: none; padding: 0 2px; color: var(--ink-3); font-size: 14px; line-height: 1; cursor: pointer; }
+.cmp-chips .c.s1 i { background: var(--k-architecture); } .cmp-chips .c.s2 i { background: var(--k-refinement); } .cmp-chips .c.s3 i { background: var(--k-training-policy); }
+table.cmpt { margin-top: 12px; }
+table.cmpt .d { color: var(--ink-2); font-size: 12.5px; }
+table.cmpt .d.better { color: var(--good); } table.cmpt .d.worse { color: var(--serious); }
+.sect.gap, .filters.gap { margin-top: 28px; }
+.row.todo { grid-template-columns: 120px minmax(0, 1fr) 140px; }
+.row.request { grid-template-columns: 150px minmax(0, 1fr) 170px; }
+.row.run { grid-template-columns: 120px minmax(160px, 1fr) 130px 70px 150px; }
+.row.run .ck { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.env { grid-template-columns: 120px minmax(0, 1fr) minmax(0, 0.8fr); }
+.row.env .mono { color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.row .sub.warnline { color: var(--warn); white-space: normal; }
+.row .sub.live { display: flex; align-items: center; gap: 8px; }
+.row .hair { position: relative; width: 120px; height: 2px; background: var(--grid); flex: none; }
+.row .hair i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.setup { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; font-size: 13px; margin: 0; }
+.setup dt { color: var(--ink-2); }
+.setup dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
+.setup dd.pre { white-space: pre-wrap; }
+.evtext { white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 var(--mono); padding: 10px; margin: 0; background: var(--surface-2); border-radius: var(--radius); color: var(--ink); max-height: 360px; overflow: auto; }
+.ds-card .pv { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.ds-card .pv.text { display: grid; place-items: center; color: var(--ink-3); font: 12px/1.6 var(--mono); padding: 10px; white-space: pre; overflow: hidden; text-align: left; }
+.ds-card .t .meta .state { margin-left: auto; }
+.ds-card .t .uses { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.viewer-bar select { max-width: 420px; }
+.filters select { max-width: 300px; }
+.filters input[type="search"] { width: 180px; }
+.ana-sum { grid-template-columns: repeat(4, minmax(0, 160px)); margin: 4px 0 10px; }
+.ana-none { margin-top: 8px; }
+.pager { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--ink-2); margin: 10px 0; }
+table.cases-t { margin-top: 8px; }
+@media (max-width: 1100px) { .row.run { grid-template-columns: 90px minmax(0, 1fr) 70px 130px; } .row.run > .chip { display: none; } }
+
 /* ---- The shell: top bar, tabs, status strip, stage, drawer (b-map.html). ---- */
 body.shell { height: 100vh; display: grid; grid-template-rows: 48px auto 1fr; overflow: clip; }   /* clip: not even a script or scrollIntoView can scroll the shell */
 .top { display: flex; align-items: center; gap: 22px; padding: 0 20px; border-bottom: 1px solid var(--line); background: var(--surface); min-width: 0; }

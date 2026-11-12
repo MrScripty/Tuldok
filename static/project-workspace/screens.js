@@ -1,6 +1,6 @@
 'use strict';
 // The screens, from the mockup's screens.js. A screen is one function
-// (main, aside, state, act) that fills the main area, fills the drawer when it
+// (main, aside, state, act, data) that fills the main area, fills the drawer when it
 // has something to show there, and returns whether the drawer is open. It
 // reads the project only through window.TuldokProject. Rule: the chrome holds
 // no project words; names, groups, metrics and text come from the project.
@@ -203,9 +203,6 @@ window.LabScreens = (() => {
     return false;
   }
 
-  // ---- Tabs of the next slice ----------------------------------------------
-  const notYet = label => (main, aside) => { main.textContent = ''; aside.textContent = ''; aside._for = null; main.appendChild(h('p', 'notyet', 'The ' + label + ' tab is not built yet.')); return false; };
-
   // ---- Theme toggle (system, light, dark) -----------------------------------
   const theme = {
     init(btn) {
@@ -217,5 +214,7 @@ window.LabScreens = (() => {
     }
   };
 
-  return { map, overview, data: notYet('Data'), train: notYet('Train'), benchmarks: notYet('Benchmarks'), analysis: notYet('Analysis'), inspectorModel, needsList, icon, stateEl, theme };
+  // The Data, Train, Benchmarks and Analysis screens are added by tabs.js, which builds with these parts.
+  const parts = { sect, cell, block, time, bytes, failure, modelState, graphFor };
+  return { map, overview, inspectorModel, needsList, icon, stateEl, theme, parts };
 })();
