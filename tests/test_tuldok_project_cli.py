@@ -400,7 +400,7 @@ class PlanCommand(FolderCase):
                       'notes', 'steps'):
             self.assertIn(field, made)
         self.assertTrue(made['buildable'])
-        self.assertEqual(made['counts'], {'build': 5, 'set-up': 1, 'blocked': 0})
+        self.assertEqual(made['counts'], {'build': 5, 'set-up': 1, 'blocked': 0, 'ready': 0})
         model = self.run_ok('plan', self.folder, 'models/stepper').splitlines()
         self.assertEqual(model[0], 'Nothing to build for models/stepper.')
         self.assertEqual(' '.join(model[1:3]),

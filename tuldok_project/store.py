@@ -14,6 +14,10 @@ long as it is open, so one Project at a time owns a project's copy.
 Benchmark results (spec-m3.md) live in three more tables owned by result_rows:
 results files are part of what open compares and imports, and save writes
 them back when the database's summaries make a different text.
+Which interpreter fulfils each environment on this machine (spec-m5.md) lives
+in one more table owned by environments; the states reported here take the
+environments' stored check results, and an environment's record goes when
+its definition does.
 """
 from dataclasses import dataclass
 import hashlib
@@ -27,7 +31,7 @@ from psycopg.types.json import Jsonb
 
 from metadata import connection_info
 
-from . import check, documents, folder as folder_reader, graph, result_rows, results
+from . import check, documents, environments, folder as folder_reader, graph, result_rows, results
 from .documents import Problem
 
 PROJECT_ID = re.compile(r'^[a-f0-9]{32}$')
@@ -71,7 +75,9 @@ class ProjectError(Exception):
 
     code is one of: invalid (the folder or the edit breaks the format; problems
     lists why), conflict (files changed on disk where the database has unsaved
-    edits), bound-elsewhere, busy, in-use, changed-on-disk, not-found.
+    edits), bound-elsewhere, busy, in-use, changed-on-disk, not-found; and for
+    environments (environments.py): not-set-up (nothing is recorded for it),
+    no-install, no-installer, target-exists, install-failed.
     references names the definitions concerned.
     """
 
@@ -306,7 +312,7 @@ class Project:
 
     def _create_schema(self):
         self._connection.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(self.schema)))
-        for statement in (*_TABLES, *_MIGRATIONS):
+        for statement in (*_TABLES, *environments.TABLES, *_MIGRATIONS):
             self._execute(statement)
 
     def _state(self):
@@ -320,6 +326,13 @@ class Project:
         where = '' if removed else ' WHERE NOT removed'
         rows = self._execute(f'SELECT {_REFERENCE_SQL}, document FROM {{schema}}.definitions{where}').fetchall()
         return dict(rows)
+
+    def _local_states(self):
+        """{reference: state} of the environments recorded on this machine, for graph.states(local=...)."""
+        return environments.recorded_states(self._connection, self.schema)
+
+    def _states(self, *, removed=True):
+        return graph.states(self._documents(removed=removed), self._local_states())
 
     def _merged_definitions(self):
         """{reference: folder.Definition} for every row not removed, decoded from the exact text."""
@@ -432,6 +445,8 @@ class Project:
                 directory, name = documents.parse_reference(reference)
                 if directory == 'benchmarks':
                     result_rows.remove_benchmark(self._connection, self.schema, name)
+                if directory == environments.DIRECTORY:
+                    environments.forget(self._connection, self.schema, name)
             for reference in take:
                 directory, name = documents.parse_reference(reference)
                 if directory == 'benchmarks' and reference in merged:
@@ -483,14 +498,14 @@ class Project:
         state = self._state()
         rows = self._execute('SELECT kind, count(*) FROM {schema}.definitions WHERE NOT removed GROUP BY kind').fetchall()
         states = {}
-        for value in graph.states(self._documents(removed=False)).values():
+        for value in self._states(removed=False).values():
             states[value] = states.get(value, 0) + 1
         return {'project_id': state['project_id'], 'name': state['name'], 'folder': state['folder'],
                 'code_root': state['code_root'], 'kinds': dict(sorted(rows)), 'states': dict(sorted(states.items()))}
 
     def definitions(self, kind=None):
         """One row per definition, sorted by reference: reference, kind, title, state, unsaved, removed."""
-        states = graph.states(self._documents())
+        states = self._states()
         query = f'SELECT {_REFERENCE_SQL}, kind, title, unsaved, removed FROM {{schema}}.definitions'
         rows = (self._execute(query + ' WHERE kind = %s', (kind,)) if kind is not None else self._execute(query)).fetchall()
         return [{'reference': reference, 'kind': row_kind, 'title': title, 'state': states[reference],
@@ -510,14 +525,14 @@ class Project:
         used_by = self._execute('SELECT from_ref, role FROM {schema}.edges WHERE to_ref = %s ORDER BY from_ref, role',
                                 (reference,)).fetchall()
         return {'reference': reference, 'kind': kind, 'title': title, 'text': text, 'document': document,
-                'state': graph.states(self._documents())[reference], 'unsaved': unsaved, 'removed': removed,
+                'state': self._states()[reference], 'unsaved': unsaved, 'removed': removed,
                 'uses': [{'reference': target, 'role': role} for target, role in uses],
                 'used_by': [{'reference': source, 'role': role} for source, role in used_by]}
 
     def graph(self):
         """The definitions not removed, with kind and state, and the edges between them."""
         nodes = self._execute(f'SELECT {_REFERENCE_SQL}, kind FROM {{schema}}.definitions WHERE NOT removed').fetchall()
-        states = graph.states(self._documents(removed=False))
+        states = self._states(removed=False)
         edges = self._execute('SELECT from_ref, to_ref, role FROM {schema}.edges ORDER BY 1, 2, 3').fetchall()
         return {'nodes': [{'reference': reference, 'kind': kind, 'state': states[reference]}
                           for reference, kind in sorted(nodes)],
@@ -606,7 +621,11 @@ class Project:
                 result_rows.prune(self._connection, self.schema, name, document)
 
     def remove_definition(self, reference):
-        """Mark a definition removed, to be deleted from disk by save(); refused while anything uses it."""
+        """Mark a definition removed, to be deleted from disk by save(); refused while anything uses it.
+
+        Removing an environment also drops its record on this machine (an
+        installed directory is left where it is).
+        """
         directory, name = _split(reference)
         with self._connection.transaction():
             row = self._execute('SELECT file_sha256 FROM {schema}.definitions '
@@ -628,6 +647,8 @@ class Project:
             self._write_edges([], [reference])
             if directory == 'benchmarks':
                 result_rows.remove_benchmark(self._connection, self.schema, name)
+            if directory == environments.DIRECTORY:
+                environments.forget(self._connection, self.schema, name)
 
     def save(self):
         """Write unsaved definitions and changed results files, and delete the files of removed ones.

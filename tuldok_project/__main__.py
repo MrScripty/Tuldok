@@ -12,6 +12,11 @@ file before it imports any. `chart` and `report` draw from the summary rows in
 the database (charts.py) and never read a results or values file. `plan` lists
 what has to be built for some definitions (plan.py) and runs nothing. A benchmark
 or chart may be named bare (`rollout`) or as a reference (`benchmarks/rollout`).
+`environments`, `connect`, `check-environment`, `set-up` and `disconnect`
+work with the interpreters that fulfil environments on this machine
+(environments.py); an environment may be named bare too. Only
+`check-environment`, `connect` and `set-up` run anything, and `set-up
+--dry-run` runs nothing.
 """
 import argparse
 import dataclasses
@@ -98,6 +103,18 @@ def _parser():
     planning = add('plan', [reading], 'list what has to be built, in order, to have these definitions; runs nothing')
     planning.add_argument('targets', nargs='*', metavar='TARGET', help='references, for example recipes/pilot-dense-k1')
     planning.add_argument('--all', action='store_true', help='plan every dataset, recipe, step and benchmark')
+    add('environments', [reading], 'list the environments: which interpreter fulfils each here and its last check')
+    connecting = add('connect', [reading], 'record an existing interpreter for an environment, then check it')
+    connecting.add_argument('environment', help='for example lab-cpu or environments/lab-cpu')
+    connecting.add_argument('interpreter', help='the absolute path of the Python executable')
+    checking = add('check-environment', [reading], 'check recorded environments again (all when none is named)')
+    checking.add_argument('environments', nargs='*', metavar='ENVIRONMENT', help='for example lab-cpu')
+    setting_up = add('set-up', [reading], "install an environment with uv from its definition's install section")
+    setting_up.add_argument('environment', help='for example lab-cpu or environments/lab-cpu')
+    setting_up.add_argument('--dry-run', action='store_true', help='print the commands, the target and the log; run nothing')
+    setting_up.add_argument('--replace', action='store_true', help='remove an existing target first')
+    disconnecting = add('disconnect', [opening], "forget an environment's interpreter; an installed one is not deleted")
+    disconnecting.add_argument('environment', help='for example lab-cpu or environments/lab-cpu')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -441,13 +458,13 @@ def _figure(value, unit):
 
 
 def _gpu(step):
-    if step['action'] == 'set-up':
+    if step['action'] in ('set-up', 'ready'):
         return '-'
     return 'yes' if step['resources']['gpu'] is True else '-'  # an absent gpu means none is needed
 
 
 def _step_figures(step):
-    if step['action'] == 'set-up':
+    if step['action'] in ('set-up', 'ready'):
         return '-', '-', '-'
     return _gpu(step), _figure(step['resources']['disk_gb'], ' GB'), _figure(step['resources']['wall_hours'], ' h')
 
@@ -467,6 +484,8 @@ def _step_details(step):
         details.append(f'{name}: {given["reference"]}{output}')
     if step['environment']:
         details.append(f'in {step["environment"]}')
+    if step['kind'] == 'environment' and step['state'] == 'failing':
+        details.append('its last check failed; see environments')
     subjects = step.get('subjects')
     if subjects is not None:
         details.append(f'runs {_plural(len(subjects["run"]), "subject")}')
@@ -510,7 +529,7 @@ def _opening(plan):
     if not plan['steps']:
         return f'Nothing to build for {targets[0] if len(targets) == 1 else _plural(len(targets), "target")}.'
     numbers = (f'{_plural(counts["build"], "step")} to build, {counts["set-up"]} to set up, '
-               f'{counts["blocked"]} blocked')
+               f'{counts["blocked"]} blocked' + (f', {counts["ready"]} ready' if counts['ready'] else ''))
     every = ' (every dataset, recipe, step and benchmark)' if plan['every'] else ''
     blocked = len(plan['blocked_targets'])
     if len(targets) == 1 and not every:
@@ -575,9 +594,157 @@ def _plan(project, arguments):
     return 0
 
 
+# ------------------------------------------------------------ environments
+
+def _when(value):
+    return '-' if value is None else value.astimezone().strftime('%Y-%m-%d %H:%M')
+
+
+def _found_lines(shown):
+    """What the last check saw, one short line each: Python, each package, and CUDA when it was looked at."""
+    found = shown['found']
+    if not found:
+        return []
+    lines = [f'python {found.get("python")} (asks {shown["python"]})']
+    for name, asked in shown['packages'].items():
+        installed = (found.get('packages') or {}).get(name)
+        lines.append(f'{name} {installed or "not installed"}' + ('' if installed == asked else f' (asks {asked})'))
+    cuda = found.get('cuda')
+    if isinstance(cuda, dict):
+        if cuda.get('available'):
+            lines.append(f'cuda {cuda.get("version") or "?"} on {cuda.get("device") or "an unnamed device"}')
+        else:
+            lines.append('cuda not available')
+        if cuda.get('driver'):
+            lines.append(f'driver: {cuda["driver"]}')
+    return lines
+
+
+def _environment_lines(shown):
+    """One environment for a person: a header row, then what was found and why it is not ready."""
+    lines = []
+    if shown['state'] == 'not-set-up':
+        how = 'run set-up or connect an interpreter' if shown['installable'] else 'connect an interpreter'
+        lines.append(f'not set up on this machine; {how}')
+    else:
+        lines += _found_lines(shown)
+        lines += [f'problem: {problem}' for problem in shown['problems']]
+    return lines
+
+
+def _environment_header(shown):
+    return (shown['reference'], shown['state'], shown['origin'] or '-', _when(shown['checked_at']),
+            shown['interpreter'] or '-')
+
+
+def _show_environments(shown_list):
+    rows = [('environment', 'state', 'origin', 'last check', 'interpreter')]
+    rows += [_environment_header(shown) for shown in shown_list]
+    widths = [max(len(str(row[index])) for row in rows) for index in range(4)]
+    for index, row in enumerate(rows):
+        print(('  '.join(str(cell).ljust(widths[column]) for column, cell in enumerate(row[:4])) + '  ' + row[4]).rstrip())
+        if index:
+            for line in _environment_lines(shown_list[index - 1]):
+                print('    ' + line)
+
+
+def _environments(project, arguments):
+    from . import environments
+
+    shown = environments.listing(project)
+    if arguments.json:
+        _json(shown)
+        return 0
+    if not shown:
+        print('The project defines no environment.')
+        return 0
+    _show_environments(shown)
+    ready = sum(item['state'] == 'ready' for item in shown)
+    print()
+    print(f'{ready} of {_plural(len(shown), "environment")} ready on this machine.')
+    return 0
+
+
+def _checked_line(shown):
+    if shown['ok']:
+        return f'{shown["reference"]} is ready: the check passed.'
+    return (f'{shown["reference"]} is failing: the check found '
+            f'{_plural(len(shown["problems"]), "problem")}.')
+
+
+def _connect(project, arguments):
+    from . import environments
+
+    shown = environments.connect(project, arguments.environment, arguments.interpreter)
+    if arguments.json:
+        _json(shown)
+    else:
+        print(f'Recorded {shown["interpreter"]} for {shown["reference"]}.')
+        print(_checked_line(shown))
+        for line in _environment_lines(shown):
+            print('  ' + line)
+    return 0 if shown['ok'] else 1
+
+
+def _check_environment(project, arguments):
+    from . import environments
+
+    names = arguments.environments or environments.recorded(project)
+    checked = [environments.check(project, reference) for reference in names]
+    if arguments.json:
+        _json(checked)
+    elif not checked:
+        print('No environment is recorded on this machine; connect an interpreter or run set-up first.')
+    else:
+        for index, shown in enumerate(checked):
+            if index:
+                print()
+            print(_checked_line(shown))
+            for line in _environment_lines(shown):
+                print('  ' + line)
+    return 0 if all(shown['ok'] for shown in checked) else 1
+
+
+def _set_up(project, arguments):
+    import shlex
+
+    from . import environments
+
+    done = environments.set_up(project, arguments.environment, dry_run=arguments.dry_run, replace=arguments.replace)
+    if arguments.json:
+        _json(done)
+        return 0 if done['dry_run'] or done['ok'] else 1
+    if done['dry_run']:
+        print(f'Would set up {done["reference"]} by running, in {done["cwd"]}:')
+        for command in done['commands']:
+            print(shlex.join(command))
+        if done['replaces']:
+            print(f'after removing the existing {done["target"]}.')
+        _columns([('target', done['target']), ('log', done['log'])])
+        print('Nothing was run.')
+        return 0
+    print(f'Installed {done["reference"]} in {done["target"]}; the log is {done["log"]}.')
+    print(_checked_line(done))
+    for line in _environment_lines(done):
+        print('  ' + line)
+    return 0 if done['ok'] else 1
+
+
+def _disconnect(project, arguments):
+    from . import environments
+
+    done = environments.disconnect(project, arguments.environment)
+    print(f'{done["reference"]} is no longer connected to {done["interpreter"]}.')
+    if done['directory']:
+        print(f'The installed environment in {done["directory"]} was kept; delete it yourself when it is not needed.')
+    return 0
+
+
 _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
-                   'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan}
+                   'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan,
+                   'environments': _environments, 'connect': _connect, 'check-environment': _check_environment,
+                   'set-up': _set_up, 'disconnect': _disconnect}
 
 
 def _project_id(folder):
@@ -653,6 +820,10 @@ def _run_store(arguments, dsn):
         arguments.benchmark = _bare(arguments.benchmark, 'benchmarks')
     if arguments.command == 'chart':
         arguments.chart = _bare(arguments.chart, 'charts')
+    if arguments.command in ('connect', 'set-up', 'disconnect'):
+        arguments.environment = 'environments/' + _bare(arguments.environment, 'environments')
+    if arguments.command == 'check-environment':
+        arguments.environments = ['environments/' + _bare(name, 'environments') for name in arguments.environments]
     if arguments.command == 'plan' and not arguments.targets and not arguments.all:
         raise UsageError('Name at least one definition to plan, or pass --all.')
     started = time.monotonic()

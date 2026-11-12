@@ -193,8 +193,13 @@ def _kind(reference, document):
     return document.get('kind') if isinstance(document, dict) else None
 
 
-def states(definitions):
+def states(definitions, local=None):
     """Return {reference: state} for every definition, by section 4.3 of the spec.
+
+    local, when given, maps environment references to the state this machine
+    records for them (ready, failing or not-set-up; spec-m5.md section 2) and
+    replaces the not-set-up computed for those environments. It applies to
+    environments only; no other definition's state depends on one.
 
     cannot-rebuild and needs-work come from a definition's own
     earlier_work.rebuild or from anything it uses through input edges, directly
@@ -220,5 +225,9 @@ def states(definitions):
             if severity[user] < severity[reference]:
                 severity[user] = severity[reference]
                 pending.append(user)
-    return {reference: _CARRIED[severity[reference]] or _BASE_STATE.get(_kind(reference, document), 'none')
-            for reference, document in definitions.items()}
+    found = {reference: _CARRIED[severity[reference]] or _BASE_STATE.get(_kind(reference, document), 'none')
+             for reference, document in definitions.items()}
+    for reference, state in (local or {}).items():
+        if reference in found and _kind(reference, definitions[reference]) == 'environment':
+            found[reference] = state
+    return found

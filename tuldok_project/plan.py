@@ -4,11 +4,13 @@ Owns docs/plans/definition-first-projects/spec-m4.md. make_plan is a pure
 function of the decoded definitions (reference -> document): it follows the
 input, environment and subject edges from the targets, but never out of a
 blocked step or into a blocked subject recipe, puts what it reaches in
-graph.order, gives each step an action from graph.states, explains each blocked
+graph.order, gives each step an action from graph.states (with the
+environments' states recorded on this machine, spec-m5.md section 5: a ready
+environment is not something to set up), explains each blocked
 step by its root causes, found over the whole graph (definitions whose own earlier_work.rebuild is no or
 needs-work), and adds up the figures the build steps declare in
 run.resources. build_plan reads the definitions from a Project's database copy
-and calls it. Making a plan runs nothing and opens no file: no command, no
+and the recorded environment states and calls it. Making a plan runs nothing and opens no file: no command, no
 estimate command, nothing on disk; an estimate is always null here.
 """
 from collections import deque
@@ -18,7 +20,7 @@ from . import documents, graph
 from .store import ProjectError
 
 BUILT_KINDS = ('dataset', 'recipe', 'step', 'benchmark')
-ACTIONS = ('build', 'set-up', 'blocked')
+ACTIONS = ('build', 'set-up', 'blocked', 'ready')
 RESOURCES = ('gpu', 'cpu_threads', 'memory_gb', 'wall_hours', 'disk_gb')
 CAUSE_LIMIT = 5
 _CAUSE_LABELS = ('no', 'needs-work')
@@ -138,7 +140,7 @@ def _subjects(document, states):
 
 def _action(kind, state):
     if kind == 'environment':
-        return 'set-up' if state == 'not-set-up' else None
+        return 'ready' if state == 'ready' else 'set-up'  # not-set-up, or failing its last check
     if state == 'not-built':
         return 'build'
     if state in ('cannot-rebuild', 'needs-work'):
@@ -153,8 +155,11 @@ def _total(steps, field):
     return round(math.fsum(numbers), 6), len(declared) - len(numbers)
 
 
-def make_plan(definitions, targets, *, every=False):
+def make_plan(definitions, targets, *, every=False, local=None):
     """The plan for targets over {reference: document}, as section 3 and 4 of spec-m4.md describe it.
+
+    local is graph.states' mapping of environment references to the state
+    recorded on this machine; without it every environment is not-set-up.
 
     every adds every dataset, recipe, step and benchmark to the targets. A
     chart target is replaced by its benchmark; a model target adds nothing
@@ -179,7 +184,7 @@ def make_plan(definitions, targets, *, every=False):
             notes.append(f'{reference} is a model; a model is not built, only the recipes that train it.')
         if reference not in resolved:
             resolved.append(reference)
-    states = graph.states(definitions)
+    states = graph.states(definitions, local)
     members = _closure(definitions, edges_from, states,
                        [reference for reference in resolved if _kind(reference) != 'model'])
     members = {reference for reference in members if _kind(reference) not in ('model', 'chart')}
@@ -233,4 +238,4 @@ def build_plan(project, targets, *, every=False):
                                references=[reference])
         if reference not in definitions:
             raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
-    return make_plan(definitions, targets, every=every)
+    return make_plan(definitions, targets, every=every, local=project._local_states())

@@ -84,7 +84,7 @@ class Closure(PlanCase):
         self.mark('datasets/waves', 'no', 'The scenes were made by hand.')
         made = self.make('recipes/stepper-k1')
         self.assertEqual(_references(made), ['recipes/stepper-k1'])  # not its dataset, solver or environment
-        self.assertEqual(made['counts'], {'build': 0, 'set-up': 0, 'blocked': 1})
+        self.assertEqual(made['counts'], {'build': 0, 'set-up': 0, 'blocked': 1, 'ready': 0})
         self.assertEqual(made['steps'][0]['blocked_by'], [{'reference': 'datasets/waves', 'rebuild': 'no',
                                                            'reason': 'The scenes were made by hand.'}])
         # A cause is a step when it is a target itself.
@@ -126,7 +126,7 @@ class Closure(PlanCase):
         self.assertEqual(made['targets'], ['models/stepper'])
         self.assertEqual(made['steps'], [])
         self.assertTrue(made['buildable'])
-        self.assertEqual(made['counts'], {'build': 0, 'set-up': 0, 'blocked': 0})
+        self.assertEqual(made['counts'], {'build': 0, 'set-up': 0, 'blocked': 0, 'ready': 0})
         self.assertEqual(made['notes'], ['models/stepper is a model; a model is not built, '
                                          'only the recipes that train it.'])
 
@@ -178,7 +178,7 @@ class Steps(PlanCase):
             'recipes/early-fit': ('cannot-rebuild', 'blocked'),
             'benchmarks/rollout': ('not-built', 'build'),
         })
-        self.assertEqual(made['counts'], {'build': 4, 'set-up': 1, 'blocked': 2})
+        self.assertEqual(made['counts'], {'build': 4, 'set-up': 1, 'blocked': 2, 'ready': 0})
         self.assertFalse(made['buildable'])
         self.assertEqual(made['blocked_targets'], ['recipes/stepper-k2', 'recipes/early-fit'])
 

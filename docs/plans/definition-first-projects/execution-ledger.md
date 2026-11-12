@@ -153,3 +153,43 @@ Command for all Tuldok tests as before: 261 tests.
 **Follow-ups, none blocking:** `plan.py` reads all documents through the private `Project._documents`; a public accessor belongs with the other private-name cleanups. No lab definition declares `wall_hours`, so plans show no time.
 
 **Next:** milestone 5, environments. Its acceptance installs packages (about 1 GB for the CPU environment, several GB for the GPU one), which needs the owner's go-ahead.
+
+## 2026-11-12 — milestone 5, environments
+
+**Owner decision:** code and tests only, plus connecting the two environments that already exist on the owner's machine. Nothing downloaded or installed. Spec: [spec-m5.md](spec-m5.md).
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: spec `1a788494`, then the environments slice.
+
+| Slice | Files | Result |
+| --- | --- | --- |
+| T10 environments | `tuldok_project/environments.py`, `tuldok_project/local.py`, hooks in `store.py`, `graph.states(definitions, local)`, the `ready` action in `plan.py`, five commands, `tests/test_tuldok_project_environments.py`, the "Environments" contract section | 41 new tests; every install in tests runs a stand-in for `uv` |
+
+Command for all Tuldok tests as before: 302 tests, 71 s.
+
+**Acceptance, on the lab project** (throwaway database, local home in a scratch directory):
+
+| Step | Result |
+| --- | --- |
+| `connect lab-cpu <lab>/.venv/bin/python` | ready: Python 3.12.3, numpy 2.3.5, torch 2.8.0+cpu |
+| `connect cuda-torch <Pumas>/torch-versions/v2.14.0/venv/bin/python` | ready: Python 3.14.7, numpy 2.5.3, torch 2.14.0+cu132, CUDA 13.2 on the RTX 5090 Laptop GPU |
+| `set-up lab-cpu --dry-run` | prints `uv venv --python 3.12 <target>` and `uv pip install ... -r tuldok/requirements-cpu.lock --extra-index-url https://download.pytorch.org/whl/cpu`; nothing run, nothing created |
+| `set-up cuda-torch --dry-run` | refused: the definition has no `install.requirements` |
+| `plan recipes/pilot-dense-k1` | both environments `ready`, nothing to set up |
+
+**Accepted as implemented:**
+
+- The check reads versions with `importlib.metadata` and imports nothing, except `torch` for a `cuda` environment.
+- A failed check is a stored result with problems; the record is kept so they can be read.
+- Editing an environment definition does not clear its stored result; the state is as of the last check.
+- An environment's record is dropped when its definition is removed.
+- A dry run still refuses for a missing `install` section, a missing installer or a non-empty target.
+- The installer's commands inherit the caller's environment and run in their own process group with a one-hour limit; the log is replaced on each set-up.
+- New `ProjectError` codes: `not-set-up`, `no-install`, `no-installer`, `target-exists`, `install-failed`.
+
+**Not verified:** a real `uv venv` or `uv pip install`; the probe on Python other than 3.12 and 3.14 (it ran on both in the acceptance run); a failing GPU.
+
+**One deviation by the implementing agent:** it ran `connect` once against `/usr/bin/python3`, outside the repository's virtual environment, during a manual demonstration. The probe is read-only and the demonstration project was removed.
+
+**Open:** the lab has no lock file for the GPU environment, so `cuda-torch` can be connected but not installed. Running a definition's `estimate` command moved to milestone 6.
+
+**Next:** milestone 6, build: runs from a commit, the launcher and queue, products, live progress, results published by the run. Its acceptance trains one tiny model on the GPU, which needs the owner's go-ahead.

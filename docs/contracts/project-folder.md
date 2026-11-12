@@ -580,7 +580,7 @@ A state is worked out from the definitions, never stored in a file:
 | `cannot-rebuild` | its `earlier_work.rebuild` is `no`, or something it uses through an input, directly or further up, is `cannot-rebuild` |
 | `needs-work` | not `cannot-rebuild`, and its `earlier_work.rebuild` is `needs-work` or something it uses through an input is `needs-work` |
 | `not-built` | any other dataset, recipe, benchmark or step |
-| `not-set-up` | an environment |
+| `not-set-up`, `ready`, `failing` | an environment, by what this machine records for it (see [Environments](#environments)) |
 | `none` | a model or a chart |
 
 Options:
@@ -588,7 +588,7 @@ Options:
 | Option | Commands | Meaning |
 | --- | --- | --- |
 | `--database-url URL` | all but `check` | The Postgres database. Without it, the `TULDOK_DATABASE_URL` environment variable is used; with neither, the command stops with exit status 2. |
-| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan` | Print one JSON document with the same content as the text. |
+| `--json` | `open`, `list`, `show`, `graph`, `status`, `save`, `results`, `values`, `import-values`, `chart`, `plan`, `environments`, `connect`, `check-environment`, `set-up` | Print one JSON document with the same content as the text. |
 | `--rebind` | all that open | The copy is bound to the folder it was first opened from. Opening the same project from another path is refused unless `--rebind` is given, which binds the copy to the new path. |
 | `--keep` | all that open | Where a file changed on disk and the same definition has unsaved edits, keep the edits; the changed file becomes the version that `save` replaces. |
 | `--discard` | all that open | Where a file changed on disk and the same definition has unsaved edits, drop the edits and take the file. |
@@ -874,7 +874,8 @@ reference), numbered from 1. Each step has one action:
 
 | Action | For |
 | --- | --- |
-| `set-up` | an environment (state `not-set-up`) |
+| `set-up` | an environment in state `not-set-up`, or `failing` (the text says its last check failed) |
+| `ready` | an environment in state `ready`; it is not counted as something to set up |
 | `build` | a dataset, recipe, step or benchmark in state `not-built` |
 | `blocked` | a definition in state `cannot-rebuild` or `needs-work`, and a benchmark with no subject to run |
 
@@ -905,7 +906,8 @@ The totals count `build` steps only:
 ### Text output
 
 The text is one opening sentence (how many steps there are to build, to set up
-and blocked, and whether the targets can be built), then one line per step with
+and blocked, how many environments are ready when any is, and whether the
+targets can be built), then one line per step with
 its number, action, GPU (`yes` for `gpu: true`, otherwise `-`: a step that
 does not declare `gpu` needs none), disk and time as declared (`?` when not
 declared) and its reference. Under a step are what it uses (each input by name,
@@ -961,7 +963,7 @@ With `--json`, `plan` prints one object:
 | `every` | true with `--all` |
 | `buildable` | true when no target is blocked |
 | `blocked_targets` | the targets that are blocked |
-| `counts` | the number of steps of each action: `{"build", "set-up", "blocked"}` |
+| `counts` | the number of steps of each action: `{"build", "set-up", "blocked", "ready"}` |
 | `gpu_steps` | how many build steps declare `gpu: true` |
 | `disk_gb`, `disk_unknown` | the sum of the declared `disk_gb` over build steps, and how many build steps declare none |
 | `wall_hours`, `wall_unknown` | the same for `wall_hours` |
@@ -974,7 +976,7 @@ Each step:
 | --- | --- |
 | `number` | its place in the order, from 1 |
 | `reference`, `kind`, `title`, `state` | from the definition; the state as `list` shows it |
-| `action` | `build`, `set-up` or `blocked` |
+| `action` | `build`, `set-up`, `blocked` or `ready` |
 | `command`, `environment` | from `run`, placeholders not filled in; null when absent |
 | `inputs` | each input name to `{"reference", "output"}`; `output` is null for a whole product |
 | `resources` | `gpu`, `cpu_threads`, `memory_gb`, `wall_hours`, `disk_gb` as declared; null when not declared (a null `gpu` means no GPU is needed) |
@@ -983,12 +985,216 @@ Each step:
 | `blocked_by_more` | how many more causes there are |
 | `subjects` | benchmarks only: `run`, the subject names that would run, and `skipped`, each `{"name", "recipe", "reason"}` |
 
+## Environments
+
+An `environment` definition says what an interpreter must be: a Python
+version, a device and exact package versions. Which interpreter fulfils it is
+a fact about one machine, so it is never written to the folder. Tuldok records
+it in the project's database schema, in the table `environments`, one row per
+environment that has an interpreter on this machine:
+
+| Column | Content |
+| --- | --- |
+| `name` | the environment's name, as in `environments/<name>` |
+| `interpreter` | the absolute path of the Python executable, exactly as it was given |
+| `origin` | `connected` (an existing interpreter was named) or `installed` (Tuldok installed it) |
+| `recorded_at` | when the interpreter was recorded |
+| `checked_at` | when it was last checked; null before the first check |
+| `ok` | whether the last check passed |
+| `found` | what the last check saw: the Python version, each package's installed version (null when not installed), the interpreter's own path, and for a `cuda` check what torch says about CUDA |
+| `problems` | the sentences saying why the last check failed; empty when it passed |
+
+Removing an environment definition, or deleting its file, drops its row. The
+row never deletes an installed directory.
+
+Environments that Tuldok installs live in the project's local home,
+`$TULDOK_PROJECT_HOME/<project id>/`, where `TULDOK_PROJECT_HOME` defaults to
+`~/.local/share/tuldok/projects`. An installed environment is the directory
+`<local home>/environments/<name>/`, with its log beside it as
+`<local home>/environments/<name>.log`. The local home is made the first time
+something is installed.
+
+### States
+
+| State | When |
+| --- | --- |
+| `not-set-up` | no interpreter is recorded for the environment on this machine |
+| `ready` | its last check passed |
+| `failing` | its last check did not pass |
+
+The state comes from the stored result of the last check. Opening a project
+never runs a check, so `list`, `show`, `graph` and `plan` show what the last
+check found, however long ago it ran; `check-environment` runs it again. No
+other definition's state depends on an environment's. A change to an
+environment definition does not change the stored result until the next check.
+
+### The check
+
+The check runs the recorded interpreter once, as a child process:
+
+```
+INTERPRETER -I -c PROBE '{"device": ..., "packages": {...}}'
+```
+
+The child gets an environment of `PATH=/usr/bin:/bin`, `LANG=C.UTF-8` and
+`HOME` set to a new empty temporary directory, which is also its working
+directory and is removed afterwards. It has 180 seconds. Its output is
+captured and never shown as it is. No project code is involved.
+
+The probe reads each package's installed version with `importlib.metadata`
+and imports no package, with one exception: when the device is `cuda` and
+`torch` is among the packages, it imports `torch` and reports whether CUDA is
+available, the CUDA version, the first device's name and the first line of
+`/proc/driver/nvidia/version` when that file exists. It works on Python 3.10
+to 3.14 and prints one JSON object.
+
+The check passes when all of these hold:
+
+| Rule | A failure reads |
+| --- | --- |
+| the Python version's major.minor is the definition's `python` | `Python is 3.11.9; the definition asks for 3.12.` |
+| every package is installed | `numpy is not installed; the definition asks for 2.3.5.` |
+| every package's version is exactly the definition's | `jsonschema is 4.26.0; the definition asks for 4.25.0.` |
+| for device `cuda`, `torch` is among the packages | `The device is cuda but torch is not among the packages, so the check cannot see the GPU.` |
+| for device `cuda`, torch reports CUDA as available | `CUDA is not available to torch.` |
+
+A probe that cannot be started, takes longer than 180 seconds, exits with an
+error, or prints anything other than the expected object is a failed check
+with one problem saying which, followed by the first 400 characters of its
+error output. A failed check is recorded like any other result.
+
+### Connect
+
+`connect` records an existing interpreter, with origin `connected`, and then
+checks it. The interpreter is named by an absolute path to an executable
+file. A symbolic link is allowed, and the path is stored as given, not
+resolved, so a virtual environment's `bin/python` stays that environment's.
+The record is kept whether or not the check passes, so its problems can be
+read with `environments`.
+
+### Set-up
+
+`set-up` installs the environment its definition describes, then records it
+with origin `installed` and checks it. It needs the definition's
+`install.requirements`; without it, the refusal says to connect an existing
+interpreter instead. The installer is `uv`: the program named by the
+`TULDOK_UV` environment variable, otherwise `uv` on `PATH`; with neither, it is
+refused.
+
+These two commands run in order, with the code root as the working directory
+and up to one hour each:
+
+```
+uv venv --python PYTHON TARGET
+uv pip install --python TARGET/bin/python -r CODE_ROOT/REQUIREMENTS [--extra-index-url URL]...
+```
+
+`TARGET` is `<local home>/environments/<name>`, `PYTHON` the definition's
+`python`, `REQUIREMENTS` its `install.requirements`, and there is one
+`--extra-index-url` for each of its `install.index_urls`. The output of both
+goes to `TARGET.log`, which is replaced each time.
+
+| Option | Meaning |
+| --- | --- |
+| `--dry-run` | Prints each command on its own line as it would be run, then the target and the log path. Nothing is made and nothing is run. |
+| `--replace` | A target that exists and is not empty is refused without this option; with it, the target is removed first. |
+
+When a command fails or runs out of time, the half-made target is removed,
+the log is kept, nothing is recorded, and the refusal ends with the last lines
+of the log. Any record the environment had before is left as it was; when
+that record was the installed target that `--replace` removed, its next check
+fails.
+
+### Disconnect
+
+`disconnect` removes the record, so the environment is `not-set-up` again. It
+never deletes an installed directory; when the origin was `installed` it
+prints that directory's path, to delete by hand when it is no longer needed.
+
+### Commands
+
+| Command | Does |
+| --- | --- |
+| `environments` | Prints one row per environment: reference, state, origin, when it was last checked and the interpreter; under it the versions the last check found (with what the definition asks for where they differ) and its problems, or how to set it up. A closing line says how many are ready. |
+| `connect ENVIRONMENT INTERPRETER` | Records and checks an existing interpreter. Exit status 1 when the check fails. |
+| `check-environment [ENVIRONMENT...]` | Checks the named environments again, or every recorded one when none is named. Exit status 1 when any fails, or when a named one is not set up. |
+| `set-up ENVIRONMENT [--dry-run] [--replace]` | Installs, records and checks the environment, or with `--dry-run` prints what it would run. Exit status 1 when it is refused, a command fails, or the check fails. |
+| `disconnect ENVIRONMENT` | Removes the record. |
+
+An environment may be named bare (`lab-cpu`) or as a reference
+(`environments/lab-cpu`). `--json` prints one JSON document for
+`environments`, `connect`, `check-environment` and `set-up`; each environment
+in it has the definition's `python`, `device` and `packages`, whether it has
+an install section (`installable`), its `state`, and the record's columns
+(null when there is no record).
+
+In these examples `FOLDER` is a copy of the test project whose `lab-cpu`
+asks for `jsonschema` and is connected to Tuldok's own `.venv/bin/python`.
+Long paths are shortened: `VENV` is that `.venv`, `CODE` the code root,
+`LOCAL` the project's local home and `UV` the `uv` found on `PATH`.
+
+```
+$ .venv/bin/python -m tuldok_project environments FOLDER
+environment           state       origin  last check  interpreter
+environments/lab-cpu  not-set-up  -       -           -
+    not set up on this machine; run set-up or connect an interpreter
+
+0 of 1 environment ready on this machine.
+$ .venv/bin/python -m tuldok_project set-up FOLDER lab-cpu --dry-run
+Would set up environments/lab-cpu by running, in CODE:
+UV venv --python 3.12 LOCAL/environments/lab-cpu
+UV pip install --python LOCAL/environments/lab-cpu/bin/python -r CODE/requirements.txt --extra-index-url https://pypi.org/simple
+target  LOCAL/environments/lab-cpu
+log     LOCAL/environments/lab-cpu.log
+Nothing was run.
+$ .venv/bin/python -m tuldok_project connect FOLDER lab-cpu VENV/bin/python
+Recorded VENV/bin/python for environments/lab-cpu.
+environments/lab-cpu is ready: the check passed.
+  python 3.12.3 (asks 3.12)
+  jsonschema 4.26.0
+$ .venv/bin/python -m tuldok_project environments FOLDER
+environment           state  origin     last check        interpreter
+environments/lab-cpu  ready  connected  2026-11-12 00:31  VENV/bin/python
+    python 3.12.3 (asks 3.12)
+    jsonschema 4.26.0
+
+1 of 1 environment ready on this machine.
+```
+
+A path with spaces or other characters the shell would split is quoted in
+`--dry-run`'s commands, so a line can be pasted into a shell as it is. When
+the check fails, `connect` exits with status 1 and the plan sets the
+environment up again:
+
+```
+$ .venv/bin/python -m tuldok_project connect FOLDER lab-cpu VENV/bin/python
+Recorded VENV/bin/python for environments/lab-cpu.
+environments/lab-cpu is failing: the check found 1 problem.
+  python 3.12.3 (asks 3.12)
+  jsonschema 4.26.0 (asks 4.25.0)
+  problem: jsonschema is 4.26.0; the definition asks for 4.25.0.
+$ .venv/bin/python -m tuldok_project plan FOLDER steps/solver
+1 step to build, 1 to set up, 0 blocked: steps/solver can be built.
+
+#  action  gpu  disk  time   reference
+1  set-up  -    -     -      environments/lab-cpu
+                               its last check failed; see environments
+2  build   -    ?     0.1 h  steps/solver
+                               in environments/lab-cpu
+...
+```
+
+With the environment ready, the same plan begins
+`1 step to build, 0 to set up, 0 blocked, 1 ready: steps/solver can be built.`
+and the environment's line has the action `ready`.
+
 ## What the format does not do yet
 
 The folder is checked, can be opened, edited and saved through the database
-copy, its results can be read and drawn, and a build can be planned, nothing more. Tuldok does not yet run any command,
-estimate, install an environment, compare installed package versions, write
+copy, its results can be read and drawn, a build can be planned, and its
+environments can be connected, checked and installed, nothing more. Tuldok
+does not yet run any definition's command or `estimate` command, write
 settings files or read the contents of notes. The `run`, `resources`,
-`estimate`, `install` and `settings` fields record what a later Tuldok will use.
+`estimate` and `settings` fields record what a later Tuldok will use.
 
 Background: [the design notes for this format](../plans/definition-first-projects/).
