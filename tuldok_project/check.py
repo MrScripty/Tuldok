@@ -5,7 +5,8 @@ docs/plans/definition-first-projects/spec-m1-m2.md are applied and the rules
 that are neither layout (folder.py), single-field syntax (documents.py and the
 schemas) nor summary-file content (results.py): kind against directory, cards,
 placeholders in context, benchmark uniqueness rules, references and named
-outputs, charts against their benchmark, cycles, and paths into the code root.
+outputs, charts against their benchmark, cycles, and paths into the code root
+(in definitions and in the code_paths of tuldok.json).
 Problems are collected, never raised, so one bad file never hides another.
 """
 from dataclasses import dataclass, field
@@ -60,6 +61,8 @@ def check_folder(folder, *, code=True):
     unsound = {problem.path for problem in problems if problem.severity == 'error'}
 
     code_root = _code_root(project, read.root, add) if code and project is not None else None
+    if project is not None:
+        check_project_code_paths(project, code_root, add)
     for definition in read.definitions:
         if definition.document is not None:
             check_code_paths(definition, code_root, add)
@@ -204,19 +207,41 @@ def check_code_paths(definition, code_root, add):
     document, path = definition.document, definition.path
     missing = 'warning' if 'earlier_work' in document else 'error'
     for pointer, value in _code_paths(document):
+        if isinstance(value, str):
+            _check_code_path(value, code_root, path, pointer, missing, add)
+
+
+def check_project_code_paths(project, code_root, add):
+    """Report tuldok.json code_paths that are malformed, repeated, escape the code root or do not exist (None skips lookups)."""
+    paths = project.get('code_paths')
+    if not isinstance(paths, list):
+        return  # absent means the whole code root; a wrong type is a schema problem
+    seen = set()
+    for index, value in enumerate(paths):
         if not isinstance(value, str):
             continue
-        wrong = documents.relative_path_problem(value)
-        if wrong:
-            add('error', path, pointer, f'The path {value!r} {wrong}.')
+        pointer = documents.pointer('code_paths', index)
+        if value in seen:
+            add('error', folder_reader.PROJECT_FILE, pointer,
+                f'The code path {value!r} is listed more than once; list each path once.')
             continue
-        if code_root is None:
-            continue
-        resolved = os.path.realpath(os.path.join(code_root, value))
-        if resolved != code_root and not resolved.startswith(code_root + os.sep):
-            add('error', path, pointer, f'The path {value!r} leads outside the code root through a symbolic link; point at a file inside it.')
-        elif not os.path.exists(resolved):
-            add(missing, path, pointer, f'The path {value!r} does not exist under the code root; fix the path or add the file.')
+        seen.add(value)
+        _check_code_path(value, code_root, folder_reader.PROJECT_FILE, pointer, 'error', add)
+
+
+def _check_code_path(value, code_root, path, pointer, missing, add):
+    """Report one path relative to the code root: its form, then (unless code_root is None) where it leads."""
+    wrong = documents.relative_path_problem(value)
+    if wrong:
+        add('error', path, pointer, f'The path {value!r} {wrong}.')
+        return
+    if code_root is None:
+        return
+    resolved = os.path.realpath(os.path.join(code_root, value))
+    if resolved != code_root and not resolved.startswith(code_root + os.sep):
+        add('error', path, pointer, f'The path {value!r} leads outside the code root through a symbolic link; point at a file inside it.')
+    elif not os.path.exists(resolved):
+        add(missing, path, pointer, f'The path {value!r} does not exist under the code root; fix the path or add the file.')
 
 
 # ----------------------------------------------------------- across files

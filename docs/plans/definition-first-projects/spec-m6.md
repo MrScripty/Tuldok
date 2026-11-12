@@ -26,12 +26,12 @@ This continues the earlier specs in this folder. Section 1 of [spec-m1-m2.md](sp
 1. The code root must be inside a Git work tree; otherwise refuse and say a scratch run is the only option.
 2. `commit` is `git rev-parse HEAD`. The run is **clean** when `git status --porcelain --untracked-files=no -- <code paths>` prints nothing.
 3. A dirty tree is refused, naming up to ten changed files, unless the caller asked for a scratch run.
-4. For a clean run the snapshot directory is `<local home>/code/<commit>/`. If it does not exist it is made by `git archive <commit> -- <code paths>` extracted into a temporary directory beside it, made read-only, then renamed into place. It is shared by every run at that commit. The path of the code root inside the repository is preserved, so the snapshot's code root is `<snapshot>/<prefix>`.
+4. For a clean run the snapshot directory is `<local home>/code/<commit>/`, or `<local home>/code/<commit>-<digest>/` when there are `code_paths`, the digest being the first 12 hex characters of the SHA-256 of the sorted paths joined by newlines. If it does not exist it is made by `git archive <commit> -- <code paths>` extracted into a temporary directory beside it, made read-only, then renamed into place. It is shared by every run at that commit with those paths. The path of the code root inside the repository is preserved, so the snapshot's code root is `<snapshot>/<prefix>`.
 5. A scratch run uses the code root in place and has `scratch` true.
 
 `snapshot.changed_since(code_root, commit) -> set of paths` is `git diff --name-only <commit> HEAD` plus the paths `git status --porcelain --untracked-files=no` reports, relative to the code root; used for the out-of-date state.
 
-Git is run with `git -C <dir>`, a fixed argument list, no shell, `GIT_OPTIONAL_LOCKS=0`, and a 60 second limit.
+Git is run with `git -C <dir>`, a fixed argument list, no shell, `GIT_OPTIONAL_LOCKS=0`, and a 60 second limit (ten minutes for `git archive`). `prepare` takes a `scratch` keyword, and errors are `SnapshotError` with a code.
 
 ## 3. The launcher
 

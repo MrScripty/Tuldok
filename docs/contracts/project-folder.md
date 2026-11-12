@@ -81,6 +81,11 @@ holding one JSON object. The checker refuses:
 | `id` | yes | 32 lowercase hexadecimal characters; make a new one per project |
 | `name` | yes | 1 to 120 characters |
 | `code_root` | no | the path from the project folder to the root of the code that commands run in; default `.`; not empty and not absolute; may contain `..` |
+| `code_paths` | no | 1 to 64 paths relative to the code root, in normal form (no `..`, no empty or `.` parts, no trailing `/`), each listed once and each existing under the code root; default: the whole code root |
+
+`code_paths` names the parts of the repository a run needs: a run sees a
+read-only copy of only those paths at the commit it runs from, and only
+changes to tracked files under them stop a run that is not a scratch run.
 
 The **code root** is the directory that commands run in and that code paths in
 definitions are relative to. It must be an existing directory. A folder kept at

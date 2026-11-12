@@ -538,6 +538,56 @@ class CodeRootPaths(FixtureCopy):
         self.assertProblem(check_folder(self.project, code=False), 'recipes/stepper-k1.json', '/run/sources/0')
 
 
+class ProjectCodePaths(FixtureCopy):
+    """The optional code_paths of tuldok.json (spec-m6.md section 2)."""
+
+    def test_existing_paths_pass(self):
+        self.edit('tuldok.json', '/code_paths', ['lab', 'configs/stepper.json', 'requirements.txt'])
+        self.assertClean(check_folder(self.project))
+
+    def test_must_list_one_to_sixty_four_paths(self):
+        for label, value in (('empty', []), ('too many', [f'p{i}' for i in range(65)]), ('not a list', 'lab'),
+                             ('not strings', [3])):
+            with self.subTest(label):
+                self.setUp()
+                self.edit('tuldok.json', '/code_paths', value)
+                pointer = '/code_paths/0' if label == 'not strings' else '/code_paths'
+                self.assertProblem(check_folder(self.project, code=False), 'tuldok.json', pointer)
+
+    def test_paths_must_be_in_normal_form(self):
+        for value in ('lab//train.py', './lab', 'lab/', '/abs', '../code/lab'):
+            with self.subTest(value):
+                self.setUp()
+                self.edit('tuldok.json', '/code_paths', ['configs', value])
+                self.assertProblem(check_folder(self.project), 'tuldok.json', '/code_paths/1')
+
+    def test_paths_are_listed_once(self):
+        self.edit('tuldok.json', '/code_paths', ['lab', 'configs', 'lab'])
+        problem = self.assertProblem(check_folder(self.project), 'tuldok.json', '/code_paths/2')
+        self.assertIn('more than once', problem.message)
+
+    def test_missing_path_is_an_error(self):
+        self.edit('tuldok.json', '/code_paths', ['lab', 'missing'])
+        problem = self.assertProblem(check_folder(self.project), 'tuldok.json', '/code_paths/1')
+        self.assertIn('does not exist', problem.message)
+
+    def test_path_may_not_escape_through_a_symbolic_link(self):
+        outside = self.base / 'outside'
+        outside.mkdir()
+        os.symlink(outside, self.code / 'escape')
+        self.edit('tuldok.json', '/code_paths', ['escape'])
+        self.assertProblem(check_folder(self.project), 'tuldok.json', '/code_paths/0')
+
+    def test_no_code_skips_lookups_but_not_form_or_repeats(self):
+        self.edit('tuldok.json', '/code_paths', ['missing'])
+        self.assertClean(check_folder(self.project, code=False))
+        self.edit('tuldok.json', '/code_paths', ['missing', 'missing', 'a/../b'])
+        report = check_folder(self.project, code=False)
+        self.assertProblem(report, 'tuldok.json', '/code_paths/1', alone=False)
+        self.assertProblem(report, 'tuldok.json', '/code_paths/2', alone=False)
+        self.assertEqual(len(report.problems), 2)
+
+
 # ------------------------------------------------------------ 2.8 results
 
 class ResultsFiles(FixtureCopy):

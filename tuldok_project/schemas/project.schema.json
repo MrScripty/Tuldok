@@ -29,6 +29,17 @@
       "minLength": 1,
       "pattern": "^[^/]",
       "description": "a relative path from the project folder to the code root, never absolute"
+    },
+    "code_paths": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "description": "1 to 64 paths relative to the code root: the parts of the repository a run needs",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1024
+      }
     }
   }
 }
