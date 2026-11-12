@@ -1,0 +1,77 @@
+# Capability check: what deleting the old project mode removes
+
+**Status: written 2026-11-12 for the owner's sign-off. Not signed. Nothing is deleted until it is.**
+
+The [plan](plan.md) deletes the old project-files mode in milestone 8 on one condition: a written check that lists every capability of that mode as covered, moved or deliberately dropped, signed off by the owner. This is that check. It is a list of what Tuldok can do today through `python app.py --project-files-root ...` and what happens to each thing when that mode is gone.
+
+## The short answer
+
+For what the lab uses a project for (definitions, runs, results, charts, environments), the new format covers it. Four things are not covered and would be gone from projects:
+
+1. **Annotated data inside a project.** Records, imports, annotation, review, saved searches, selections and frozen releases exist in the new format nowhere. They stay available in catalog mode, which this plan does not change. A project folder cannot hold them until the annotation plan is written.
+2. **The interactive project page.** The old page browses data, the experiment graph, progressions and measurements. The new page shows the report only, until the workspace screens have their plan.
+3. **Studies, trials and candidate selection** as records Tuldok keeps. A trial becomes a recipe; the grouping lives in labels and notes.
+4. **Reading a run's files through the agent interface.** An agent can read a run's record, its progress and the end of its logs, but not fetch its weights or other outputs; those are files on the same machine.
+
+## What would be deleted
+
+| What | Size |
+| --- | --- |
+| 38 Python modules that only the old mode reaches | 20,854 lines |
+| The old project page and the extraction page, with their scripts and styles under `static/` | 3,263 lines in 10 files |
+| 145 `project_files.*` and 5 `project_transfer.*` operations in `agent_api.py`, the `project` capability profile, the two owner clients and their `mcp_stdio.py` flags | |
+| 74 test files that import one of those modules | 21,791 lines |
+| The documentation of the old mode under `docs/contracts/` and its plans | |
+
+The 38 modules: `project_artifacts`, `project_cli`, `project_composition`, `project_custody`, `project_data`, `project_data_fork`, `project_dispatch`, `project_execution`, `project_extraction`, `project_files`, `project_fork`, `project_fork_composition`, `project_history`, `project_locks`, `project_material`, `project_material_fork`, `project_measurements`, `project_native_execution`, `project_native_preparation`, `project_native_process`, `project_producer_execution`, `project_producers`, `project_projection`, `project_record_dedupe`, `project_runtime`, `project_session`, `project_sources`, `project_store`, `project_study_execution`, `project_text`, `project_transfer`, `project_transfer_controller`, `project_validation_cache`, `project_validation_delta`, `project_working_store`, `project_workspace`, `retained_measurements`, `native_process_bootstrap`.
+
+**What stays:** catalog mode and everything it uses, including `projects.py` and `project_activity.py` (catalog mode's read-only inspection of project snapshots with `--project-root`), the access layer, the agent registry and clients, and the new `tuldok_project` package.
+
+**Where the old code is tied to catalog mode.** Eight import lines in three files reach into the 38 modules, so they change before anything is deleted:
+
+| File | What it imports | What happens |
+| --- | --- | --- |
+| `app.py` | `project_workspace`, `project_transfer_controller`, `project_transfer.stop_source`, `project_store.ProjectStoreError` | the old mode's start-up flags, routes and error branches are removed |
+| `candidate_packages.py` | `ProjectHistory`, `ProjectExecution`, for two `isinstance` branches | the two branches are removed |
+| `pipeline.py` | `preparation_owner` (twice), `native_admission_wall_seconds` | the project-only branches are removed; the one small function catalog mode also uses moves into `pipeline.py` |
+
+## Every capability
+
+The old mode has 150 operations. They are grouped here by what they do; each group says what replaces it.
+
+| Group | Operations | What it did | After deletion |
+| --- | --- | --- | --- |
+| Opening, saving and files on disk | 11: `status`, `new`, `open`, `save`, `close`, `files_inspect`, `file_get`, `file_history`, `file_adopt`, `files_adopt`, `file_adopt_deletion` | Create, open, save and close a project; see and adopt files changed on disk; a file's history | **Covered**, differently. `open`, `save`, `status`, `check`, `resolve_conflict`. Files changed on disk are imported on the next operation. Nothing stays open, so there is no close. History is Git's. **Gap:** no command creates a new folder; one copies the example. A `new` command is added in milestone 8 |
+| Forks and composing | 3: `save_as`, `compose`, `fork_info` | Copy a project to an independent fork; merge retained checkpoints of several projects | **Dropped**, as the plan decided: a Git branch is a fork |
+| Data records and annotation | 30: `query`, `get`, `import_text`, `annotate`, the `data_*` reads and imports for text, image, audio, mesh, point cloud, volume, sequence and scientific fields, `data_annotate`, `data_rights`, responses and preferences, `source_register`, `source_references` | Hold data records in a project, annotate and review them, record rights, responses and preference judgments | **Not covered. Catalog mode only.** The plan put annotation data out of scope; it needs its own plan before a project folder can hold it |
+| Selections, searches, releases | 11: `selections`, `selection_*`, `searches`, `search_*`, `release_preview`, `release_freeze` | Saved selections and searches over records; freezing a dataset release with its splits | **Not covered. Catalog mode only**, with the group above |
+| Definitions | 27: `definitions`, `models`, `model_*`, `graphs`, `graph_*`, `recipes`, `recipe_*`, the material reads, `material_intent*`, `dependencies`, `policies`, `policy` | Model drafts, node graphs and recipes with revisions; immutable captured copies ("materials") of each; publishing a model | **Covered**, differently: seven kinds of plain definition file, `definitions`, `definition`, `graph`, `set_definition`, `remove_definition`, `save`. No revisions and no captured copies; Git has the history. **Not covered:** the built-in node graphs (image, text and audio classifier training), which remain in catalog mode |
+| Studies, trials, candidates, lineage | 17: `studies`, `study`, `study_create`, `study_save`, `trial`, `trial_prepare`, `candidate`, `candidate_select`, `lineage`, `lineage_record`, `progression`, `progression_origins`, `snapshot`, `evidence`, `package_state`, `publication_result`, `expose_holdout` | A study of trials with a budget; choosing a candidate; recorded lineage between runs; the progression view; recording that held-out test results were looked at | **Partly covered.** Lineage is the graph's edges; progression is a chart form ordered by `trained_at`; evidence is a recipe's card and its results. **Dropped:** studies, trials and budgets as records, candidate selection, snapshots, and the record of held-out exposure. The lab's 205 earlier models keep their study and trial origin as labels and cards |
+| Runs and execution | 24: `run`, `runs`, `run_document_segment`, `artifacts`, `artifact_status`, `artifact_resolve`, `execution_health`, the external preflight, approve, submit and cancel, the `execution_study_*` operations, `execution_reconcile_current`, `native_*` | Preflight, owner approval, submission, cancel, retry and recovery of runs; reading a run's documents and artifacts in pieces | **Covered:** `plan`, `request_build`, `approve_build`, `decline_build`, `cancel_build`, `build_requests`, `runs`, `run`, `progress`, `products`, `cancel_run`, `stop_run`. A retry is a new request. **Not covered:** reading a run's output files through the interface |
+| Producers | 8: `producers`, `producer`, `execution_producer_*`, `execution_generation_resume`, `execution_grounded_review` | Image generation, grounded review and caption or label proposals run inside a project | **Not covered. Catalog mode only** |
+| Measurements and analysis | 9: `measurement_*`, `retained_analysis`, `retained_analysis_export` | Import result sets, query and compare them, inspect one observation with its evidence, export an analysis | **Covered:** `import_values`, `results_overview`, `results`, `values`, `chart` (ranking, tradeoff, progression, comparison), `report`. Summaries are rows in the database, not documents re-read per request. **Not covered:** the pointer from one observation back to its evidence file, and interactive charts |
+| Runtimes | 5: `runtime_sources`, `runtime_inspect`, `runtime_capture`, `runtime_status`, `runtime_abandon` | Capture a copy of a Python environment with a listing of its files | **Covered**, differently: `environments`, `environment`, `connect_environment`, `check_environment`, and `set-up` on the command line. Versions are checked; nothing is copied or listed per file |
+| Extraction from a catalog | 5: `project_transfer.*` | Stop a legacy catalog and extract it into a project | **Dropped.** The one project that needed converting is the lab, which its own script converts |
+
+Outside the operations:
+
+| Capability | After deletion |
+| --- | --- |
+| The old command line, `project_cli.py` | Replaced by `python -m tuldok_project` |
+| Opening the lab's old folder (`projects/rheon-model-portfolio-unified-04`) in Tuldok | Gone. The lab's converter reads that folder's files directly, and the old code stays in Git history |
+| Byte-identical save, receipts, custody and checkpoint proofs | Dropped, as the plan decided |
+
+## Before deletion, in milestone 8
+
+These are done first, so the deletion removes nothing the lab still needs:
+
+1. The lab's earlier weights and prepared inputs are adopted as products into Tuldok's per-project directory (owner decision, 2026-11-12: they stay on this machine and never go into Git).
+2. The lab repository holds the new folder only, and the clean-install test of the plan's summary passes.
+3. The eight import lines above are cut and catalog mode's tests pass.
+4. A `new` command exists.
+
+## Sign-off
+
+The owner signs by saying so; the date and the words are recorded here and in the ledger.
+
+- [ ] I accept that projects lose annotated data, the interactive page, studies and trials, and reading run files through the interface, as listed above, and the old project mode may be deleted.

@@ -56,7 +56,7 @@ Stated by the owner on 2026-11-10:
 | --- | --- | --- | --- |
 | Project folder | Definitions, notes and cards, result summaries | Yes | It is the source; Git has it |
 | Tuldok database | The imported definitions, the graph, run history, result rows and summaries, the activity log | No | Re-import the folder, then re-run or restore products |
-| Product store (a local folder) | Generated files: datasets, weights, raw result files, logs | No | Re-run the steps, or restore from a product archive (section 9) |
+| Product store (Tuldok's own directory for the project, on the machine) | Generated files: datasets, weights, raw result files, logs | No | Re-run the steps. Files that cannot be regenerated, such as the earlier weights, are single copies (section 9) |
 
 The rule for deciding where something goes: if a person or an agent wrote it, it is a definition and belongs in the folder. If a command produced it, it is a product and stays local. The one deliberate exception is the result summary, which Tuldok writes into the folder so the results travel with the project.
 
@@ -189,7 +189,9 @@ Every operation in this plan is available through the agent interface and the co
 
 ### 9. Product archive
 
-Some products cannot be regenerated or are expensive to. A product archive is a folder Tuldok writes on request, containing chosen products with their records, which can be copied to another disk or host and restored into another install. It is the answer to "where do the weights live", and it is never Git.
+**Decided by the owner on 2026-11-12: not built now.** The weights stay with Tuldok on the local system, in Tuldok's own per-project directory, and never go into the Git repository. That directory is the product store of section 1, so the question this section answered, "where do the weights live", is answered without an archive.
+
+What the section proposed, kept for when a second machine needs the products: a product archive is a folder Tuldok writes on request, containing chosen products with their records, which can be copied to another disk or host and restored into another install.
 
 ### 10. The lab project: conversion and the exception
 
@@ -248,7 +250,7 @@ Each milestone ends with a check against the lab. Sizes are relative.
 | 5 | Environments. Tuldok installs or connects an environment from its definition and checks it | Medium | On a machine without the lab's environments, Tuldok sets up the CPU and the GPU environment from their definitions and reports the versions it found. The GPU install is a multi-gigabyte download and needs the owner's go-ahead |
 | 6 | Build. Runs from a commit, per-definition limits, GPU, live progress, results published by the run | Large | On a fresh clone Tuldok builds one tiny dataset, trains one tiny model on the GPU with live progress, benchmarks it and charts it. This run needs the owner's go-ahead |
 | 7 | Serve the new core from the Tuldok app, with agent operations for all of the above | Medium | The app opens a project folder; an agent repeats milestone 6 through the interface alone |
-| 8 | Convert the lab for good, then retire the old code. Product archive, tracked export replaced, old project-files modules removed | Medium | The lab repository holds the new folder only; the clean-install test in the summary passes. Before any old module is deleted, a written check lists every capability of the old project-files mode as covered, moved or deliberately dropped, and the owner signs it off |
+| 8 | Convert the lab for good, then retire the old code. Earlier weights adopted into Tuldok's per-project directory, tracked export replaced, old project-files modules removed | Medium | The lab repository holds the new folder only; the clean-install test in the summary passes. Before any old module is deleted, a written check lists every capability of the old project-files mode as covered, moved or deliberately dropped, and the owner signs it off |
 
 The workspace redesign (the Map variant chosen on 2026-11-03) builds on milestones 2 and 3 and gets its own plan.
 
@@ -268,10 +270,14 @@ Decided by the owner on 2026-11-10:
 2. **Runs require committed code**, with a marked scratch-run escape.
 3. **Tuldok installs and configures environments.** This replaces the proposal's "checked, not installed".
 
+Decided by the owner on 2026-11-12:
+
+4. **The earlier weights stay with Tuldok on the local system**, in Tuldok's own per-project directory, which holds each project's data including its weights. They are not in the Git repository. No product archive is built now (section 9).
+
 Still open, and needed only before milestone 8:
 
-4. **Where the product archive for the earlier weights and raw results goes** (an external disk or a host).
 5. **Which earlier models to drop**, if any.
+6. **Sign-off of the [capability check](capability-check.md)** before any old module is deleted.
 
 ## Risks
 
