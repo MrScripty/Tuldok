@@ -1,0 +1,9 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "chart",
+  "title": "Error against time per wave",
+  "benchmark": "benchmarks/held-out",
+  "form": "tradeoff",
+  "metric": "error",
+  "metric_x": "time_ms"
+}

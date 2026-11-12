@@ -1,0 +1,14 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Noisy sine waves",
+  "description": "Each item is 64 samples of a noisy sine wave with a random amplitude, frequency and phase; the target is the next 16 samples of the clean wave.",
+  "run": {
+    "command": ["python", "make_waves.py", "--output", "{output}", "--seed", "7"],
+    "environment": "environments/cpu",
+    "outputs": {"data": {"path": "waves.npz", "role": "data"}},
+    "resources": {"cpu_threads": 1, "wall_hours": 0.05, "disk_gb": 0.1},
+    "sources": ["make_waves.py"]
+  },
+  "splits": {"train": 4000, "test": 400}
+}

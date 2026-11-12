@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "model",
+  "title": "Small fully connected network",
+  "description": "Three fully connected layers, 64 to 256 to 256 to 16, that read 64 samples of a wave and predict the next 16.",
+  "entry": "net:SmallNet",
+  "sources": ["net.py"]
+}

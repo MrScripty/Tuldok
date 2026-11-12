@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "environment",
+  "title": "Python 3.12 with numpy, on the CPU",
+  "python": "3.12",
+  "device": "cpu",
+  "packages": {"numpy": "2.3.5"}
+}
