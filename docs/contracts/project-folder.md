@@ -1026,8 +1026,8 @@ Removing an environment definition, or deleting its file, drops its row. The
 row never deletes an installed directory.
 
 Environments that Tuldok installs live in the project's local home,
-`$TULDOK_PROJECT_HOME/<project id>/`, where `TULDOK_PROJECT_HOME` defaults to
-`~/.local/share/tuldok/projects`. An installed environment is the directory
+`<project directory>/<project id>/`, where the project directory is the one
+[the setting](#the-project-directory-on-this-machine) names. An installed environment is the directory
 `<local home>/environments/<name>/`, with its log beside it as
 `<local home>/environments/<name>.log`. The local home is made the first time
 something is installed.
@@ -1349,7 +1349,7 @@ strays.
 ### The GPU lock
 
 A step that declares `gpu: true` holds an exclusive lock on
-`$TULDOK_PROJECT_HOME/gpu.lock` while its command runs. The lock is shared by
+`<project directory>/gpu.lock` while its command runs. The lock is shared by
 every project on this machine, so two GPU steps never run at the same time; a
 build that finds the lock taken waits for it. Steps without `gpu: true` take no
 lock.
@@ -1376,6 +1376,7 @@ others.
 | `over-disk` | stopped at, or ended over, its disk limit |
 | `cancelled` | stopped because cancellation was asked for, with `cancel` or by a signal to `build` |
 | `unknown` | how it ended is not known: its build is gone, or a process of the run could not be stopped |
+| `adopted` | nothing was run: `adopt` made files made elsewhere its product (see [Adopting existing files](#adopting-existing-files)) |
 
 ### Build states
 
@@ -1408,7 +1409,9 @@ product it is `not-built`, or `failed` when its latest run ended badly. A produc
 is `built` or `out-of-date` even when its label would make it
 `cannot-rebuild` or `needs-work`; those take precedence only when there is no
 current product. A `cancelled` run never makes a definition `failed`, and a
-definition with a current product keeps it.
+definition with a current product keeps it. A definition whose current
+product was adopted is `built` and never out of date: none of the causes above
+is looked at.
 
 In a plan, `built` is the action `built` and is not counted as work;
 `out-of-date`, `failed` and `running` are `build`, and the plan says why under
@@ -1845,9 +1848,129 @@ Installing an environment (`set-up`), measuring estimates (`estimate`),
 variables passed to a build (`build --env`), rebinding and forgetting a
 project stay command-line actions.
 
+## The project directory on this machine
+
+Everything a project keeps on one machine alone (installed environments, code
+snapshots, run directories and products) is in its local home,
+`<project directory>/<project id>/`. The project directory is, first that
+applies:
+
+1. the environment variable `TULDOK_PROJECT_HOME`, when it is set and not empty;
+2. `project_home` of the settings file;
+3. `~/.local/share/tuldok/projects`.
+
+The settings file is `~/.local/share/tuldok/settings.json`, or the file the
+environment variable `TULDOK_SETTINGS` names. It is strict JSON as in
+[JSON rules](#json-rules), at most 64 KiB, and has no other fields:
+
+```json
+{"format": "tuldok_settings_v1", "project_home": "/absolute/path"}
+```
+
+`project_home` is optional and must be absolute. The file is read only when
+the environment variable does not decide. A settings file that cannot be read
+or is not valid stops the command with a message naming the file and the
+fault, exit status 2, and stops the app's start-up; Tuldok never falls back to
+the default then.
+
+| Command | Does |
+| --- | --- |
+| `home [--json]` | Prints the project directory, where it came from (the environment variable, the settings file or the default), the free space on its disk and how many project directories it holds. Needs no database. |
+| `home --set PATH [--json]` | Saves `PATH`, which must be absolute, as `project_home`. `PATH` is made with its parents when missing and must be a directory this user can write. The settings file is written through a temporary file renamed into place, mode 0600. Says when the directory the setting or the default gave before holds project directories (they are not moved), and when `TULDOK_PROJECT_HOME` is set and so overrides the setting. |
+
+```
+$ .venv/bin/python -m tuldok_project home
+directory  /mnt/data/tuldok/projects
+from       the settings file /home/me/.local/share/tuldok/settings.json
+free       812 GB on its disk
+projects   2
+```
+
+## A new project
+
+`new FOLDER --name NAME [--code-root PATH] [--json]` makes `FOLDER`, which must
+not exist or must be an empty directory, and writes `tuldok.json` in it with
+the format, a new random id, the name and `code_root` (`.` when not given). It
+writes nothing else and needs no database. A name or code root that
+[`tuldok.json`](#tuldokjson) does not allow is refused with exit status 2, and
+nothing is made.
+
+## Adopting existing files
+
+Some files were made before Tuldok could build them and cannot be made again,
+such as an earlier model's weights. `adopt` makes such files the product of a
+dataset, recipe or step, so it is `built` and what uses it can be built. It is
+a command-line action only, since a manifest names files anywhere on the
+machine.
+
+The manifest is strict JSON, at most 16 MiB:
+
+```json
+{"format": "tuldok_adoption_v1",
+ "products": [
+   {"reference": "recipes/pilot-a",
+    "note": "Tuldok run acb748bc of 2026-10-21",
+    "files": {"weights.npz": "/absolute/path/to/the/file",
+              "history.json": "/absolute/path/to/another"}}
+ ]}
+```
+
+| Field | Rule |
+| --- | --- |
+| `products` | 1 to 5000 entries; a reference appears once |
+| `reference` | a dataset, recipe or step of the project, not removed |
+| `note` | optional, 1 to 400 characters; kept as the run's problem text, where a run's remark is shown |
+| `files` | 1 to 200 entries. Each key is a relative path in normal form where the file goes in the product. When the definition declares outputs, the key is the `path` of one of them or a path under one; when it declares none, its product is the directory as a whole (what a step that uses it as an input is given) and any relative path is accepted. No key may have another under it. Each value is the absolute path of an existing regular file this user can read; a link is refused |
+
+Unknown fields are refused. Every entry is checked before anything is
+adopted: one refused entry stops the command, every problem is printed, and
+nothing is adopted. Declared outputs without a file are reported as missing,
+and the entry is still adopted. An entry whose definition already has a
+current product is skipped, unless `--replace`.
+
+Adopting an entry makes `<local home>/runs/<run id>/output/` holding the files
+at their keys, as hard links to the sources; a source on another filesystem
+is copied, and `--copy` copies always. The directory is made under a temporary
+name and renamed into place. Then a run is recorded in state `adopted`, with
+no commit and no command, the definition's text as it is now, the note, all
+three times set to now and the total size of the files; and its product, made
+current, with the declared outputs that have a file and the size of each. A
+product that was current before stays in the database, no longer current. No
+checksum is taken, and Tuldok never writes to an adopted file.
+
+A definition whose current product was adopted is `built` and never out of
+date: its text, settings, inputs and code are not compared. `plan` shows it as
+`built` (noting `adopted, not built here`) and plans nothing it uses. A
+benchmark subject whose recipe has a current product runs even when the
+recipe's own label is `no` or `needs-work`. `runs` and `run` show the state
+`adopted`; `products` and `run` mark the product `(adopted)`, and their JSON,
+like `status` entries and the app's `runs`, `run` and `products` results,
+carries `adopted: true`. A real build of the definition replaces it like any
+other product.
+
+| Command | Does |
+| --- | --- |
+| `adopt FOLDER MANIFEST [--dry-run] [--copy] [--replace] [--json]` | Checks the manifest and prints what it would do: the entries to adopt, those skipped because they have a product, the declared outputs missing, the files and bytes, and whether they are linked or copied. Without `--dry-run` it then does it and prints the same, with each new run id. |
+
+Exit statuses: 0 done (or, with `--dry-run`, checked); 1 when an entry is
+refused, the manifest is not strict JSON, or copying or linking failed (the
+entries printed before the failure were adopted); 2 when the manifest cannot
+be read.
+
+```
+$ .venv/bin/python -m tuldok_project adopt FOLDER manifest.json --dry-run
+Would adopt 1 entry, skip 0 that already have a product.
+1 file, 61 B: 1 to be linked, 0 copied.
+
+adopt  datasets/numbers  1 file  61 B  linked
+
+Nothing was changed (--dry-run).
+```
+
 ## What the format does not do yet
 
-The folder is checked, can be opened, edited and saved through the database
+A project folder can be made with `new`, files made elsewhere can be adopted
+as products, and the folder is checked, can be opened, edited and saved through the database
 copy, its results can be read and drawn, its environments can be connected,
 checked and installed, and its definitions can be planned, estimated and
 built on this machine, one build at a time per step, from the command line

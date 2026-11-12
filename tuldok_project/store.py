@@ -87,8 +87,8 @@ class ProjectError(Exception):
     environments (environments.py): not-set-up (nothing is recorded for it),
     no-install, no-installer, target-exists, install-failed; and for builds
     (builds.py): blocked, running, not-ready, and a snapshot.SnapshotError's
-    code (dirty, not-in-git, ...), whose files names the changed files.
-    references names the definitions concerned.
+    code (dirty, not-in-git, ...), whose files names the changed files; and
+    settings, which host.py raises for a local.SettingsError. references names the definitions concerned.
     """
 
     def __init__(self, message, code, *, problems=(), references=(), files=()):
@@ -793,7 +793,17 @@ class Project:
         return result_rows.overview(self._connection, self.schema)
 
     def close(self):
-        """Close the connection, which also releases the project's lock."""
+        """Release the project's lock, then close the connection.
+
+        The lock is released by a statement, so the project can be opened
+        again the moment this returns. Closing alone would leave it held
+        until the server noticed the session had ended.
+        """
+        try:
+            if not self._connection.closed:
+                self._connection.execute('SELECT pg_advisory_unlock(%s)', (_lock_key(self.schema),))
+        except psycopg.Error:
+            pass  # a connection that is already broken gives the lock up when the server ends its session
         self._connection.close()
 
     def __enter__(self):

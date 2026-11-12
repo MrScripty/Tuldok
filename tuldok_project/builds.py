@@ -14,7 +14,10 @@ launcher.run (so other commands can open it), and opened again to check the
 outputs, import a benchmark's results and record the product. A run left
 queued or running by a builder that is gone becomes unknown whenever builds
 are looked at; nothing is ever restarted. Files are never deleted here,
-except an estimate's throwaway directory.
+except an estimate's throwaway directory. A run in state adopted ran
+nothing: adoption.py recorded files made elsewhere as its product, and
+status counts that product built without comparing anything (spec-m8.md
+section 3); a later build replaces it like any other.
 
 What a person needs while and after a build runs (sections 7 and 8): a run is
 named by its id or an unambiguous prefix of it (find_run); run_details reads
@@ -50,6 +53,7 @@ from . import documents, environments, graph, launcher, local, result_rows, snap
 BUILT_KINDS = ('dataset', 'recipe', 'step', 'benchmark')
 ACTIVE = ('queued', 'running')
 ENDED_BADLY = ('failed', 'timed-out', 'over-disk', 'unknown')
+ADOPTED = 'adopted'         # the state of a run that adopted files made elsewhere (adoption.py)
 DEFAULT_WALL_HOURS = 24
 DEFAULT_DISK_GB = 50
 GB = 1000 ** 3
@@ -278,12 +282,15 @@ def _own_causes(document, text, product, current, changes, code_root):
 
 
 def status(project):
-    """{reference: {state, causes, scratch, subjects}} for every dataset, recipe, step and benchmark with runs or products.
+    """{reference: {state, causes, scratch, adopted, subjects}} for every dataset, recipe, step and benchmark with runs or products.
 
     state is running, built, out-of-date or failed (section 5); a definition
     absent from the result has none of them. causes are sentences saying why
     it is out of date or failed. For a benchmark, subjects maps each subject
-    that would run to its own {state, causes, run_id}.
+    that would run to its own {state, causes, run_id}. A definition whose
+    current product was adopted (adoption.py) is built and adopted, and is
+    never out of date: nothing of it is compared. A subject whose recipe has a
+    current product would run even when the recipe's label holds it.
     """
     connection, schema = project._connection, project.schema
     if connection.execute(_q(schema, 'SELECT NOT EXISTS (SELECT 1 FROM {schema}.runs)')).fetchone()[0]:
@@ -294,12 +301,13 @@ def status(project):
     texts = {reference: text for reference, text, _ in rows}
     definitions = {reference: document for reference, _, document in rows}
     current = {}
-    for (run_id, reference, subject, outputs, scratch, commit, definition, settings, inputs) in connection.execute(_q(
+    for (run_id, reference, subject, outputs, scratch, commit, definition, settings, inputs, state) in connection.execute(_q(
             schema, '''SELECT p.run_id, p.reference, p.subject, p.outputs, r.scratch, r.commit, r.definition,
-                              r.settings, r.inputs
+                              r.settings, r.inputs, r.state
                        FROM {schema}.products p JOIN {schema}.runs r ON r.id = p.run_id WHERE p.current''')):
         current[reference, subject] = {'run_id': run_id, 'outputs': outputs, 'scratch': scratch, 'commit': commit,
-                                       'definition': definition, 'settings': settings, 'inputs': inputs}
+                                       'definition': definition, 'settings': settings, 'inputs': inputs,
+                                       'adopted': state == ADOPTED}
     latest = {reference: (run_id, state, problem) for reference, run_id, state, problem in connection.execute(_q(
         schema, '''SELECT DISTINCT ON (reference) reference, id, state, problem FROM {schema}.runs
                    ORDER BY reference, queued_at DESC, id''')).fetchall()}
@@ -308,7 +316,7 @@ def status(project):
     code_root = _code_root(project) if current else None
     changes = _changes(code_root, {product['commit'] for product in current.values()
                                    if not product['scratch'] and product['commit']}) if current else {}
-    held = graph.states(definitions)
+    held = graph.states(definitions, {reference: 'built' for reference, subject in current if not subject})
 
     found = {}
     out_of_date = set()
@@ -317,13 +325,15 @@ def status(project):
         product = current.get((reference, subject['name'] if subject else ''))
         if product is None:
             return None
+        if product['adopted']:
+            return {'state': 'built', 'causes': [], 'run_id': product['run_id'], 'scratch': False, 'adopted': True}
         product = {**product, 'subject_document': subject}
         causes = _own_causes(document, texts[reference], product, current, changes, code_root)
         for key, used in _uses(document, subject).items():
             if used in out_of_date and not any(cause.startswith(_input_words(key, used)) for cause in causes):
                 causes.append(f'{_input_words(key, used)} is out of date')
         return {'state': 'out-of-date' if causes else 'built', 'causes': causes, 'run_id': product['run_id'],
-                'scratch': product['scratch']}
+                'scratch': product['scratch'], 'adopted': False}
 
     for reference in graph.order(definitions):
         if reference not in definitions or _kind(reference) not in BUILT_KINDS:
@@ -335,7 +345,7 @@ def status(project):
             judged = {name: item for name, item in subjects.items() if item is not None}
             entry = {'subjects': {name: item or {'state': 'not-built', 'causes': [], 'run_id': None, 'scratch': False}
                                   for name, item in subjects.items()},
-                     'scratch': any(item['scratch'] for item in judged.values())}
+                     'scratch': any(item['scratch'] for item in judged.values()), 'adopted': False}
             if not subjects or not judged:
                 entry.update(state=None, causes=[])
             elif len(judged) == len(subjects) and all(item['state'] == 'built' for item in judged.values()):
@@ -348,6 +358,7 @@ def status(project):
         else:
             judged = judge(reference, document)
             entry = {'subjects': None, 'scratch': bool(judged and judged['scratch']),
+                     'adopted': bool(judged and judged['adopted']),
                      'state': judged and judged['state'], 'causes': judged['causes'] if judged else []}
         if entry['state'] is None and reference in latest and latest[reference][1] in ENDED_BADLY:
             run_id, state, problem = latest[reference]
@@ -383,9 +394,10 @@ def runs(project, reference=None):
 
 
 def products(project, reference=None):
-    """The current products, by reference and subject: run, size of the declared outputs, directory, scratch."""
+    """The current products, by reference and subject: run, size of the declared outputs, directory, scratch, adopted."""
     reap_orphans(project._connection, project.schema)
-    query = '''SELECT p.reference, p.subject, p.run_id, p.directory, p.outputs, r.scratch, r.commit, r.finished_at
+    query = '''SELECT p.reference, p.subject, p.run_id, p.directory, p.outputs, r.scratch, r.commit, r.finished_at,
+                      r.state
                FROM {schema}.products p JOIN {schema}.runs r ON r.id = p.run_id WHERE p.current'''
     parameters = ()
     if reference is not None:
@@ -393,11 +405,11 @@ def products(project, reference=None):
         parameters = (reference,)
     query += ' ORDER BY p.reference, p.subject'
     found = []
-    for reference_, subject, run_id, directory, outputs, scratch, commit, finished in project._execute(
+    for reference_, subject, run_id, directory, outputs, scratch, commit, finished, state in project._execute(
             query, parameters).fetchall():
         found.append({'reference': reference_, 'subject': subject, 'run_id': run_id, 'directory': directory,
                       'outputs': outputs, 'bytes': sum(item.get('bytes') or 0 for item in outputs.values()),
-                      'scratch': scratch, 'commit': commit, 'finished_at': finished})
+                      'scratch': scratch, 'commit': commit, 'finished_at': finished, 'adopted': state == ADOPTED})
     return found
 
 
@@ -957,7 +969,8 @@ def run_details(project, text):
     row = _row(project, run_id)
     product = project._execute('SELECT directory, outputs, current FROM {schema}.products WHERE run_id = %s',
                                (run_id,)).fetchone()
-    row['product'] = None if product is None else dict(zip(('directory', 'outputs', 'current'), product))
+    row['product'] = None if product is None else {**dict(zip(('directory', 'outputs', 'current'), product)),
+                                                    'adopted': row['state'] == ADOPTED}
     row['builder_alive'] = row['state'] in ACTIVE and builder_alive(row)
     return row
 

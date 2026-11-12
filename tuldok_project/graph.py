@@ -210,8 +210,11 @@ def states(definitions, local=None):
 
     cannot-rebuild and needs-work come from a definition's own
     earlier_work.rebuild or from anything it uses through input edges, directly
-    or further up; the worse of the two wins. Other edges (environment, model,
-    subjects, cases, chart) carry nothing. Otherwise the state follows the
+    or further up; the worse of the two wins. A definition that local says is
+    built carries nothing to what uses it, and nothing through it: its product
+    is on this machine to be used, whether it was built here or adopted
+    (spec-m8.md section 3). Other edges (environment, model, subjects, cases,
+    chart) carry nothing. Otherwise the state follows the
     kind. The table is read in order, so a model marked rebuild "no" is
     cannot-rebuild, not none. Cycles are tolerated: the result is the fixed point.
     """
@@ -224,12 +227,15 @@ def states(definitions, local=None):
     for edge in edges(definitions):
         if edge.role.startswith('input:') and edge.to_ref in users:
             users[edge.to_ref].append(edge.from_ref)
+    built_here = {reference for reference, state in (local or {}).items()
+                  if state == 'built' and reference in definitions
+                  and _kind(reference, definitions[reference]) in _BUILT}
     # Severity only rises, at most twice per definition, so this ends even on a cycle.
-    pending = [reference for reference, value in severity.items() if value]
+    pending = [reference for reference, value in severity.items() if value and reference not in built_here]
     while pending:
         reference = pending.pop()
         for user in users[reference]:
-            if severity[user] < severity[reference]:
+            if user not in built_here and severity[user] < severity[reference]:
                 severity[user] = severity[reference]
                 pending.append(user)
     found = {reference: _CARRIED[severity[reference]] or _BASE_STATE.get(_kind(reference, document), 'none')

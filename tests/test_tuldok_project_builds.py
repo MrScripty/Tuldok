@@ -83,6 +83,20 @@ class States(unittest.TestCase):
         built = graph.states(self.documents, {'recipes/fit-b': 'built'})
         self.assertEqual(built['recipes/fit-b'], 'built')           # a current product wins over needs-work
 
+    def test_a_built_definition_carries_nothing_to_what_uses_it(self):
+        self.documents['datasets/numbers']['earlier_work'] = {'rebuild': 'no', 'reason': 'Test.'}
+        held = graph.states(self.documents)
+        self.assertEqual((held['datasets/numbers'], held['recipes/fit-a']), ('cannot-rebuild', 'cannot-rebuild'))
+        there = graph.states(self.documents, {'datasets/numbers': 'built'})
+        self.assertEqual((there['datasets/numbers'], there['recipes/fit-a']), ('built', 'not-built'))
+        stale = graph.states(self.documents, {'datasets/numbers': 'out-of-date'})
+        self.assertEqual((stale['datasets/numbers'], stale['recipes/fit-a']), ('out-of-date', 'cannot-rebuild'))
+        # Nothing passes through a built definition either: fit-b starting from a built fit-a is not held by the dataset.
+        self.documents['recipes/fit-b']['run']['inputs'] = {'start': 'recipes/fit-a'}
+        self.assertEqual(graph.states(self.documents)['recipes/fit-b'], 'cannot-rebuild')
+        through = graph.states(self.documents, {'recipes/fit-a': 'built'})
+        self.assertEqual((through['recipes/fit-a'], through['recipes/fit-b']), ('built', 'not-built'))
+
     def test_the_built_action_is_not_work(self):
         local = {'environments/test-python': 'ready', 'datasets/numbers': 'built', 'recipes/fit-a': 'out-of-date'}
         made = plan.make_plan(self.documents, ['recipes/fit-a'], local=local,

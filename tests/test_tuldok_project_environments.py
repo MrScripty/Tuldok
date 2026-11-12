@@ -250,7 +250,9 @@ class Local(unittest.TestCase):
                 self.assertFalse(os.path.exists(os.path.join(directory, 'h')))  # nothing made by asking
                 made = local.environments_directory('a' * 32, create=True)
                 self.assertTrue(os.path.isdir(made))
-        with mock.patch.dict(os.environ, {local.HOME_VARIABLE: ''}):
+        # With neither the variable nor a settings file (this machine's own is never read by a test).
+        with mock.patch.dict(os.environ, {local.HOME_VARIABLE: '',
+                                          local.SETTINGS_VARIABLE: os.path.join(directory, 'no-settings.json')}):
             self.assertEqual(local.projects_home(), os.path.expanduser('~/.local/share/tuldok/projects'))
 
 

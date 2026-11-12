@@ -61,6 +61,18 @@ def _parser():
     check.add_argument('folder', help='the project folder (the one holding tuldok.json)')
     check.add_argument('--no-code', action='store_true', help='do not look up paths in the code root')
     check.add_argument('--json', action='store_true', help='print the report as one JSON object')
+    home = commands.add_parser('home', help="show the directory that holds every project's local home",
+                               description="Show the directory that holds every project's local home, or save it "
+                                           'as a setting with --set.')
+    home.add_argument('--set', metavar='PATH', help='save this absolute path as the setting; made when missing')
+    home.add_argument('--json', action='store_true', help='print one JSON document')
+    new = commands.add_parser('new', help='make a new project folder holding tuldok.json alone',
+                              description='Make a new project folder holding tuldok.json alone.')
+    new.add_argument('folder', help='the folder to make; it must not exist, or be an empty directory')
+    new.add_argument('--name', required=True, help='the name of the project, 1 to 120 characters')
+    new.add_argument('--code-root', default='.', metavar='PATH',
+                     help="the code root, relative to the folder (default '.')")
+    new.add_argument('--json', action='store_true', help='print one JSON document')
 
     database = argparse.ArgumentParser(add_help=False)
     database.add_argument('folder', help='the project folder (the one holding tuldok.json)')
@@ -165,6 +177,12 @@ def _parser():
     declining = add('decline', [opening], 'decline a build request awaiting approval')
     declining.add_argument('request', help='a request id, or at least its first six characters')
     declining.add_argument('--reason', default='', help=f'why, in at most {REASON_CHARACTERS} characters')
+    adopting = add('adopt', [reading], 'make existing files the products of their definitions, as a manifest says')
+    adopting.add_argument('manifest', help='the tuldok_adoption_v1 manifest')
+    adopting.add_argument('--dry-run', action='store_true', help='print what would be done; change nothing')
+    adopting.add_argument('--copy', action='store_true', help='copy the files instead of linking them')
+    adopting.add_argument('--replace', action='store_true',
+                          help='adopt also where the definition has a current product, which stays, no longer current')
     add('forget', [database], "drop this project's copy from the database; the folder is not touched")
     return parser
 
@@ -561,6 +579,8 @@ def _step_details(step):
             details.append(f'skips {len(skipped)} whose recipe is blocked: {shown}')
     if step['action'] == 'built' and step.get('scratch'):
         details.append('built by a scratch run')
+    if step['action'] == 'built' and step.get('adopted'):
+        details.append('adopted, not built here')
     if step['action'] == 'build' and step['state'] in ('out-of-date', 'failed', 'running'):
         word = {'out-of-date': 'out of date', 'failed': 'failed', 'running': 'running'}[step['state']]
         details += [f'{word}: {reason}' for reason in step.get('reasons', [])] or [word]
@@ -718,7 +738,8 @@ def _products(project, arguments):
         return 0
     _columns([('reference', 'subject', 'run', 'size', 'scratch', 'directory'),
               *((row['reference'], row['subject'] or '-', row['run_id'], _size(row['bytes']),
-                 'scratch' if row['scratch'] else '-', row['directory']) for row in rows)])
+                 'scratch' if row['scratch'] else '-',
+                 row['directory'] + ('  (adopted)' if row['adopted'] else '')) for row in rows)])
     return 0
 
 
@@ -742,15 +763,18 @@ def _run_name(row):
 def _show_run(row, event):
     import shlex
 
+    from . import builds
+
     code = ('scratch run, the code root as it was' + (f' at commit {row["commit"][:12]}' if row['commit'] else '')
-            if row['scratch'] else f'commit {row["commit"][:12]}, from its snapshot')
+            if row['scratch'] else 'none: adopted, not built here' if row['state'] == builds.ADOPTED
+            else f'commit {row["commit"][:12]}, from its snapshot')
     builder = '-' if row['owner_pid'] is None else (
         f'process {row["owner_pid"]}' + (' (running)' if row['builder_alive'] else ''))
     environment = row['environment']
     rows = [('run', row['id']), ('reference', row['reference']), ('subject', row['subject'] or '-'),
             ('state', row['state']), ('plan', row['plan_id']), ('code', code),
             ('environment', f'{environment["reference"]}  {environment["interpreter"]}' if environment else '-'),
-            ('command', shlex.join(row['argv'])), ('directory', row['directory']), ('builder', builder),
+            ('command', shlex.join(row['argv']) or '-'), ('directory', row['directory']), ('builder', builder),
             ('queued', _moment(row['queued_at'])), ('started', _moment(row['started_at'])),
             ('finished', _moment(row['finished_at'])),
             ('exit status', '-' if row['exit_status'] is None else row['exit_status']),
@@ -762,7 +786,8 @@ def _show_run(row, event):
         rows.append((label, f'{used["reference"]}{output}, run {used["run_id"]}'))
     product = row['product']
     if product is not None:
-        rows.append(('product', product['directory'] + ('' if product['current'] else '  (no longer current)')))
+        rows.append(('product', product['directory'] + ('  (adopted)' if product['adopted'] else '')
+                     + ('' if product['current'] else '  (no longer current)')))
         for name, output in sorted(product['outputs'].items()):
             rows.append((f'output {name}', f'{output["path"]}  {output["role"]}  {_size(output["bytes"])}'))
     rows.append(('progress', _event_words(event)))
@@ -1234,12 +1259,133 @@ def _disconnect(project, arguments):
     return 0
 
 
+# ------------------------------------------------- the local home, new, adopt
+
+_SOURCE_WORDS = {'environment': 'the environment variable TULDOK_PROJECT_HOME',
+                 'settings': 'the settings file {settings}', 'default': 'the default; no setting is saved in {settings}'}
+
+
+def _home(arguments):
+    from . import local
+
+    if arguments.set is not None:
+        try:
+            done = local.set_project_home(arguments.set)
+        except ValueError as exc:
+            raise UsageError(f'--set {exc}') from None
+        if arguments.json:
+            _json(done)
+            return 0
+        print(f'Saved {done["project_home"]} as the project directory in {done["settings"]}.')
+        count = done['before_projects']
+        if count:
+            print(f'The directory used before, {done["before"]}, holds {count} project '
+                  + ('directory; it was' if count == 1 else 'directories; they were') + ' not moved.')
+        if done['overridden']:
+            print(f'{local.HOME_VARIABLE} is set, so it overrides this setting while it is set.')
+        return 0
+    directory, source = local.projects_home_source()
+    shown = {'directory': directory, 'source': source, 'settings': local.settings_path(),
+             'exists': os.path.isdir(directory), 'free_bytes': local.free_bytes(directory),
+             'projects': local.project_directories(directory)}
+    if arguments.json:
+        _json(shown)
+        return 0
+    free = '?' if shown['free_bytes'] is None else _size(shown['free_bytes'])
+    _columns([('directory', directory + ('' if shown['exists'] else '  (not made yet)')),
+              ('from', _SOURCE_WORDS[source].format(settings=shown['settings'])),
+              ('free', f'{free} on its disk'), ('projects', shown['projects'])])
+    return 0
+
+
+def _new(arguments):
+    import uuid
+
+    folder = os.path.abspath(arguments.folder)
+    document = {'format': documents.PROJECT_FORMAT, 'id': uuid.uuid4().hex, 'name': arguments.name,
+                'code_root': arguments.code_root}
+    problems = documents.schema_problems('project', document)
+    if problems:
+        raise UsageError(f'The project cannot be made; its {folder_reader.PROJECT_FILE} would break the format: '
+                         + '; '.join(f'{pointer}: {message}' for pointer, message in problems))
+    if os.path.lexists(folder) and not (os.path.isdir(folder) and not os.path.islink(folder) and not os.listdir(folder)):
+        raise UsageError(f'{folder} exists and is not an empty directory.')
+    try:
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, folder_reader.PROJECT_FILE), 'x', encoding='utf-8') as handle:
+            handle.write(json.dumps(document, indent=2, ensure_ascii=False) + '\n')
+    except OSError as exc:
+        print(f'{folder} cannot be made: {exc.strerror}.', file=sys.stderr)
+        return 1
+    if arguments.json:
+        _json({'folder': folder, 'project_id': document['id'], 'name': document['name'],
+               'code_root': document['code_root']})
+        return 0
+    print(f'Made project {document["name"]} ({document["id"]}) in {folder}; it holds {folder_reader.PROJECT_FILE} '
+          'alone.')
+    return 0
+
+
+def _adoption_lines(done, dry_run):
+    counts = done['counts']
+    entries = f'{counts["adopt"]} ' + ('entry' if counts['adopt'] == 1 else 'entries')
+    missing = (f'; {_plural(counts["missing"], "declared output")} ' + ('has' if counts['missing'] == 1 else 'have')
+               + ' no file' if counts['missing'] else '')
+    lines = [(f'Would adopt {entries}' if dry_run else f'Adopted {entries}')
+             + f', skip{"" if dry_run else "ped"} {counts["skip"]} that already '
+             + ('has' if counts['skip'] == 1 else 'have') + f' a product{missing}.',
+             f'{_plural(counts["files"], "file")}, {_size(counts["bytes"])}: {counts["linked"]} '
+             + ('to be ' if dry_run else '') + f'linked, {counts["copied"]} copied.', '']
+    rows = []
+    for entry in done['entries']:
+        if entry['action'] == 'skip':
+            rows.append(('skip' if dry_run else 'skipped', entry['reference'],
+                         f'has a current product, run {entry["current_run"]}'))
+            continue
+        hows = sorted({item['how'] for item in entry['files']})
+        rows.append(('adopt' if dry_run else 'adopted', entry['reference'],
+                     f'{_plural(len(entry["files"]), "file")}  {_size(entry["bytes"])}  '
+                     + ' and '.join({'link': 'linked', 'copy': 'copied'}[how] for how in hows)
+                     + ('' if dry_run else f'  run {entry["run_id"]}')))
+        rows += [('', '', f'missing: output {item["name"]} ({item["path"]})') for item in entry['missing']]
+    return lines, rows
+
+
+def _adopt(project, arguments):
+    from . import adoption
+
+    try:
+        made = adoption.make_plan(project, arguments.manifest_document, copy=arguments.copy, replace=arguments.replace)
+    except adoption.AdoptionError as exc:
+        for problem in exc.problems:
+            print(problem, file=sys.stderr)
+        print(str(exc), file=sys.stderr)
+        return 1
+    if not arguments.dry_run:
+        try:
+            adoption.adopt(project, made)
+        except OSError as exc:
+            print(f'Adopting stopped: {exc}. The entries listed before it were adopted.', file=sys.stderr)
+            return 1
+    if arguments.json:
+        _json({**made, 'dry_run': arguments.dry_run})
+        return 0
+    lines, rows = _adoption_lines(made, arguments.dry_run)
+    for line in lines:
+        print(line)
+    _columns(rows)
+    if arguments.dry_run:
+        print()
+        print('Nothing was changed (--dry-run).')
+    return 0
+
+
 _STORE_COMMANDS = {'open': _open, 'list': _list, 'show': _show, 'graph': _graph, 'status': _status,
                    'set': _set, 'remove': _remove, 'save': _save, 'results': _results, 'values': _values,
                    'import-values': _import_values, 'chart': _chart, 'report': _report, 'plan': _plan,
                    'environments': _environments, 'connect': _connect, 'check-environment': _check_environment,
                    'set-up': _set_up, 'disconnect': _disconnect, 'runs': _runs, 'products': _products,
-                   'requests': _requests}
+                   'requests': _requests, 'adopt': _adopt}
 
 
 def _project_id(folder):
@@ -1319,6 +1465,16 @@ def _run_store(arguments, dsn):
         arguments.environment = 'environments/' + _bare(arguments.environment, 'environments')
     if arguments.command == 'check-environment':
         arguments.environments = ['environments/' + _bare(name, 'environments') for name in arguments.environments]
+    if arguments.command == 'adopt':
+        from .adoption import AdoptionError, read_manifest
+
+        try:
+            arguments.manifest_document = read_manifest(arguments.manifest)
+        except OSError as exc:
+            raise UsageError(f'{arguments.manifest} cannot be read: {exc.strerror}.') from None
+        except AdoptionError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
     if arguments.command == 'plan' and not arguments.targets and not arguments.all:
         raise UsageError('Name at least one definition to plan, or pass --all.')
     # The app that serves a folder, and a build, open the project for a moment at a time: wait for them.
@@ -1332,6 +1488,7 @@ def _run_store(arguments, dsn):
 def _database_command(arguments):
     import psycopg
     from metadata import StorageError
+    from .local import SettingsError
     from .store import ProjectError
 
     dsn = arguments.database_url or os.environ.get(DATABASE_VARIABLE)
@@ -1360,6 +1517,9 @@ def _database_command(arguments):
     except StorageError as exc:
         print(f'The database setting is not usable: {exc}', file=sys.stderr)
         return 2
+    except SettingsError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     except ProjectError as exc:
         print(str(exc), file=sys.stderr)
         for problem in exc.problems:
@@ -1376,6 +1536,14 @@ def main(argv=None):
     arguments = _parser().parse_args(argv)  # exits with status 2 on a usage error
     if arguments.command == 'check':
         return _check(arguments)
+    if arguments.command in ('home', 'new'):
+        from .local import SettingsError
+
+        try:
+            return _home(arguments) if arguments.command == 'home' else _new(arguments)
+        except (UsageError, SettingsError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
     return _database_command(arguments)
 
 

@@ -63,12 +63,13 @@ def _held(state):
     return state in ('cannot-rebuild', 'needs-work')
 
 
-def _closure(definitions, edges_from, states, starts):
+def _closure(definitions, edges_from, states, starts, adopted=frozenset()):
     """Every definition reached from starts, starts included (section 2 of spec-m4.md).
 
     Input and environment edges are followed; a subject edge only when its
-    recipe is not blocked. Nothing is followed out of a blocked definition, nor
-    out of a benchmark with no subject to run.
+    recipe is not blocked. Nothing is followed out of a blocked definition, out
+    of a benchmark with no subject to run, nor out of a definition whose
+    current product was adopted (it needs nothing it uses: spec-m8.md section 3).
     """
     seen, pending = set(), list(starts)
     while pending:
@@ -76,7 +77,7 @@ def _closure(definitions, edges_from, states, starts):
         if reference in seen or reference not in definitions:
             continue
         seen.add(reference)
-        if _held(states[reference]):
+        if _held(states[reference]) or (reference in adopted and states[reference] == 'built'):
             continue
         if _kind(reference) == 'benchmark' and not _subjects(definitions[reference], states)['run']:
             continue
@@ -208,8 +209,9 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
         if reference not in resolved:
             resolved.append(reference)
     states = graph.states(definitions, local)
+    adopted = {reference for reference, entry in (built or {}).items() if entry.get('adopted')}
     members = _closure(definitions, edges_from, states,
-                       [reference for reference in resolved if _kind(reference) != 'model'])
+                       [reference for reference in resolved if _kind(reference) != 'model'], adopted)
     members = {reference for reference in members if _kind(reference) not in ('model', 'chart')}
     ordered = graph.order({reference: definitions[reference] for reference in members})
     actions = {reference: _action(_kind(reference), states[reference]) for reference in ordered}
@@ -226,7 +228,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
                 'estimate': (estimates or {}).get(reference),
                 'blocked_by': [], 'blocked_by_more': 0,
                 'reasons': list((built or {}).get(reference, {}).get('causes', [])),
-                'scratch': bool((built or {}).get(reference, {}).get('scratch', False))}
+                'scratch': bool((built or {}).get(reference, {}).get('scratch', False)),
+                'adopted': reference in adopted}
         if kind == 'benchmark':
             step['subjects'] = _subjects(document, states)
             if action == 'build' and not step['subjects']['run']:

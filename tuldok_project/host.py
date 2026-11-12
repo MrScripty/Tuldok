@@ -15,7 +15,7 @@ import agent_api
 from access import Access, AccessError
 from metadata import Metadata
 
-from . import operations, store
+from . import local, operations, store
 from .service import Service
 
 REFUSAL_PROBLEMS = 50
@@ -40,7 +40,16 @@ class ProjectHost:
     project_folder_mode = True
 
     def __init__(self, data_path, folder, *, dsn=None):
-        """Open the catalog of data_path and the folder, and start the build worker; raises ProjectError."""
+        """Open the catalog of data_path and the folder, and start the build worker; raises ProjectError.
+
+        A settings file that is not valid (local.SettingsError) is raised as
+        ProjectError code settings before anything is opened, so app.py ends
+        start-up with its message.
+        """
+        try:
+            local.projects_home()
+        except local.SettingsError as error:
+            raise store.ProjectError(str(error), 'settings') from None
         self.path = Path(data_path).resolve()
         self.db = Metadata(self.path, dsn=dsn)
         self.lock = self.db.lock
@@ -70,6 +79,8 @@ class ProjectHost:
             return 200, self.service.call(name, arguments, actor)
         except store.ProjectError as error:
             return refusal(error)
+        except local.SettingsError as error:  # the settings file broke while the app runs
+            return refusal(store.ProjectError(str(error), 'settings'))
 
     def _require(self, who, action):
         if who == 'owner':
