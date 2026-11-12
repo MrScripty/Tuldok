@@ -386,3 +386,47 @@ The clone was not built: that needs the reference solver and the dataset generat
 **Left as they are:** `scripts/track_project_results.py` and `scripts/extract_model_recipes.py`, which served the old format and which nothing current refers to; the historical plans and the migration scripts under `experiments/model-portfolio-migration-v1/` that name the old folder; the README's link to the older `tuldok/` folder, which a reader may confuse with the project.
 
 **Next:** deleting the old project mode from Tuldok. It waits for the owner to sign the [capability check](capability-check.md).
+
+## 2026-11-12 — the owner looks at the interface; the Map workspace plan
+
+**What happened.** The owner asked to see the project open in the Tuldok interface. Tuldok was started on the lab folder in the new project-folder mode, whose only page is the report. The owner: "wtf happened to tuldoks ui? It doesnt have any of the pages it used to have." Started again the way it had been run before (`--project-files-root`), it showed the form-panel project page; the owner: "that is not the GUI it had before either", and described tabs along the top, a bench page and a model page with a horizontal ancestry tree. That is the Map layout of [the workspace redesign](../project-workspace-redesign/README.md), chosen on 2026-11-03, which exists only as mockups run from disk and was never part of the app. Shown the mockup, the owner confirmed: "yes, thts the gui i remember".
+
+**What this changes.** Nothing had been deleted, but the new format has no real screens, and that was not made plain before the owner looked. [The Map workspace plan](workspace-plan.md) builds the Map layout into the app in three phases; the owner approved it the same day ("the plan looks good") with its three recommended decisions. The old project mode is not deleted before phase 3 is accepted, which replaces the earlier advice to sign the capability check.
+
+**A fault found and repaired.** Adoption had hard-linked 2,407 files of the old project folder into Tuldok's project directory. The old project code refuses a stored file that has a second name ("Artifact source must be an ordinary file without hard-link aliases"), so those weights and training data would have been refused by the old mode. Each was replaced in Tuldok's directory by a real copy, compared byte for byte, and every file of the old folder has one name again. Cost: 15.9 GB on the OrangeCream disk. The old lab project was then opened in the old mode to check: it opened, in 166 s. The files' change times moved, so the old mode re-verifies them on first read. Adoption by link stays the command's default; a source that another tool manages should be adopted with `--copy`.
+
+**Commits** (none pushed), Tuldok: the plan `55a5ac68`; the brief and mockups, without the baked data file, `4af5a74a`.
+
+## 2026-11-12 — the Map workspace, phase 1: what the map reads
+
+**Owner instruction:** "the plan looks good". Spec: [spec-w1.md](spec-w1.md).
+
+**Commits** (none pushed). Tuldok `feat/definition-first-projects`: spec `ecca58d1`; the fields and operations `a4047b68`. Lab `reorg/reproducible-lab-20261102`: the fields on the lab's models `d9e8960a0`.
+
+| Slice | What | Tests |
+| --- | --- | --- |
+| T17 | `groups` and `map.chart` in `tuldok.json`; `group`, `change`, `derived_from`, `compared_with` on a recipe; the checker's rules; graph roles `derived` and `compared`; `tuldok_project/workspace.py` with the operations `map`, `note`, `recipe_results`; the commands `map` and `note` | 47 new; 554 in all, about 4 minutes |
+| L6 | the lab's converter writes the fields; `scripts/earlier-model-map.json`; a ninth chart for the track; the folder regenerated | 44 in the lab's converter tests |
+
+**As built, beyond the spec:**
+
+- The kind of change is `change` on a recipe, not a field of a group as the plan first said: in the mockup one group holds 31 architecture and 20 refinement models.
+- `derived_from` was added. The plan had lines come only from recorded inputs; a model branched from another without taking its weights has no such input, and "Branch from here" needs the field.
+- `tuldok.json` is now kept in the database (a new column of the state row), so `map` reads no file; a change to `tuldok.json` alone now imports the folder again.
+- Removing the chart that `map.chart` names is refused.
+- `note` takes a path relative to `notes/`; a recipe's `card` value starts with `notes/`.
+
+**Acceptance on the lab** (throwaway database):
+
+| Check | Result |
+| --- | --- |
+| `map` through the service | 0.04 s, 133 KiB: 206 models, 19 groups, 43 derived and 63 input lines, 26 comparisons |
+| Kinds | 48 training policy, 95 architecture, 36 refinement, 26 component, 1 with none (the new pilot model) |
+| Track | worst pressure error on the 128 consumed requests; 150 of 206 models have a value |
+| C53 | 36 models derived from it; its card read by `note` (28,684 characters); `recipe_results` gives 15 rows over 3 benchmarks |
+| The plan for everything, on an empty machine | unchanged: 17 to build, 243 blocked |
+| The lab folder | `tuldok.json` and 205 recipes changed, one chart added, the notes file removed; every other file byte-identical; checker 0 errors and the same 8 warnings |
+
+**Starting values to correct.** Kinds, parents and short labels were carried from the mockup, which inferred kinds and parents from card text: 128 models have a short label, 43 a parent (36 from C53, 4 from C37, 3 from C44). The group "Pressure proposal fits" has no model of its own, only child groups.
+
+**Next:** phase 2, the page, read-only.
