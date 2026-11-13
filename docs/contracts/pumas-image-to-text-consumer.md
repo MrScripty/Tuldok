@@ -1,13 +1,15 @@
 # Pumas Image→Text consumer
 
 This opt-in caption path, and the typed text and image operations that share
-`pumas_operations`, consume the Pumas Library v0.8 typed HTTP contract on branch
-`feat/v080-consumer-api`, source `4c79cd8e35db566b70caaa13d8d8f92265f5976e`:
-[model operations, contract version 1](https://github.com/MrScripty/Pumas-Library/blob/4c79cd8e35db566b70caaa13d8d8f92265f5976e/docs/contracts/model-operations-v1.md).
-It supersedes the merged PR68 pin `36c2aab2c885b8416fd4e39cf8c37c510596d6e4`,
-which `source.json` keeps as `previous_producer`. The legacy compatible caption
-path remains available. The PR54 typed text/image capture receipt in
-`tests/fixtures/pumas-typed-v1` is historical and is not repinned.
+`pumas_operations`, consume the typed HTTP contract released in Pumas Library
+0.8.0, tag `v0.8.0`, commit `69e32a2208c5c2d840f4adafec03350669fcb5bc`:
+[model operations, contract version 1](https://github.com/MrScripty/Pumas-Library/blob/v0.8.0/docs/contracts/model-operations-v1.md).
+Pumas is reached only as an HTTP endpoint; no Pumas code is imported or started.
+It supersedes the pre-release pin `4c79cd8e35db566b70caaa13d8d8f92265f5976e`
+(and before it PR68), which `source.json` keeps as `previous_producer`. The
+legacy compatible caption path remains available. The PR54 typed text/image
+capture receipt in `tests/fixtures/pumas-typed-v1` keeps its gateway harness;
+its capability files were brought to the 0.8.0 descriptor shape.
 
 ### Additive compatibility
 
@@ -23,16 +25,26 @@ position or count:
   validated: fixed semantic task, string format lists, an availability `state`
   with an optional string reason, and finite, ordered bounds for the options
   Tuldok compares (`max_tokens`, `temperature`, `top_p`, `width`, `height`,
-  `seed`, `image_bytes`, `image_pixels`, `image_count`). A used capability or
+  `seed`, `input_characters`, `image_bytes`, `total_image_bytes`, `image_pixels`,
+  `image_count`, `message_count`, `content_parts`). A used capability or
   option advertised twice is refused as ambiguous.
-- Other capabilities (`multimodal_embedding`, `decision`, audio, future values),
-  formats (`content_batch`, `decision`, `decisions`, future values), option names,
+- Other capabilities (`multimodal_embedding`, `decision`, `rerank`, audio, future
+  values), formats (`content_batch`, `decision`, `decisions`, `relevance_scores`,
+  future values), modalities, option names,
   availability states and reasons, and response or result fields are ignored.
   Any availability other than `available` means unavailable, and its reason is
   shown.
 - The capability observation is bounded at 1 MiB. `GET /v1/served-models` is
   preferred for listing serving aliases with their profiles; gateways without it
   (HTTP 404) fall back to `/v1/models`, which lists each ID once with `profiles`.
+- `pumas_operations.served_models(address)` reads `GET /v1/served-models` in
+  full, independent of the catalog: each served (model, profile) with
+  `profile_required`, model ID, provider, load state, context size, input and
+  output modalities and its descriptors with availability, bounded at 8 MiB and
+  4096 entries. Values outside the 0.8.0 vocabulary are dropped; a malformed
+  entry refuses the listing, naming the entry. `available_capabilities(entry,
+  input_kind, output)` answers which available capabilities make an output from
+  a request input kind, as the release's resolver matches input formats.
 
 Availability is a live observation, not a model qualification receipt.
 
@@ -58,7 +70,7 @@ aggregate, four-image, 4096-axis, 4,194,304-pixel, 128-message and 128-total-par
 bounds. Tokens default to 512. Pumas no longer caps Image→Text `max_tokens` at
 2048; the live `max_tokens` bound follows the served context window and is
 checked before admission. Temperature/top-p must be finite and within 0–2/0–1.
-Advertised image byte, pixel, count and dimension bounds are checked when present. The caption application's existing preparation is smaller:
+Advertised image byte, aggregate byte, pixel, count, dimension, message and part bounds are checked when present. The caption application's existing preparation is smaller:
 one RGB JPEG, at most 2 MiB and 1600 pixels on its longest side. It decodes the
 captured, hash-verified canonical image and retains both canonical-source and
 prepared-input hashes. Preparation is explicit in request history.
@@ -80,6 +92,8 @@ bytes. Explicit application creates a draft target and records its evidence in
 revision history; human review remains separate.
 
 Every typed error is `{contract_version, request_id, error:{code, outcome, message}}`.
+A refusal made before the request reaches its handler is `{"error":{"code","message"}}`
+(for example `request_limit`, HTTP 413); it is decoded as a typed `not_admitted` refusal.
 `error.outcome` is authoritative: `not_admitted` records no provider effect and
 anything else is `unknown`, whatever the HTTP status. 404 `model_not_found` and
 409 `ambiguous_model`/`ambiguous_operation` are ordinary refusals. An error whose
@@ -103,30 +117,29 @@ and packaged application acceptance remain integration-lead/provider-owner gates
 ## Evidence and coordinated review
 
 `tests/fixtures/pumas-image-to-text-v1/source.json` labels the capability/wire
-fixture as **source-derived**, with inspected production-source hashes. It is not
-a captured native DTO schema export or an actual model reply. The fixture follows
-the pinned descriptor construction for a llama.cpp vision serving with an
-8192-token context, including the `multimodal_embedding` and `decision`
-descriptors. The tests exercise additive capability parsing, named/facade PNG/JPEG inputs (including progressive
+fixture as **release-derived**. It is not a captured native DTO schema export or
+an actual model reply. The fixtures (`controlled-capabilities.json`,
+`served-models.json`) follow the 0.8.0 descriptor construction for a llama.cpp
+vision serving with an 8192-token context and a Torch image serving, including
+modalities and the `multimodal_embedding`, `decision` and `rerank` descriptors. The tests exercise additive capability parsing, named/facade PNG/JPEG inputs (including progressive
 JPEG), order, closed shapes, finite/resource bounds, typed application captions,
 draft/history, live selection refusal, cancellation/borrowed-owner survival,
 HTTP outcomes, restart and no replay. The existing typed browser suite additionally
 checks the actual caption form, capability inspection, application and disconnect.
 
-The six actual production DTO schemas regenerated at the pinned source with the
-`export-contract` feature are retained in
-`tests/fixtures/pumas-image-to-text-v1/schemas/`, with SHA-256 identities in
-`source.json`. All six changed from the PR68 export (new capabilities, formats,
-`context_tokens`, decision and content-batch DTOs and the required error
-`message`). The
-source-derived capability fixture and authored named/facade image requests and
-typed responses validate against these exports in the vision tests. The schemas
+The schemas in `tests/fixtures/pumas-image-to-text-v1/schemas/` have SHA-256
+identities and origins in `source.json`. `capability-descriptor.schema.json` is
+the copy the 0.8.0 release ships; `capabilities-response` and
+`served-models-response` are derived from it and from `types.rs` at the tag; the
+request, response and error schemas remain the pre-release export, as the
+release's changes to them are additive and Pumas is not built here. The
+capability fixtures and authored named/facade image requests and typed
+responses validate against these schemas in the vision tests. The schemas
 describe wire shape; finite bounds and live readiness remain runtime checks.
 Neither fixture output nor schema validity proves native inference.
 
-`source.json` records the branch, commit, tree, contract document hash and
-handler/controlled-test source hashes. The pin is a branch commit, not a merged
-Pumas main commit; repin when it merges. The fixture gateway advertisement reads
+`source.json` records the tag, commit, tree and contract document hash. The
+fixture gateway advertisement reads
 the same versioned source pin as its consumer acceptance evidence.
 The combined desktop contract and packaged application are provider integration
 gates. Real model/projector inference, semantic quality, managed native teardown

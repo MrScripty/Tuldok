@@ -11,7 +11,8 @@ import ipaddress
 import json
 from urllib.parse import urlsplit
 
-SOURCE_COMMIT = '80f06ab17f9eea639fee143c86319ca9b5e1a21c'
+# Pumas Library tag v0.8.0, whose `HttpServiceDescription` and `PumasBuildInfo` this decodes.
+SOURCE_COMMIT = '69e32a2208c5c2d840f4adafec03350669fcb5bc'
 # Transport bound. Open lists have no entry-count cap of their own.
 MAX_DESCRIPTION_BYTES = 64 * 1024
 
@@ -142,7 +143,7 @@ def decode(raw):
     value = _object(value, '', ('advertisement_schema_version', 'service_generation', 'instance', 'endpoint',
                                 'build_info'))
     _version(value['advertisement_schema_version'], 'advertisement_schema_version')
-    _text(value['service_generation'], 'service_generation', 128)
+    _text(value['service_generation'], 'service_generation', 256)
     try:
         endpoint(value['endpoint'])
     except ValueError as error:

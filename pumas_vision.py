@@ -1,4 +1,4 @@
-"""Finite Image→Text consumer of the Pumas v0.8 typed contract, never model qualification.
+"""Finite Image→Text consumer of the Pumas 0.8.0 typed contract, never model qualification.
 
 The application sends its prepared image bytes, without URL/path authority.
 Pumas's production PNG/turbojpeg decoder remains the admission authority.
@@ -28,7 +28,8 @@ MAX_PIXELS = 4194304
 MAX_MESSAGES = MAX_PARTS = 128
 # Pumas has no fixed generation cap; the live max_tokens bound follows the served context.
 MAX_TOKENS = 4294967295
-IMAGE_FACTS = ('image_count', 'image_bytes', 'image_pixels', 'width', 'height')
+IMAGE_FACTS = ('image_count', 'image_bytes', 'image_pixels', 'width', 'height', 'total_image_bytes',
+               'message_count', 'content_parts')
 
 
 def _container(data, encoding):
@@ -176,7 +177,12 @@ def prepare(job, payload, stop):
     input_format, images = validate_input(payload['input'], facade='semantic_task' in payload)
     options = {key: value for key, value in payload['options'].items() if key != 'kind'}
     # Image facts are checked against advertised bounds; local preflight already bounds them.
-    pumas.require(observed, 'image_to_text', input_format, 'text', dict(options, image_count=len(images)), advisory=IMAGE_FACTS)
+    facts = dict(options, image_count=len(images), total_image_bytes=sum(row['image_bytes'] for row in images))
+    if payload['input']['kind'] != 'image':
+        messages = payload['input']['messages']
+        facts.update(message_count=len(messages), content_parts=sum(
+            1 if type(message['content']) is str else len(message['content']) for message in messages))
+    pumas.require(observed, 'image_to_text', input_format, 'text', facts, advisory=IMAGE_FACTS)
     for image in images: pumas.require(observed, 'image_to_text', input_format, 'text', image, advisory=IMAGE_FACTS)
     job.update(capability_observation=observed, build_observation=build, producer_contract_source=SOURCE_COMMIT)
     pumas.request_evidence(job, payload)

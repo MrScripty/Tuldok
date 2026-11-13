@@ -28,23 +28,29 @@ def image(encoding='png', size=(16,8), progressive=False):
 
 class VisionBoundaryTests(unittest.TestCase):
     def job(self): return {'id':'caption-17','config':{'model':'controlled-vision','profile':'vision-cpu'}}
-    def test_actual_dto_schema_identities_and_closed_capability_enum(self):
+    def test_release_schema_identities_and_closed_capability_enum(self):
         source = json.loads((FIXTURES/'source.json').read_text())
         self.assertEqual(source['producer_commit'], vision.SOURCE_COMMIT)
-        schemas = source['actual_dto_schema_sha256']
+        self.assertEqual(source['producer_tag'], 'v0.8.0')
+        schemas = source['schema_sha256']
         self.assertEqual(set(schemas), {name+'.schema.json' for name in (
-            'operation-request', 'modality-request', 'capabilities-response',
+            'operation-request', 'modality-request', 'capabilities-response', 'served-models-response',
             'capability-descriptor', 'operation-response', 'error-response')})
+        self.assertEqual(set(schemas), set(source['schema_origin']))
         for name, digest in schemas.items():
             raw = (FIXTURES/'schemas'/name).read_bytes()
             self.assertEqual(hashlib.sha256(raw).hexdigest(), digest, name)
             self.assertEqual(json.loads(raw)['$schema'], 'https://json-schema.org/draft/2020-12/schema')
+        # The release's own consumer reference pins this digest for the descriptor schema it ships.
+        self.assertEqual(schemas['capability-descriptor.schema.json'],
+                         '070f85949bff2451a0ca3f3a489548afff82f7d1e3a25ddc6036370aab6f3365')
         descriptor = json.loads((FIXTURES/'schemas/capability-descriptor.schema.json').read_text())
         # Documented capability variants export as `oneOf`; new ones are appended additively.
         variants = descriptor['$defs']['Capability']['oneOf']
         names = [name for row in variants for name in row.get('enum', [row.get('const')])]
         self.assertTrue(set(pumas.USED_CAPABILITIES) <= set(names))
-        self.assertTrue({'multimodal_embedding', 'decision'} <= set(names))
+        self.assertTrue({'multimodal_embedding', 'decision', 'rerank'} <= set(names))
+        self.assertTrue(set(pumas.CAPABILITIES) <= set(names))
         error = json.loads((FIXTURES/'schemas/error-response.schema.json').read_text())
         self.assertIn('message', error['$defs']['OperationError']['required'])
         self.assertEqual(error['properties']['request_id']['type'], ['string', 'null'])
@@ -57,6 +63,9 @@ class VisionBoundaryTests(unittest.TestCase):
             'capabilities-response', 'operation-request', 'modality-request', 'operation-response', 'error-response')}
         def valid(name, value): jsonschema.Draft202012Validator(schemas[name]).validate(value)
         valid('capabilities-response', json.loads((FIXTURES/'controlled-capabilities.json').read_bytes()))
+        schemas['served-models-response'] = json.loads((FIXTURES/'schemas/served-models-response.schema.json').read_text())
+        valid('served-models-response', json.loads((FIXTURES/'served-models.json').read_bytes()))
+        valid('error-response', {'contract_version':1,'request_id':'caption-17','error':{'code':'request_limit','outcome':'not_admitted','message':'the request has more than 4 images; the limit is 4'}})
         valid('operation-request', vision.request(self.job(), image(), facade=False))
         valid('operation-request', vision.request(self.job(), {'kind':'image_messages','messages':[{'role':'user','content':[image()]}]}, facade=False))
         valid('modality-request', {key: value for key, value in vision.request(self.job(), image('jpeg')).items()})

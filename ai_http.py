@@ -91,7 +91,8 @@ def provider_error_detail(data, payload=None, headers=None):
 def pumas_error_detail(data, payload=None, headers=None):
     """Pumas' OpenAI-compatible errors carry its (redacted) reason in `error.message`.
 
-    Returns '' for any body that is not a bounded `pumas_error`; that reason is
+    Returns '' for any body that is not a bounded `pumas_error` or typed
+    operation error; that reason is
     still passed through the same redaction as other provider diagnostics.
     """
     if not data or len(data) > MAX_ERROR_BODY:
@@ -101,7 +102,9 @@ def pumas_error_detail(data, payload=None, headers=None):
     except (ValueError, UnicodeError):
         return ''
     error = value.get('error') if isinstance(value, dict) else None
-    if (not isinstance(error, dict) or error.get('type') != 'pumas_error'
+    # Typed operation errors (contract version 1) carry `code`, `outcome` and `message` instead of `type`.
+    typed = isinstance(error, dict) and value.get('contract_version') == 1 and isinstance(error.get('outcome'), str)
+    if (not isinstance(error, dict) or (error.get('type') != 'pumas_error' and not typed)
             or not isinstance(error.get('message'), str) or not error['message'].strip()):
         return ''
     detail = provider_error_detail(json.dumps({'message': error['message']}).encode(), payload, headers)

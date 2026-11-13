@@ -35,7 +35,6 @@
     "AvailabilityReason": {
       "enum": [
         "unsupported_adapter",
-        "unqualified_audio_runtime",
         "unknown_model_task",
         "model_task_mismatch",
         "runtime_unavailable"
@@ -65,23 +64,62 @@
           "const": "decision",
           "description": "Typed questions about a state answered with probabilities by a native\ndecision model (llama.cpp `/v1/systemone`, e.g. Kev, OpenJev).",
           "type": "string"
+        },
+        {
+          "const": "rerank",
+          "description": "Relevance of each document to a query, scored by a reranker\n(llama.cpp `/v1/rerank`).",
+          "type": "string"
         }
       ]
     },
     "InputFormat": {
-      "enum": [
-        "messages_text",
-        "png_base64",
-        "jpeg_base64",
-        "messages_image",
-        "text",
-        "text_batch",
-        "pcm_s16le",
-        "pcm_f32le",
-        "content_batch",
-        "decision"
-      ],
-      "type": "string"
+      "oneOf": [
+        {
+          "enum": [
+            "messages_text",
+            "png_base64",
+            "jpeg_base64",
+            "messages_image",
+            "text",
+            "text_batch",
+            "pcm_s16le",
+            "pcm_f32le",
+            "content_batch",
+            "decision",
+            "rerank"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "messages_multimodal",
+          "description": "Messages whose parts include audio.",
+          "type": "string"
+        }
+      ]
+    },
+    "Modality": {
+      "description": "A modality primitive: one kind of data, the same whether it is a model's\ninput or its output. `json` and `vector` are output-only result kinds.",
+      "oneOf": [
+        {
+          "enum": [
+            "text",
+            "image",
+            "audio",
+            "video"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "json",
+          "description": "Structured data checked against the capability's schema\n(decision answers, relevance scores).",
+          "type": "string"
+        },
+        {
+          "const": "vector",
+          "description": "Embedding vectors.",
+          "type": "string"
+        }
+      ]
     },
     "OptionBound": {
       "properties": {
@@ -105,22 +143,71 @@
       "type": "object"
     },
     "OptionName": {
-      "enum": [
-        "max_tokens",
-        "temperature",
-        "top_p",
-        "dimensions",
-        "input_count",
-        "input_characters",
-        "width",
-        "height",
-        "seed",
-        "max_output_tokens",
-        "image_bytes",
-        "image_pixels",
-        "image_count"
-      ],
-      "type": "string"
+      "oneOf": [
+        {
+          "enum": [
+            "max_tokens",
+            "temperature",
+            "top_p",
+            "dimensions",
+            "input_count",
+            "input_characters",
+            "width",
+            "height",
+            "seed",
+            "max_output_tokens",
+            "image_bytes",
+            "image_pixels",
+            "image_count"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "total_image_bytes",
+          "description": "Decoded bytes of all images in one request.",
+          "type": "string"
+        },
+        {
+          "const": "message_count",
+          "description": "Messages in one `image_messages` input.",
+          "type": "string"
+        },
+        {
+          "const": "content_parts",
+          "description": "Content parts across one request.",
+          "type": "string"
+        },
+        {
+          "const": "input_tokens",
+          "description": "Tokens per input, including special tokens, from the served model's\nown positional limit.",
+          "type": "string"
+        },
+        {
+          "const": "top_n",
+          "description": "Documents returned by a `rerank` operation.",
+          "type": "string"
+        },
+        {
+          "const": "audio_count",
+          "description": "Audio clips in one request.",
+          "type": "string"
+        },
+        {
+          "const": "total_audio_bytes",
+          "description": "Decoded PCM bytes of all audio in one request.",
+          "type": "string"
+        },
+        {
+          "const": "audio_seconds",
+          "description": "Seconds per audio clip.",
+          "type": "string"
+        },
+        {
+          "const": "sample_rate",
+          "description": "Sample rate of an audio clip, in Hz.",
+          "type": "string"
+        }
+      ]
     },
     "OutputFormat": {
       "enum": [
@@ -128,7 +215,8 @@
         "embeddings_float32",
         "png_base64",
         "labels",
-        "decisions"
+        "decisions",
+        "relevance_scores"
       ],
       "type": "string"
     },
@@ -142,7 +230,8 @@
         "audio_classification",
         "image_to_text",
         "multimodal_embedding",
-        "decision"
+        "decision",
+        "rerank"
       ],
       "type": "string"
     }
@@ -161,6 +250,13 @@
       },
       "type": "array"
     },
+    "input_modalities": {
+      "description": "Content modalities this capability accepts for this served model.",
+      "items": {
+        "$ref": "#/$defs/Modality"
+      },
+      "type": "array"
+    },
     "option_bounds": {
       "items": {
         "$ref": "#/$defs/OptionBound"
@@ -170,6 +266,13 @@
     "output_formats": {
       "items": {
         "$ref": "#/$defs/OutputFormat"
+      },
+      "type": "array"
+    },
+    "output_modalities": {
+      "description": "Modalities this capability produces.",
+      "items": {
+        "$ref": "#/$defs/Modality"
       },
       "type": "array"
     },
@@ -185,6 +288,8 @@
     "semantic_task",
     "input_formats",
     "output_formats",
+    "input_modalities",
+    "output_modalities",
     "streaming",
     "availability",
     "option_bounds"

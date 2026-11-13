@@ -1,8 +1,10 @@
-"""Finite Pumas typed model operations (contract version 1, v0.8 additive rules).
+"""Finite Pumas typed model operations, as released in Pumas Library 0.8.0 (contract version 1).
 
-Discovery budgets never time generation. Responses grow additively: unknown
-response fields, capabilities, formats, option names, availability reasons and
-error codes are ignored; only what Tuldok uses is validated and selected by name.
+Pumas is reached only as an HTTP endpoint. Discovery budgets never time
+generation. Responses grow additively: unknown response fields, capabilities,
+formats, modalities, option names, availability reasons and error codes are
+ignored; only what Tuldok uses is validated and selected by name. Requests send
+only what the selected serving declared.
 """
 import hashlib
 import http.client
@@ -13,14 +15,18 @@ import threading
 import time
 from urllib.parse import urlencode, urlsplit
 
+import ai_http
+from ai_codex import CodexError
 import gateway_discovery
 from pumas_gateway_descriptor import endpoint
 from workbench import WorkbenchError, encode
 
 PROTOCOL = 'pumas_typed_v1'
-SOURCE_COMMIT = '4c79cd8e35db566b70caaa13d8d8f92265f5976e'
+# Pumas Library tag v0.8.0: the released contract this module follows.
+SOURCE_COMMIT = '69e32a2208c5c2d840f4adafec03350669fcb5bc'
 MAX_CAPABILITIES = 1024 * 1024
 MAX_SERVED_MODELS = 8 * 1024 * 1024
+MAX_SERVED_ENTRIES = 4096
 MAX_TEXT_RESPONSE = 256 * 1024
 MAX_IMAGE_JSON = 12 * 1024 * 1024
 MAX_DIMENSION = 2048
@@ -30,8 +36,25 @@ MAX_MESSAGE = 600
 USED_CAPABILITIES = {'chat_generation': 'chat_generation', 'image_generation': 'text_to_image',
                      'image_to_text': 'image_to_text'}
 # Option bounds Tuldok compares against. Other advertised options are ignored.
-USED_OPTIONS = {'max_tokens', 'temperature', 'top_p', 'width', 'height', 'seed',
-                'image_bytes', 'image_pixels', 'image_count'}
+USED_OPTIONS = {'max_tokens', 'temperature', 'top_p', 'width', 'height', 'seed', 'input_characters',
+                'image_bytes', 'image_pixels', 'image_count', 'total_image_bytes', 'message_count', 'content_parts'}
+# The 0.8.0 release vocabulary. Values outside these sets are ignored, never an error.
+CAPABILITIES = ('chat_generation', 'text_generation', 'text_embedding', 'image_generation', 'image_to_text',
+                'multimodal_embedding', 'decision', 'rerank', 'audio_transcription', 'audio_classification')
+INPUT_FORMATS = ('messages_text', 'messages_image', 'messages_multimodal', 'text', 'text_batch', 'png_base64',
+                 'jpeg_base64', 'pcm_s16le', 'pcm_f32le', 'content_batch', 'decision', 'rerank')
+OUTPUT_FORMATS = ('text', 'embeddings_float32', 'png_base64', 'decisions', 'relevance_scores', 'labels')
+MODALITIES = ('text', 'image', 'audio', 'video', 'json', 'vector')
+OPTION_NAMES = ('max_tokens', 'temperature', 'top_p', 'dimensions', 'input_count', 'input_characters', 'width',
+                'height', 'seed', 'max_output_tokens', 'image_bytes', 'image_pixels', 'image_count',
+                'total_image_bytes', 'message_count', 'content_parts', 'input_tokens', 'top_n', 'audio_count',
+                'total_audio_bytes', 'audio_seconds', 'sample_rate')
+# Request `input.kind` to the descriptor input formats that accept it (the release's resolver).
+# `messages` with image parts is the same request as `image_messages`; ask with that kind.
+INPUT_KINDS = {'text': ('text',), 'text_batch': ('text_batch',), 'messages': ('messages_text',),
+               'image_messages': ('messages_image',), 'image': ('png_base64', 'jpeg_base64'),
+               'content_batch': ('content_batch',), 'decision': ('decision',), 'rerank': ('rerank',),
+               'audio': ('pcm_s16le', 'pcm_f32le')}
 
 
 class OperationError(WorkbenchError):
@@ -84,11 +107,19 @@ def message_text(value):
     return value[:MAX_MESSAGE] + ('…' if len(value) > MAX_MESSAGE else '')
 
 
+def pre_handler(value):
+    """True for a refusal made before the request reached its handler: `{"error":{"code","message"}}`."""
+    return (type(value) is dict and type(value.get('error')) is dict and 'contract_version' not in value
+            and 'request_id' not in value and 'outcome' not in value['error'])
+
+
 def typed_error(value):
     """Decode `{contract_version, request_id, error:{code, outcome, message}}` or return None.
 
     `outcome` is authoritative. Only `not_admitted` proves no provider effect;
-    any other value is treated as `unknown`. Unknown codes are kept verbatim.
+    any other value is treated as `unknown`. A pre-handler refusal has no
+    outcome and never reached a handler, so it is `not_admitted`. Unknown codes
+    are kept verbatim.
     """
     if type(value) is not dict or type(value.get('error')) is not dict:
         return None
@@ -96,7 +127,7 @@ def typed_error(value):
     code = error.get('code')
     if not isinstance(code, str) or not code or len(code) > 200:
         return None
-    outcome = 'not_admitted' if error.get('outcome') == 'not_admitted' else 'unknown'
+    outcome = 'not_admitted' if error.get('outcome') == 'not_admitted' or pre_handler(value) else 'unknown'
     return {'code': code, 'outcome': outcome, 'message': message_text(error.get('message'))}
 
 
@@ -298,6 +329,174 @@ def models(base):
         max_response=1024*1024, decode=_openai_models, require_complete=True, error=http_error)
 
 
+def _known(values, vocabulary, where):
+    """The known members of a declared list, in order; unknown strings are ignored."""
+    if type(values) is not list or any(type(value) is not str for value in values):
+        raise ValueError(where + ' must be a list of strings.')
+    return [value for value in dict.fromkeys(values) if value in vocabulary]
+
+
+def _text_field(value, where, limit):
+    if not isinstance(value, str) or not value.strip() or len(value) > limit:
+        raise ValueError(f'{where} must be a nonempty string of at most {limit} characters.')
+    return value
+
+
+def _served_descriptor(item, where):
+    """One release capability descriptor, reduced to the vocabulary Tuldok knows."""
+    response_fields(item, ('capability', 'semantic_task', 'input_formats', 'output_formats', 'input_modalities',
+                           'output_modalities', 'streaming', 'availability', 'option_bounds'))
+    if type(item['semantic_task']) is not str or type(item['streaming']) is not bool:
+        raise ValueError(where + ' has an invalid semantic task or streaming flag.')
+    availability = item['availability']
+    if type(availability) is not dict or type(availability.get('state')) is not str:
+        raise ValueError(where + ' has an invalid availability.')
+    reason = availability.get('reason')
+    if reason is not None and type(reason) is not str:
+        raise ValueError(where + ' has an invalid availability reason.')
+    bounds = {}
+    if type(item['option_bounds']) is not list:
+        raise ValueError(where + ' option bounds must be a list.')
+    for bound in item['option_bounds']:
+        if type(bound) is not dict or bound.get('option') not in OPTION_NAMES:
+            continue
+        response_fields(bound, ('option', 'minimum', 'maximum'))
+        if (bound['option'] in bounds or not _bound_number(bound['minimum']) or not _bound_number(bound['maximum'])
+                or bound['minimum'] > bound['maximum']):
+            raise ValueError(where + ' has an invalid or repeated ' + bound['option'] + ' bound.')
+        bounds[bound['option']] = {'minimum': bound['minimum'], 'maximum': bound['maximum']}
+    available = availability['state'] == 'available'
+    return {'capability': item['capability'], 'semantic_task': item['semantic_task'],
+            'input_formats': _known(item['input_formats'], INPUT_FORMATS, where + ' input formats'),
+            'output_formats': _known(item['output_formats'], OUTPUT_FORMATS, where + ' output formats'),
+            'input_modalities': _known(item['input_modalities'], MODALITIES, where + ' input modalities'),
+            'output_modalities': _known(item['output_modalities'], MODALITIES, where + ' output modalities'),
+            'streaming': item['streaming'],
+            # An unknown reason is kept as display text, never interpreted.
+            'availability': {'state': 'available'} if available else
+                            {'state': 'unavailable', 'reason': message_text(reason) or None},
+            'option_bounds': bounds}
+
+
+def _served_entry(item, where):
+    response_fields(item, ('model', 'profile', 'model_id', 'provider', 'load_state', 'profile_required',
+                           'modalities', 'capabilities'))
+    selected = profile(item['profile'])
+    if selected is None:
+        raise ValueError(where + ' has no exact profile.')
+    context = item.get('context_tokens')
+    if context is not None and (type(context) is not int or not 0 < context <= 4294967295):
+        raise ValueError(where + ' context_tokens must be a positive 32-bit integer.')
+    if type(item['profile_required']) is not bool:
+        raise ValueError(where + ' profile_required must be true or false.')
+    modalities = item['modalities']
+    response_fields(modalities, ('input', 'output'))
+    if type(item['capabilities']) is not list:
+        raise ValueError(where + ' capabilities must be a list.')
+    capabilities = []
+    for index, row in enumerate(item['capabilities']):
+        if type(row) is not dict or row.get('capability') not in CAPABILITIES:
+            continue
+        if any(seen['capability'] == row['capability'] for seen in capabilities):
+            raise ValueError(where + ' lists ' + row['capability'] + ' more than once.')
+        capabilities.append(_served_descriptor(row, f'{where} capability {index}'))
+    return {'model': alias(item['model']), 'profile': selected, 'profile_required': item['profile_required'],
+            'model_id': _text_field(item['model_id'], where + ' model_id', 1024),
+            'provider': _text_field(item['provider'], where + ' provider', 128),
+            'load_state': _text_field(item['load_state'], where + ' load_state', 128),
+            'context_tokens': context,
+            'modalities': {'input': _known(modalities['input'], MODALITIES, where + ' input modalities'),
+                           'output': _known(modalities['output'], MODALITIES, where + ' output modalities')},
+            'capabilities': capabilities}
+
+
+def decode_served_models(raw):
+    """Validate a `GET /v1/served-models` body into the served (model, profile) pairs.
+
+    Refuses a body that is not contract version 1, lacks a required field or
+    has a malformed entry, naming the entry. Capabilities, formats, modalities
+    and option names outside the release vocabulary, and unknown fields, are
+    dropped without error.
+    """
+    if len(raw) > MAX_SERVED_MODELS:
+        raise ValueError(f'The served-model listing exceeds {MAX_SERVED_MODELS} bytes.')
+    value = strict_json(raw)
+    response_fields(value, ('supported_contract_versions', 'max_request_bytes', 'max_response_bytes', 'models'))
+    versions = value['supported_contract_versions']
+    if type(versions) is not list or not any(type(version) is int and version == 1 for version in versions):
+        raise ValueError('Pumas typed contract version 1 is unavailable.')
+    for key in ('max_request_bytes', 'max_response_bytes'):
+        if not _positive_int(value[key]):
+            raise ValueError('Unsupported typed Pumas byte bounds.')
+    if type(value['models']) is not list or len(value['models']) > MAX_SERVED_ENTRIES:
+        raise ValueError(f'The served-model listing must be a list of at most {MAX_SERVED_ENTRIES} entries.')
+    models, pairs = [], set()
+    for index, item in enumerate(value['models']):
+        try:
+            entry = _served_entry(item, f'Served model {index}')
+        except ValueError as error:
+            message = str(error)
+            raise ValueError(message if message.startswith('Served model') else f'Served model {index}: {message}') from None
+        if (entry['model'], entry['profile']) in pairs:
+            raise ValueError(f"Served model {index} repeats {entry['model']} with profile {entry['profile']}.")
+        pairs.add((entry['model'], entry['profile']))
+        models.append(entry)
+    return {'max_request_bytes': value['max_request_bytes'], 'max_response_bytes': value['max_response_bytes'],
+            'models': models}
+
+
+def served_models(address, cancel_event=None):
+    """What a Pumas endpoint serves: each (model, profile) with its capabilities, from `GET /v1/served-models`.
+
+    Independent of the catalog. Reads at most `MAX_SERVED_MODELS` bytes within
+    15 seconds and never retries. Raises `OperationError` with the reason.
+    """
+    base = ai_http.validate_url('llamacpp', address)
+    try:
+        with ai_http.request(base, '/v1/served-models', timeout=15, label='Pumas endpoint',
+                             cancel_event=cancel_event) as (response, transport, deadline):
+            raw = bytearray()
+            while not response.isclosed():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError()
+                transport.settimeout(remaining)
+                chunk = response.read1(65536)
+                if not chunk:
+                    break
+                raw.extend(chunk)
+                if len(raw) > MAX_SERVED_MODELS:
+                    raise ValueError(f'The served-model listing exceeds {MAX_SERVED_MODELS} bytes.')
+            if response.length not in (None, 0):
+                raise ValueError('The served-model listing ended before its declared length.')
+        return decode_served_models(bytes(raw))
+    except (CodexError, TimeoutError, OSError, http.client.HTTPException, ValueError) as error:
+        raise OperationError('Pumas served models unavailable: ' + (str(error) or 'the endpoint timed out.')) from None
+
+
+def available_capabilities(served, input_kind, output):
+    """The capabilities of one served model that are available to make `output` from `input_kind`.
+
+    `served` is one entry of `served_models()`. `input_kind` is a request
+    `input.kind`; `output` an output format of the release. Returns capability
+    names in the order the endpoint declared them.
+    """
+    if input_kind not in INPUT_KINDS:
+        raise ValueError('Unknown input kind; use one of ' + ', '.join(INPUT_KINDS) + '.')
+    if output not in OUTPUT_FORMATS:
+        raise ValueError('Unknown output; use one of ' + ', '.join(OUTPUT_FORMATS) + '.')
+    names = []
+    for row in served['capabilities']:
+        formats = INPUT_KINDS[input_kind]
+        # The release sends a `text` input to chat as one user message.
+        if input_kind == 'text' and row['capability'] == 'chat_generation':
+            formats = ('messages_text',)
+        if (row['availability']['state'] == 'available' and output in row['output_formats']
+                and any(name in row['input_formats'] for name in formats)):
+            names.append(row['capability'])
+    return names
+
+
 def descriptor(observed, name):
     """Select a capability descriptor by name, never by position or count."""
     return next((row for row in observed['capabilities']['capabilities']
@@ -404,6 +603,11 @@ def result(raw, request_id):
     """Decode a finite typed response. Unknown response fields are ignored."""
     try:
         value = strict_json(raw)
+        if pre_handler(value):
+            error = typed_error(value)
+            if error is None:
+                raise ValueError('Invalid Pumas refusal.')
+            raise OperationError(error_message(error), error['outcome'], error['code'], raw)
         if type(value) is not dict or type(value.get('contract_version')) is not int or value['contract_version'] != 1:
             raise ValueError('Typed response is not contract version 1.')
         if 'error' in value:
