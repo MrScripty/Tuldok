@@ -1,6 +1,6 @@
 # Capability check: what deleting the old project mode removes
 
-**Status: written 2026-11-12 for the owner's sign-off, and brought up to date the same evening after the Map workspace was built and the owner had looked at it. Not signed. Nothing is deleted until it is.**
+**Status: written 2026-11-12 for the owner's sign-off, and brought up to date the same evening after the Map workspace was built and the owner had looked at it. Not signed. Nothing is deleted until it is. The deletion is prepared and checked on a side branch ("The deletion as prepared", below) and reaches this branch only on sign-off.**
 
 The [plan](plan.md) deletes the old project-files mode in milestone 8 on one condition: a written check that lists every capability of that mode as covered, moved or deliberately dropped, signed off by the owner. This is that check. It is a list of what Tuldok can do today through `python app.py --project-files-root ...` and what happens to each thing when that mode is gone.
 
@@ -22,17 +22,19 @@ Two more follow from the deletion itself: the lab's old project folder (`project
 
 | What | Size |
 | --- | --- |
-| 38 Python modules that only the old mode reaches | 20,854 lines |
-| The old project page and the extraction page, with their scripts and styles under `static/` | 3,263 lines in 10 files |
+| 37 Python modules that only the old mode reaches | 20,437 lines |
+| The old project page and the extraction page, with their scripts and styles under `static/` | 3,264 lines in 11 files |
 | 145 `project_files.*` and 5 `project_transfer.*` operations in `agent_api.py`, the `project` capability profile, the two owner clients and their `mcp_stdio.py` flags | |
-| 74 test files that import one of those modules | 21,791 lines |
+| The old mode's tests: 72 Python files and 18 JavaScript files | 22,675 lines |
 | The documentation of the old mode under `docs/contracts/`, the runbooks and the READMEs. Its plans and ledgers under `docs/plans/` stay, as the record | |
 
-The 38 modules: `project_artifacts`, `project_cli`, `project_composition`, `project_custody`, `project_data`, `project_data_fork`, `project_dispatch`, `project_execution`, `project_extraction`, `project_files`, `project_fork`, `project_fork_composition`, `project_history`, `project_locks`, `project_material`, `project_material_fork`, `project_measurements`, `project_native_execution`, `project_native_preparation`, `project_native_process`, `project_producer_execution`, `project_producers`, `project_projection`, `project_record_dedupe`, `project_runtime`, `project_session`, `project_sources`, `project_store`, `project_study_execution`, `project_text`, `project_transfer`, `project_transfer_controller`, `project_validation_cache`, `project_validation_delta`, `project_working_store`, `project_workspace`, `retained_measurements`, `native_process_bootstrap`.
+The 37 modules: `project_artifacts`, `project_composition`, `project_custody`, `project_data`, `project_data_fork`, `project_dispatch`, `project_execution`, `project_extraction`, `project_files`, `project_fork`, `project_fork_composition`, `project_history`, `project_locks`, `project_material`, `project_material_fork`, `project_measurements`, `project_native_execution`, `project_native_preparation`, `project_native_process`, `project_producer_execution`, `project_producers`, `project_projection`, `project_record_dedupe`, `project_runtime`, `project_session`, `project_sources`, `project_store`, `project_study_execution`, `project_text`, `project_transfer`, `project_transfer_controller`, `project_validation_cache`, `project_validation_delta`, `project_working_store`, `project_workspace`, `retained_measurements`, `native_process_bootstrap`.
+
+`project_cli.py` was listed here as a 38th module until the deletion was prepared. It stays: it is also catalog mode's command line for agents (`open`, `inspect`, `preflight`, `submit`, `status`, `download` and the rest), and tests that stay use it. It loses only the old mode's commands, `file-*` and `project-transfer`, and the flag `--owner-project-files`.
 
 **What stays:** every remaining operation's contract, unchanged; catalog mode and everything it uses, including `projects.py` and `project_activity.py` (catalog mode's read-only inspection of project snapshots with `--project-root`), the access layer, the agent registry and clients, and the new `tuldok_project` package.
 
-**Where the old code is tied to catalog mode.** Eight import lines in three files reach into the 38 modules, so they change before anything is deleted:
+**Where the old code is tied to catalog mode.** Twelve import statements in three files reach into the 37 modules, so they change before anything is deleted:
 
 | File | What it imports | What happens |
 | --- | --- | --- |
@@ -62,7 +64,7 @@ Outside the operations:
 
 | Capability | After deletion |
 | --- | --- |
-| The old command line, `project_cli.py` | Replaced by `python -m tuldok_project` |
+| The old mode's commands in `project_cli.py` (`file-*`, `project-transfer`) | Gone. A project folder has `python -m tuldok_project`. The rest of `project_cli.py` is catalog mode's and stays |
 | Opening the lab's old folder (`projects/rheon-model-portfolio-unified-04`) in Tuldok | Gone. The lab's converter reads that folder's files directly, and the old code stays in Git history |
 | The old project page (`/project-files`), about twenty stacked form panels | Gone. The Map workspace is the project's interface |
 | Byte-identical save, receipts, custody and checkpoint proofs | Dropped, as the plan decided |
@@ -75,7 +77,23 @@ These come first, so the deletion removes nothing the lab still needs:
 2. **Done.** The lab repository holds the new folder only, and the clean-install test of the plan's summary passed on fresh clones.
 3. **Done.** A `new` command exists.
 4. **Done.** The Map workspace is built in three phases and the owner has looked at each.
-5. **Part of the deletion.** The eight import lines above are cut and catalog mode's tests pass.
+5. **Part of the deletion.** The twelve import statements above are cut and catalog mode's tests pass.
+
+## The deletion as prepared
+
+Prepared 2026-11-12 on the branch `chore/retire-old-project-mode`, in a working tree of its own. It is not on this branch. What it changes file by file, and each check with its result, is section 10.6 of [spec-m8.md](spec-m8.md) on that branch. In short:
+
+| | |
+| --- | --- |
+| Removed | 143 files, 47,099 lines: 37 modules, 72 Python and 18 JavaScript test files, 11 files under `static/`, one script, four documents. 2,446 more lines are cut from 16 files that stay |
+| Contracts | Every operation that remains is published byte for byte as before, in the `catalog` and the `project_folder` profile. The catalog's list goes from 115 operations to 110: the five `project_transfer.*` entries, which it listed as unavailable. The `project` profile is refused. The 145 `project_files.*` and 5 `project_transfer.*` operations are offered nowhere |
+| Python tests | 3,149 before; 2,397 after, which is 3,149 less the 751 tests of the deleted files and one test of a deleted client class. No test that stays is newly skipped. One test that stays had to change: it pinned the digest of the whole catalog list and of the `project` profile, so it now pins the list without the five entries and checks that the old profile is refused. 23 tests fail before and after alike, none of them from the change: this machine has no training environment (numpy, scikit-learn), the test database's user may not create databases, and three tests of the CPU snapshot refuse this machine's Python directories |
+| Project folder tests | 585 before, 586 after (the new test of the refused profile), all passing |
+| JavaScript | All 49 remaining `tests/test_*.cjs` pass; `node --check` passes on all 54 scripts under `static/` |
+| Browser | The workspace checks pass on their fixture and on the lab folder, read only. Of the 62 catalog checks the workflow runs, 49 ran here and 45 pass. One fails in its own clean-up of a temporary directory, the same way on the unchanged code; three need packages only the workflow installs. 13 were not run: they need training, a GPU or generated fixtures |
+| Start-up | `--help` shows none of the removed flags and each is an argument error; Tuldok starts in catalog mode on an empty data directory and with `--project-folder` on the tiny example |
+
+**Left for a later change.** About thirty lines in ten of catalog mode's files (`runs.py`, `synthetic.py`, the proposal modules and others) still ask the catalog for an attribute only the deleted modules set (`project_execution`, `project_sources`, `project_asset`, `project_availability`, `project_study_execution`). They can no longer be reached. They run through the code that starts and recovers runs, so removing them is its own reviewed change. `docs/decisions/external-project-authority.md`, the decision record of the old mode, stays as a record.
 
 ## Sign-off
 
