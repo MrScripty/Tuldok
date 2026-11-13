@@ -186,7 +186,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
     current estimate ({disk_bytes, wall_seconds, items, measured_at}).
 
     every adds every dataset, recipe, step and benchmark to the targets. A
-    chart target is replaced by its benchmark; a model target adds nothing
+    chart target is replaced by its benchmark, an annotation task by its
+    dataset (spec-d4.md section 1); a model target adds nothing
     and a note saying so. Raises ValueError naming any target that is not a
     definition.
     """
@@ -204,6 +205,10 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
             benchmark = definitions[reference].get('benchmark')
             notes.append(f'{reference} is drawn from {benchmark}, which is planned in its place.')
             reference = benchmark
+        elif kind == 'annotation':
+            dataset = definitions[reference].get('dataset')
+            notes.append(f'{reference} annotates the records of {dataset}, which is planned in its place.')
+            reference = dataset
         elif kind == 'model':
             notes.append(f'{reference} is a model; a model is not built, only the recipes that train it.')
         if reference not in resolved:
@@ -212,7 +217,7 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
     adopted = {reference for reference, entry in (built or {}).items() if entry.get('adopted')}
     members = _closure(definitions, edges_from, states,
                        [reference for reference in resolved if _kind(reference) != 'model'], adopted)
-    members = {reference for reference in members if _kind(reference) not in ('model', 'chart')}
+    members = {reference for reference in members if _kind(reference) not in ('model', 'chart', 'annotation')}
     ordered = graph.order({reference: definitions[reference] for reference in members})
     actions = {reference: _action(_kind(reference), states[reference]) for reference in ordered}
 

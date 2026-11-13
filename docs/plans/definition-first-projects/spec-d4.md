@@ -177,3 +177,22 @@ D4a first; D4b and D4c after it; D4d last. `docs/contracts/project-folder.md` is
 ## 10. Out of scope
 
 Suggestions from a model and generation (phase 5); the history of one annotation (Git has it); several people's annotations of one record side by side and agreement between them; export to COCO and other formats; annotating arrays beyond the tasks that fit any kind; polygons, masks, keypoints and 3D boxes; importing from a URL.
+
+## As built
+
+### D4a, the task and the file of lines
+
+What differs from the text above, and what was chosen where it was silent.
+
+- **A term that is not in the vocabulary is a warning in `check` and an error in an edit.** Section 2 lists it among a line's problems and also calls a removed term a warning; in a folder the two cannot be told apart. `check` warns once per term, with how many annotations use it and up to 20 line numbers. `annotations.validate`, which edits go through, refuses it.
+- **Form and content are separate.** A line whose content is right but which is not written exactly as Tuldok writes it (key order, spacing, escapes, the form of a number), a blank line, a missing final newline and an empty file are warnings. A wrong value, a duplicate record and lines out of order are errors. A file with no problem at all is written back byte for byte.
+- **The cap of 20 problems per file** counts errors and warnings together; one more problem counts the rest, and is an error if any of the rest is.
+- **Bounds the text did not give:** at most 1,000 boxes, spans or segments in one annotation; a segment's `text` at most 64 KiB; `note` and `from` may be absent but not null; `agent:` is followed by 1 to 80 characters; a term holds no control character. The 64 KiB of a `text` value are UTF-8 bytes; the 2 KiB of `from` are of its compact form.
+- **Inside an item** the keys are written in the order `term`, `x`, `y`, `w`, `h`, `start`, `end`, `text`.
+- **A line file whose task has errors** is not checked and says so, as a results file whose benchmark has errors does.
+- **The edge** from a task to its dataset has the role `dataset`. Planning a task plans its dataset and says so in the plan's notes; a task is never a step.
+- **The store,** for now, neither lists nor refuses a task's line file: its lines reach the database in D4b. A line file without its task sends the open to `check`, which refuses it. Removing a task today would leave its line file behind; D4b refuses that removal.
+- **The fixture project of the tests** gained a task and its lines, since a test requires a definition of every kind; three tests that count definitions moved from 12 to 13.
+- **Checked in review** with annotations generated at random: 400 of each task, with ids holding `/`, `!`, non-Latin letters and upper case, values holding quotes, backslashes, line separators and emoji, written and read back equal, byte for byte and in order; 3,000 corrupted files read without an error escaping; 100,000 lines written in 0.2 s and read and checked in 1.4 s (16 MiB).
+- **Tests:** `tests/test_tuldok_project_annotations.py`, 22; project suite 632; agent interface 43 (4 skipped). The catalog profile's digest is unchanged.
+- **Not verified:** the editor's list of kinds in a browser.

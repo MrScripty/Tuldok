@@ -6,15 +6,16 @@ that are neither layout (folder.py), single-field syntax (documents.py and the
 schemas) nor summary-file content (results.py): kind against directory, cards,
 placeholders in context, benchmark uniqueness rules, references and named
 outputs, charts against their benchmark, cycles, paths into the code root
-(in definitions and in the code_paths of tuldok.json), and the map's fields
+(in definitions and in the code_paths of tuldok.json), the map's fields
 (spec-w1.md section 1): groups, a recipe's group, derived_from and
-compared_with, and map.chart.
+compared_with, and map.chart, and each annotations/<name>.jsonl against its
+task (spec-d4.md section 2; the rules of a line are annotations.py's).
 Problems are collected, never raised, so one bad file never hides another.
 """
 from dataclasses import dataclass, field
 import os
 
-from . import documents, folder as folder_reader, graph, results
+from . import annotations, documents, folder as folder_reader, graph, results
 from .documents import Problem
 
 _SEVERITY_ORDER = {'error': 0, 'warning': 1}
@@ -74,6 +75,7 @@ def check_folder(folder, *, code=True):
     check_cycles(definitions, add)
     check_map(project, definitions, add)
     _check_results(read.results, definitions, unsound, add)
+    _check_annotations(read.annotations, definitions, unsound, add)
 
     problems.sort(key=lambda p: (p.path, p.pointer, _SEVERITY_ORDER.get(p.severity, 2), p.message))
     decoded = {reference: d.document for reference, d in definitions.items() if d.document is not None}
@@ -424,3 +426,22 @@ def _check_results(files, definitions, unsound, add):
             continue
         for severity, pointer, message in results.check_results(file.text, benchmark.document):
             add(severity, file.path, pointer, message)
+
+
+def _check_annotations(files, definitions, unsound, add):
+    """Each line file against its task: a file with no task is an error; a task with errors leaves it unchecked."""
+    for file in files:
+        name = file.path[len(f'{folder_reader.ANNOTATIONS}/'):-len(folder_reader.LINES_SUFFIX)]
+        task = definitions.get(documents.reference(folder_reader.ANNOTATIONS, name))
+        if task is None:
+            add('error', file.path, '', f'There is no {folder_reader.ANNOTATIONS}/{name}.json, the task of these '
+                                        'annotations; add the task or remove the file.')
+            continue
+        if file.text is None or task.document is None:
+            continue  # unreadable: already reported
+        if task.path in unsound:
+            add('warning', file.path, '', f'Not checked, because {task.path} has errors; fix those first.')
+            continue
+        parsed = annotations.read(file.raw, task.document['task'], task.document.get('vocabulary', []))
+        for problem in parsed.reported():
+            add(problem.severity, file.path, problem.pointer, problem.message)

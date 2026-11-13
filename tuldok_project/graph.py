@@ -4,6 +4,7 @@ Owns the edge table of section 2.9 of docs/plans/definition-first-projects/spec-
 Every function is pure and takes `definitions`, a mapping of reference (such as
 'datasets/x') to decoded document. Documents need not be valid: fields of the
 wrong type are skipped, so the graph can be read even from a folder with problems.
+An annotation task uses its dataset in the role dataset (spec-d4.md section 1).
 Edges whose target is not in `definitions` are kept by edges() and uses() but
 ignored by order() and cycles(). The two roles of a recipe's place on the map
 (spec-w1.md section 1), derived and compared, are edges like the others for
@@ -79,6 +80,8 @@ def uses(document):
             found.append(Use('cases', '/cases/dataset', cases['dataset']))
     if kind == 'chart' and isinstance(document.get('benchmark'), str):
         found.append(Use('benchmark', '/benchmark', document['benchmark']))
+    if kind == 'annotation' and isinstance(document.get('dataset'), str):
+        found.append(Use('dataset', '/dataset', document['dataset']))
     return found
 
 
@@ -219,7 +222,8 @@ def users_of(definitions, reference):
 _CARRIED = (None, 'needs-work', 'cannot-rebuild')
 _OWN_STATE = {'needs-work': 1, 'no': 2}  # earlier_work.rebuild -> index into _CARRIED
 _BASE_STATE = {'dataset': 'not-built', 'recipe': 'not-built', 'benchmark': 'not-built',
-               'step': 'not-built', 'environment': 'not-set-up', 'model': 'none', 'chart': 'none'}
+               'step': 'not-built', 'environment': 'not-set-up', 'model': 'none', 'chart': 'none',
+               'annotation': 'none'}
 _BUILT = ('dataset', 'recipe', 'step', 'benchmark')
 _ENVIRONMENT_STATES = ('ready', 'failing', 'not-set-up')
 _BUILD_STATES = ('running', 'built', 'out-of-date', 'failed')
@@ -250,7 +254,7 @@ def states(definitions, local=None):
     built carries nothing to what uses it, and nothing through it: its product
     is on this machine to be used, whether it was built here or adopted
     (spec-m8.md section 3). Other edges (environment, model, subjects, cases,
-    chart) carry nothing. Otherwise the state follows the
+    chart, an annotation task's dataset) carry nothing. Otherwise the state follows the
     kind. The table is read in order, so a model marked rebuild "no" is
     cannot-rebuild, not none. Cycles are tolerated: the result is the fixed point.
     """

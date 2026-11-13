@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 WHO = ('inspect', 'edit', 'cancel', 'request', 'owner')
 REQUEST_STATES = ('awaiting-approval', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'declined', 'expired')
-KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart')
+KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart', 'annotation')
 CHANGES = ('training-policy', 'architecture', 'refinement', 'component')   # a recipe's kind of change
 RECORD_KINDS = ('text', 'image', 'audio', 'pointcloud', 'mesh', 'array', 'file')   # the kinds of a product's record
 TARGET_LIMIT = 50

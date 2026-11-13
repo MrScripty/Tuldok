@@ -825,7 +825,8 @@ def _comparison_grid(svg, data, y):
 # =============================================================== report
 
 _PLURALS = {'dataset': 'Datasets', 'model': 'Models', 'recipe': 'Recipes', 'benchmark': 'Benchmarks',
-            'step': 'Steps', 'environment': 'Environments', 'chart': 'Charts'}
+            'step': 'Steps', 'environment': 'Environments', 'chart': 'Charts',
+            'annotation': 'Annotation tasks'}
 _STATE_WORDS = {'cannot-rebuild': 'cannot rebuild', 'needs-work': 'needs work', 'not-built': 'not built',
                 'not-set-up': 'not set up', 'none': 'no state'}
 

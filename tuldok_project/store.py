@@ -176,6 +176,8 @@ def _list_definitions(root):
 
     Anything the layout rules would refuse (a link, a non-.json entry, a bad
     name, an oversize file) is put in irregular, which sends open() to the checker.
+    A task's annotations/<name>.jsonl beside its <name>.json is neither listed
+    nor irregular; one without its task is irregular.
     """
     files, irregular = {}, []
     root_fd = _open_root(root)
@@ -189,8 +191,14 @@ def _list_definitions(root):
                 continue
             fd = os.open(directory, folder_reader.DIRECTORY_FLAGS, dir_fd=root_fd)
             try:
-                for name, entry_kind in folder_reader.entries(fd):
+                listed = folder_reader.entries(fd)
+                tasks = {name for name, entry_kind in listed if entry_kind == 'file'}
+                for name, entry_kind in listed:
                     path = f'{directory}/{name}'
+                    if (directory == folder_reader.ANNOTATIONS and name.endswith(folder_reader.LINES_SUFFIX)
+                            and entry_kind == 'file'
+                            and name[:-len(folder_reader.LINES_SUFFIX)] + '.json' in tasks):
+                        continue  # a task's annotations (spec-d4.md section 2): not a definition file
                     stem = name[:-len('.json')] if name.endswith('.json') else None
                     if entry_kind != 'file' or stem is None or not documents.is_name(stem):
                         irregular.append(path)

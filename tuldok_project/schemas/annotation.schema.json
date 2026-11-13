@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/annotation.schema.json",
+  "title": "Tuldok annotation task definition",
+  "description": "One annotation task in annotations/<name>.json (tuldok_definition_v1). Its annotations are the lines of annotations/<name>.jsonl, checked in tuldok_project/annotations.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title",
+    "dataset",
+    "task"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart",
+        "annotation"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "description": {
+      "$ref": "#/$defs/description"
+    },
+    "card": {
+      "$ref": "#/$defs/card"
+    },
+    "labels": {
+      "$ref": "#/$defs/labels"
+    },
+    "dataset": {
+      "type": "string",
+      "pattern": "^datasets/[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a reference to a dataset, such as datasets/<name>"
+    },
+    "task": {
+      "enum": [
+        "review",
+        "class",
+        "tags",
+        "text",
+        "boxes",
+        "spans",
+        "segments"
+      ]
+    },
+    "vocabulary": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/term"
+      },
+      "description": "1 to 500 different terms"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "enum": [
+              "review",
+              "text"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "vocabulary": {
+            "not": {},
+            "description": "A review or text task has no vocabulary; remove it."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "enum": [
+              "class",
+              "tags",
+              "boxes",
+              "spans",
+              "segments"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "vocabulary"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "term": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]*$",
+      "description": "a term of 1 to 200 characters without control characters"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    }
+  }
+}

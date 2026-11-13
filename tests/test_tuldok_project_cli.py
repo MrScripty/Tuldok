@@ -118,20 +118,21 @@ class StoreCommands(FolderCase):
         self.assertRegex(lines[0], rf'^Opened Minimal surrogate project \({self.project_id}\) from .* in \d+\.\d\d s\.$')
         self.assertIn('kind         count', lines)
         self.assertIn('recipe       3', lines)
-        self.assertIn('total        12', lines)
+        self.assertIn('total        13', lines)
         self.assertIn('state           count', lines)
         self.assertIn('cannot-rebuild  1', lines)
         self.assertTrue(self.schema_exists())
         again = self.run_json('open', self.folder)
         self.assertEqual(again['project_id'], self.project_id)
         self.assertEqual(again['kinds']['recipe'], 3)
-        self.assertEqual(again['states'], {'cannot-rebuild': 1, 'none': 5, 'not-built': 5, 'not-set-up': 1})
+        self.assertEqual(again['states'], {'cannot-rebuild': 1, 'none': 6, 'not-built': 5, 'not-set-up': 1})
         self.assertIsInstance(again['seconds'], float)
 
     def test_list(self):
         lines = self.run_ok('list', self.folder).splitlines()
-        self.assertEqual(len(lines), 12)
-        self.assertEqual(lines[0].split(None, 2), ['benchmarks/rollout', 'not-built', 'Rollout error'])
+        self.assertEqual(len(lines), 13)
+        self.assertEqual(lines[0].split(None, 2), ['annotations/wave-quality', 'none', 'Wave scene quality'])
+        self.assertEqual(lines[1].split(None, 2), ['benchmarks/rollout', 'not-built', 'Rollout error'])
         self.assertEqual(len({line.index('not-built') for line in lines if ' not-built ' in line}), 1)  # aligned
         rows = self.run_json('list', self.folder, '--kind', 'recipe')
         self.assertEqual([row['reference'] for row in rows],
@@ -144,8 +145,8 @@ class StoreCommands(FolderCase):
         lines = head.splitlines()
         self.assertEqual(lines[:4], ['reference  datasets/waves', 'title      Wave scenes', 'kind       dataset',
                                      'state      not-built'])
-        self.assertIn('uses       steps/solver          input:solver', lines)
-        self.assertIn('used by    recipes/stepper-k1    input:training', lines)
+        self.assertIn('uses       steps/solver              input:solver', lines)
+        self.assertIn('used by    recipes/stepper-k1        input:training', lines)
         self.assertEqual(text, (self.folder / 'datasets' / 'waves.json').read_text(encoding='utf-8'))
         shown = self.run_json('show', self.folder, 'models/stepper')
         self.assertEqual(shown['uses'], [])
@@ -159,10 +160,10 @@ class StoreCommands(FolderCase):
 
     def test_graph_and_order(self):
         nodes, edges = self.run_ok('graph', self.folder).split('\n\n')
-        self.assertEqual(len(nodes.splitlines()), 12)
+        self.assertEqual(len(nodes.splitlines()), 13)
         self.assertIn('recipes/stepper-k2          input:start         recipes/stepper-k1', edges.splitlines())
         drawn = self.run_json('graph', self.folder)
-        self.assertEqual(len(drawn['nodes']), 12)
+        self.assertEqual(len(drawn['nodes']), 13)
         self.assertEqual(len(drawn['edges']), len(edges.splitlines()))
         order = [line.split() for line in self.run_ok('graph', self.folder, '--order').splitlines()]
         references = [reference for reference, _ in order]
@@ -247,7 +248,7 @@ class StoreCommands(FolderCase):
         done = run('list', moved / 'project')
         self.assertEqual(done.returncode, 1)
         self.assertIn('rebind', done.stderr)
-        self.assertEqual(len(self.run_json('list', moved / 'project', '--rebind')), 12)
+        self.assertEqual(len(self.run_json('list', moved / 'project', '--rebind')), 13)
 
     def test_open_elsewhere_is_busy_and_every_command_releases_the_lock(self):
         for arguments in (('open',), ('list',), ('show', 'models/stepper'), ('graph',), ('status',), ('save',)):

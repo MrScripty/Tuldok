@@ -5,7 +5,9 @@ the folder through directory descriptors without following symbolic links,
 accepts only regular files and directories, enforces the size caps, and returns
 every file it could read together with the problems it found. It decodes
 tuldok.json and the definitions (documents.decode) but judges nothing else
-about their content; that is check.py's work.
+about their content; that is check.py's work. annotations/ may also hold the
+line files of its tasks, <name>.jsonl (spec-d4.md section 2), which it reads
+as text; whether each has its task is check.py's rule too.
 """
 from dataclasses import dataclass, field
 import errno
@@ -19,11 +21,14 @@ from .documents import Problem
 DEFINITION_LIMIT = 1024 * 1024
 PROJECT_LIMIT = 64 * 1024
 RESULTS_LIMIT = 16 * 1024 * 1024
+LINES_LIMIT = 64 * 1024 * 1024     # annotations.FILE_LIMIT
 
 PROJECT_FILE = 'tuldok.json'
 OPTIONAL_FILES = ('README.md', '.gitignore')
 RESULTS = 'results'
 NOTES = 'notes'
+ANNOTATIONS = 'annotations'
+LINES_SUFFIX = '.jsonl'
 
 # Flags for opening a directory without following a symbolic link.
 DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
@@ -60,6 +65,7 @@ class Folder:
     root: str
     project: File | None = None
     definitions: list = field(default_factory=list)
+    annotations: list = field(default_factory=list)   # File per annotations/<name>.jsonl, document None
     results: list = field(default_factory=list)
     notes: frozenset = frozenset()
     problems: list = field(default_factory=list)
@@ -158,14 +164,22 @@ def _read_definitions(folder, root_fd, directory):
     try:
         for name, entry_kind in entries(fd):
             path = f'{directory}/{name}'
-            if entry_kind != 'file' or not name.endswith('.json'):
+            lines = directory == ANNOTATIONS and name.endswith(LINES_SUFFIX)
+            if entry_kind != 'file' or not (name.endswith('.json') or lines):
+                allowed = ('<name>.json files, one task each, and their <name>.jsonl annotations'
+                           if directory == ANNOTATIONS else '<name>.json files, one definition each')
                 message = (_wrong_type(entry_kind, 'file') if entry_kind == 'link'
-                           else f'{directory}/ may hold only <name>.json files, one definition each; move or remove this.')
+                           else f'{directory}/ may hold only {allowed}; move or remove this.')
                 folder.problems.append(Problem('error', path, '', message))
                 continue
-            stem = name[:-len('.json')]
+            stem = name[:-len(LINES_SUFFIX if lines else '.json')]
             if not documents.is_name(stem):
                 folder.problems.append(Problem('error', path, '', f'{stem!r} is not a valid name; use lowercase letters, digits, ".", "_" or "-", starting with a letter or digit.'))
+                continue
+            if lines:
+                loaded = _load(folder, fd, name, path, LINES_LIMIT, decode=False)
+                if loaded is not None:
+                    folder.annotations.append(loaded)
                 continue
             loaded = _load(folder, fd, name, path, DEFINITION_LIMIT, decode=True)
             if loaded is not None:

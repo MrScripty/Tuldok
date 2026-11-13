@@ -310,15 +310,15 @@ class Report(StoreCase):
             self.assertEqual(headings, ['Every metric side by side', 'Rollout error in training order',
                                         'Rollout error by subject', 'Error against time'])
             details = root.findall('.//details')
-            self.assertEqual(len(details), 7)
+            self.assertEqual(len(details), 8)  # one per kind
             self.assertTrue(all(element.get('open') is None for element in details))
             sections = [element.text for element in root.iter('h2')]
             self.assertEqual(sections, ['Charts ', 'Results ', 'Definitions '])
-            self.assertIn('12 definitions', page)
+            self.assertIn('13 definitions', page)
         self.assertIn('color-scheme: dark', dark)
         self.assertIn('#171c22', dark)
         # Where the project stands comes first, then the charts, then the results and the definitions.
-        self.assertLess(light.index('12 definitions'), light.index('<h2>Charts'))
+        self.assertLess(light.index('13 definitions'), light.index('<h2>Charts'))
         self.assertLess(light.index('<h2>Charts'), light.index('<h2>Results'))
         self.assertLess(light.index('<h2>Results'), light.index('<h2>Definitions'))
 

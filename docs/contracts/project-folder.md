@@ -2,16 +2,17 @@
 
 Owner: the package `tuldok_project/` (`folder.py` reads the folder, `documents.py`
 and `schemas/*.json` check single files, `check.py` applies every rule,
-`results.py` owns summary files, `store.py` and `result_rows.py` the database
-copy and its results, `charts.py` charts and the report page, `plan.py`
+`results.py` owns summary files, `annotations.py` the files of annotations,
+`store.py` and `result_rows.py` the database copy and its results, `charts.py` charts and the report page, `plan.py`
 plans, `environments.py` environments, and `builds.py`, `launcher.py` and
 `snapshot.py` building). The format names are `tuldok_project_v1` for
 the folder and `tuldok_definition_v1` for each definition.
 
 A project folder describes a piece of research as a set of small JSON files that
 people and agents write and keep in Git. Each file is a **definition**: it says
-what a dataset, model, training recipe, benchmark, build step, environment or
-chart is and, where something has to be produced, which command produces it.
+what a dataset, model, training recipe, benchmark, build step, environment,
+chart or annotation task is and, where something has to be produced, which
+command produces it.
 What a command writes is a **product**. Products stay on the machine that made
 them; the folder holds only what someone wrote, plus benchmark summaries.
 
@@ -21,7 +22,8 @@ document says exactly what the checker accepts.
 ## What belongs in the folder
 
 Put in the folder: the definitions, the result summary of each benchmark
-(`results/`), and cards and notes written by people (`notes/`).
+(`results/`), the annotations of each annotation task (`annotations/`), and
+cards and notes written by people (`notes/`).
 
 Keep out of the folder: generated datasets, weights, logs, run directories,
 installed environments, caches, checksums of other files, and history. Git is
@@ -45,6 +47,8 @@ benchmarks/<name>.json
 steps/<name>.json
 environments/<name>.json
 charts/<name>.json
+annotations/<name>.json
+annotations/<name>.jsonl   the annotations of task <name>
 results/<benchmark name>.csv
 notes/...
 ```
@@ -52,14 +56,17 @@ notes/...
 - `tuldok.json` is required. Every other entry is optional.
 - Any other top-level entry is an error. Move such files into `notes/` or out of
   the folder.
-- The seven **definition directories** (`datasets/` to `charts/`) hold only
+- The eight **definition directories** (`datasets/` to `annotations/`) hold only
   `<name>.json` files, one definition each, and no subdirectories.
+  `annotations/` also holds `<name>.jsonl`, the annotations of the task in
+  `<name>.json`, which must exist.
 - `results/` holds only `<name>.csv` files.
 - `notes/` holds plain files and directories to any depth. Their contents are not
   read.
 - Every file is a regular file and every directory a real directory. A symbolic
   link anywhere in the folder, including under `notes/`, is an error.
-- Size limits: `tuldok.json` 64 KiB, a definition 1 MiB, a results file 16 MiB.
+- Size limits: `tuldok.json` 64 KiB, a definition 1 MiB, a results file 16 MiB,
+  a file of annotations 64 MiB.
 
 A **name** is 1 to 120 characters of lowercase letters, digits, `.`, `_` and `-`,
 starting with a letter or digit (`^[a-z0-9][a-z0-9._-]{0,119}$`). The file
@@ -121,6 +128,7 @@ directories:
 | `subjects[].recipe` (benchmark) | `recipes/` |
 | `cases.dataset` (benchmark) | `datasets/` |
 | `benchmark` (chart) | `benchmarks/` |
+| `dataset` (annotation) | `datasets/` |
 
 An **input** is what a command reads from another definition's product. It is
 written either as a reference, meaning the whole product, or as
@@ -132,7 +140,7 @@ other definition declares in its `run.outputs`.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `format` | yes | exactly `tuldok_definition_v1` |
-| `kind` | yes | `dataset`, `model`, `recipe`, `benchmark`, `step`, `environment` or `chart`; must match the directory |
+| `kind` | yes | `dataset`, `model`, `recipe`, `benchmark`, `step`, `environment`, `chart` or `annotation`; must match the directory |
 | `title` | yes | 1 to 200 characters |
 | `description` | no | at most 4,000 characters |
 | `card` | no | path of an existing file under `notes/`, written from the project folder, for example `notes/fits/early-fit.md` |
@@ -213,7 +221,7 @@ directory) and may not lead outside it through a symbolic link.
 Any other placeholder is an error, and so is a brace without its partner. Write
 `{{` and `}}` for literal braces.
 
-## The seven kinds
+## The eight kinds
 
 The examples below come from one project. References in them point at the other
 examples, except `environments/cuda-torch`, a second environment not shown.
@@ -454,6 +462,102 @@ Example, `charts/final-velocity-ranking.json`:
 }
 ```
 
+### `annotation`
+
+An annotation task says what is recorded about the records of one dataset
+(see [Looking inside a product](#looking-inside-a-product) for records). Its
+annotations are the lines of `annotations/<name>.jsonl` beside it. A task is
+never built: it has no `run`, no product, and the state `none`. Planning a task
+plans its dataset in its place.
+
+| Field | Required | Rule |
+| --- | --- | --- |
+| `dataset` | yes | reference to `datasets/` |
+| `task` | yes | `review`, `class`, `tags`, `text`, `boxes`, `spans` or `segments` |
+| `vocabulary` | for `class`, `tags`, `boxes`, `spans` and `segments`; not allowed for `review` and `text` | 1 to 500 different **terms**, each 1 to 200 characters without control characters |
+
+`earlier_work` is not allowed here. `card` is where the guide for the people
+and agents who annotate is written.
+
+What an annotation's `value` is, by task, and which records it may describe:
+
+| Task | `value` | Records of kind |
+| --- | --- | --- |
+| `review` | always null; the state is the decision | any but `file` |
+| `class` | one term | any but `file` |
+| `tags` | a list of different terms, possibly empty | any but `file` |
+| `text` | a string of at most 64 KiB in UTF-8: a caption, a transcript, a summary | any but `file` |
+| `boxes` | a list of `{"term", "x", "y", "w", "h"}`, numbers in pixels of the image; `x` and `y` at least 0, `w` and `h` above 0, the box inside the image | `image` |
+| `spans` | a list of `{"term", "start", "end"}`, whole numbers of characters (code points) of the text; 0 ≤ `start` < `end` ≤ the text's length | `text` |
+| `segments` | a list of `{"term", "start", "end"}` with an optional `"text"` (a string of at most 64 KiB), numbers of seconds; 0 ≤ `start` < `end` ≤ the sound's length | `audio` |
+
+A list holds at most 1,000 items, and an item no other key. The value may be
+null in any state but `accepted`. The record's kind, an image's size, a text's
+length and a sound's length are known only from the dataset's product, so the
+folder check cannot apply those rules; Tuldok applies them when an annotation
+is made.
+
+Example, `annotations/scene-quality.json`:
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "annotation",
+  "title": "Scene quality",
+  "card": "notes/annotating/scene-quality.md",
+  "dataset": "datasets/sinusoidal-v1",
+  "task": "class",
+  "vocabulary": ["clean", "noisy", "broken"]
+}
+```
+
+#### The annotations file
+
+`annotations/<name>.jsonl` holds the annotations of task `<name>`, one JSON
+object per line, one line per record. A record with no line is not annotated.
+The keys, in this order:
+
+| Key | Required | Rule |
+| --- | --- | --- |
+| `record` | yes | the record's id: 1 to 600 characters, no control characters; each record once |
+| `sha256` | yes | the SHA-256 of the record's content when it was annotated (64 lowercase hexadecimal characters), or null |
+| `state` | yes | `draft`, `accepted`, `needs-work` or `rejected` |
+| `value` | yes | as the task says, or null |
+| `note` | no | a string of at most 4,000 characters |
+| `by` | yes | `owner`, or `agent:` followed by 1 to 80 characters (the agent credential's name, cut) |
+| `at` | yes | a real UTC time, `YYYY-MM-DDTHH:MM:SSZ` |
+| `from` | no | an object of at most 2 KiB, written compact, saying what suggested the value; kept as it is |
+
+The file is written in one exact form, so that Git shows one changed line per
+changed annotation:
+
+- lines sorted by `record`, comparing the bytes of its UTF-8;
+- each line written compact (`,` and `:` with no spaces), with characters
+  other than ASCII written as themselves rather than as `\u` escapes, the keys
+  in the order above and the keys of a `boxes`, `spans` or `segments` item in
+  the order of the table of tasks;
+- each line ending with `\n`, the last one included.
+
+A file with no line left is deleted when it is saved. The JSON rules above
+apply to each line: no repeated key, no `NaN` or `Infinity`, and no escaped
+half of a surrogate pair.
+
+The check reads every line. A line that is not such an object, a value the task
+does not allow, a record that an earlier line has, and a line whose record
+does not sort after the one above it are errors; a term outside the
+vocabulary is a warning, so that a term can be removed from a vocabulary
+while annotations still use it. Each problem names its line (`line <n>`): the
+first 20 of a file, then one problem counting the rest. A file of annotations
+is not checked while its task has errors.
+
+Example, `annotations/scene-quality.jsonl`:
+
+```
+{"record":"scene-0001","sha256":"9f2c0e5d1b8a7f6e5d4c3b2a19087f6e5d4c3b2a19087f6e5d4c3b2a19087f6e","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T10:02:11Z"}
+{"record":"scene-0002","sha256":null,"state":"rejected","value":null,"note":"blurry","by":"owner","at":"2026-11-13T10:02:40Z"}
+{"record":"scene-0003","sha256":null,"state":"draft","value":"noisy","by":"agent:helper","at":"2026-11-13T10:05:02Z"}
+```
+
 ## Results files
 
 `results/<name>.csv` is the summary of benchmark `benchmarks/<name>.json`, which
@@ -517,6 +621,7 @@ pilot-dense-k1,velocity_error_final,cells_per_metre=8,4,0,0.195,0.175,0.129,0.27
    | a benchmark subject's `recipe` | `subject:<subject name>` |
    | a benchmark's `cases.dataset` | `cases` |
    | a chart's `benchmark` | `benchmark` |
+   | an annotation task's `dataset` | `dataset` |
 
    Two more fields of a recipe are edges with a role, shown in a definition's
    uses and used-by, but are not uses in this sense: they may run both ways,
@@ -529,7 +634,8 @@ pilot-dense-k1,velocity_error_final,cells_per_metre=8,4,0,0.195,0.175,0.129,0.27
 
 4. A chart's `metric`, `metric_x`, `subjects` and `group` exist in its benchmark.
 5. Code paths exist under the code root (see the `run` block).
-6. Every results file has its benchmark and follows the rules above.
+6. Every results file has its benchmark and follows the rules above. Every
+   file of annotations has its task and follows the rules of its task.
 7. A recipe's `group` is a group of `tuldok.json`; a group's `parent` is another
    group and no group is its own ancestor; a recipe is never derived from or
    compared with itself; following `derived_from` never comes back to where it
@@ -554,7 +660,7 @@ at least one error, and 2 for a usage error such as an unknown option.
 Every problem is reported; the check does not stop at the first. A problem has a
 severity (`error` or `warning`), the file's path relative to the project folder,
 a JSON pointer to the field (empty for a problem with the whole file; `line <n>`
-in a results file), and one sentence. Text output prints one line per problem,
+in a results file or a file of annotations), and one sentence. Text output prints one line per problem,
 with the parts separated by two spaces and `-` for an empty pointer, sorted by
 path and pointer, then a count:
 
@@ -567,11 +673,16 @@ warning  results/dense-development-240.csv  -  The results file does not end wit
 With `--json` the object is `{"folder", "ok", "errors", "warnings", "problems"}`,
 each problem being `{"severity", "path", "pointer", "message"}`.
 
-There are three warnings; every other problem is an error:
+These are warnings; every other problem is an error:
 
 - a code path that does not exist, in a definition with `earlier_work`;
 - a results file without a final line end;
-- a results file that is not checked because its benchmark has errors.
+- a results file that is not checked because its benchmark has errors;
+- in a file of annotations: a term that is not in the task's vocabulary (one
+  warning per term, saying how many annotations use it and on which lines), a
+  blank line, a line not written in the exact form below, a missing final line
+  end, and a file with no lines;
+- a file of annotations that is not checked because its task has errors.
 
 One mistake is reported once. A reference into the wrong directory is reported by
 the field's own rule and not again as a missing definition, and a chart is not
