@@ -3,9 +3,10 @@
 Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md, with the three
 rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
 section 2 of spec-w3.md (draft_branch, revert_definition), the five of
-section 3 of spec-d1.md (records, record, inside, array_slice, array_summary)
-and the three of section 3 of spec-d2.md (weights, weights_compare,
-array_tiles).
+section 3 of spec-d1.md (records, record, inside, array_slice, array_summary),
+the three of section 3 of spec-d2.md (weights, weights_compare,
+array_tiles) and the five of section 5 of spec-d4.md (annotation_tasks,
+annotated_records, annotation, set_annotation, revert_annotations).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -21,6 +22,11 @@ CHANGES = ('training-policy', 'architecture', 'refinement', 'component')   # a r
 RECORD_KINDS = ('text', 'image', 'audio', 'pointcloud', 'mesh', 'array', 'file')   # the kinds of a product's record
 TARGET_LIMIT = 50
 REASON_CHARACTERS = 400
+ANNOTATION_STATES = ('draft', 'accepted', 'needs-work', 'rejected')    # annotations.STATES
+# The counts of annotation_tasks, and the filters of annotated_records.
+ANNOTATION_COUNTS = ('unannotated', 'draft', 'accepted', 'needs-work', 'rejected', 'stale', 'invalid')
+ANNOTATION_ITEMS = 200      # items of one set_annotation
+REVERT_RECORDS = 10_000     # records named by one revert_annotations
 
 
 @dataclass(frozen=True)
@@ -48,6 +54,13 @@ _TARGETS = {'type': 'array', 'items': _REFERENCE, 'maxItems': TARGET_LIMIT}
 _ADDRESS = {'type': 'string', 'minLength': 1, 'maxLength': 4096}   # a path in a product; '!' names an archive member
 _ARRAY = {'type': 'string', 'minLength': 1, 'maxLength': 1024}
 _AXIS = {'type': 'integer', 'minimum': 0, 'maximum': 63}
+_RECORD_ID = {'type': 'string', 'minLength': 1, 'maxLength': 600}     # an annotation's record (spec-d4.md section 2)
+_SET_ITEM = {'type': 'object', 'properties': {'record': _RECORD_ID,
+                                              'state': {'type': 'string', 'enum': list(ANNOTATION_STATES)},
+                                              'value': {}, 'note': {'type': 'string', 'maxLength': 4000}},
+             'required': ['record', 'state'], 'additionalProperties': False}
+_REMOVE_ITEM = {'type': 'object', 'properties': {'record': _RECORD_ID, 'remove': {'const': True}},
+                'required': ['record', 'remove'], 'additionalProperties': False}
 
 
 def _limit(most):
@@ -61,7 +74,8 @@ def _arguments(required=(), **properties):
 # --------------------------------------------------------------- result keys
 
 SUMMARY = ('project_id', 'name', 'folder', 'code_root', 'kinds', 'states', 'worker')
-STATUS = ('unsaved', 'removed', 'added', 'changed', 'missing', 'irregular', 'results_unsaved', 'results_changed')
+STATUS = ('unsaved', 'removed', 'added', 'changed', 'missing', 'irregular', 'results_unsaved', 'results_changed',
+          'annotations_unsaved', 'annotations_changed')
 DEFINITION = ('reference', 'kind', 'title', 'text', 'document', 'state', 'unsaved', 'removed', 'uses', 'used_by')
 PLAN = ('targets', 'every', 'buildable', 'blocked_targets', 'counts', 'gpu_steps', 'disk_gb', 'disk_unknown',
         'wall_hours', 'wall_unknown', 'estimated_disk_gb', 'estimated_disk_steps', 'estimated_wall_hours',
@@ -80,7 +94,7 @@ SUMMARY_OF_ARRAY = ('shape', 'dtype', 'count', 'min', 'max', 'mean', 'std', 'zer
 TILES = ('shape', 'dtype', 'across', 'axes', 'index', 'first', 'tiles', 'rows', 'columns', 'stride', 'values_f32',
          'min', 'max', 'nonfinite')
 COMPARE = ('tensors', 'total', 'only_here', 'only_there', 'reshaped', 'unread')
-SAVE = ('written', 'deleted', 'results_written', 'results_deleted')
+SAVE = ('written', 'deleted', 'results_written', 'results_deleted', 'annotations_written', 'annotations_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
 STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
 
@@ -189,6 +203,29 @@ OPERATIONS = (
                          axes={'type': 'array', 'items': _AXIS, 'minItems': 2, 'maxItems': 2},
                          index={'type': 'array', 'items': {'type': 'integer', 'minimum': 0}, 'maxItems': 64},
                          first=_OFFSET, most=_limit(64)), TILES),
+    Operation('annotation_tasks', 'List the annotation tasks, each with its dataset, current product and counts of '
+              'its records by the state of their annotations.', 'inspect', False, _arguments(), ('tasks',)),
+    Operation('annotated_records', "Read one page of the records of a task's dataset with their annotations, "
+              'optionally in one state or of one kind, with the counts.', 'inspect', False,
+              _arguments(['task'], task=_NAME, state={'type': 'string', 'enum': list(ANNOTATION_COUNTS)},
+                         kind={'type': 'string', 'enum': list(RECORD_KINDS)}, offset=_OFFSET, limit=_limit(200)),
+              ('task', 'run', 'records', 'total', 'counts')),
+    Operation('annotation', "Read one record's annotation under a task as it now is and as it is in the file, "
+              "whether it is unsaved or stale, and the hash of the record's content.", 'inspect', False,
+              _arguments(['task', 'record'], task=_NAME, record=_RECORD_ID),
+              ('task', 'record', 'annotation', 'saved', 'unsaved', 'stale', 'sha256')),
+    Operation('set_annotation', "Check annotations of a task's records, or their removal, and keep them as unsaved "
+              'edits; one item that does not check refuses them all.', 'edit', True,
+              _arguments(['task', 'items'], task=_NAME,
+                         items={'type': 'array', 'minItems': 1, 'maxItems': ANNOTATION_ITEMS,
+                                'items': {'oneOf': [_SET_ITEM, _REMOVE_ITEM]}},
+                         **{'from': {'type': 'object'}}),
+              ('task', 'set', 'removed', 'unsaved')),
+    Operation('revert_annotations', "Put back the saved annotations of a task's named records, or of all its "
+              'records, in place of their unsaved edits.', 'edit', True,
+              _arguments(['task'], task=_NAME,
+                         records={'type': 'array', 'items': _RECORD_ID, 'minItems': 1, 'maxItems': REVERT_RECORDS}),
+              ('task', 'reverted')),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',

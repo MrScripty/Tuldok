@@ -45,7 +45,7 @@ FIXTURE_STATES = {
 }
 
 CLEAN_STATUS = {'unsaved': [], 'removed': [], 'added': [], 'changed': [], 'missing': [], 'irregular': [],
-                'results_unsaved': [], 'results_changed': []}
+                'results_unsaved': [], 'results_changed': [], 'annotations_unsaved': [], 'annotations_changed': []}
 
 
 
@@ -439,7 +439,8 @@ class Save(StoreCase):
         self.project.remove_definition('charts/speed-accuracy')
         result = self.project.save()
         self.assertEqual(result, {'written': ['datasets/waves', 'models/extra'], 'deleted': ['charts/speed-accuracy'],
-                                  'results_written': [], 'results_deleted': []})
+                                  'results_written': [], 'results_deleted': [],
+                                  'annotations_written': [], 'annotations_deleted': []})
         self.assertEqual(self.read('datasets/waves'), waves)
         self.assertEqual(self.read('models/extra'), extra)
         self.assertFalse((self.folder / 'charts' / 'speed-accuracy.json').exists())

@@ -196,3 +196,24 @@ What differs from the text above, and what was chosen where it was silent.
 - **Checked in review** with annotations generated at random: 400 of each task, with ids holding `/`, `!`, non-Latin letters and upper case, values holding quotes, backslashes, line separators and emoji, written and read back equal, byte for byte and in order; 3,000 corrupted files read without an error escaping; 100,000 lines written in 0.2 s and read and checked in 1.4 s (16 MiB).
 - **Tests:** `tests/test_tuldok_project_annotations.py`, 22; project suite 632; agent interface 43 (4 skipped). The catalog profile's digest is unchanged.
 - **Not verified:** the editor's list of kinds in a browser.
+
+### D4b, the working copy and the operations
+
+What differs from sections 3 to 5, and what was chosen where they were silent.
+
+- **A file's size and time are trusted only once its time is old** (found in review). A line file written a moment ago can be written again within the same tick of the clock, to the same size, and by size and time it would look untouched: the edit would not be imported, and the next Save would write over it. A file whose time is less than two seconds old when it is recorded is recorded as unsettled, and is read and compared by content on every operation until it is seen settled, as Git does for the same case. A test writes such an edit and fails without the rule.
+- **A removed annotation** is a row with no state until Save, which keeps its saved line so that the file can be rewritten or deleted.
+- **`from` is kept as text** (`json`, not `jsonb`), since the database's own form reorders keys and `from` is kept as it is. `value` is `jsonb`: a number of 1e16 or more written as a float in a file becomes a whole number the next time that task is saved.
+- **Invalid is kept, not computed on every count.** Each row holds a digest of the task's type and vocabulary it was last judged against, and the verdict; a count judges again only the rows of a task that changed. Invalid judges the value alone, not the record's kind.
+- **A task whose dataset has no product:** `stale` and `unannotated` are 0, a record's `stale` is null, setting an annotation is refused `not-found`, and removing one still works.
+- **A task deleted on disk while it has unsaved annotations** is a `conflict` that only `discard` resolves. A line file that is gone never conflicts: unsaved rows stay, with no saved line.
+- **U+0000** in a line or an item is refused `invalid`: PostgreSQL cannot store it.
+- **Removing a task** that has annotations is refused `in-use` with their number. With none left, Save deletes the task and its line file together.
+- **`set_annotation` works in two stages:** it finds and hashes the records outside the service's lock, then checks and stores under it; when the task or the product's run changed in between, it is refused `busy`.
+- **Activity rows** carry "N set, M removed" or "N reverted".
+- **A record's hash** is also computed, and kept, when `annotation` reads a record that has no annotation.
+- **An agent with an empty label** is written `agent:agent`.
+- **Names.** Every operation answers the task as `annotations/<name>` and takes a bare name or that reference; `status` and `save` name files as `annotations/<name>.jsonl`. `annotated_records` also answers `task`, `run` and, for each record, `sha256` and `in_product`; annotations whose record is not in the product come last, with `in_product` false and no kind. "Still right" on a stale annotation is setting it again.
+- **Measured with 100,000 annotations** (the test's bound in brackets): setting them in 500 calls of 200, 28 to 36 s, about 66 ms a call (120); counting them, 0.2 s (2); `status`, 0.03 s; Save, 2 s (10); opening again, 0.02 s (2); importing the file into an empty database, 5 s (30).
+- **Tests:** `tests/test_tuldok_project_annotation_rows.py`, 22; the project suite and the agent interface are in the ledger. The catalog profile's digest is unchanged.
+- **Not verified:** hashes kept for runs that are later forgotten are never pruned; a sound's length is read from WAV files only, so a segment in another format is not checked against the sound's end; the command line has no annotation commands.

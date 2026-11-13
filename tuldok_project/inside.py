@@ -55,6 +55,7 @@ MEDIA_TYPES = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
                '.gif': 'image/gif', '.bmp': 'image/bmp', '.wav': 'audio/wav', '.flac': 'audio/flac',
                '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.opus': 'audio/ogg', '.m4a': 'audio/mp4'}
 _ID = re.compile(r'[A-Za-z0-9._-]{1,200}')
+_SHA256 = re.compile(r'[0-9a-f]{64}')
 _SURROGATES = re.compile('[\udc80-\udcff]')
 _lock = threading.Lock()
 _indexes = collections.OrderedDict()   # (root, source) -> (stamp, _Index)
@@ -135,10 +136,11 @@ class _Index:
 
 def _record(identifier, kind, path, *, size=None, **extra):
     return {'id': identifier, 'kind': kind, 'path': path, 'bytes': size, 'text': None, 'array': None, 'split': None,
-            'rights': None, 'origin': None, 'meta': None, **extra}
+            'rights': None, 'origin': None, 'meta': None, 'sha256': None, **extra}
 
 
-_LIST_KEYS = ('id', 'kind', 'path', 'text', 'array', 'split', 'rights', 'origin', 'meta')
+# sha256 is the hash of the record's content (spec-d4.md section 3), given by the list or None.
+_LIST_KEYS = ('id', 'kind', 'path', 'text', 'array', 'split', 'rights', 'origin', 'meta', 'sha256')
 
 
 def _list_entry(value):
@@ -166,12 +168,15 @@ def _list_entry(value):
     for key in ('origin', 'meta'):
         if value.get(key) is not None and not isinstance(value[key], dict):
             return f'{key} must be an object'
+    sha256 = value.get('sha256')
+    if sha256 is not None and not (isinstance(sha256, str) and _SHA256.fullmatch(sha256)):
+        return 'sha256 must be 64 lowercase hexadecimal characters'
     meta = dict(value.get('meta') or {})
     for key, item in value.items():
         if key not in _LIST_KEYS:
             meta.setdefault(key, item)
     return _record(identifier, kind, path, text=text, array=value.get('array'), split=value.get('split'),
-                   rights=value.get('rights'), origin=value.get('origin'), meta=meta or None)
+                   rights=value.get('rights'), origin=value.get('origin'), meta=meta or None, sha256=sha256)
 
 
 def _lines(place):
@@ -381,7 +386,7 @@ def _preview(product, record):
 
 
 def _shown(product, record, *, preview):
-    shown = {key: record[key] for key in ('id', 'kind', 'path', 'split', 'rights', 'origin', 'meta')}
+    shown = {key: record[key] for key in ('id', 'kind', 'path', 'split', 'rights', 'origin', 'meta', 'sha256')}
     shown['bytes'] = _size_of(product, record)
     if record['array'] is not None:
         shown['array'] = record['array']

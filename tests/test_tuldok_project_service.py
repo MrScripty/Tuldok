@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 49)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, and of section 3 of spec-d1.md and spec-d2.md
+        self.assertEqual(len(names), 54)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, and of section 5 of spec-d4.md
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -79,7 +79,7 @@ class Table(unittest.TestCase):
         self.assertEqual(mutations, {'set_definition', 'remove_definition', 'revert_definition', 'save', 'resolve_conflict',
                                      'import_values', 'check_environment', 'connect_environment',
                                      'disconnect_environment', 'request_build', 'approve_build', 'decline_build',
-                                     'cancel_build', 'cancel_run', 'stop_run'})
+                                     'cancel_build', 'cancel_run', 'stop_run', 'set_annotation', 'revert_annotations'})
         owner = {operation.name for operation in operations.OPERATIONS if operation.who == 'owner'}
         self.assertEqual(owner, {'connect_environment', 'disconnect_environment', 'approve_build', 'decline_build'})
 
@@ -212,6 +212,8 @@ class Reads(ServiceCase):
             'weights_compare': {'run': run_id, 'path': 'weights.json', 'other_run': run_id,
                                 'other_path': 'weights.json'},
             'array_tiles': {'run': run_id, 'path': 'weights.npy'},
+            'annotation_tasks': {}, 'annotated_records': {'task': 'none-here'},
+            'annotation': {'task': 'none-here', 'record': 'r1'},
         }
         reads = [operation for operation in operations.OPERATIONS if not operation.mutation]
         arguments['build_requests'] = {'state': 'queued', 'limit': 5}
@@ -227,6 +229,10 @@ class Reads(ServiceCase):
                     continue
                 if operation.name == 'weights_compare':  # fit-a's weights are JSON; test_tuldok_project_weights
                     self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'unsupported')
+                    continue
+                if operation.name in ('annotated_records', 'annotation'):  # this fixture has no task; read in
+                    # test_tuldok_project_annotation_rows
+                    self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
                     continue
                 if operation.name == 'note':  # this fixture has no notes; read in test_tuldok_project_workspace
                     self.assertEqual(self.refused(operation.name, arguments['note']).code, 'not-found')

@@ -181,7 +181,8 @@ class StoreCommands(FolderCase):
         self.assertEqual(self.run_ok('save', self.folder), 'wrote  datasets/waves\n')
         self.assertEqual((self.folder / 'datasets' / 'waves.json').read_text(encoding='utf-8'), text)
         self.assertEqual(self.run_json('save', self.folder), {'written': [], 'deleted': [], 'results_written': [],
-                                                           'results_deleted': []})
+                                                           'results_deleted': [], 'annotations_written': [],
+                                                           'annotations_deleted': []})
         self.assertEqual(self.run_ok('status', self.folder),
                          'Nothing is unsaved and no file changed on disk since the last import.\n')
 

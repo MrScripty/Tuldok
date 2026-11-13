@@ -705,13 +705,13 @@ to the folder. Each project has its own schema, `project_<id>`, named after the
 | `list [--kind K]` | Prints each definition's reference, state and title, one per line. `--kind` keeps one kind. |
 | `show REFERENCE` | Prints a definition's reference, title, kind and state, what it uses and what uses it (each with its role), then the definition's text. |
 | `graph [--order]` | Prints every definition with its kind and state, then every use as `from  role  to`. `--order` instead prints the build order: each definition after everything it uses, with its state. |
-| `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import. |
+| `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import; and per annotation task, how many records have unsaved annotations, and the annotation files changed on disk. |
 | `set REFERENCE FILE` | Replaces or adds the definition at `REFERENCE` with the text of `FILE`, in the database only. The text is checked on its own and against the rest of the project; an edit with any error is refused and changes nothing. |
 | `remove REFERENCE` | Removes the definition in the database only. It is refused while another definition uses it, or while it is the chart `tuldok.json` names in `map.chart`. |
 | `revert REFERENCE` | Undoes the unsaved edit or the removal of a definition, in the database only: the file in the folder takes its place again. A definition the folder has no file for is dropped instead (refused while another definition uses it). A file that no longer checks is refused, and a definition with neither an unsaved edit nor a removal has nothing to revert (exit status 1). |
 | `branch RECIPE --title TITLE [--name NAME] [--change KIND] [--description TEXT] [--keep]` | Prints a new recipe branched from `RECIPE` (a bare name or `recipes/<name>`), as the operation `draft_branch` writes it: its reference, its problems in the form `check` prints them, and its text. Nothing is stored, unless `--keep` is given and the text has no error: then it is kept as an unsaved edit, as `set` keeps one. With `--keep` and an error, exit status 1. Here `--keep` keeps the branch; `branch` takes no `--keep` or `--discard` for a conflict. |
 | `map` | Prints the project's map: per group in order, its title, how many models (recipes) it has and how many of each kind of change, then the models in no group and the totals, then how many lines (`derived_from`, and recipes used as inputs by recipes) and comparisons there are, and the track. Reads the database only, never a results file, values file or note. |
-| `save` | Writes every unsaved definition to its file and deletes the files of removed ones. It writes nothing when one of those files changed on disk since it was imported, and names them. |
+| `save` | Writes every unsaved definition to its file and deletes the files of removed ones, and writes the annotation file of each task with unsaved annotations. It writes nothing when one of those files changed on disk since it was imported, and names them. |
 | `forget` | Drops the project's copy from the database, including unsaved edits. The folder is not touched. |
 
 `note FOLDER PATH` prints one file under the folder's `notes/` directory,
@@ -796,6 +796,68 @@ that subject's rows.
 
 Charts and the report read only these rows. A copy of the folder with its
 `results/` files draws every chart; no run directory or values file is needed.
+
+## Annotations in the database
+
+Annotations are edited in the database copy and written to the folder by
+`save`, as definitions are. The copy holds one row per task and record: the
+line's fields as they now are, the line as it is in `annotations/<name>.jsonl`
+(or nothing, for an annotation made here and not yet saved), and whether the
+row is unsaved. An annotation removed here and not yet saved keeps its row,
+with no fields, until `save`.
+
+**Opening** notices an annotation file that is new, changed or gone. Its size
+and time are compared with those recorded at the last import or save, and
+only a file whose size or time differs is read and its SHA-256 compared; a
+file with the same content and a new time is not imported again. A changed
+file is read line by line: each record whose line changed takes the file's
+line. Where the record also has an unsaved annotation here, the project does
+not open: the refusal is `conflict` and names `annotations/<name>.jsonl`, and
+opening again with `--keep` (or `resolve_conflict` `keep`) keeps the
+annotations here, the file's lines becoming the saved ones, while `--discard`
+takes the file's lines. An annotation file that is gone forgets the saved
+lines; an annotation with an unsaved change here stays, unsaved. A task
+removed from the folder while it has unsaved annotations here is a
+conflict too; it can only be discarded. A line holding the character U+0000
+cannot be kept in the database and refuses the open `invalid`.
+
+**`save`** writes, whole, the file of each task that has an unsaved row, from
+all its annotations in the exact form of [The annotations file](#the-annotations-file)
+(by a temporary file and a rename), and deletes it when the task has no
+annotation left; it also deletes the file of a removed task. It writes nothing
+when such a file changed on disk since it was imported, and names it
+(`changed-on-disk`). After a save no annotation is unsaved, and each row's
+saved line is the line written.
+
+**`status`** gains `annotations_unsaved`, a list of `{task, records}` (the
+task's reference and how many of its records have an unsaved change), and
+`annotations_changed`, the paths of the annotation files added, changed or
+removed on disk since the last import or save, by size and time. Neither reads
+nor writes an annotation file.
+
+A task with annotations cannot be removed (`in-use`, saying how many); remove
+or revert its annotations first.
+
+**The hash of a record's content** ties an annotation to what it describes:
+SHA-256 of the record's file, of an archive member's bytes once decompressed,
+or of the UTF-8 of an inline `text`. A record list may give it as `sha256`.
+Otherwise Tuldok computes it when the record is first annotated, or first
+looked at for an annotation, and keeps it for that run and record; a run's
+product never changes, so it is computed once. A record over 1 GiB is not
+hashed: its annotations carry null and are tied by id alone.
+
+**Stale.** An annotation is stale when its dataset's current product has no
+record of its id, or has one whose hash differs from the annotation's (an
+annotation or a record without a hash is never stale by content). It is
+worked out when asked, never stored, and only the records that have
+annotations are hashed to find it. When the dataset has no product, nothing
+is stale (`stale` is null). Stale annotations are kept, counted and shown;
+Tuldok never drops one.
+
+**Invalid.** An annotation is invalid when its value is not one the task as it
+now is allows (its `task` or `vocabulary` changed since it was made). Each row
+remembers the task it was last checked against, so counting reads no value
+until the task changes.
 
 ## Values files
 
@@ -2013,6 +2075,11 @@ and result keys of each operation are in its contract.
 | `cancel_build` | cancel | Cancel a build request, stopping its build when it is running. |
 | `cancel_run` | cancel | Ask a queued or running run to stop. |
 | `stop_run` | cancel | Kill what a run whose build is gone left running, and mark it unknown. |
+| `annotation_tasks` | inspect | List the annotation tasks, each with its dataset, current product and counts of its records by the state of their annotations. |
+| `annotated_records` | inspect | Read one page of the records of a task's dataset with their annotations, optionally in one state or of one kind, with the counts. |
+| `annotation` | inspect | Read one record's annotation under a task as it now is and as it is in the file, whether it is unsaved or stale, and the hash of the record's content. |
+| `set_annotation` | edit | Check annotations of a task's records, or their removal, and keep them as unsaved edits; one item that does not check refuses them all. |
+| `revert_annotations` | edit | Put back the saved annotations of a task's named records, or of all its records, in place of their unsaved edits. |
 
 `map` answers `groups` (in their order, each with `id`, `title`, `parent`,
 `description` and `models`, the number of recipes naming it), `models` (one per
@@ -2126,6 +2193,7 @@ it: a missing file, and a symbolic link that leaves the product, are refused
    | `array` | for kind `array` in an `.npz`: the array to show first |
    | `split`, `rights` | optional strings |
    | `origin`, `meta` | optional objects, kept and shown as they are |
+   | `sha256` | optional; the SHA-256 of the record's content, 64 lowercase hexadecimal characters (see [Annotations in the database](#annotations-in-the-database)) |
 
    Other keys are kept and shown in `meta` (a key of `meta` itself wins). A
    line that is not such a record, or is longer than 64 KiB, is skipped and
@@ -2166,7 +2234,8 @@ size or time.
 
 **`records`** takes `offset`, `limit` (at most 200, 50 by default), `kind` and
 `split`, and answers `records` (each `id`, `kind`, `path`, `bytes`, `split`,
-`rights`, `origin`, `meta`, `array` when the list gives one, and for a text
+`rights`, `origin`, `meta`, `sha256` (null unless the list gives it), `array`
+when the list gives one, and for a text
 record its first 400 characters as `preview`), `total` (after the filters),
 `source` (`records.jsonl`, `view` or `files`), `kinds` and `splits` (counts
 over all the records; records without a split are not counted in `splits`)
@@ -2340,6 +2409,66 @@ element by element in C order, whichever order each is stored in. At most
 32,000,000 values are read in all (both files together) and at most 10,000
 tensors per file; beyond either the call is refused `too-large`, saying how
 many there are.
+
+### Annotating
+
+The five operations on annotations (see [Annotations in the database](#annotations-in-the-database))
+name a task by `task`, its name or its reference `annotations/<name>`, and
+answer it as the reference. A task that the project does not have (or has
+removed) is refused `not-found`. The records are those of the current product
+of the task's dataset, read as `records` reads them; the reads find the product
+with the project open for a moment and read it after, as the reads above do.
+
+**`annotation_tasks`** takes nothing and answers `tasks`, by name, each with
+`task`, `title`, `dataset`, `type` (the task's `task`), `vocabulary` (empty for
+`review` and `text`), `run` (the dataset's current product, or null),
+`records` (how many records it has, or null), `counts` and `unsaved` (how many
+records have an unsaved change). `counts` has `unannotated` (records of the
+product without an annotation), `draft`, `accepted`, `needs-work`, `rejected`
+(annotations by state, stale ones included), `stale` and `invalid`.
+
+**`annotated_records`** takes `task`, `state` (one of the names of `counts`;
+absent for all), `kind`, `offset` and `limit` (at most 200, 50 by default),
+and answers `task`, `run`, `records` (the page), `total` (after the filters)
+and `counts`. The records are those of the product in its order, each as
+`records` gives it with `in_product` true, followed (unless `kind` is given)
+by the annotated records the product does not have, by id, with `in_product`
+false and null `kind`, `path`, `bytes`, `split`, `rights`, `origin`, `meta`
+and `sha256`. Each has `annotation`: null, or `state`, `value`, `note` (null
+when there is none), `by`, `at`, `stale` and `unsaved`.
+
+**`annotation`** takes `task` and `record` and answers `task`, `record`,
+`annotation` (the line as it now is, as an object with the keys of the
+annotations file, or null), `saved` (the line in the file, likewise, or
+null), `unsaved`, `stale` (null when there is no annotation or no product)
+and `sha256` (the hash of the record's content now, or null).
+
+**`set_annotation`** takes `task`, `items` (1 to 200, each
+`{record, state, value?, note?}` or `{record, remove: true}`) and `from`
+(optional, an object written as every item's `from`), and answers `task`,
+`set`, `removed` (how many annotations went) and `unsaved` (how many of the
+task's records now have an unsaved change). Every item is checked before
+anything changes: the record must be in the product (refused `not-found`
+when the dataset has none), named once, and its line must be one the
+annotations file allows, its value checked against the task, the vocabulary
+and the record's kind, and, where the product makes it cheap to know, an
+image's size, a text's length (a file of at most 16 MiB) and a WAVE sound's
+length. One item that does not check refuses the call `invalid`, with one
+problem per such item whose pointer is `/items/<n>`. The line takes `sha256`
+from the record now, `by` from the caller (`owner`, or `agent:` and the
+credential's name cut to 80 characters; never its id, token or scopes) and
+`at` from the clock. Setting an annotation again takes the record's hash
+again, which is how a stale annotation that is still right is put right.
+Removing a record that has no annotation does nothing.
+
+**`revert_annotations`** takes `task` and `records` (optional, at most 10,000)
+and answers `task` and `reverted`: how many of those records (all the task's,
+without `records`) had an unsaved change and now have their saved line
+again, or no annotation when the file has none.
+
+Each call of `set_annotation` and `revert_annotations` writes one activity
+row whose target is the task's reference and whose detail says how many
+records it set, removed or reverted.
 
 ## The project directory on this machine
 
