@@ -49,6 +49,72 @@
         "type": "integer",
         "minimum": 0
       }
+    },
+    "view": {
+      "type": "object",
+      "description": "an object with records (a record list) or files (a pattern), not both",
+      "additionalProperties": false,
+      "properties": {
+        "records": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "the address of a record list in the product, such as lists/all.jsonl"
+        },
+        "files": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "a pattern of addresses in the product, such as training-view.zip!samples/*.npz"
+        },
+        "kind": {
+          "enum": [
+            "text",
+            "image",
+            "audio",
+            "pointcloud",
+            "mesh",
+            "array",
+            "file"
+          ]
+        },
+        "show": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "the name of the array drawn first"
+        }
+      },
+      "dependentSchemas": {
+        "records": {
+          "properties": {
+            "files": {
+              "not": {},
+              "description": "Use either records or files in view, not both; remove one."
+            },
+            "kind": {
+              "not": {},
+              "description": "kind applies to the files of a pattern; remove it, or use files."
+            },
+            "show": {
+              "not": {},
+              "description": "show applies to the files of a pattern; remove it, or use files."
+            }
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "records"
+          ]
+        },
+        {
+          "required": [
+            "files"
+          ]
+        }
+      ]
     }
   },
   "if": {

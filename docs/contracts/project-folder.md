@@ -224,6 +224,7 @@ examples, except `environments/cuda-torch`, a second environment not shown.
 | --- | --- | --- |
 | `run` | unless `earlier_work.rebuild` is `no` | see the `run` block |
 | `splits` | no | object, split name to a number of items (integer ≥ 0) |
+| `view` | no | how its product is shown as records; see [Looking inside a product](#looking-inside-a-product) |
 
 Example, `datasets/sinusoidal-v1.json`:
 
@@ -1827,8 +1828,9 @@ call answers its result object, or a refusal `{"error", "code"}` with
 `problems`, `references` and `files` when there are any. The status is 404
 for `not-found`, 400 for `invalid`, 403 for `forbidden` and 409 for every
 other code. Other `/api/` routes answer 409 `unavailable`, except sign-in,
-credentials, `GET /api/agent/capabilities`, `GET /api/agent/operations` and
-`GET /api/workspace/context`.
+credentials, `GET /api/agent/capabilities`, `GET /api/agent/operations`,
+`GET /api/workspace/context` and `GET /api/project/file` (see
+[Looking inside a product](#looking-inside-a-product)).
 
 ### Requests and approval
 
@@ -1877,6 +1879,11 @@ and result keys of each operation are in its contract.
 | `note` | inspect | Read one file under the notes directory of the project folder, given relative to it. |
 | `recipe_results` | inspect | Read the summary rows of every benchmark subject made from one recipe, ungrouped or for one group. |
 | `draft_branch` | inspect | Write the text of a new recipe branched from one of the project's, with its name and what keeping it would find wrong; nothing is stored. |
+| `records` | inspect | Read one page of the records of a finished run's product, optionally of one kind or split, with the counts by kind and split. |
+| `record` | inspect | Read one record of a finished run's product with its content: text, image size, sound peaks, points, mesh or arrays. |
+| `inside` | inspect | List a directory, an archive or the arrays of an .npz in a finished run's product. |
+| `array_slice` | inspect | Read a slice along two axes of an array in a finished run's product, as 32-bit floats. |
+| `array_summary` | inspect | Read the range, mean, deviation and histogram of an array in a finished run's product. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -1970,6 +1977,172 @@ A definition with neither an unsaved edit nor the removed mark is refused
 Installing an environment (`set-up`), measuring estimates (`estimate`),
 variables passed to a build (`build --env`), rebinding and forgetting a
 project stay command-line actions.
+
+### Looking inside a product
+
+A **product** is the `output` directory of a run in state `succeeded` or
+`adopted`, named by its run id (or an unambiguous prefix of it). The
+operations `records`, `record`, `inside`, `array_slice` and `array_summary`
+read it; each takes `run`, and a run that does not exist, has not finished or
+has no output directory is refused `not-found`. Like every operation they
+open the project for a moment, to find the run and the view of its dataset;
+they read the product after closing it and write nothing: no file, no row.
+
+An **address** is a path relative to the product, never absolute, never with
+`..`. A member of a zip archive is named after `!`, as
+`training-view.zip!samples/a.npz`; an address has at most two `!`. An `.npz`
+is a zip of `.npy` members; one of its arrays is named by the argument
+`array`, without `.npy`. An address that is not one is refused `invalid`. An
+address is resolved under the product, and its real path must lie inside
+it: a missing file, and a symbolic link that leaves the product, are refused
+`not-found`. Archive members are read where they are, never extracted.
+
+**Records.** A record is one item of the product. Its kind is `text`,
+`image`, `audio`, `pointcloud`, `mesh`, `array`, or `file` for anything else
+(listed, never opened). The records come from the first of:
+
+1. `records.jsonl` at the product's root, one JSON object per line:
+
+   | Key | |
+   | --- | --- |
+   | `id` | required; unique; 1 to 200 characters of `A-Z a-z 0-9 . _ -` |
+   | `kind` | required; one of the seven kinds |
+   | `path` | an address; required unless `kind` is `text` and `text` is given |
+   | `text` | the text itself, for a short text record (at most 64 KiB) |
+   | `array` | for kind `array` in an `.npz`: the array to show first |
+   | `split`, `rights` | optional strings |
+   | `origin`, `meta` | optional objects, kept and shown as they are |
+
+   Other keys are kept and shown in `meta` (a key of `meta` itself wins). A
+   line that is not such a record, or is longer than 64 KiB, is skipped and
+   reported in `problems` with its line number (the first 20, then one
+   problem with the number of such lines); blank lines are skipped.
+2. `view` on the dataset's definition (datasets only):
+
+   ```json
+   "view": {"records": "lists/all.jsonl"}
+   "view": {"files": "training-view.zip!samples/*.npz", "kind": "array", "show": "target_pressure"}
+   ```
+
+   `records` is the address of a record list in the format above, anywhere
+   in the product; its paths are addresses in the product. `files` is a
+   pattern: `*` and `?` match within one path segment, `**` across segments,
+   and one `!` may reach into the archives it matches. Each match is a record
+   whose id is its address. `kind` (by default by extension) and `show` (the
+   array shown first) apply to every match and only to `files`. A view has
+   `records` or `files`, not both. `check` checks the shape of `view` and its
+   addresses, and nothing about any product.
+3. Otherwise every regular file under the product, sorted by address, its id
+   its address and its kind by extension. At most 200,000 files are listed,
+   and `problems` says when there are more.
+
+| Kind | Extensions |
+| --- | --- |
+| text | `.txt .md .json .jsonl .csv .tsv .yaml .yml .log` |
+| image | `.png .jpg .jpeg .webp .gif .bmp` |
+| audio | `.wav .flac .mp3 .ogg .opus .m4a` |
+| pointcloud | `.xyz`, and `.ply` with no faces |
+| mesh | `.obj .stl`, and `.ply` with faces |
+| array | `.npy .npz` |
+| file | everything else |
+
+The index of a product's records is kept for the 8 products read last and
+made again when its list (or, without a list, the product directory) changes
+size or time.
+
+**`records`** takes `offset`, `limit` (at most 200, 50 by default), `kind` and
+`split`, and answers `records` (each `id`, `kind`, `path`, `bytes`, `split`,
+`rights`, `origin`, `meta`, `array` when the list gives one, and for a text
+record its first 400 characters as `preview`), `total` (after the filters),
+`source` (`records.jsonl`, `view` or `files`), `kinds` and `splits` (counts
+over all the records; records without a split are not counted in `splits`)
+and `problems` (each `{line, message}`, `line` null for a problem of the whole
+list).
+
+**`record`** takes `id` and answers `record` (as above, with `media_type`:
+the type of the file route for an image or a sound, with `url`, the file
+route's address for it; `text/plain` for text; else
+`application/octet-stream`) and `content`, by kind:
+
+| Kind | `content` |
+| --- | --- |
+| text | `text` (at most 262,144 characters), `characters` (of the whole text; null when it is longer than 16 MiB), `truncated`, `replaced` (bytes that were not UTF-8, each shown as U+FFFD) |
+| image | `width`, `height`, from the header of a PNG, JPEG, GIF, WebP or BMP; null when not found |
+| audio | for a WAV of PCM (8, 16, 24, 32 bit) or 32-bit float: `channels`, `rate`, `frames`, `seconds`, `peaks` (at most 1,000 pairs of lowest and highest sample over all channels, scaled to -1..1); for other sounds all null |
+| pointcloud | `count`, `stride`, `bounds` (`[[x, y, z] lowest, [x, y, z] highest]` of the points returned), `points_f32` (base64 of little-endian 32-bit x, y, z; at most 100,000 points, every `stride`-th above that), `colors_u8` (base64 of r, g, b, or null). From PLY (ASCII or binary little-endian, colours from `red`, `green`, `blue`), XYZ text (colours when columns 4 to 6 are whole numbers 0 to 255), or an `.npy` of shape (N, 3 or more) when the record's kind is `pointcloud` |
+| mesh | `vertices`, `triangles`, `bounds`, `positions_f32`, `triangles_u32` (base64, little-endian; polygons split into triangles as a fan). From PLY (ASCII or binary little-endian), OBJ (`v` and `f`, with `/` forms and negative indexes) and STL (binary or ASCII; equal corners are one vertex) |
+| array | `arrays` (each `array`, `shape`, `dtype`, `bytes`; a plain `.npy` has one array, named null) and `show` (the record's `array`, else the view's `show`, else the first array with two or more dimensions, else the first) |
+| file | an empty object |
+
+A point cloud or mesh file of more than 256 MiB is refused `too-large`, and
+so is a mesh of more than 200,000 vertices or 400,000 triangles, with the
+counts. A file that cannot be read as its kind is refused `invalid`.
+
+**`inside`** takes `path` (an address; the product's root by default),
+`offset` and `limit` (at most 500, 200 by default), and answers `entries` and
+`total`. A directory lists its children, an archive the members at its top
+(an address `a.zip!samples` lists the members under `samples/`), and an
+`.npy` or `.npz` its arrays. Each entry has `name`, `path` (its address),
+`type` (`directory`, `file`, `archive` or `array`), `bytes` (decompressed, for
+a member) and `kind`; an array also has `array`, `shape` and `dtype`, and its
+`path` is the address of its file. Directories come first, then by name. A
+zip nested deeper than an address can name is a `file`. A plain file is
+refused `invalid`.
+
+**Arrays.** NPY versions 1, 2 and 3 are read, in C or Fortran order, little-
+or big-endian, of floats of 2, 4 and 8 bytes, signed and unsigned integers of
+1, 2, 4 and 8 bytes and booleans; `dtype` is named as `float32`, `int16`,
+`uint8`, `bool`. Anything else (objects, complex numbers, strings,
+structured types) is listed with its type as written and refused
+`unsupported` when read; an object array is never unpickled. The header is
+parsed as a literal of at most 64 KiB.
+
+**`array_slice`** takes `path`, `array` (for an `.npz`), `axes` (the two axes
+drawn, by default the last two), `index` (one position per axis, by default
+the middle of each; ignored for the two drawn) and `most` (rows and columns
+at most, 256 by default, at most 512). It answers `shape`, `dtype`, `axes`,
+`index`, `rows`, `columns`, `stride` (one for both axes; 1 unless every
+`stride`-th row and column is taken to fit `most`), `values_f32` (base64 of
+little-endian 32-bit floats, row by row), `min` and `max` (of the finite
+values) and `nonfinite`. An array of one axis is drawn as one row and one of
+none as one value; `axes` is then left out.
+
+**`array_summary`** takes `path`, `array` and `bins` (64 by default, at most
+256), and answers `shape`, `dtype`, `count`, `min`, `max`, `mean`, `std`,
+`zeros`, `nonfinite`, `histogram` (`low`, `high`, `counts`: equal bins from
+the lowest to the highest finite value) and `stride`. At most 4,000,000
+values are read: beyond that every n-th value in storage order, and `stride`
+is n. All but `count` and `stride` are of the values read.
+
+**Reading no more than is needed.** A file on disk is mapped read only, and a
+member stored uncompressed in a zip is read at its offsets in its archive's
+bytes, so a slice reads only the bytes it draws and listing an archive reads
+only its central directory. A compressed member (deflate or bzip2) is
+decompressed whole into memory; one of more than 256 MiB, by the size the
+archive declares and again while decompressing, is refused `too-large` with
+its size. What was decompressed is kept for the next read, at most 512 MiB
+for all products together, the least recently used dropped first. Other
+compression methods and encrypted members are refused `unsupported`.
+
+A file that is damaged, or is not what its name says, is refused `unsupported`
+and the product stays readable: the file is one record among the others.
+Arguments that do not fit (an address that is not one, axes or positions
+outside an array) are refused `invalid`.
+
+**The bytes of an image or a sound.** `GET /api/project/file?run=<id>&path=<address>`
+answers the bytes of a file of a product, or of an archive member of at most
+256 MiB, to whoever may call an `inspect` operation, and is refused as such an
+operation is otherwise (401 without a credential). `run` and `path` are given
+once each and nothing else, or the request is refused 400 `invalid`; refusals
+of the product and the address are as for the operations. The media type
+comes from the extension, for the image and audio extensions above only, and
+those are sent `inline`; everything else is `application/octet-stream` with
+`Content-Disposition: attachment`, so no product file is sent as HTML, SVG or
+script. Every answer carries `X-Content-Type-Options: nosniff` and
+`Cache-Control: no-store`. For a file on disk one `Range: bytes=a-b` (or
+`bytes=a-`) is answered 206 with `Content-Range`; any other `Range` gets the
+whole file. This route is not an operation and is not in the capability
+manifest: an agent reads records, arrays and text through the operations.
 
 ## The project directory on this machine
 

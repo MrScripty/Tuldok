@@ -2,7 +2,8 @@
 
 Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md, with the three
 rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
-section 2 of spec-w3.md (draft_branch, revert_definition).
+section 2 of spec-w3.md (draft_branch, revert_definition) and the five of
+section 3 of spec-d1.md (records, record, inside, array_slice, array_summary).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -15,6 +16,7 @@ WHO = ('inspect', 'edit', 'cancel', 'request', 'owner')
 REQUEST_STATES = ('awaiting-approval', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'declined', 'expired')
 KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart')
 CHANGES = ('training-policy', 'architecture', 'refinement', 'component')   # a recipe's kind of change
+RECORD_KINDS = ('text', 'image', 'audio', 'pointcloud', 'mesh', 'array', 'file')   # the kinds of a product's record
 TARGET_LIMIT = 50
 REASON_CHARACTERS = 400
 
@@ -41,6 +43,9 @@ _FLAG = {'type': 'boolean'}
 _OFFSET = {'type': 'integer', 'minimum': 0}
 _THEME = {'type': 'string', 'enum': ['light', 'dark']}
 _TARGETS = {'type': 'array', 'items': _REFERENCE, 'maxItems': TARGET_LIMIT}
+_ADDRESS = {'type': 'string', 'minLength': 1, 'maxLength': 4096}   # a path in a product; '!' names an archive member
+_ARRAY = {'type': 'string', 'minLength': 1, 'maxLength': 1024}
+_AXIS = {'type': 'integer', 'minimum': 0, 'maximum': 63}
 
 
 def _limit(most):
@@ -67,6 +72,9 @@ RUN = ('id', 'reference', 'subject', 'plan_id', 'state', 'scratch', 'commit', 'i
 REQUEST = ('id', 'state', 'targets', 'every', 'scratch', 'covers', 'requested_at', 'requested_by', 'decided_at',
            'decided_by', 'started_at', 'finished_at', 'plan_id', 'cancel_requested', 'result', 'problem',
            'expires_at')
+SLICE = ('shape', 'dtype', 'axes', 'index', 'rows', 'columns', 'stride', 'values_f32', 'min', 'max', 'nonfinite')
+SUMMARY_OF_ARRAY = ('shape', 'dtype', 'count', 'min', 'max', 'mean', 'std', 'zeros', 'nonfinite', 'histogram',
+                    'stride')
 SAVE = ('written', 'deleted', 'results_written', 'results_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
 STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
@@ -139,6 +147,29 @@ OPERATIONS = (
                          change={'type': 'string', 'enum': list(CHANGES)},
                          description={'type': 'string', 'maxLength': 4000}),
               ('reference', 'text', 'parent', 'inlined', 'problems')),
+    Operation('records', "Read one page of the records of a finished run's product, optionally of one kind or split, "
+              'with the counts by kind and split.', 'inspect', False,
+              _arguments(['run'], run=_RUN, offset=_OFFSET, limit=_limit(200),
+                         kind={'type': 'string', 'enum': list(RECORD_KINDS)}, split=_TEXT),
+              ('records', 'total', 'source', 'kinds', 'splits', 'problems')),
+    Operation('record', "Read one record of a finished run's product with its content: text, image size, sound "
+              'peaks, points, mesh or arrays.', 'inspect', False,
+              _arguments(['run', 'id'], run=_RUN, id={'type': 'string', 'minLength': 1, 'maxLength': 4096}),
+              ('record', 'content')),
+    Operation('inside', "List a directory, an archive or the arrays of an .npz in a finished run's product.",
+              'inspect', False,
+              _arguments(['run'], run=_RUN, path={'type': 'string', 'maxLength': 4096}, offset=_OFFSET,
+                         limit=_limit(500)), ('entries', 'total')),
+    Operation('array_slice', "Read a slice along two axes of an array in a finished run's product, as 32-bit floats.",
+              'inspect', False,
+              _arguments(['run', 'path'], run=_RUN, path=_ADDRESS, array=_ARRAY,
+                         axes={'type': 'array', 'items': _AXIS, 'minItems': 2, 'maxItems': 2},
+                         index={'type': 'array', 'items': {'type': 'integer', 'minimum': 0}, 'maxItems': 64},
+                         most=_limit(512)), SLICE),
+    Operation('array_summary', "Read the range, mean, deviation and histogram of an array in a finished run's "
+              'product.', 'inspect', False,
+              _arguments(['run', 'path'], run=_RUN, path=_ADDRESS, array=_ARRAY, bins=_limit(256)),
+              SUMMARY_OF_ARRAY),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',

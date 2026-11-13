@@ -7,8 +7,11 @@ its schema), runs it with the project open only for the moment it needs, and
 returns a JSON-plain object. Calls are answered one at a time under one lock
 of the service. Every mutating call that passed the actor check writes one
 activity row, done or refused. The six operations on build requests are
-passed to build_requests. Nothing here knows of HTTP or of the app's access
-layer.
+passed to build_requests. The five reads inside a product (spec-d1.md) find
+the finished run with the project open for a moment and read its output
+directory through inside.py after closing it; product_file does the same for
+the file route; those reads run outside the lock, so a long one holds up no
+other call. Nothing here knows of HTTP or of the app's access layer.
 
 The worker (section 4) is one thread per service, started by start() and
 stopped by close(). It runs queued build requests one at a time while it
@@ -33,11 +36,27 @@ import threading
 import jsonschema
 import psycopg
 
-from . import (activity, build_requests, builds, charts, check, environments, launcher, local, operations, plan,
-               store, workspace)
+from . import (activity, build_requests, builds, charts, check, environments, inside, launcher, local, operations,
+               plan, store, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
+
+# The reads inside a product (spec-d1.md), each a function of (inside.Product, arguments). call() finds the product
+# under the service's lock and reads outside it: decompressing a large member or parsing a large mesh takes seconds,
+# and the other calls (the page's own readings among them) must not wait for it. inside.py guards what it keeps.
+INSIDE_READS = {
+    'records': lambda product, a: inside.records(product, offset=a.get('offset', 0), limit=a.get('limit', 50),
+                                                 kind=a.get('kind'), split=a.get('split')),
+    'record': lambda product, a: inside.record(product, a['id']),
+    'inside': lambda product, a: inside.inside(product, path=a.get('path', ''), offset=a.get('offset', 0),
+                                               limit=a.get('limit', 200)),
+    'array_slice': lambda product, a: inside.array_slice(product, path=a['path'], array=a.get('array'),
+                                                         axes=a.get('axes'), index=a.get('index'),
+                                                         most=a.get('most', 256)),
+    'array_summary': lambda product, a: inside.array_summary(product, path=a['path'], array=a.get('array'),
+                                                             bins=a.get('bins', 64)),
+}
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
@@ -253,6 +272,14 @@ class Service:
             raise store.ProjectError(f'There is no operation project.{name}.', 'not-found')
         if not _allowed(operation.who, actor):
             raise store.ProjectError(f'This credential may not call project.{name}.', 'forbidden')
+        if name in INSIDE_READS:
+            problems = _argument_problems(operation, arguments)
+            if problems:
+                raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
+                                         problems=problems)
+            with self._lock:
+                product = self._product(arguments['run'])
+            return _plain(INSIDE_READS[name](product, dict(arguments)))
         with self._lock:
             try:
                 problems = _argument_problems(operation, arguments)
@@ -262,18 +289,18 @@ class Service:
                 result = _plain(getattr(self, f'_{name}')(dict(arguments), actor))
             except store.ProjectError as exc:
                 if operation.mutation:
-                    self._record(actor, name, _target(arguments), exc.code, str(exc))
+                    self._record_activity(actor, name, _target(arguments), exc.code, str(exc))
                 raise
             except Exception as exc:
                 if operation.mutation:
-                    self._record(actor, name, _target(arguments), 'error', f'{type(exc).__name__}: {exc}')
+                    self._record_activity(actor, name, _target(arguments), 'error', f'{type(exc).__name__}: {exc}')
                 raise
             if operation.mutation:
                 target = result.get('id', '') if name == 'request_build' else _target(arguments)
-                self._record(actor, name, target, 'done')
+                self._record_activity(actor, name, target, 'done')
             return result
 
-    def _record(self, actor, name, target, outcome, detail=''):
+    def _record_activity(self, actor, name, target, outcome, detail=''):
         # Its own connection: the row is written even when the project would not open.
         with psycopg.connect(store.connection_info(self.dsn), autocommit=True) as connection:
             activity.record(connection, self.schema, actor, name, target, outcome, detail)
@@ -422,6 +449,30 @@ class Service:
         with self._open() as project:
             return workspace.draft_branch(project, recipe, arguments['title'], name=arguments.get('name'),
                                           change=arguments.get('change'), description=arguments.get('description'))
+
+    # ------------------------------------------------------ inside a product
+
+    def _product(self, run):
+        """The inside.Product of a finished run (succeeded or adopted), read with the project open for a moment."""
+        with self._open() as project:
+            run_id = builds.find_run(project, run)
+            state, directory, reference = project._execute(
+                'SELECT state, directory, reference FROM {schema}.runs WHERE id = %s', (run_id,)).fetchone()
+            view = None
+            if reference.startswith('datasets/'):
+                row = project._execute('SELECT document FROM {schema}.definitions WHERE directory = %s AND name = %s '
+                                       'AND NOT removed', ('datasets', reference.split('/', 1)[1])).fetchone()
+                view = row[0].get('view') if row and isinstance(row[0], dict) else None
+        if state not in ('succeeded', builds.ADOPTED) or not directory:
+            raise store.ProjectError(f'Run {run_id} is {state}; only a finished run has a product to look inside.',
+                                     'not-found')
+        return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view)
+
+    def product_file(self, run, address, range_header=None):
+        """The inside.FileResponse of GET /api/project/file; the caller has checked the right to inspect."""
+        with self._lock:
+            product = self._product(run)
+        return inside.file_response(product, address, range_header)
 
     # ------------------------------------------------------------- changes
 

@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 41)  # the rows of spec-m7.md section 2 and of section 2 of spec-w1.md and spec-w3.md
+        self.assertEqual(len(names), 46)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, and of section 3 of spec-d1.md
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -205,6 +205,9 @@ class Reads(ServiceCase):
             'run': {'run': run_id}, 'progress': {'run': run_id[:8]}, 'products': {}, 'activity': {},
             'map': {}, 'note': {'path': 'missing.md'}, 'recipe_results': {'recipe': 'recipes/fit-a'},
             'draft_branch': {'recipe': 'recipes/fit-a', 'title': 'Fit c'},
+            'records': {'run': run_id}, 'record': {'run': run_id, 'id': 'weights.json'}, 'inside': {'run': run_id},
+            'array_slice': {'run': run_id, 'path': 'weights.npy'},
+            'array_summary': {'run': run_id, 'path': 'weights.npy'},
         }
         reads = [operation for operation in operations.OPERATIONS if not operation.mutation]
         arguments['build_requests'] = {'state': 'queued', 'limit': 5}
@@ -213,6 +216,9 @@ class Reads(ServiceCase):
             with self.subTest(operation.name):
                 if operation.name == 'build_request':  # tested with a request in test_tuldok_project_build_requests
                     self.assertEqual(self.refused(operation.name, {'request': 'abcdef12'}).code, 'not-found')
+                    continue
+                if operation.name in ('array_slice', 'array_summary'):  # no arrays here; test_tuldok_project_inside
+                    self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
                     continue
                 if operation.name == 'note':  # this fixture has no notes; read in test_tuldok_project_workspace
                     self.assertEqual(self.refused(operation.name, arguments['note']).code, 'not-found')

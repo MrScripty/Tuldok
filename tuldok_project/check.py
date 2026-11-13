@@ -107,6 +107,18 @@ def check_definition(definition, notes, add):
         _check_run(run, path, benchmark=definition.kind == 'benchmark', add=add)
     if definition.kind == 'benchmark':
         _check_benchmark(document, path, add)
+    if definition.kind == 'dataset' and isinstance(document.get('view'), dict):
+        _check_view(document['view'], path, add)
+
+
+def _check_view(view, path, add):
+    """The addresses of a dataset's view: a record list's at most two '!', a pattern's at most one."""
+    from . import inside_archive  # here: inside_archive imports store, which imports this module
+    for key, archives in (('records', 2), ('files', 1)):
+        if isinstance(view.get(key), str):
+            wrong = inside_archive.address_problem(view[key], archives=archives)
+            if wrong:
+                add('error', path, documents.pointer('view', key), wrong)
 
 
 def _check_run(run, path, *, benchmark, add):

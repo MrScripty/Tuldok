@@ -416,6 +416,27 @@ def make_handler(dataset, observer=None):
                 result, status = {'error': 'The operation failed: ' + type(error).__name__ + '.', 'code': 'internal'}, 500
             return self.reply(result, status)
 
+        def _project_folder_file(self):
+            # The bytes of a product's file (spec-d1.md, section 5), for whoever may call an inspect operation.
+            try:
+                query = parse_qs(urlsplit(self.path).query, keep_blank_values=True, strict_parsing=True,
+                                 max_num_fields=4)
+            except ValueError:
+                query = {}
+            if set(query) != {'run', 'path'} or any(len(values) != 1 for values in query.values()):
+                return self.reply({'error': 'Give run and path, once each, and nothing else.', 'code': 'invalid'}, 400)
+            status, answer = dataset.product_file(query['run'][0], query['path'][0], self.headers.get('Range'))
+            if status != 200:
+                return self.reply(answer, status)
+            observe_stage(observer, getattr(self, '_observation', None), 'returned',
+                          outcome='success', envelope_status=answer.status, http_status=answer.status)
+            self.send_response(answer.status)
+            for key, value in answer.headers:
+                self.send_header(key, value)
+            self.send_header('Content-Length', str(answer.length))
+            self.end_headers()
+            self._write_observed(answer.chunks, answer.status)
+
         def do_GET(self):
             return self._observe_request(self._handle_GET)
 
@@ -512,6 +533,8 @@ def make_handler(dataset, observer=None):
                     if path == '/api/workspace/context':
                         return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
                                            'project_folder': True})
+                    if path == '/api/project/file':
+                        return self._project_folder_file()
                     if path != '/api/agent/operations':
                         return self.reply({'error': 'This Tuldok serves one project folder; use /api/project/<operation>.',
                                            'code': 'unavailable'}, 409)

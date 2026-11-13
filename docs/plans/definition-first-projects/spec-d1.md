@@ -158,3 +158,20 @@ With `--lab-root` nothing is asserted in this check (a fresh database has no pro
 ## 10. Out of scope
 
 Annotating, importing, generating; thumbnails made on the server; video; glTF; a model's weights (phase 2 uses these operations); comparing predicted with native fields (phase 6).
+
+## As built
+
+### D1a, the readers and the operations
+
+What differs from the text above, and what was found.
+
+- **Seven kinds, not six.** `file` is a kind like the others in a record list and in `view.kind`.
+- **The project is opened for a moment, like any read.** Section 6 says no operation here opens the project; finding the run and the dataset's `view` needs it. Each operation opens it as the other reads do (which imports files changed on disk), reads the run's state, directory and the definition's `view`, closes it, and only then reads files. It does not run the step that clears orphaned runs, which writes a row.
+- **These reads do not hold the service's lock** (changed in review). The service answers one call at a time; as first built a large member being decompressed, or a large mesh being parsed, held up every other call, the page's own readings among them. The run is found under the lock and the files are read outside it. What `inside.py` keeps in memory has its own lock.
+- **A damaged file is a refusal, never a failure** (found in review, by feeding the readers 22,000 corrupted files). Compressed data that does not decompress and a binary PLY that ends early raised errors of their own, which the app would have answered as an internal failure. Each of the six entry points now answers whatever a reader raises on bad bytes as `unsupported`, and logs it. A truncated or malformed `.npy` was coded `invalid`; it is `unsupported` too. `invalid` is kept for arguments.
+- **A stored archive inside an archive is not decompressed.** Section 3 says an archive inside an archive is read into memory. Only a compressed one is; a stored one stays a part of the outer file's mapping. This is what makes the lab's 9.8 GB training view quick: its 783 inner `.npz` files are stored.
+- **Tuldok reads zip archives with a parser of its own** (the central directory, zip64 included), because the standard library does not give a member's offset in the file without reading its local header through a file object.
+- **Choices the text left open:** `problems` is a list of `{line, message}`; the one array of a plain `.npy` is named null; a one-dimensional array is drawn as one row; `characters` is null for a text over 16 MiB; a point cloud's `bounds` are those of the points returned; a malformed address is `invalid`, a missing file or a link out of the product `not-found`; `array` is required for an `.npz`; a summary's sampling takes every n-th value in the order stored.
+- **Measured on the lab's largest product** (9.77 GB, 792 members), through the readers alone, no database: listing the archive 0.004 s; the arrays of one sample 0.004 s; a middle slice of its `features` 0.009 s; a summary of its 645,120 values 0.12 s. The disk's cache may have held the file.
+- **Tests:** `tests/test_tuldok_project_inside.py`, 24; project suite 610; agent interface 43 (4 skipped, as before). The catalog profile's digest is unchanged.
+- **Not verified:** a big-endian machine; a PLY whose lists are in an element other than its faces; a JPEG whose size is declared beyond its first megabyte; a product on a disk that is truly cold. A file of a finished run is read through `mmap`: if something truncated it while it was being read, the process would be killed. Tuldok never changes a finished run's output.
