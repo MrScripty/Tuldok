@@ -57,7 +57,68 @@ class PumasGateways(unittest.TestCase):
         legacy['instance']['build_info'] = None
         self.assertIsNone(descriptor.decode(json.dumps(legacy).encode())['advertisement']['instance']['build_info'])
 
-    def test_versions_boolean_wrong_shapes_unknown_fields_and_oversizing_fail(self):
+    def test_additive_fields_and_open_list_entries_are_accepted_and_not_retained(self):
+        additions = [
+            lambda v: v.update(future_field={'nested': [1, 2]}),
+            lambda v: v['instance'].update(connection_token='never retained'),
+            lambda v: v['instance']['build_info'].update(future_field=True),
+            lambda v: v['build_info'].update(future_field='ignored'),
+            lambda v: v['build_info']['protocols'][0].update(future_field='ignored'),
+            lambda v: v['build_info']['schemas'][0].update(future_field='ignored'),
+            lambda v: v['build_info']['schemas'].append({'name': 'pumas.discovery', 'version': 2}),
+            lambda v: v['build_info']['schemas'].append({'name': 'pumas.future-schema', 'version': 1}),
+            lambda v: v['build_info']['protocols'].append({'name': 'pumas.future-protocol', 'versions': [3]}),
+            lambda v: v['build_info']['protocols'][-1].update(versions=[1, 2]),
+            lambda v: v['instance'].update(capabilities=[f'future.capability{i}@1' for i in range(100)]),
+        ]
+        for add in additions:
+            value = fixture(); add(value)
+            with self.subTest(value=value):
+                decoded = descriptor.decode(json.dumps(value).encode())['advertisement']
+                self.assertEqual(decoded['instance']['registry_library_id'], fixture()['instance']['registry_library_id'])
+                text = json.dumps(decoded)
+                self.assertNotIn('future_field', text)
+                self.assertNotIn('connection_token', text)
+        value = fixture(); value['future_field'] = 'ignored'; value['instance']['future_field'] = 'ignored'
+        self.assertEqual(descriptor.decode(json.dumps(value).encode())['advertisement'], fixture())
+        endpoint, calls = self.server(value)
+        self.assertEqual(discovery.inspect_advertised(f'http://127.0.0.1:{endpoint[1]}')['advertisement']['instance'],
+                         fixture()['instance'])
+
+    def test_missing_required_fields_and_unsupported_versions_are_refused_with_reasons(self):
+        cases = [
+            (lambda v: v.pop('service_generation'),
+             'Pumas advertisement is missing required field(s) service_generation.'),
+            (lambda v: v['instance'].pop('generation'),
+             'Pumas advertisement instance is missing required field(s) generation.'),
+            (lambda v: v['build_info'].pop('schemas'),
+             'Pumas advertisement build_info is missing required field(s) schemas.'),
+            (lambda v: v['build_info']['protocols'][0].pop('versions'),
+             'Pumas advertisement build_info.protocols[0] is missing required field(s) versions.'),
+            (lambda v: v.update(advertisement_schema_version=2),
+             'Pumas advertisement advertisement_schema_version 2 is unsupported; Tuldok supports version 1.'),
+            (lambda v: v['instance'].update(selector_schema_version='1'),
+             'Pumas advertisement instance.selector_schema_version must be an unsigned 32-bit integer.'),
+            (lambda v: v.update(endpoint='http://example.com:8765'),
+             'Pumas advertisement endpoint is invalid: Enter a numeric-loopback HTTP base URL.'),
+        ]
+        for mutate, reason in cases:
+            value = fixture(); mutate(value)
+            with self.subTest(reason=reason):
+                with self.assertRaises(descriptor.Rejected) as caught:
+                    descriptor.decode(json.dumps(value).encode())
+                self.assertEqual(str(caught.exception), reason)
+        value = fixture(); value['instance'].pop('generation')
+        endpoint, calls = self.server(value)
+        with patch.object(discovery, 'listening_endpoints', return_value=[endpoint]):
+            result = discovery.scan_advertised()
+        self.assertEqual(result['gateways'], [])
+        self.assertEqual(result['rejected'], [{'server_url': f'http://127.0.0.1:{endpoint[1]}',
+            'reason': 'Pumas advertisement instance is missing required field(s) generation.'}])
+        with self.assertRaisesRegex(ValueError, 'missing required field'):
+            discovery.inspect_advertised(f'http://127.0.0.1:{endpoint[1]}')
+
+    def test_versions_boolean_wrong_shapes_and_oversizing_fail(self):
         mutations = [
             lambda v: v.update(advertisement_schema_version=True),
             lambda v: v.update(advertisement_schema_version=2),
@@ -69,8 +130,8 @@ class PumasGateways(unittest.TestCase):
             lambda v: v['build_info']['schemas'][-1].update(version=True),
             lambda v: v['build_info'].update(compiled_features=[None]),
             lambda v: v.update(service_generation=''),
-            lambda v: v['instance'].update(connection_token='do not expose'),
-            lambda v: v['instance'].update(capabilities=['x'] * 65),
+            lambda v: v['instance'].update(capabilities='model.query@1'),
+            lambda v: v.update(instance=[]),
             lambda v: v['instance'].update(library_root='x' * 4097),
             lambda v: v.update(endpoint='http://example.com:8765'),
             lambda v: v.update(endpoint='http://[::1%lo]:8765'),

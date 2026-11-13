@@ -6,7 +6,8 @@
   "streaming_commit": "f3b3c770ca531f013c8e1f8b1f958b9dc0babbfb",
   "fixture_origin": "Actual non-test pinned gateway with authored controlled text backend and owned managed image worker. No model inference.",
   "capabilities_sha256": {
-    "controlled-image-capabilities.json": "dc884c0a2ef44cdcb36a5cfb6b4658630ee625f9eeed4864aba9aa296844982b",
-    "controlled-text-capabilities.json": "f67f101ea23679cdc0062169b11fe8ab0769a87491bbb7f85fdbc1452c0af8c9"
-  }
+    "controlled-image-capabilities.json": "7ed4f80b7100b9fc6782d48606680302778a4422de04f776fcd541da2bcc9237",
+    "controlled-text-capabilities.json": "12bf001573db2e557f83f8423c760d9c3e948e4c6198f9a21970202567577bf6"
+  },
+  "capabilities_update": "Pumas Library v0.8.0 (69e32a2208c5c2d840f4adafec03350669fcb5bc): descriptors gain input_modalities and output_modalities, the serving gains modalities, chat accepts messages_multimodal, rerank is listed, and the pre-release reason unqualified_audio_runtime becomes unsupported_adapter. The gateway harness is unchanged."
 }

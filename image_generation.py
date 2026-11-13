@@ -11,6 +11,7 @@ import hashlib
 import http.client
 import io
 import json
+import re
 import select
 import socket
 import threading
@@ -93,7 +94,8 @@ def decode_image(data, width, height):
         for key in ('seed', 'steps', 'guidance', 'duration_seconds'):
             if type(metadata.get(key)) in (int, float):
                 safe_metadata[key] = metadata[key]
-        if metadata.get('memory_policy') in ('sequential_cpu_offload', 'model_cpu_offload', 'gpu'):
+        # The policy set grows with adapters (0.8.0 adds `scaled_fp8_to_bf16_sequential_cpu_offload`).
+        if isinstance(metadata.get('memory_policy'), str) and re.fullmatch(r'[a-z0-9_]{1,64}', metadata['memory_policy']):
             safe_metadata['memory_policy'] = metadata['memory_policy']
     result['metadata'] = safe_metadata
     return result
@@ -122,6 +124,8 @@ def typed_generate(base, body, operation, payload, on_admission=None):
     evidence = {'capability_observation': observed, 'producer_contract_source': pumas.SOURCE_COMMIT}
     try:
         pumas.require(observed, 'image_generation', 'text', 'png_base64', options)
+        pumas.require(observed, 'image_generation', 'text', 'png_base64', {'input_characters': len(payload['prompt'])},
+                      advisory=('input_characters',))
         request = {'contract_version': 1, 'request_id': body['request_id'], 'model': payload['model'],
                    'profile': observed['capabilities']['profile'], 'capability': 'image_generation',
                    'input': {'kind': 'text', 'text': payload['prompt']}, 'output': 'png_base64',
@@ -258,7 +262,13 @@ class ImageRequests:
                                 499: 'Image generation cancelled.',
                                 503: 'The image model is unavailable. Load it in Pumas and refresh models.',
                                 507: 'Pumas reported insufficient GPU memory. Free memory before trying again.'}
-                    raise ValueError(messages.get(response.status, 'Pumas image generation failed. Check its runtime status. The request was not retried.'))
+                    message = messages.get(response.status, 'Pumas image generation failed. Check its runtime status. The request was not retried.')
+                    try:
+                        transport.settimeout(2)
+                        detail = ai_http.pumas_error_detail(response.read(ai_http.MAX_ERROR_BODY + 1), payload)
+                    except (OSError, http.client.HTTPException):
+                        detail = ''
+                    raise ValueError(message + (' ' + detail if detail else ''))
                 data = bytearray()
                 while not response.isclosed():
                     chunk = response.read1(65536)

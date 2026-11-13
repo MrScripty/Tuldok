@@ -1,22 +1,64 @@
 # Pumas Image→Text consumer
 
-This opt-in caption path consumes the contract at Pumas Library merged PR68,
-source `36c2aab2c885b8416fd4e39cf8c37c510596d6e4`:
-[Image→Text contract](https://github.com/MrScripty/Pumas-Library/blob/36c2aab2c885b8416fd4e39cf8c37c510596d6e4/docs/contracts/image-to-text-v0.8.md).
-It is based on Tuldok main `d99e23d2b0d2783a7a9863232a7453cd9f2db7aa`.
-The legacy compatible caption path and the previous typed text/image operations
-remain available. Their existing producer receipt is not silently repinned.
+This opt-in caption path, and the typed text and image operations that share
+`pumas_operations`, consume the typed HTTP contract released in Pumas Library
+0.8.0, tag `v0.8.0`, commit `69e32a2208c5c2d840f4adafec03350669fcb5bc`:
+[model operations, contract version 1](https://github.com/MrScripty/Pumas-Library/blob/v0.8.0/docs/contracts/model-operations-v1.md).
+Pumas is reached only as an HTTP endpoint; no Pumas code is imported or started.
+It supersedes the pre-release pin `4c79cd8e35db566b70caaa13d8d8f92265f5976e`
+(and before it PR68), which `source.json` keeps as `previous_producer`. The
+legacy compatible caption path remains available. The PR54 typed text/image
+capture receipt in `tests/fixtures/pumas-typed-v1` keeps its gateway harness;
+its capability files were brought to the 0.8.0 descriptor shape.
 
-`pumas_operations.validate_manifest` accepts all seven closed capability variants,
-the three additional image input formats and image byte/pixel/count option names.
-The existing unavailable reasons remain unchanged. Availability is a live
-observation, not a model qualification receipt. Audio's existing
-`max_output_tokens` descriptor option is accepted as declared in the inspected DTO.
+### Additive compatibility
+
+Pumas responses grow additively within contract version 1. Tuldok validates
+only what it uses and selects capabilities and option bounds by name, never by
+position or count:
+
+- `GET /v1/capabilities` requires `supported_contract_versions` containing 1,
+  `model`, an exact `profile`, positive `max_request_bytes`/`max_response_bytes`
+  and a `capabilities` list. Other fields (`context_tokens`,
+  `max_stream_event_bytes`, future fields) are retained but not required.
+- Only `chat_generation`, `image_generation` and `image_to_text` descriptors are
+  validated: fixed semantic task, string format lists, an availability `state`
+  with an optional string reason, and finite, ordered bounds for the options
+  Tuldok compares (`max_tokens`, `temperature`, `top_p`, `width`, `height`,
+  `seed`, `input_characters`, `image_bytes`, `total_image_bytes`, `image_pixels`,
+  `image_count`, `message_count`, `content_parts`). A used capability or
+  option advertised twice is refused as ambiguous.
+- Other capabilities (`multimodal_embedding`, `decision`, `rerank`, audio, future
+  values), formats (`content_batch`, `decision`, `decisions`, `relevance_scores`,
+  future values), modalities, option names,
+  availability states and reasons, and response or result fields are ignored.
+  Any availability other than `available` means unavailable, and its reason is
+  shown.
+- The capability observation is bounded at 1 MiB. `GET /v1/served-models` is
+  preferred for listing serving aliases with their profiles; gateways without it
+  (HTTP 404) fall back to `/v1/models`, which lists each ID once with `profiles`.
+- `pumas_operations.served_models(address)` reads `GET /v1/served-models` in
+  full, independent of the catalog: each served (model, profile) with
+  `profile_required`, model ID, provider, load state, context size, input and
+  output modalities and its descriptors with availability, bounded at 8 MiB and
+  4096 entries. Values outside the 0.8.0 vocabulary are dropped; a malformed
+  entry refuses the listing, naming the entry. `available_capabilities(entry,
+  input_kind, output)` answers which available capabilities make an output from
+  a request input kind, as the release's resolver matches input formats.
+
+Availability is a live observation, not a model qualification receipt.
 
 Choose **Pumas typed v1** in the image caption form, select the serving alias and
 optional exact profile, and inspect capabilities. On each new attempt, the owner
 requires `pumas.model-operations.image-to-text:1` in the gateway build advertisement
-and an available Image→Text descriptor for the exact resolved model/profile.
+and an available Image→Text descriptor for the exact resolved model/profile. The
+gateway advertisement (`GET /.well-known/pumas`) has its own versioned decoder,
+which also grows additively: unknown fields and new protocol, schema, capability or
+compiled-feature entries are ignored and are not retained in the stored build
+observation, which keeps only the known fields. Missing required fields, wrong
+types, unsupported schema versions and malformed endpoints are refused with a
+reason naming the field; a gateway scan lists such refused advertisements with
+their reasons instead of hiding them.
 The request uses the facade's `messages`, `semantic_task:"image_to_text"`,
 text-generation options and `stream:false`. The seed is omitted. Named image and
 `image_messages` inputs are also supported by the bounded consumer request builder.
@@ -25,8 +67,10 @@ messages can contain images; audio, URLs, paths and data-URL envelopes are refus
 
 The consumer applies the producer's 32 MiB whole-request, 8 MiB per-image, 16 MiB
 aggregate, four-image, 4096-axis, 4,194,304-pixel, 128-message and 128-total-part
-bounds. Tokens default to 512 and permit 1–2048; temperature/top-p must be finite
-and within 0–2/0–1. The caption application's existing preparation is smaller:
+bounds. Tokens default to 512. Pumas no longer caps Image→Text `max_tokens` at
+2048; the live `max_tokens` bound follows the served context window and is
+checked before admission. Temperature/top-p must be finite and within 0–2/0–1.
+Advertised image byte, aggregate byte, pixel, count, dimension, message and part bounds are checked when present. The caption application's existing preparation is smaller:
 one RGB JPEG, at most 2 MiB and 1600 pixels on its longest side. It decodes the
 captured, hash-verified canonical image and retains both canonical-source and
 prepared-input hashes. Preparation is explicit in request history.
@@ -37,8 +81,8 @@ replace Pumas's production PNG/turbojpeg validation, allocation controls or
 admission authority, and does not claim equivalent JPEG warning detection.
 No local validation result is used as permission to bypass provider refusals.
 
-The response is the closed `{contract_version, request_id, result}` envelope.
-The request ID must match; `result.kind` must be text. There is no response-model
+The response is the `{contract_version, request_id, result}` envelope; added
+fields are ignored. The request ID must match; `result.kind` must be text. There is no response-model
 requirement and no private provider envelope projection. This application requires
 a complete `stop` finish reason and valid caption JSON within a 256 KiB response
 bound; partial or filtered output is not applied. Capability/build observations,
@@ -47,8 +91,17 @@ on the exact job. List responses omit image-bearing canonical requests and raw
 bytes. Explicit application creates a draft target and records its evidence in
 revision history; human review remains separate.
 
-HTTP 400/413/422/503 pre-admission refusals and 502 failures retain their typed
-code, HTTP status and `outcome` in the asynchronous job. A disconnect, uncertain
+Every typed error is `{contract_version, request_id, error:{code, outcome, message}}`.
+A refusal made before the request reaches its handler is `{"error":{"code","message"}}`
+(for example `request_limit`, HTTP 413); it is decoded as a typed `not_admitted` refusal.
+`error.outcome` is authoritative: `not_admitted` records no provider effect and
+anything else is `unknown`, whatever the HTTP status. 404 `model_not_found` and
+409 `ambiguous_model`/`ambiguous_operation` are ordinary refusals. An error whose
+`request_id` is `null` (Pumas could not read the body) is still a typed refusal.
+Unknown error codes are kept verbatim. The job retains the code, HTTP status and
+outcome, and its error text includes Pumas' `error.message`, bounded and on one
+line. Capability refusals show the same message. On the OpenAI-compatible routes,
+a `pumas_error` body's `error.message` is shown after the existing redaction. A disconnect, uncertain
 response or possibly dispatched interrupted attempt remains `unknown`. Repeating
 an existing exact application request ID returns the retained attempt; it never
 replays inference. A new attempt requires a new explicit request. Browser recovery
@@ -64,28 +117,30 @@ and packaged application acceptance remain integration-lead/provider-owner gates
 ## Evidence and coordinated review
 
 `tests/fixtures/pumas-image-to-text-v1/source.json` labels the capability/wire
-fixture as **source-derived**, with inspected production-source hashes. It is not
-a captured native DTO schema export or an actual model reply. The tests exercise
-seven-capability parsing, named/facade PNG/JPEG inputs (including progressive
+fixture as **release-derived**. It is not a captured native DTO schema export or
+an actual model reply. The fixtures (`controlled-capabilities.json`,
+`served-models.json`) follow the 0.8.0 descriptor construction for a llama.cpp
+vision serving with an 8192-token context and a Torch image serving, including
+modalities and the `multimodal_embedding`, `decision` and `rerank` descriptors. The tests exercise additive capability parsing, named/facade PNG/JPEG inputs (including progressive
 JPEG), order, closed shapes, finite/resource bounds, typed application captions,
 draft/history, live selection refusal, cancellation/borrowed-owner survival,
 HTTP outcomes, restart and no replay. The existing typed browser suite additionally
 checks the actual caption form, capability inspection, application and disconnect.
 
-The six actual production DTO schemas regenerated from the combined source
-are retained in `tests/fixtures/pumas-image-to-text-v1/schemas/`, with SHA-256
-identities in `source.json`. The source-derived capability fixture and authored
-named/facade image requests and typed responses validate against these exports.
-The schemas describe wire shape; finite bounds and live readiness remain runtime
-checks. Neither fixture output nor schema validity proves native inference.
+The schemas in `tests/fixtures/pumas-image-to-text-v1/schemas/` have SHA-256
+identities and origins in `source.json`. `capability-descriptor.schema.json` is
+the copy the 0.8.0 release ships; `capabilities-response` and
+`served-models-response` are derived from it and from `types.rs` at the tag; the
+request, response and error schemas remain the pre-release export, as the
+release's changes to them are additive and Pumas is not built here. The
+capability fixtures and authored named/facade image requests and typed
+responses validate against these schemas in the vision tests. The schemas
+describe wire shape; finite bounds and live readiness remain runtime checks.
+Neither fixture output nor schema validity proves native inference.
 
-The reviewed producer retains identical DTO definitions and schema dependencies;
-all six exported schema SHA-256 identities are unchanged. `source.json` records
-the export commit and refreshed handler/controlled-test source hashes. The fixture
-gateway advertisement reads the same versioned source pin as its consumer
-acceptance evidence.
-This pin is the immutable merged Pumas main commit. Its source tree is identical
-to the reviewed producer that passed CI before the coordinated merge.
+`source.json` records the tag, commit, tree and contract document hash. The
+fixture gateway advertisement reads
+the same versioned source pin as its consumer acceptance evidence.
 The combined desktop contract and packaged application are provider integration
 gates. Real model/projector inference, semantic quality, managed native teardown
 and production audio qualification remain unclaimed. No models or runtimes are
