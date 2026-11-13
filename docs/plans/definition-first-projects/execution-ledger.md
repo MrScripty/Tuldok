@@ -513,3 +513,38 @@ Screenshots: `build/qa/project-workspace-acceptance/final/` (21) and, for the ow
 **Seen, not Tuldok's:** this machine's zone is America/Vancouver, which the system clock gives as UTC−7 in November; the headless browser and Node carry older zone data and show times an hour earlier. A browser with current zone data shows the right hour.
 
 **Next:** the owner looks at phase 3 on the lab project. Then the capability check can be signed and the old project mode deleted (milestone 8, part 3).
+
+## 2026-11-12 — the owner looks at phase 3; the workspace updates in place
+
+**Owner, on phase 3 on the lab project:** "looks ok. continue", and then: "one thing, im noticing there is a full page reset when it should just be updating info on the page instead". Phase 3 is accepted with that one fault. The capability check is not signed by these words; it was brought up to date and its losses put to the owner again.
+
+Spec: [spec-w4.md](spec-w4.md). **Commits** (none pushed), Tuldok `feat/definition-first-projects`: the spec, part 3 of [spec-m8.md](spec-m8.md) and the capability check `4f206bbd`; the fix and its check, the commit before this entry.
+
+**What was measured before** (the lab folder, owner signed in, nothing changing; elements of the main area that were new nodes afterwards):
+
+| Tab | On return to the window | Every 15 s while idle |
+| --- | --- | --- |
+| Map | none | none |
+| Data | all 356 | none |
+| Train | all 64 | all 64 |
+| Benchmarks | all 2,109 | none |
+| Analysis | all 159 | none |
+| Overview | all 2,336 | all 2,336 |
+
+The tab bar was rebuilt with each of those, the strip on every reading, and the sideways scroll inside tables was lost. The reading every fifteen seconds had been added at phase 3's acceptance, where only its cost was measured, not what it redrew.
+
+**After:** none, in every cell, with the model's drawer and the editor open as well; no strip or tab-bar node added; every scroll position kept. The same measurement is now a check, `tests/browser_project_workspace_still.cjs` (about 2 min 40 s on the fixture, 1 min on the lab folder read only): nothing touched on twelve places when nothing changed; a build asked for by a second session shown within one reading with the scroll and the focus kept and no "Reading…"; a drawer brought up to date in place; a running build's progress set in place in the strip, the run's drawer and its row of Train's list while the Map gains no node; the editor with typed text left alone; and the page kept as it is when the server cannot be reached.
+
+**How.** One slice by an agent, then review. The page compares the text of each watched answer (`summary`, `status`, `build_requests`, `environments`, `runs`, and `map` when it can have changed) with the one it holds, and draws nothing when none differs. When one does, the tab and the drawer are built off the page and put in place whole, in one step. No element is kept from an older drawing when its content is drawn again, so a control never acts on older answers than it was drawn from.
+
+**Changed in review:**
+
+- As first built, a running run's progress line in Train's list and Overview's "Read at" went stale until a watched answer changed. Both are now set in place on every reading.
+- As first specified, a watched answer that was refused counted as a change, which emptied the tab on screen whenever the server could not be reached for a moment. A reading that fails now changes nothing: the page stays, the strip says "Not read" and why, and the timer asks again.
+- `tests/browser_project_workspace_actions.cjs` failed twice in a row at one assertion made the moment a control stopped being busy; the drawer is now redrawn by the reading that follows, a few milliseconds later. Its `settled()` waits for the page's own requests; no assertion changed, and it then passed twice.
+
+**Tests on the final code:** project suite 585; agent interface 44 (4 skipped); HTTP 17; `browser_project_workspace.cjs` on its fixture and on the lab folder; `browser_project_workspace_actions.cjs` (27 steps, twice); `browser_project_workspace_still.cjs` on its fixture (twice) and on the lab folder. The lab folder was unchanged throughout.
+
+**Not verified:** the new check in the dark theme; a reading that fails while a build runs; widths other than those the checks use (1280 and 1440). Each browser check asserts at one moment after waiting; on a busy machine a wait may still prove short.
+
+**Next:** the owner looks at the page again. The deletion of the old project mode is being prepared on the side branch `chore/retire-old-project-mode` and lands only when the capability check is signed.
