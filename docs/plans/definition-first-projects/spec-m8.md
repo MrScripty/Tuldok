@@ -132,3 +132,54 @@ Found while implementing; the code and its tests follow this section.
 - **Tests that need the old folder** skip when it is absent, so a fresh clone's tests pass.
 
 **Acceptance: the plan's test, on a fresh clone.** A new clone of the lab branch, opened by Tuldok into an empty database with an empty project directory: it opens in seconds; it lists the models, recipes and benchmarks; the report draws the result charts from `results/` alone; and `plan --all` lists the ordered steps for what can be built. The clone holds no old project folder.
+
+## 10. Part 3: the old project mode is deleted
+
+**Gate.** The plan deletes nothing before the owner signs the [capability check](capability-check.md). This part is therefore prepared on a side branch, `chore/retire-old-project-mode`, in a working tree of its own, and reaches `feat/definition-first-projects` only on the owner's word. Until then that branch, the running old-mode app and the owner's database are as they were.
+
+**After this part** Tuldok has two ways to start: catalog mode, unchanged, and a project folder (`--project-folder`). `--project-files-root` and everything only it reaches is gone.
+
+### 10.1 What goes
+
+What the capability check lists, measured again when the work starts:
+
+- The 38 modules it names.
+- `app.py`: the flags `--project-files-root`, `--project-runtime-source`, `--project-transfer-control` and `--project-transfer-root`, their routes, pages and error branches. `--project-root` (catalog mode's read-only look at project snapshots, `projects.py` and `project_activity.py`) stays.
+- `candidate_packages.py` and `pipeline.py`: the branches for the old project objects. The one small function catalog mode also uses moves into `pipeline.py`.
+- `agent_api.py`: the `project_files.*` and `project_transfer.*` operations, the `project` capability profile, `ProjectFilesOwnerClient` and `ProjectTransferOwnerClient`; `mcp_stdio.py`: `--project-files-owner` and `--project-transfer-owner`.
+- `static/`: the old project page, the extraction page and the scripts and styles only they load.
+- Every test file, fixture, fake and qualification script that exists for the old mode, and the steps of `.github/workflows/` that run them.
+- `scripts/generate_project_files_contracts.py`, and what it generates.
+- Under `docs/contracts/`, `docs/runbooks/`, `docs/reference/` and the READMEs: what describes the old mode as something Tuldok does. A document that covers both loses the old mode's part.
+
+### 10.2 What stays exactly as it is
+
+- **Every remaining operation's contract.** For each operation id still offered, the entry in the capability manifest of the `catalog` and of the `project_folder` profile (versions, digests, schemas) is the same before and after, byte for byte. Where a catalog operation's contract is built from an old operation's (as `graphs.create` is from `project_files.graph_create`), the shared shape is kept under a name of its own. The ids that disappear are exactly those beginning `project_files.` and `project_transfer.`. Asking for the `project` profile is refused as unsupported.
+- **Catalog mode's behaviour**, its pages and its tests.
+- **`tuldok_project/`, the Map workspace and their tests.** Not touched.
+- **The database.** Nothing is dropped, migrated or rewritten. The old project's schemas stay where they are, unread.
+- **`docs/plans/`.** The plans and ledgers of the old mode are the record of what was built; they stay. (The capability check said they would go; keeping them deletes less.)
+- **The lab repository.** Not touched.
+
+### 10.3 Order
+
+1. **Baseline, before any change:** the capability manifests of both profiles saved to a scratch file; the whole Python suite run once with its counts (passed, failed, skipped) and time; the remaining suites' names.
+2. **Cut the eight import lines** (`app.py`, `candidate_packages.py`, `pipeline.py`) and remove what they served. Catalog mode's tests pass.
+3. **Delete** modules, operations, clients, flags, pages, tests, scripts, workflow steps, documents.
+4. **Look for what is left:** no import of a deleted module; outside `docs/plans/` and Git history, no mention of `project_files`, `project-files`, `project_transfer`, `project-transfer`, `--project-files-root` or a deleted module's name.
+
+### 10.4 Done when
+
+| Check | Passes when |
+| --- | --- |
+| Contracts | a script compares the saved manifests with the new ones as 10.2 says and prints the ids removed |
+| Python suite | `python -m unittest discover -s tests` passes; its count is the baseline's less the tests of the deleted files; no test that passed before fails or is newly skipped |
+| Project suite | the `test_tuldok_project_*.py` count is unchanged |
+| JavaScript | every remaining `tests/test_*.cjs` passes; `node --check` on every remaining script under `static/` |
+| Browser | the workspace checks pass on their fixture and on the lab folder read only; the catalog-mode browser checks that the workflow runs and that need no download or GPU pass, and those not run are named |
+| Start-up | `python app.py --help` shows none of the removed flags; a removed flag is an argument error; Tuldok starts in catalog mode on an empty data directory and with `--project-folder` on the tiny example |
+| Size | the lines and files removed, by kind, reported beside the capability check's figures |
+
+### 10.5 Landing
+
+On the owner's sign-off: their words and the date go into the capability check and the ledger; the old-mode app left running on port 8091 for comparison is stopped (its pages would be gone from under it); the side branch is brought onto `feat/definition-first-projects` without rewriting that branch's history. Nothing is pushed.
