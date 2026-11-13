@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 46)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, and of section 3 of spec-d1.md
+        self.assertEqual(len(names), 49)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, and of section 3 of spec-d1.md and spec-d2.md
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -208,6 +208,10 @@ class Reads(ServiceCase):
             'records': {'run': run_id}, 'record': {'run': run_id, 'id': 'weights.json'}, 'inside': {'run': run_id},
             'array_slice': {'run': run_id, 'path': 'weights.npy'},
             'array_summary': {'run': run_id, 'path': 'weights.npy'},
+            'weights': {'run': run_id},
+            'weights_compare': {'run': run_id, 'path': 'weights.json', 'other_run': run_id,
+                                'other_path': 'weights.json'},
+            'array_tiles': {'run': run_id, 'path': 'weights.npy'},
         }
         reads = [operation for operation in operations.OPERATIONS if not operation.mutation]
         arguments['build_requests'] = {'state': 'queued', 'limit': 5}
@@ -217,8 +221,12 @@ class Reads(ServiceCase):
                 if operation.name == 'build_request':  # tested with a request in test_tuldok_project_build_requests
                     self.assertEqual(self.refused(operation.name, {'request': 'abcdef12'}).code, 'not-found')
                     continue
-                if operation.name in ('array_slice', 'array_summary'):  # no arrays here; test_tuldok_project_inside
+                if operation.name in ('array_slice', 'array_summary', 'array_tiles'):  # no arrays here; tested in
+                    # test_tuldok_project_inside and test_tuldok_project_weights
                     self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
+                    continue
+                if operation.name == 'weights_compare':  # fit-a's weights are JSON; test_tuldok_project_weights
+                    self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'unsupported')
                     continue
                 if operation.name == 'note':  # this fixture has no notes; read in test_tuldok_project_workspace
                     self.assertEqual(self.refused(operation.name, arguments['note']).code, 'not-found')

@@ -1884,6 +1884,9 @@ and result keys of each operation are in its contract.
 | `inside` | inspect | List a directory, an archive or the arrays of an .npz in a finished run's product. |
 | `array_slice` | inspect | Read a slice along two axes of an array in a finished run's product, as 32-bit floats. |
 | `array_summary` | inspect | Read the range, mean, deviation and histogram of an array in a finished run's product. |
+| `weights` | inspect | List the weights files of a finished run's product, each with its size, the file it started from and, when Tuldok reads it, its layers and parameter count. |
+| `weights_compare` | inspect | Compare, array by array, a weights file of a finished run's product with one of the same or another finished run: norms, relative change, cosine and largest change. |
+| `array_tiles` | inspect | Read tiles of two axes of an array in a finished run's product, one per position along a third axis, as 32-bit floats. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -1982,8 +1985,8 @@ project stay command-line actions.
 
 A **product** is the `output` directory of a run in state `succeeded` or
 `adopted`, named by its run id (or an unambiguous prefix of it). The
-operations `records`, `record`, `inside`, `array_slice` and `array_summary`
-read it; each takes `run`, and a run that does not exist, has not finished or
+operations `records`, `record`, `inside`, `array_slice`, `array_summary`,
+`array_tiles`, `weights` and `weights_compare` read it; each takes `run`, and a run that does not exist, has not finished or
 has no output directory is refused `not-found`. Like every operation they
 open the project for a moment, to find the run and the view of its dataset;
 they read the product after closing it and write nothing: no file, no row.
@@ -2043,7 +2046,7 @@ it: a missing file, and a symbolic link that leaves the product, are refused
 | audio | `.wav .flac .mp3 .ogg .opus .m4a` |
 | pointcloud | `.xyz`, and `.ply` with no faces |
 | mesh | `.obj .stl`, and `.ply` with faces |
-| array | `.npy .npz` |
+| array | `.npy .npz .safetensors` |
 | file | everything else |
 
 The index of a product's records is kept for the 8 products read last and
@@ -2082,12 +2085,13 @@ counts. A file that cannot be read as its kind is refused `invalid`.
 `offset` and `limit` (at most 500, 200 by default), and answers `entries` and
 `total`. A directory lists its children, an archive the members at its top
 (an address `a.zip!samples` lists the members under `samples/`), and an
-`.npy` or `.npz` its arrays. Each entry has `name`, `path` (its address),
+`.npy`, `.npz` or `.safetensors` its arrays. Each entry has `name`, `path` (its address),
 `type` (`directory`, `file`, `archive` or `array`), `bytes` (decompressed, for
 a member) and `kind`; an array also has `array`, `shape` and `dtype`, and its
 `path` is the address of its file. Directories come first, then by name. A
 zip nested deeper than an address can name is a `file`. A plain file is
-refused `invalid`.
+refused `invalid`. A `.safetensors` file is listed with `type` `archive`, as
+an `.npz` is, though no address reaches into it with `!`.
 
 **Arrays.** NPY versions 1, 2 and 3 are read, in C or Fortran order, little-
 or big-endian, of floats of 2, 4 and 8 bytes, signed and unsigned integers of
@@ -2096,6 +2100,18 @@ or big-endian, of floats of 2, 4 and 8 bytes, signed and unsigned integers of
 structured types) is listed with its type as written and refused
 `unsupported` when read; an object array is never unpickled. The header is
 parsed as a literal of at most 64 KiB.
+
+A `.safetensors` file is read like an `.npz`: its tensors are its arrays, named
+by `array` as they are in its header, listed in the order of its header. The
+file is 8 bytes (the header's length, little-endian), a JSON header of at most
+16 MiB (each tensor's `dtype`, `shape` and `data_offsets`, and
+`__metadata__`, which is not shown), then the data, read where it lies. The
+types `F16 F32 F64 I8 I16 I32 I64 U8 U16 U32 U64 BOOL` are read, little-endian
+and in C order, and named as an NPY array's are; a tensor of another type
+(`BF16` and the rest) is listed with its type as written and refused
+`unsupported` when read. A header longer than the file, data offsets outside
+the file or reaching into the header, and data whose length does not match
+its shape and type are refused `unsupported`.
 
 **`array_slice`** takes `path`, `array` (for an `.npz`), `axes` (the two axes
 drawn, by default the last two), `index` (one position per axis, by default
@@ -2113,6 +2129,20 @@ none as one value; `axes` is then left out.
 the lowest to the highest finite value) and `stride`. At most 4,000,000
 values are read: beyond that every n-th value in storage order, and `stride`
 is n. All but `count` and `stride` are of the values read.
+
+**`array_tiles`** takes `path`, `array`, `across` (the axis counted over; by
+default the first axis not drawn), `axes` (the two drawn in each tile; by
+default the last two other than `across`), `index` (one position per axis, by
+default the middle of each; used for the axes neither drawn nor counted
+over), `first` (0 by default) and `most` (tiles at most, 16 by default, at most
+64). The array has three axes or more; otherwise, or when `first` is outside
+`across`, the call is refused `invalid`. It answers `shape`, `dtype`,
+`across`, `axes`, `index` (with the position of `first` on `across`), `first`,
+`tiles` (how many follow `first`, at most `most`), `rows`, `columns`,
+`stride` (as for `array_slice`, one for every tile, each tile at most 64 by
+64), `values_f32` (base64 of little-endian 32-bit floats, tile by tile, each
+row by row; tile `t` is the slice at position `first + t` on `across`), `min`,
+`max` (of the finite values of all the tiles) and `nonfinite`.
 
 **Reading no more than is needed.** A file on disk is mapped read only, and a
 member stored uncompressed in a zip is read at its offsets in its archive's
@@ -2143,6 +2173,62 @@ script. Every answer carries `X-Content-Type-Options: nosniff` and
 `bytes=a-`) is answered 206 with `Content-Range`; any other `Range` gets the
 whole file. This route is not an operation and is not in the capability
 manifest: an agent reads records, arrays and text through the operations.
+
+### A model's weights
+
+`weights`, `weights_compare` and `array_tiles` (above) read a product as the
+operations above do: the same addresses and confinement, nothing written, and
+a damaged file refused `unsupported`. Nothing runs the model.
+
+**A run's weights** are the outputs its product records with role
+`weights`; a declared output that is a directory gives the files directly in
+it with one of the extensions below. When the product records none, they are
+the files at the top of the product whose extension is `.npz`,
+`.safetensors`, `.pt`, `.pth`, `.ckpt`, `.bin` or `.onnx` and whose name
+contains `weight` or `model` (in any case), not beginning `initial-`. Only
+`.npz` and `.safetensors` files are read. A PyTorch file (`.pt`, `.pth`,
+`.ckpt`, `.bin`) is a pickle: it is listed by name and size with the reason,
+and never opened, not even to look at its first bytes. The weights a file
+started from are the file beside it with the same name prefixed `initial-`.
+
+**Layers.** A tensor's layer is its name without its last dotted part:
+`encoders.0.layers.0.weight` and `encoders.0.layers.0.bias` are the tensors
+`weight` and `bias` of the layer `encoders.0.layers.0`; a name with no dot is
+its own layer. Layers are in the order of the file (an `.npz`'s members in the
+order of its central directory, a safetensors file's tensors in the order of
+its header), each where its first tensor is.
+
+**`weights`** takes only `run` and answers `files`, each with `path` (its
+address), `output` (the output's name, or null when found by name), `bytes`
+(null when a declared output is missing), `readable`, `reason` (null when
+readable; otherwise a sentence: a pickle, ONNX, another format, a file that is
+missing, or one that could not be read and why), `starts_from` (the address of
+its `initial-` file, or null) and, when readable, `parameters` (the count of
+the tensors listed), `tensors` (how many the file holds) and `layers` (each
+`name`, `parameters` and `tensors`, each tensor `array`, `name`, `shape`,
+`dtype` and `parameters`). At most 10,000 tensors of a file are listed. A
+damaged weights file is listed as not readable with its reason; the call is
+not refused for it.
+
+**`weights_compare`** takes `path`, `other_run` (the same run, for its
+`initial-` file, or any other finished run of the project) and `other_path`,
+both weights files that are read (otherwise refused `unsupported` with the
+reason). For each array in both with the same shape, in the order of `path`,
+`tensors` gives `array`, `parameters`, `norm`, `other_norm`,
+`difference_norm` (of this minus the other), `relative_change` (the
+difference's norm over the other's; null when that is zero), `cosine` (null
+when either norm is zero), `largest_change` (the largest absolute difference)
+and `nonfinite` (non-finite values in either). `total` gives the same over all
+of them together, without `array`. `only_here` and `only_there` name the
+arrays of one file only, `reshaped` gives `array`, `shape` and `other_shape`
+of those whose shapes differ, and `unread` gives `array`, `dtype` and
+`other_dtype` of those with the same shape that one side's type keeps from
+being read; neither is compared. Norms are Euclidean, over 64-bit floats; a
+quantity that includes a non-finite value is null. Arrays are compared
+element by element in C order, whichever order each is stored in. At most
+32,000,000 values are read in all (both files together) and at most 10,000
+tensors per file; beyond either the call is refused `too-large`, saying how
+many there are.
 
 ## The project directory on this machine
 
