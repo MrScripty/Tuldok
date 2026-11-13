@@ -593,3 +593,28 @@ The tab bar was rebuilt with each of those, the strip on every reading, and the 
 3. A view of a model's weights layer by layer.
 
 **Also carried:** the unreachable lines in catalog mode's run code that read attributes only the deleted modules set.
+
+## 2026-11-13 — the data tools plan; reading inside a product (server); the Pumas 0.8.0 client
+
+**Owner, 2026-11-13,** on the [data tools plan](data-tools-plan.md): "we will use the pumas endpoint. We wont be embedding pumas. What do you mean by lables? Right now we just need the basic modality support for data generation and annotation. text, image, audio, 3D (point clouds, mesh). We dont have a specific need for the surrogate lab. This is more a setup so other projects can setup what they need to generate. The rest sounds good. You can go ahead". The plan records what that changed: Pumas as an endpoint only, five kinds of record, "annotation" for "label", the lab's field comparison last.
+
+**Commits** on `feat/definition-first-projects`, none pushed: the plan and specs (`c7693b0d`, `1c08b2b0`, `685be616`, `f26361dc`); reading inside a product `710a5f01`; the Pumas client `d3270202` (the earlier branch merged), `04e1ddb2`, merged here as `be7af731`.
+
+**Phase 1, server side** ([spec-d1.md](spec-d1.md), slice D1a). Five read operations and one route open the output of any finished run: its records, one record, its files and archives, a slice and a summary of an array, and the bytes of an image or a sound. Kinds: text, image, audio, point cloud, mesh, array, file. Standard library only; nothing is unpickled, extracted or written.
+
+**Changed in review:**
+
+- The reads were answered under the service's one lock, so a large member being decompressed held up every other call. They now find the run under the lock and read outside it.
+- The readers were fed 22,000 corrupted files. Compressed data that does not decompress and a binary PLY that ends early raised errors of their own; every entry point now refuses a damaged file as `unsupported` and logs it. A malformed `.npy` was coded `invalid`, which is kept for arguments; it is `unsupported` too.
+
+**Measured** on the lab's largest product (9.77 GB), through the readers alone: listing 0.004 s, one sample's arrays 0.004 s, a slice 0.009 s, a summary of 645,120 values 0.12 s.
+
+**Phase 3, the Pumas 0.8.0 client** ([spec-d3.md](spec-d3.md)), built beside phase 1 on a branch of its own. The client written on 2 November against a pre-release was merged, compared with the contract released at the tag `v0.8.0` (read only from the Pumas Library repository; the spec's "As built" has the table) and brought up to it. `served_models()` reads what an endpoint serves, with each model's modalities and capabilities. Nothing uses it yet. No running Pumas was contacted.
+
+**What Pumas 0.8.0 can make:** text and PNG images. Its contract reserves audio output and has nothing for 3D. Audio and 3D datasets therefore come from import or a project's own generator command until a served model declares them.
+
+**Tests:** project suite 610; `tests/test_tuldok_project_inside.py` 24; agent interface 43 (4 skipped); the Pumas client and its fakes 80, and the four catalog tools that call it (61); the two Pumas browser checks and the two controller checks. The catalog profile's manifest is unchanged by phase 1.
+
+**Not verified:** a real Pumas endpoint; the schemas the release does not publish (four are the pre-release export, one is derived); what spec-d1's "As built" lists. The standards service the implementers' rules name answered "awaiting application publication" on 2026-11-13, so no standards text was read for these slices.
+
+**Next:** the page of phase 1 (the record grid and a viewer per kind), and phase 2 (weights by layer, [spec-d2.md](spec-d2.md)), both being built.
