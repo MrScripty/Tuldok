@@ -258,7 +258,13 @@ class ImageRequests:
                                 499: 'Image generation cancelled.',
                                 503: 'The image model is unavailable. Load it in Pumas and refresh models.',
                                 507: 'Pumas reported insufficient GPU memory. Free memory before trying again.'}
-                    raise ValueError(messages.get(response.status, 'Pumas image generation failed. Check its runtime status. The request was not retried.'))
+                    message = messages.get(response.status, 'Pumas image generation failed. Check its runtime status. The request was not retried.')
+                    try:
+                        transport.settimeout(2)
+                        detail = ai_http.pumas_error_detail(response.read(ai_http.MAX_ERROR_BODY + 1), payload)
+                    except (OSError, http.client.HTTPException):
+                        detail = ''
+                    raise ValueError(message + (' ' + detail if detail else ''))
                 data = bytearray()
                 while not response.isclosed():
                     chunk = response.read1(65536)

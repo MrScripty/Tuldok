@@ -190,18 +190,61 @@ class TypedTests(unittest.TestCase):
         self.assertEqual(record['review'],'draft'); self.assertEqual(record['parents'],[row['id']])
         self.assertEqual(record['groups'],row['groups']); self.assertEqual(record['provenance']['rights'],row['provenance']['rights'])
         self.assertEqual(record['provenance']['canonical_request']['profile'],'controlled-text-cpu')
-    def test_manifest_hash_closed_semantics_nonfinite_intervals(self):
+    def test_manifest_hash_additive_semantics_nonfinite_intervals(self):
         raw=(FIXTURES/'controlled-text-capabilities.json').read_bytes(); observed=pumas.validate_manifest(raw)
         self.assertEqual(observed['observed_sha256'],hashlib.sha256(raw).hexdigest())
         self.assertEqual(pumas.models(self.url)['models'][0]['id'],'controlled-text')
         self.state['duplicate_alias']=True
         self.assertEqual(len(pumas.models(self.url)['models']),2)
-        for mutate in (lambda v:v.update(extra=1),lambda v:v['capabilities'][0].update(capability={}),
-                       lambda v:v['capabilities'][0]['option_bounds'][0].update(minimum=10**500),
+        # Additive fields and unrecognised capability entries are ignored, never refused.
+        for mutate in (lambda v:v.update(extra=1,context_tokens=4096),lambda v:v['capabilities'][0].update(capability={}),
+                       lambda v:v['capabilities'].append({'capability':'decision','semantic_task':'decision'}),
+                       lambda v:v['capabilities'][0]['option_bounds'].append({'option':'top_k','minimum':'n/a'})):
+            value=copy.deepcopy(observed['capabilities']); mutate(value)
+            pumas.validate_manifest(json.dumps(value).encode())
+        value=copy.deepcopy(observed['capabilities']); value['capabilities'][0].update(capability={})
+        with self.assertRaises(pumas.OperationError):
+            pumas.require(pumas.validate_manifest(json.dumps(value).encode()),'chat_generation','messages_text','text',{'max_tokens':1})
+        for mutate in (lambda v:v['capabilities'][0]['option_bounds'][0].update(minimum=10**500),
                        lambda v:v['capabilities'][0]['option_bounds'][0].update(minimum=10,maximum=1),
                        lambda v:v['capabilities'][0].update(availability={'state':'unavailable','reason':{}})):
             value=copy.deepcopy(observed['capabilities']); mutate(value)
             with self.assertRaises(ValueError): pumas.validate_manifest(json.dumps(value).encode())
+    def test_served_models_listing_profiles_and_fallback(self):
+        self.state['served_models']={'supported_contract_versions':[1],'max_request_bytes':1,'max_response_bytes':1,'max_stream_event_bytes':1,
+            'future':True,'models':[
+                {'model':'shared','profile':'gpu','model_id':'lib/a','provider':'llama_cpp','load_state':'loaded','profile_required':True,'capabilities':[],'extra':1},
+                {'model':'shared','profile':'cpu','model_id':'lib/a','provider':'llama_cpp','load_state':'loading','profile_required':True,'capabilities':[]},
+                {'model':'controlled-text','profile':'controlled-text-cpu','model_id':'lib/t','provider':'ollama','load_state':'loaded','context_tokens':8192,
+                 'profile_required':False,'capabilities':[]}]}
+        listed=pumas.models(self.url)
+        self.assertEqual(listed['source'],'/v1/served-models')
+        rows={row['id']:row for row in listed['models']}
+        self.assertEqual(rows['shared']['profiles'],['gpu','cpu']); self.assertTrue(rows['shared']['profile_required'])
+        self.assertIn('choose one',rows['shared']['name']); self.assertEqual(rows['controlled-text']['name'],'controlled-text')
+        self.state['served_models']=None
+        self.assertEqual(pumas.models(self.url)['source'],'/v1/models')
+    def test_capability_refusals_surface_pumas_message(self):
+        with self.assertRaises(pumas.OperationError) as caught: pumas.capabilities(self.url,'missing-model')
+        self.assertIn("no served model is named 'missing-model'",str(caught.exception)); self.assertIn('model_not_found',str(caught.exception))
+        self.assertEqual(caught.exception.outcome,'not_admitted')
+        self.state['ambiguous']=True
+        with self.assertRaises(pumas.OperationError) as caught: pumas.capabilities(self.url,'controlled-text')
+        self.assertIn('send profile',str(caught.exception))
+        self.state['ambiguous']=False; self.state['mode']='unavailable'
+        job=self.generate(); self.assertIn('runtime_unavailable',job['error']); self.assertFalse(self.state['requests'])
+    def test_typed_error_outcome_is_authoritative_and_message_is_retained(self):
+        for mode,status in (('not_admitted',502),('not_admitted',404),('not_admitted',409),('unknown',400),('unknown',503)):
+            with self.subTest(mode=mode,status=status):
+                self.state.update(mode=mode,error_status=status,error_message='provider said '+str(status))
+                job=self.generate()
+                self.assertEqual(job['provider_outcome'],mode); self.assertEqual(job['provider_http_status'],status)
+                self.assertIn('provider said '+str(status),job['error'])
+        self.state['mode']='unreadable'; job=self.generate()
+        self.assertEqual(job['provider_outcome'],'not_admitted'); self.assertIn('not valid JSON',job['error'])
+        self.state.update(mode='not_admitted',error_status=503,error_message='image runtime is busy')
+        with self.assertRaises(pumas.OperationError) as caught: self.data.image_requests.generate(self.image())
+        self.assertIn('image runtime is busy',str(caught.exception)); self.assertEqual(caught.exception.outcome,'not_admitted')
         for raw in (b'{"x":1,"x":2}',b'{"x":NaN}',b'{','{"x":1}'.encode('utf-16')):
             with self.assertRaises(ValueError): pumas.strict_json(raw)
 

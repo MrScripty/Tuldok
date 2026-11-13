@@ -43,16 +43,30 @@
       "type": "string"
     },
     "Capability": {
-      "enum": [
-        "chat_generation",
-        "text_generation",
-        "text_embedding",
-        "image_generation",
-        "image_to_text",
-        "audio_transcription",
-        "audio_classification"
-      ],
-      "type": "string"
+      "oneOf": [
+        {
+          "enum": [
+            "chat_generation",
+            "text_generation",
+            "text_embedding",
+            "image_generation",
+            "image_to_text",
+            "audio_transcription",
+            "audio_classification"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "multimodal_embedding",
+          "description": "One embedding per image or per mixed text/image item, in the same\nvector space as the model's text embeddings.",
+          "type": "string"
+        },
+        {
+          "const": "decision",
+          "description": "Typed questions about a state answered with probabilities by a native\ndecision model (llama.cpp `/v1/systemone`, e.g. Kev, OpenJev).",
+          "type": "string"
+        }
+      ]
     },
     "CapabilityDescriptor": {
       "properties": {
@@ -107,7 +121,9 @@
         "text",
         "text_batch",
         "pcm_s16le",
-        "pcm_f32le"
+        "pcm_f32le",
+        "content_batch",
+        "decision"
       ],
       "type": "string"
     },
@@ -155,7 +171,8 @@
         "text",
         "embeddings_float32",
         "png_base64",
-        "labels"
+        "labels",
+        "decisions"
       ],
       "type": "string"
     },
@@ -167,7 +184,9 @@
         "text_to_image",
         "speech_to_text",
         "audio_classification",
-        "image_to_text"
+        "image_to_text",
+        "multimodal_embedding",
+        "decision"
       ],
       "type": "string"
     }
@@ -179,6 +198,15 @@
         "$ref": "#/$defs/CapabilityDescriptor"
       },
       "type": "array"
+    },
+    "context_tokens": {
+      "description": "Context window configured for this serving, when the runtime reports it.",
+      "format": "uint32",
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
     },
     "max_request_bytes": {
       "format": "uint",

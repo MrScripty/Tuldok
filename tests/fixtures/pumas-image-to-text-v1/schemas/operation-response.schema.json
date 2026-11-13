@@ -1,5 +1,94 @@
 {
   "$defs": {
+    "DecisionAnswer": {
+      "oneOf": [
+        {
+          "properties": {
+            "choice": {
+              "type": "string"
+            },
+            "confidence": {
+              "format": "double",
+              "type": "number"
+            },
+            "probabilities": {
+              "additionalProperties": {
+                "format": "double",
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "type": {
+              "const": "choice",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "choice",
+            "probabilities",
+            "confidence"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "confidence": {
+              "format": "double",
+              "type": "number"
+            },
+            "legend": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "probabilities": {
+              "additionalProperties": {
+                "format": "double",
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "score": {
+              "description": "Probability-weighted level index; may fall between levels.",
+              "format": "double",
+              "type": "number"
+            },
+            "type": {
+              "const": "score",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "score",
+            "legend",
+            "probabilities",
+            "confidence"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "noul": {
+              "description": "Probability that the answer is true.",
+              "format": "double",
+              "type": "number"
+            },
+            "type": {
+              "const": "noul",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "noul"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "FinishReason": {
       "enum": [
         "stop",
@@ -72,6 +161,34 @@
             "kind",
             "png_base64",
             "seed"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "answers": {
+              "additionalProperties": {
+                "$ref": "#/$defs/DecisionAnswer"
+              },
+              "type": "object"
+            },
+            "input_tokens": {
+              "description": "Prompt tokens evaluated across all questions, when reported.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "kind": {
+              "const": "decisions",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "answers"
           ],
           "type": "object"
         }
