@@ -548,3 +548,32 @@ The tab bar was rebuilt with each of those, the strip on every reading, and the 
 **Not verified:** the new check in the dark theme; a reading that fails while a build runs; widths other than those the checks use (1280 and 1440). Each browser check asserts at one moment after waiting; on a busy machine a wait may still prove short.
 
 **Next:** the owner looks at the page again. The deletion of the old project mode is being prepared on the side branch `chore/retire-old-project-mode` and lands only when the capability check is signed.
+
+## 2026-11-12 — milestone 8, part 3: the deletion of the old project mode is prepared, not landed
+
+**Status: prepared and checked on the side branch `chore/retire-old-project-mode`, one commit on top of this one. Nothing is deleted on this branch. The capability check is not signed.**
+
+**Why it is not landed.** The plan deletes the old mode only when the owner signs the capability check, and the owner signs by saying so. The owner was told twice that the deletion lands on the word "signed"; the replies were "continue", which is taken as leave to prepare it and not as the sign-off.
+
+**How.** Section 10 of [spec-m8.md](spec-m8.md). First the baseline: the capability manifests of both profiles saved, and the whole Python suite run on the unchanged branch. An agent cut the import statements that tied the old code to catalog mode; the machine was restarted at that point, which lost the agent and the first baseline run and kept the working tree. A second agent checked that first step, deleted, searched for what was left and gathered the evidence. In review every changed file's diff was read, the changed Python files were linted (no undefined name; the same warnings before and after), the manifests were compared again by a script of the reviewer's own, and the workflow file was parsed.
+
+**Found while preparing** (each is corrected in the capability check and in section 10.6 of the spec on the side branch):
+
+- `project_cli.py` is also catalog mode's command line, so it stays without its old-mode commands: 37 modules go, not 38.
+- Twelve import statements tied the old code to catalog mode, not eight.
+- A test of the kept code, `tests/test_tuldok_project_http.py`, pinned the digest of the whole catalog manifest and of the `project` profile, which the deletion changes by its own rule. It now pins the manifest without the five `project_transfer.*` entries (shown equal, entry by entry, to the earlier manifest with those five taken out) and a new test checks that the old profile is refused.
+- About thirty lines in ten of catalog mode's files read an attribute that only the deleted modules set. They cannot be reached any more and are left for a change of their own, since they run through the code that starts and recovers runs.
+
+**Size:** 143 files and 47,099 lines deleted; 2,450 lines cut from 17 files that stay.
+
+**Tests:**
+
+- Contracts: every remaining operation published byte for byte as before in both profiles; the catalog's list 115 to 110 (the five `project_transfer.*` entries, listed as unavailable before); the `project` profile refused.
+- Whole Python suite: 3,149 tests before with 40 not passing; 2,397 after with 25 not passing, of which 23 are the same tests failing for the same reasons of this machine (no training environment, a database user that may not create databases, three CPU snapshot tests) and two lines are the pinned digest. After that test was changed: project suite 586, agent interface and command line 67 (4 skipped). The whole suite was not run again after that change.
+- JavaScript: all 49 remaining `tests/test_*.cjs`; `node --check` on 54 scripts.
+- Browser: the three workspace checks on the fixture, two of them on the lab folder read only (unchanged before and after); 45 of the 49 catalog checks that can run here.
+- Start-up: the removed flags are argument errors; catalog mode and `--project-folder` both start.
+
+**Not verified:** 13 catalog browser checks that need training, a GPU or generated fixtures, and three that need packages only the workflow installs; one catalog check fails removing its own temporary directory, on the unchanged code as well. The browser checks used Playwright's headless shell. Nothing ran on GitHub: nothing is pushed.
+
+**Next:** the owner's sign-off of the capability check. Then section 10.5: the words and the date recorded there and here, and the side branch brought onto this one. Separately, the unreachable lines in catalog mode's run code.

@@ -85,7 +85,7 @@ Prepared 2026-11-12 on the branch `chore/retire-old-project-mode`, in a working 
 
 | | |
 | --- | --- |
-| Removed | 143 files, 47,099 lines: 37 modules, 72 Python and 18 JavaScript test files, 11 files under `static/`, one script, four documents. 2,446 more lines are cut from 16 files that stay |
+| Removed | 143 files, 47,099 lines: 37 modules, 72 Python and 18 JavaScript test files, 11 files under `static/`, one script, four documents. 2,450 more lines are cut from 17 files that stay |
 | Contracts | Every operation that remains is published byte for byte as before, in the `catalog` and the `project_folder` profile. The catalog's list goes from 115 operations to 110: the five `project_transfer.*` entries, which it listed as unavailable. The `project` profile is refused. The 145 `project_files.*` and 5 `project_transfer.*` operations are offered nowhere |
 | Python tests | 3,149 before; 2,397 after, which is 3,149 less the 751 tests of the deleted files and one test of a deleted client class. No test that stays is newly skipped. One test that stays had to change: it pinned the digest of the whole catalog list and of the `project` profile, so it now pins the list without the five entries and checks that the old profile is refused. 23 tests fail before and after alike, none of them from the change: this machine has no training environment (numpy, scikit-learn), the test database's user may not create databases, and three tests of the CPU snapshot refuse this machine's Python directories |
 | Project folder tests | 585 before, 586 after (the new test of the refused profile), all passing |
