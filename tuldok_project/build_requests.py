@@ -91,7 +91,8 @@ def covers(project, made, targets, *, every, scratch):
     steps are the plan's build steps in order, each with the benchmark
     subjects execute would run (those to run that are not built yet);
     definitions has the SHA-256 of the text of every reference in the plan's
-    steps, whatever its action.
+    steps, whatever its action, and of the tasks a freeze among them reads
+    (whose line files the commit covers, as it covers code).
     """
     status = builds.status(project)
     steps = []
@@ -103,7 +104,8 @@ def covers(project, made, targets, *, every, scratch):
             held = (status.get(step['reference']) or {}).get('subjects') or {}
             subjects = [name for name in step['subjects']['run'] if (held.get(name) or {}).get('state') != 'built']
         steps.append({'reference': step['reference'], 'subjects': subjects})
-    references = sorted({step['reference'] for step in made['steps']})
+    references = sorted({step['reference'] for step in made['steps']}
+                        | {task for step in made['steps'] for task in step.get('annotations') or ()})
     texts = dict(project._execute(f'SELECT {store._REFERENCE_SQL}, text FROM {{schema}}.definitions '
                                   f'WHERE NOT removed AND {store._REFERENCE_SQL} = ANY(%s)', (references,)).fetchall())
     return {'targets': list(targets), 'every': bool(every), 'scratch': bool(scratch),

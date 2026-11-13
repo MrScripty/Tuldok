@@ -4,7 +4,9 @@ Owns the edge table of section 2.9 of docs/plans/definition-first-projects/spec-
 Every function is pure and takes `definitions`, a mapping of reference (such as
 'datasets/x') to decoded document. Documents need not be valid: fields of the
 wrong type are skipped, so the graph can be read even from a folder with problems.
-An annotation task uses its dataset in the role dataset (spec-d4.md section 1).
+An annotation task uses its dataset in the role dataset (spec-d4.md section 1),
+and a freeze step its tasks in the role annotations (section 6): an edge for
+order() and cycles(), which carries no state and which a plan does not follow.
 Edges whose target is not in `definitions` are kept by edges() and uses() but
 ignored by order() and cycles(). The two roles of a recipe's place on the map
 (spec-w1.md section 1), derived and compared, are edges like the others for
@@ -60,6 +62,10 @@ def uses(document):
                     found.append(Use(f'input:{name}', documents.pointer('run', 'inputs', name, 'from'), value['from'], output))
         if isinstance(run.get('environment'), str):
             found.append(Use('environment', '/run/environment', run['environment']))
+        tasks = run.get('annotations')
+        for index, task in enumerate(tasks if isinstance(tasks, list) else ()):
+            if isinstance(task, str):
+                found.append(Use('annotations', documents.pointer('run', 'annotations', index), task))
     kind = document.get('kind')
     if kind == 'recipe' and isinstance(document.get('model'), str):
         found.append(Use('model', '/model', document['model']))

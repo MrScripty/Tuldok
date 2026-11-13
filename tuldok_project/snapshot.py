@@ -329,3 +329,36 @@ def changed_since(code_root, commit):
         if inside:
             changed.add(inside)
     return changed
+
+
+# ------------------------------------------------------------- file_at
+
+def file_at(directory, commit, path, limit):
+    """(blob id, bytes) of path, relative to directory, in commit of directory's repository; None when it has no such file.
+
+    The blob id alone is returned with None for the bytes when limit is None
+    (to compare without reading). Raises SnapshotError: not-in-git,
+    git-failed, and too-large when the file is over limit bytes.
+    """
+    directory = os.path.abspath(os.fspath(directory))
+    if not isinstance(commit, str) or not _COMMIT.match(commit):
+        raise SnapshotError(f'{commit!r} is not a full commit id.', 'invalid')
+    _repository(directory)
+    listed = _git(directory, f'find {path} in commit {commit[:12]}', 'ls-tree', '-z', '-l', commit, '--', path)
+    for entry in listed.split(b'\0'):
+        if not entry:
+            continue
+        head, _, name = entry.partition(b'\t')
+        words = head.split()
+        if name.decode('utf-8', 'surrogateescape') != path:   # ls-tree names it relative to directory
+            continue
+        if len(words) != 4 or words[1] != b'blob':
+            return None
+        blob, size = words[2].decode('ascii'), int(words[3])
+        if limit is None:
+            return blob, None
+        if size > limit:
+            raise SnapshotError(f'{path} is {size} bytes in commit {commit[:12]}; at most {limit} are read.',
+                                'too-large')
+        return blob, _git(directory, f'read {path} in commit {commit[:12]}', 'cat-file', 'blob', blob)
+    return None

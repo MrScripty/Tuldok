@@ -136,11 +136,13 @@ class _Index:
 
 def _record(identifier, kind, path, *, size=None, **extra):
     return {'id': identifier, 'kind': kind, 'path': path, 'bytes': size, 'text': None, 'array': None, 'split': None,
-            'rights': None, 'origin': None, 'meta': None, 'sha256': None, **extra}
+            'rights': None, 'origin': None, 'meta': None, 'sha256': None, 'annotations': None, **extra}
 
 
-# sha256 is the hash of the record's content (spec-d4.md section 3), given by the list or None.
-_LIST_KEYS = ('id', 'kind', 'path', 'text', 'array', 'split', 'rights', 'origin', 'meta', 'sha256')
+_LIST_KEYS = ('id', 'kind', 'path', 'text', 'array', 'split', 'rights', 'origin', 'meta')
+# Keys import and freeze write (spec-d4.md sections 3 and 6): the content's hash, its size, and a frozen record's
+# annotations ({task: {state, value}}).
+_STEP_KEYS = ('sha256', 'bytes', 'annotations')
 
 
 def _list_entry(value):
@@ -165,18 +167,21 @@ def _list_entry(value):
     for key in ('array', 'split', 'rights'):
         if value.get(key) is not None and not isinstance(value[key], str):
             return f'{key} must be a string'
-    for key in ('origin', 'meta'):
+    for key in ('origin', 'meta', 'annotations'):
         if value.get(key) is not None and not isinstance(value[key], dict):
             return f'{key} must be an object'
-    sha256 = value.get('sha256')
-    if sha256 is not None and not (isinstance(sha256, str) and _SHA256.fullmatch(sha256)):
-        return 'sha256 must be 64 lowercase hexadecimal characters'
+    if value.get('sha256') is not None and not (isinstance(value['sha256'], str) and _SHA256.fullmatch(value['sha256'])):
+        return 'sha256 must be 64 lowercase hexadecimal digits'
+    size = value.get('bytes')
+    if size is not None and (type(size) is not int or size < 0):
+        return 'bytes must be an integer of at least 0'
     meta = dict(value.get('meta') or {})
     for key, item in value.items():
-        if key not in _LIST_KEYS:
+        if key not in _LIST_KEYS and key not in _STEP_KEYS:
             meta.setdefault(key, item)
-    return _record(identifier, kind, path, text=text, array=value.get('array'), split=value.get('split'),
-                   rights=value.get('rights'), origin=value.get('origin'), meta=meta or None, sha256=sha256)
+    return _record(identifier, kind, path, size=size, text=text, array=value.get('array'), split=value.get('split'),
+                   rights=value.get('rights'), origin=value.get('origin'), meta=meta or None,
+                   sha256=value.get('sha256'), annotations=value.get('annotations'))
 
 
 def _lines(place):
@@ -386,7 +391,8 @@ def _preview(product, record):
 
 
 def _shown(product, record, *, preview):
-    shown = {key: record[key] for key in ('id', 'kind', 'path', 'split', 'rights', 'origin', 'meta', 'sha256')}
+    shown = {key: record[key] for key in ('id', 'kind', 'path', 'split', 'rights', 'origin', 'meta', 'sha256',
+                                          'annotations')}
     shown['bytes'] = _size_of(product, record)
     if record['array'] is not None:
         shown['array'] = record['array']

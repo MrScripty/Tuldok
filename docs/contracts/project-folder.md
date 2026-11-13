@@ -129,6 +129,7 @@ directories:
 | `cases.dataset` (benchmark) | `datasets/` |
 | `benchmark` (chart) | `benchmarks/` |
 | `dataset` (annotation) | `datasets/` |
+| `run.annotations` (a dataset's freeze) | `annotations/` |
 
 An **input** is what a command reads from another definition's product. It is
 written either as a reference, meaning the whole product, or as
@@ -189,7 +190,8 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 
 | Field | Required | Rule |
 | --- | --- | --- |
-| `command` | yes | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
+| `command` | unless `step` is given | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
+| `step` | no | datasets only: `import` or `freeze`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
 | `environment` | when the first string of `command` is `python` | reference to `environments/` |
 | `inputs` | no | at most 32 entries; keys `^[a-z][a-z0-9_]{0,31}$`; values are inputs from `datasets/`, `recipes/` or `steps/` |
 | `settings` | no | object, free content, written to a file whose path replaces `{settings}`; not together with `settings_file` |
@@ -199,6 +201,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | `resources` | no | any of `gpu` (boolean), `cpu_threads` (integer ≥ 1), `memory_gb`, `wall_hours`, `disk_gb` (numbers > 0) |
 | `sources` | no | at most 64 code paths (files or directories); a change in them means the code changed |
 | `estimate` | no | `{"command": [...]}`, 1 to 64 strings; the command prints one JSON object with any of `disk_bytes`, `wall_seconds`, `items` |
+| `annotations` | with `step: "freeze"` only | 1 to 32 different references to `annotations/`: the tasks a freeze reads |
 
 A **code path** is a path relative to the code root, at most 1,024 characters.
 `settings_file`, `sources`, a model's `config_file` and `sources`, and an
@@ -234,6 +237,9 @@ examples, except `environments/cuda-torch`, a second environment not shown.
 | `splits` | no | object, split name to a number of items (integer ≥ 0) |
 | `view` | no | how its product is shown as records; see [Looking inside a product](#looking-inside-a-product) |
 
+A dataset's run may name a `step` instead of a `command`: see
+[Steps Tuldok provides](#steps-tuldok-provides).
+
 Example, `datasets/sinusoidal-v1.json`:
 
 ```json
@@ -252,6 +258,123 @@ Example, `datasets/sinusoidal-v1.json`:
     "estimate": {"command": ["python", "-m", "surrogate.datasets", "plan", "sinusoidal-v1", "--root", "{output}"]}
   },
   "splits": {"train": 16, "development": 8, "reserved": 88}
+}
+```
+
+#### Steps Tuldok provides
+
+A dataset's `run` names either a `command` or a `step`, one of `import` and
+`freeze`. A run with `step` has no `command`, `environment`, `outputs`,
+`settings_file`, `env` or `estimate`: the step's outputs are fixed, its
+settings are inline in `settings`, and it runs with Tuldok's own interpreter
+(see [The command and its environment](#the-command-and-its-environment)).
+It may have `resources` and `sources`. A plan shows it as `tuldok import` or
+`tuldok freeze`. It is planned, requested, approved, run, cancelled and
+recorded like any build, from a commit as builds are. `check` reports a
+setting the step does not take, a required one missing and a value of the
+wrong form.
+
+**`import`** brings files on this machine into the dataset. Its run takes no
+`inputs`. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `source` | yes | a directory. Relative to the code root, it is a code path read from the code the run sees (the commit, or the working tree for a scratch run), and a change under it makes the product out of date; absolute, it is read on this machine only, and `check` warns |
+| `pattern` | no | which files, as a pattern of [Looking inside a product](#looking-inside-a-product) without `!`, matched against paths under the source; default `**/*` |
+| `kind` | no | one of the seven kinds, for every file; default by extension |
+| `rights` | yes | 1 to 1,000 characters: what may be done with the files |
+| `lines` | no | `true` makes each line of each text file a record of its own (a line that is empty or blank is skipped). A line of a `.jsonl` file that is an object with a string `text` gives that string; any other line gives itself |
+
+Its product holds the files under `files/`, each at its path under the
+source, hard-linked (copied when a link cannot be made, such as across file
+systems), and `records.jsonl` with one line per file, or per line with
+`lines`:
+
+```
+{"id":"images__cat.png","kind":"image","path":"files/images/cat.png","sha256":"9f…","bytes":5120,"rights":"Photographed by us; free to use.","origin":{"path":"images/cat.png"}}
+{"id":"notes__a.txt__4","kind":"text","text":"second line","sha256":"…","bytes":11,"rights":"…","origin":{"path":"notes/a.txt","line":4}}
+```
+
+An id is made from the path (and `/` and the line number): `/` becomes
+`__`, any other character outside `A-Z a-z 0-9 . _ -` becomes `_`, it is cut
+to 200 characters, and an id already taken gets `-2`, `-3`, … before its
+extension. Files are taken in the order of their paths, bytewise in UTF-8. A
+path holding `!` (which an address reads as an archive) is placed with `_`
+in its place. `sha256` is the SHA-256 of the file, or of the UTF-8 of a
+line's text; null for a file over 1 GiB. A symbolic link whose target is in
+the source is taken where it stands; one that leaves the source is skipped
+and counted, and so are names that are not UTF-8, entries that are not
+regular files, lines that are not UTF-8 and lines too long for one line of
+`records.jsonl` (64 KiB). The step never follows a link out of its source,
+writes only its output and deletes nothing.
+
+**`freeze`** makes a dataset with splits from another dataset's records and
+their annotations. Its run takes one input, `"inputs": {"records":
+"datasets/<name>"}`, and `annotations`, one or more tasks on that dataset;
+`check` reports a task on another dataset. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `seed` | yes | an integer of at most 63 bits |
+| `shares` | yes | 1 to 16 splits and their relative sizes, integers from 0 to 1,000,000, at least one above 0, for example `{"train": 8, "validation": 1, "test": 1}` |
+| `include` | no | the states of the first task's annotations that take a record in; default `["accepted"]` |
+
+It reads each task's line file from the commit the build uses, at the
+project folder's place in the code's Git repository (a scratch build reads
+the working tree): annotations that are not saved and committed are not
+frozen, as code is not. A build from a commit refuses a project folder that
+is not in the code's repository. The input's records are its product's
+`records.jsonl`, or its files (an input shown through a `view` is refused).
+A record is taken when the first task has an annotation of it in a state of
+`include` that is not stale: its record exists and, when the annotation
+carries a `sha256`, the record's hash is the same. The records taken are
+ordered by the SHA-256 of `<seed>:<record's sha256>` (`<seed>:id:<id>` for a
+record with no hash), then cut by the shares, the splits taken in the order
+of their names (`test`, `train`, `validation`), each split's end being
+`count × shares so far ÷ all shares`, rounded down. The output holds their
+files linked under `files/` (an archive member brings its whole archive)
+and `records.jsonl` with each record's keys, `split` and `annotations`: per
+task by name, its `state` and `value`, for each task whose annotation of the
+record is not stale.
+
+```
+{"id":"images__cat.png","kind":"image","path":"files/images/cat.png","sha256":"9f…","bytes":5120,"rights":"…","origin":{"path":"images/cat.png"},"split":"train","annotations":{"scene-quality":{"state":"accepted","value":"clean"}}}
+```
+
+Stale annotations, records left out by their state, records with no
+annotation, invalid lines, stale annotations of the other tasks and records
+whose file is missing are counted in the run's progress and printed in its
+log. A record whose id is not one of `records.jsonl` (a file of an input
+with no `records.jsonl`) gets one made as `import` makes them.
+
+A frozen dataset's run records the SHA-256 of each task's line file as it
+read it; see [Build states](#build-states).
+
+Example, `datasets/scene-photos.json` and `datasets/scene-photos-v1.json`:
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Scene photos",
+  "run": {
+    "step": "import",
+    "settings": {"source": "data/scenes", "pattern": "**/*.png", "rights": "Photographed by us; free to use."}
+  }
+}
+```
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Scene photos v1, frozen",
+  "run": {
+    "step": "freeze",
+    "inputs": {"records": "datasets/scene-photos"},
+    "annotations": ["annotations/scene-quality"],
+    "settings": {"seed": 7, "shares": {"train": 8, "validation": 1, "test": 1}}
+  }
 }
 ```
 
@@ -1487,6 +1610,7 @@ is 32 hexadecimal characters:
 | --- | --- |
 | `output/` | what `{output}` names, made empty before the command starts; a succeeded run's `output/` is its product |
 | `settings.json` | the inline `settings` as the run saw them, when the definition has them |
+| `tasks.json`, `annotations/` | a freeze's tasks and the line files it read |
 | `stdout.log`, `stderr.log` | the command's standard output and error |
 | `cancel` | present when cancellation was asked for |
 | `outcome.json` | how the command ended, written when every process of the run is gone |
@@ -1521,6 +1645,17 @@ earlier ones:
 The working directory is the code root in the snapshot (or the code root
 itself for a scratch run). Standard input is `/dev/null`; standard output and
 error are appended to the two logs.
+
+A [step Tuldok provides](#steps-tuldok-provides) needs no environment
+definition. Its command is Tuldok's own interpreter running `-m
+tuldok_project.steps <step> <run directory>/settings.json <run
+directory>/output`, followed by `--code <code root>` for `import`, and by
+`--records <the input's product> --tasks <run directory>/tasks.json` for
+`freeze`, which also finds the line files it was given in `<run
+directory>/annotations/`. Its environment is the one above without `env`,
+with `PYTHONSAFEPATH=1` and `PYTHONPATH` set to Tuldok's own directory last,
+so that Tuldok's code is imported and the code root's never is. A step opens
+no database; it prints progress lines like any command.
 
 ### Placeholders at run time
 
@@ -1606,7 +1741,15 @@ A current product is **out of date** when:
 - the run was not a scratch run, and one of the definition's `sources` (or a
   file under one) changed since the run's commit: in a later commit or as an
   uncommitted change to a tracked file. When Git no longer has that commit,
-  the code is taken to have changed.
+  the code is taken to have changed. An `import` from a relative `source` is
+  out of date the same way when a file under its source changed;
+- for a `freeze`, the line file of one of its tasks differs from the one its
+  run read: in the commit `HEAD` names (the commit a build would use; an
+  uncommitted change does not count), or in the working tree for a scratch
+  product. The cause names the task and the file (`the annotations of
+  annotations/scene-quality (annotations/scene-quality.jsonl) changed since
+  run …`, or `are gone`). A change to the file of a task it does not read
+  changes nothing.
 
 A benchmark has a product per subject. It is `built` when every subject that
 would run has a current product that is not out of date, and `out-of-date`
@@ -2193,7 +2336,9 @@ it: a missing file, and a symbolic link that leaves the product, are refused
    | `array` | for kind `array` in an `.npz`: the array to show first |
    | `split`, `rights` | optional strings |
    | `origin`, `meta` | optional objects, kept and shown as they are |
-   | `sha256` | optional; the SHA-256 of the record's content, 64 lowercase hexadecimal characters (see [Annotations in the database](#annotations-in-the-database)) |
+  | `sha256` | optional; the SHA-256 of the record's content, 64 lowercase hexadecimal digits, or null (see [Annotations in the database](#annotations-in-the-database)) |
+   | `bytes` | optional; the record's size, an integer ≥ 0 (otherwise the file's size is shown) |
+   | `annotations` | optional object; a frozen record's annotations, per task its `state` and `value` |
 
    Other keys are kept and shown in `meta` (a key of `meta` itself wins). A
    line that is not such a record, or is longer than 64 KiB, is skipped and
