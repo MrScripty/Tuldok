@@ -1,6 +1,6 @@
 # Capability check: what deleting the old project mode removes
 
-**Status: written 2026-11-12 for the owner's sign-off, and brought up to date the same evening after the Map workspace was built and the owner had looked at it. Not signed. Nothing is deleted until it is. The deletion is prepared and checked on a side branch ("The deletion as prepared", below) and reaches this branch only on sign-off.**
+**Status: written 2026-11-12 for the owner's sign-off, and brought up to date the same evening after the Map workspace was built and the owner had looked at it. Signed in part on 2026-11-13, and the deletion landed on this branch that day: see "Sign-off" at the end. Three things the owner did not give up are requirements from here on.**
 
 The [plan](plan.md) deletes the old project-files mode in milestone 8 on one condition: a written check that lists every capability of that mode as covered, moved or deliberately dropped, signed off by the owner. This is that check. It is a list of what Tuldok can do today through `python app.py --project-files-root ...` and what happens to each thing when that mode is gone.
 
@@ -81,7 +81,7 @@ These come first, so the deletion removes nothing the lab still needs:
 
 ## The deletion as prepared
 
-Prepared 2026-11-12 on the branch `chore/retire-old-project-mode`, in a working tree of its own. It is not on this branch. What it changes file by file, and each check with its result, is section 10.6 of [spec-m8.md](spec-m8.md) on that branch. In short:
+Prepared 2026-11-12 on the branch `chore/retire-old-project-mode`, in a working tree of its own, and brought onto this branch on 2026-11-13. What it changes file by file, and each check with its result, is section 10.6 of [spec-m8.md](spec-m8.md). In short:
 
 | | |
 | --- | --- |
@@ -99,4 +99,17 @@ Prepared 2026-11-12 on the branch `chore/retire-old-project-mode`, in a working 
 
 The owner signs by saying so; the date and the words are recorded here and in the ledger.
 
-- [ ] I accept that projects lose annotated data, looking inside the data from the project page, studies and trials, producers and the built-in training graphs, reading run files through the interface, forks, and opening the lab's old folder, as listed above, and the old project mode may be deleted.
+**Signed in part, 2026-11-13.** Asked what projects lose, and told item by item what each thing is, the owner answered:
+
+> We still want tools for generating datasets and annotating them using pumas library v0.8.0 in tuldok. Tuldok also needs to be able to look inside data. It would be great if tuldok also had a layer visulization tool so we can visualize a models weights.
+
+and then:
+
+> the other stuff is all ok to go ahead on
+
+- [x] **Accepted.** Projects lose studies and trials as records, candidate selection, the built-in training graphs, reading run files through the interface, forks and composing, and opening the lab's old folder, as listed above, and the old project mode may be deleted.
+- [ ] **Not given up; requirements from here on.** Tools for generating datasets and annotating them, through Pumas Library 0.8.0, and looking inside data. The sentence first written here had the owner accept that projects lose them; the owner did not.
+
+**Why the deletion landed all the same.** It takes neither of those out of Tuldok. Generation (images, grounded candidates, caption and label proposals), annotation and the data viewers (volumes, scientific fields, point clouds, meshes, audio, sequences) are catalog mode's, and catalog mode is unchanged: the table above says "Catalog mode only" for each. What went is the old format's own wrapping of them, which worked only on a folder of the old format through the old page, and could not serve a project folder. Before and after the deletion alike, a project folder has none of them. So they are to be built for project folders, on the new format, under a plan of their own, together with the view of a model's weights layer by layer that the owner asked for. Pumas Library 0.8.0 is not yet spoken by this branch: the work for it is on `feat/pumas-v080-api`, four commits not merged here.
+
+**Landed 2026-11-13:** `feat/definition-first-projects` fast-forwarded to the side branch's one commit. Nothing is pushed. If the owner meant the old format's own tools to stay until the new ones exist, reverting that one commit brings all of it back.

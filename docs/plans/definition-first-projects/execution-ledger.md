@@ -577,3 +577,19 @@ The tab bar was rebuilt with each of those, the strip on every reading, and the 
 **Not verified:** 13 catalog browser checks that need training, a GPU or generated fixtures, and three that need packages only the workflow installs; one catalog check fails removing its own temporary directory, on the unchanged code as well. The browser checks used Playwright's headless shell. Nothing ran on GitHub: nothing is pushed.
 
 **Next:** the owner's sign-off of the capability check. Then section 10.5: the words and the date recorded there and here, and the side branch brought onto this one. Separately, the unreachable lines in catalog mode's run code.
+
+## 2026-11-13 — milestone 8, part 3: the old project mode is deleted
+
+**Owner's words, 2026-11-13**, after being told item by item what projects lose: "We still want tools for generating datasets and annotating them using pumas library v0.8.0 in tuldok. Tuldok also needs to be able to look inside data. It would be great if tuldok also had a layer visulization tool so we can visualize a models weights." Then: "the other stuff is all ok to go ahead on".
+
+**What was done on them.** `feat/definition-first-projects` was fast-forwarded to the one commit of `chore/retire-old-project-mode` (section 10.5 of [spec-m8.md](spec-m8.md)). No old-mode app was running. Nothing is pushed. The words are recorded in the [capability check](capability-check.md) as a sign-off in part.
+
+**How the words were read.** The owner accepted every loss on the list but two: tools for generating and annotating datasets, and looking inside data. The deletion was landed all the same because it takes neither out of Tuldok: both are catalog mode's and stay; only the old format's wrapping of them went, which could not serve a project folder. This reading is the assistant's. One revert undoes it.
+
+**Requirements carried from here** (not planned yet):
+
+1. In a project folder: generating datasets and annotating them, through Pumas Library 0.8.0. The client for 0.8.0 is on `feat/pumas-v080-api`, four commits not merged into this branch.
+2. In a project folder: looking inside data.
+3. A view of a model's weights layer by layer.
+
+**Also carried:** the unreachable lines in catalog mode's run code that read attributes only the deleted modules set.
