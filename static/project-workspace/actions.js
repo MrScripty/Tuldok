@@ -6,8 +6,8 @@
 // two-press "Confirm" state, typed text, the last refusal), and the views
 // built of them: the plan view, the conflict panel, the controls of Needs
 // you and the strip's Save. A control calls one operation; while it waits it
-// is disabled and says so; when the answer comes every kept answer is
-// forgotten and the page reads again (hooks.changed, set by app.js); a
+// is disabled and says so; when the answer comes what it can have changed
+// is forgotten and the page reads again (hooks.changed, set by app.js); a
 // refusal is shown under the control in the server's words, with its
 // problems listed. Nothing is retried on its own. Text goes in through text
 // nodes only.
@@ -137,7 +137,7 @@ window.LabActions = (() => {
     s.confirming = null; s.text = {}; refill(key);
     // local: nothing in the project changed, so nothing is read again.
     if (it.local) { if (it.done) it.done(result); return; }
-    P.forgetAll();
+    P.forgetBut(P.WATCHED);   // what it can have changed is read afresh; the watched answers are read again by hooks.changed and compared
     if (it.done) it.done(result);
     await hooks.changed({ key, item: it, result, focus: key + ':' + it.id });
   }
@@ -262,16 +262,18 @@ window.LabActions = (() => {
   /**
    * The plan view in the drawer, for sel 'plan:<target>,<target>' or
    * 'plan:*' (everything buildable): read with `plan`, shown in sentences,
-   * with the scratch box and Request build. back(): leaves the view.
+   * with the scratch box and Request build. back(): leaves the view. Read
+   * again for the plan on screen (aside._again), it stays until the new one
+   * is built off the page and put in its place in one step.
    */
   function planView(aside, sel, go, back) {
-    if (aside._for === sel) return;
-    aside._for = sel; aside.textContent = '';
+    if (aside._for === sel && !aside._again) return;
+    const S = window.LabScreens, same = aside._for === sel && !!aside.firstChild, mine = S.parts.turn(aside), live = () => aside._turn === mine && aside._for === sel;
+    aside._for = sel;
     const every = sel === 'plan:*', targets = every ? [] : sel.slice(5).split(',').filter(Boolean);
-    aside.appendChild(h('p', 'note', 'Reading…'));
+    if (!same) { aside.textContent = ''; aside.appendChild(h('p', 'note', 'Reading…')); }
     P.read('plan', { targets, every }).then(plan => {
-      if (aside._for !== sel) return;
-      aside.textContent = '';
+      if (!live()) return;
       const ins = h('div', 'inspector plan-view');
       const hd = h('header'); hd.appendChild(h('span', 'kicker', 'plan · nothing runs until it is requested'));
       const title = h('h2', null, every ? 'A build of everything buildable' : 'A build of ' + plan.targets.join(', ')); title.tabIndex = -1; hd.appendChild(title);
@@ -311,8 +313,8 @@ window.LabActions = (() => {
           args: st => ({ targets, every, scratch: !!st.text.scratch }), done: r => go('train', 'request:' + r.id) }]));
         ins.appendChild(h('p', 'note', isAgent() ? 'The owner approves or declines what you ask for; nothing runs before.' : 'Your request is queued at once and runs when the build worker takes it.'));
       }
-      aside.appendChild(ins);
-    }, error => { if (aside._for !== sel) return; aside.textContent = ''; aside.appendChild(refusal(error)); });
+      S.parts.putDrawer(aside, ins);
+    }, error => { if (live()) S.parts.putDrawer(aside, refusal(error)); });
   }
 
   // ---- The conflict panel --------------------------------------------------------

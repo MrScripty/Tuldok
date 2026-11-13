@@ -1774,7 +1774,17 @@ The page at `/` is the Map workspace: the tabs Map, Data, Train, Benchmarks,
 Analysis and Overview over the project, read through the operations below.
 Each of its controls calls one operation and is drawn only for a session that
 may call it, so a credential that may only inspect sees a page that changes
-nothing. The report is linked from the Overview tab.
+nothing. The report is linked from the Overview tab. The page reads again
+every two seconds while a build is queued or running and every fifteen
+seconds otherwise, when its window regains focus, and after a control's
+answer: it asks again for `summary`, `status`, `build_requests`,
+`environments` and `runs` (and `map`, except on the timer unless a run or a
+request ended or `status` changed) and compares each answer with the one it
+holds. When none differs nothing on the page is drawn again but the time it
+was read and the progress of a running build; when one does, what is on screen is drawn again in place, keeping
+the scroll and the focus, and a drawer holding the editor or the branch form
+is left alone except after a control's answer. A reading that fails leaves
+the page as it is; the status strip says the project was not read, and why.
 
 ### Signing in and issuing an agent credential
 

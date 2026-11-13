@@ -3,8 +3,10 @@
 // screens.js, added to window.LabScreens. Each is a screen like the others
 // (main, aside, state, act, data): it shows "Reading…" the first time, reads
 // what it needs through window.TuldokProject, then builds its content off the
-// page and swaps it in, so a re-render (a sort, a filter, the refresh while a
-// build runs) keeps the scroll and the focus. Data, Benchmarks and Analysis
+// page and puts it in place in one step, so a re-render (a sort, a filter, a
+// reading that found something changed) keeps the scroll, inside tables too,
+// and the focus; a drawer read again for its subject stays on screen until
+// its new content replaces it whole (spec-w4.md). Data, Benchmarks and Analysis
 // only read. Train draws the controls of spec-w3.md section 3.1 (actions.js):
 // Plan build, a build request's Approve, Decline and Cancel, a run's Cancel
 // run and Stop, an environment's Check again, Connect and Disconnect, and it
@@ -14,7 +16,7 @@
 // metrics and text come from the project.
 (() => {
   const S = window.LabScreens, P = window.TuldokProject, Tree = window.LabTree, C = window.LabCharts, h = C.h, A = window.LabActions;
-  const { sect, cell, block, time, bytes, failure, modelState, graphFor } = S.parts;
+  const { sect, cell, block, time, bytes, failure, modelState, graphFor, putInPlace, putDrawer, turn } = S.parts;
   const fmt = C.fmtSci;
   const STATISTICS = ['median', 'mean', 'p10', 'p90', 'min', 'max'];
   const plural = (n, one, many) => n.toLocaleString('en-GB') + ' ' + (n === 1 ? one : many || one + 's');
@@ -34,8 +36,10 @@
   /**
    * Fills main from load() (a promise of what build reads): "Reading…" only
    * when this view has not been painted, the content built off the page and
-   * swapped in when it is still the newest render of the same view; the
-   * focused control (by data-key) and its caret are given back.
+   * put in place in one step when it is still the newest render of the same
+   * view, keeping what spec-w4 R4 lists (screens.js's putInPlace): the scroll
+   * of main and of every scrolled element in it, and the focused control (by
+   * data-key) with its caret.
    */
   function paint(main, load, build) {
     const view = main._view, mine = main._paint = (main._paint || 0) + 1;
@@ -49,23 +53,25 @@
       swap(main, frag); main._painted = view;
     }, error => {
       done(); if (main._paint !== mine || main._view !== view) return;
-      main.textContent = ''; failure(main, error); main._painted = view;
+      const frag = document.createDocumentFragment(); failure(frag, error); swap(main, frag); main._painted = view;
     });
   }
-  function swap(main, frag) {
-    const active = document.activeElement, key = active && main.contains(active) && active.dataset ? active.dataset.key : null;
-    const caret = key && typeof active.selectionStart === 'number' ? active.selectionStart : null;
-    const top = main.scrollTop;
-    main.textContent = ''; main.appendChild(frag); main.scrollTop = top;
-    if (key) { const again = main.querySelector('[data-key="' + CSS.escape(key) + '"]'); if (again) { again.focus({ preventScroll: true }); if (caret !== null && again.setSelectionRange) again.setSelectionRange(caret, caret); } }
-  }
-  /** Fills the drawer from load() once per id; build(ins, value). */
+  const swap = (main, frag) => putInPlace(main, frag);
+  /**
+   * Fills the drawer from load() for the subject id; build(ins, value). Once
+   * per id; read again for the subject on screen (app.js marks the drawer
+   * with _again after a change), what is on screen stays until the new
+   * content is built off the page, then is replaced in one step with the
+   * drawer's scroll kept. "Reading…" only for a subject not on screen yet.
+   */
   function drawer(aside, id, load, build) {
-    if (aside._for === id) return;
-    aside._for = id; aside.textContent = '';
-    const note = h('p', 'note', 'Reading…'); aside.appendChild(note);
-    load().then(value => { if (aside._for !== id) return; aside.textContent = ''; const ins = h('div', 'inspector'); try { build(ins, value); } catch (error) { failure(ins, error); } aside.appendChild(ins); },
-      error => { if (aside._for !== id) return; aside.textContent = ''; failure(aside, error); });
+    if (aside._for === id && !aside._again) return;
+    const same = aside._for === id && !!aside.firstChild, mine = turn(aside);
+    aside._for = id;
+    if (!same) { aside.textContent = ''; aside.appendChild(h('p', 'note', 'Reading…')); }
+    const live = () => aside._turn === mine && aside._for === id;
+    load().then(value => { if (!live()) return; const ins = h('div', 'inspector'); try { build(ins, value); } catch (error) { failure(ins, error); } putDrawer(aside, ins); },
+      error => { if (!live()) return; const frag = document.createDocumentFragment(); failure(frag, error); putDrawer(aside, frag); });
   }
   const closeDrawer = aside => { aside.textContent = ''; aside._for = null; return false; };
   const setup = () => { const dl = h('dl', 'setup'); return { dl, put(k, v, cls) { dl.appendChild(h('dt', null, k)); const dd = h('dd', cls || null); if (typeof v === 'string') dd.textContent = v; else if (v) dd.appendChild(v); dl.appendChild(dd); } }; };
@@ -165,8 +171,8 @@
   /** The drawer of a selected subject: the model's drawer when it is made from a recipe of the map, with Compare. */
   function benchmarkDrawer(aside, sel, state, act, data) {
     const isModel = data.map.byId.has(sel);
-    if (isModel) S.inspectorModel(aside, sel, act, data);
-    else if (aside._for !== sel) {
+    if (isModel) S.inspectorModel(aside, sel, act, data, ins => compareActs(ins, sel, state, act, true));
+    else if (aside._for !== sel || aside._again) {
       const name = sel.startsWith('subject:') ? sel.slice('subject:'.length) : sel;
       drawer(aside, sel, async () => { const list = await benchmarkList(); const b = pickBenchmark(list, state.benchmark); return b ? benchmarkView(b.benchmark, data.map) : null; }, (ins, view) => {
         const s = view && view.byName.get(name);
@@ -402,10 +408,8 @@
           b.appendChild(h('span', 'ck', m ? Tree.refName(m) : nameOfRef(r.reference)));
           const t = h('span'); t.appendChild(h('span', 'title', (m ? m.title : r.reference) + (r.subject ? ' · ' + r.subject : '')));
           const when = r.finished_at || r.started_at || r.queued_at, ev = progress.get(r.id);
-          if (r.state === 'running' && ev) {
-            const line = h('span', 'sub live'); const hair = h('span', 'hair'); const i = h('i'); i.style.width = Math.round(100 * ev.completed / Math.max(1, ev.total)) + '%'; hair.appendChild(i); line.appendChild(hair);
-            line.appendChild(document.createTextNode(ev.stage + ' ' + ev.completed + ' of ' + ev.total + Object.entries(ev.metrics).slice(0, 2).map(([k, v]) => ' · ' + k + ' ' + fmt(v)).join(''))); t.appendChild(line);
-          } else t.appendChild(h('span', 'sub', [r.state === 'running' ? 'started ' + time(r.started_at) + ' · no progress reported yet' : time(when), seconds(r.seconds), r.bytes != null ? bytes(r.bytes) : null, r.scratch ? 'from the code as it is' : null].filter(Boolean).join(' · ')));
+          if (r.state === 'running' && ev) t.appendChild(rowProgress(ev));
+          else t.appendChild(h('span', 'sub', [r.state === 'running' ? 'started ' + time(r.started_at) + ' · no progress reported yet' : time(when), seconds(r.seconds), r.bytes != null ? bytes(r.bytes) : null, r.scratch ? 'from the code as it is' : null].filter(Boolean).join(' · ')));
           b.appendChild(t);
           b.appendChild(m ? h('span', 'chip ' + m.kind, P.kindLabel(m.kind)) : h('span', 'small faint', nameOfRef(r.reference).length ? r.reference.split('/')[0].replace(/s$/, '') : ''));
           b.appendChild(h('span', 'sub', (r.environment && deviceOf.get(r.environment.reference)) || '—'));
@@ -440,7 +444,7 @@
     else if (sel.startsWith('env:')) envDrawer(aside, sel, act, data);
     else if (window.LabEditor && window.LabEditor.owns(sel, data)) window.LabEditor.drawer(aside, sel, act, data, 'train');
     else if (data.map.byId.has(sel)) S.inspectorModel(aside, sel, act, data);
-    else { aside.textContent = ''; aside._for = sel; aside.appendChild(h('p', 'empty', 'There is no ' + sel + ' here.')); }
+    else if (aside._for !== sel) { aside.textContent = ''; aside._for = sel; aside.appendChild(h('p', 'empty', 'There is no ' + sel + ' here.')); }
     return true;
   }
   /** A row of a model to build, opening its drawer, with Plan build. */
@@ -462,8 +466,32 @@
   const LOG_LINES = 200;   // lines of each log kept on the page while a run is read live
   const hairOf = ev => { const hair = h('span', 'hair'); const i = h('i'); i.style.width = Math.round(100 * ev.completed / Math.max(1, ev.total)) + '%'; hair.appendChild(i); hair.setAttribute('role', 'progressbar'); hair.setAttribute('aria-valuemin', '0'); hair.setAttribute('aria-valuemax', String(ev.total)); hair.setAttribute('aria-valuenow', String(ev.completed)); return hair; };
   const eventText = ev => ev.stage + ': ' + ev.completed + ' of ' + ev.total + Object.entries(ev.metrics).map(([k, v]) => ' · ' + k + ' ' + fmt(v)).join('');
-  let live = null;   // the open run read live: {key, run, offsets, update(progress)}
-  /** One step of the live run (app.js calls it every two seconds while a build runs): its progress and its logs from the offsets. */
+  // A running run's progress in its row of Train's list: a hairline and a line.
+  const rowWidth = ev => Math.round(100 * ev.completed / Math.max(1, ev.total)) + '%';
+  const rowText = ev => ev.stage + ' ' + ev.completed + ' of ' + ev.total + Object.entries(ev.metrics).slice(0, 2).map(([k, v]) => ' · ' + k + ' ' + fmt(v)).join('');
+  function rowProgress(ev) { const line = h('span', 'sub live'); const hair = h('span', 'hair'); const i = h('i'); i.style.width = rowWidth(ev); hair.appendChild(i); line.appendChild(hair); line.appendChild(document.createTextNode(rowText(ev))); return line; }
+  /**
+   * Sets the latest progress of the running runs (a Map of run id to event,
+   * app.js on every reading) into their rows of Train's list, in place: the
+   * hairline's width and the line's text, when they differ (spec-w4 R7).
+   */
+  S.progress = events => {
+    for (const b of document.querySelectorAll('#main button.row.run[data-run]')) {
+      const ev = events.get(b.dataset.run); if (!ev) continue;
+      const line = b.querySelector('.sub.live');
+      if (!line) { const sub = b.children[1] && b.children[1].querySelector('.sub'); if (sub) sub.replaceWith(rowProgress(ev)); continue; }   // its first progress
+      const i = line.querySelector('i'), width = rowWidth(ev), text = rowText(ev);
+      if (i.style.width !== width) i.style.width = width;
+      if (line.lastChild.data !== text) line.lastChild.data = text;
+    }
+  };
+  let live = null;   // the open run read live: {key, run, offsets, update(progress), ended()}
+  /**
+   * One step of the live run (app.js calls it on every reading, every two
+   * seconds while a build runs): its progress and its logs from the offsets,
+   * updated in place (spec-w4 R7). When it has ended, the project is read
+   * again and its drawer is drawn again in place.
+   */
   S.tick = async () => {
     const aside = document.getElementById('aside');
     if (!live || aside._for !== live.key) { live = null; return; }
@@ -472,7 +500,7 @@
       const pr = await P.call('progress', { run: mine.run, stdout_offset: mine.offsets.stdout, stderr_offset: mine.offsets.stderr });
       if (live !== mine || aside._for !== mine.key) return;
       mine.update(pr);
-      if (pr.ended) { live = null; aside._for = null; mine.ended(); }
+      if (pr.ended) { live = null; mine.ended(); }   // not awaited: the reading it starts waits for the one calling this
     } catch (error) { /* the next tick asks again; the strip says what fails */ }
   };
   function runDrawer(aside, key, act, data) {
@@ -525,6 +553,7 @@
         logs[name] = { head, title, add: text => { if (!text) return; lines = lines.concat(text.replace(/\n$/, '').split('\n')).slice(-LOG_LINES); paintLog(); } };
       }
       if (active) ins.appendChild(su.dl);
+      if (!active && live && live.key === key) live = null;   // drawn again once it ended
       if (active) {
         live = { key, run: r.id, offsets: { stdout: (pr.stdout || {}).offset || 0, stderr: (pr.stderr || {}).offset || 0 },
           update: p => {

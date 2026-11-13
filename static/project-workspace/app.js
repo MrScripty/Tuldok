@@ -3,14 +3,20 @@
 // routing by hash (#<tab>/<selected>), the status strip and Needs you, the
 // drawer, and when the project is read. The first screen reads summary and
 // map; the strip's other sources are read right after; a tab reads what it
-// needs when it is first shown; everything is read again when the window
-// regains focus and after a control's answer (actions.js). While a build is
-// queued or running the strip asks again every two seconds for what can
-// change, the open run reads on its progress and logs, and when a run ends
-// the map and everything else is read again, so a model turns to built
-// without a reload. While nothing builds it asks again every fifteen seconds,
-// so a build an agent asks for shows in Needs you while the page is open.
-// A read refused conflict shows the conflict panel.
+// needs when it is first shown. The page reads again in one way (reread(),
+// spec-w4.md): on its timer (every two seconds while a build is queued or
+// running, every fifteen otherwise), when the window regains focus and after
+// a control's answer (actions.js), asking again for what it watches (summary,
+// status, build requests, environments, runs, and the map except on the
+// timer unless a run or request ended or status changed). When no answer
+// differs nothing is drawn again; only the progress of a running run (the
+// strip's and its row's in Train's list) and the minute of "Read at" are set
+// in place. When one does, what is not watched is forgotten and the strip,
+// the tab and the open drawer are drawn again in place, keeping the scroll
+// and the focus, so a model turns to built without a reload. The open run
+// reads on its progress and logs on every reading. A reading that fails
+// leaves the page as it is and the strip says so; a read refused conflict
+// shows the conflict panel.
 (() => {
   const P = window.TuldokProject, S = window.LabScreens, A = window.LabActions;
   const TABS = [['map', 'Map'], ['data', 'Data'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['overview', 'Overview']];
@@ -19,7 +25,7 @@
   const $ = id => document.getElementById(id);
   const state = { screen: 'map', sel: {}, kinds: null, query: '', zoom: 1, track: false, ui: {}, benchmark: null, cmp: [] };
   const data = { summary: null, map: null, standing: null, needs: null, status: null, readAt: '', polling: false };
-  let failed = null, conflict = null, mapText = null, pollTimer = null, pollFast = false, states = null, opener = null;
+  let failed = null, conflict = null, pollTimer = null, pollFast = false, states = null, opener = null;
   const clock = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   function parse() {
@@ -73,38 +79,75 @@
   }
 
   // ---- The status strip and Needs you ---------------------------------------
+  // The strip is drawn by parts, each made again only when what it shows differs (spec-w4 R2): a reading
+  // that changed nothing touches no element of it but the text of "Read at", when its minute changes.
+  const parts = {};   // by name: { key, el }
+  const part = (name, key, make) => { const p = parts[name]; if (p && p.key === key) return p.el; const el = make(); parts[name] = { key, el }; return el; };
+  const span = (cls, text) => Object.assign(document.createElement('span'), { className: cls, textContent: text });
+  const setText = (node, text) => { if (node.data !== text) node.data = text; };
+  function hairline(p) {
+    const hair = span('hair', ''), i = document.createElement('i'); i.style.width = Math.round(100 * p.completed / Math.max(1, p.total)) + '%'; hair.appendChild(i);
+    hair.title = p.stage + ' ' + p.completed + ' of ' + p.total; hair.setAttribute('role', 'progressbar'); hair.setAttribute('aria-valuemin', '0'); hair.setAttribute('aria-valuemax', String(p.total)); hair.setAttribute('aria-valuenow', String(p.completed));
+    return hair;
+  }
+  /** The Needs you button: made once, its words, state and aria-expanded set when they differ. */
+  function needsButton() {
+    if (!parts.needs) {
+      const b = document.createElement('button'); b.className = 'btn sm needs-btn'; b.type = 'button'; b.id = 'needs-btn'; b.dataset.key = 'needs-btn'; b.setAttribute('aria-controls', 'needs-panel');
+      b.addEventListener('click', () => { const panel = $('needs-panel'); panel.hidden = !panel.hidden; b.setAttribute('aria-expanded', String(!panel.hidden)); fillNeeds(true); });
+      parts.needs = { key: null, el: b };
+    }
+    const b = parts.needs.el, text = 'Needs you · ' + (data.needs ? data.needs.length : '…'), open = String(!$('needs-panel').hidden);
+    if (b.textContent !== text) b.textContent = text;
+    if (b.disabled !== !data.needs) b.disabled = !data.needs;
+    if (b.getAttribute('aria-expanded') !== open) b.setAttribute('aria-expanded', open);
+    return b;
+  }
   function strip() {
-    const el = $('strip');
-    keepFocus(el, () => {
-      el.textContent = '';
-      if (failed) { el.appendChild(S.stateEl('serious', conflict ? 'Conflict' : 'Not read')); el.appendChild(Object.assign(document.createElement('span'), { className: 'msg', textContent: failed })); return; }
-      if (!data.standing) { el.appendChild(Object.assign(document.createElement('span'), { className: 'msg', textContent: 'Reading the project…' })); return; }
-      el.appendChild(S.stateEl(data.standing.tone, data.standing.word));
-      if (data.progress) { const hair = document.createElement('span'); hair.className = 'hair'; const i = document.createElement('i'); i.style.width = Math.round(100 * data.progress.completed / Math.max(1, data.progress.total)) + '%'; hair.appendChild(i); hair.title = data.progress.stage + ' ' + data.progress.completed + ' of ' + data.progress.total; hair.setAttribute('role', 'progressbar'); hair.setAttribute('aria-valuemin', '0'); hair.setAttribute('aria-valuemax', String(data.progress.total)); hair.setAttribute('aria-valuenow', String(data.progress.completed)); el.appendChild(hair); }
-      const m = document.createElement('span'); m.className = 'msg';
-      m.textContent = data.standing.text + (data.progress ? ' ' + data.progress.stage + ': ' + data.progress.completed + ' of ' + data.progress.total + '.' : '') + ' Read at ' + data.readAt + '.';
-      el.appendChild(m);
-      const save = data.status ? A.stripSave(data.status, $('strip-note')) : null;
-      if (save) el.appendChild(save); else $('strip-note').textContent = '';
-      const b = document.createElement('button'); b.className = 'btn sm needs-btn'; b.type = 'button'; b.id = 'needs-btn'; b.dataset.key = 'needs-btn';
-      b.textContent = 'Needs you · ' + (data.needs ? data.needs.length : '…'); b.disabled = !data.needs;
-      const panel = $('needs-panel'); b.setAttribute('aria-expanded', String(!panel.hidden)); b.setAttribute('aria-controls', 'needs-panel');
-      b.addEventListener('click', () => { panel.hidden = !panel.hidden; b.setAttribute('aria-expanded', String(!panel.hidden)); fillNeeds(); });
-      el.appendChild(b);
+    const el = $('strip'), want = [];
+    if (failed) { want.push(part('state', 'failed ' + !!conflict, () => S.stateEl('serious', conflict ? 'Conflict' : 'Not read'))); want.push(part('msg', 'failed ' + failed, () => span('msg', failed))); }
+    else if (!data.standing) want.push(part('msg', 'reading', () => span('msg', 'Reading the project…')));
+    else {
+      const { tone, word, text } = data.standing, p = data.progress;
+      want.push(part('state', tone + ' ' + word, () => S.stateEl(tone, word)));
+      if (p) want.push(part('hair', [p.stage, p.completed, p.total].join(' '), () => hairline(p)));
+      const m = part('msg', 'standing', () => { const s = span('msg', ''); s.append(document.createTextNode(''), document.createTextNode('')); return s; });
+      setText(m.firstChild, text + (p ? ' ' + p.stage + ': ' + p.completed + ' of ' + p.total + '.' : ''));
+      setText(m.lastChild, ' Read at ' + data.readAt + '.');
+      want.push(m);
+      const n = data.status ? data.status.unsaved.length + data.status.removed.length : 0;
+      if (n) want.push(part('save', n + ' ' + A.may('edit'), () => A.stripSave(data.status, $('strip-note'))));
+      else if ($('strip-note').firstChild) $('strip-note').textContent = '';
+      want.push(needsButton());
+    }
+    const now = [...el.children];
+    if (now.length !== want.length || want.some((e, i) => now[i] !== e)) keepFocus(el, () => {
+      want.forEach((e, i) => { if (el.children[i] !== e) el.insertBefore(e, el.children[i] || null); });
+      while (el.children.length > want.length) el.lastElementChild.remove();
     });
     fillNeeds();
   }
   /** Places Needs you sends to: the panel closes and the focus goes to the drawer that opens. */
   function needsGo(screen, id) { const panel = $('needs-panel'); panel.hidden = true; const b = $('needs-btn'); if (b) b.setAttribute('aria-expanded', 'false'); opener = { key: 'needs-btn', el: null }; go(screen, id); }
-  function fillNeeds() {
+  /** Needs you, when open: drawn again when what it lists (or who may use its controls) differs, or when it is opened (force). */
+  function fillNeeds(force) {
     const panel = $('needs-panel'); if (panel.hidden || !data.needs) return;
+    const key = JSON.stringify([data.needs.map(n => [n.kind, n.key || '', n.text, n.references || null]), (window.TuldokAuth && window.TuldokAuth.identity()) || null]);
+    if (!force && panel._key === key) return;
+    panel._key = key;
     keepFocus(panel, () => { panel.textContent = ''; panel.appendChild(S.needsList(data.needs, n => A.needControls(n, needsGo))); });
   }
 
   // ---- Rendering --------------------------------------------------------------
+  /**
+   * Draws the tab on screen. The tab bar is built once (start()); this sets
+   * which link is current. The drawer is drawn again in place when app.js
+   * marked it (aside._again: 'data' after a reading that changed something,
+   * 'control' after a control's answer, which the editor and the branch form
+   * take too); otherwise a drawer already showing its subject is left alone.
+   */
   function render() {
-    const tabs = $('tabs'); tabs.textContent = '';
-    for (const [id, label] of TABS) { const a = document.createElement('a'); a.href = '#' + id; a.textContent = label; if (id === state.screen) a.setAttribute('aria-current', 'page'); tabs.appendChild(a); }
+    for (const a of $('tabs').children) { const on = a.dataset.tab === state.screen; if (on !== a.hasAttribute('aria-current')) { if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); } }
     const main = $('main'), aside = $('aside'), drawer = $('drawer');
     const name = data.summary ? data.summary.name : '';
     document.title = TABS.find(t => t[0] === state.screen)[1] + (name ? ' · ' + name : '') + ' · Tuldok';
@@ -112,7 +155,7 @@
       main.className = 'content'; main.textContent = ''; main._tree = null; main._view = null; main._painted = null;
       if (conflict) A.conflictPanel(main, conflict);
       else { const p = document.createElement('p'); p.className = failed ? 'failure' : 'note'; p.textContent = failed || 'Reading the project…'; main.appendChild(p); }
-      drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); main.classList.remove('with-drawer'); aside.textContent = ''; aside._for = null;
+      drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); main.classList.remove('with-drawer'); aside.textContent = ''; aside._for = null; aside._again = false;
       return;
     }
     const wasMap = main.classList.contains('map'), view = state.screen + '/' + (state.screen === 'overview' && state.sel.overview === 'report' ? 'report' : '');   // a selection opens the drawer and keeps the place; the report is its own view
@@ -120,114 +163,141 @@
     if (state.screen !== 'map' && wasMap) main._tree = null;
     if (main._view !== view) { main.scrollTop = 0; main.scrollLeft = 0; main._view = view; }   // a new screen starts at its top
     const has = S[state.screen](main, aside, state, act, data);
+    aside._again = false;
     drawer.classList.toggle('open', !!has); drawer.setAttribute('aria-hidden', String(!has)); main.classList.toggle('with-drawer', !!has);
     if (!has) aside._for = null;
   }
   function fail(error) { failed = error.message; conflict = error.code === 'conflict' ? error : null; }
 
   // ---- Reading ------------------------------------------------------------------
+  const WATCH = P.WATCHED.filter(n => n !== 'map');   // asked again on every reading; the map too on some (step())
   async function first() {
     try {
       data.summary = await P.read('summary');
       $('projname').textContent = data.summary.name;
       if (window.LabEditor) window.LabEditor.load(data.summary.project_id);   // the drafts of this project, kept for this tab
-      data.map = await P.map(); mapText = JSON.stringify(await P.read('map'));
+      data.map = await P.map();
       data.standing = P.standing(data.map, null, null); data.readAt = clock(); failed = null; conflict = null;
     } catch (error) { fail(error); }
     strip(); render();
-    if (!failed) await standing();
-  }
-  /**
-   * The strip's other sources: status, build requests, environments and runs.
-   * Asks again in two seconds while a build is queued or running. Compares
-   * the states of the runs and requests with the last reading: when a run
-   * has ended everything is read again (the map too); when the open run or
-   * request changed state, its drawer is drawn again.
-   */
-  async function standing() {
-    let ended = false, moved = new Set(), lists = null;
-    try {
-      const [status, requests, environments, runs] = await Promise.all([P.read('status'), P.read('build_requests'), P.read('environments'), P.read('runs')]);
-      lists = [runs.runs, requests.requests];
-      data.status = status;
-      data.standing = P.standing(data.map, runs.runs, requests.requests);
-      data.needs = P.needs({ summary: data.summary, status, requests: requests.requests, environments: environments.environments, runs: runs.runs, shaped: data.map });
-      const running = runs.runs.find(r => r.state === 'running');
-      data.progress = running ? (await P.call('progress', { run: running.id })).event : null;
-      data.readAt = clock();
-      const now = new Map(runs.runs.map(r => ['run:' + r.id, r.state]).concat(requests.requests.map(r => ['request:' + r.id, r.state])));
-      if (states) for (const [key, st] of now) {
-        const was = states.get(key);
-        if (was !== st) moved.add(key);
-        // A run or a request that was active and is no more, or a run that came and went between two readings.
-        if (key.startsWith('run:') ? (was === undefined || ACTIVE_RUN.includes(was)) && !ACTIVE_RUN.includes(st) : ACTIVE_REQUEST.includes(was) && !ACTIVE_REQUEST.includes(st)) ended = true;
-      }
-      states = now;
-      const busy = runs.runs.some(r => ACTIVE_RUN.includes(r.state)) || requests.requests.some(r => ACTIVE_REQUEST.includes(r.state));
-      later(busy);
-    } catch (error) {
-      if (error.code === 'conflict') { fail(error); strip(); render(); return; }
-      data.needs = null; data.standing = Object.assign({}, data.standing, { text: data.standing.text + ' ' + error.message });
-      later(false);
-    }
-    const aside = $('aside');
-    if (ended) {
-      // A run ended: what it made changes the map, the lists and the drawers.
-      for (const name of ['summary', 'map', 'definitions', 'definition', 'products', 'recipe_results', 'results_overview', 'results', 'values', 'chart', 'graph', 'activity', 'run', 'build_request', 'plan', 'estimates'])
-        P.forget([name]);
-      try {
-        data.summary = await P.read('summary');
-        const text = JSON.stringify(await P.read('map'));
-        if (text !== mapText) { mapText = text; data.map = await P.map(); aside._for = null; if (lists) data.standing = P.standing(data.map, ...lists); }
-      } catch (error) { fail(error); strip(); render(); return; }
-    }
-    let redraw = ended;
-    if (aside._for && moved.has(aside._for)) { P.forget(['run', 'build_request']); aside._for = null; redraw = true; }
+    if (failed) return;
+    const read = await sources();
+    if (read.error && read.error.code === 'conflict') { fail(read.error); strip(); render(); return; }
+    ended(read); await stand(read);
     strip();
-    if (redraw || ['overview', 'train'].includes(state.screen)) render();
+    if (state.screen === 'overview') render();   // it shows where the project stands and Needs you
+  }
+  /** The strip's other sources, as kept: status, build requests, environments and runs. */
+  async function sources() {
+    try { const [status, requests, environments, runs] = await Promise.all([P.read('status'), P.read('build_requests'), P.read('environments'), P.read('runs')]); return { status, requests: requests.requests, environments: environments.environments, runs: runs.runs }; }
+    catch (error) { return { error }; }
+  }
+  /** Whether a run or a build request that was active is no more (or a run came and went) since the last reading. */
+  function ended(read) {
+    if (read.error) return false;
+    const now = new Map(read.runs.map(r => ['run:' + r.id, r.state]).concat(read.requests.map(r => ['request:' + r.id, r.state])));
+    let gone = false;
+    if (states) for (const [key, st] of now) {
+      const was = states.get(key);
+      if (key.startsWith('run:') ? (was === undefined || ACTIVE_RUN.includes(was)) && !ACTIVE_RUN.includes(st) : ACTIVE_REQUEST.includes(was) && !ACTIVE_REQUEST.includes(st)) gone = true;
+    }
+    states = now;
+    return gone;
+  }
+  /** Where the project stands, Needs you and the running run's progress, from the sources; asks again later (in two seconds while something builds). */
+  async function stand(read) {
+    try {
+      if (read.error) throw read.error;
+      data.status = read.status;
+      data.standing = P.standing(data.map, read.runs, read.requests);
+      data.needs = P.needs({ summary: data.summary, status: read.status, requests: read.requests, environments: read.environments, runs: read.runs, shaped: data.map });
+      // The latest progress of each running run: the first is the strip's, all are set into Train's rows (tabs.js's S.progress).
+      const running = read.runs.filter(r => r.state === 'running');
+      data.progressOf = new Map(await Promise.all(running.map(r => P.call('progress', { run: r.id }).then(p => [r.id, p.event], () => [r.id, null]))));
+      data.progress = running.length ? data.progressOf.get(running[0].id) : null;
+      data.readAt = clock();
+      later(read.runs.some(r => ACTIVE_RUN.includes(r.state)) || read.requests.some(r => ACTIVE_REQUEST.includes(r.state)));
+    } catch (error) {
+      unread(error);
+    }
+  }
+  /** A reading that failed (not a conflict): what is on screen stays, the strip says the project was not read and why, and it is asked again later. */
+  function unread(error) {
+    data.progress = null; data.progressOf = new Map();
+    data.standing = { tone: 'serious', word: 'Not read', text: P.standing(data.map, null, null).text + ' The last reading failed: ' + error.message.replace(/\.$/, '') + '.' };
+    later(false);
+  }
+  /** What a reading sets in place in the main area whether or not anything changed: Overview's "Read at" and the progress of the running runs in Train's list. */
+  function current() {
+    const at = $('main').querySelector('[data-read-at]'), text = 'Read at ' + data.readAt;
+    if (at && at.firstChild) setText(at.firstChild, text);
+    if (S.progress && data.progressOf) S.progress(data.progressOf);
   }
   /** Asks again later: in two seconds while something builds, otherwise in fifteen, so a request an agent makes or an edit made elsewhere shows without the window losing and regaining focus. */
   function later(busy) {
     if (pollTimer && busy && !pollFast) { clearTimeout(pollTimer); pollTimer = null; }
-    if (!pollTimer) { pollFast = busy; pollTimer = setTimeout(poll, busy ? POLL_MS : IDLE_MS); }
+    if (!pollTimer) { pollFast = busy; pollTimer = setTimeout(() => { pollTimer = null; reread('timer'); }, busy ? POLL_MS : IDLE_MS); }
   }
-  async function poll() {
-    pollTimer = null;
-    P.forget(['summary', 'runs', 'build_requests'].concat(pollFast ? [] : ['status', 'environments']));
-    try { data.summary = await P.read('summary'); } catch (error) { /* the strip says what failed below */ }
-    await standing();
-    if (S.tick) await S.tick();
+  /**
+   * The one way of reading again (spec-w4 R1 to R3), for a cause: 'timer',
+   * 'focus' (the window regained it, or a control was refused) or 'control'
+   * (a control's answer, which always counts as a change). One reading at a
+   * time: a cause arriving meanwhile waits, the strongest of those waiting kept.
+   */
+  const RANK = { timer: 0, focus: 1, control: 2 };
+  let reading = null, waiting = null, owed = false;   // owed: a control was answered and the reading after it failed, so the next one counts as a change
+  function reread(cause, info) {
+    if (!reading) { reading = step(cause, info).catch(error => console.error(error)).finally(() => { reading = null; }); return reading; }
+    if (!waiting) { const w = waiting = { cause, info }; w.done = reading.then(() => { waiting = null; return reread(w.cause, w.info); }); }
+    else if (RANK[cause] > RANK[waiting.cause] || (cause === waiting.cause && info)) Object.assign(waiting, { cause, info });
+    return waiting.done;
   }
-  /** Everything again, when the window regains focus; the map is redrawn only when it changed. */
-  async function again() {
-    if (failed) { P.forgetAll(); return first(); }
-    P.forgetAll();
+  /**
+   * One reading: asks again for what the page watches (the map too, except
+   * on the timer unless a run or request ended or status changed). Nothing
+   * changed: only the strip's parts that differ (the progress, the minute of
+   * "Read at") and the same two in the main area are touched. A reading that
+   * failed touches nothing but the strip, which says so. Something changed: what is not watched is
+   * forgotten, and the strip, the tab and the open drawer are drawn again in
+   * place (a drawer holding the editor or the branch form only after a
+   * control). The open run reads on (tabs.js's S.tick).
+   */
+  async function step(cause, info) {
+    if (failed) { if (cause === 'timer') return; P.forgetAll(); await first(); return settleFocus(info); }
+    const control = cause === 'control';
+    let changed;
     try {
-      data.summary = await P.read('summary');
-      const text = JSON.stringify(await P.read('map'));
-      if (text !== mapText) { mapText = text; data.map = await P.map(); $('aside')._for = null; render(); }
-      else if (state.screen !== 'map') render();
-    } catch (error) { fail(error); strip(); render(); return; }
-    await standing();
+      changed = await P.again(cause === 'timer' ? WATCH : P.WATCHED);
+      if (changed.includes('map')) data.map = await P.map();
+    } catch (error) { return notRead(error, control); }
+    if (changed.includes('summary')) try { data.summary = await P.read('summary'); } catch (error) { /* the strip says what failed */ }
+    const read = await sources();
+    if (read.error && read.error.code === 'conflict') return notRead(read.error, control);
+    if (cause === 'timer' && (ended(read) || changed.includes('status'))) {
+      try { if ((await P.again(['map'])).length) { changed = changed.concat(['map']); data.map = await P.map(); } } catch (error) { return notRead(error, control); }
+    } else if (cause !== 'timer') ended(read);
+    await stand(read);
+    const anything = control || owed || changed.length > 0; owed = false;
+    if (anything) P.forgetBut(P.WATCHED);
+    strip();
+    if (anything) { $('aside')._again = control ? 'control' : 'data'; render(); } else current();
+    if (S.tick) await S.tick();
+    if (control) settleFocus(info);
   }
-  /** After a control's answer: forget everything, read again, draw the drawer afresh; the focus stays on the control when it is still there. */
-  async function changed(info) {
-    P.forgetAll();
-    if (failed) { await first(); }
-    else {
-      try {
-        data.summary = await P.read('summary');
-        const text = JSON.stringify(await P.read('map'));
-        if (text !== mapText) { mapText = text; data.map = await P.map(); }
-      } catch (error) { fail(error); strip(); render(); return; }
-      $('aside')._for = null; render();
-      await standing();
-    }
+  /** A reading that could not be made: a conflict shows the conflict panel; anything else leaves the page as it is and says so in the strip. */
+  function notRead(error, control) {
+    if (error.code === 'conflict') { fail(error); strip(); render(); return; }
+    if (control) owed = true;
+    unread(error); strip();
+  }
+  /** After a control's answer: the focus stays on the control when it is still there, else goes to the drawer's heading. */
+  function settleFocus(info) {
     if (info && info.focus && (!document.activeElement || document.activeElement === document.body)) {
       if (!A.focusKey(info.focus)) setTimeout(() => { if (document.activeElement === document.body) { const t = $('aside').querySelector('h2') || $('main'); if (t.tabIndex < 0 && t !== $('main')) t.tabIndex = -1; t.focus(); } }, 300);
     }
   }
-  A.connect({ changed, refused: () => standing(), reread: () => changed() });
+  const changed = info => reread('control', info);
+  A.connect({ changed, refused: () => reread('focus'), reread: () => reread('control') });
 
   function start() {
     // auth.js puts its session controls first in the body; they belong at the right of the top bar.
@@ -243,10 +313,12 @@
       if ($('drawer').classList.contains('open') && state.sel[state.screen]) go(state.screen);
     });
     window.addEventListener('hashchange', () => { parse(); render(); });
-    window.addEventListener('focus', () => { if (data.summary || failed) again(); });
+    window.addEventListener('focus', () => { if (data.summary || failed) reread('focus'); });
     // Who may use a control comes from the session: draw the controls again when it changes.
-    window.addEventListener('tuldok-session', () => { if (failed) again(); else { $('aside')._for = null; if (data.map) act.redraw(); else { strip(); render(); } } });
+    window.addEventListener('tuldok-session', () => { if (failed) reread('focus'); else { $('aside')._for = null; if (data.map) act.redraw(); else { strip(); render(); } } });
     { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, 3); }
+    // The tab bar, once (spec-w4 R5): render() sets which link is current.
+    for (const [id, label] of TABS) { const a = document.createElement('a'); a.href = '#' + id; a.textContent = label; a.dataset.tab = id; $('tabs').appendChild(a); }
     parse(); strip(); render(); first();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();

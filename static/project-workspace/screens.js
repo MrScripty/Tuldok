@@ -4,7 +4,10 @@
 // has something to show there, and returns whether the drawer is open. It
 // reads the project only through window.TuldokProject. Rule: the chrome holds
 // no project words; names, groups, metrics and text come from the project.
-// The editor, the branch form, a draft's drawer, the steps of a new model and
+// What is drawn again is built off the page and put in place whole, in one
+// step, keeping the scroll and the focus (putInPlace, spec-w4.md); the map
+// keeps its tree while its answer is unchanged, and keeps its place when
+// rebuilt. The editor, the branch form, a draft's drawer, the steps of a new model and
 // the Overview's list of every definition are editor.js's (window.LabEditor).
 window.LabScreens = (() => {
   const P = window.TuldokProject, Tree = window.LabTree, C = window.LabCharts, h = C.h;
@@ -28,6 +31,39 @@ window.LabScreens = (() => {
   const time = iso => iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
   const bytes = b => b == null ? '—' : b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b >= 1e6 ? (b / 1e6).toFixed(1) + ' MB' : b >= 1e3 ? Math.round(b / 1e3) + ' KB' : b + ' B';
   const failure = (parent, error) => { parent.appendChild(h('p', 'failure', error.message || String(error))); };
+  // ---- Putting in place (spec-w4 R4) ------------------------------------------
+  /** Every element under root that is scrolled, by its path of child indexes and its tag. */
+  function scrolls(root) {
+    const out = [];
+    const walk = (el, path) => { for (let i = 0; i < el.children.length; i++) { const c = el.children[i], p = path.concat([i]); if (c.scrollTop || c.scrollLeft) out.push({ path: p, tag: c.tagName, top: c.scrollTop, left: c.scrollLeft }); walk(c, p); } };
+    walk(root, []); return out;
+  }
+  /**
+   * Puts content, built off the page, in box in one step in place of what it
+   * holds, keeping the scroll of scroller (box unless named) in both
+   * directions, the scroll of every scrolled element inside box (the same
+   * path and tag), and the focused control (by data-key) with its caret.
+   * Returns whether the focus was inside and whether its control was found.
+   */
+  function putInPlace(box, content, scroller = box) {
+    const active = document.activeElement, inside = !!active && box.contains(active), key = inside && active.dataset ? active.dataset.key : null;
+    let caret = null; try { caret = key && typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd, active.scrollTop] : null; } catch (e) { caret = null; }
+    const top = scroller.scrollTop, left = scroller.scrollLeft, inner = scrolls(box);
+    box.replaceChildren(content);
+    scroller.scrollTop = top; scroller.scrollLeft = left;
+    for (const s of inner) { let e = box; for (const i of s.path) { e = e.children[i]; if (!e) break; } if (e && e.tagName === s.tag) { e.scrollTop = s.top; e.scrollLeft = s.left; } }
+    const again = key && [...box.querySelectorAll('[data-key]')].find(e => e.dataset.key === key);
+    if (again) { again.focus({ preventScroll: true }); if (caret && again.setSelectionRange) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) { /* not a text field */ } again.scrollTop = caret[2]; } }
+    return { inside, found: !!again };
+  }
+  /** Puts a drawer's content in place (the drawer's own scroll kept); when the focused control is gone, the heading takes the focus. */
+  function putDrawer(aside, content) {
+    const r = putInPlace(aside, content, aside.parentElement);
+    if (r.inside && !r.found) { const t = aside.querySelector('h2'); if (t) t.focus({ preventScroll: true }); }
+  }
+  /** A new turn of the drawer: a read started for an older turn puts nothing in it. */
+  const turn = aside => (aside._turn = (aside._turn || 0) + 1);
+
   const NEEDS_ICON = { approval: 'clock', changed: 'alert', missing: 'triangle' };
   /** What needs the person, one sentence each; controls(item) gives the controls drawn under a sentence. */
   function needsList(items, controls) {
@@ -69,16 +105,19 @@ window.LabScreens = (() => {
     // While a parent is being picked (editor.js), the next model pressed is the parent instead.
     const common = { onSelect: id => { if (!(E && E.picked(id, act))) act.select(id); }, kinds: state.kinds, query: state.query };
     if (prev && prev.sig === sig && prev.shaped === shaped && main.contains(prev.bar)) {
-      if (sel && sel !== prev.sel) { prev.map.scrollTo(sel, true); prev.list.scrollTo(sel, true); }
-      prev.map.select(sel); prev.list.select(sel); prev.sel = sel;
+      // The same tree: only a new selection is drawn (spec-w4 R2, R6).
+      if (sel !== prev.sel) { if (sel) { prev.map.scrollTo(sel, true); prev.list.scrollTo(sel, true); } prev.map.select(sel); prev.list.select(sel); prev.sel = sel; }
     } else {
       const focused = prev && prev.bar && prev.bar.contains(document.activeElement) && document.activeElement.type === 'search' ? document.activeElement.selectionStart : null;
+      // A changed map (the same filters) is rebuilt where it was: the scroll of the map and of the list kept (R6).
+      const place = prev && prev.sig === sig && main.contains(prev.bar) ? [main.querySelector('.tree-map'), main.querySelector('.tree-host')].map(e => e ? [e.scrollLeft, e.scrollTop] : null) : null;
       main.textContent = ''; const bar = buildBar(); main.appendChild(bar);
       const mh = h('div', 'tree-map'); main.appendChild(mh);
       const inst = { sig, bar, sel, shaped, map: null, list: null };
       inst.map = Tree.renderMap(mh, g, Object.assign({ selected: sel, zoom: state.zoom || 1, track: !!state.track }, common));
       const lh = h('div', 'tree-host'); main.appendChild(lh); inst.list = Tree.renderList(lh, g, Object.assign({ selected: sel }, common));
-      if (sel) { inst.map.scrollTo(sel, false); inst.list.scrollTo(sel, false); }
+      if (place) { for (const [e, at] of [[mh, place[0]], [lh, place[1]]]) if (at) { e.scrollLeft = at[0]; e.scrollTop = at[1]; } }
+      else if (sel) { inst.map.scrollTo(sel, false); inst.list.scrollTo(sel, false); }
       if (focused !== null) { const q = bar.querySelector('input[type="search"]'); q.focus(); q.setSelectionRange(focused, focused); }
       main._tree = inst;
     }
@@ -91,11 +130,21 @@ window.LabScreens = (() => {
 
   // ---- Drawer: one model ---------------------------------------------------
   const TO_BUILD = ['not-built', 'out-of-date', 'failed'];
-  function inspectorModel(aside, id, act, data) {
+  /**
+   * The drawer of one model: its header, controls and lineage at once, and
+   * four blocks filled as their reads arrive (Results, Runs and product, Uses,
+   * Card; and the steps of a new model). Read again for the model on screen
+   * (aside._again), the new drawer is built off the page and put in place in
+   * one step once every block is filled. more(ins): added by the caller to
+   * each drawing (the Benchmarks tab's Compare).
+   */
+  function inspectorModel(aside, id, act, data, more) {
     const E = window.LabEditor, A = window.LabActions;
     if (E && E.isDraft(id)) return E.drawer(aside, id, act, data, 'map');   // a draft's drawer is the editor
-    if (aside._for === id) return;
-    aside._for = id; aside.textContent = '';
+    if (aside._for === id && !aside._again) return;
+    const same = aside._for === id && !!aside.firstChild, mine = turn(aside);
+    aside._for = id; if (!same) aside.textContent = '';
+    const live = () => aside._turn === mine && aside._for === id, reads = [];
     const g = graphFor(data.map), m = g.byId.get(id);
     const ins = h('div', 'inspector');
     const hd = h('header');
@@ -109,7 +158,7 @@ window.LabScreens = (() => {
     // Plan build, for a model to build (spec-w3 section 3.1): the plan view, never a request from here. A model
     // never built that is not earlier work has the steps of a new model instead (editor.js), whose next step it is.
     const planGroup = () => A.group('model:' + m.id, [{ id: 'plan', label: 'Plan build', cls: 'btn primary', who: 'request', onClick: () => act.select('plan:' + m.id) }]);
-    if (E && E.followsSteps(m)) { const box = h('div', 'steps-box'); box.appendChild(h('p', 'note', 'Reading…')); ins.appendChild(box); E.steps(box, m, act, data, planGroup); }
+    if (E && E.followsSteps(m)) { const box = h('div', 'steps-box'); box.appendChild(h('p', 'note', 'Reading…')); ins.appendChild(box); reads.push(E.steps(box, m, act, data, planGroup)); }
     else if (TO_BUILD.includes(m.state)) ins.appendChild(planGroup());
     // Edit and Branch from here (spec-w3 section 3.2), for a session that may edit.
     ins.appendChild(A.group('modelact:' + m.id, [
@@ -149,10 +198,11 @@ window.LabScreens = (() => {
     // What is read when the model is opened.
     const results = block('Results'), runs = block('Runs and product'), uses2 = block('Uses'), card = block('Card');
     for (const b of [results, runs, uses2, card]) { b.appendChild(h('p', 'note', 'Reading…')); ins.appendChild(b); }
-    aside.appendChild(ins);
-    const fill = (b, build) => p => { if (aside._for !== id) return; b.lastChild.remove(); try { build(b, p); } catch (error) { failure(b, error); } };
-    const fail = b => error => { if (aside._for !== id) return; b.lastChild.remove(); failure(b, error); };
-    Promise.all([P.read('recipe_results', { recipe: m.id }), P.read('definitions', { kind: 'benchmark' }).catch(() => ({ definitions: [] }))])
+    if (more) more(ins);
+    if (!same) aside.appendChild(ins);   // first shown: at once, its blocks filled as they come
+    const fill = (b, build) => p => { if (!live()) return; b.lastChild.remove(); try { build(b, p); } catch (error) { failure(b, error); } };
+    const fail = b => error => { if (!live()) return; b.lastChild.remove(); failure(b, error); };
+    reads.push(Promise.all([P.read('recipe_results', { recipe: m.id }), P.read('definitions', { kind: 'benchmark' }).catch(() => ({ definitions: [] }))])
       .then(fill(results, (b, [found, defs]) => {
         if (!found.rows.length) { b.appendChild(h('p', 'empty', found.benchmarks.length ? 'Named in ' + found.benchmarks.length + ' benchmarks, with no results yet.' : 'No benchmark measures this model.')); return; }
         const titles = new Map(defs.definitions.map(d => [d.reference.split('/').slice(1).join('/'), d.title]));
@@ -162,37 +212,39 @@ window.LabScreens = (() => {
           const t = h('table', 'tv'); const hr = h('tr'); for (const [c, k] of [['Metric', ''], ['Median', 'n'], ['Cases', 'n']]) hr.appendChild(h('th', k, c)); const th = h('thead'); th.appendChild(hr); t.appendChild(th);
           const tb = h('tbody'); for (const r of rows) { const tr = h('tr'); tr.appendChild(h('td', 'ck', r.metric)); tr.appendChild(h('td', 'n', C.fmtSci(r.median))); tr.appendChild(h('td', 'n', String(r.count))); tb.appendChild(tr); } t.appendChild(tb); b.appendChild(t);
         }
-      }), fail(results));
-    Promise.all([P.read('runs', { reference: m.id }), P.read('products', { reference: m.id })])
+      }), fail(results)));
+    reads.push(Promise.all([P.read('runs', { reference: m.id }), P.read('products', { reference: m.id })])
       .then(fill(runs, (b, [r, p]) => {
         if (!r.runs.length) b.appendChild(h('p', 'empty', 'No run of this model in this project.'));
         else { const ul = h('ul', 'rows'); for (const run of r.runs.slice(0, 8)) { const li = h('li'); const row = h('div', 'row'); row.style.gridTemplateColumns = 'minmax(0, 1fr) auto'; const t = h('span'); t.appendChild(h('span', 'title', (run.subject ? run.subject + ' · ' : '') + time(run.finished_at || run.started_at || run.queued_at))); t.appendChild(h('span', 'sub', [run.seconds != null ? Math.round(run.seconds) + ' s' : null, run.bytes != null ? bytes(run.bytes) : null, run.scratch ? 'scratch' : null].filter(Boolean).join(' · ') || run.id)); row.appendChild(t); row.appendChild(modelState(run.state)); li.appendChild(row); ul.appendChild(li); } b.appendChild(ul); if (r.runs.length > 8) b.appendChild(h('p', 'note', (r.runs.length - 8) + ' earlier runs are not listed.')); }
         if (!p.products.length) b.appendChild(h('p', 'note', 'No product on this machine.'));
         else { const dl = h('dl', 'facts'); for (const pr of p.products) { dl.appendChild(h('dt', null, (pr.subject || 'Product') + (pr.adopted ? ' (adopted)' : ''))); dl.appendChild(h('dd', 'mono', pr.directory + ' · ' + bytes(pr.bytes))); } b.appendChild(dl); }
-      }), fail(runs));
-    P.read('definition', { reference: m.id })
+      }), fail(runs)));
+    reads.push(P.read('definition', { reference: m.id })
       .then(fill(uses2, (b, d) => {
         const other = d.uses.filter(u => !u.reference.startsWith('recipes/'));
         if (!other.length) { b.appendChild(h('p', 'empty', 'It uses no dataset, model or environment.')); return; }
         const dl = h('dl', 'facts'); for (const u of other) { dl.appendChild(h('dt', null, u.role)); dl.appendChild(h('dd', 'mono', u.reference)); } b.appendChild(dl);
-      }), fail(uses2));
+      }), fail(uses2)));
     if (!m.card) fill(card, b => b.appendChild(h('p', 'empty', 'This model has no card.')))();
     else if (!m.card.startsWith('notes/')) fill(card, b => b.appendChild(h('p', 'empty', 'Its card ' + m.card + ' is not under notes/ and is not read.')))();
-    else P.read('note', { path: m.card.slice('notes/'.length) }).then(fill(card, (b, note) => { b.appendChild(h('p', 'note mono', m.card)); b.appendChild(window.TuldokMarkdown.render(note.text)); }), fail(card));
+    else reads.push(P.read('note', { path: m.card.slice('notes/'.length) }).then(fill(card, (b, note) => { b.appendChild(h('p', 'note mono', m.card)); b.appendChild(window.TuldokMarkdown.render(note.text)); }), fail(card)));
+    // Read again: the drawer on screen stays until the new one is complete.
+    if (same) Promise.all(reads).then(() => { if (live()) putDrawer(aside, ins); });
   }
 
   // ---- Overview --------------------------------------------------------------
   // Read once and built off the page (tabs.js's paint), so the refresh while a build runs keeps the place.
   function overview(main, aside, state, act, data) {
     const E = window.LabEditor, sel = state.sel.overview || '';
-    if (sel === 'report') { aside.textContent = ''; aside._for = null; main.textContent = ''; main._painted = null; return report(main, data); }
+    if (sel === 'report') { aside.textContent = ''; aside._for = null; return report(main, data); }
     const editing = !!(E && E.owns(sel, data));
     if (editing) E.drawer(aside, sel, act, data, 'overview'); else { aside.textContent = ''; aside._for = null; }
     S.paint(main, () => Promise.all([P.read('definitions'), P.read('environments'), P.read('activity', { limit: 12 })].map(p => p.then(v => ({ v }), error => ({ error })))), (frag, [d, e, a]) => {
       const standing = data.standing;
       const top = h('section', 'ov-status');
       const line = h('div', 'ov-line'); line.appendChild(stateEl(standing.tone, standing.word)); line.appendChild(h('p', 'ov-text', standing.text)); top.appendChild(line);
-      top.appendChild(h('p', 'small faint', 'Read at ' + data.readAt));
+      const at = h('p', 'small faint', 'Read at ' + data.readAt); at.dataset.readAt = '1'; top.appendChild(at);   // set in place on every reading (app.js)
       frag.appendChild(top);
       const row = h('div', 'ov-row');
       const needs = h('section'); needs.appendChild(sect('Needs you', data.needs ? String(data.needs.length) : '…'));
@@ -233,12 +285,14 @@ window.LabScreens = (() => {
     });
     return editing;
   }
+  /** The report in a frame: "Reading…" the first time; read again, the frame on screen stays until the new one is put in its place. */
   function report(main, data) {
-    const bar = h('div', 'report-bar'); const back = h('a', 'btn sm ghost', '← Overview'); back.href = '#overview'; bar.appendChild(back); bar.appendChild(h('h2', null, 'Report')); main.appendChild(bar);
-    const frame = h('iframe', 'report-frame'); frame.title = 'Project report'; frame.setAttribute('sandbox', '');
-    const note = h('p', 'note', 'Reading…'); main.appendChild(note);
+    const view = main._view, mine = main._paint = (main._paint || 0) + 1;
+    const head = () => { const bar = h('div', 'report-bar'); const back = h('a', 'btn sm ghost', '← Overview'); back.href = '#overview'; bar.appendChild(back); bar.appendChild(h('h2', null, 'Report')); return bar; };
+    if (main._painted !== view) { main.textContent = ''; main.appendChild(head()); main.appendChild(h('p', 'note', 'Reading…')); }
     const theme = getComputedStyle(document.documentElement).colorScheme === 'dark' ? 'dark' : 'light';
-    P.call('report', { theme }).then(r => { note.remove(); frame.srcdoc = r.html; main.appendChild(frame); }, error => { note.remove(); failure(main, error); });
+    const put = add => { if (main._paint !== mine || main._view !== view) return; const frag = document.createDocumentFragment(); frag.appendChild(head()); add(frag); putInPlace(main, frag); main._painted = view; };
+    P.call('report', { theme }).then(r => put(frag => { const frame = h('iframe', 'report-frame'); frame.title = 'Project report'; frame.setAttribute('sandbox', ''); frame.srcdoc = r.html; frag.appendChild(frame); }), error => put(frag => failure(frag, error)));
     return false;
   }
 
@@ -254,7 +308,7 @@ window.LabScreens = (() => {
   };
 
   // The Data, Train, Benchmarks and Analysis screens are added by tabs.js, which builds with these parts.
-  const parts = { sect, cell, block, time, bytes, failure, modelState, graphFor };
+  const parts = { sect, cell, block, time, bytes, failure, modelState, graphFor, putInPlace, putDrawer, turn };
   const S = { map, overview, inspectorModel, needsList, icon, stateEl, theme, parts };
   return S;
 })();

@@ -5,9 +5,11 @@
 // read again, and shapes what the screens read: the map's sections, models
 // and lines, the sentence of where the project stands, and what needs the
 // person. It reads on its own; an operation that changes the project is
-// called only by a control the person pressed (actions.js), after which every
-// kept answer is forgotten. A refusal is thrown as an Error carrying the
-// server's code, problems, references and files.
+// called only by a control the person pressed (actions.js). Reading again
+// (again()) compares each answer's text with the kept one, so the page can
+// leave alone what did not change; what is not watched is forgotten when
+// something changed (forgetBut()). A refusal is thrown as an Error carrying
+// the server's code, problems, references and files.
 window.TuldokProject = (() => {
   // Kinds of change, by the project format's names, with the brief's labels.
   const KINDS = [
@@ -59,15 +61,47 @@ window.TuldokProject = (() => {
     } catch (error) { contracts = null; throw error; }
   }
 
-  // Answers are kept by operation and arguments until forgotten.
-  const kept = new Map();
+  // Answers are kept by operation and arguments until forgotten, each with its text, so a reading
+  // again can tell an answer that changed from one that did not.
+  const kept = new Map();   // key -> { answer: promise, text: the answer as JSON once it came }
+  const keyOf = (name, args) => name + ' ' + JSON.stringify(args);
   function read(name, args = {}) {
-    const key = name + ' ' + JSON.stringify(args);
-    if (!kept.has(key)) kept.set(key, call(name, args).catch(error => { kept.delete(key); throw error; }));
-    return kept.get(key);
+    const key = keyOf(name, args);
+    if (!kept.has(key)) {
+      const entry = { text: null };
+      entry.answer = call(name, args).then(value => { entry.text = JSON.stringify(value); return value; }, error => { if (kept.get(key) === entry) kept.delete(key); throw error; });
+      kept.set(key, entry);
+    }
+    return kept.get(key).answer;
+  }
+  /**
+   * Asks again for the kept answer of each named operation (no arguments),
+   * asking for the first time when none is kept, and resolves to the names
+   * whose answer differs from the kept one; for those the kept answer is
+   * replaced, and an equal answer leaves the kept object as it is. When any
+   * of them is refused or does not arrive, the error is thrown and nothing
+   * kept is replaced: a reading that failed changes nothing.
+   */
+  async function again(names) {
+    const got = await Promise.all(names.map(async name => {
+      const key = keyOf(name, {}), had = kept.get(key);
+      const before = had ? await had.answer.then(() => had.text, () => null) : null;
+      const value = await call(name, {});
+      return { name, key, had, before, value, text: JSON.stringify(value) };
+    }));
+    const changed = [];
+    for (const g of got) {
+      if (g.before !== null && g.text === g.before && kept.get(g.key) === g.had) continue;
+      kept.set(g.key, { answer: Promise.resolve(g.value), text: g.text }); changed.push(g.name);
+    }
+    return changed;
   }
   function forget(names) { for (const key of [...kept.keys()]) if (names.includes(key.split(' ')[0])) kept.delete(key); }
+  /** Forgets every kept answer whose operation is not named. */
+  function forgetBut(names) { for (const key of [...kept.keys()]) if (!names.includes(key.split(' ')[0])) kept.delete(key); }
   function forgetAll() { kept.clear(); }
+  // What the page watches: asked again on every reading ('map' on some, app.js), kept across a change.
+  const WATCHED = ['summary', 'status', 'build_requests', 'environments', 'runs', 'map'];
 
   // ---- The map ------------------------------------------------------------
   /**
@@ -216,5 +250,5 @@ window.TuldokProject = (() => {
     return out;
   }
 
-  return { KINDS, UNSET, kindLabel, stateWord, call, read, forget, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day };
+  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day };
 })();

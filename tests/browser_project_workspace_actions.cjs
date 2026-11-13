@@ -138,9 +138,17 @@ async function type(selector, text) {
   await key('Delete', 'Delete', 46);
   await send('Input.insertText', { text });
 }
-/** Waits until nothing reads and no control waits for its answer. */
+// The page's own calls of the project's operations: a control's answer is followed by a reading that draws the tab
+// and the drawer again in place (spec-w4.md), so settled() also waits until none is in flight.
+const inflight = new Set(); let lastAnswer = 0;
+function network(event) {
+  const p = event.params;
+  if (event.method === 'Network.requestWillBeSent' && /\/api\/project\/[a-z_]+$/.test(p.request.url)) inflight.add(p.requestId);
+  if ((event.method === 'Network.loadingFinished' || event.method === 'Network.loadingFailed') && inflight.delete(p.requestId)) lastAnswer = Date.now();
+}
+/** Waits until nothing reads, no control waits for its answer, and the page has asked nothing of the project for a moment. */
 async function settled(label) {
-  await until(() => evaluate(`(() => { const reading = e => [...e.querySelectorAll('.note')].some(n => n.textContent === 'Reading…'); return !reading(document.getElementById('main')) && !reading(document.getElementById('aside')) && !document.getElementById('main').hasAttribute('aria-busy') && !document.querySelector('.act-group [aria-busy]'); })()`), label);
+  await until(async () => !inflight.size && Date.now() - lastAnswer > 120 && await evaluate(`(() => { const reading = e => [...e.querySelectorAll('.note')].some(n => n.textContent === 'Reading…'); return !reading(document.getElementById('main')) && !reading(document.getElementById('aside')) && !document.getElementById('main').hasAttribute('aria-busy') && !document.querySelector('.act-group [aria-busy]'); })()`), label);
   await pause(150);
 }
 /** Replaces the whole value of a field (a number field too): select all, delete, then the text. */
@@ -219,6 +227,7 @@ with open(os.path.join(out, 'weights.json'), 'w') as handle:
   const target = (await (await fetch('http://127.0.0.1:' + debugPort + '/json')).json()).find(item => item.type === 'page');
   socket = new WebSocket(target.webSocketDebuggerUrl); await once(socket, 'open');
   session = cdpSession(socket, { timeoutMs: 60000, onEvent: event => {
+    network(event);
     if (event.method === 'Runtime.exceptionThrown') errors.push(event.params.exceptionDetails.exception?.description || event.params.exceptionDetails.text);
     if (event.method === 'Runtime.consoleAPICalled' && event.params.type === 'error') errors.push(event.params.args.map(a => a.value ?? a.description).join(' '));
     if (event.method === 'Log.entryAdded' && event.params.entry.level === 'error') {

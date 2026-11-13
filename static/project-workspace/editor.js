@@ -5,7 +5,8 @@
 // map; Branch from here and the drafts it makes; the steps of a new model; the
 // Overview's list of every definition. What is typed is kept in page memory
 // per definition until it is kept or discarded, so leaving the drawer or a
-// re-render loses nothing; a draft is kept in sessionStorage under the
+// re-render loses nothing, and a reading on the timer or on focus leaves the
+// editor and the branch form alone; a draft is kept in sessionStorage under the
 // project's id, so it survives a reload of the tab. The form changes only the
 // fields touched and writes the JSON back with the indentation the text had.
 // Nothing here writes to disk: Keep stores an unsaved edit, Save writes them.
@@ -79,7 +80,8 @@ window.LabEditor = (() => {
   function decorate(root) {
     for (const s of (root || document).querySelectorAll('.umark[data-ref]')) {
       const typed = buffers.has(s.dataset.ref) || s.dataset.draft === '1';
-      s.textContent = typed ? 'not kept yet' : s.dataset.removed === '1' ? 'removed' : s.dataset.unsaved === '1' ? 'unsaved' : '';
+      const text = typed ? 'not kept yet' : s.dataset.removed === '1' ? 'removed' : s.dataset.unsaved === '1' ? 'unsaved' : '';
+      if (s.textContent !== text) s.textContent = text;   // a mark already right is not touched (spec-w4 R2)
       s.classList.toggle('typed', typed);
     }
   }
@@ -94,21 +96,19 @@ window.LabEditor = (() => {
     if (sel.startsWith('branch:')) return branchForm(aside, sel, sel.slice(7), act, data);
     return editor(aside, sel, subject(sel), act, data, screen);
   }
-  /** Puts node in the drawer, giving back the focused control (by data-key), its caret and the scroll; else the heading takes the focus when the focus was in the drawer. */
+  /** Puts node in the drawer in one step (screens.js's putInPlace: the focused control by data-key, its caret and the scroll given back); else the heading takes the focus when the focus was in the drawer or nowhere. */
   function swapInto(aside, node) {
-    const active = document.activeElement, inside = !!active && aside.contains(active), key = inside && active.dataset ? active.dataset.key : null;
-    let caret = null; try { caret = key && typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd, active.scrollTop] : null; } catch (e) { caret = null; }
-    const scroller = aside.parentElement, top = scroller.scrollTop;
-    aside.textContent = ''; aside.appendChild(node); scroller.scrollTop = top;
-    const again = key && [...aside.querySelectorAll('[data-key]')].find(e => e.dataset.key === key);
-    if (again) { again.focus({ preventScroll: true }); if (caret && again.setSelectionRange) { again.setSelectionRange(caret[0], caret[1]); again.scrollTop = caret[2]; } }
-    else if (inside || !active || active === document.body) { const t = aside.querySelector('h2'); if (t && aside.closest('.drawer.open')) t.focus({ preventScroll: true }); }
+    const active = document.activeElement, nowhere = !active || active === document.body;
+    const r = S.parts.putInPlace(aside, node, aside.parentElement);
+    if (!r.found && (r.inside || nowhere)) { const t = aside.querySelector('h2'); if (t && aside.closest('.drawer.open')) t.focus({ preventScroll: true }); }
   }
 
   // ---- The editor ---------------------------------------------------------------------
+  // A reading on the timer or on focus never touches the editor or the branch form (spec-w4 R3): what is typed stays.
+  // After a control's answer (aside._again 'control') they are drawn again in place.
   function editor(aside, sel, ref, act, data, screen) {
     const key = 'editor:' + sel;
-    if (aside._for === key) return true;
+    if (aside._for === key && aside._again !== 'control') return true;
     aside._for = key;
     const draft = draftOf(ref);
     if (!(aside._editing === ref && aside.querySelector('.editor'))) { aside.textContent = ''; aside.appendChild(h('p', 'note', 'Reading…')); }
@@ -341,7 +341,7 @@ window.LabEditor = (() => {
 
   // ---- Branch from here -------------------------------------------------------------------
   function branchForm(aside, sel, parentRef, act, data) {
-    if (aside._for === sel) return true;
+    if (aside._for === sel && aside._again !== 'control') return true;
     aside._for = sel; aside._editing = null;
     const m = data.map.byId.get(parentRef);
     const ins = h('div', 'inspector branch');
@@ -408,10 +408,11 @@ window.LabEditor = (() => {
   /**
    * The steps of a model of the map (screens.js): read its definition, runs and
    * the build requests; earlier work gets planGroup() instead (as phase 2).
+   * Fills box, on the page or not yet (a drawer read again is built off the
+   * page), and resolves once it is filled.
    */
   function steps(box, m, act, data, planGroup) {
-    Promise.all([P.read('definition', { reference: m.id }), P.read('runs', { reference: m.id }), P.read('build_requests')]).then(([def, runs, requests]) => {
-      if (!box.isConnected) return;
+    return Promise.all([P.read('definition', { reference: m.id }), P.read('runs', { reference: m.id }), P.read('build_requests')]).then(([def, runs, requests]) => {
       box.textContent = '';
       if (isObject(def.document) && def.document.earlier_work && !followed.includes(m.id)) { if (['not-built', 'out-of-date', 'failed'].includes(m.state)) box.appendChild(planGroup()); return; }
       const asked = requests.requests.filter(r => (r.targets || []).includes(m.id) && !['declined', 'cancelled', 'expired'].includes(r.state));
@@ -421,7 +422,7 @@ window.LabEditor = (() => {
         runningNow: runList.some(r => r.state === 'running'), built: ['built', 'out-of-date'].includes(m.state), unsaved: def.unsaved,
         request: asked[0] || null, run: runList[0] || null, state: m.state
       }, act, data, planGroup));
-    }, error => { if (box.isConnected) { box.textContent = ''; box.appendChild(A.refusal(error)); } });
+    }, error => { box.textContent = ''; box.appendChild(A.refusal(error)); });
   }
   function stepsBlock(ref, f, act, data) {
     const wrap = h('div', 'new-steps');
