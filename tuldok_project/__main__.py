@@ -900,6 +900,8 @@ def _show_run(row, event):
         label = 'subject recipe' if name == '{recipe}' else f'input {name}'
         output = f' ({used["output"]})' if used.get('output') else ''
         rows.append((label, f'{used["reference"]}{output}, run {used["run_id"]}'))
+    for task, read in sorted((row.get('annotations') or {}).items()):
+        rows.append((f'task {task}', f'{read["file"]}, sha256 {(read["sha256"] or "none (no file)")[:16]}'))
     product = row['product']
     if product is not None:
         rows.append(('product', product['directory'] + ('  (adopted)' if product['adopted'] else '')

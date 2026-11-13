@@ -45,6 +45,7 @@ ACCEPTS = {
     'cases': ('datasets',),
     'benchmark': ('benchmarks',),
     'dataset': ('datasets',),
+    'annotations': ('annotations',),
     'derived': ('recipes',),
     'compared': ('recipes',),
 }

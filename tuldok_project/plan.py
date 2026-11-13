@@ -2,7 +2,8 @@
 
 Owns docs/plans/definition-first-projects/spec-m4.md. make_plan is a pure
 function of the decoded definitions (reference -> document): it follows the
-input, environment and subject edges from the targets, but never out of a
+input, environment and subject edges from the targets (a freeze's tasks only
+to note one that is missing or on another dataset), but never out of a
 blocked step or into a blocked subject recipe, puts what it reaches in
 graph.order, gives each step an action from graph.states (with the
 environments' states recorded on this machine, spec-m5.md section 5: a ready
@@ -126,6 +127,30 @@ def _inputs(document):
     return found
 
 
+def _tasks(run):
+    """The tasks a freeze step reads (run.annotations), in order; empty for any other run."""
+    tasks = run.get('annotations') if run.get('step') == 'freeze' else None
+    return [task for task in (tasks if isinstance(tasks, list) else ()) if isinstance(task, str)]
+
+
+def _task_notes(definitions, reference, document):
+    """Notes on a freeze's tasks that do not exist or are on another dataset than its input (spec-d4.md section 6).
+
+    The plan follows a step's annotations edges only this far: a task is
+    never a step. Such a freeze fails before it runs.
+    """
+    used = _inputs(document).get('records', {}).get('reference')
+    notes = []
+    for task in _tasks(_run(document)):
+        target = definitions.get(task)
+        if target is None:
+            notes.append(f'{reference} freezes by {task}, which does not exist; it fails when built.')
+        elif target.get('dataset') != used:
+            notes.append(f'{reference} freezes by {task}, which annotates {target.get("dataset")}, not its input '
+                         f'{used}; it fails when built.')
+    return notes
+
+
 def _resources(document):
     declared = _run(document).get('resources')
     declared = declared if isinstance(declared, dict) else {}
@@ -226,9 +251,12 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
         document, kind = definitions[reference], _kind(reference)
         run = _run(document)
         action = actions[reference]
+        provided = run.get('step') if isinstance(run.get('step'), str) else None
         step = {'number': number, 'reference': reference, 'kind': kind, 'title': document.get('title'),
                 'state': states[reference], 'action': action,
-                'command': run.get('command'), 'environment': run.get('environment'),
+                'command': ['tuldok', provided] if provided else run.get('command'),
+                'environment': None if provided else run.get('environment'),
+                'step': provided, 'annotations': _tasks(run),
                 'inputs': _inputs(document), 'resources': _resources(document),
                 'estimate': (estimates or {}).get(reference),
                 'blocked_by': [], 'blocked_by_more': 0,
@@ -240,6 +268,8 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
             if action == 'build' and not step['subjects']['run']:
                 # Nothing would run: blocked, though by no cause of its own.
                 step['action'] = action = actions[reference] = 'blocked'
+        if provided == 'freeze':
+            notes.extend(_task_notes(definitions, reference, document))
         if action == 'blocked':
             found = causes(definitions, edges_from, reference)
             step['blocked_by'] = found[:CAUSE_LIMIT]
