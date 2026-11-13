@@ -7,11 +7,12 @@ its schema), runs it with the project open only for the moment it needs, and
 returns a JSON-plain object. Calls are answered one at a time under one lock
 of the service. Every mutating call that passed the actor check writes one
 activity row, done or refused. The six operations on build requests are
-passed to build_requests. The five reads inside a product (spec-d1.md) find
-the finished run with the project open for a moment and read its output
-directory through inside.py after closing it; product_file does the same for
-the file route; those reads run outside the lock, so a long one holds up no
-other call. Nothing here knows of HTTP or of the app's access layer.
+passed to build_requests. The five reads inside a product (spec-d1.md) and
+the three reads of a model's weights (spec-d2.md) find the finished run (and
+for weights_compare the other run) with the project open for a moment and
+read its output directory through inside.py and inside_weights.py after
+closing it; product_file does the same for the file route; those reads run
+outside the lock, so a long one holds up no other call. Nothing here knows of HTTP or of the app's access layer.
 
 The worker (section 4) is one thread per service, started by start() and
 stopped by close(). It runs queued build requests one at a time while it
@@ -36,26 +37,37 @@ import threading
 import jsonschema
 import psycopg
 
-from . import (activity, build_requests, builds, charts, check, environments, inside, launcher, local, operations,
-               plan, store, workspace)
+from . import (activity, build_requests, builds, charts, check, environments, inside, inside_weights, launcher, local,
+               operations, plan, store, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
 
-# The reads inside a product (spec-d1.md), each a function of (inside.Product, arguments). call() finds the product
-# under the service's lock and reads outside it: decompressing a large member or parsing a large mesh takes seconds,
-# and the other calls (the page's own readings among them) must not wait for it. inside.py guards what it keeps.
+# The reads inside a product (spec-d1.md, spec-d2.md), each a function of ({argument: inside.Product}, arguments):
+# the products of the arguments in PRODUCT_ARGUMENTS that the call gives. call() finds them under the service's lock
+# and reads outside it: decompressing a large member, parsing a large mesh or comparing two large weights files takes
+# seconds, and the other calls (the page's own readings among them) must not wait for it. inside.py guards what it
+# keeps.
+PRODUCT_ARGUMENTS = ('run', 'other_run')
 INSIDE_READS = {
-    'records': lambda product, a: inside.records(product, offset=a.get('offset', 0), limit=a.get('limit', 50),
-                                                 kind=a.get('kind'), split=a.get('split')),
-    'record': lambda product, a: inside.record(product, a['id']),
-    'inside': lambda product, a: inside.inside(product, path=a.get('path', ''), offset=a.get('offset', 0),
-                                               limit=a.get('limit', 200)),
-    'array_slice': lambda product, a: inside.array_slice(product, path=a['path'], array=a.get('array'),
-                                                         axes=a.get('axes'), index=a.get('index'),
-                                                         most=a.get('most', 256)),
-    'array_summary': lambda product, a: inside.array_summary(product, path=a['path'], array=a.get('array'),
-                                                             bins=a.get('bins', 64)),
+    'records': lambda found, a: inside.records(found['run'], offset=a.get('offset', 0), limit=a.get('limit', 50),
+                                               kind=a.get('kind'), split=a.get('split')),
+    'record': lambda found, a: inside.record(found['run'], a['id']),
+    'inside': lambda found, a: inside.inside(found['run'], path=a.get('path', ''), offset=a.get('offset', 0),
+                                             limit=a.get('limit', 200)),
+    'array_slice': lambda found, a: inside.array_slice(found['run'], path=a['path'], array=a.get('array'),
+                                                       axes=a.get('axes'), index=a.get('index'),
+                                                       most=a.get('most', 256)),
+    'array_summary': lambda found, a: inside.array_summary(found['run'], path=a['path'], array=a.get('array'),
+                                                           bins=a.get('bins', 64)),
+    'weights': lambda found, a: inside_weights.weights(found['run']),
+    'weights_compare': lambda found, a: inside_weights.weights_compare(found['run'], path=a['path'],
+                                                                       other=found['other_run'],
+                                                                       other_path=a['other_path']),
+    'array_tiles': lambda found, a: inside_weights.array_tiles(found['run'], path=a['path'], array=a.get('array'),
+                                                               across=a.get('across'), axes=a.get('axes'),
+                                                               index=a.get('index'), first=a.get('first', 0),
+                                                               most=a.get('most', 16)),
 }
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
@@ -278,8 +290,8 @@ class Service:
                 raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
                                          problems=problems)
             with self._lock:
-                product = self._product(arguments['run'])
-            return _plain(INSIDE_READS[name](product, dict(arguments)))
+                found = {key: self._product(arguments[key]) for key in PRODUCT_ARGUMENTS if key in arguments}
+            return _plain(INSIDE_READS[name](found, dict(arguments)))
         with self._lock:
             try:
                 problems = _argument_problems(operation, arguments)
@@ -453,11 +465,17 @@ class Service:
     # ------------------------------------------------------ inside a product
 
     def _product(self, run):
-        """The inside.Product of a finished run (succeeded or adopted), read with the project open for a moment."""
+        """The inside.Product of a finished run (succeeded or adopted), read with the project open for a moment.
+
+        It carries the outputs its products row records (with their roles), so that inside_weights knows which
+        files are the run's weights without opening the project.
+        """
         with self._open() as project:
             run_id = builds.find_run(project, run)
             state, directory, reference = project._execute(
                 'SELECT state, directory, reference FROM {schema}.runs WHERE id = %s', (run_id,)).fetchone()
+            recorded = project._execute('SELECT outputs FROM {schema}.products WHERE run_id = %s',
+                                        (run_id,)).fetchone()
             view = None
             if reference.startswith('datasets/'):
                 row = project._execute('SELECT document FROM {schema}.definitions WHERE directory = %s AND name = %s '
@@ -466,7 +484,8 @@ class Service:
         if state not in ('succeeded', builds.ADOPTED) or not directory:
             raise store.ProjectError(f'Run {run_id} is {state}; only a finished run has a product to look inside.',
                                      'not-found')
-        return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view)
+        return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view,
+                              recorded[0] if recorded else None)
 
     def product_file(self, run, address, range_header=None):
         """The inside.FileResponse of GET /api/project/file; the caller has checked the right to inspect."""

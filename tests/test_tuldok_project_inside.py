@@ -235,6 +235,21 @@ class Readers(unittest.TestCase):
         self.assertEqual((summary['count'], summary['nonfinite'], summary['min'], summary['max']), (6, 3, -2.0, 3.0))
         self.assertEqual(sum(summary['histogram']['counts']), 3)
 
+    def test_a_summary_of_values_too_large_to_sum_is_plain_json(self):
+        huge = 1.7e308
+        self.write('same.npy', npy((2,), '<f8', lambda index: huge))
+        self.write('apart.npy', npy((2,), '<f8', lambda index: huge if index[0] else -huge))
+        same = inside.array_summary(self.product, path='same.npy', bins=4)
+        apart = inside.array_summary(self.product, path='apart.npy', bins=4)
+        for answer in (same, apart):
+            json.dumps(answer, allow_nan=False)         # no infinity, no NaN
+            self.assertEqual(answer['nonfinite'], 0)
+        self.assertEqual((same['min'], same['max'], same['mean'], same['std']), (huge, huge, None, None))
+        self.assertEqual(same['histogram']['counts'], [2, 0, 0, 0])
+        self.assertEqual((apart['mean'], apart['std']), (0.0, None))
+        self.assertEqual(apart['histogram']['counts'], [1, 0, 0, 1])
+        json.dumps(self.slice('apart.npy'), allow_nan=False)
+
     def test_a_summary_compared_with_its_own_arithmetic(self):
         values = [((i * 37) % 101) - 50 for i in range(1000)]
         self.write('flat.npy', npy((1000,), '<i2', lambda index: values[index[0]]))

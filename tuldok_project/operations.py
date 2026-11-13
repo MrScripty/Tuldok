@@ -2,8 +2,10 @@
 
 Owns the table of section 2 of docs/plans/definition-first-projects/spec-m7.md, with the three
 rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
-section 2 of spec-w3.md (draft_branch, revert_definition) and the five of
-section 3 of spec-d1.md (records, record, inside, array_slice, array_summary).
+section 2 of spec-w3.md (draft_branch, revert_definition), the five of
+section 3 of spec-d1.md (records, record, inside, array_slice, array_summary)
+and the three of section 3 of spec-d2.md (weights, weights_compare,
+array_tiles).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -75,6 +77,9 @@ REQUEST = ('id', 'state', 'targets', 'every', 'scratch', 'covers', 'requested_at
 SLICE = ('shape', 'dtype', 'axes', 'index', 'rows', 'columns', 'stride', 'values_f32', 'min', 'max', 'nonfinite')
 SUMMARY_OF_ARRAY = ('shape', 'dtype', 'count', 'min', 'max', 'mean', 'std', 'zeros', 'nonfinite', 'histogram',
                     'stride')
+TILES = ('shape', 'dtype', 'across', 'axes', 'index', 'first', 'tiles', 'rows', 'columns', 'stride', 'values_f32',
+         'min', 'max', 'nonfinite')
+COMPARE = ('tensors', 'total', 'only_here', 'only_there', 'reshaped', 'unread')
 SAVE = ('written', 'deleted', 'results_written', 'results_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
 STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
@@ -170,6 +175,20 @@ OPERATIONS = (
               'product.', 'inspect', False,
               _arguments(['run', 'path'], run=_RUN, path=_ADDRESS, array=_ARRAY, bins=_limit(256)),
               SUMMARY_OF_ARRAY),
+    Operation('weights', "List the weights files of a finished run's product, each with its size, the file it started "
+              'from and, when Tuldok reads it, its layers and parameter count.', 'inspect', False,
+              _arguments(['run'], run=_RUN), ('files',)),
+    Operation('weights_compare', "Compare, array by array, a weights file of a finished run's product with one of "
+              'the same or another finished run: norms, relative change, cosine and largest change.', 'inspect',
+              False,
+              _arguments(['run', 'path', 'other_run', 'other_path'], run=_RUN, path=_ADDRESS, other_run=_RUN,
+                         other_path=_ADDRESS), COMPARE),
+    Operation('array_tiles', "Read tiles of two axes of an array in a finished run's product, one per position along "
+              'a third axis, as 32-bit floats.', 'inspect', False,
+              _arguments(['run', 'path'], run=_RUN, path=_ADDRESS, array=_ARRAY, across=_AXIS,
+                         axes={'type': 'array', 'items': _AXIS, 'minItems': 2, 'maxItems': 2},
+                         index={'type': 'array', 'items': {'type': 'integer', 'minimum': 0}, 'maxItems': 64},
+                         first=_OFFSET, most=_limit(64)), TILES),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',

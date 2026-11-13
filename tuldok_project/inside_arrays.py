@@ -1,4 +1,4 @@
-"""Arrays in a product: NPY headers, the arrays of an NPZ, a two-axis slice and a summary, without numpy.
+"""Arrays in a product: NPY and safetensors headers, a two-axis slice and a summary, without numpy.
 
 Owns the "Arrays" paragraph and the array_slice and array_summary rows of
 section 3 of docs/plans/definition-first-projects/spec-d1.md. A header is
@@ -12,11 +12,21 @@ byte column by byte column, so only those bytes are touched and no Python
 loop runs per value; they are decoded with the array module (struct for
 half floats). A summary reads at most SUMMARY_VALUES values, every n-th in
 storage order beyond that.
+
+A .safetensors file (section 2 of spec-d2.md) is 8 bytes giving the length
+of a JSON header (at most SAFETENSORS_HEADER_BYTES), the header, then the
+data; safetensors_headers turns each tensor of its header into a Header of
+the NPY reader (little-endian, C order, its offset where its data begins in
+the file), so a tensor is sliced and summarised as an NPY array is. A tensor
+of a type outside SAFETENSORS_TYPES is listed with its type and refused when
+read. A header longer than the file, and data offsets outside the file or
+reaching into the header, are refused unsupported.
 """
 import ast
 from array import array
 import base64
 import collections
+import json
 import math
 import operator
 import struct
@@ -26,6 +36,9 @@ from itertools import repeat
 from .store import ProjectError
 
 HEADER_BYTES = 64 * 1024        # an NPY header
+SAFETENSORS_HEADER_BYTES = 16 * 1024 * 1024   # a safetensors header
+SAFETENSORS_TYPES = {'F16': '<f2', 'F32': '<f4', 'F64': '<f8', 'I8': '|i1', 'I16': '<i2', 'I32': '<i4',
+                     'I64': '<i8', 'U8': '|u1', 'U16': '<u2', 'U32': '<u4', 'U64': '<u8', 'BOOL': '|b1'}
 SUMMARY_VALUES = 4_000_000      # values read for one summary
 DRAWN_MOST = 512                # rows and columns of a slice
 _MAGIC = b'\x93NUMPY'
@@ -135,6 +148,60 @@ def read_header(place):
     return parse_header(place.head(header_length(head)))
 
 
+def _whole(value):
+    return type(value) is int and value >= 0
+
+
+def safetensors_headers(place):
+    """[(name, Header)] of the tensors of the .safetensors file a Place holds, in the order of its header.
+
+    Each Header's offset is where its data begins in the file. Only the
+    header is read. A tensor of a type Tuldok does not read has kind None
+    and says so in problem.
+    """
+    size = place.size or 0
+    head = place.head(8)
+    if len(head) < 8:
+        _refuse('This is not a safetensors file: it is shorter than 8 bytes.')
+    length = struct.unpack('<Q', head)[0]
+    if length > SAFETENSORS_HEADER_BYTES:
+        _refuse(f'The safetensors header is {length} bytes; at most {SAFETENSORS_HEADER_BYTES} are read.')
+    if 8 + length > size:
+        _refuse(f'The safetensors header says it is {length} bytes, longer than the file.')
+    try:
+        value = json.loads(bytes(place.head(8 + length)[8:]).decode('utf-8'))
+    except (ValueError, RecursionError):
+        _refuse('The safetensors header is not JSON.')
+    if not isinstance(value, dict):
+        _refuse('The safetensors header is not a JSON object.')
+    start = 8 + length
+    found = []
+    for name, entry in value.items():
+        if name == '__metadata__':
+            continue
+        if (not isinstance(entry, dict) or not isinstance(entry.get('dtype'), str)
+                or not isinstance(entry.get('shape'), list) or not all(map(_whole, entry['shape']))
+                or not isinstance(entry.get('data_offsets'), list) or len(entry['data_offsets']) != 2
+                or not all(type(item) is int for item in entry['data_offsets'])):
+            _refuse(f'The safetensors entry {name!r} must hold a dtype, a shape of whole numbers and two '
+                    'data_offsets.')
+        begin, end = entry['data_offsets']
+        if begin < 0 or end < begin:
+            _refuse(f'The data of the tensor {name!r} reaches into the safetensors header.')
+        if start + end > size:
+            _refuse(f'The data of the tensor {name!r} lies outside the file.')
+        dtype = entry['dtype']
+        header = Header(list(entry['shape']), SAFETENSORS_TYPES.get(dtype, dtype), False, start + begin)
+        if dtype not in SAFETENSORS_TYPES:
+            header.descr, header.kind, header.itemsize = dtype, None, None
+            header.problem = f'of the type {dtype}'
+        elif end - begin != header.count * header.itemsize:
+            _refuse(f'The data of the tensor {name!r} is {end - begin} bytes; its shape and type need '
+                    f'{header.count * header.itemsize}.')
+        found.append((name, header))
+    return found
+
+
 # ------------------------------------------------------------------- reading
 
 def gather(view, start, step, count, itemsize):
@@ -168,7 +235,7 @@ def decode(raw, header):
     return values
 
 
-def _check_length(blob, header, name):
+def check_length(blob, header, name):
     if header.offset + header.count * header.itemsize > len(blob.view):
         _refuse(f'{name} is shorter than its shape says.')
 
@@ -181,7 +248,7 @@ def float32_base64(values):
     return base64.b64encode(packed.tobytes()).decode('ascii')
 
 
-def _finite_range(values):
+def finite_range(values):
     """(minimum, maximum, count of non-finite) of numbers; the minimum and maximum of the finite ones."""
     try:
         total = sum(values)
@@ -198,7 +265,19 @@ def _finite_range(values):
 def array_slice(blob, header, name, *, axes=None, index=None, most=256):
     """Two axes of an array, at index on the others, at most most rows and columns (one stride for both)."""
     header.require(name)
-    _check_length(blob, header, name)
+    check_length(blob, header, name)
+    axes, index, rows, columns, stride, values = slice_values(blob, header, name, axes=axes, index=index, most=most)
+    low, high, nonfinite = finite_range(values)
+    return {'shape': header.shape, 'dtype': header.dtype, 'axes': axes, 'index': index, 'rows': rows,
+            'columns': columns, 'stride': stride, 'values_f32': float32_base64(values), 'min': low, 'max': high,
+            'nonfinite': nonfinite}
+
+
+def slice_values(blob, header, name, *, axes=None, index=None, most=256):
+    """(axes, index, rows, columns, stride, values row by row) of the slice array_slice answers.
+
+    The caller has checked the header (require) and the blob's length.
+    """
     shape, ndim = header.shape, len(header.shape)
     if axes is None:
         axes = list(range(max(0, ndim - 2), ndim))
@@ -235,16 +314,13 @@ def array_slice(blob, header, name, *, axes=None, index=None, most=256):
             for row in range(rows):
                 values.extend(decode(gather(blob.view, base + row * stride * row_step, stride * column_step,
                                              columns, header.itemsize), header))
-    low, high, nonfinite = _finite_range(values)
-    return {'shape': shape, 'dtype': header.dtype, 'axes': list(axes), 'index': list(index), 'rows': rows,
-            'columns': columns, 'stride': stride, 'values_f32': float32_base64(values), 'min': low, 'max': high,
-            'nonfinite': nonfinite}
+    return list(axes), list(index), rows, columns, stride, values
 
 
 def array_summary(blob, header, name, *, bins=64):
     """Count, range, mean, deviation, zeros, non-finite and a histogram of an array, every stride-th value."""
     header.require(name)
-    _check_length(blob, header, name)
+    check_length(blob, header, name)
     count = header.count
     stride = max(1, math.ceil(count / SUMMARY_VALUES))
     read = math.ceil(count / stride)
@@ -266,18 +342,25 @@ def array_summary(blob, header, name, *, bins=64):
     if not finite:
         return {**result, 'min': None, 'max': None, 'mean': None, 'std': None, 'zeros': 0,
                 'histogram': {'low': None, 'high': None, 'counts': [0] * bins}}
+    # 64-bit values near the largest a float holds overflow a sum or a square: such a mean or deviation is null,
+    # never infinity (an answer is plain JSON).
+    mean = std = None
     try:
         mean = (total if finite is values else math.fsum(finite)) / len(finite)
-    except OverflowError:
-        mean = math.inf
-    deviations = array('d', map(operator.sub, finite, repeat(mean)))
-    std = math.sqrt(math.fsum(map(operator.mul, deviations, deviations)) / len(finite))
+        deviations = array('d', map(operator.sub, finite, repeat(mean)))
+        std = math.sqrt(math.fsum(map(operator.mul, deviations, deviations)) / len(finite))
+    except (OverflowError, ValueError):
+        pass
+    mean = mean if mean is not None and math.isfinite(mean) else None
+    std = std if mean is not None and std is not None and math.isfinite(std) else None
     low, high = min(finite), max(finite)
     counts = [0] * bins
     if high > low:
-        scale = bins / (high - low)
-        for position, many in collections.Counter(map(int, map(operator.mul, map(operator.sub, finite, repeat(low)),
-                                                             repeat(scale)))).items():
+        # Halved when the range itself overflows, so that a position is always a finite number.
+        part = 1.0 if math.isfinite(high - low) else 0.5
+        base, scale = low * part, bins / (high * part - low * part)
+        for position, many in collections.Counter(
+                int((value * part - base) * scale) for value in finite).items():
             counts[min(position, bins - 1)] += many
     else:
         counts[0] = len(finite)
@@ -292,7 +375,7 @@ def columns(blob, header, name, wanted, most):
     Returns (rows in all, stride, [values of each column]).
     """
     header.require(name)
-    _check_length(blob, header, name)
+    check_length(blob, header, name)
     if len(header.shape) != 2 or header.shape[1] < wanted:
         _refuse(f'{name} must have the shape (N, {wanted} or more).')
     total = header.shape[0]
