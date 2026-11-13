@@ -32,10 +32,13 @@ from tuldok_project import operations  # noqa: E402
 import test_tuldok_project_builds as builds_base  # noqa: E402
 
 REPOSITORY = Path(__file__).resolve().parents[1]
+# The catalog's manifest lost five entries when the old project mode was deleted (spec-m8.md, section 10): the
+# project_transfer operations, which it listed as unavailable. This is the digest of the manifest published before
+# (115 operations, b31b7a2b...) with those five entries taken out; every other entry is byte for byte what it was.
 PUBLISHED = {
-    'catalog': (115, 'b31b7a2b794020622e64d593cd29455226a4170451f15201e28cad5d9edd18f1'),
-    'project': (152, '58e4270277a38b58869ca4c6ae4bccffe74387b2ee70d3c178b30821f8d27320'),
+    'catalog': (110, 'ad5cc7ac91646b39b7a20b9dfca5ec79ed96ded4b5e36732fcf1145f1cc24460'),
 }
+OLD_MODE = ('project_files.', 'project_transfer.')
 DISCOVERY = '9c02284ed750bce31c53100d4657deaf40b519c9d17d5e3165b6b6342930b660'
 PROJECT_NAMES = {'project.' + operation.name for operation in operations.OPERATIONS}
 AGENT_SCOPES = ['inspect', 'edit', 'execute', 'cancel']
@@ -64,7 +67,7 @@ def digest(value):
 
 
 class Contracts(unittest.TestCase):
-    """What is published: unchanged for catalogs and old projects, the table for project folders."""
+    """What is published: unchanged for catalogs, the table for project folders, nothing of the old project mode."""
 
     def test_the_published_digests_are_unchanged(self):
         for profile, (count, expected) in PUBLISHED.items():
@@ -72,8 +75,19 @@ class Contracts(unittest.TestCase):
                 value = agent_api.capabilities('b' * 32, profile=profile)
                 self.assertEqual(len(value['operations']), count)
                 self.assertEqual(digest(value), expected)
-                self.assertFalse([item['id'] for item in value['operations'] if item['id'].startswith('project.')])
+                self.assertFalse([item['id'] for item in value['operations']
+                                  if item['id'].startswith(('project.',) + OLD_MODE)])
         self.assertEqual(digest(agent_api.discovery()), DISCOVERY)
+
+    def test_the_old_project_mode_is_not_published(self):
+        with self.assertRaises(agent_api.AgentAPIError) as refused:
+            agent_api.capabilities('b' * 32, profile='project')
+        self.assertEqual(refused.exception.code, 'registry_invalid')
+        folder = agent_api.capabilities('b' * 32, profile='project_folder')
+        self.assertFalse([item['id'] for item in folder['operations'] if item['id'].startswith(OLD_MODE)])
+        for name in ('project_files.status', 'project_transfer.status'):
+            with self.subTest(name), self.assertRaises(agent_api.AgentAPIError):
+                agent_api.operation(name)
 
     def test_the_project_folder_profile_is_the_table(self):
         value = agent_api.capabilities('b' * 32, profile='project_folder')

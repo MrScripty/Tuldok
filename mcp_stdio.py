@@ -236,12 +236,7 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
         try:
             agent_api.validate_arguments(name, arguments, contract_version(name))
             observe('dispatch', pending_observation)
-            # The explicit owner clients admit canonical operation IDs only;
-            # MCP names are transport aliases, validated by the fixed profile.
-            dispatch_name = (agent_api.operation(name)['operation_id']
-                             if isinstance(client, (agent_api.ProjectFilesOwnerClient,
-                                                    agent_api.ProjectTransferOwnerClient)) else name)
-            envelope = await anyio.to_thread.run_sync(client.call, dispatch_name, arguments)
+            envelope = await anyio.to_thread.run_sync(client.call, name, arguments)
             pending_http_status = envelope.get('status') if isinstance(envelope, dict) else None
             agent_api.validate_output(name, envelope, contract_version(name))
             pending_outcome = ('permission-refusal' if envelope['status'] in (401, 403)
@@ -412,10 +407,6 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, help='Private SDK JSON configuration file')
     owner_profile = parser.add_mutually_exclusive_group()
-    owner_profile.add_argument('--project-files-owner', action='store_true',
-                               help='Explicit current owner credential; expose only finite project-file operations')
-    owner_profile.add_argument('--project-transfer-owner', action='store_true',
-                               help='Explicit current host owner; expose only the five project-transfer operations')
     owner_profile.add_argument('--project-folder-owner', action='store_true',
                                help='Explicit owner of a served project folder; expose only the project folder operations')
     parser.add_argument('--observe-v2-database', help='Explicit operator opt-in to a fresh private v2 interface store')
@@ -430,9 +421,7 @@ def main(argv=None):
         import mcp  # noqa: F401 - explicit optional consumer boundary
         import jsonschema  # noqa: F401
         import agent_api
-        client_type = (agent_api.ProjectFilesOwnerClient if args.project_files_owner else
-                       agent_api.ProjectTransferOwnerClient if args.project_transfer_owner else
-                       agent_api.ProjectFolderOwnerClient if args.project_folder_owner else agent_api.AgentClient)
+        client_type = agent_api.ProjectFolderOwnerClient if args.project_folder_owner else agent_api.AgentClient
         client = client_type.from_config(args.config)
         client.bootstrap()
         if args.observe_database is not None or args.observe_v2_database is not None:

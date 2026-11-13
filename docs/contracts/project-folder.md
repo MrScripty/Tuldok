@@ -1762,10 +1762,8 @@ python app.py --data CATALOG --project-folder FOLDER
 
 `--data` names the catalog directory, which holds the credentials; the
 database is the one `TULDOK_DATABASE_URL` names. One app serves one folder and
-nothing else: `--project-folder` cannot be combined with `--project-root`,
-`--project-files-root`, `--project-runtime-source`,
-`--project-transfer-control` or `--project-transfer-root`. A folder that
-does not open stops start-up with the message and its first problems, exit
+nothing else: `--project-folder` cannot be combined with `--project-root`.
+A folder that does not open stops start-up with the message and its first problems, exit
 status 2. The app opens the project only for each operation, as the commands
 do, so files changed on disk are imported before an operation answers and
 the command line keeps working beside the app.
