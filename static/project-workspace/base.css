@@ -525,6 +525,7 @@ textarea { font: inherit; resize: vertical; }
 .rows > li.with-act > .row { flex: 1 1 auto; min-width: 0; }
 .rows > li.with-act > .act-group { flex: none; margin-right: 8px; }
 .sect .act-group { align-self: center; }
+.sect .act-group .btn { white-space: nowrap; }
 .hair { position: relative; display: inline-block; width: 120px; height: 2px; background: var(--grid); flex: none; vertical-align: middle; }
 .hair i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
 .progress-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -794,3 +795,35 @@ tr.wts-row:has(+ tr.wts-open) > td { background: var(--accent-wash); }
 .ann-stale p:first-child { color: var(--serious); font-weight: 500; }
 .ann-empty { display: grid; gap: 12px; justify-items: start; }
 .ann-new .form h3 { margin: 4px 0 0; }
+
+/* ---- The Pumas endpoint (generate.js): on Train beside the environments, the Generate form, and Suggest (annotate.js). ---- */
+.ep-models > li.ep-model { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr) minmax(120px, 190px); gap: 12px; align-items: start; padding: 8px 8px; }
+.ep-model > span { min-width: 0; }
+.ep-model .title, .ep-model .sub { display: block; }
+.ep-model .title { font-weight: 500; overflow-wrap: anywhere; }
+.ep-model .title.mono { font-family: var(--mono); font-size: 13px; }
+.ep-model .sub { color: var(--ink-2); font-size: 12.5px; overflow-wrap: anywhere; }
+.ep-model .sub.mono { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.ep-model .ep-makes b { font-weight: 500; color: var(--ink); }
+.ep-model .ep-off { color: var(--ink-3); }
+.ep-model .ep-load { text-align: right; }
+@media (max-width: 1100px) { .ep-models > li.ep-model { grid-template-columns: minmax(120px, 170px) minmax(0, 1fr); } .ep-model .ep-load { grid-column: 2; text-align: left; } }
+.row.ep-row .sub { white-space: normal; }
+.ep-part { display: grid; gap: 6px; }
+.ep-part .note { margin: 0; }
+.ep-found { display: grid; gap: 6px; }
+.ep-found .rows { margin-top: 4px; }
+.ep-found .row.ep-hit { cursor: default; }
+.gen-form .gen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; align-items: start; }
+.gen-form .gen-line { margin: -4px 0 0; }
+.gen-form .ann-field h3 { margin: 4px 0 0; }
+.gen-none { display: grid; gap: 10px; justify-items: start; }
+.ann-suggest { display: grid; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); min-width: 0; }
+.ann-suggest-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.ann-suggest-model { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; color: var(--ink-2); min-width: 0; flex: 1 1 200px; }
+.ann-suggest-model select { min-width: 0; max-width: 100%; flex: 1 1 140px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 3px 6px; }
+.ann-sugmark { margin: 0; padding: 2px 0 2px 8px; border-left: 3px solid var(--accent); color: var(--ink); overflow-wrap: anywhere; }
+.ann-sugmark.changed { border-left-color: var(--ink-3); color: var(--ink-2); font-weight: 400; }
+.ann-batch { border-top: 1px solid var(--line); padding-top: 8px; }
+.ann-batch .ann-batch-line { flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.ann-sugrefusal { font-size: 12.5px; }

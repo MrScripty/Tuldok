@@ -10,7 +10,8 @@
 // only read. Train draws the controls of spec-w3.md section 3.1 (actions.js):
 // Plan build, a build request's Approve, Decline and Cancel, a run's Cancel
 // run and Stop, an environment's Check again, Connect and Disconnect, and it
-// shows a running run live; it lists first what is planned (the page's drafts
+// shows a running run live, and the machine's Pumas endpoint beside the environments (generate.js);
+// it lists first what is planned (the page's drafts
 // and the models never built, spec-w3 section 3.2). Data's drawer has Edit;
 // the editor itself is editor.js's. Rule: the chrome holds no project words; titles,
 // metrics and text come from the project.
@@ -346,11 +347,12 @@
   function train(main, aside, state, act, data) {
     const sel = state.sel.train || null;
     paint(main, async () => {
-      const [recipes, runs, requests, envs] = await Promise.all([P.read('definitions', { kind: 'recipe' }), P.read('runs'), P.read('build_requests'), P.read('environments')]);
+      const [recipes, runs, requests, envs, endpoint] = await Promise.all([P.read('definitions', { kind: 'recipe' }), P.read('runs'), P.read('build_requests'), P.read('environments'),
+        window.LabGenerate ? P.read('endpoint').catch(error => ({ error })) : null]);
       const running = runs.runs.filter(r => r.state === 'running');
       const progress = new Map(await Promise.all(running.map(r => P.call('progress', { run: r.id }).then(p => [r.id, p.event], () => [r.id, null]))));
-      return { recipes: recipes.definitions, runs: runs.runs, requests: requests.requests, envs: envs.environments, progress };
-    }, (frag, { recipes, runs, requests, envs, progress }) => {
+      return { recipes: recipes.definitions, runs: runs.runs, requests: requests.requests, envs: envs.environments, progress, endpoint };
+    }, (frag, { recipes, runs, requests, envs, progress, endpoint }) => {
       const g = graphFor(data.map), deviceOf = new Map(envs.map(e => [e.reference, e.device]));
       // Planned (spec-w3 section 3.2): the drafts of this page, then the models never built.
       const E = window.LabEditor, drafts = g.nodes.filter(m => m.draft);
@@ -436,9 +438,12 @@
         }
         frag.appendChild(ul);
       }
+      // The Pumas endpoint of this machine, beside the environments (spec-d5 section 5, generate.js).
+      if (endpoint) window.LabGenerate.section(frag, endpoint, sel, act);
     });
     if (!sel) return closeDrawer(aside);
-    if (sel.startsWith('run:')) runDrawer(aside, sel, act, data);
+    if (sel === 'endpoint' && window.LabGenerate) window.LabGenerate.drawer(aside, act);
+    else if (sel.startsWith('run:')) runDrawer(aside, sel, act, data);
     else if (sel.startsWith('request:')) requestDrawer(aside, sel, act, data);
     else if (sel.startsWith('plan:')) A.planView(aside, sel, act.go, () => { const one = sel.slice(5); act.select(data.map.byId.has(one) ? one : null); });
     else if (sel.startsWith('env:')) envDrawer(aside, sel, act, data);
@@ -620,10 +625,11 @@
       const built = sets.filter(d => byRef.has(d.reference)).length, adopted = sets.filter(d => (byRef.get(d.reference) || []).some(p => p.adopted)).length;
       const total = sets.reduce((n, d) => n + (byRef.get(d.reference) || []).reduce((a, p) => a + (p.bytes || 0), 0), 0);
       const head = sect('Datasets', sets.length + ' · ' + built + ' with files on this machine' + (adopted ? ', ' + adopted + ' adopted' : '') + (total ? ' · ' + bytes(total) : ''));
-      // Two forms that keep a new dataset as an unsaved edit (spec-d4 section 7, annotate.js): files brought in, and a dataset frozen with splits.
+      // Three forms that keep a new dataset as an unsaved edit (spec-d4 section 7, annotate.js; spec-d5 section 5, generate.js): files brought in, a dataset frozen with splits, and one generated through the Pumas endpoint.
       if (window.LabAnnotate) { head.appendChild(h('span', 'spacer')); head.appendChild(A.group('data:new', [
         { id: 'import', label: 'Import files', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:import' ? null : 'new:import') },
-        { id: 'freeze', label: 'Freeze a dataset', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:freeze' ? null : 'new:freeze') }], { inline: true })); }
+        { id: 'freeze', label: 'Freeze a dataset', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:freeze' ? null : 'new:freeze') },
+        { id: 'generate', label: 'Generate', cls: 'btn sm', who: 'edit', hidden: !window.LabGenerate, onClick: () => act.select(sel === 'new:generate' ? null : 'new:generate') }], { inline: true })); }
       frag.appendChild(head);
       if (!sets.length) { frag.appendChild(h('p', 'empty', 'The project defines no dataset.')); return; }
       const grid = h('div', 'ds-grid');
@@ -651,6 +657,7 @@
       frag.appendChild(grid);
     });
     if (!sel) return closeDrawer(aside);
+    if (raw === 'new:generate' && window.LabGenerate && window.LabAnnotate) { window.LabGenerate.form(aside, act); return true; }
     if (raw.startsWith('new:') && window.LabAnnotate) { window.LabAnnotate.datasetForm(aside, raw.slice(4), act); return true; }
     if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'data'); return true; }
     drawer(aside, sel, () => Promise.all([P.read('definition', { reference: sel }), P.read('products', { reference: sel })]), (ins, [d, p]) => {
@@ -772,6 +779,6 @@
     });
   }
 
-  S.paint = paint;
+  S.paint = paint; S.drawer = drawer;
   Object.assign(S, { benchmarks, train, data: data_, analysis });
 })();
