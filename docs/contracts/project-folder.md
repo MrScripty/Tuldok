@@ -2,16 +2,17 @@
 
 Owner: the package `tuldok_project/` (`folder.py` reads the folder, `documents.py`
 and `schemas/*.json` check single files, `check.py` applies every rule,
-`results.py` owns summary files, `store.py` and `result_rows.py` the database
-copy and its results, `charts.py` charts and the report page, `plan.py`
+`results.py` owns summary files, `annotations.py` the files of annotations,
+`store.py` and `result_rows.py` the database copy and its results, `charts.py` charts and the report page, `plan.py`
 plans, `environments.py` environments, and `builds.py`, `launcher.py` and
 `snapshot.py` building). The format names are `tuldok_project_v1` for
 the folder and `tuldok_definition_v1` for each definition.
 
 A project folder describes a piece of research as a set of small JSON files that
 people and agents write and keep in Git. Each file is a **definition**: it says
-what a dataset, model, training recipe, benchmark, build step, environment or
-chart is and, where something has to be produced, which command produces it.
+what a dataset, model, training recipe, benchmark, build step, environment,
+chart or annotation task is and, where something has to be produced, which
+command produces it.
 What a command writes is a **product**. Products stay on the machine that made
 them; the folder holds only what someone wrote, plus benchmark summaries.
 
@@ -21,7 +22,8 @@ document says exactly what the checker accepts.
 ## What belongs in the folder
 
 Put in the folder: the definitions, the result summary of each benchmark
-(`results/`), and cards and notes written by people (`notes/`).
+(`results/`), the annotations of each annotation task (`annotations/`), and
+cards and notes written by people (`notes/`).
 
 Keep out of the folder: generated datasets, weights, logs, run directories,
 installed environments, caches, checksums of other files, and history. Git is
@@ -45,6 +47,8 @@ benchmarks/<name>.json
 steps/<name>.json
 environments/<name>.json
 charts/<name>.json
+annotations/<name>.json
+annotations/<name>.jsonl   the annotations of task <name>
 results/<benchmark name>.csv
 notes/...
 ```
@@ -52,14 +56,17 @@ notes/...
 - `tuldok.json` is required. Every other entry is optional.
 - Any other top-level entry is an error. Move such files into `notes/` or out of
   the folder.
-- The seven **definition directories** (`datasets/` to `charts/`) hold only
+- The eight **definition directories** (`datasets/` to `annotations/`) hold only
   `<name>.json` files, one definition each, and no subdirectories.
+  `annotations/` also holds `<name>.jsonl`, the annotations of the task in
+  `<name>.json`, which must exist.
 - `results/` holds only `<name>.csv` files.
 - `notes/` holds plain files and directories to any depth. Their contents are not
   read.
 - Every file is a regular file and every directory a real directory. A symbolic
   link anywhere in the folder, including under `notes/`, is an error.
-- Size limits: `tuldok.json` 64 KiB, a definition 1 MiB, a results file 16 MiB.
+- Size limits: `tuldok.json` 64 KiB, a definition 1 MiB, a results file 16 MiB,
+  a file of annotations 64 MiB.
 
 A **name** is 1 to 120 characters of lowercase letters, digits, `.`, `_` and `-`,
 starting with a letter or digit (`^[a-z0-9][a-z0-9._-]{0,119}$`). The file
@@ -121,6 +128,8 @@ directories:
 | `subjects[].recipe` (benchmark) | `recipes/` |
 | `cases.dataset` (benchmark) | `datasets/` |
 | `benchmark` (chart) | `benchmarks/` |
+| `dataset` (annotation) | `datasets/` |
+| `run.annotations` (a dataset's freeze) | `annotations/` |
 
 An **input** is what a command reads from another definition's product. It is
 written either as a reference, meaning the whole product, or as
@@ -132,7 +141,7 @@ other definition declares in its `run.outputs`.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `format` | yes | exactly `tuldok_definition_v1` |
-| `kind` | yes | `dataset`, `model`, `recipe`, `benchmark`, `step`, `environment` or `chart`; must match the directory |
+| `kind` | yes | `dataset`, `model`, `recipe`, `benchmark`, `step`, `environment`, `chart` or `annotation`; must match the directory |
 | `title` | yes | 1 to 200 characters |
 | `description` | no | at most 4,000 characters |
 | `card` | no | path of an existing file under `notes/`, written from the project folder, for example `notes/fits/early-fit.md` |
@@ -181,7 +190,8 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 
 | Field | Required | Rule |
 | --- | --- | --- |
-| `command` | yes | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
+| `command` | unless `step` is given | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
+| `step` | no | datasets only: `import` or `freeze`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
 | `environment` | when the first string of `command` is `python` | reference to `environments/` |
 | `inputs` | no | at most 32 entries; keys `^[a-z][a-z0-9_]{0,31}$`; values are inputs from `datasets/`, `recipes/` or `steps/` |
 | `settings` | no | object, free content, written to a file whose path replaces `{settings}`; not together with `settings_file` |
@@ -191,6 +201,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | `resources` | no | any of `gpu` (boolean), `cpu_threads` (integer ≥ 1), `memory_gb`, `wall_hours`, `disk_gb` (numbers > 0) |
 | `sources` | no | at most 64 code paths (files or directories); a change in them means the code changed |
 | `estimate` | no | `{"command": [...]}`, 1 to 64 strings; the command prints one JSON object with any of `disk_bytes`, `wall_seconds`, `items` |
+| `annotations` | with `step: "freeze"` only | 1 to 32 different references to `annotations/`: the tasks a freeze reads |
 
 A **code path** is a path relative to the code root, at most 1,024 characters.
 `settings_file`, `sources`, a model's `config_file` and `sources`, and an
@@ -213,7 +224,7 @@ directory) and may not lead outside it through a symbolic link.
 Any other placeholder is an error, and so is a brace without its partner. Write
 `{{` and `}}` for literal braces.
 
-## The seven kinds
+## The eight kinds
 
 The examples below come from one project. References in them point at the other
 examples, except `environments/cuda-torch`, a second environment not shown.
@@ -225,6 +236,9 @@ examples, except `environments/cuda-torch`, a second environment not shown.
 | `run` | unless `earlier_work.rebuild` is `no` | see the `run` block |
 | `splits` | no | object, split name to a number of items (integer ≥ 0) |
 | `view` | no | how its product is shown as records; see [Looking inside a product](#looking-inside-a-product) |
+
+A dataset's run may name a `step` instead of a `command`: see
+[Steps Tuldok provides](#steps-tuldok-provides).
 
 Example, `datasets/sinusoidal-v1.json`:
 
@@ -244,6 +258,123 @@ Example, `datasets/sinusoidal-v1.json`:
     "estimate": {"command": ["python", "-m", "surrogate.datasets", "plan", "sinusoidal-v1", "--root", "{output}"]}
   },
   "splits": {"train": 16, "development": 8, "reserved": 88}
+}
+```
+
+#### Steps Tuldok provides
+
+A dataset's `run` names either a `command` or a `step`, one of `import` and
+`freeze`. A run with `step` has no `command`, `environment`, `outputs`,
+`settings_file`, `env` or `estimate`: the step's outputs are fixed, its
+settings are inline in `settings`, and it runs with Tuldok's own interpreter
+(see [The command and its environment](#the-command-and-its-environment)).
+It may have `resources` and `sources`. A plan shows it as `tuldok import` or
+`tuldok freeze`. It is planned, requested, approved, run, cancelled and
+recorded like any build, from a commit as builds are. `check` reports a
+setting the step does not take, a required one missing and a value of the
+wrong form.
+
+**`import`** brings files on this machine into the dataset. Its run takes no
+`inputs`. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `source` | yes | a directory. Relative to the code root, it is a code path read from the code the run sees (the commit, or the working tree for a scratch run), and a change under it makes the product out of date; absolute, it is read on this machine only, and `check` warns |
+| `pattern` | no | which files, as a pattern of [Looking inside a product](#looking-inside-a-product) without `!`, matched against paths under the source; default `**/*` |
+| `kind` | no | one of the seven kinds, for every file; default by extension |
+| `rights` | yes | 1 to 1,000 characters: what may be done with the files |
+| `lines` | no | `true` makes each line of each text file a record of its own (a line that is empty or blank is skipped). A line of a `.jsonl` file that is an object with a string `text` gives that string; any other line gives itself |
+
+Its product holds the files under `files/`, each at its path under the
+source, hard-linked (copied when a link cannot be made, such as across file
+systems), and `records.jsonl` with one line per file, or per line with
+`lines`:
+
+```
+{"id":"images__cat.png","kind":"image","path":"files/images/cat.png","sha256":"9f…","bytes":5120,"rights":"Photographed by us; free to use.","origin":{"path":"images/cat.png"}}
+{"id":"notes__a.txt__4","kind":"text","text":"second line","sha256":"…","bytes":11,"rights":"…","origin":{"path":"notes/a.txt","line":4}}
+```
+
+An id is made from the path (and `/` and the line number): `/` becomes
+`__`, any other character outside `A-Z a-z 0-9 . _ -` becomes `_`, it is cut
+to 200 characters, and an id already taken gets `-2`, `-3`, … before its
+extension. Files are taken in the order of their paths, bytewise in UTF-8. A
+path holding `!` (which an address reads as an archive) is placed with `_`
+in its place. `sha256` is the SHA-256 of the file, or of the UTF-8 of a
+line's text; null for a file over 1 GiB. A symbolic link whose target is in
+the source is taken where it stands; one that leaves the source is skipped
+and counted, and so are names that are not UTF-8, entries that are not
+regular files, lines that are not UTF-8 and lines too long for one line of
+`records.jsonl` (64 KiB). The step never follows a link out of its source,
+writes only its output and deletes nothing.
+
+**`freeze`** makes a dataset with splits from another dataset's records and
+their annotations. Its run takes one input, `"inputs": {"records":
+"datasets/<name>"}`, and `annotations`, one or more tasks on that dataset;
+`check` reports a task on another dataset. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `seed` | yes | an integer of at most 63 bits |
+| `shares` | yes | 1 to 16 splits and their relative sizes, integers from 0 to 1,000,000, at least one above 0, for example `{"train": 8, "validation": 1, "test": 1}` |
+| `include` | no | the states of the first task's annotations that take a record in; default `["accepted"]` |
+
+It reads each task's line file from the commit the build uses, at the
+project folder's place in the code's Git repository (a scratch build reads
+the working tree): annotations that are not saved and committed are not
+frozen, as code is not. A build from a commit refuses a project folder that
+is not in the code's repository. The input's records are its product's
+`records.jsonl`, or its files (an input shown through a `view` is refused).
+A record is taken when the first task has an annotation of it in a state of
+`include` that is not stale: its record exists and, when the annotation
+carries a `sha256`, the record's hash is the same. The records taken are
+ordered by the SHA-256 of `<seed>:<record's sha256>` (`<seed>:id:<id>` for a
+record with no hash), then cut by the shares, the splits taken in the order
+of their names (`test`, `train`, `validation`), each split's end being
+`count × shares so far ÷ all shares`, rounded down. The output holds their
+files linked under `files/` (an archive member brings its whole archive)
+and `records.jsonl` with each record's keys, `split` and `annotations`: per
+task by name, its `state` and `value`, for each task whose annotation of the
+record is not stale.
+
+```
+{"id":"images__cat.png","kind":"image","path":"files/images/cat.png","sha256":"9f…","bytes":5120,"rights":"…","origin":{"path":"images/cat.png"},"split":"train","annotations":{"scene-quality":{"state":"accepted","value":"clean"}}}
+```
+
+Stale annotations, records left out by their state, records with no
+annotation, invalid lines, stale annotations of the other tasks and records
+whose file is missing are counted in the run's progress and printed in its
+log. A record whose id is not one of `records.jsonl` (a file of an input
+with no `records.jsonl`) gets one made as `import` makes them.
+
+A frozen dataset's run records the SHA-256 of each task's line file as it
+read it; see [Build states](#build-states).
+
+Example, `datasets/scene-photos.json` and `datasets/scene-photos-v1.json`:
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Scene photos",
+  "run": {
+    "step": "import",
+    "settings": {"source": "data/scenes", "pattern": "**/*.png", "rights": "Photographed by us; free to use."}
+  }
+}
+```
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Scene photos v1, frozen",
+  "run": {
+    "step": "freeze",
+    "inputs": {"records": "datasets/scene-photos"},
+    "annotations": ["annotations/scene-quality"],
+    "settings": {"seed": 7, "shares": {"train": 8, "validation": 1, "test": 1}}
+  }
 }
 ```
 
@@ -454,6 +585,102 @@ Example, `charts/final-velocity-ranking.json`:
 }
 ```
 
+### `annotation`
+
+An annotation task says what is recorded about the records of one dataset
+(see [Looking inside a product](#looking-inside-a-product) for records). Its
+annotations are the lines of `annotations/<name>.jsonl` beside it. A task is
+never built: it has no `run`, no product, and the state `none`. Planning a task
+plans its dataset in its place.
+
+| Field | Required | Rule |
+| --- | --- | --- |
+| `dataset` | yes | reference to `datasets/` |
+| `task` | yes | `review`, `class`, `tags`, `text`, `boxes`, `spans` or `segments` |
+| `vocabulary` | for `class`, `tags`, `boxes`, `spans` and `segments`; not allowed for `review` and `text` | 1 to 500 different **terms**, each 1 to 200 characters without control characters |
+
+`earlier_work` is not allowed here. `card` is where the guide for the people
+and agents who annotate is written.
+
+What an annotation's `value` is, by task, and which records it may describe:
+
+| Task | `value` | Records of kind |
+| --- | --- | --- |
+| `review` | always null; the state is the decision | any but `file` |
+| `class` | one term | any but `file` |
+| `tags` | a list of different terms, possibly empty | any but `file` |
+| `text` | a string of at most 64 KiB in UTF-8: a caption, a transcript, a summary | any but `file` |
+| `boxes` | a list of `{"term", "x", "y", "w", "h"}`, numbers in pixels of the image; `x` and `y` at least 0, `w` and `h` above 0, the box inside the image | `image` |
+| `spans` | a list of `{"term", "start", "end"}`, whole numbers of characters (code points) of the text; 0 ≤ `start` < `end` ≤ the text's length | `text` |
+| `segments` | a list of `{"term", "start", "end"}` with an optional `"text"` (a string of at most 64 KiB), numbers of seconds; 0 ≤ `start` < `end` ≤ the sound's length | `audio` |
+
+A list holds at most 1,000 items, and an item no other key. The value may be
+null in any state but `accepted`. The record's kind, an image's size, a text's
+length and a sound's length are known only from the dataset's product, so the
+folder check cannot apply those rules; Tuldok applies them when an annotation
+is made.
+
+Example, `annotations/scene-quality.json`:
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "annotation",
+  "title": "Scene quality",
+  "card": "notes/annotating/scene-quality.md",
+  "dataset": "datasets/sinusoidal-v1",
+  "task": "class",
+  "vocabulary": ["clean", "noisy", "broken"]
+}
+```
+
+#### The annotations file
+
+`annotations/<name>.jsonl` holds the annotations of task `<name>`, one JSON
+object per line, one line per record. A record with no line is not annotated.
+The keys, in this order:
+
+| Key | Required | Rule |
+| --- | --- | --- |
+| `record` | yes | the record's id: 1 to 600 characters, no control characters; each record once |
+| `sha256` | yes | the SHA-256 of the record's content when it was annotated (64 lowercase hexadecimal characters), or null |
+| `state` | yes | `draft`, `accepted`, `needs-work` or `rejected` |
+| `value` | yes | as the task says, or null |
+| `note` | no | a string of at most 4,000 characters |
+| `by` | yes | `owner`, or `agent:` followed by 1 to 80 characters (the agent credential's name, cut) |
+| `at` | yes | a real UTC time, `YYYY-MM-DDTHH:MM:SSZ` |
+| `from` | no | an object of at most 2 KiB, written compact, saying what suggested the value; kept as it is |
+
+The file is written in one exact form, so that Git shows one changed line per
+changed annotation:
+
+- lines sorted by `record`, comparing the bytes of its UTF-8;
+- each line written compact (`,` and `:` with no spaces), with characters
+  other than ASCII written as themselves rather than as `\u` escapes, the keys
+  in the order above and the keys of a `boxes`, `spans` or `segments` item in
+  the order of the table of tasks;
+- each line ending with `\n`, the last one included.
+
+A file with no line left is deleted when it is saved. The JSON rules above
+apply to each line: no repeated key, no `NaN` or `Infinity`, and no escaped
+half of a surrogate pair.
+
+The check reads every line. A line that is not such an object, a value the task
+does not allow, a record that an earlier line has, and a line whose record
+does not sort after the one above it are errors; a term outside the
+vocabulary is a warning, so that a term can be removed from a vocabulary
+while annotations still use it. Each problem names its line (`line <n>`): the
+first 20 of a file, then one problem counting the rest. A file of annotations
+is not checked while its task has errors.
+
+Example, `annotations/scene-quality.jsonl`:
+
+```
+{"record":"scene-0001","sha256":"9f2c0e5d1b8a7f6e5d4c3b2a19087f6e5d4c3b2a19087f6e5d4c3b2a19087f6e","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T10:02:11Z"}
+{"record":"scene-0002","sha256":null,"state":"rejected","value":null,"note":"blurry","by":"owner","at":"2026-11-13T10:02:40Z"}
+{"record":"scene-0003","sha256":null,"state":"draft","value":"noisy","by":"agent:helper","at":"2026-11-13T10:05:02Z"}
+```
+
 ## Results files
 
 `results/<name>.csv` is the summary of benchmark `benchmarks/<name>.json`, which
@@ -517,6 +744,7 @@ pilot-dense-k1,velocity_error_final,cells_per_metre=8,4,0,0.195,0.175,0.129,0.27
    | a benchmark subject's `recipe` | `subject:<subject name>` |
    | a benchmark's `cases.dataset` | `cases` |
    | a chart's `benchmark` | `benchmark` |
+   | an annotation task's `dataset` | `dataset` |
 
    Two more fields of a recipe are edges with a role, shown in a definition's
    uses and used-by, but are not uses in this sense: they may run both ways,
@@ -529,7 +757,8 @@ pilot-dense-k1,velocity_error_final,cells_per_metre=8,4,0,0.195,0.175,0.129,0.27
 
 4. A chart's `metric`, `metric_x`, `subjects` and `group` exist in its benchmark.
 5. Code paths exist under the code root (see the `run` block).
-6. Every results file has its benchmark and follows the rules above.
+6. Every results file has its benchmark and follows the rules above. Every
+   file of annotations has its task and follows the rules of its task.
 7. A recipe's `group` is a group of `tuldok.json`; a group's `parent` is another
    group and no group is its own ancestor; a recipe is never derived from or
    compared with itself; following `derived_from` never comes back to where it
@@ -554,7 +783,7 @@ at least one error, and 2 for a usage error such as an unknown option.
 Every problem is reported; the check does not stop at the first. A problem has a
 severity (`error` or `warning`), the file's path relative to the project folder,
 a JSON pointer to the field (empty for a problem with the whole file; `line <n>`
-in a results file), and one sentence. Text output prints one line per problem,
+in a results file or a file of annotations), and one sentence. Text output prints one line per problem,
 with the parts separated by two spaces and `-` for an empty pointer, sorted by
 path and pointer, then a count:
 
@@ -567,11 +796,16 @@ warning  results/dense-development-240.csv  -  The results file does not end wit
 With `--json` the object is `{"folder", "ok", "errors", "warnings", "problems"}`,
 each problem being `{"severity", "path", "pointer", "message"}`.
 
-There are three warnings; every other problem is an error:
+These are warnings; every other problem is an error:
 
 - a code path that does not exist, in a definition with `earlier_work`;
 - a results file without a final line end;
-- a results file that is not checked because its benchmark has errors.
+- a results file that is not checked because its benchmark has errors;
+- in a file of annotations: a term that is not in the task's vocabulary (one
+  warning per term, saying how many annotations use it and on which lines), a
+  blank line, a line not written in the exact form below, a missing final line
+  end, and a file with no lines;
+- a file of annotations that is not checked because its task has errors.
 
 One mistake is reported once. A reference into the wrong directory is reported by
 the field's own rule and not again as a missing definition, and a chart is not
@@ -594,13 +828,13 @@ to the folder. Each project has its own schema, `project_<id>`, named after the
 | `list [--kind K]` | Prints each definition's reference, state and title, one per line. `--kind` keeps one kind. |
 | `show REFERENCE` | Prints a definition's reference, title, kind and state, what it uses and what uses it (each with its role), then the definition's text. |
 | `graph [--order]` | Prints every definition with its kind and state, then every use as `from  role  to`. `--order` instead prints the build order: each definition after everything it uses, with its state. |
-| `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import. |
+| `status` | Lists definitions edited or removed in the database and not yet saved, and definition files added, changed or missing on disk since the last import; and per annotation task, how many records have unsaved annotations, and the annotation files changed on disk. |
 | `set REFERENCE FILE` | Replaces or adds the definition at `REFERENCE` with the text of `FILE`, in the database only. The text is checked on its own and against the rest of the project; an edit with any error is refused and changes nothing. |
 | `remove REFERENCE` | Removes the definition in the database only. It is refused while another definition uses it, or while it is the chart `tuldok.json` names in `map.chart`. |
 | `revert REFERENCE` | Undoes the unsaved edit or the removal of a definition, in the database only: the file in the folder takes its place again. A definition the folder has no file for is dropped instead (refused while another definition uses it). A file that no longer checks is refused, and a definition with neither an unsaved edit nor a removal has nothing to revert (exit status 1). |
 | `branch RECIPE --title TITLE [--name NAME] [--change KIND] [--description TEXT] [--keep]` | Prints a new recipe branched from `RECIPE` (a bare name or `recipes/<name>`), as the operation `draft_branch` writes it: its reference, its problems in the form `check` prints them, and its text. Nothing is stored, unless `--keep` is given and the text has no error: then it is kept as an unsaved edit, as `set` keeps one. With `--keep` and an error, exit status 1. Here `--keep` keeps the branch; `branch` takes no `--keep` or `--discard` for a conflict. |
 | `map` | Prints the project's map: per group in order, its title, how many models (recipes) it has and how many of each kind of change, then the models in no group and the totals, then how many lines (`derived_from`, and recipes used as inputs by recipes) and comparisons there are, and the track. Reads the database only, never a results file, values file or note. |
-| `save` | Writes every unsaved definition to its file and deletes the files of removed ones. It writes nothing when one of those files changed on disk since it was imported, and names them. |
+| `save` | Writes every unsaved definition to its file and deletes the files of removed ones, and writes the annotation file of each task with unsaved annotations. It writes nothing when one of those files changed on disk since it was imported, and names them. |
 | `forget` | Drops the project's copy from the database, including unsaved edits. The folder is not touched. |
 
 `note FOLDER PATH` prints one file under the folder's `notes/` directory,
@@ -685,6 +919,68 @@ that subject's rows.
 
 Charts and the report read only these rows. A copy of the folder with its
 `results/` files draws every chart; no run directory or values file is needed.
+
+## Annotations in the database
+
+Annotations are edited in the database copy and written to the folder by
+`save`, as definitions are. The copy holds one row per task and record: the
+line's fields as they now are, the line as it is in `annotations/<name>.jsonl`
+(or nothing, for an annotation made here and not yet saved), and whether the
+row is unsaved. An annotation removed here and not yet saved keeps its row,
+with no fields, until `save`.
+
+**Opening** notices an annotation file that is new, changed or gone. Its size
+and time are compared with those recorded at the last import or save, and
+only a file whose size or time differs is read and its SHA-256 compared; a
+file with the same content and a new time is not imported again. A changed
+file is read line by line: each record whose line changed takes the file's
+line. Where the record also has an unsaved annotation here, the project does
+not open: the refusal is `conflict` and names `annotations/<name>.jsonl`, and
+opening again with `--keep` (or `resolve_conflict` `keep`) keeps the
+annotations here, the file's lines becoming the saved ones, while `--discard`
+takes the file's lines. An annotation file that is gone forgets the saved
+lines; an annotation with an unsaved change here stays, unsaved. A task
+removed from the folder while it has unsaved annotations here is a
+conflict too; it can only be discarded. A line holding the character U+0000
+cannot be kept in the database and refuses the open `invalid`.
+
+**`save`** writes, whole, the file of each task that has an unsaved row, from
+all its annotations in the exact form of [The annotations file](#the-annotations-file)
+(by a temporary file and a rename), and deletes it when the task has no
+annotation left; it also deletes the file of a removed task. It writes nothing
+when such a file changed on disk since it was imported, and names it
+(`changed-on-disk`). After a save no annotation is unsaved, and each row's
+saved line is the line written.
+
+**`status`** gains `annotations_unsaved`, a list of `{task, records}` (the
+task's reference and how many of its records have an unsaved change), and
+`annotations_changed`, the paths of the annotation files added, changed or
+removed on disk since the last import or save, by size and time. Neither reads
+nor writes an annotation file.
+
+A task with annotations cannot be removed (`in-use`, saying how many); remove
+or revert its annotations first.
+
+**The hash of a record's content** ties an annotation to what it describes:
+SHA-256 of the record's file, of an archive member's bytes once decompressed,
+or of the UTF-8 of an inline `text`. A record list may give it as `sha256`.
+Otherwise Tuldok computes it when the record is first annotated, or first
+looked at for an annotation, and keeps it for that run and record; a run's
+product never changes, so it is computed once. A record over 1 GiB is not
+hashed: its annotations carry null and are tied by id alone.
+
+**Stale.** An annotation is stale when its dataset's current product has no
+record of its id, or has one whose hash differs from the annotation's (an
+annotation or a record without a hash is never stale by content). It is
+worked out when asked, never stored, and only the records that have
+annotations are hashed to find it. When the dataset has no product, nothing
+is stale (`stale` is null). Stale annotations are kept, counted and shown;
+Tuldok never drops one.
+
+**Invalid.** An annotation is invalid when its value is not one the task as it
+now is allows (its `task` or `vocabulary` changed since it was made). Each row
+remembers the task it was last checked against, so counting reads no value
+until the task changes.
 
 ## Values files
 
@@ -1314,6 +1610,7 @@ is 32 hexadecimal characters:
 | --- | --- |
 | `output/` | what `{output}` names, made empty before the command starts; a succeeded run's `output/` is its product |
 | `settings.json` | the inline `settings` as the run saw them, when the definition has them |
+| `tasks.json`, `annotations/` | a freeze's tasks and the line files it read |
 | `stdout.log`, `stderr.log` | the command's standard output and error |
 | `cancel` | present when cancellation was asked for |
 | `outcome.json` | how the command ended, written when every process of the run is gone |
@@ -1348,6 +1645,17 @@ earlier ones:
 The working directory is the code root in the snapshot (or the code root
 itself for a scratch run). Standard input is `/dev/null`; standard output and
 error are appended to the two logs.
+
+A [step Tuldok provides](#steps-tuldok-provides) needs no environment
+definition. Its command is Tuldok's own interpreter running `-m
+tuldok_project.steps <step> <run directory>/settings.json <run
+directory>/output`, followed by `--code <code root>` for `import`, and by
+`--records <the input's product> --tasks <run directory>/tasks.json` for
+`freeze`, which also finds the line files it was given in `<run
+directory>/annotations/`. Its environment is the one above without `env`,
+with `PYTHONSAFEPATH=1` and `PYTHONPATH` set to Tuldok's own directory last,
+so that Tuldok's code is imported and the code root's never is. A step opens
+no database; it prints progress lines like any command.
 
 ### Placeholders at run time
 
@@ -1433,7 +1741,15 @@ A current product is **out of date** when:
 - the run was not a scratch run, and one of the definition's `sources` (or a
   file under one) changed since the run's commit: in a later commit or as an
   uncommitted change to a tracked file. When Git no longer has that commit,
-  the code is taken to have changed.
+  the code is taken to have changed. An `import` from a relative `source` is
+  out of date the same way when a file under its source changed;
+- for a `freeze`, the line file of one of its tasks differs from the one its
+  run read: in the commit `HEAD` names (the commit a build would use; an
+  uncommitted change does not count), or in the working tree for a scratch
+  product. The cause names the task and the file (`the annotations of
+  annotations/scene-quality (annotations/scene-quality.jsonl) changed since
+  run …`, or `are gone`). A change to the file of a task it does not read
+  changes nothing.
 
 A benchmark has a product per subject. It is `built` when every subject that
 would run has a current product that is not out of date, and `out-of-date`
@@ -1884,6 +2200,9 @@ and result keys of each operation are in its contract.
 | `inside` | inspect | List a directory, an archive or the arrays of an .npz in a finished run's product. |
 | `array_slice` | inspect | Read a slice along two axes of an array in a finished run's product, as 32-bit floats. |
 | `array_summary` | inspect | Read the range, mean, deviation and histogram of an array in a finished run's product. |
+| `weights` | inspect | List the weights files of a finished run's product, each with its size, the file it started from and, when Tuldok reads it, its layers and parameter count. |
+| `weights_compare` | inspect | Compare, array by array, a weights file of a finished run's product with one of the same or another finished run: norms, relative change, cosine and largest change. |
+| `array_tiles` | inspect | Read tiles of two axes of an array in a finished run's product, one per position along a third axis, as 32-bit floats. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -1899,6 +2218,11 @@ and result keys of each operation are in its contract.
 | `cancel_build` | cancel | Cancel a build request, stopping its build when it is running. |
 | `cancel_run` | cancel | Ask a queued or running run to stop. |
 | `stop_run` | cancel | Kill what a run whose build is gone left running, and mark it unknown. |
+| `annotation_tasks` | inspect | List the annotation tasks, each with its dataset, current product and counts of its records by the state of their annotations. |
+| `annotated_records` | inspect | Read one page of the records of a task's dataset with their annotations, optionally in one state or of one kind, with the counts. |
+| `annotation` | inspect | Read one record's annotation under a task as it now is and as it is in the file, whether it is unsaved or stale, and the hash of the record's content. |
+| `set_annotation` | edit | Check annotations of a task's records, or their removal, and keep them as unsaved edits; one item that does not check refuses them all. |
+| `revert_annotations` | edit | Put back the saved annotations of a task's named records, or of all its records, in place of their unsaved edits. |
 
 `map` answers `groups` (in their order, each with `id`, `title`, `parent`,
 `description` and `models`, the number of recipes naming it), `models` (one per
@@ -1982,8 +2306,8 @@ project stay command-line actions.
 
 A **product** is the `output` directory of a run in state `succeeded` or
 `adopted`, named by its run id (or an unambiguous prefix of it). The
-operations `records`, `record`, `inside`, `array_slice` and `array_summary`
-read it; each takes `run`, and a run that does not exist, has not finished or
+operations `records`, `record`, `inside`, `array_slice`, `array_summary`,
+`array_tiles`, `weights` and `weights_compare` read it; each takes `run`, and a run that does not exist, has not finished or
 has no output directory is refused `not-found`. Like every operation they
 open the project for a moment, to find the run and the view of its dataset;
 they read the product after closing it and write nothing: no file, no row.
@@ -2012,6 +2336,9 @@ it: a missing file, and a symbolic link that leaves the product, are refused
    | `array` | for kind `array` in an `.npz`: the array to show first |
    | `split`, `rights` | optional strings |
    | `origin`, `meta` | optional objects, kept and shown as they are |
+  | `sha256` | optional; the SHA-256 of the record's content, 64 lowercase hexadecimal digits, or null (see [Annotations in the database](#annotations-in-the-database)) |
+   | `bytes` | optional; the record's size, an integer ≥ 0 (otherwise the file's size is shown) |
+   | `annotations` | optional object; a frozen record's annotations, per task its `state` and `value` |
 
    Other keys are kept and shown in `meta` (a key of `meta` itself wins). A
    line that is not such a record, or is longer than 64 KiB, is skipped and
@@ -2043,7 +2370,7 @@ it: a missing file, and a symbolic link that leaves the product, are refused
 | audio | `.wav .flac .mp3 .ogg .opus .m4a` |
 | pointcloud | `.xyz`, and `.ply` with no faces |
 | mesh | `.obj .stl`, and `.ply` with faces |
-| array | `.npy .npz` |
+| array | `.npy .npz .safetensors` |
 | file | everything else |
 
 The index of a product's records is kept for the 8 products read last and
@@ -2052,7 +2379,8 @@ size or time.
 
 **`records`** takes `offset`, `limit` (at most 200, 50 by default), `kind` and
 `split`, and answers `records` (each `id`, `kind`, `path`, `bytes`, `split`,
-`rights`, `origin`, `meta`, `array` when the list gives one, and for a text
+`rights`, `origin`, `meta`, `sha256` (null unless the list gives it), `array`
+when the list gives one, and for a text
 record its first 400 characters as `preview`), `total` (after the filters),
 `source` (`records.jsonl`, `view` or `files`), `kinds` and `splits` (counts
 over all the records; records without a split are not counted in `splits`)
@@ -2082,12 +2410,13 @@ counts. A file that cannot be read as its kind is refused `invalid`.
 `offset` and `limit` (at most 500, 200 by default), and answers `entries` and
 `total`. A directory lists its children, an archive the members at its top
 (an address `a.zip!samples` lists the members under `samples/`), and an
-`.npy` or `.npz` its arrays. Each entry has `name`, `path` (its address),
+`.npy`, `.npz` or `.safetensors` its arrays. Each entry has `name`, `path` (its address),
 `type` (`directory`, `file`, `archive` or `array`), `bytes` (decompressed, for
 a member) and `kind`; an array also has `array`, `shape` and `dtype`, and its
 `path` is the address of its file. Directories come first, then by name. A
 zip nested deeper than an address can name is a `file`. A plain file is
-refused `invalid`.
+refused `invalid`. A `.safetensors` file is listed with `type` `archive`, as
+an `.npz` is, though no address reaches into it with `!`.
 
 **Arrays.** NPY versions 1, 2 and 3 are read, in C or Fortran order, little-
 or big-endian, of floats of 2, 4 and 8 bytes, signed and unsigned integers of
@@ -2096,6 +2425,18 @@ or big-endian, of floats of 2, 4 and 8 bytes, signed and unsigned integers of
 structured types) is listed with its type as written and refused
 `unsupported` when read; an object array is never unpickled. The header is
 parsed as a literal of at most 64 KiB.
+
+A `.safetensors` file is read like an `.npz`: its tensors are its arrays, named
+by `array` as they are in its header, listed in the order of its header. The
+file is 8 bytes (the header's length, little-endian), a JSON header of at most
+16 MiB (each tensor's `dtype`, `shape` and `data_offsets`, and
+`__metadata__`, which is not shown), then the data, read where it lies. The
+types `F16 F32 F64 I8 I16 I32 I64 U8 U16 U32 U64 BOOL` are read, little-endian
+and in C order, and named as an NPY array's are; a tensor of another type
+(`BF16` and the rest) is listed with its type as written and refused
+`unsupported` when read. A header longer than the file, data offsets outside
+the file or reaching into the header, and data whose length does not match
+its shape and type are refused `unsupported`.
 
 **`array_slice`** takes `path`, `array` (for an `.npz`), `axes` (the two axes
 drawn, by default the last two), `index` (one position per axis, by default
@@ -2113,6 +2454,20 @@ none as one value; `axes` is then left out.
 the lowest to the highest finite value) and `stride`. At most 4,000,000
 values are read: beyond that every n-th value in storage order, and `stride`
 is n. All but `count` and `stride` are of the values read.
+
+**`array_tiles`** takes `path`, `array`, `across` (the axis counted over; by
+default the first axis not drawn), `axes` (the two drawn in each tile; by
+default the last two other than `across`), `index` (one position per axis, by
+default the middle of each; used for the axes neither drawn nor counted
+over), `first` (0 by default) and `most` (tiles at most, 16 by default, at most
+64). The array has three axes or more; otherwise, or when `first` is outside
+`across`, the call is refused `invalid`. It answers `shape`, `dtype`,
+`across`, `axes`, `index` (with the position of `first` on `across`), `first`,
+`tiles` (how many follow `first`, at most `most`), `rows`, `columns`,
+`stride` (as for `array_slice`, one for every tile, each tile at most 64 by
+64), `values_f32` (base64 of little-endian 32-bit floats, tile by tile, each
+row by row; tile `t` is the slice at position `first + t` on `across`), `min`,
+`max` (of the finite values of all the tiles) and `nonfinite`.
 
 **Reading no more than is needed.** A file on disk is mapped read only, and a
 member stored uncompressed in a zip is read at its offsets in its archive's
@@ -2143,6 +2498,122 @@ script. Every answer carries `X-Content-Type-Options: nosniff` and
 `bytes=a-`) is answered 206 with `Content-Range`; any other `Range` gets the
 whole file. This route is not an operation and is not in the capability
 manifest: an agent reads records, arrays and text through the operations.
+
+### A model's weights
+
+`weights`, `weights_compare` and `array_tiles` (above) read a product as the
+operations above do: the same addresses and confinement, nothing written, and
+a damaged file refused `unsupported`. Nothing runs the model.
+
+**A run's weights** are the outputs its product records with role
+`weights`; a declared output that is a directory gives the files directly in
+it with one of the extensions below. When the product records none, they are
+the files at the top of the product whose extension is `.npz`,
+`.safetensors`, `.pt`, `.pth`, `.ckpt`, `.bin` or `.onnx` and whose name
+contains `weight` or `model` (in any case), not beginning `initial-`. Only
+`.npz` and `.safetensors` files are read. A PyTorch file (`.pt`, `.pth`,
+`.ckpt`, `.bin`) is a pickle: it is listed by name and size with the reason,
+and never opened, not even to look at its first bytes. The weights a file
+started from are the file beside it with the same name prefixed `initial-`.
+
+**Layers.** A tensor's layer is its name without its last dotted part:
+`encoders.0.layers.0.weight` and `encoders.0.layers.0.bias` are the tensors
+`weight` and `bias` of the layer `encoders.0.layers.0`; a name with no dot is
+its own layer. Layers are in the order of the file (an `.npz`'s members in the
+order of its central directory, a safetensors file's tensors in the order of
+its header), each where its first tensor is.
+
+**`weights`** takes only `run` and answers `files`, each with `path` (its
+address), `output` (the output's name, or null when found by name), `bytes`
+(null when a declared output is missing), `readable`, `reason` (null when
+readable; otherwise a sentence: a pickle, ONNX, another format, a file that is
+missing, or one that could not be read and why), `starts_from` (the address of
+its `initial-` file, or null) and, when readable, `parameters` (the count of
+the tensors listed), `tensors` (how many the file holds) and `layers` (each
+`name`, `parameters` and `tensors`, each tensor `array`, `name`, `shape`,
+`dtype` and `parameters`). At most 10,000 tensors of a file are listed. A
+damaged weights file is listed as not readable with its reason; the call is
+not refused for it.
+
+**`weights_compare`** takes `path`, `other_run` (the same run, for its
+`initial-` file, or any other finished run of the project) and `other_path`,
+both weights files that are read (otherwise refused `unsupported` with the
+reason). For each array in both with the same shape, in the order of `path`,
+`tensors` gives `array`, `parameters`, `norm`, `other_norm`,
+`difference_norm` (of this minus the other), `relative_change` (the
+difference's norm over the other's; null when that is zero), `cosine` (null
+when either norm is zero), `largest_change` (the largest absolute difference)
+and `nonfinite` (non-finite values in either). `total` gives the same over all
+of them together, without `array`. `only_here` and `only_there` name the
+arrays of one file only, `reshaped` gives `array`, `shape` and `other_shape`
+of those whose shapes differ, and `unread` gives `array`, `dtype` and
+`other_dtype` of those with the same shape that one side's type keeps from
+being read; neither is compared. Norms are Euclidean, over 64-bit floats; a
+quantity that includes a non-finite value is null. Arrays are compared
+element by element in C order, whichever order each is stored in. At most
+32,000,000 values are read in all (both files together) and at most 10,000
+tensors per file; beyond either the call is refused `too-large`, saying how
+many there are.
+
+### Annotating
+
+The five operations on annotations (see [Annotations in the database](#annotations-in-the-database))
+name a task by `task`, its name or its reference `annotations/<name>`, and
+answer it as the reference. A task that the project does not have (or has
+removed) is refused `not-found`. The records are those of the current product
+of the task's dataset, read as `records` reads them; the reads find the product
+with the project open for a moment and read it after, as the reads above do.
+
+**`annotation_tasks`** takes nothing and answers `tasks`, by name, each with
+`task`, `title`, `dataset`, `type` (the task's `task`), `vocabulary` (empty for
+`review` and `text`), `run` (the dataset's current product, or null),
+`records` (how many records it has, or null), `counts` and `unsaved` (how many
+records have an unsaved change). `counts` has `unannotated` (records of the
+product without an annotation), `draft`, `accepted`, `needs-work`, `rejected`
+(annotations by state, stale ones included), `stale` and `invalid`.
+
+**`annotated_records`** takes `task`, `state` (one of the names of `counts`;
+absent for all), `kind`, `offset` and `limit` (at most 200, 50 by default),
+and answers `task`, `run`, `records` (the page), `total` (after the filters)
+and `counts`. The records are those of the product in its order, each as
+`records` gives it with `in_product` true, followed (unless `kind` is given)
+by the annotated records the product does not have, by id, with `in_product`
+false and null `kind`, `path`, `bytes`, `split`, `rights`, `origin`, `meta`
+and `sha256`. Each has `annotation`: null, or `state`, `value`, `note` (null
+when there is none), `by`, `at`, `stale` and `unsaved`.
+
+**`annotation`** takes `task` and `record` and answers `task`, `record`,
+`annotation` (the line as it now is, as an object with the keys of the
+annotations file, or null), `saved` (the line in the file, likewise, or
+null), `unsaved`, `stale` (null when there is no annotation or no product)
+and `sha256` (the hash of the record's content now, or null).
+
+**`set_annotation`** takes `task`, `items` (1 to 200, each
+`{record, state, value?, note?}` or `{record, remove: true}`) and `from`
+(optional, an object written as every item's `from`), and answers `task`,
+`set`, `removed` (how many annotations went) and `unsaved` (how many of the
+task's records now have an unsaved change). Every item is checked before
+anything changes: the record must be in the product (refused `not-found`
+when the dataset has none), named once, and its line must be one the
+annotations file allows, its value checked against the task, the vocabulary
+and the record's kind, and, where the product makes it cheap to know, an
+image's size, a text's length (a file of at most 16 MiB) and a WAVE sound's
+length. One item that does not check refuses the call `invalid`, with one
+problem per such item whose pointer is `/items/<n>`. The line takes `sha256`
+from the record now, `by` from the caller (`owner`, or `agent:` and the
+credential's name cut to 80 characters; never its id, token or scopes) and
+`at` from the clock. Setting an annotation again takes the record's hash
+again, which is how a stale annotation that is still right is put right.
+Removing a record that has no annotation does nothing.
+
+**`revert_annotations`** takes `task` and `records` (optional, at most 10,000)
+and answers `task` and `reverted`: how many of those records (all the task's,
+without `records`) had an unsaved change and now have their saved line
+again, or no annotation when the file has none.
+
+Each call of `set_annotation` and `revert_annotations` writes one activity
+row whose target is the task's reference and whose detail says how many
+records it set, removed or reverted.
 
 ## The project directory on this machine
 

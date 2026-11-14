@@ -17,7 +17,11 @@ are looked at; nothing is ever restarted. Files are never deleted here,
 except an estimate's throwaway directory. A run in state adopted ran
 nothing: adoption.py recorded files made elsewhere as its product, and
 status counts that product built without comparing anything (spec-m8.md
-section 3); a later build replaces it like any other.
+section 3); a later build replaces it like any other. A dataset whose run
+names a step Tuldok provides (spec-d4.md section 6) runs steps.py with
+Tuldok's own interpreter and code, no environment; a freeze's run records the
+line files of its tasks as it read them from the commit, and the product is
+out of date when one of them differs at HEAD (_LineFiles).
 
 What a person needs while and after a build runs (sections 7 and 8): a run is
 named by its id or an unambiguous prefix of it (find_run); run_details reads
@@ -42,13 +46,15 @@ import os
 import re
 import shutil
 import stat
+import sys
 import time
 import uuid
 
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from . import documents, environments, graph, launcher, local, result_rows, snapshot, store
+from . import annotations, documents, environments, graph, launcher, local, result_rows, snapshot, store
+from . import folder as folder_reader
 
 BUILT_KINDS = ('dataset', 'recipe', 'step', 'benchmark')
 ACTIVE = ('queued', 'running')
@@ -73,6 +79,11 @@ ESTIMATE_LIMITS = {'wall_seconds': 300.0, 'disk_bytes': 100 * 1000 ** 2}
 ESTIMATE_OUTPUT_LIMIT = 64 * 1024   # bytes of standard output an estimate may print
 ESTIMATE_FIELDS = ('disk_bytes', 'wall_seconds', 'items')
 _RUN_TEXT = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}')
+# A step Tuldok provides (spec-d4.md section 6) runs this module with Tuldok's own interpreter, from Tuldok's root.
+STEPS_MODULE = 'tuldok_project.steps'
+TULDOK_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STEP_TASKS_FILE = 'tasks.json'          # <run>/tasks.json: what a freeze is told of its tasks
+STEP_LINES = 'annotations'              # <run>/annotations/<name>.jsonl: the line files a freeze read
 
 TABLES = (
     '''CREATE TABLE IF NOT EXISTS {schema}.plans (
@@ -93,6 +104,8 @@ TABLES = (
            exit_status integer, seconds double precision, bytes bigint, strays integer,
            problem text)''',
     'CREATE INDEX IF NOT EXISTS runs_reference ON {schema}.runs (reference, subject, queued_at)',
+    # A freeze's run records each task's line file as it read it: {task: {file, sha256, blob}} (spec-d4.md section 6).
+    'ALTER TABLE {schema}.runs ADD COLUMN IF NOT EXISTS annotations jsonb',
     '''CREATE TABLE IF NOT EXISTS {schema}.products (
            run_id text PRIMARY KEY,
            reference text NOT NULL, subject text NOT NULL DEFAULT '',
@@ -107,7 +120,7 @@ TABLES = (
 _RUN_COLUMNS = ('id', 'reference', 'subject', 'plan_id', 'state', 'scratch', 'commit', 'inputs', 'environment',
                 'argv', 'directory', 'owner_pid', 'owner_boot', 'queued_at', 'started_at', 'finished_at',
                 'exit_status', 'seconds', 'bytes', 'strays', 'problem')
-_DETAIL_COLUMNS = _RUN_COLUMNS + ('definition', 'settings', 'env')
+_DETAIL_COLUMNS = _RUN_COLUMNS + ('definition', 'settings', 'env', 'annotations')
 
 
 def _q(schema, template):
@@ -276,9 +289,106 @@ def _own_causes(document, text, product, current, changes, code_root):
             sources = [source for source in _run_block(document).get('sources', []) if isinstance(source, str)]
             hits = sorted(path for path in changed if any(_under(path, source) for source in sources))
             if hits:
-                shown = ', '.join(hits[:3]) + (f' and {len(hits) - 3} more' if len(hits) > 3 else '')
-                causes.append(f'its code changed since commit {product["commit"][:12]}: {shown}')
+                causes.append(f'its code changed since commit {product["commit"][:12]}: {_named(hits)}')
+            source = import_source(document)
+            hits = sorted(path for path in changed if source is not None and _under(path, source))
+            if hits:
+                causes.append(f'its source {source} changed since commit {product["commit"][:12]}: {_named(hits)}')
     return causes
+
+
+def _named(paths):
+    return ', '.join(paths[:3]) + (f' and {len(paths) - 3} more' if len(paths) > 3 else '')
+
+
+def import_source(document):
+    """The source of an import step when it is relative to the code root (read from the commit), else None."""
+    run = _run_block(document)
+    settings = run.get('settings') if isinstance(run.get('settings'), dict) else {}
+    source = settings.get('source')
+    if run.get('step') == 'import' and isinstance(source, str) and source and not source.startswith('/'):
+        return source
+    return None
+
+
+def step_tasks(document):
+    """The tasks a freeze step names in run.annotations (references, in order); empty for any other run."""
+    run = _run_block(document)
+    tasks = run.get('annotations') if run.get('step') == 'freeze' else None
+    return [task for task in (tasks if isinstance(tasks, list) else ()) if isinstance(task, str)]
+
+
+_LINE_HASHES = {}           # (path, size, mtime_ns, inode) -> SHA-256 of a working-tree line file, for scratch products
+_LINE_HASHES_KEPT = 256
+
+
+class _LineFiles:
+    """The tasks' line files as a build would read them now, for the out-of-date state of a frozen dataset.
+
+    A product built from a commit is compared with the code root's HEAD (the
+    commit a build would use), a scratch product with the working tree.
+    Nothing is read for a file whose Git blob is the one the run recorded.
+    """
+    _UNKNOWN = object()
+
+    def __init__(self, folder, code_root):
+        self.folder, self.code_root = folder, code_root
+        self._head = None
+        self._looked = False
+
+    def head(self):
+        if not self._looked:
+            self._looked = True
+            try:
+                if snapshot._repository(self.folder)[0] == snapshot._repository(self.code_root)[0]:
+                    self._head = snapshot._head(self.code_root)
+            except snapshot.SnapshotError:
+                self._head = None
+        return self._head
+
+    def now(self, item, scratch):
+        """The SHA-256 of the file now, None when there is none, or _UNKNOWN when it cannot be told."""
+        if scratch:
+            path = os.path.join(self.folder, item['file'])
+            try:
+                info = os.stat(path)
+            except FileNotFoundError:
+                return None
+            except OSError:
+                return self._UNKNOWN
+            key = (path, info.st_size, info.st_mtime_ns, info.st_ino)
+            if key not in _LINE_HASHES:
+                try:
+                    with open(path, 'rb') as handle:
+                        _LINE_HASHES[key] = hashlib.sha256(handle.read()).hexdigest()
+                except OSError:
+                    return self._UNKNOWN
+                while len(_LINE_HASHES) > _LINE_HASHES_KEPT:
+                    _LINE_HASHES.pop(next(iter(_LINE_HASHES)))
+            return _LINE_HASHES[key]
+        head = self.head()
+        if head is None:
+            return self._UNKNOWN
+        try:
+            found = snapshot.file_at(self.folder, head, item['file'], None)
+            if found is None:
+                return None
+            if found[0] == item.get('blob'):
+                return item['sha256']
+            return hashlib.sha256(snapshot.file_at(self.folder, head, item['file'], annotations.FILE_LIMIT)[1]
+                                  ).hexdigest()
+        except (snapshot.SnapshotError, TypeError):
+            return self._UNKNOWN
+
+    def causes(self, product):
+        found = []
+        for reference, item in sorted((product.get('annotations') or {}).items()):
+            now = self.now(item, product['scratch'])
+            if now is self._UNKNOWN or now == item.get('sha256'):
+                continue
+            was = 'are gone' if now is None else 'changed'
+            found.append(f'the annotations of {reference} ({item["file"]}) {was} since run {_short(product["run_id"])}')
+        return found
 
 
 def status(project):
@@ -301,13 +411,14 @@ def status(project):
     texts = {reference: text for reference, text, _ in rows}
     definitions = {reference: document for reference, _, document in rows}
     current = {}
-    for (run_id, reference, subject, outputs, scratch, commit, definition, settings, inputs, state) in connection.execute(_q(
+    for (run_id, reference, subject, outputs, scratch, commit, definition, settings, inputs, state,
+         read) in connection.execute(_q(
             schema, '''SELECT p.run_id, p.reference, p.subject, p.outputs, r.scratch, r.commit, r.definition,
-                              r.settings, r.inputs, r.state
+                              r.settings, r.inputs, r.state, r.annotations
                        FROM {schema}.products p JOIN {schema}.runs r ON r.id = p.run_id WHERE p.current''')):
         current[reference, subject] = {'run_id': run_id, 'outputs': outputs, 'scratch': scratch, 'commit': commit,
                                        'definition': definition, 'settings': settings, 'inputs': inputs,
-                                       'adopted': state == ADOPTED}
+                                       'adopted': state == ADOPTED, 'annotations': read}
     latest = {reference: (run_id, state, problem) for reference, run_id, state, problem in connection.execute(_q(
         schema, '''SELECT DISTINCT ON (reference) reference, id, state, problem FROM {schema}.runs
                    ORDER BY reference, queued_at DESC, id''')).fetchall()}
@@ -317,6 +428,7 @@ def status(project):
     changes = _changes(code_root, {product['commit'] for product in current.values()
                                    if not product['scratch'] and product['commit']}) if current else {}
     held = graph.states(definitions, {reference: 'built' for reference, subject in current if not subject})
+    line_files = _LineFiles(project._state()['folder'], code_root) if current else None
 
     found = {}
     out_of_date = set()
@@ -329,6 +441,8 @@ def status(project):
             return {'state': 'built', 'causes': [], 'run_id': product['run_id'], 'scratch': False, 'adopted': True}
         product = {**product, 'subject_document': subject}
         causes = _own_causes(document, texts[reference], product, current, changes, code_root)
+        if product['annotations']:
+            causes += line_files.causes(product)
         for key, used in _uses(document, subject).items():
             if used in out_of_date and not any(cause.startswith(_input_words(key, used)) for cause in causes):
                 causes.append(f'{_input_words(key, used)} is out of date')
@@ -582,6 +696,9 @@ class _Build:
         output = os.path.join(run_directory, OUTPUT)
         estimate_block = run.get('estimate') if isinstance(run.get('estimate'), dict) else {}
         command = list(estimate_block.get('command') or []) if estimate else list(run.get('command') or [])
+        step = None if estimate or not isinstance(run.get('step'), str) else run['step']
+        if step is not None:
+            command = ['tuldok', step]   # replaced by the step's own argv below
         values, missing, recorded = {'output': output}, {}, {}
 
         environment_record = None
@@ -593,7 +710,7 @@ class _Build:
         prepared = {'id': run_id, 'reference': reference, 'subject': subject['name'] if subject else '',
                     'definition': text, 'settings': None, 'environment': environment_record,
                     'directory': run_directory, 'argv': list(command), 'env': {},
-                    'problem': None, 'skipped': False}
+                    'problem': None, 'skipped': False, 'annotations': None, 'files': {}}
         try:
             if not command:
                 raise StepProblem(f'{reference} has no run.estimate.command.' if estimate else
@@ -640,21 +757,11 @@ class _Build:
                 if prepared['settings'] is None:
                     raise StepProblem(f'Its settings file {run["settings_file"]} cannot be read in the code '
                                       f'at commit {self.code.commit[:12] or "(none)"}.')
-            argv = [_fill(part, values, missing, f'The command word {part!r}') for part in command]
-            if command[0] == 'python':
-                if environment_record is None:
-                    raise StepProblem('The command starts with python but the run names no environment.')
-                argv[0] = environment_record['interpreter']
-            elif '/' in argv[0]:
-                program = os.path.join(self.code.code_root, argv[0])
-                if not (os.path.isfile(program) and os.access(program, os.X_OK)):
-                    raise StepProblem(f'The program {argv[0]} is not an executable file in the code.')
-                argv[0] = program
+            if step is not None:
+                argv = self._step_argv(project, reference, run, step, values, prepared)
             else:
-                program = shutil.which(argv[0], path=os.environ.get('PATH', os.defpath))
-                if program is None:
-                    raise StepProblem(f'The program {argv[0]} was not found on PATH.')
-                argv[0] = program
+                argv = [_fill(part, values, missing, f'The command word {part!r}') for part in command]
+                argv[0] = self._program(command, argv, environment_record)
             prepared['argv'] = argv
             resources = run.get('resources') if isinstance(run.get('resources'), dict) else {}
             gpu = resources.get('gpu') is True
@@ -667,6 +774,9 @@ class _Build:
             for key, value in (run.get('env') or {}).items():
                 env[key] = _fill(value, values, missing, f'The value of env {key}')
             env.update(self.extra_env)
+            if step is not None:
+                # Tuldok's own code first; the snapshot's code (the working directory) never importable.
+                env.update(PYTHONSAFEPATH='1', PYTHONPATH=TULDOK_ROOT)
             prepared['env'] = env
             wall_hours = resources.get('wall_hours') or DEFAULT_WALL_HOURS
             disk_gb = resources.get('disk_gb') or DEFAULT_DISK_GB
@@ -683,6 +793,95 @@ class _Build:
         prepared['inline_settings'] = 'settings' in run
         return prepared
 
+    def _program(self, command, argv, environment_record):
+        """The program a command runs: the environment's interpreter for python, a file in the code, or one on PATH."""
+        if command[0] == 'python':
+            if environment_record is None:
+                raise StepProblem('The command starts with python but the run names no environment.')
+            return environment_record['interpreter']
+        if '/' in argv[0]:
+            program = os.path.join(self.code.code_root, argv[0])
+            if not (os.path.isfile(program) and os.access(program, os.X_OK)):
+                raise StepProblem(f'The program {argv[0]} is not an executable file in the code.')
+            return program
+        program = shutil.which(argv[0], path=os.environ.get('PATH', os.defpath))
+        if program is None:
+            raise StepProblem(f'The program {argv[0]} was not found on PATH.')
+        return program
+
+    def _step_argv(self, project, reference, run, step, values, prepared):
+        """The argv of a step Tuldok provides; for a freeze, the line files read and what the step is told of them."""
+        if 'settings' not in values:
+            raise StepProblem(f'{reference} runs the step {step}, which needs run.settings.')
+        argv = [sys.executable, '-m', STEPS_MODULE, step, values['settings'], values['output']]
+        if step == 'import':
+            return argv + ['--code', self.code.code_root]
+        if step != 'freeze':
+            raise StepProblem(f'Tuldok provides no step {step!r}; use import or freeze.')
+        inputs = _declared_inputs({'run': run})
+        used = inputs.get('records', (None, None))[0]
+        if 'inputs.records' not in values or used is None:
+            raise StepProblem('A freeze reads the records of its input records; declare run.inputs.records.')
+        tasks = step_tasks({'run': run})
+        if not tasks:
+            raise StepProblem('A freeze needs one or more tasks in run.annotations.')
+        documents_ = {row[0]: row[1] for row in project._execute(
+            f'SELECT {store._REFERENCE_SQL}, document FROM {{schema}}.definitions '
+            f'WHERE NOT removed AND {store._REFERENCE_SQL} = ANY(%s)', ([*tasks, used],)).fetchall()}
+        described, read = [], {}
+        for task in tasks:
+            document = documents_.get(task)
+            if document is None:
+                raise StepProblem(f'Its task {task} does not exist.')
+            if document.get('dataset') != used:
+                raise StepProblem(f'Its task {task} annotates {document.get("dataset")}, not its input {used}.')
+            name = documents.parse_reference(task)[1]
+            file = f'{folder_reader.ANNOTATIONS}/{name}{folder_reader.LINES_SUFFIX}'
+            blob, data = self._line_file(project, file)
+            digest = None if data is None else hashlib.sha256(data).hexdigest()
+            read[task] = {'file': file, 'sha256': digest, 'blob': blob}
+            copy = None
+            if data is not None:
+                copy = os.path.join(prepared['directory'], STEP_LINES, f'{name}{folder_reader.LINES_SUFFIX}')
+                prepared['files'][copy] = data
+            described.append({'reference': task, 'task': document.get('task'),
+                              'vocabulary': document.get('vocabulary') or [], 'lines': copy, 'sha256': digest})
+        view = (documents_.get(used) or {}).get('view')
+        tasks_file = os.path.join(prepared['directory'], STEP_TASKS_FILE)
+        prepared['files'][tasks_file] = (json.dumps({'tasks': described, 'view': view}, ensure_ascii=False,
+                                                    indent=2) + '\n').encode('utf-8')
+        prepared['annotations'] = read
+        return argv + ['--records', values['inputs.records'], '--tasks', tasks_file]
+
+    def _line_file(self, project, file):
+        """(Git blob id or None, bytes or None) of a line file, relative to the project folder, as this build reads it.
+
+        From the build's commit (annotations not committed are not frozen, as
+        code is not); a scratch build reads the working tree.
+        """
+        folder = project._state()['folder']
+        if self.code.scratch:
+            path = os.path.join(folder, file)
+            if not os.path.isfile(path):
+                return None, None
+            with open(path, 'rb') as handle:
+                data = handle.read(annotations.FILE_LIMIT + 1)
+            if len(data) > annotations.FILE_LIMIT:
+                raise StepProblem(f'{file} is over {annotations.FILE_LIMIT} bytes.')
+            return None, data
+        try:
+            same = snapshot._repository(folder)[0] == snapshot._repository(_code_root(project))[0]
+        except snapshot.SnapshotError:
+            same = False
+        if not same:
+            raise StepProblem(f'The project folder is not in the Git repository of the code, so {file} cannot be '
+                              f'read from commit {self.code.commit[:12]}; commit it there, or build with scratch.')
+        try:
+            found = snapshot.file_at(folder, self.code.commit, file, annotations.FILE_LIMIT)
+        except snapshot.SnapshotError as exc:
+            raise StepProblem(str(exc)) from None
+        return found if found is not None else (None, None)
+
     def _check_expected(self, project, reference, text, run, subject):
         """Refuse (stale) a step when a definition it reads to run is not the text whose SHA-256 expect holds.
 
@@ -690,6 +889,7 @@ class _Build:
         environment and, for a benchmark subject, the subject's recipe.
         """
         others = [used for used in (run.get('environment'), (subject or {}).get('recipe')) if isinstance(used, str)]
+        others += step_tasks({'run': run})
         texts = dict(project._execute(f'SELECT {store._REFERENCE_SQL}, text FROM {{schema}}.definitions '
                                       f'WHERE NOT removed AND {store._REFERENCE_SQL} = ANY(%s)', (others,)).fetchall())
         texts[reference] = text
@@ -703,15 +903,16 @@ class _Build:
     def _insert(self, project, prepared, state):
         project._execute('''INSERT INTO {schema}.runs (id, reference, subject, plan_id, state, scratch, commit,
                                 definition, settings, inputs, environment, argv, env, directory, owner_pid,
-                                owner_boot, queued_at, started_at, finished_at, problem)
+                                owner_boot, queued_at, started_at, finished_at, problem, annotations)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(),
                                     CASE WHEN %s = 'running' THEN now() END,
-                                    CASE WHEN %s = 'running' THEN NULL ELSE now() END, %s)''',
+                                    CASE WHEN %s = 'running' THEN NULL ELSE now() END, %s, %s)''',
                          (prepared['id'], prepared['reference'], prepared['subject'], self.plan_id, state,
                           self.code.scratch, self.code.commit, prepared['definition'], prepared['settings'],
                           Jsonb(prepared['inputs']), Jsonb(prepared['environment']) if prepared['environment'] else None,
                           Jsonb(prepared['argv']), Jsonb(prepared['env']), prepared['directory'], os.getpid(),
-                          self.boot, state, state, prepared['problem']))
+                          self.boot, state, state, prepared['problem'],
+                          Jsonb(prepared['annotations']) if prepared['annotations'] is not None else None))
 
     # ------------------------------------------------------------------- run
 
@@ -729,6 +930,10 @@ class _Build:
             if prepared['inline_settings']:
                 with open(os.path.join(prepared['directory'], SETTINGS_FILE), 'w', encoding='utf-8') as handle:
                     handle.write(prepared['settings'])
+            for path, data in prepared['files'].items():
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, 'xb') as handle:
+                    handle.write(data)
             self._insert(project, prepared, 'running')
         self.on_event('start', item)
         try:

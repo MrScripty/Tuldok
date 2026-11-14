@@ -6,15 +6,18 @@ that are neither layout (folder.py), single-field syntax (documents.py and the
 schemas) nor summary-file content (results.py): kind against directory, cards,
 placeholders in context, benchmark uniqueness rules, references and named
 outputs, charts against their benchmark, cycles, paths into the code root
-(in definitions and in the code_paths of tuldok.json), and the map's fields
+(in definitions and in the code_paths of tuldok.json), the map's fields
 (spec-w1.md section 1): groups, a recipe's group, derived_from and
-compared_with, and map.chart.
+compared_with, and map.chart, each annotations/<name>.jsonl against its
+task (spec-d4.md section 2; the rules of a line are annotations.py's), and
+the settings, inputs and tasks of a dataset whose run names a step Tuldok
+provides (section 6).
 Problems are collected, never raised, so one bad file never hides another.
 """
 from dataclasses import dataclass, field
 import os
 
-from . import documents, folder as folder_reader, graph, results
+from . import annotations, documents, folder as folder_reader, graph, results
 from .documents import Problem
 
 _SEVERITY_ORDER = {'error': 0, 'warning': 1}
@@ -70,10 +73,12 @@ def check_folder(folder, *, code=True):
             check_code_paths(definition, code_root, add)
 
     check_references(definitions, add)
+    check_steps(definitions, add)
     check_charts(definitions, unsound, add)
     check_cycles(definitions, add)
     check_map(project, definitions, add)
     _check_results(read.results, definitions, unsound, add)
+    _check_annotations(read.annotations, definitions, unsound, add)
 
     problems.sort(key=lambda p: (p.path, p.pointer, _SEVERITY_ORDER.get(p.severity, 2), p.message))
     decoded = {reference: d.document for reference, d in definitions.items() if d.document is not None}
@@ -109,6 +114,8 @@ def check_definition(definition, notes, add):
         _check_benchmark(document, path, add)
     if definition.kind == 'dataset' and isinstance(document.get('view'), dict):
         _check_view(document['view'], path, add)
+    if definition.kind == 'dataset' and isinstance(run, dict) and run.get('step') in STEP_SETTINGS:
+        _check_step(run, path, add)
 
 
 def _check_view(view, path, add):
@@ -119,6 +126,129 @@ def _check_view(view, path, add):
             wrong = inside_archive.address_problem(view[key], archives=archives)
             if wrong:
                 add('error', path, documents.pointer('view', key), wrong)
+
+
+# The settings of each step Tuldok provides (spec-d4.md section 6): {member: required}.
+STEP_SETTINGS = {'import': {'source': True, 'pattern': False, 'kind': False, 'rights': True, 'lines': False},
+                 'freeze': {'seed': True, 'shares': True, 'include': False}}
+SEED_LIMIT = 2 ** 63
+SHARES_LIMIT = 16
+SHARE_LIMIT = 1_000_000
+RIGHTS_LIMIT = 1000
+
+
+def _check_step(run, path, add):
+    """The settings, inputs and tasks of a run that names a step Tuldok provides."""
+    step = run['step']
+    settings = run.get('settings')
+    if 'settings' not in run:
+        add('error', path, '/run/settings', f'Add the required field \'settings\'; the step {step} needs '
+                                            + ' and '.join(key for key, needed in STEP_SETTINGS[step].items() if needed)
+                                            + '.')
+    if isinstance(settings, dict):
+        for key in settings:
+            if key not in STEP_SETTINGS[step]:
+                add('error', path, documents.pointer('run', 'settings', key),
+                    f'Remove the unknown setting {key!r}; the step {step} takes '
+                    + ', '.join(STEP_SETTINGS[step]) + '.')
+        for key, needed in STEP_SETTINGS[step].items():
+            if needed and key not in settings:
+                add('error', path, documents.pointer('run', 'settings', key),
+                    f'Add the required setting {key!r} of the step {step}.')
+    settings = settings if isinstance(settings, dict) else {}
+    where = lambda key: documents.pointer('run', 'settings', key)  # noqa: E731
+    if step == 'import':
+        _check_import(settings, path, where, add)
+        if 'inputs' in run:
+            add('error', path, '/run/inputs', 'The step import reads files, not other products; remove inputs.')
+        if 'annotations' in run:
+            add('error', path, '/run/annotations', 'Only the step freeze reads annotations; remove annotations.')
+    else:
+        _check_freeze(run, settings, path, where, add)
+
+
+def _check_import(settings, path, where, add):
+    source = settings.get('source')
+    if 'source' in settings:
+        if not isinstance(source, str) or not source or len(source) > 1024 or '\x00' in source:
+            add('error', path, where('source'), 'The source must be a directory: a path of 1 to 1,024 characters.')
+        elif source.startswith('/'):
+            add('warning', path, where('source'), f'The source {source} is absolute, so this dataset can be built '
+                                                  'on this machine only; give a path relative to the code root.')
+    if 'pattern' in settings:
+        pattern = settings['pattern']
+        wrong = documents.relative_path_problem(pattern) if isinstance(pattern, str) else 'must be a string'
+        if not wrong and len(pattern) > 1024:
+            wrong = 'is longer than 1,024 characters'
+        if not wrong and '!' in pattern:
+            wrong = "reaches into an archive with '!', which import does not do"
+        if wrong:
+            add('error', path, where('pattern'), f'The pattern {pattern!r} {wrong}.')
+    if 'kind' in settings and settings['kind'] not in annotations.RECORD_KINDS:
+        add('error', path, where('kind'), f'The kind {settings["kind"]!r} is not one of ' + ', '.join(annotations.RECORD_KINDS)
+                                          + '.')
+    rights = settings.get('rights')
+    if 'rights' in settings and (not isinstance(rights, str) or not rights.strip() or len(rights) > RIGHTS_LIMIT):
+        add('error', path, where('rights'), f'rights must be a sentence of 1 to {RIGHTS_LIMIT:,} characters on '
+                                            'what may be done with the files.')
+    if 'lines' in settings and not isinstance(settings['lines'], bool):
+        add('error', path, where('lines'), 'lines must be true or false.')
+
+
+def _check_freeze(run, settings, path, where, add):
+    inputs = run.get('inputs')
+    if not isinstance(inputs, dict) or set(inputs) != {'records'} or not isinstance(inputs['records'], str) \
+            or not inputs['records'].startswith('datasets/'):
+        add('error', path, '/run/inputs', 'The step freeze takes one input, records, naming a dataset: '
+                                          '"inputs": {"records": "datasets/<name>"}.')
+    if 'annotations' not in run:
+        add('error', path, '/run/annotations', "Add the required field 'annotations': the tasks the step freeze "
+                                               'reads, the first deciding which records are taken.')
+    seed = settings.get('seed')
+    if 'seed' in settings and (type(seed) is not int or not -SEED_LIMIT <= seed < SEED_LIMIT):
+        add('error', path, where('seed'), 'The seed must be an integer of at most 63 bits.')
+    shares = settings.get('shares')
+    if 'shares' in settings:
+        if not isinstance(shares, dict) or not 1 <= len(shares) <= SHARES_LIMIT:
+            add('error', path, where('shares'), f'shares must be an object of 1 to {SHARES_LIMIT} splits and their '
+                                                'relative sizes, such as {"train": 8, "validation": 1, "test": 1}.')
+        else:
+            for name, size in shares.items():
+                if not documents.NAME.match(name) or len(name) > 32:
+                    add('error', path, documents.pointer('run', 'settings', 'shares', name),
+                        f'The split name {name!r} must be 1 to 32 characters of a-z 0-9 . _ -, starting with a '
+                        'letter or digit.')
+                if type(size) is not int or not 0 <= size <= SHARE_LIMIT:
+                    add('error', path, documents.pointer('run', 'settings', 'shares', name),
+                        f'The share of {name!r} must be an integer from 0 to {SHARE_LIMIT:,}.')
+            if all(type(size) is int for size in shares.values()) and not any(shares.values()):
+                add('error', path, where('shares'), 'At least one share must be above 0.')
+    include = settings.get('include')
+    if 'include' in settings:
+        if not isinstance(include, list) or not include or len(set(map(str, include))) != len(include) \
+                or any(state not in annotations.STATES for state in include):
+            add('error', path, where('include'), 'include must be a list of different states: '
+                                                 + ', '.join(annotations.STATES) + '.')
+
+
+def check_steps(definitions, add):
+    """Report each task of a freeze that annotates another dataset than the freeze's input (a missing one is
+    check_references' problem)."""
+    for definition in definitions.values():
+        run = definition.document.get('run') if isinstance(definition.document, dict) else None
+        if definition.kind != 'dataset' or not isinstance(run, dict) or run.get('step') != 'freeze':
+            continue
+        inputs = run.get('inputs') if isinstance(run.get('inputs'), dict) else {}
+        used = inputs.get('records') if isinstance(inputs.get('records'), str) else None
+        tasks = run.get('annotations') if isinstance(run.get('annotations'), list) else []
+        for index, task in enumerate(tasks):
+            target = definitions.get(task) if isinstance(task, str) else None
+            if target is None or target.kind != 'annotation' or not isinstance(target.document, dict):
+                continue
+            if used is not None and target.document.get('dataset') != used:
+                add('error', definition.path, documents.pointer('run', 'annotations', index),
+                    f'{task} annotates {target.document.get("dataset")}, not {used}, the input of this freeze; '
+                    'name a task of its input.')
 
 
 def _check_run(run, path, *, benchmark, add):
@@ -209,6 +339,10 @@ def _code_paths(document):
         if 'settings_file' in run:
             yield '/run/settings_file', run['settings_file']
         yield from sources(run, 'run')
+        settings = run.get('settings')
+        source = settings.get('source') if run.get('step') == 'import' and isinstance(settings, dict) else None
+        if isinstance(source, str) and source and not source.startswith('/'):
+            yield '/run/settings/source', source   # relative to the code root, read from the commit
     if 'config_file' in document:
         yield '/config_file', document['config_file']
     yield from sources(document)
@@ -424,3 +558,22 @@ def _check_results(files, definitions, unsound, add):
             continue
         for severity, pointer, message in results.check_results(file.text, benchmark.document):
             add(severity, file.path, pointer, message)
+
+
+def _check_annotations(files, definitions, unsound, add):
+    """Each line file against its task: a file with no task is an error; a task with errors leaves it unchecked."""
+    for file in files:
+        name = file.path[len(f'{folder_reader.ANNOTATIONS}/'):-len(folder_reader.LINES_SUFFIX)]
+        task = definitions.get(documents.reference(folder_reader.ANNOTATIONS, name))
+        if task is None:
+            add('error', file.path, '', f'There is no {folder_reader.ANNOTATIONS}/{name}.json, the task of these '
+                                        'annotations; add the task or remove the file.')
+            continue
+        if file.text is None or task.document is None:
+            continue  # unreadable: already reported
+        if task.path in unsound:
+            add('warning', file.path, '', f'Not checked, because {task.path} has errors; fix those first.')
+            continue
+        parsed = annotations.read(file.raw, task.document['task'], task.document.get('vocabulary', []))
+        for problem in parsed.reported():
+            add(problem.severity, file.path, problem.pointer, problem.message)

@@ -12,7 +12,10 @@ file_response answers GET /api/project/file. Addresses are resolved by
 inside_archive, which confines them to the product; nothing here writes.
 A product's files are whatever a build or a person put there: what a damaged
 or mislabelled one makes a reader raise is answered as a refusal (unsupported)
-by each of those six, and logged, so that it is never a failure of the app.
+by each of those six, and logged, so that it is never a failure of the app;
+reading() is that guard, and inside_weights guards its three entry points with
+it too. A .safetensors file is an array file like an .npz: its tensors are
+its arrays (spec-d2.md, section 2).
 """
 import codecs
 import collections
@@ -45,22 +48,24 @@ EXTENSIONS = {
     'audio': ('.wav', '.flac', '.mp3', '.ogg', '.opus', '.m4a'),
     'pointcloud': ('.xyz',),
     'mesh': ('.obj', '.stl'),
-    'array': ('.npy', '.npz'),
+    'array': ('.npy', '.npz', '.safetensors'),
 }
+ARRAY_FILES = ('.npy', '.npz', '.safetensors')   # what inside lists the arrays of, and array_at reads
 MEDIA_TYPES = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
                '.gif': 'image/gif', '.bmp': 'image/bmp', '.wav': 'audio/wav', '.flac': 'audio/flac',
                '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.opus': 'audio/ogg', '.m4a': 'audio/mp4'}
 _ID = re.compile(r'[A-Za-z0-9._-]{1,200}')
+_SHA256 = re.compile(r'[0-9a-f]{64}')
 _SURROGATES = re.compile('[\udc80-\udcff]')
 _lock = threading.Lock()
 _indexes = collections.OrderedDict()   # (root, source) -> (stamp, _Index)
 _LOG = logging.getLogger(__name__)
 # What a reader raises on bytes that are not what it expects. ValueError covers bad numbers, bad UTF-8 and bad JSON.
-_DAMAGED = (struct.error, zlib.error, EOFError, IndexError, KeyError, ValueError, OverflowError, StopIteration,
+DAMAGED = (struct.error, zlib.error, EOFError, IndexError, KeyError, ValueError, OverflowError, StopIteration,
             ArithmeticError, OSError)
 
 
-def _reading(function):
+def reading(function):
     """function, with what a damaged or mislabelled file makes it raise turned into a refusal (unsupported)."""
     @functools.wraps(function)
     def guarded(product, *arguments, **options):
@@ -68,7 +73,7 @@ def _reading(function):
             return function(product, *arguments, **options)
         except ProjectError:
             raise
-        except _DAMAGED as error:
+        except DAMAGED as error:
             _LOG.warning('A file of run %s could not be read by %s.', product.run_id, function.__name__, exc_info=True)
             raise ProjectError('That file could not be read: it is damaged, or it is not what its name says '
                                f'({type(error).__name__}).', 'unsupported') from error
@@ -76,12 +81,14 @@ def _reading(function):
 
 
 class Product:
-    """The output directory (real path) of run run_id, and the view of its dataset (a dict) or None."""
+    """The output directory (real path) of run run_id, the view of its dataset (a dict) or None, and the outputs
+    the product records ({name: {path, role, bytes}}, empty when it records none)."""
 
-    def __init__(self, run_id, directory, view=None):
+    def __init__(self, run_id, directory, view=None, outputs=None):
         self.run_id = run_id
         self.root = os.path.realpath(directory)
         self.view = view if isinstance(view, dict) else None
+        self.outputs = outputs if isinstance(outputs, dict) else {}
         if not os.path.isdir(self.root):
             raise ProjectError(f'Run {run_id} has no output directory.', 'not-found')
 
@@ -129,10 +136,13 @@ class _Index:
 
 def _record(identifier, kind, path, *, size=None, **extra):
     return {'id': identifier, 'kind': kind, 'path': path, 'bytes': size, 'text': None, 'array': None, 'split': None,
-            'rights': None, 'origin': None, 'meta': None, **extra}
+            'rights': None, 'origin': None, 'meta': None, 'sha256': None, 'annotations': None, **extra}
 
 
 _LIST_KEYS = ('id', 'kind', 'path', 'text', 'array', 'split', 'rights', 'origin', 'meta')
+# Keys import and freeze write (spec-d4.md sections 3 and 6): the content's hash, its size, and a frozen record's
+# annotations ({task: {state, value}}).
+_STEP_KEYS = ('sha256', 'bytes', 'annotations')
 
 
 def _list_entry(value):
@@ -157,15 +167,21 @@ def _list_entry(value):
     for key in ('array', 'split', 'rights'):
         if value.get(key) is not None and not isinstance(value[key], str):
             return f'{key} must be a string'
-    for key in ('origin', 'meta'):
+    for key in ('origin', 'meta', 'annotations'):
         if value.get(key) is not None and not isinstance(value[key], dict):
             return f'{key} must be an object'
+    if value.get('sha256') is not None and not (isinstance(value['sha256'], str) and _SHA256.fullmatch(value['sha256'])):
+        return 'sha256 must be 64 lowercase hexadecimal digits'
+    size = value.get('bytes')
+    if size is not None and (type(size) is not int or size < 0):
+        return 'bytes must be an integer of at least 0'
     meta = dict(value.get('meta') or {})
     for key, item in value.items():
-        if key not in _LIST_KEYS:
+        if key not in _LIST_KEYS and key not in _STEP_KEYS:
             meta.setdefault(key, item)
-    return _record(identifier, kind, path, text=text, array=value.get('array'), split=value.get('split'),
-                   rights=value.get('rights'), origin=value.get('origin'), meta=meta or None)
+    return _record(identifier, kind, path, size=size, text=text, array=value.get('array'), split=value.get('split'),
+                   rights=value.get('rights'), origin=value.get('origin'), meta=meta or None,
+                   sha256=value.get('sha256'), annotations=value.get('annotations'))
 
 
 def _lines(place):
@@ -375,7 +391,8 @@ def _preview(product, record):
 
 
 def _shown(product, record, *, preview):
-    shown = {key: record[key] for key in ('id', 'kind', 'path', 'split', 'rights', 'origin', 'meta')}
+    shown = {key: record[key] for key in ('id', 'kind', 'path', 'split', 'rights', 'origin', 'meta', 'sha256',
+                                          'annotations')}
     shown['bytes'] = _size_of(product, record)
     if record['array'] is not None:
         shown['array'] = record['array']
@@ -384,7 +401,7 @@ def _shown(product, record, *, preview):
     return shown
 
 
-@_reading
+@reading
 def records(product, *, offset=0, limit=50, kind=None, split=None):
     index = index_of(product)
     chosen = [record for record in index.records
@@ -414,7 +431,12 @@ def _text_content(record, place):
 
 
 def array_listing(place):
-    """The arrays of an .npy or .npz Place: [{array, shape, dtype, bytes}]; a plain .npy's one array is named null."""
+    """The arrays of an .npy, .npz or .safetensors Place: [{array, shape, dtype, bytes}]; a plain .npy's one array is
+    named null; a safetensors file's tensors are in the order of its header."""
+    if place.name.lower().endswith('.safetensors'):
+        return [{'array': name, 'shape': header.shape, 'dtype': header.dtype,
+                 'bytes': header.count * header.itemsize if header.itemsize else None}
+                for name, header in inside_arrays.safetensors_headers(place)]
     if place.name.lower().endswith('.npz'):
         held, blob = inside_archive.open_archive_place(place)
         found = []
@@ -460,7 +482,7 @@ def _content(record, place):
     return {}
 
 
-@_reading
+@reading
 def record(product, identifier):
     index = index_of(product)
     position = index.by_id.get(identifier)
@@ -485,7 +507,8 @@ def _entry(address, name, kind_of_entry, size, kind):
 
 
 def _file_entry(address, name, size, place_for_head, depth):
-    if name.lower().endswith('.npz') or (is_archive_name(name) and depth < inside_archive.ARCHIVES_IN_ADDRESS):
+    if name.lower().endswith(('.npz', '.safetensors')) or (is_archive_name(name)
+                                                            and depth < inside_archive.ARCHIVES_IN_ADDRESS):
         kind_of_entry = 'archive'
     else:
         kind_of_entry = 'file'
@@ -509,7 +532,7 @@ def _entries(product, place):
                                          lambda child_place=child_place: child_place.head(64 * 1024), 0))
         return found
     lower = place.name.lower()
-    if place.kind == 'file' and lower.endswith(('.npz', '.npy')):
+    if place.kind == 'file' and lower.endswith(ARRAY_FILES):
         return [{**_entry(address, item['array'] or place.name, 'array', item['bytes'], 'array'),
                  'array': item['array'], 'shape': item['shape'], 'dtype': item['dtype']}
                 for item in array_listing(place)]
@@ -534,7 +557,7 @@ def _entries(product, place):
     return found
 
 
-@_reading
+@reading
 def inside(product, *, path='', offset=0, limit=200):
     place = locate(product.root, path, folders=True)
     entries = _entries(product, place)
@@ -544,10 +567,19 @@ def inside(product, *, path='', offset=0, limit=200):
 
 # -------------------------------------------------------------------- arrays
 
-def _array_at(product, path, name):
-    """(Blob, Header, a name for messages) of the array at path (an .npy, or an .npz with name)."""
+def array_at(product, path, name):
+    """(Blob, Header, a name for messages) of the array at path (an .npy, or an .npz or .safetensors with name)."""
     place = locate(product.root, path)
     lower = place.name.lower()
+    if lower.endswith('.safetensors'):
+        if not name:
+            raise ProjectError(f'{path} holds several tensors; name one with array.', 'invalid')
+        header = dict(inside_arrays.safetensors_headers(place)).get(name)
+        if header is None:
+            raise ProjectError(f'There is no array {name} in {path}.', 'not-found')
+        label = f'{path} {name}'
+        header.require(label)
+        return place.blob(), header, label
     if lower.endswith('.npz'):
         if not name:
             raise ProjectError(f'{path} holds several arrays; name one with array.', 'invalid')
@@ -560,21 +592,21 @@ def _array_at(product, path, name):
     elif lower.endswith('.npy'):
         label = path
     else:
-        raise ProjectError(f'{path} is not an .npy or .npz array.', 'invalid')
+        raise ProjectError(f'{path} is not an .npy, .npz or .safetensors array.', 'invalid')
     header = inside_arrays.read_header(place)
     header.require(label)
     return place.blob(), header, label
 
 
-@_reading
+@reading
 def array_slice(product, *, path, array=None, axes=None, index=None, most=256):
-    blob, header, label = _array_at(product, path, array)
+    blob, header, label = array_at(product, path, array)
     return inside_arrays.array_slice(blob, header, label, axes=axes, index=index, most=most)
 
 
-@_reading
+@reading
 def array_summary(product, *, path, array=None, bins=64):
-    blob, header, label = _array_at(product, path, array)
+    blob, header, label = array_at(product, path, array)
     return inside_arrays.array_summary(blob, header, label, bins=bins)
 
 
@@ -590,7 +622,7 @@ class FileResponse:
 _RANGE = re.compile(r'bytes=(\d+)-(\d*)')
 
 
-@_reading
+@reading
 def file_response(product, address, range_header=None, chunk=1 << 16):
     """The bytes of a file or archive member of a product, with its media type, disposition and range."""
     place = locate(product.root, address)

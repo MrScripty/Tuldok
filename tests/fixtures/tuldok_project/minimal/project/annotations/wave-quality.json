@@ -1,0 +1,10 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "annotation",
+  "title": "Wave scene quality",
+  "description": "Whether each scene looks like a clean wave.",
+  "card": "notes/decisions.md",
+  "dataset": "datasets/waves",
+  "task": "class",
+  "vocabulary": ["clean", "noisy"]
+}

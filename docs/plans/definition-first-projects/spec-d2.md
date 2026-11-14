@@ -80,3 +80,20 @@ D2a is built on a branch of its own beside spec-d1's page; D2b after both.
 ## 7. Out of scope
 
 Activations; a drawing of the architecture; reading `.pt`, `.ckpt`, ONNX or GGUF; comparing more than two files; any change to how a recipe declares its outputs.
+
+## As built
+
+### D2a, the readers and the operations
+
+What differs from the text above, and what was found.
+
+- **`weights_compare` also answers `unread`:** tensors of the same shape that one side holds in a type Tuldok does not read (`BF16`, say), with both types. They are left out of the comparison. Each tensor row and `total` also carry `nonfinite`.
+- **`array_tiles` also answers `stride`,** as a slice does. `across` defaults to the first axis not drawn; an array of fewer than three axes is refused `invalid`.
+- **`weights`** also answers `tensors` (how many the file holds; `parameters` counts those listed, at most 10,000). A declared weights output that is a directory gives the weights files at its top. A declared output that is missing is listed as not readable with `bytes` null. A damaged file is listed as not readable with its reason; the call is not refused.
+- **`weights_compare`:** all four arguments are required; a file of more than 10,000 tensors is refused `too-large`; the bound of 32,000,000 values counts both files together.
+- **Layer order:** an `.npz` follows its directory of members, a `.safetensors` its header.
+- **In `inside.py`** the guard of the entry points, the list of what a damaged file raises and the function that finds an array are no longer private (`reading`, `DAMAGED`, `array_at`), since the weights module uses them. A product now carries the outputs its run recorded, so that no reader opens the database.
+- **A summary never answers infinity** (found in review, feeding the readers 20,000 corrupted `.safetensors` files). 64-bit values near the largest a float holds overflowed the mean and the deviation of `array_summary`, which spec-d1 built: the answer held `Infinity`, which is not JSON, and a page could not have read it. A mean or deviation that overflows is null, and the histogram's positions are computed on halved values when the range itself overflows. `weights_compare` already answered null in that case.
+- **Measured** on an earlier lab model (26 tensors in 14 layers, 163,068 parameters, 660 KB), through the readers alone: `weights` 0.002 s; `weights_compare` against its `initial-weights.npz` 0.024 s (total relative change 0.85, cosine 0.70; four layers started at zero, so their relative change is null); `array_tiles` of its largest tensor 0.0003 s.
+- **Tests:** `tests/test_tuldok_project_weights.py`, 16; `tests/test_tuldok_project_inside.py`, 25; project suite 626 before the review's change, and the two files above after it; agent interface 43 (4 skipped). The catalog profile's digest is unchanged.
+- **Not verified:** a `.safetensors` written by the library itself (the tests write their own); comparing a Fortran-ordered array with a C-ordered one is right but reorders value by value, which would be slow on a large tensor; a big-endian machine.

@@ -7,11 +7,18 @@ its schema), runs it with the project open only for the moment it needs, and
 returns a JSON-plain object. Calls are answered one at a time under one lock
 of the service. Every mutating call that passed the actor check writes one
 activity row, done or refused. The six operations on build requests are
-passed to build_requests. The five reads inside a product (spec-d1.md) find
-the finished run with the project open for a moment and read its output
-directory through inside.py after closing it; product_file does the same for
-the file route; those reads run outside the lock, so a long one holds up no
-other call. Nothing here knows of HTTP or of the app's access layer.
+passed to build_requests. The five reads inside a product (spec-d1.md) and
+the three reads of a model's weights (spec-d2.md) find the finished run (and
+for weights_compare the other run) with the project open for a moment and
+read its output directory through inside.py and inside_weights.py after
+closing it; product_file does the same for the file route; those reads run
+outside the lock, so a long one holds up no other call. The five operations
+on annotations (spec-d4.md section 5) work the same way: what the database
+holds of a task (its rows, the hashes kept for its product) is read under the
+lock, the product is read and hashed outside it (annotation_records), and
+what was computed is kept under the lock again; set_annotation finds and
+reads the records it names before it takes the lock to check and store them.
+Nothing here knows of HTTP or of the app's access layer.
 
 The worker (section 4) is one thread per service, started by start() and
 stopped by close(). It runs queued build requests one at a time while it
@@ -28,6 +35,7 @@ CLOSE_SECONDS for the thread.
 import dataclasses
 import datetime
 import fcntl
+import json
 import logging
 import math
 import os
@@ -36,32 +44,45 @@ import threading
 import jsonschema
 import psycopg
 
-from . import (activity, build_requests, builds, charts, check, environments, inside, launcher, local, operations,
-               plan, store, workspace)
+from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
+               documents, environments, inside, inside_weights, launcher, local, operations, plan, store, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
 
-# The reads inside a product (spec-d1.md), each a function of (inside.Product, arguments). call() finds the product
-# under the service's lock and reads outside it: decompressing a large member or parsing a large mesh takes seconds,
-# and the other calls (the page's own readings among them) must not wait for it. inside.py guards what it keeps.
+# The reads inside a product (spec-d1.md, spec-d2.md), each a function of ({argument: inside.Product}, arguments):
+# the products of the arguments in PRODUCT_ARGUMENTS that the call gives. call() finds them under the service's lock
+# and reads outside it: decompressing a large member, parsing a large mesh or comparing two large weights files takes
+# seconds, and the other calls (the page's own readings among them) must not wait for it. inside.py guards what it
+# keeps.
+PRODUCT_ARGUMENTS = ('run', 'other_run')
 INSIDE_READS = {
-    'records': lambda product, a: inside.records(product, offset=a.get('offset', 0), limit=a.get('limit', 50),
-                                                 kind=a.get('kind'), split=a.get('split')),
-    'record': lambda product, a: inside.record(product, a['id']),
-    'inside': lambda product, a: inside.inside(product, path=a.get('path', ''), offset=a.get('offset', 0),
-                                               limit=a.get('limit', 200)),
-    'array_slice': lambda product, a: inside.array_slice(product, path=a['path'], array=a.get('array'),
-                                                         axes=a.get('axes'), index=a.get('index'),
-                                                         most=a.get('most', 256)),
-    'array_summary': lambda product, a: inside.array_summary(product, path=a['path'], array=a.get('array'),
-                                                             bins=a.get('bins', 64)),
+    'records': lambda found, a: inside.records(found['run'], offset=a.get('offset', 0), limit=a.get('limit', 50),
+                                               kind=a.get('kind'), split=a.get('split')),
+    'record': lambda found, a: inside.record(found['run'], a['id']),
+    'inside': lambda found, a: inside.inside(found['run'], path=a.get('path', ''), offset=a.get('offset', 0),
+                                             limit=a.get('limit', 200)),
+    'array_slice': lambda found, a: inside.array_slice(found['run'], path=a['path'], array=a.get('array'),
+                                                       axes=a.get('axes'), index=a.get('index'),
+                                                       most=a.get('most', 256)),
+    'array_summary': lambda found, a: inside.array_summary(found['run'], path=a['path'], array=a.get('array'),
+                                                           bins=a.get('bins', 64)),
+    'weights': lambda found, a: inside_weights.weights(found['run']),
+    'weights_compare': lambda found, a: inside_weights.weights_compare(found['run'], path=a['path'],
+                                                                       other=found['other_run'],
+                                                                       other_path=a['other_path']),
+    'array_tiles': lambda found, a: inside_weights.array_tiles(found['run'], path=a['path'], array=a.get('array'),
+                                                               across=a.get('across'), axes=a.get('axes'),
+                                                               index=a.get('index'), first=a.get('first', 0),
+                                                               most=a.get('most', 16)),
 }
+# The reads of annotations (spec-d4.md section 5): each takes the service's lock itself, only for its database work.
+ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
 _LOG = logging.getLogger(__name__)
-_TARGET_ARGUMENTS = ('reference', 'run', 'request')
+_TARGET_ARGUMENTS = ('reference', 'run', 'request', 'task')
 
 
 def _plain(value):
@@ -112,8 +133,24 @@ def _target(arguments):
     if isinstance(arguments, dict):
         for key in _TARGET_ARGUMENTS:
             if isinstance(arguments.get(key), str):
+                if key == 'task':  # a task is named by its reference, given as a bare name or not
+                    return annotation_rows.reference(_bare(arguments[key], annotation_rows.DIRECTORY))
                 return arguments[key]
     return ''
+
+
+def _detail(name, result):
+    """The detail of a done activity row: how many records a change of annotations touched."""
+    if name == 'set_annotation':
+        return f'{result["set"]} set, {result["removed"]} removed'
+    if name == 'revert_annotations':
+        return f'{result["reverted"]} reverted'
+    return ''
+
+
+def _now():
+    """The time an annotation is made: UTC, to the second (spec-d4.md section 2)."""
+    return datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def _write_cancel_file(directory):
@@ -278,15 +315,35 @@ class Service:
                 raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
                                          problems=problems)
             with self._lock:
-                product = self._product(arguments['run'])
-            return _plain(INSIDE_READS[name](product, dict(arguments)))
-        with self._lock:
+                found = {key: self._product(arguments[key]) for key in PRODUCT_ARGUMENTS if key in arguments}
+            return _plain(INSIDE_READS[name](found, dict(arguments)))
+        if name in ANNOTATION_READS:
+            problems = _argument_problems(operation, arguments)
+            if problems:
+                raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
+                                         problems=problems)
+            return _plain(getattr(self, f'_{name}')(dict(arguments), actor))
+        prepared = ()
+        if name == 'set_annotation':  # the records are found and read before the lock is taken to store them
             try:
                 problems = _argument_problems(operation, arguments)
                 if problems:
                     raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
                                              problems=problems)
-                result = _plain(getattr(self, f'_{name}')(dict(arguments), actor))
+                prepared = (self._prepare_annotations(dict(arguments)),)
+            except store.ProjectError as exc:
+                self._record_activity(actor, name, _target(arguments), exc.code, str(exc))
+                raise
+            except Exception as exc:
+                self._record_activity(actor, name, _target(arguments), 'error', f'{type(exc).__name__}: {exc}')
+                raise
+        with self._lock:
+            try:
+                problems = [] if prepared else _argument_problems(operation, arguments)  # prepared: checked above
+                if problems:
+                    raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
+                                             problems=problems)
+                result = _plain(getattr(self, f'_{name}')(dict(arguments), actor, *prepared))
             except store.ProjectError as exc:
                 if operation.mutation:
                     self._record_activity(actor, name, _target(arguments), exc.code, str(exc))
@@ -297,7 +354,7 @@ class Service:
                 raise
             if operation.mutation:
                 target = result.get('id', '') if name == 'request_build' else _target(arguments)
-                self._record_activity(actor, name, target, 'done')
+                self._record_activity(actor, name, target, 'done', _detail(name, result))
             return result
 
     def _record_activity(self, actor, name, target, outcome, detail=''):
@@ -453,11 +510,17 @@ class Service:
     # ------------------------------------------------------ inside a product
 
     def _product(self, run):
-        """The inside.Product of a finished run (succeeded or adopted), read with the project open for a moment."""
+        """The inside.Product of a finished run (succeeded or adopted), read with the project open for a moment.
+
+        It carries the outputs its products row records (with their roles), so that inside_weights knows which
+        files are the run's weights without opening the project.
+        """
         with self._open() as project:
             run_id = builds.find_run(project, run)
             state, directory, reference = project._execute(
                 'SELECT state, directory, reference FROM {schema}.runs WHERE id = %s', (run_id,)).fetchone()
+            recorded = project._execute('SELECT outputs FROM {schema}.products WHERE run_id = %s',
+                                        (run_id,)).fetchone()
             view = None
             if reference.startswith('datasets/'):
                 row = project._execute('SELECT document FROM {schema}.definitions WHERE directory = %s AND name = %s '
@@ -466,13 +529,224 @@ class Service:
         if state not in ('succeeded', builds.ADOPTED) or not directory:
             raise store.ProjectError(f'Run {run_id} is {state}; only a finished run has a product to look inside.',
                                      'not-found')
-        return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view)
+        return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view,
+                              recorded[0] if recorded else None)
 
     def product_file(self, run, address, range_header=None):
         """The inside.FileResponse of GET /api/project/file; the caller has checked the right to inspect."""
         with self._lock:
             product = self._product(run)
         return inside.file_response(product, address, range_header)
+
+    # ---------------------------------------------------------- annotations
+
+    def _located(self, project, document):
+        """(run id, output directory, the dataset's view) of the current product of a task's dataset, or None."""
+        dataset = document.get('dataset') if isinstance(document, dict) else None
+        if not isinstance(dataset, str):
+            return None
+        row = project._execute('''SELECT p.run_id, r.state, r.directory FROM {schema}.products p
+                                  JOIN {schema}.runs r ON r.id = p.run_id
+                                  WHERE p.reference = %s AND p.subject = '' AND p.current''', (dataset,)).fetchone()
+        if row is None or row[1] not in ('succeeded', builds.ADOPTED) or not row[2]:
+            return None
+        parsed = documents.parse_reference(dataset)
+        held = project._execute('SELECT document FROM {schema}.definitions WHERE directory = %s AND name = %s '
+                                'AND NOT removed', parsed).fetchone() if parsed else None
+        view = held[0].get('view') if held and isinstance(held[0], dict) else None
+        return row[0], os.path.join(row[2], builds.OUTPUT), view
+
+    @staticmethod
+    def _product_of(located):
+        """(inside.Product, its record index) of what _located found, or (None, None) when there is none."""
+        if located is None:
+            return None, None
+        try:
+            product = inside.Product(*located)
+        except store.ProjectError:
+            return None, None  # its output directory is gone
+        return product, annotation_records.index(product)
+
+    def _gather(self, project, name, document):
+        """What the database holds of one task for its counts and its records: read under the lock."""
+        connection, schema = project._connection, project.schema
+        annotation_rows.recheck(connection, schema, name, document)
+        located = self._located(project, document)
+        return {'name': name, 'document': document, 'located': located,
+                'held': annotation_rows.held_rows(connection, schema, name),
+                'unsaved': annotation_rows.unsaved_counts(connection, schema).get(name, 0),
+                'kept': annotation_rows.cached_hashes(connection, schema, located[0]) if located else {}}
+
+    @staticmethod
+    def _judge(gathered):
+        """Read the task's product outside the lock: its index, the hashes of the annotated records, what is stale."""
+        product, index = Service._product_of(gathered['located'])
+        held = gathered['held']
+        hashes, computed, stale = {}, {}, set()
+        if index is not None:
+            hashes, computed = annotation_records.current_hashes(product, index, held, gathered['kept'])
+            stale = {record for record, (sha, *_rest) in held.items()
+                     if annotation_records.is_stale(record, sha, index, hashes)}
+        counts = dict.fromkeys(operations.ANNOTATION_COUNTS, 0)
+        for _sha, state, valid, _unsaved in held.values():
+            counts[state] += 1
+            counts['invalid'] += not valid
+        counts['stale'] = len(stale)
+        if index is not None:
+            counts['unannotated'] = len(index.records) - sum(1 for record in held if record in index.by_id)
+        return {**gathered, 'product': product, 'index': index, 'hashes': hashes, 'computed': computed,
+                'stale': stale, 'counts': counts}
+
+    def _keep_hashes(self, judged):
+        """Keep the hashes computed outside the lock, per run and record."""
+        if judged['computed']:
+            with self._lock, self._open() as project:
+                annotation_rows.keep_hashes(project._connection, project.schema, judged['located'][0],
+                                            judged['computed'])
+
+    def _annotation_tasks(self, arguments, actor):
+        with self._lock, self._open() as project:
+            gathered = [self._gather(project, name, document) for name, document in project.annotation_tasks().items()]
+        tasks = []
+        for item in gathered:
+            judged = self._judge(item)
+            self._keep_hashes(judged)
+            document, index = judged['document'], judged['index']
+            tasks.append({'task': annotation_rows.reference(judged['name']), 'title': document.get('title'),
+                          'dataset': document.get('dataset'), 'type': document.get('task'),
+                          'vocabulary': document.get('vocabulary') or [],
+                          'run': judged['located'][0] if index is not None else None,
+                          'records': len(index.records) if index is not None else None,
+                          'counts': judged['counts'], 'unsaved': judged['unsaved']})
+        return {'tasks': tasks}
+
+    def _annotated_records(self, arguments, actor):
+        with self._lock, self._open() as project:
+            name, document = project.annotation_task(arguments['task'])
+            gathered = self._gather(project, name, document)
+        judged = self._judge(gathered)
+        held, index, stale = judged['held'], judged['index'], judged['stale']
+        wanted, kind = arguments.get('state'), arguments.get('kind')
+        listed = [record for record in (index.records if index is not None else [])
+                  if kind is None or record['kind'] == kind]
+        gone = [] if kind is not None else sorted(
+            (record for record in held if index is None or record not in index.by_id), key=annotations.sort_key)
+
+        def chosen(record_id):
+            if wanted is None:
+                return True
+            if wanted == 'unannotated':
+                return record_id not in held
+            if record_id not in held:
+                return False
+            if wanted == 'stale':
+                return record_id in stale
+            if wanted == 'invalid':
+                return not held[record_id][2]
+            return held[record_id][1] == wanted
+
+        ids = [(record['id'], record) for record in listed if chosen(record['id'])]
+        ids += [(record_id, None) for record_id in gone if wanted != 'unannotated' and chosen(record_id)]
+        offset, limit = arguments.get('offset', 0), arguments.get('limit', 50)
+        page = ids[offset:offset + limit]
+        with self._lock, self._open() as project:
+            if judged['computed']:
+                annotation_rows.keep_hashes(project._connection, project.schema, judged['located'][0],
+                                            judged['computed'])
+            found = annotation_rows.rows(project._connection, project.schema, name, [record_id for record_id, _ in page])
+        records = []
+        for record_id, record in page:
+            shown = (annotation_records.shown(judged['product'], record) if record is not None
+                     else {'id': record_id, 'kind': None, 'path': None, 'split': None, 'rights': None,
+                           'origin': None, 'meta': None, 'sha256': None, 'bytes': None})
+            shown['in_product'] = record is not None
+            current, _saved, unsaved = found.get(record_id, (None, None, False))
+            shown['annotation'] = None if current is None else {
+                'state': current['state'], 'value': current['value'], 'note': current.get('note'),
+                'by': current['by'], 'at': current['at'],
+                'stale': record_id in stale if index is not None else None, 'unsaved': unsaved}
+            records.append(shown)
+        return {'task': annotation_rows.reference(name), 'run': judged['located'][0] if index is not None else None,
+                'records': records, 'total': len(ids), 'counts': judged['counts']}
+
+    def _annotation(self, arguments, actor):
+        record_id = arguments['record']
+        with self._lock, self._open() as project:
+            name, document = project.annotation_task(arguments['task'])
+            located = self._located(project, document)
+            kept = (annotation_rows.cached_hashes(project._connection, project.schema, located[0], [record_id])
+                    if located else {})
+            current, saved, unsaved = annotation_rows.rows(project._connection, project.schema, name,
+                                                           [record_id]).get(record_id, (None, None, False))
+        product, index = self._product_of(located)
+        sha256, stale = None, None
+        if index is not None:
+            hashes, computed = annotation_records.current_hashes(product, index, [record_id], kept)
+            sha256 = hashes.get(record_id)
+            if current is not None:
+                stale = annotation_records.is_stale(record_id, current['sha256'], index, hashes)
+            self._keep_hashes({'computed': computed, 'located': located})
+        return {'task': annotation_rows.reference(name), 'record': record_id, 'annotation': current,
+                'saved': None if saved is None else json.loads(saved), 'unsaved': unsaved, 'stale': stale,
+                'sha256': sha256}
+
+    def _prepare_annotations(self, arguments):
+        """Find the task and its product under the lock, then read the records the items set outside it.
+
+        Returns what _set_annotation needs: the task as it was, the run, and
+        for each record set, its facts and hash (None when the product does not
+        have it), and the hashes computed here.
+        """
+        setting = [item['record'] for item in arguments['items'] if not item.get('remove')]
+        with self._lock, self._open() as project:
+            name, document = project.annotation_task(arguments['task'])
+            located = self._located(project, document)
+            kept = (annotation_rows.cached_hashes(project._connection, project.schema, located[0], setting)
+                    if located and setting else {})
+        known, computed = {}, {}
+        if setting:
+            product, index = self._product_of(located)
+            if index is None:
+                raise store.ProjectError(f'{document.get("dataset")} has no product to annotate; build it first.',
+                                         'not-found', references=[document.get('dataset')])
+            hashes, computed = annotation_records.current_hashes(product, index, setting, kept)
+            for record_id in setting:
+                position = index.by_id.get(record_id)
+                if position is not None:
+                    known[record_id] = (annotation_records.facts(product, index.records[position],
+                                                                 document.get('task')), hashes.get(record_id))
+        return {'name': name, 'document': document, 'run': located[0] if located else None, 'known': known,
+                'computed': computed}
+
+    def _set_annotation(self, arguments, actor, prepared):
+        with self._open() as project:
+            name, document = project.annotation_task(arguments['task'])
+            located = self._located(project, document)
+            if (annotation_rows.fingerprint(document) != annotation_rows.fingerprint(prepared['document'])
+                    or document.get('dataset') != prepared['document'].get('dataset')
+                    or (located[0] if located else None) != prepared['run']):
+                raise store.ProjectError(f'{annotation_rows.reference(name)} or the product of its dataset changed '
+                                         'while the annotations were being checked; try again.', 'busy',
+                                         references=[annotation_rows.reference(name)])
+            if prepared['computed']:
+                annotation_rows.keep_hashes(project._connection, project.schema, prepared['run'],
+                                            prepared['computed'])
+            rows, removals, problems = annotation_records.check_items(
+                document, arguments['items'], prepared['known'], by=annotation_records.by_of(actor), at=_now(),
+                origin=arguments.get('from'))
+            if problems:
+                raise store.ProjectError(f'{len(problems)} of the items cannot be kept; nothing was changed.',
+                                         'invalid', problems=[Problem('error', annotation_rows.path(name), pointer,
+                                                                      message) for pointer, message in problems],
+                                         references=[annotation_rows.reference(name)])
+            done, removed, unsaved = project.set_annotations(name, rows, removals, document)
+        return {'task': annotation_rows.reference(name), 'set': done, 'removed': removed, 'unsaved': unsaved}
+
+    def _revert_annotations(self, arguments, actor):
+        with self._open() as project:
+            name, document = project.annotation_task(arguments['task'])
+            reverted = project.revert_annotations(name, arguments.get('records'), document)
+        return {'task': annotation_rows.reference(name), 'reverted': reverted}
 
     # ------------------------------------------------------------- changes
 

@@ -332,6 +332,7 @@ _STATUS_WORDS = (
     ('unsaved', 'unsaved'), ('removed', 'removed'), ('added', 'added on disk'),
     ('changed', 'changed on disk'), ('missing', 'missing on disk'), ('irregular', 'not a definition file'),
     ('results_unsaved', 'results unsaved'), ('results_changed', 'results changed on disk'),
+    ('annotations_changed', 'annotations changed on disk'),
 )
 
 
@@ -341,6 +342,8 @@ def _status(project, arguments):
         _json(status)
         return 0
     rows = [(word, reference) for key, word in _STATUS_WORDS for reference in status[key]]
+    rows += [('annotations unsaved', f'{item["task"]} ({_plural(item["records"], "record")})')
+             for item in status['annotations_unsaved']]
     if rows:
         _columns(rows)
     else:
@@ -408,6 +411,8 @@ def _save(project, arguments):
     rows += [('deleted', reference) for reference in saved['deleted']]
     rows += [('wrote', f'results/{name}.csv') for name in saved['results_written']]
     rows += [('deleted', f'results/{name}.csv') for name in saved['results_deleted']]
+    rows += [('wrote', path) for path in saved['annotations_written']]
+    rows += [('deleted', path) for path in saved['annotations_deleted']]
     if rows:
         _columns(rows)
     else:
@@ -900,6 +905,8 @@ def _show_run(row, event):
         label = 'subject recipe' if name == '{recipe}' else f'input {name}'
         output = f' ({used["output"]})' if used.get('output') else ''
         rows.append((label, f'{used["reference"]}{output}, run {used["run_id"]}'))
+    for task, read in sorted((row.get('annotations') or {}).items()):
+        rows.append((f'task {task}', f'{read["file"]}, sha256 {(read["sha256"] or "none (no file)")[:16]}'))
     product = row['product']
     if product is not None:
         rows.append(('product', product['directory'] + ('  (adopted)' if product['adopted'] else '')

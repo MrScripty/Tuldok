@@ -22,7 +22,8 @@
         "benchmark",
         "step",
         "environment",
-        "chart"
+        "chart",
+        "annotation"
       ]
     },
     "title": {
@@ -260,12 +261,16 @@
     "run": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "command"
-      ],
       "properties": {
         "command": {
           "$ref": "#/$defs/command"
+        },
+        "step": {
+          "enum": [
+            "import",
+            "freeze"
+          ],
+          "description": "a step Tuldok provides: import or freeze"
         },
         "environment": {
           "type": "string",
@@ -368,6 +373,17 @@
               "$ref": "#/$defs/command"
             }
           }
+        },
+        "annotations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^annotations/[a-z0-9][a-z0-9._-]{0,119}$",
+            "description": "a reference to an annotation task, such as annotations/<name>"
+          }
         }
       },
       "dependentSchemas": {
@@ -380,27 +396,77 @@
           }
         }
       },
-      "if": {
-        "required": [
-          "command"
-        ],
-        "properties": {
-          "command": {
-            "type": "array",
-            "minItems": 1,
-            "prefixItems": [
-              {
-                "const": "python"
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "command": {
+                "type": "array",
+                "minItems": 1,
+                "prefixItems": [
+                  {
+                    "const": "python"
+                  }
+                ]
               }
+            }
+          },
+          "then": {
+            "required": [
+              "environment"
             ]
           }
+        },
+        {
+          "if": {
+            "required": [
+              "step"
+            ]
+          },
+          "then": {
+            "properties": {
+              "command": {
+                "not": {},
+                "description": "A run with step has no command; remove one of the two."
+              },
+              "environment": {
+                "not": {},
+                "description": "A step Tuldok provides runs with Tuldok's own interpreter; remove environment."
+              },
+              "outputs": {
+                "not": {},
+                "description": "A step's outputs are fixed by the step; remove outputs."
+              },
+              "settings_file": {
+                "not": {},
+                "description": "A step takes its settings inline; use settings, not settings_file."
+              },
+              "env": {
+                "not": {},
+                "description": "A step Tuldok provides takes no environment variables; remove env."
+              },
+              "estimate": {
+                "not": {},
+                "description": "A step Tuldok provides has no estimate command; remove estimate."
+              }
+            }
+          },
+          "else": {
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "annotations": {
+                "not": {},
+                "description": "annotations belong to a run with step freeze; add step or remove annotations."
+              }
+            }
+          }
         }
-      },
-      "then": {
-        "required": [
-          "environment"
-        ]
-      }
+      ]
     }
   }
 }

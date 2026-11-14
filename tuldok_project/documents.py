@@ -28,11 +28,13 @@ DIRECTORIES = {
     'step': 'steps',
     'environment': 'environments',
     'chart': 'charts',
+    'annotation': 'annotations',
 }
 KINDS = {directory: kind for kind, directory in DIRECTORIES.items()}
 
 # Which directories each reference-taking field accepts (2.6, 2.7). The keys
-# are the edge roles of 2.9 without their ":<name>" suffix, and the two roles
+# are the edge roles of 2.9 without their ":<name>" suffix, the role of an
+# annotation task's dataset (spec-d4.md section 1), and the two roles
 # of a recipe's place on the map (spec-w1.md section 1): derived_from and
 # compared_with.
 ACCEPTS = {
@@ -42,6 +44,8 @@ ACCEPTS = {
     'subject': ('recipes',),
     'cases': ('datasets',),
     'benchmark': ('benchmarks',),
+    'dataset': ('datasets',),
+    'annotations': ('annotations',),
     'derived': ('recipes',),
     'compared': ('recipes',),
 }

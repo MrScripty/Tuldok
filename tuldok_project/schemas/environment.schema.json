@@ -25,7 +25,8 @@
         "benchmark",
         "step",
         "environment",
-        "chart"
+        "chart",
+        "annotation"
       ]
     },
     "title": {

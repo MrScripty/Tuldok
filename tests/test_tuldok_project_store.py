@@ -29,6 +29,7 @@ FIXTURE = REPOSITORY / 'tests' / 'fixtures' / 'tuldok_project' / 'minimal'
 DATABASE = os.environ.get('TULDOK_DATABASE_URL')
 
 FIXTURE_STATES = {
+    'annotations/wave-quality': 'none',  # a task is never built (spec-d4.md)
     'benchmarks/rollout': 'not-built',  # its early-fit subject carries nothing
     'charts/rollout-comparison': 'none',
     'charts/rollout-progression': 'none',
@@ -44,7 +45,7 @@ FIXTURE_STATES = {
 }
 
 CLEAN_STATUS = {'unsaved': [], 'removed': [], 'added': [], 'changed': [], 'missing': [], 'irregular': [],
-                'results_unsaved': [], 'results_changed': []}
+                'results_unsaved': [], 'results_changed': [], 'annotations_unsaved': [], 'annotations_changed': []}
 
 
 
@@ -180,9 +181,9 @@ class Open(StoreCase):
         self.assertEqual(summary['project_id'], self.project_id)
         self.assertEqual(summary['folder'], os.path.realpath(self.folder))
         self.assertEqual(summary['code_root'], '../code')
-        self.assertEqual(summary['kinds'], {'benchmark': 1, 'chart': 4, 'dataset': 1, 'environment': 1,
-                                            'model': 1, 'recipe': 3, 'step': 1})
-        self.assertEqual(summary['states'], {'cannot-rebuild': 1, 'none': 5, 'not-built': 5, 'not-set-up': 1})
+        self.assertEqual(summary['kinds'], {'annotation': 1, 'benchmark': 1, 'chart': 4, 'dataset': 1,
+                                            'environment': 1, 'model': 1, 'recipe': 3, 'step': 1})
+        self.assertEqual(summary['states'], {'cannot-rebuild': 1, 'none': 6, 'not-built': 5, 'not-set-up': 1})
         rows = project.definitions()
         self.assertEqual({row['reference']: row['state'] for row in rows}, FIXTURE_STATES)
         self.assertEqual([row['reference'] for row in project.definitions(kind='chart')],
@@ -198,7 +199,7 @@ class Open(StoreCase):
         self.assertIn({'reference': 'benchmarks/rollout', 'role': 'cases'}, shown['used_by'])
 
         drawn = project.graph()
-        self.assertEqual(len(drawn['nodes']), 12)
+        self.assertEqual(len(drawn['nodes']), 13)
         self.assertIn({'from': 'recipes/stepper-k2', 'to': 'recipes/stepper-k1', 'role': 'input:start'}, drawn['edges'])
         self.assertEqual(len(drawn['edges']), len(check.check_folder(self.folder).edges))
         order = project.order()
@@ -213,7 +214,7 @@ class Open(StoreCase):
         project = self.open()
         checker.assert_not_called()
         self.assertEqual(self.dump(), before)
-        self.assertEqual(len(project.definitions()), 12)
+        self.assertEqual(len(project.definitions()), 13)
 
     def test_changed_added_and_removed_files_are_imported(self):
         self.close(self.open())
@@ -386,7 +387,8 @@ class Edit(StoreCase):
         with self.assertRaises(ProjectError) as caught:
             self.project.remove_definition('datasets/waves')
         self.assertEqual(caught.exception.code, 'in-use')
-        self.assertEqual(caught.exception.references, ['benchmarks/rollout', 'recipes/stepper-k1', 'recipes/stepper-k2'])
+        self.assertEqual(caught.exception.references, ['annotations/wave-quality', 'benchmarks/rollout',
+                                                     'recipes/stepper-k1', 'recipes/stepper-k2'])
         self.assertEqual(self.dump(), before)
 
     def test_removing_a_user_frees_what_it_used(self):
@@ -437,7 +439,8 @@ class Save(StoreCase):
         self.project.remove_definition('charts/speed-accuracy')
         result = self.project.save()
         self.assertEqual(result, {'written': ['datasets/waves', 'models/extra'], 'deleted': ['charts/speed-accuracy'],
-                                  'results_written': [], 'results_deleted': []})
+                                  'results_written': [], 'results_deleted': [],
+                                  'annotations_written': [], 'annotations_deleted': []})
         self.assertEqual(self.read('datasets/waves'), waves)
         self.assertEqual(self.read('models/extra'), extra)
         self.assertFalse((self.folder / 'charts' / 'speed-accuracy.json').exists())

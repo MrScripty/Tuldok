@@ -16,8 +16,8 @@ window.LabEditor = (() => {
   const { sect, modelState } = S.parts;
   const isObject = v => !!v && typeof v === 'object' && !Array.isArray(v);
   const button = (cls, text, key, onClick) => { const b = h('button', cls, text); b.type = 'button'; if (key) b.dataset.key = key; if (onClick) b.addEventListener('click', onClick); return b; };
-  const KIND_ORDER = ['recipe', 'dataset', 'model', 'step', 'benchmark', 'chart', 'environment'];
-  const KIND_TITLE = { recipe: 'Recipes', dataset: 'Datasets', model: 'Models', step: 'Steps', benchmark: 'Benchmarks', chart: 'Charts', environment: 'Environments' };
+  const KIND_ORDER = ['recipe', 'dataset', 'annotation', 'model', 'step', 'benchmark', 'chart', 'environment'];
+  const KIND_TITLE = { recipe: 'Recipes', dataset: 'Datasets', model: 'Models', step: 'Steps', benchmark: 'Benchmarks', chart: 'Charts', environment: 'Environments', annotation: 'Annotation tasks' };
 
   // ---- Page memory ------------------------------------------------------------
   const buffers = new Map();   // reference -> { text, base }: typed and not kept yet

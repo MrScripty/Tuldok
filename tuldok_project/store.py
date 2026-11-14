@@ -25,6 +25,12 @@ definition does (the files on disk are left).
 The record of changes asked through the service (spec-m7.md section 5) lives
 in one more table owned by activity, and the build requests (section 4) in
 one owned by build_requests.
+Annotations (spec-d4.md sections 3 and 4) live in three more tables owned by
+annotation_rows and follow the definitions' pattern row by row: a task's line
+file is imported when it changed on disk (its size and time are compared
+before it is hashed), an unsaved row whose saved line the file changes is a
+conflict, status counts the unsaved rows without writing a file, and save
+writes each task's file that has unsaved rows, whole.
 The state row also keeps tuldok.json as last imported (spec-w1.md: the map's
 groups and track are read from it); a change to it alone imports the folder
 again, and the chart its map.chart names cannot be removed.
@@ -44,8 +50,8 @@ from psycopg.types.json import Jsonb
 
 from metadata import connection_info
 
-from . import (activity, build_requests, builds, check, documents, environments, folder as folder_reader, graph,
-               result_rows, results)
+from . import (activity, annotation_rows, annotations, build_requests, builds, check, documents, environments,
+               folder as folder_reader, graph, result_rows, results)
 from .documents import Problem
 
 PROJECT_ID = re.compile(r'^[a-f0-9]{32}$')
@@ -70,6 +76,7 @@ _TABLES = (
            PRIMARY KEY (from_ref, to_ref, role))''',
     'CREATE INDEX IF NOT EXISTS edges_to ON {schema}.edges (to_ref)',
     *result_rows.TABLES,
+    *annotation_rows.TABLES,
 )
 # Later additive changes go here as ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
 # state.project: tuldok.json as last imported, for the map's groups and track (spec-w1.md).
@@ -166,9 +173,11 @@ def _read_project_file(root):
 
 @dataclass(frozen=True)
 class DiskListing:
-    """The definition files on disk: reference -> SHA-256, and paths that are not plain definition files."""
+    """The definition files on disk: reference -> SHA-256, paths that are not plain definition files, and the
+    tasks' line files: task name -> (size, mtime in nanoseconds), which are not read here."""
     files: dict
     irregular: tuple
+    lines: dict
 
 
 def _list_definitions(root):
@@ -176,8 +185,11 @@ def _list_definitions(root):
 
     Anything the layout rules would refuse (a link, a non-.json entry, a bad
     name, an oversize file) is put in irregular, which sends open() to the checker.
+    A task's annotations/<name>.jsonl beside its <name>.json is not a
+    definition file: its size and time go in lines; one without its task is
+    irregular.
     """
-    files, irregular = {}, []
+    files, irregular, lines = {}, [], {}
     root_fd = _open_root(root)
     try:
         top = dict(folder_reader.entries(root_fd))
@@ -189,8 +201,20 @@ def _list_definitions(root):
                 continue
             fd = os.open(directory, folder_reader.DIRECTORY_FLAGS, dir_fd=root_fd)
             try:
-                for name, entry_kind in folder_reader.entries(fd):
+                listed = folder_reader.entries(fd)
+                tasks = {name for name, entry_kind in listed if entry_kind == 'file'}
+                for name, entry_kind in listed:
                     path = f'{directory}/{name}'
+                    if (directory == folder_reader.ANNOTATIONS and name.endswith(folder_reader.LINES_SUFFIX)
+                            and entry_kind == 'file'
+                            and name[:-len(folder_reader.LINES_SUFFIX)] + '.json' in tasks):
+                        # a task's annotations (spec-d4.md section 2): not a definition file, and not read here
+                        try:
+                            info = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                        except FileNotFoundError:
+                            continue
+                        lines[name[:-len(folder_reader.LINES_SUFFIX)]] = (info.st_size, info.st_mtime_ns)
+                        continue
                     stem = name[:-len('.json')] if name.endswith('.json') else None
                     if entry_kind != 'file' or stem is None or not documents.is_name(stem):
                         irregular.append(path)
@@ -205,7 +229,7 @@ def _list_definitions(root):
                 os.close(fd)
     finally:
         os.close(root_fd)
-    return DiskListing(files, tuple(irregular))
+    return DiskListing(files, tuple(irregular), lines)
 
 
 def _list_results(root):
@@ -390,12 +414,13 @@ class Project:
         if state is not None and state['folder'] != root and not rebind:
             raise ProjectError(f'This project is bound to {state["folder"]}, not {root}; '
                                'open it with rebind to move it here.', 'bound-elsewhere')
-        rows, recorded_results = {}, {}
+        rows, recorded_results, recorded_lines = {}, {}, {}
         if exists:
             for reference, file_sha256, unsaved, removed in self._execute(
                     f'SELECT {_REFERENCE_SQL}, file_sha256, unsaved, removed FROM {{schema}}.definitions'):
                 rows[reference] = (file_sha256, unsaved or removed)
             recorded_results = dict(self._execute('SELECT benchmark, file_sha256 FROM {schema}.results_files'))
+            recorded_lines = annotation_rows.recorded_files(self._connection, self.schema)
         listing = _list_definitions(root)
         results_on_disk, results_irregular = _list_results(root)
         on_disk = {reference: sha for reference, (sha, _) in rows.items() if sha is not None}
@@ -405,12 +430,17 @@ class Project:
                 and {name: _sha(raw) for name, raw in results_on_disk.items()} == recorded_results
                 and state['name'] == project['name'] and state['code_root'] == code_root
                 and state['project'] == project):
-            if state['folder'] != root:
-                self._execute('UPDATE {schema}.state SET folder = %s', (root,))
-            return
-        self._import(root, rows, on_conflict, results_on_disk, recorded_results)
+            touched = _touched_lines(root, listing.lines, recorded_lines)
+            if touched is not None:
+                with self._connection.transaction():
+                    for name, (sha, size, mtime) in touched.items():
+                        annotation_rows.record_file(self._connection, self.schema, name, sha, size, mtime)
+                    if state['folder'] != root:
+                        self._execute('UPDATE {schema}.state SET folder = %s', (root,))
+                return
+        self._import(root, rows, on_conflict, results_on_disk, recorded_results, recorded_lines, listing.lines)
 
-    def _import(self, root, rows, on_conflict, results_on_disk, recorded_results):
+    def _import(self, root, rows, on_conflict, results_on_disk, recorded_results, recorded_lines, disk_lines):
         report = check.check_folder(root)
         if not report.ok:
             raise ProjectError(f'The project folder {root} has errors; fix them and open it again.', 'invalid',
@@ -430,10 +460,29 @@ class Project:
                     reseat.append((reference, disk_sha))
                     continue
             (take if disk_sha is not None else delete).append(reference)
-        if conflicts and on_conflict is None:
-            raise ProjectError('These definitions changed on disk and also have unsaved edits here: '
-                               + ', '.join(conflicts) + '. Open again keeping or discarding the edits.',
-                               'conflict', references=conflicts)
+        exists = self._schema_exists()
+        lines_plan, touched = self._lines_to_import(root, disk, recorded_lines, disk_lines, exists)
+        unsaved_rows = annotation_rows.unsaved_counts(self._connection, self.schema) if exists else {}
+        line_conflicts = []
+        for name, item in lines_plan.items():
+            if item['lines'] is not None and item['comparison'].contested:
+                line_conflicts.append(annotation_rows.path(name))
+        tasks_gone = sorted(documents.parse_reference(reference)[1] for reference in delete
+                            if reference.startswith(annotation_rows.DIRECTORY + '/'))
+        for name in tasks_gone:
+            if unsaved_rows.get(name) and annotation_rows.path(name) not in line_conflicts:
+                line_conflicts.append(annotation_rows.path(name))
+        line_conflicts.sort()
+        if (conflicts or line_conflicts) and on_conflict is None:
+            named = conflicts + line_conflicts
+            raise ProjectError('These definitions or annotations changed on disk and also have unsaved edits here: '
+                               + ', '.join(named) + '. Open again keeping or discarding the edits.',
+                               'conflict', references=named)
+        kept_gone = [annotation_rows.path(name) for name in tasks_gone if unsaved_rows.get(name)]
+        if kept_gone and on_conflict == 'keep':
+            raise ProjectError('These annotations have unsaved edits here, but their task was removed from the '
+                               'folder: ' + ', '.join(kept_gone) + '. Open again discarding the edits, or put the '
+                               'task back in the folder.', 'invalid', references=kept_gone)
 
         # The project as it will be: the folder, with the unsaved edits the database keeps.
         merged = dict(disk)
@@ -478,6 +527,26 @@ class Project:
                     result_rows.remove_benchmark(self._connection, self.schema, name)
                 if directory == environments.DIRECTORY:
                     environments.forget(self._connection, self.schema, name)
+                if directory == annotation_rows.DIRECTORY:
+                    annotation_rows.forget_task(self._connection, self.schema, name)
+            for name, (sha, size, mtime) in touched.items():
+                annotation_rows.record_file(self._connection, self.schema, name, sha, size, mtime)
+            for name, item in lines_plan.items():
+                if name in tasks_gone:
+                    continue
+                comparison, lines = item['comparison'], item['lines']
+                taken, reseated = list(comparison.take), []
+                if lines is None or on_conflict == 'keep':
+                    reseated = comparison.contested
+                else:
+                    taken += [record for record, _ in comparison.contested]
+                task = merged.get(annotation_rows.reference(name))
+                annotation_rows.apply_import(self._connection, self.schema, name, lines,
+                                             task.document if task is not None else None, taken, reseated)
+                if lines is None:
+                    annotation_rows.forget_file(self._connection, self.schema, name)
+                else:
+                    annotation_rows.record_file(self._connection, self.schema, name, *item['stamp'])
             for reference in take:
                 directory, name = documents.parse_reference(reference)
                 if directory == 'benchmarks' and reference in merged:
@@ -495,6 +564,67 @@ class Project:
                                  code_root = EXCLUDED.code_root, imported_at = EXCLUDED.imported_at,
                                  project = EXCLUDED.project''',
                           (self.project_id, project['name'], root, project.get('code_root', '.'), Jsonb(project)))
+
+    def _lines_to_import(self, root, disk, recorded, disk_lines, exists):
+        """({task name: {lines, comparison, stamp}} of line files new, changed or gone, {name: (sha, size, mtime)}
+        of those whose size or time alone changed).
+
+        A file whose size and time are those recorded is not read. One that is
+        read is checked again against its task in the folder (it may have
+        changed since the checker read it); an error refuses the open invalid.
+        lines is {record: (the line as it is in the file, its row)}, or None
+        for a file that is gone; stamp is (sha256, size, mtime_ns).
+        """
+        plan, touched, problems = {}, {}, []
+        for name in sorted(set(disk_lines) | set(recorded)):
+            known = recorded.get(name)
+            if name not in disk_lines:
+                plan[name] = {'lines': None, 'stamp': None,
+                              'comparison': annotation_rows.compare(self._connection, self.schema, name, None)}
+                continue
+            if known is not None and tuple(known[1:]) == disk_lines[name]:
+                continue
+            where = annotation_rows.path(name)
+            try:
+                found = _read_lines(root, name)
+            except folder_reader.Unsafe as exc:
+                raise ProjectError(f'{where} cannot be read; fix it and open the project again.', 'invalid',
+                                   problems=[Problem('error', where, '', str(exc))]) from None
+            if found is None:
+                if known is not None:
+                    plan[name] = {'lines': None, 'stamp': None,
+                                  'comparison': annotation_rows.compare(self._connection, self.schema, name, None)}
+                continue
+            raw, size, mtime = found
+            sha = _sha(raw)
+            if known is not None and sha == known[0]:
+                touched[name] = (sha, size, mtime)
+                continue
+            task = disk.get(annotation_rows.reference(name))
+            if task is None or not isinstance(task.document, dict):
+                problems.append(Problem('error', where, '', f'There is no {annotation_rows.reference(name)}.json, '
+                                                            'the task of these annotations.'))
+                continue
+            parsed = annotations.read(raw, task.document.get('task'), task.document.get('vocabulary', []))
+            errors = [Problem(item.severity, where, item.pointer, item.message)
+                      for item in parsed.reported() if item.severity == 'error']
+            if errors:
+                problems.extend(errors)
+                continue
+            pieces = raw.decode('utf-8').split('\n')
+            lines = {}
+            for number, row in parsed.rows:
+                if annotation_rows.has_nul(row):
+                    problems.append(Problem('error', where, f'line {number}', 'The line holds the character U+0000, '
+                                                                              'which Tuldok cannot keep; remove it.'))
+                lines[row['record']] = (pieces[number - 1], row)
+            comparison = (annotation_rows.compare(self._connection, self.schema, name, lines) if exists
+                          else annotation_rows.Comparison(take=list(lines)))
+            plan[name] = {'lines': lines, 'stamp': (sha, size, mtime), 'comparison': comparison}
+        if problems:
+            raise ProjectError('A file of annotations changed while the folder was being opened, or holds what '
+                               'Tuldok cannot keep; fix it and open the project again.', 'invalid', problems=problems)
+        return plan, touched
 
     def _results_to_import(self, disk, merged, results_on_disk, recorded_results):
         """({benchmark: text} of new or changed results files, [benchmarks whose file is gone]).
@@ -582,6 +712,10 @@ class Project:
         are not the results file as last imported or saved (save would write
         or remove it); results_changed names the results files added, changed
         or removed on disk since then.
+        annotations_unsaved is [{task, records}]: per task (its reference), how
+        many records have an unsaved change; annotations_changed names the line
+        files added, changed or removed on disk since then, by size and time
+        alone. Neither renders nor reads a line file.
         """
         state = self._state()
         rows = self._execute(f'SELECT {_REFERENCE_SQL}, file_sha256, unsaved, removed FROM {{schema}}.definitions').fetchall()
@@ -602,7 +736,12 @@ class Project:
                 'irregular': list(listing.irregular) + list(results_irregular),
                 'results_unsaved': [name for name, (text, recorded_sha) in texts.items()
                                     if result_rows.differs(text, recorded_sha)],
-                'results_changed': results_changed}
+                'results_changed': results_changed,
+                'annotations_unsaved': [{'task': annotation_rows.reference(name), 'records': count}
+                                        for name, count in annotation_rows.unsaved_counts(self._connection,
+                                                                                          self.schema).items()],
+                'annotations_changed': _lines_changed(listing.lines, annotation_rows.recorded_files(
+                    self._connection, self.schema))}
 
     # ------------------------------------------------------------ editing
 
@@ -687,6 +826,11 @@ class Project:
             if row is None:
                 raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
             self._refuse_in_use(reference)
+            if directory == annotation_rows.DIRECTORY:
+                held = annotation_rows.held_count(self._connection, self.schema, name)
+                if held:
+                    raise ProjectError(f'{reference} has {held} annotation{"s" if held != 1 else ""}; remove '
+                                       f'{"them" if held != 1 else "it"} first.', 'in-use', references=[reference])
             if row[0] is None:
                 # Never written to disk: there is no file for save() to delete.
                 self._drop(reference)
@@ -708,9 +852,11 @@ class Project:
 
     def _drop(self, reference):
         """Delete a definition's row outright (there is no file for save() to delete) and forget its records."""
-        self._execute('DELETE FROM {schema}.definitions WHERE directory = %s AND name = %s',
-                      documents.parse_reference(reference))
+        directory, name = documents.parse_reference(reference)
+        self._execute('DELETE FROM {schema}.definitions WHERE directory = %s AND name = %s', (directory, name))
         self._forget(reference)
+        if directory == annotation_rows.DIRECTORY:
+            annotation_rows.forget_task(self._connection, self.schema, name)
 
     def _forget(self, reference):
         """Drop what a definition that is gone leaves: its edges, runs and products, results, environment record."""
@@ -809,6 +955,11 @@ class Project:
         Otherwise nothing is written and ProjectError (code changed-on-disk)
         names them. Returns the references written and deleted, and the
         benchmarks whose results files were written and deleted.
+        Each task with an unsaved annotation (or removed, with a line file)
+        has annotations/<name>.jsonl written whole from all its rows through
+        annotations.write, or deleted when no annotation is left
+        (spec-d4.md section 4), under the same rule; annotations_written and
+        annotations_deleted name those files.
         """
         root = self._state()['folder']
         rows = self._execute(f'SELECT {_REFERENCE_SQL}, text, file_sha256, removed FROM {{schema}}.definitions '
@@ -830,6 +981,7 @@ class Project:
                 changed.append(_results_path(name))
             else:
                 results_plan.append((name, text, True))
+        lines_plan = self._lines_to_save(root, changed)
         if changed:
             raise ProjectError('These files changed on disk since they were imported: ' + ', '.join(changed)
                                + '. Open the project again to take or keep the changes.', 'changed-on-disk',
@@ -852,7 +1004,24 @@ class Project:
                 if must_change:
                     _write_path(root, folder_reader.RESULTS, f'{name}.csv', text.encode('utf-8'))
                     results_written.append(name)
+        annotations_written, annotations_deleted = [], []
+        for name, data, must_change, _ in lines_plan:
+            if must_change and data is None:
+                _delete_path(root, folder_reader.ANNOTATIONS, name + folder_reader.LINES_SUFFIX)
+                annotations_deleted.append(annotation_rows.path(name))
+            elif must_change:
+                _write_path(root, folder_reader.ANNOTATIONS, name + folder_reader.LINES_SUFFIX, data)
+                annotations_written.append(annotation_rows.path(name))
         with self._connection.transaction():
+            for name, data, _, lines in lines_plan:
+                annotation_rows.mark_saved(self._connection, self.schema, name, lines)
+                if data is None:
+                    annotation_rows.forget_file(self._connection, self.schema, name)
+                else:  # the file now holds data: its digest is known, its size and time are read
+                    info = os.stat(os.path.join(root, folder_reader.ANNOTATIONS, name + folder_reader.LINES_SUFFIX),
+                                   follow_symlinks=False)
+                    annotation_rows.record_file(self._connection, self.schema, name, _sha(data), info.st_size,
+                                                info.st_mtime_ns)
             for name, text, _ in results_plan:
                 if text is None:
                     result_rows.forget_file(self._connection, self.schema, name)
@@ -868,7 +1037,68 @@ class Project:
                     cursor.executemany(self._sql('DELETE FROM {schema}.definitions WHERE directory = %s AND name = %s'),
                                        [documents.parse_reference(reference) for reference in deleted])
         return {'written': written, 'deleted': deleted,
-                'results_written': results_written, 'results_deleted': results_deleted}
+                'results_written': results_written, 'results_deleted': results_deleted,
+                'annotations_written': annotations_written, 'annotations_deleted': annotations_deleted}
+
+    def _lines_to_save(self, root, changed):
+        """[(task name, bytes to write or None to delete, whether the file must change, [(record, line)])].
+
+        The tasks are those with an unsaved row, and removed tasks whose line
+        file is recorded. A file whose content is neither the one recorded nor
+        the one to be written is added to changed by its path.
+        """
+        recorded = annotation_rows.recorded_files(self._connection, self.schema)
+        names = set(annotation_rows.unsaved_counts(self._connection, self.schema))
+        names |= {name for (name,) in self._execute('SELECT name FROM {schema}.definitions WHERE directory = %s '
+                                                    'AND removed', (annotation_rows.DIRECTORY,))
+                  if name in recorded}
+        plan = []
+        for name in sorted(names):
+            data, lines = annotation_rows.file_text(self._connection, self.schema, name)
+            if not lines:
+                data = None
+            known = recorded.get(name)
+            current = _lines_sha(root, name, known)
+            target = None if data is None else _sha(data)
+            if current == target:
+                plan.append((name, data, False, lines))
+            elif current != (known[0] if known else None):
+                changed.append(annotation_rows.path(name))
+            else:
+                plan.append((name, data, True, lines))
+        return plan
+
+    # -------------------------------------------------------- annotations
+
+    def annotation_tasks(self):
+        """{task name: document} of every task not removed, by name."""
+        return dict(self._execute('SELECT name, document FROM {schema}.definitions WHERE directory = %s '
+                                  'AND NOT removed ORDER BY name', (annotation_rows.DIRECTORY,)).fetchall())
+
+    def annotation_task(self, task):
+        """(name, document) of a task given by name or reference; refused not-found when the project has none."""
+        name = task[len(annotation_rows.DIRECTORY) + 1:] if task.startswith(annotation_rows.DIRECTORY + '/') else task
+        row = self._execute('SELECT document FROM {schema}.definitions WHERE directory = %s AND name = %s '
+                            'AND NOT removed', (annotation_rows.DIRECTORY, name)).fetchone() \
+            if documents.is_name(name) else None
+        if row is None:
+            raise ProjectError(f'There is no task {annotation_rows.reference(name)}.', 'not-found',
+                               references=[annotation_rows.reference(name)])
+        return name, row[0]
+
+    def set_annotations(self, name, given, removals, document):
+        """Store checked rows and removals of task name as unsaved, in one transaction (annotation_rows.set_rows).
+
+        Returns (set, removed, how many records of the task are now unsaved).
+        """
+        with self._connection.transaction():
+            done = annotation_rows.set_rows(self._connection, self.schema, name, given, removals, document)
+        return (*done, annotation_rows.unsaved_counts(self._connection, self.schema).get(name, 0))
+
+    def revert_annotations(self, name, records, document):
+        """Put back the saved lines of the task's unsaved records (all when records is None); returns how many."""
+        with self._connection.transaction():
+            return annotation_rows.revert(self._connection, self.schema, name, records, document)
 
     # ------------------------------------------------------------ results
 
@@ -941,6 +1171,77 @@ class Project:
 
 
 # --------------------------------------------------------------- files
+
+def _touched_lines(root, disk_lines, recorded):
+    """None when a task's line file is new, gone or changed in content; else {name: (sha, size, mtime)} of the
+    files whose size or time alone differ from those recorded (they are read and hashed; the others are not)."""
+    if set(disk_lines) != set(recorded):
+        return None
+    touched = {}
+    for name, stamp in disk_lines.items():
+        if tuple(recorded[name][1:]) == stamp:
+            continue
+        try:
+            found = _read_lines(root, name)
+        except folder_reader.Unsafe:
+            return None
+        if found is None or _sha(found[0]) != recorded[name][0]:
+            return None
+        touched[name] = (recorded[name][0], found[1], found[2])
+    return touched
+
+
+def _read_lines(root, name):
+    """(bytes, size, mtime_ns) of annotations/<name>.jsonl; None when there is none, folder.Unsafe when it is not
+    a plain file. The size and time are taken before the bytes are read, so a change while reading shows next time."""
+    filename = name + folder_reader.LINES_SUFFIX
+    try:
+        fd = os.open(os.path.join(root, folder_reader.ANNOTATIONS), folder_reader.DIRECTORY_FLAGS)
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        raise folder_reader.Unsafe(f'The directory {folder_reader.ANNOTATIONS} cannot be opened: {exc.strerror}.') \
+            from None
+    try:
+        try:
+            info = os.stat(filename, dir_fd=fd, follow_symlinks=False)
+        except FileNotFoundError:
+            return None
+        return folder_reader.read(fd, filename, folder_reader.LINES_LIMIT), info.st_size, info.st_mtime_ns
+    finally:
+        os.close(fd)
+
+
+def _lines_sha(root, name, known):
+    """SHA-256 of a task's line file, None when there is none, 'unreadable' when it is not a plain file; the
+    recorded digest when its size and time are those recorded in known ((sha, size, mtime) or None)."""
+    try:
+        info = os.stat(os.path.join(root, folder_reader.ANNOTATIONS, name + folder_reader.LINES_SUFFIX),
+                       follow_symlinks=False)
+    except FileNotFoundError:
+        return None
+    except OSError:
+        return 'unreadable'
+    if known is not None and (info.st_size, info.st_mtime_ns) == tuple(known[1:]):
+        return known[0]
+    try:
+        found = _read_lines(root, name)
+    except folder_reader.Unsafe:
+        return 'unreadable'
+    return None if found is None else _sha(found[0])
+
+
+def _lines_changed(disk_lines, recorded):
+    """The paths of the line files added, removed, or whose size or time differ from those recorded."""
+    def differs(name):
+        disk, known = disk_lines.get(name), recorded.get(name)
+        if disk is None or known is None:
+            return disk is not known
+        # A file recorded while its time was still fresh was compared by content when the project was opened for
+        # this call (annotation_rows.UNSETTLED): only its size can say more here.
+        return disk[0] != known[1] or (known[2] != annotation_rows.UNSETTLED and disk[1] != known[2])
+    return sorted(annotation_rows.path(name) for name in set(disk_lines) | set(recorded) if differs(name))
+
 
 def _file_sha(root, reference):
     """SHA-256 of the definition file on disk, None when it does not exist, 'unreadable' when it is not a plain file."""
