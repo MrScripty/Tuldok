@@ -2,6 +2,8 @@
 
 **Status: approved by the owner on 2026-11-13, with the changes under "The owner's answer" below.**
 
+**Built, 2026-11-13:** phases 1 to 5, on `feat/definition-first-projects`, not pushed; the specs `spec-d1.md` to `spec-d5.md` say what was built and what was not verified, and the [ledger](execution-ledger.md) has the record. **Not built:** phase 6. **Not run:** anything against a real Pumas endpoint, which waits for the owner's word (decision 3). The owner has not yet looked at these pages.
+
 ## The owner's answer
 
 > we will use the pumas endpoint. We wont be embedding pumas. What do you mean by lables? Right now we just need the basic modality support for data generation and annotation. text, image, audio, 3D (point clouds, mesh). We dont have a specific need for the surrogate lab. This is more a setup so other projects can setup what they need to generate. The rest sounds good. You can go ahead

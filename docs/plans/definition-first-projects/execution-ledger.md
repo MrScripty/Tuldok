@@ -644,3 +644,43 @@ The tab bar was rebuilt with each of those, the strip on every reading, and the 
 **Not verified:** what each spec's "As built" lists; a real `.safetensors` written by the library; a copy across file systems in `import`; the standards service was unavailable (see the entry above).
 
 **Next:** the cause of the scroll going back; the Weights block of a model's drawer; the Annotate tab with the Import and Freeze forms; then phase 5.
+
+## 2026-11-13 — data tools: phases 1 to 5 are built
+
+**Commits** on `feat/definition-first-projects`, none pushed: the Weights block `8b7ff525`; the Annotate tab with Import and Freeze `c41f360c`; the endpoint, `generate` and suggestions, server side `f6231508`; their page `fc145a48`; the dataset view's scroll and `record` by path `32b1d0d9`; merged as `636da697` and `d95aeb4f`.
+
+**What a project folder has now** (the plan's five phases):
+
+1. **Looking inside data.** A dataset opens to its records as a paged grid with a viewer per kind (text, image, sound, point cloud, mesh, array) and a Files view in which any file or archive member opens.
+2. **Weights by layer.** A model's drawer shows its weights file by layer, how each layer's values are distributed, a tensor as images, and the change from the weights it started from or from the model it derives from.
+3. **The Pumas 0.8.0 client,** following the released contract.
+4. **Annotation.** Tasks as a kind of definition; annotations as lines in Git; the Annotate tab with a form per task (decision, class, tags, text, boxes, spans, segments); Import and Freeze as steps Tuldok runs.
+5. **Through the Pumas endpoint.** The endpoint as a setting of the machine, shown on the Train tab; a Generate form and the step `generate` for text and image datasets; Suggest in Annotate.
+
+**The open defect of the last entry is closed.** The dataset view's jump to its top was the browser's scroll anchoring: tiles fill in after the view is drawn, and when the tile the browser had chosen as its anchor had its picture replaced, the scroll was put back to 0. No code of the page moved it. A loop with every way of moving the scroll traced reproduced it in 3 of 12 iterations; with `overflow-anchor: none` on the main area, which keeps its scroll itself, 220 iterations were clean. The Annotate tab's grid fills the same way and is covered by the same rule. One correction to how this was handled: the agent sent to find it waited on a test run of the reviewer's that had been held up, and stood idle for about an hour and a half before that was noticed.
+
+**Acceptance on the merged tip `d95aeb4f`:**
+
+| Claim | Evidence | Result |
+| --- | --- | --- |
+| The project folder's code behaves as its tests say | `python -m unittest discover -s tests -p 'test_tuldok_project_*.py'`, on a disposable PostgreSQL | 719 pass |
+| The agent interface and the Pumas client are unchanged in what catalog mode uses | `test_agent_api`, `test_agent_negotiation`, `test_agent_http`, and the seven modules of the Pumas client and its fakes | 123 pass, 4 skipped as before |
+| Each page part does what its spec says, in a real browser against a served fixture | `browser_project_workspace_inside`, `_weights`, `_annotate`, `_endpoint`, `_actions`, `_still` and `browser_project_workspace` | 8, 7, 11, 8, 27, 6 and 23 steps pass |
+| The lab's folder still opens | `python -m tuldok_project check` on `projects/surrogate-lab`, read only | 0 errors, the same 8 warnings |
+| Generation and suggestions work against a real endpoint | one small text dataset, one small image dataset and one suggestion through the owner's Pumas | **not run**: it needs the owner's word, and uses that machine's GPU for a moment |
+| The pages are what the owner wants | the owner looks at them | **pending** |
+
+Everything that speaks to Pumas was checked against a fake endpoint built from the released contract. No running Pumas was contacted and this machine's listeners were not scanned.
+
+**Known limits,** each in its spec's "As built":
+
+- The endpoint must be a numeric loopback address on this machine: that is what the 0.8.0 client sends to and what Pumas 0.8.0 serves on.
+- Pumas 0.8.0 makes text and images. Audio and 3D datasets come from `import` or a project's own command.
+- `set_annotation` does not refuse when the annotation changed since the form was drawn: of two people keeping the same record, the later one wins without a warning.
+- Cancelling a suggestion drops its answer; the request to the endpoint runs to its end.
+- The endpoint's state on the Train tab is not read again on the timer.
+- The whole repository suite (catalog mode included, about an hour) was not run after the data tools; the project suite, the agent interface and the Pumas client were.
+
+**Not built:** phase 6, native, predicted and signed error side by side in the Analysis tab.
+
+**Next:** the owner looks at the pages; on the owner's word, the run against a real endpoint.
