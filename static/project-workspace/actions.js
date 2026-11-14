@@ -168,12 +168,12 @@ window.LabActions = (() => {
     id: 'save', label: 'Save', cls: 'btn sm', who: 'edit', op: 'save', busy: 'Saving…',
     extra: error => { if (error.code !== 'changed-on-disk') return null; const b = btn('btn sm', 'Read the project again', 'reread'); b.addEventListener('click', () => hooks.reread()); const d = h('div', 'actions'); d.appendChild(b); return d; }
   });
-  /** The strip's part: how many definitions are unsaved or marked removed, and Save. */
+  /** The strip's part: how many definitions are unsaved or marked removed and how many annotations are unsaved ("3 definitions, 41 annotations unsaved"), and Save, which writes both. */
   function stripSave(status, note) {
-    const n = status.unsaved.length + status.removed.length;
-    if (!n) { if (note) note.textContent = ''; return null; }
+    const n = status.unsaved.length + status.removed.length, a = P.annotationsUnsaved(status);
+    if (!n && !a) { if (note) note.textContent = ''; return null; }
     const box = h('span', 'unsaved');
-    box.appendChild(h('span', 'count', plural(n, 'definition', 'definitions') + ' unsaved'));
+    box.appendChild(h('span', 'count', [n ? plural(n, 'definition', 'definitions') : null, a ? plural(a, 'annotation', 'annotations') : null].filter(Boolean).join(', ') + ' unsaved'));
     box.appendChild(group('save', [saveItem()], { inline: true, refusalIn: note }));
     return box;
   }
@@ -188,8 +188,8 @@ window.LabActions = (() => {
     } else if (n.save) {
       items.push(saveItem());
       for (const ref of n.references.slice(0, 6)) {
-        const where = ref.startsWith('recipes/') ? 'map' : ref.startsWith('datasets/') ? 'data' : null;
-        if (where) items.push({ id: 'open-' + ref, label: ref, cls: 'btn sm ghost', onClick: () => go(where, ref) });
+        const where = ref.startsWith('recipes/') ? 'map' : ref.startsWith('datasets/') ? 'data' : ref.startsWith('annotations/') ? 'annotate' : null;
+        if (where) items.push({ id: 'open-' + ref, label: ref, cls: 'btn sm ghost', onClick: () => { if (where !== 'annotate') return go(where, ref); if (window.LabAnnotate) window.LabAnnotate.choose(ref); go(where); } });
       }
     } else if (n.environment) {
       const e = n.environment;

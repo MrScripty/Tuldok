@@ -2157,8 +2157,11 @@ status 2. The app opens the project only for each operation, as the commands
 do, so files changed on disk are imported before an operation answers and
 the command line keeps working beside the app.
 
-The page at `/` is the Map workspace: the tabs Map, Data, Train, Benchmarks,
-Analysis and Overview over the project, read through the operations below.
+The page at `/` is the Map workspace: the tabs Map, Data, Annotate, Train,
+Benchmarks, Analysis and Overview over the project, read through the operations
+below. Annotate shows a task's records, one in its viewer, and the task's form,
+which keeps an annotation with `set_annotation`; Save writes the unsaved
+annotations with the unsaved definitions.
 Each of its controls calls one operation and is drawn only for a session that
 may call it, so a credential that may only inspect sees a page that changes
 nothing. The report is linked from the Overview tab. The page reads again
@@ -2170,7 +2173,8 @@ request ended or `status` changed) and compares each answer with the one it
 holds. When none differs nothing on the page is drawn again but the time it
 was read and the progress of a running build; when one does, what is on screen is drawn again in place, keeping
 the scroll and the focus, and a drawer holding the editor or the branch form
-is left alone except after a control's answer. A reading that fails leaves
+is left alone except after a control's answer, as are the forms of New task,
+Import and Freeze and an annotation typed or drawn and not kept. A reading that fails leaves
 the page as it is; the status strip says the project was not read, and why.
 
 ### Signing in and issuing an agent credential

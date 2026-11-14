@@ -19,7 +19,7 @@
 // shows the conflict panel.
 (() => {
   const P = window.TuldokProject, S = window.LabScreens, A = window.LabActions;
-  const TABS = [['map', 'Map'], ['data', 'Data'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['overview', 'Overview']];
+  const TABS = [['map', 'Map'], ['data', 'Data'], ['annotate', 'Annotate'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['overview', 'Overview']];
   const POLL_MS = 2000, IDLE_MS = 15000;   // how often the page asks again while something builds, and while nothing does
   const ACTIVE_RUN = ['queued', 'running'], ACTIVE_REQUEST = ['queued', 'running'];
   const $ = id => document.getElementById(id);
@@ -115,8 +115,8 @@
       setText(m.firstChild, text + (p ? ' ' + p.stage + ': ' + p.completed + ' of ' + p.total + '.' : ''));
       setText(m.lastChild, ' Read at ' + data.readAt + '.');
       want.push(m);
-      const n = data.status ? data.status.unsaved.length + data.status.removed.length : 0;
-      if (n) want.push(part('save', n + ' ' + A.may('edit'), () => A.stripSave(data.status, $('strip-note'))));
+      const n = data.status ? data.status.unsaved.length + data.status.removed.length : 0, a = P.annotationsUnsaved(data.status);
+      if (n || a) want.push(part('save', n + ' ' + a + ' ' + A.may('edit'), () => A.stripSave(data.status, $('strip-note'))));
       else if ($('strip-note').firstChild) $('strip-note').textContent = '';
       want.push(needsButton());
     }

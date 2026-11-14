@@ -1,7 +1,8 @@
 # Tiny project
 
 The smallest real Tuldok project: a dataset, a network trained on a GPU, a
-benchmark and two charts. Building it end to end takes about a minute, and it
+benchmark and two charts, and beside them a few small files of each kind
+brought in, annotated and frozen with splits. Building it end to end takes about a minute, and it
 uses every part of a build: environments, a command per definition, a product
 passed from one definition to the next, progress lines while training, a
 benchmark's results imported into the database, and charts drawn from them.
@@ -25,6 +26,9 @@ phase are random, and predict the next 16 samples of the clean wave.
 | `benchmarks/held-out` | `bench.py` scores a subject on the 400 test waves: error (RMSE) and time per wave |
 | `charts/held-out-ranking` | the subjects ranked by error |
 | `charts/held-out-tradeoff` | error against time per wave |
+| `datasets/samples` | the step `import`: the files under `code/samples` (two texts, a PNG, a WAV, a PLY point cloud and an OBJ mesh, written by `make_samples.py`), one record each |
+| `annotations/sample-quality` | a `class` task on `datasets/samples`: whether each sample is clean; its annotations are `annotations/sample-quality.jsonl` |
+| `datasets/samples-v1` | the step `freeze`: the samples whose quality is accepted, split three to one from seed 7 |
 
 The benchmark has two subjects: `small-net-a`, the trained network, and
 `predict-zero`, which always predicts zero and shows the error any model has to
@@ -72,14 +76,27 @@ P=examples/tiny-project/project
 .venv/bin/python -m tuldok_project build $P --all
 ```
 
-The plan has three build steps after the two environments: `datasets/waves`,
-`recipes/small-net-a`, then `benchmarks/held-out` once for each subject.
+The plan has five build steps after the two environments: `datasets/waves`,
+`recipes/small-net-a`, then `benchmarks/held-out` once for each subject, and
+`datasets/samples` and `datasets/samples-v1`, which Tuldok's own steps build
+in a moment with no environment.
 
 | Step | Time |
 | --- | --- |
 | `datasets/waves` | about a second on the CPU |
 | `recipes/small-net-a` | 6,000 updates; well under a minute on a GPU, much of it starting CUDA. The recipe allows 6 minutes |
 | `benchmarks/held-out` | a few seconds per subject, mostly starting torch |
+
+### The samples, annotated
+
+`datasets/samples` brings the files under `code/samples` in as records; open
+it on the Data tab of the page (`python app.py --data CATALOG --project-folder
+$P`) to look inside. On the Annotate tab, `annotations/sample-quality` shows
+each record with its annotation; change one, press Keep and next, and Save
+writes `annotations/sample-quality.jsonl`. `datasets/samples-v1` takes the
+records whose annotation is accepted, as committed, and splits them; build it
+again after committing a change to the annotations. To write the samples
+again, run `python make_samples.py` from `code/`: the bytes are the same.
 
 ### Watch the training
 

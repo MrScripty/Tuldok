@@ -415,20 +415,22 @@ window.LabInside = (() => {
     el.appendChild(h('p', 'small muted', has ? [k.seconds.toFixed(k.seconds < 10 ? 2 : 1) + ' s', k.rate.toLocaleString('en-GB') + ' Hz', count(k.channels, 'channel'), count(k.frames, 'frame')].join(' · ') : 'Length, rate and channels are read from a WAV only; the player reads the rest.'));
     if (has && k.peaks && k.peaks.length) {
       const cv = h('canvas', 'iv-wave'); cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', 'Waveform of ' + id + ', ' + k.seconds.toFixed(2) + ' seconds');
-      paints(cv, () => {
-        const size = fit(cv, 96); if (!size) return; const [W, H] = size, ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
-        const ink = token('--mark'), axis = token('--line-strong'), n = k.peaks.length;
-        ctx.fillStyle = 'rgb(' + axis.join(',') + ')'; ctx.fillRect(0, Math.floor(H / 2), W, 1);
-        ctx.fillStyle = 'rgb(' + ink.join(',') + ')';
-        for (let x = 0; x < W; x++) {
-          const a = Math.floor(x / W * n), b = Math.max(a + 1, Math.floor((x + 1) / W * n)); let lo = 1, hi = -1;
-          for (let i = a; i < b && i < n; i++) { lo = Math.min(lo, k.peaks[i][0]); hi = Math.max(hi, k.peaks[i][1]); }
-          if (hi < lo) continue; const y0 = (1 - hi) / 2 * (H - 2) + 1, y1 = (1 - lo) / 2 * (H - 2) + 1; ctx.fillRect(x, y0, 1, Math.max(1, y1 - y0));
-        }
-      });
+      paints(cv, () => { const size = fit(cv, 96); if (!size) return; const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, size[0], size[1]); wave(ctx, size[0], size[1], k.peaks); });
       el.appendChild(cv);
     }
     const a = h('audio'); a.controls = true; a.preload = 'metadata'; a.src = url; a.dataset.key = 'iv-audio'; a.setAttribute('aria-label', 'Play ' + id); el.appendChild(a);
+  }
+
+  /** A sound's waveform from its peaks ([low, high] per bucket, -1 to 1) across a W by H canvas: the axis, then a bar per column. */
+  function wave(ctx, W, H, peaks) {
+    const ink = token('--mark'), axis = token('--line-strong'), n = peaks.length;
+    ctx.fillStyle = 'rgb(' + axis.join(',') + ')'; ctx.fillRect(0, Math.floor(H / 2), W, 1);
+    ctx.fillStyle = 'rgb(' + ink.join(',') + ')';
+    for (let x = 0; x < W; x++) {
+      const a = Math.floor(x / W * n), b = Math.max(a + 1, Math.floor((x + 1) / W * n)); let lo = 1, hi = -1;
+      for (let i = a; i < b && i < n; i++) { lo = Math.min(lo, peaks[i][0]); hi = Math.max(hi, peaks[i][1]); }
+      if (hi < lo) continue; const y0 = (1 - hi) / 2 * (H - 2) + 1, y1 = (1 - lo) / 2 * (H - 2) + 1; ctx.fillRect(x, y0, 1, Math.max(1, y1 - y0));
+    }
   }
 
   // ---- Point clouds and meshes: turned by dragging, zoomed by the wheel ----------------------------------------------
@@ -698,5 +700,11 @@ window.LabInside = (() => {
   }
 
   // The drawing parts other viewers reuse (weights.js): decoding, the tokens' colours, the canvases drawn again on a new size or theme.
-  return { open, leave, PER_PAGE, drawing: { floats, token, ramp, paints, fit, heat, contain, ordinal } };
+  /**
+   * What the Annotate tab (annotate.js) draws with: a record's viewer as this module draws it, from the answer of
+   * `record` (run: the product's run; store: a Map that keeps each viewer's settings, as a dataset opened here does),
+   * and the parts its own drawing surfaces share with these viewers.
+   */
+  const viewers = { record: (el, got, run, store) => recordView(null, { run, viewers: store }, el, got), wave, paints, fit, token, glyph, WORD };
+  return { open, leave, PER_PAGE, viewers, drawing: { floats, token, ramp, paints, fit, heat, contain, ordinal } };
 })();
