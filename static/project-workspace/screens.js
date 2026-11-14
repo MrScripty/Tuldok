@@ -198,6 +198,11 @@ window.LabScreens = (() => {
     // What is read when the model is opened.
     const results = block('Results'), runs = block('Runs and product'), uses2 = block('Uses'), card = block('Card');
     for (const b of [results, runs, uses2, card]) { b.appendChild(h('p', 'note', 'Reading…')); ins.appendChild(b); }
+    // Weights (weights.js, spec-d2 section 4), after Runs and product: shown only when the model has a current product with a weights file.
+    if (window.LabWeights) {
+      const wts = h('div', 'wts-box'); wts.hidden = true; ins.insertBefore(wts, uses2);
+      reads.push(window.LabWeights.block(wts, m, g, aside.parentElement, live).catch(error => { if (!live()) return; wts.hidden = false; wts.replaceChildren(h('h3', null, 'Weights'), A.refusal(error)); }));
+    }
     if (more) more(ins);
     if (!same) aside.appendChild(ins);   // first shown: at once, its blocks filled as they come
     const fill = (b, build) => p => { if (!live()) return; b.lastChild.remove(); try { build(b, p); } catch (error) { failure(b, error); } };
