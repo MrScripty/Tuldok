@@ -805,6 +805,7 @@ def make_handler(dataset, observer=None):
                                '/project-workspace/actions.js': ('project-workspace/actions.js', 'text/javascript'),
                                '/project-workspace/editor.js': ('project-workspace/editor.js', 'text/javascript'),
                                '/project-workspace/tabs.js': ('project-workspace/tabs.js', 'text/javascript'),
+                               '/project-workspace/inside.js': ('project-workspace/inside.js', 'text/javascript'),
                                '/project-workspace/app.js': ('project-workspace/app.js', 'text/javascript'),
                                '/static/vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf': ('vendor/ubuntu-sans/UbuntuSans[wdth,wght].ttf', 'font/ttf'),
                                '/static/vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf': ('vendor/ubuntu-sans/UbuntuSans-Italic[wdth,wght].ttf', 'font/ttf'),

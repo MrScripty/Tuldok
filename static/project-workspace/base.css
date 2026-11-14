@@ -33,6 +33,9 @@
   --k-component: #8a94a3;
   --mark: #2e6fcf;
   --grid: #e6eaef;
+  /* The colour ramps of the viewers of a product (inside.js): sequential low to high, diverging about zero. */
+  --ramp-lo: #e4ebf5; --ramp-hi: #1c5cab;
+  --ramp-neg: #2e6fcf; --ramp-mid: #efeeeb; --ramp-pos: #d2652f;
   --font: "Ubuntu Sans", "Noto Sans", system-ui, sans-serif;
   --mono: "Ubuntu Sans Mono", "Ubuntu Mono", ui-monospace, monospace;
   --radius: 4px;
@@ -48,6 +51,7 @@
     --good-wash: #15302a; --warn-wash: #342a16; --serious-wash: #3a2320;
     --k-training-policy: #22a07f; --k-architecture: #4f8ae0; --k-refinement: #d96f3c; --k-component: #7c8694;
     --mark: #4f8ae0; --grid: #222a33;
+    --ramp-lo: #2a3542; --ramp-hi: #8db4f5; --ramp-neg: #4f8ae0; --ramp-mid: #3a3a37; --ramp-pos: #e07a4a;
   }
 }
 :root[data-theme="dark"] {
@@ -60,6 +64,7 @@
   --good-wash: #15302a; --warn-wash: #342a16; --serious-wash: #3a2320;
   --k-training-policy: #22a07f; --k-architecture: #4f8ae0; --k-refinement: #d96f3c; --k-component: #7c8694;
   --mark: #4f8ae0; --grid: #222a33;
+  --ramp-lo: #2a3542; --ramp-hi: #8db4f5; --ramp-neg: #4f8ae0; --ramp-mid: #3a3a37; --ramp-pos: #e07a4a;
 }
 
 * { box-sizing: border-box; }
@@ -594,3 +599,60 @@ textarea.code { width: 100%; min-width: 0; font: 12px/1.5 var(--mono); white-spa
 .row.def > .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 div.row.def { cursor: default; }
 @media (max-width: 900px) { .row.def { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 110px; } .row.def .umark { display: none; } }
+
+/* ---- Looking inside a product (inside.js, spec-d1.md section 7); from the mockup's Data tab. ---- */
+.ds-item { display: grid; align-content: start; gap: 6px; min-width: 0; }
+.ds-foot { display: flex; gap: 8px; }
+.ds-back { margin-bottom: 10px; }
+.ds-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+.ds-head h2 { font-size: 17px; overflow-wrap: anywhere; }
+.ds-head .meta { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+.ds-head select { max-width: 360px; }
+.inside-problems { margin: -4px 0 12px; }
+.ds-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 44%); gap: 20px; align-items: start; }
+@media (max-width: 1100px) { .ds-body { grid-template-columns: minmax(0, 1fr); } }
+.rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.rec { display: grid; grid-template-rows: auto auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; text-align: left; color: inherit; min-width: 0; }
+.rec:hover { border-color: var(--line-strong); }
+.rec[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.rec .th { display: grid; place-items: center; aspect-ratio: 1; background: var(--surface-2); color: var(--ink-3); overflow: hidden; border-bottom: 1px solid var(--line); }
+.rec .th > * { grid-area: 1 / 1; }
+.rec .th svg.glyph { width: 30px; height: 30px; }
+.rec .th img { width: 100%; height: 100%; object-fit: contain; }
+.rec .th canvas { display: block; width: 100%; height: 100%; }
+.rec .th .pre { align-self: start; justify-self: stretch; margin: 6px 7px; font: 10.5px/1.35 var(--mono); color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; overflow: hidden; text-align: left; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; }
+.rec .id { display: block; font: 11px var(--mono); color: var(--ink-2); padding: 3px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.rec.refused .th { color: var(--serious); }
+.inside-list .sect { margin-bottom: 8px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 2px 6px; align-items: baseline; font-size: 13px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.crumbs .sep { color: var(--ink-3); }
+.crumbs .here { font-weight: 500; }
+.crumbs .linkish { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+.crumbs .linkish:hover { text-decoration: underline; }
+.row.tree-entry { grid-template-columns: 18px minmax(0, 1fr) auto; }
+.row.tree-entry svg.glyph { width: 18px; height: 18px; color: var(--ink-3); }
+.viewer { position: sticky; top: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 12px; display: grid; gap: 10px; min-width: 0; max-height: calc(100vh - 140px); overflow: auto; }
+@media (max-width: 1100px) { .viewer { position: static; max-height: none; } }
+.iv { display: grid; gap: 10px; min-width: 0; }
+.iv-head { display: grid; gap: 2px; min-width: 0; }
+.iv-head h3 { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.iv-text { margin: 0; padding: 10px; background: var(--surface-2); border-radius: var(--radius); font: 12.5px/1.5 var(--mono); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 52vh; overflow: auto; }
+.iv-imgbox { overflow: auto; max-height: 60vh; background: var(--surface-2); border-radius: var(--radius); }
+.iv-img { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.iv-img img { display: block; width: 100%; max-height: 56vh; object-fit: contain; image-rendering: pixelated; }
+.iv-img.actual { width: auto; cursor: zoom-out; }
+.iv-img.actual img { width: auto; max-height: none; max-width: none; }
+.iv canvas { display: block; width: 100%; background: var(--surface-2); border-radius: var(--radius); }
+.iv canvas.iv-3d { cursor: grab; touch-action: none; }
+.iv canvas.iv-3d.dragging { cursor: grabbing; }
+.iv canvas.iv-heat { cursor: crosshair; }
+.iv audio { width: 100%; }
+.iv-ctl { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+.iv-field { display: inline-flex; gap: 6px; align-items: center; min-width: 0; }
+.iv-field select { max-width: 240px; }
+.iv-slider input[type="range"] { width: 140px; }
+.iv-array { display: grid; gap: 10px; min-width: 0; }
+.iv-probe { font-variant-numeric: tabular-nums; color: var(--ink); min-height: 1.5em; overflow-wrap: anywhere; }
+.iv-ends { display: flex; justify-content: space-between; margin-top: 2px; }
+.iv-facts { font-size: 12.5px; }
+.iv-hist { display: grid; gap: 6px; }

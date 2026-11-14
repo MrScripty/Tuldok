@@ -103,6 +103,22 @@ window.TuldokProject = (() => {
   // What the page watches: asked again on every reading ('map' on some, app.js), kept across a change.
   const WATCHED = ['summary', 'status', 'build_requests', 'environments', 'runs', 'map'];
 
+  // ---- Looking inside a product (spec-d1.md, inside.js) -----------------------------
+  // The five reads of a finished run's product. Their answers are kept like any other until a reading
+  // finds something changed (they are not watched, so forgetBut() drops them); the slice the viewer draws
+  // as a slider moves is asked for each time and not kept, so the kept answers do not grow with every move.
+  const defined = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null));
+  const product = {
+    records: (run, { offset, limit, kind, split } = {}) => read('records', defined({ run, offset, limit, kind, split })),
+    record: (run, id) => read('record', { run, id }),
+    inside: (run, { path, offset, limit } = {}) => read('inside', defined({ run, path: path || null, offset, limit })),
+    /** A slice; kept unless fresh (the viewer's slider). */
+    slice: (run, { path, array, axes, index, most }, fresh = false) => (fresh ? call : read)('array_slice', defined({ run, path, array, axes, index, most })),
+    summary: (run, { path, array, bins }) => read('array_summary', defined({ run, path, array, bins })),
+    /** The address of an image's or a sound's bytes (GET /api/project/file), as the record operation gives it. */
+    fileUrl: (run, path) => '/api/project/file?run=' + encodeURIComponent(run) + '&path=' + encodeURIComponent(path)
+  };
+
   // ---- The map ------------------------------------------------------------
   /**
    * What the Map tab and the drawer read, from the answer of `map`:
@@ -250,5 +266,5 @@ window.TuldokProject = (() => {
     return out;
   }
 
-  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day };
+  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day, product };
 })();

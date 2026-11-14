@@ -602,8 +602,17 @@
   }
 
   // ---- Data -----------------------------------------------------------------------
+  // The tab has two states (spec-d1 section 7): the cards, and one dataset opened, '#data/inside:<reference>'
+  // (inside.js); a selection '<reference>' is that dataset's drawer beside the cards, as before.
+  const INSIDE = 'inside:';
+  const lookInside = (ref, act) => { const b = button('btn sm', 'Look inside', ev => { ev.stopPropagation(); act.go('data', INSIDE + ref); }); b.dataset.key = 'inside-' + ref; return b; };
+  /** Data: the dataset cards, a dataset's drawer, or one dataset opened (inside.js). */
   function data_(main, aside, state, act, data) {
-    const E = window.LabEditor, raw = state.sel.data || null, sel = raw && E ? E.subject(raw) : raw;
+    const E = window.LabEditor, raw = state.sel.data || null;
+    if (raw && raw.startsWith(INSIDE)) { closeDrawer(aside); window.LabInside.open(main, raw.slice(INSIDE.length), act, !!aside._again); return false; }
+    if (window.LabInside) window.LabInside.leave();
+    if (main._painted && String(main._painted).startsWith('data/' + INSIDE)) { main.scrollTop = 0; main.scrollLeft = 0; }   // back to the cards: from their top
+    const sel = raw && E ? E.subject(raw) : raw;
     paint(main, () => Promise.all([P.read('definitions', { kind: 'dataset' }), P.read('products'), P.read('graph')]), (frag, [defs, products, graph]) => {
       const sets = defs.definitions.filter(d => !d.removed), byRef = new Map();
       for (const p of products.products) { if (!byRef.has(p.reference)) byRef.set(p.reference, []); byRef.get(p.reference).push(p); }
@@ -628,7 +637,11 @@
         t.appendChild(h('div', 'uses', used.length ? 'used by ' + used.length + ': ' + used.map(nameOfRef).join(', ') : 'used by nothing'));
         t.appendChild(h('div', 'path', ps.length ? ps[0].directory : d.reference)); card.appendChild(t);
         card.title = d.title;
-        card.addEventListener('click', () => act.select(d.reference === sel ? null : d.reference)); grid.appendChild(card);
+        card.addEventListener('click', () => act.select(d.reference === sel ? null : d.reference));
+        // "Look inside" beside the card (a button cannot hold a button), when the dataset has a product here.
+        const item = h('div', 'ds-item'); item.appendChild(card);
+        if (ps.some(p => p.run_id)) { const foot = h('div', 'ds-foot'); foot.appendChild(lookInside(d.reference, act)); item.appendChild(foot); }
+        grid.appendChild(item);
       }
       frag.appendChild(grid);
     });
@@ -638,6 +651,7 @@
       const hd = h('header'); hd.appendChild(h('span', 'kicker', d.reference)); const t2 = h('h2', null, d.title); t2.tabIndex = -1; hd.appendChild(t2);
       const meta = h('div', 'ins-meta'); meta.appendChild(p.products.some(x => x.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state)); meta.appendChild(Tree.mark({ id: d.reference, unsaved: d.unsaved })); hd.appendChild(meta); ins.appendChild(hd);
       // Edit (spec-w3 section 3.2): the editor, in the text view.
+      if (p.products.some(x => x.run_id)) { const look = h('div', 'actions'); look.appendChild(lookInside(d.reference, act)); ins.appendChild(look); }
       ins.appendChild(A.group('dataedit:' + d.reference, [{ id: 'edit', label: 'Edit', cls: 'btn sm', who: 'edit', onClick: () => act.select('edit:' + d.reference) }]));
       if (E) E.decorate(hd);
       const doc = d.document || {};
