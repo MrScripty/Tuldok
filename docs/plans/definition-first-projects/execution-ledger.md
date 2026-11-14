@@ -618,3 +618,29 @@ The tab bar was rebuilt with each of those, the strip on every reading, and the 
 **Not verified:** a real Pumas endpoint; the schemas the release does not publish (four are the pre-release export, one is derived); what spec-d1's "As built" lists. The standards service the implementers' rules name answered "awaiting application publication" on 2026-11-13, so no standards text was read for these slices.
 
 **Next:** the page of phase 1 (the record grid and a viewer per kind), and phase 2 (weights by layer, [spec-d2.md](spec-d2.md)), both being built.
+
+## 2026-11-13 — data tools: looking inside a dataset (page), weights (server), annotation (server)
+
+**Commits** on `feat/definition-first-projects`, none pushed: the page of phase 1 `7d376b61`; the weights readers `dfbeb10e`; annotation tasks and their file of lines `eefa274e`; the working copy and its operations `68aad8fb`; the steps `import` and `freeze` `e2ae4bb2`; merged here as `7262e8b4`. Specs: [spec-d2.md](spec-d2.md), [spec-d4.md](spec-d4.md), [spec-d5.md](spec-d5.md) (phase 5, written, not built).
+
+**How.** Slices were built by agents in working trees of their own, several at once where they touched different files, and merged after review. Each "As built" section of the specs has what differs from the text and what was not verified.
+
+**Phase 1, the page** ([spec-d1.md](spec-d1.md), slice D1b). A dataset with a product opens to its records as a paged grid with a viewer per kind: text, image, sound with its waveform, point cloud and mesh turned by dragging, array as a slice with the stacked-slice drawing and histogram; and a Files view of the product. Checked by `tests/browser_project_workspace_inside.cjs`, with screenshots read in light and dark at two widths.
+
+**Open defect in it.** In the reviewer's twelve further runs of that check, one failed: the main area's scroll went back to its top once, in the first second after the dataset opened, with its content unchanged. The owner's one complaint about this page so far was a full reset where an update in place was wanted, so this is not accepted as a flake: it is being reproduced in a loop with every way of moving the scroll traced. Also open: the Files view cannot yet open a text, point cloud or mesh that is not one of the product's records.
+
+**Phase 2, server side** (slice D2a): a run's weights by layer, a comparison of two files tensor by tensor, an array as tiles, `.safetensors` read like `.npz`. A PyTorch pickle is listed with its reason and never opened.
+
+**Phase 4, server side** (slices D4a to D4c): the annotation task as an eighth kind of definition; its annotations as a file of lines in Git, tied to each record's content by a hash; the working copy in the database, written by Save, with conflicts handled as for definitions; five operations; and `import` and `freeze` as steps Tuldok itself runs as ordinary builds.
+
+**Changed in review:**
+
+- `array_summary` (phase 1) answered `Infinity` for 64-bit values too large to sum, which is not JSON; found by feeding the weights readers 20,000 corrupted files. An overflowing mean or deviation is null.
+- A line file rewritten to the same size within one tick of the clock looked unchanged by size and time: the edit was not imported and Save would have written over it. A file's size and time are trusted only once its time is two seconds old; a test that writes such an edit fails without the rule.
+- The annotation file module was checked with 2,800 random annotations of every task written and read back byte for byte, and 3,000 corrupted files; `import` on a directory holding links out of it, a loop, a named pipe and names that collide.
+
+**Tests on the merged branch:** project suite 689; agent interface 43 (4 skipped). The catalog profile's manifest is unchanged throughout.
+
+**Not verified:** what each spec's "As built" lists; a real `.safetensors` written by the library; a copy across file systems in `import`; the standards service was unavailable (see the entry above).
+
+**Next:** the cause of the scroll going back; the Weights block of a model's drawer; the Annotate tab with the Import and Freeze forms; then phase 5.
