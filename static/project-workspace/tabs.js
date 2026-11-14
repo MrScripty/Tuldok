@@ -619,7 +619,12 @@
       const users = new Map(); for (const e of graph.edges) { if (!users.has(e.to)) users.set(e.to, new Set()); users.get(e.to).add(e.from); }
       const built = sets.filter(d => byRef.has(d.reference)).length, adopted = sets.filter(d => (byRef.get(d.reference) || []).some(p => p.adopted)).length;
       const total = sets.reduce((n, d) => n + (byRef.get(d.reference) || []).reduce((a, p) => a + (p.bytes || 0), 0), 0);
-      frag.appendChild(sect('Datasets', sets.length + ' · ' + built + ' with files on this machine' + (adopted ? ', ' + adopted + ' adopted' : '') + (total ? ' · ' + bytes(total) : '')));
+      const head = sect('Datasets', sets.length + ' · ' + built + ' with files on this machine' + (adopted ? ', ' + adopted + ' adopted' : '') + (total ? ' · ' + bytes(total) : ''));
+      // Two forms that keep a new dataset as an unsaved edit (spec-d4 section 7, annotate.js): files brought in, and a dataset frozen with splits.
+      if (window.LabAnnotate) { head.appendChild(h('span', 'spacer')); head.appendChild(A.group('data:new', [
+        { id: 'import', label: 'Import files', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:import' ? null : 'new:import') },
+        { id: 'freeze', label: 'Freeze a dataset', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:freeze' ? null : 'new:freeze') }], { inline: true })); }
+      frag.appendChild(head);
       if (!sets.length) { frag.appendChild(h('p', 'empty', 'The project defines no dataset.')); return; }
       const grid = h('div', 'ds-grid');
       for (const d of sets) {
@@ -646,15 +651,17 @@
       frag.appendChild(grid);
     });
     if (!sel) return closeDrawer(aside);
+    if (raw.startsWith('new:') && window.LabAnnotate) { window.LabAnnotate.datasetForm(aside, raw.slice(4), act); return true; }
     if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'data'); return true; }
     drawer(aside, sel, () => Promise.all([P.read('definition', { reference: sel }), P.read('products', { reference: sel })]), (ins, [d, p]) => {
       const hd = h('header'); hd.appendChild(h('span', 'kicker', d.reference)); const t2 = h('h2', null, d.title); t2.tabIndex = -1; hd.appendChild(t2);
       const meta = h('div', 'ins-meta'); meta.appendChild(p.products.some(x => x.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state)); meta.appendChild(Tree.mark({ id: d.reference, unsaved: d.unsaved })); hd.appendChild(meta); ins.appendChild(hd);
       // Edit (spec-w3 section 3.2): the editor, in the text view.
       if (p.products.some(x => x.run_id)) { const look = h('div', 'actions'); look.appendChild(lookInside(d.reference, act)); ins.appendChild(look); }
-      ins.appendChild(A.group('dataedit:' + d.reference, [{ id: 'edit', label: 'Edit', cls: 'btn sm', who: 'edit', onClick: () => act.select('edit:' + d.reference) }]));
-      if (E) E.decorate(hd);
       const doc = d.document || {};
+      ins.appendChild(A.group('dataedit:' + d.reference, [{ id: 'edit', label: 'Edit', cls: 'btn sm', who: 'edit', onClick: () => act.select('edit:' + d.reference) },
+        { id: 'plan', label: 'Plan build', cls: 'btn sm', who: 'request', hidden: !(doc.run && typeof doc.run === 'object'), onClick: () => act.go('train', 'plan:' + d.reference) }]));
+      if (E) E.decorate(hd);
       ins.appendChild(block('Description', doc.description ? h('p', null, doc.description) : h('p', 'note', 'The definition has no description.')));
       const su = setup(); const skip = new Set(['format', 'kind', 'title', 'description']);
       for (const [k, v] of Object.entries(doc)) {

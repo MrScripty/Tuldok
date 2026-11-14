@@ -119,6 +119,19 @@ window.TuldokProject = (() => {
     fileUrl: (run, path) => '/api/project/file?run=' + encodeURIComponent(run) + '&path=' + encodeURIComponent(path)
   };
 
+  // ---- Annotating (spec-d4.md, annotate.js) --------------------------------------------------
+  // The three reads of annotations, kept like any other answer until a reading finds something changed (they are
+  // not watched, so forgetBut() drops them). The two changes (set_annotation, revert_annotations) are called by
+  // controls (actions.js) by their names.
+  const annotations = {
+    tasks: () => read('annotation_tasks'),
+    /** A page of a task's records with their annotations; state one of the counts' names, or none for all. */
+    records: (task, { state, kind, offset, limit } = {}) => read('annotated_records', defined({ task, state, kind, offset, limit })),
+    one: (task, record) => read('annotation', { task, record })
+  };
+  /** How many records have an unsaved annotation, in all, from a status answer. */
+  const annotationsUnsaved = status => ((status && status.annotations_unsaved) || []).reduce((n, t) => n + t.records, 0);
+
   // ---- The map ------------------------------------------------------------
   /**
    * What the Map tab and the drawer read, from the answer of `map`:
@@ -251,8 +264,10 @@ window.TuldokProject = (() => {
       out.push({ kind: 'approval', key: 'request:' + r.id, request: r, text: 'A build of ' + (r.every ? 'everything buildable' : listed(r.targets || [])) + ', asked by ' + who + ' on ' + day(r.requested_at) + ', awaits your approval.' });
     }
     if (status.unsaved.length) out.push({ kind: 'changed', key: 'unsaved', save: true, references: status.unsaved.map(String), text: plural(status.unsaved.length, 'definition has', 'definitions have') + ' unsaved edits: ' + listed(status.unsaved.map(String)) + '.' });
+    const typed = annotationsUnsaved(status);
+    if (typed) out.push({ kind: 'changed', key: 'annotations-unsaved', save: true, references: status.annotations_unsaved.map(t => t.task), text: plural(typed, 'annotation is', 'annotations are') + ' unsaved: ' + listed(status.annotations_unsaved.map(t => t.task + ' (' + t.records + ')')) + '.' });
     if (status.removed.length) out.push({ kind: 'changed', key: 'removed', save: true, references: status.removed.map(String), text: plural(status.removed.length, 'definition is', 'definitions are') + ' marked removed and not yet saved: ' + listed(status.removed.map(String)) + '.' });
-    const disk = [].concat(status.added, status.changed, status.missing).map(String);
+    const disk = [].concat(status.added, status.changed, status.missing, status.annotations_changed || []).map(String);
     if (disk.length) out.push({ kind: 'changed', text: plural(disk.length, 'file changed', 'files changed') + ' on disk since the project was last read: ' + listed(disk) + '.' });
     if (status.irregular.length) out.push({ kind: 'missing', text: plural(status.irregular.length, 'file is', 'files are') + ' not regular files and are not read: ' + listed(status.irregular.map(String)) + '.' });
     const results = [].concat(status.results_unsaved, status.results_changed).map(String);
@@ -266,5 +281,5 @@ window.TuldokProject = (() => {
     return out;
   }
 
-  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day, product };
+  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day, product, annotations, annotationsUnsaved };
 })();
