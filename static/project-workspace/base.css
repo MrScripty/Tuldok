@@ -429,7 +429,10 @@ body.shell { height: 100vh; display: grid; grid-template-rows: 48px auto auto 1f
 #needs-panel .needs li:first-child { border-top: 0; }
 #needs-panel .needs li:last-child { border-bottom: 0; }
 .stage { position: relative; min-height: 0; overflow: clip; display: grid; }
-main { overflow: auto; padding: 18px 20px 40px; min-height: 0; min-width: 0; }
+/* overflow-anchor: the page keeps the main area's scroll itself (putInPlace, spec-w4 R4). The browser's scroll
+   anchoring, left on, moved it back to the top when a tile's picture replaced its glyph in the first second after a
+   dataset opened (spec-d1 As built, D1b). */
+main { overflow: auto; overflow-anchor: none; padding: 18px 20px 40px; min-height: 0; min-width: 0; }
 main.map { padding: 10px 20px 12px; display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; }
 main.map .tree-host { overflow: auto; min-height: 0; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); background: var(--surface); }
 main.map > .filters { margin-bottom: 10px; }

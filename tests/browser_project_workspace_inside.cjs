@@ -6,7 +6,9 @@
 // product of 57 records: at least one of every kind (text, image, audio, point cloud, mesh, array, file), a zip
 // archive holding .npz arrays, and an array Tuldok refuses to read. The command line builds it before Tuldok starts.
 //   1. Data shows "Look inside" on that dataset and not on one without a product; the dataset opens to 48 tiles,
-//      the counts by kind are the fixture's, the pager reaches the rest, a kind filter narrows the grid.
+//      the counts by kind are the fixture's, the pager reaches the rest, a kind filter narrows the grid. Scrolled
+//      down as soon as it opens, it keeps its scroll while its tiles fill, through a timer reading and a focus event.
+//      Every press must find its target where it was measured.
 //   2. Each kind's viewer shows its record: the text equals the file's; the image is decoded at its true size; the
 //      sound plays, with the right length and a drawn waveform; a point cloud and a mesh draw a canvas that is not
 //      blank and changes when dragged (and a mesh above 60,000 triangles says it is drawn as points); the array's
@@ -14,7 +16,7 @@
 //      draws; the array Tuldok refuses shows the server's sentence and the grid stays usable; left and right
 //      arrows move the selection.
 //   3. "Files" lists the tree, opens the archive and an array inside it, whose value under the pointer is the
-//      fixture's.
+//      fixture's, and opens any file by its address: a text inside the archive, a mesh on disk.
 //   4. With the dataset open and a record selected, the window regaining focus and one reading on the timer add,
 //      remove and change no node and keep every scroll (the counting of browser_project_workspace_still.cjs). When
 //      something changes elsewhere (an agent asks for a build), the view is drawn again in place: same page, same
@@ -112,7 +114,7 @@ async function settled(label) {
 }
 async function hash(value) { await evaluate(`location.hash = ${JSON.stringify('#' + value)}`); await settled('#' + value); await pause(200); await settled('#' + value); }
 const byKey = key => `[data-key=${JSON.stringify(key)}]`;
-let moved = 0;   // presses whose target was not under its point when measured (the layout moved between); counted, then measured again
+let moved = 0;   // presses whose target was not under its point when measured (the layout moved between); must stay 0
 async function centre(selector) {
   for (;;) {
     const at = await until(() => evaluate(`(() => { const e = [...document.querySelectorAll(${JSON.stringify(selector)})].find(e => e.offsetParent !== null); if (!e) return null; e.scrollIntoView({ block: 'nearest', inline: 'nearest' }); const r = e.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, hit = document.elementFromPoint(x, y); return { x, y, ok: !!hit && (hit === e || e.contains(hit)) }; })()`), 'shown: ' + selector, 100);
@@ -255,6 +257,15 @@ const touched = (r, ids) => ids.filter(id => { const c = r.counts[id]; return c.
   assert.deepEqual(grid.chips, Object.assign({ all: TOTAL }, KINDS), 'The counts by kind are the fixture\'s');
   assert.equal(grid.title, 'Specimens of every kind'); assert.match(grid.meta, new RegExp('run ' + run.slice(0, 8)));
   // Every tile carries its record's id; tiles never jump: each is a square picture and a line.
+  // The view keeps its scroll through its first seconds: scrolled down at once, then the tiles fill, the timer reads
+  // and the window regains focus (scroll anchoring once moved it back to the top here; spec-d1 As built, D1b).
+  const scrolled = await evaluate(`(() => { document.querySelector('#main [data-key="inside-next"]').scrollIntoView({ block: 'nearest' }); return document.getElementById('main').scrollTop; })()`);
+  assert.ok(scrolled > 50, 'The opened view scrolls at this size: ' + scrolled);
+  const since1 = Date.now();
+  await reading(since1, WATCHED, 'the timer, with the view scrolled', Math.round((IDLE_MS + 15000) / 100));
+  const since2 = Date.now(); await evaluate(`window.dispatchEvent(new Event('focus')); true`); await reading(since2, WATCHED.concat(['map']), 'focus, with the view scrolled');
+  const kept1 = await evaluate(`({ top: document.getElementById('main').scrollTop, filled: [...document.querySelectorAll('#main .rec[data-lazy]')].filter(t => !t.querySelector('svg.glyph:not(.refused)')).length })`);
+  assert.equal(kept1.top, scrolled, 'The scroll is where it was after the tiles filled, a timer reading and a focus event: ' + JSON.stringify(kept1));
   const ids = await evaluate(`[...document.querySelectorAll('#main .rec')].map(t => t.dataset.id)`);
   const listed = (await api('records', { run, limit: 48 })).records.map(r => r.id);
   assert.deepEqual(ids, listed, 'The tiles are the first page of records, in order');
@@ -269,6 +280,7 @@ const touched = (r, ids) => ids.filter(id => { const c = r.counts[id]; return c.
   assert.deepEqual(meshes, ['mesh meshes/cube.obj', 'mesh meshes/sphere.stl', 'mesh meshes/terrain.ply'], 'The kind filter narrows the grid');
   await press(byKey('inside-kind-all')); await settled('all');
   assert.equal(await evaluate(`document.querySelectorAll('#main .rec').length`), 48);
+  check('1. The opened view, scrolled to ' + scrolled + ' at once, kept that scroll while ' + kept1.filled + ' tiles filled and through a timer reading and a focus event');
   check('1. "Look inside" on ' + REF + ' and on none of ' + without.join(', ') + '; opened at #' + OPENED + ' to 48 tiles of ' + TOTAL + ' with the counts ' + JSON.stringify(grid.chips) + '; Next showed ' + second.tiles + ' more (' + second.sum + '); Mesh narrowed the grid to ' + meshes.length);
 
   // ---- 2. Each kind's viewer -------------------------------------------------------------------------------------------
@@ -365,9 +377,18 @@ const touched = (r, ids) => ids.filter(id => { const c = r.counts[id]; return c.
   const inner = await probe(5, 7);
   assert.deepEqual(inner.index, [5, 7]); assert.equal(inner.value, 1000 + 5 * 10 + 7, 'The value inside the archive is the fixture\'s');
   await press(byKey('crumb-bundles/training-view.zip')); await settled('back up');
-  await press(byKey('entry-bundles/training-view.zip!readme.txt')); await settled('readme');
-  const readme = await evaluate(`document.querySelector('#main .viewer .iv .note').textContent`);
-  check('3. Files listed ' + top.length + ' entries at the top; the archive opened to ' + inArchive.length + ' members; "' + crumbs.replace(/\s+/g, ' ') + '" listed target, whose value at ' + JSON.stringify(inner.index) + ' is ' + inner.value + '; a text inside the archive says: "' + readme + '"');
+  // Any file opens from the tree by its address: a text inside the archive, a mesh on disk.
+  await press(byKey('entry-bundles/training-view.zip!readme.txt'));
+  await until(() => evaluate(`(() => { const t = document.querySelector('#main .viewer .iv-text'); return !!t && document.querySelector('#main .viewer .iv-head h3').textContent === 'bundles/training-view.zip!readme.txt'; })()`), 'the text inside the archive'); await settled('readme');
+  const readme = await evaluate(`document.querySelector('#main .viewer .iv-text').textContent`);
+  assert.equal(readme, 'Two samples, stored.\n', 'The text inside the archive is the fixture\'s');
+  await press(byKey('crumb-')); await settled('the top');
+  await press(byKey('entry-meshes')); await settled('meshes');
+  await press(byKey('entry-meshes/cube.obj'));
+  await until(() => evaluate(`!!document.querySelector('#main .viewer canvas.iv-3d') && document.querySelector('#main .viewer .iv-head h3').textContent === 'meshes/cube.obj'`), 'the mesh from the tree'); await settled('cube');
+  const cube = await pixels('#main .viewer canvas.iv-3d');
+  assert.ok(cube.drawn > 500 && /8 vertices and 12 triangles/.test(cube.label), 'The mesh opened from the tree is drawn: ' + JSON.stringify(cube));
+  check('3. Files listed ' + top.length + ' entries at the top; the archive opened to ' + inArchive.length + ' members; "' + crumbs.replace(/\s+/g, ' ') + '" listed target, whose value at ' + JSON.stringify(inner.index) + ' is ' + inner.value + '; the text inside the archive read "' + readme.trim() + '"; meshes/cube.obj opened from the tree (' + cube.label.split('.')[0] + ')');
 
   // ---- 4. Nothing changed: the window regains focus, the timer reads -------------------------------------------------
   await press(byKey('inside-mode-records')); await settled('records');
@@ -436,7 +457,8 @@ const touched = (r, ids) => ids.filter(id => { const c = r.counts[id]; return c.
   assert.deepEqual(errors, [], 'Script errors');
   assert.deepEqual(failures, [], 'Failed requests');
   assert.ok(refusedOk.length > 0, 'The refused array was asked for');
-  check('No script error, no failed request but the ' + refusedOk.length + ' refusals of arrays/complex.npy asked for' + (moved ? '; ' + moved + ' presses measured again because their target was not under its point' : ''));
+  assert.equal(moved, 0, 'Every press found its target under its point (the page did not move between measuring and pressing)');
+  check('No script error, no failed request but the ' + refusedOk.length + ' refusals of arrays/complex.npy asked for; every press found its target where it was measured');
   fs.writeFileSync(path.join(report, 'receipt.json'), JSON.stringify({ status: 'pass', folder, checks }, null, 2) + '\n');
   console.log('Receipt in ' + report);
 })().catch(async error => {

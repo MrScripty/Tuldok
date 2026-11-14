@@ -66,7 +66,7 @@ PRODUCT_ARGUMENTS = ('run', 'other_run')
 INSIDE_READS = {
     'records': lambda found, a: inside.records(found['run'], offset=a.get('offset', 0), limit=a.get('limit', 50),
                                                kind=a.get('kind'), split=a.get('split')),
-    'record': lambda found, a: inside.record(found['run'], a['id']),
+    'record': lambda found, a: inside.record(found['run'], a.get('id'), path=a.get('path')),
     'inside': lambda found, a: inside.inside(found['run'], path=a.get('path', ''), offset=a.get('offset', 0),
                                              limit=a.get('limit', 200)),
     'array_slice': lambda found, a: inside.array_slice(found['run'], path=a['path'], array=a.get('array'),

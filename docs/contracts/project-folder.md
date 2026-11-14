@@ -2272,7 +2272,7 @@ and result keys of each operation are in its contract.
 | `recipe_results` | inspect | Read the summary rows of every benchmark subject made from one recipe, ungrouped or for one group. |
 | `draft_branch` | inspect | Write the text of a new recipe branched from one of the project's, with its name and what keeping it would find wrong; nothing is stored. |
 | `records` | inspect | Read one page of the records of a finished run's product, optionally of one kind or split, with the counts by kind and split. |
-| `record` | inspect | Read one record of a finished run's product with its content: text, image size, sound peaks, points, mesh or arrays. |
+| `record` | inspect | Read one record of a finished run's product by its id, or any file in it by its path, with its content: text, image size, sound peaks, points, mesh or arrays. |
 | `inside` | inspect | List a directory, an archive or the arrays of an .npz in a finished run's product. |
 | `array_slice` | inspect | Read a slice along two axes of an array in a finished run's product, as 32-bit floats. |
 | `array_summary` | inspect | Read the range, mean, deviation and histogram of an array in a finished run's product. |
@@ -2468,7 +2468,7 @@ over all the records; records without a split are not counted in `splits`)
 and `problems` (each `{line, message}`, `line` null for a problem of the whole
 list).
 
-**`record`** takes `id` and answers `record` (as above, with `media_type`:
+**`record`** takes `id`, or `path` (an address) in its place, exactly one of the two, and answers `record` (as above, with `media_type`:
 the type of the file route for an image or a sound, with `url`, the file
 route's address for it; `text/plain` for text; else
 `application/octet-stream`) and `content`, by kind:

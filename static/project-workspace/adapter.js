@@ -111,6 +111,8 @@ window.TuldokProject = (() => {
   const product = {
     records: (run, { offset, limit, kind, split } = {}) => read('records', defined({ run, offset, limit, kind, split })),
     record: (run, id) => read('record', { run, id }),
+    /** Any file of the product, or a member of an archive in it, read as a record by its address. */
+    recordAt: (run, path) => read('record', { run, path }),
     inside: (run, { path, offset, limit } = {}) => read('inside', defined({ run, path: path || null, offset, limit })),
     /** A slice; kept unless fresh (the viewer's slider). */
     slice: (run, { path, array, axes, index, most }, fresh = false) => (fresh ? call : read)('array_slice', defined({ run, path, array, axes, index, most })),

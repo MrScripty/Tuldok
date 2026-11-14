@@ -609,6 +609,42 @@ class Operations(ProductCase):
         listed = self.call('records', run=self.run_id)
         self.assertEqual((listed['source'], [record['id'] for record in listed['records']]), ('view', ['field.npy']))
 
+    def test_a_file_by_path_on_disk_and_inside_an_archive(self):
+        points = [(0, 0, 0, 255, 0, 0), (1, 2, 3, 0, 255, 0)]
+        members = {'deep/note.txt': 'inside the archive', 'deep/cube.obj': obj_cube(),
+                   'deep/points.ply': ply_points_ascii(points)}
+        self.write('notes/a.txt', 'on disk')
+        self.write('shapes/points.ply', ply_points_ascii(points))
+        self.write('shapes/cube.obj', obj_cube())
+        self.write('bundle.zip', zip_bytes({name: data if isinstance(data, bytes) else data.encode()
+                                            for name, data in members.items()}, zipfile.ZIP_DEFLATED))
+        for prefix in ('', 'bundle.zip!deep/'):
+            text = self.call('record', run=self.run_id, path=(prefix or 'notes/a') + ('note.txt' if prefix else '.txt'))
+            self.assertEqual((text['record']['kind'], text['content']['text']),
+                             ('text', 'inside the archive' if prefix else 'on disk'))
+            where = prefix or 'shapes/'
+            cloud = self.call('record', run=self.run_id, path=where + 'points.ply')
+            self.assertEqual((cloud['record']['id'], cloud['record']['kind'], cloud['content']['count']),
+                             (where + 'points.ply', 'pointcloud', 2))
+            self.assertEqual(floats(cloud['content']['points_f32']), [0, 0, 0, 1, 2, 3])
+            mesh = self.call('record', run=self.run_id, path=where + 'cube.obj')
+            self.assertEqual((mesh['record']['kind'], mesh['content']['vertices'], mesh['content']['triangles']),
+                             ('mesh', 8, 12))
+        # A member of an archive is not a record: by id it is not found, by path it is read.
+        with self.assertRaises(store.ProjectError) as caught:
+            self.call('record', run=self.run_id, id='bundle.zip!deep/note.txt')
+        self.assertEqual(caught.exception.code, 'not-found')
+        for arguments, code in (({'path': '../outside.txt'}, 'invalid'), ({'path': '/etc/hostname'}, 'invalid'),
+                                ({'path': 'notes/missing.txt'}, 'not-found'), ({'path': 'notes'}, 'invalid'),
+                                ({'id': 'notes/a.txt', 'path': 'notes/a.txt'}, 'invalid'), ({}, 'invalid')):
+            with self.subTest(arguments=arguments), self.assertRaises(store.ProjectError) as caught:
+                self.call('record', run=self.run_id, **arguments)
+            self.assertEqual(caught.exception.code, code)
+        os.symlink('/etc/hostname', self.output / 'notes' / 'out.txt')
+        with self.assertRaises(store.ProjectError) as caught:
+            self.call('record', run=self.run_id, path='notes/out.txt')
+        self.assertEqual(caught.exception.code, 'not-found')
+
     def test_refusals(self):
         with self.assertRaises(store.ProjectError) as caught:
             self.call('records', run='f' * 32)

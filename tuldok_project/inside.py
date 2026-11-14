@@ -483,12 +483,20 @@ def _content(record, place):
 
 
 @reading
-def record(product, identifier):
-    index = index_of(product)
-    position = index.by_id.get(identifier)
-    if position is None:
-        raise ProjectError(f'There is no record {identifier} in this product.', 'not-found')
-    found = index.records[position]
+def record(product, identifier=None, *, path=None):
+    """One record with its content, by its id; or, by path, the file or archive member at that address read as a
+    record of a product read from its files would be (its id the address, its kind by its name)."""
+    if (identifier is None) == (path is None):
+        raise ProjectError('Name a record by id or a file by path, one of the two.', 'invalid')
+    if path is not None:
+        place = locate(product.root, path)   # refuses a malformed address, a directory and what is not there
+        found = _record(path, kind_by_name(path, lambda: place.head(64 * 1024)), path, size=place.size)
+    else:
+        index = index_of(product)
+        position = index.by_id.get(identifier)
+        if position is None:
+            raise ProjectError(f'There is no record {identifier} in this product.', 'not-found')
+        found = index.records[position]
     shown = _shown(product, found, preview=False)
     place = locate(product.root, found['path']) if found['path'] is not None else None
     extension = _extension(found['path'] or '')

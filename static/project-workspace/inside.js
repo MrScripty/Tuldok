@@ -383,16 +383,10 @@ window.LabInside = (() => {
     put('Split', r.split); put('Rights', r.rights); put('Origin', r.origin); put('Meta', r.meta);
     if (facts.children.length) el.appendChild(facts);
   }
-  /** A place in the tree that is not a record: an array by its path, an image or a sound by the file route; other kinds only as a record. */
+  /** A place in the tree: an array by its path and name, any other file read as a record by its address (record's path). */
   async function placeView(c, v, el, t) {
     if (t.kind === 'array') { el.appendChild(heading(t.path, 'Array')); await arrayView(el, v.run, t.path, t.arrays || [], t.array, settingsOf(v, 'path:' + t.path + '#' + t.array, () => ({}))); return; }
-    if (!t.path.includes('!')) {
-      try { await recordView(c, v, el, await R.record(v.run, t.path)); return; } catch (error) { if (error.code !== 'not-found') throw error; el.replaceChildren(); }
-    }
-    el.appendChild(heading(t.path, WORD[t.kind] || 'File'));
-    if (t.kind === 'image') imageView(el, R.fileUrl(v.run, t.path), null, null, t.path, settingsOf(v, 'path:' + t.path, () => ({ actual: false })));
-    else if (t.kind === 'audio') audioView(el, R.fileUrl(v.run, t.path), null, t.path);
-    else el.appendChild(h('p', 'note', 'Not one of the product\'s records: Tuldok reads arrays, images and sounds by their place, and other kinds only as records.'));
+    await recordView(c, v, el, await R.recordAt(v.run, t.path));   // any file, inside an archive too, by its address
   }
   function textView(el, k) {
     const line = [count(k.characters != null ? k.characters : k.text.length, 'character'), k.truncated ? 'truncated: the first ' + k.text.length.toLocaleString('en-GB') + ' are shown' : null, k.replaced ? count(k.replaced, 'byte') + ' not UTF-8, shown as �' : null].filter(Boolean).join(' · ');

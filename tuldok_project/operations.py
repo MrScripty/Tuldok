@@ -176,9 +176,11 @@ OPERATIONS = (
               _arguments(['run'], run=_RUN, offset=_OFFSET, limit=_limit(200),
                          kind={'type': 'string', 'enum': list(RECORD_KINDS)}, split=_TEXT),
               ('records', 'total', 'source', 'kinds', 'splits', 'problems')),
-    Operation('record', "Read one record of a finished run's product with its content: text, image size, sound "
-              'peaks, points, mesh or arrays.', 'inspect', False,
-              _arguments(['run', 'id'], run=_RUN, id={'type': 'string', 'minLength': 1, 'maxLength': 4096}),
+    Operation('record', "Read one record of a finished run's product by its id, or any file in it by its path, "
+              'with its content: text, image size, sound peaks, points, mesh or arrays.', 'inspect', False,
+              dict(_arguments(['run'], run=_RUN, id={'type': 'string', 'minLength': 1, 'maxLength': 4096},
+                              path={'type': 'string', 'minLength': 1, 'maxLength': 4096}),
+                   oneOf=[{'required': ['id']}, {'required': ['path']}]),
               ('record', 'content')),
     Operation('inside', "List a directory, an archive or the arrays of an .npz in a finished run's product.",
               'inspect', False,
