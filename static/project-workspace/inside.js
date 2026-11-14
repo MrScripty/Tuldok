@@ -697,5 +697,6 @@ window.LabInside = (() => {
     ctx.globalAlpha = 1;
   }
 
-  return { open, leave, PER_PAGE };
+  // The drawing parts other viewers reuse (weights.js): decoding, the tokens' colours, the canvases drawn again on a new size or theme.
+  return { open, leave, PER_PAGE, drawing: { floats, token, ramp, paints, fit, heat, contain, ordinal } };
 })();

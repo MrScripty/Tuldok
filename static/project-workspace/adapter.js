@@ -115,6 +115,11 @@ window.TuldokProject = (() => {
     /** A slice; kept unless fresh (the viewer's slider). */
     slice: (run, { path, array, axes, index, most }, fresh = false) => (fresh ? call : read)('array_slice', defined({ run, path, array, axes, index, most })),
     summary: (run, { path, array, bins }) => read('array_summary', defined({ run, path, array, bins })),
+    // A model's weights (spec-d2.md, weights.js): its weights files, a comparison of two, and tiles of a tensor
+    // of three or more axes (asked for each time the person moves through them unless kept).
+    weights: run => read('weights', { run }),
+    compare: (run, path, otherRun, otherPath) => read('weights_compare', { run, path, other_run: otherRun, other_path: otherPath }),
+    tiles: (run, { path, array, across, axes, index, first, most }, fresh = false) => (fresh ? call : read)('array_tiles', defined({ run, path, array, across, axes, index, first, most })),
     /** The address of an image's or a sound's bytes (GET /api/project/file), as the record operation gives it. */
     fileUrl: (run, path) => '/api/project/file?run=' + encodeURIComponent(run) + '&path=' + encodeURIComponent(path)
   };
