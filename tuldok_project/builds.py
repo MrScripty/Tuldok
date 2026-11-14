@@ -21,7 +21,11 @@ section 3); a later build replaces it like any other. A dataset whose run
 names a step Tuldok provides (spec-d4.md section 6) runs steps.py with
 Tuldok's own interpreter and code, no environment; a freeze's run records the
 line files of its tasks as it read them from the commit, and the product is
-out of date when one of them differs at HEAD (_LineFiles).
+out of date when one of them differs at HEAD (_LineFiles). A generate is
+given the machine's Pumas endpoint (local.pumas_endpoint; none set is a
+problem before it runs), and its run keeps the address and the version the
+endpoint reported, in the column endpoint, never in the project folder
+(spec-d5.md section 3).
 
 What a person needs while and after a build runs (sections 7 and 8): a run is
 named by its id or an unambiguous prefix of it (find_run); run_details reads
@@ -84,6 +88,8 @@ STEPS_MODULE = 'tuldok_project.steps'
 TULDOK_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STEP_TASKS_FILE = 'tasks.json'          # <run>/tasks.json: what a freeze is told of its tasks
 STEP_LINES = 'annotations'              # <run>/annotations/<name>.jsonl: the line files a freeze read
+STEP_REPORT = 'endpoint.json'           # <run>/endpoint.json: the endpoint a generate asked, and its version
+REPORT_LIMIT = 4096
 
 TABLES = (
     '''CREATE TABLE IF NOT EXISTS {schema}.plans (
@@ -106,6 +112,8 @@ TABLES = (
     'CREATE INDEX IF NOT EXISTS runs_reference ON {schema}.runs (reference, subject, queued_at)',
     # A freeze's run records each task's line file as it read it: {task: {file, sha256, blob}} (spec-d4.md section 6).
     'ALTER TABLE {schema}.runs ADD COLUMN IF NOT EXISTS annotations jsonb',
+    # A generate's run keeps the Pumas endpoint it asked: {address, version} (spec-d5.md section 3).
+    'ALTER TABLE {schema}.runs ADD COLUMN IF NOT EXISTS endpoint jsonb',
     '''CREATE TABLE IF NOT EXISTS {schema}.products (
            run_id text PRIMARY KEY,
            reference text NOT NULL, subject text NOT NULL DEFAULT '',
@@ -120,7 +128,7 @@ TABLES = (
 _RUN_COLUMNS = ('id', 'reference', 'subject', 'plan_id', 'state', 'scratch', 'commit', 'inputs', 'environment',
                 'argv', 'directory', 'owner_pid', 'owner_boot', 'queued_at', 'started_at', 'finished_at',
                 'exit_status', 'seconds', 'bytes', 'strays', 'problem')
-_DETAIL_COLUMNS = _RUN_COLUMNS + ('definition', 'settings', 'env', 'annotations')
+_DETAIL_COLUMNS = _RUN_COLUMNS + ('definition', 'settings', 'env', 'annotations', 'endpoint')
 
 
 def _q(schema, template):
@@ -710,7 +718,7 @@ class _Build:
         prepared = {'id': run_id, 'reference': reference, 'subject': subject['name'] if subject else '',
                     'definition': text, 'settings': None, 'environment': environment_record,
                     'directory': run_directory, 'argv': list(command), 'env': {},
-                    'problem': None, 'skipped': False, 'annotations': None, 'files': {}}
+                    'problem': None, 'skipped': False, 'annotations': None, 'endpoint': None, 'files': {}}
         try:
             if not command:
                 raise StepProblem(f'{reference} has no run.estimate.command.' if estimate else
@@ -816,8 +824,10 @@ class _Build:
         argv = [sys.executable, '-m', STEPS_MODULE, step, values['settings'], values['output']]
         if step == 'import':
             return argv + ['--code', self.code.code_root]
+        if step == 'generate':
+            return argv + self._generate_argv(project, run, values, prepared)
         if step != 'freeze':
-            raise StepProblem(f'Tuldok provides no step {step!r}; use import or freeze.')
+            raise StepProblem(f'Tuldok provides no step {step!r}; use import, freeze or generate.')
         inputs = _declared_inputs({'run': run})
         used = inputs.get('records', (None, None))[0]
         if 'inputs.records' not in values or used is None:
@@ -852,6 +862,27 @@ class _Build:
                                                     indent=2) + '\n').encode('utf-8')
         prepared['annotations'] = read
         return argv + ['--records', values['inputs.records'], '--tasks', tasks_file]
+
+    def _generate_argv(self, project, run, values, prepared):
+        """The arguments of a generate after its settings and output: the machine's endpoint, the report, the input."""
+        try:
+            address = local.pumas_endpoint()
+        except local.SettingsError as exc:
+            raise StepProblem(str(exc)) from None
+        if address is None:
+            raise StepProblem('No Pumas endpoint is set on this machine, so nothing can be generated; the owner sets '
+                              'one, then build again.')
+        prepared['endpoint'] = {'address': address, 'version': None}
+        argv = ['--endpoint', address, '--report', os.path.join(prepared['directory'], STEP_REPORT)]
+        used = _declared_inputs({'run': run}).get('prompts', (None, None))[0]
+        if used is not None:
+            row = project._execute(f'SELECT document FROM {{schema}}.definitions WHERE NOT removed AND '
+                                   f'{store._REFERENCE_SQL} = %s', (used,)).fetchone()
+            if row is not None and isinstance(row[0], dict) and row[0].get('view') is not None:
+                raise StepProblem(f'Its input prompts ({used}) is shown through a view, and generate reads only a '
+                                  "product's records.jsonl or its files.")
+            argv += ['--records', values['inputs.prompts']]
+        return argv
 
     def _line_file(self, project, file):
         """(Git blob id or None, bytes or None) of a line file, relative to the project folder, as this build reads it.
@@ -903,16 +934,17 @@ class _Build:
     def _insert(self, project, prepared, state):
         project._execute('''INSERT INTO {schema}.runs (id, reference, subject, plan_id, state, scratch, commit,
                                 definition, settings, inputs, environment, argv, env, directory, owner_pid,
-                                owner_boot, queued_at, started_at, finished_at, problem, annotations)
+                                owner_boot, queued_at, started_at, finished_at, problem, annotations, endpoint)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(),
                                     CASE WHEN %s = 'running' THEN now() END,
-                                    CASE WHEN %s = 'running' THEN NULL ELSE now() END, %s, %s)''',
+                                    CASE WHEN %s = 'running' THEN NULL ELSE now() END, %s, %s, %s)''',
                          (prepared['id'], prepared['reference'], prepared['subject'], self.plan_id, state,
                           self.code.scratch, self.code.commit, prepared['definition'], prepared['settings'],
                           Jsonb(prepared['inputs']), Jsonb(prepared['environment']) if prepared['environment'] else None,
                           Jsonb(prepared['argv']), Jsonb(prepared['env']), prepared['directory'], os.getpid(),
                           self.boot, state, state, prepared['problem'],
-                          Jsonb(prepared['annotations']) if prepared['annotations'] is not None else None))
+                          Jsonb(prepared['annotations']) if prepared['annotations'] is not None else None,
+                          Jsonb(prepared['endpoint']) if prepared['endpoint'] is not None else None))
 
     # ------------------------------------------------------------------- run
 
@@ -993,7 +1025,24 @@ class _Build:
                                     seconds = %s, bytes = %s, strays = %s, problem = %s WHERE id = %s''',
                              (state, outcome.exit_status, outcome.seconds, outcome.bytes, outcome.strays, problem,
                               prepared['id']))
+            if prepared.get('endpoint') is not None:
+                project._execute('UPDATE {schema}.runs SET endpoint = %s WHERE id = %s',
+                                 (Jsonb(_endpoint_report(prepared)), prepared['id']))
         return state, problem
+
+
+def _endpoint_report(prepared):
+    """{address, version} of the endpoint a generate asked: the version as its report file says, when it does."""
+    found = dict(prepared['endpoint'])
+    try:
+        with open(os.path.join(prepared['directory'], STEP_REPORT), 'rb') as handle:
+            reported = json.loads(handle.read(REPORT_LIMIT + 1)[:REPORT_LIMIT])
+    except (OSError, ValueError):
+        return found
+    version = reported.get('version') if isinstance(reported, dict) else None
+    if isinstance(version, str) and 0 < len(version) <= 128 and version.isprintable():
+        found['version'] = version
+    return found
 
 
 def outputs_path(outputs):

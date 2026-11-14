@@ -5,8 +5,10 @@ rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
 section 2 of spec-w3.md (draft_branch, revert_definition), the five of
 section 3 of spec-d1.md (records, record, inside, array_slice, array_summary),
 the three of section 3 of spec-d2.md (weights, weights_compare,
-array_tiles) and the five of section 5 of spec-d4.md (annotation_tasks,
-annotated_records, annotation, set_annotation, revert_annotations).
+array_tiles), the five of section 5 of spec-d4.md (annotation_tasks,
+annotated_records, annotation, set_annotation, revert_annotations) and the
+five of sections 2 and 4 of spec-d5.md (endpoint, set_endpoint,
+find_endpoints, suggestion_models, suggest_annotation).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -27,6 +29,8 @@ ANNOTATION_STATES = ('draft', 'accepted', 'needs-work', 'rejected')    # annotat
 ANNOTATION_COUNTS = ('unannotated', 'draft', 'accepted', 'needs-work', 'rejected', 'stale', 'invalid')
 ANNOTATION_ITEMS = 200      # items of one set_annotation
 REVERT_RECORDS = 10_000     # records named by one revert_annotations
+ENDPOINT_CHARACTERS = 2048  # an address of a Pumas endpoint (local.ENDPOINT_LIMIT)
+INSTRUCTION_CHARACTERS = 4000
 
 
 @dataclass(frozen=True)
@@ -97,6 +101,7 @@ COMPARE = ('tensors', 'total', 'only_here', 'only_there', 'reshaped', 'unread')
 SAVE = ('written', 'deleted', 'results_written', 'results_deleted', 'annotations_written', 'annotations_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
 STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
+ENDPOINT = ('address', 'answered', 'version', 'models', 'problem')
 
 
 OPERATIONS = (
@@ -226,6 +231,16 @@ OPERATIONS = (
               _arguments(['task'], task=_NAME,
                          records={'type': 'array', 'items': _RECORD_ID, 'minItems': 1, 'maxItems': REVERT_RECORDS}),
               ('task', 'reverted')),
+    Operation('suggestion_models', "List, for each kind of record in the product of a task's dataset, the models "
+              'the Pumas endpoint serves that can suggest a value of the task.', 'inspect', False,
+              _arguments(['task'], task=_NAME), ('task', 'type', 'address', 'kinds', 'problem')),
+    Operation('suggest_annotation', 'Ask a model the Pumas endpoint serves for a value of a task for one record; '
+              'nothing is stored, and an answer that is not a value of the task is refused.', 'edit', False,
+              _arguments(['task', 'record', 'model'], task=_NAME, record=_RECORD_ID,
+                         model={'type': 'string', 'minLength': 1, 'maxLength': 256},
+                         profile={'type': 'string', 'minLength': 1, 'maxLength': 128},
+                         instruction={'type': 'string', 'minLength': 1, 'maxLength': INSTRUCTION_CHARACTERS}),
+              ('task', 'record', 'suggestion')),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',
@@ -248,6 +263,15 @@ OPERATIONS = (
                          interpreter={'type': 'string', 'minLength': 1, 'maxLength': 4096}), ENVIRONMENT),
     Operation('disconnect_environment', "Forget an environment's recorded interpreter on this machine; nothing is "
               'deleted.', 'owner', True, _arguments(['reference'], reference=_REFERENCE), ('disconnected',)),
+    Operation('endpoint', 'Read the Pumas endpoint this machine uses: its address, whether it answered, and each '
+              'model and profile it serves with its modalities, its capabilities and what Tuldok can make with it.',
+              'inspect', False, _arguments(), ENDPOINT),
+    Operation('set_endpoint', 'Set the Pumas endpoint this machine uses once it has answered what it serves, or '
+              'clear it with null.', 'owner', True,
+              _arguments(['address'], address={'type': ['string', 'null'], 'minLength': 1,
+                                               'maxLength': ENDPOINT_CHARACTERS}), ENDPOINT),
+    Operation('find_endpoints', 'List the Pumas endpoints advertising themselves on this machine, for the owner to '
+              'pick from.', 'owner', False, _arguments(), ('endpoints', 'rejected')),
     Operation('request_build', "Ask for a build of the targets: the owner's request is queued, an agent's waits for "
               "the owner's approval (read build_request for its state), and a queued request not started by "
               'its expires_at expires.', 'request', True,

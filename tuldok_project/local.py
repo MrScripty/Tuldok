@@ -9,6 +9,9 @@ settings file is read only when the variable does not decide, and a file that
 cannot be read or is not valid raises SettingsError: it never falls back to
 the default. Nothing in a local home is part of the project folder.
 Environments that Tuldok installs go to <local home>/environments/<name>/.
+The settings file also holds pumas_endpoint, the address of the Pumas endpoint
+this machine uses (spec-d5.md section 2), or nothing; it is never part of a
+project folder. pumas.py checks an address before set_pumas_endpoint keeps it.
 Working out a path never creates anything; a directory is made only when a
 caller asks for it with create=True, or by set_project_home.
 """
@@ -26,7 +29,8 @@ DEFAULT_HOME = os.path.join('~', '.local', 'share', 'tuldok', 'projects')
 DEFAULT_SETTINGS = os.path.join('~', '.local', 'share', 'tuldok', 'settings.json')
 SETTINGS_FORMAT = 'tuldok_settings_v1'
 SETTINGS_LIMIT = 64 * 1024
-SETTINGS_FIELDS = ('format', 'project_home')
+SETTINGS_FIELDS = ('format', 'project_home', 'pumas_endpoint')
+ENDPOINT_LIMIT = 2048          # characters of pumas_endpoint
 ENVIRONMENTS = 'environments'
 _PROJECT_DIRECTORY = re.compile(r'^[a-f0-9]{32}$')
 
@@ -64,7 +68,59 @@ def read_settings():
     home = settings.get('project_home')
     if 'project_home' in settings and not (isinstance(home, str) and os.path.isabs(home) and '\x00' not in home):
         raise SettingsError(f'The settings file {path} is not valid: its project_home must be an absolute path.')
+    if 'pumas_endpoint' in settings and endpoint_problem(settings['pumas_endpoint']):
+        raise SettingsError(f'The settings file {path} is not valid: its pumas_endpoint '
+                            f'{endpoint_problem(settings["pumas_endpoint"])}.')
     return settings
+
+
+def endpoint_problem(value):
+    """Why value cannot be a pumas_endpoint (an http or https address), or None."""
+    if not isinstance(value, str) or not 1 <= len(value) <= ENDPOINT_LIMIT:
+        return f'must be an address of 1 to {ENDPOINT_LIMIT} characters'
+    if not value.startswith(('http://', 'https://')) or any(char.isspace() or ord(char) < 32 for char in value):
+        return 'must be an http or https address without spaces'
+    return None
+
+
+def pumas_endpoint():
+    """The Pumas endpoint this machine uses (pumas_endpoint of the settings file), or None; raises SettingsError."""
+    return read_settings().get('pumas_endpoint')
+
+
+def set_pumas_endpoint(address):
+    """Keep address as pumas_endpoint in the settings file, or remove the key when address is None.
+
+    The caller has checked the address (pumas.py asks it once); a value that
+    is not an http or https address raises ValueError. A settings file that is
+    not valid is not replaced (SettingsError). Returns the settings file's path.
+    """
+    if address is not None and endpoint_problem(address):
+        raise ValueError(f'{address!r} {endpoint_problem(address)}.')
+    settings = {key: value for key, value in read_settings().items() if key != 'pumas_endpoint'}
+    if address is not None:
+        settings['pumas_endpoint'] = address
+    return _write_settings(settings)
+
+
+def _write_settings(settings):
+    """Write settings (with its format) through a temporary file renamed into place, mode 0600; the file's path."""
+    file = settings_path()
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    text = json.dumps({'format': SETTINGS_FORMAT, **settings}, indent=2, ensure_ascii=False) + '\n'
+    descriptor, temporary = tempfile.mkstemp(prefix='.settings.', suffix='.tmp', dir=os.path.dirname(file))
+    try:
+        with os.fdopen(descriptor, 'w', encoding='utf-8') as handle:
+            os.fchmod(handle.fileno(), 0o600)
+            handle.write(text)
+        os.replace(temporary, file)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+    return file
 
 
 def projects_home_source():
@@ -127,21 +183,7 @@ def set_project_home(path):
         raise ValueError(f'{path} cannot be made: {exc.strerror}.') from None
     if not os.path.isdir(path) or not os.access(path, os.W_OK | os.X_OK):
         raise ValueError(f'{path} is not a directory this user can write.')
-    file = settings_path()
-    os.makedirs(os.path.dirname(file), exist_ok=True)
-    text = json.dumps({**settings, 'format': SETTINGS_FORMAT, 'project_home': path}, indent=2, ensure_ascii=False) + '\n'
-    descriptor, temporary = tempfile.mkstemp(prefix='.settings.', suffix='.tmp', dir=os.path.dirname(file))
-    try:
-        with os.fdopen(descriptor, 'w', encoding='utf-8') as handle:
-            os.fchmod(handle.fileno(), 0o600)
-            handle.write(text)
-        os.replace(temporary, file)
-    except BaseException:
-        try:
-            os.unlink(temporary)
-        except OSError:
-            pass
-        raise
+    file = _write_settings({**settings, 'project_home': path})
     return {'project_home': path, 'settings': file, 'before': before,
             'before_projects': project_directories(before) if before != path else 0,
             'overridden': bool(os.environ.get(HOME_VARIABLE))}

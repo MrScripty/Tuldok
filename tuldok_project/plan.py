@@ -21,18 +21,25 @@ With what was built on this machine (spec-m6.md section 5), a step that is
 built has the action built and is not work; one that is out-of-date or failed
 is built again, and its reasons say why. build_plan reads those states from
 builds.status, which looks at the code root's Git history only when some
-product exists.
+product exists. A generate step (spec-d5.md section 3) to be built on a
+machine with no Pumas endpoint set is blocked, says so, and keeps the plan
+from being buildable, as an environment that is not ready keeps it from
+running; the settings file is read for that only when such a step is to be
+built.
 """
 from collections import deque
 import math
 
 from . import documents, graph
+from . import local as machine   # make_plan's argument local is the recorded states
 from .store import ProjectError
 
 BUILT_KINDS = ('dataset', 'recipe', 'step', 'benchmark')
 ACTIONS = ('build', 'set-up', 'blocked', 'ready', 'built')
 RESOURCES = ('gpu', 'cpu_threads', 'memory_gb', 'wall_hours', 'disk_gb')
 CAUSE_LIMIT = 5
+NO_ENDPOINT = ('No Pumas endpoint is set on this machine, so this dataset cannot be generated here; the owner sets '
+               'one, then it can be built.')
 _CAUSE_LABELS = ('no', 'needs-work')
 
 
@@ -199,7 +206,7 @@ def _estimated(steps, field, scale):
     return math.fsum(values) / scale, len(values)
 
 
-def make_plan(definitions, targets, *, every=False, local=None, built=None, estimates=None):
+def make_plan(definitions, targets, *, every=False, local=None, built=None, estimates=None, endpoint=False):
     """The plan for targets over {reference: document}, as section 3 and 4 of spec-m4.md describe it.
 
     local is graph.states' mapping of references to the state recorded on
@@ -209,6 +216,10 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
     running) and scratch says whether its current product is a scratch one.
     estimates is builds.stored_estimates' mapping of reference to the
     current estimate ({disk_bytes, wall_seconds, items, measured_at}).
+    endpoint says whether this machine has a Pumas endpoint set, or is a
+    function answering that, asked only when a generate step would be built
+    (so that a plan with none reads no settings file); without one such a
+    step is blocked by itself (rebuild 'endpoint').
 
     every adds every dataset, recipe, step and benchmark to the targets. A
     chart target is replaced by its benchmark, an annotation task by its
@@ -246,6 +257,13 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
     ordered = graph.order({reference: definitions[reference] for reference in members})
     actions = {reference: _action(_kind(reference), states[reference]) for reference in ordered}
 
+    asked = {}
+
+    def has_endpoint():
+        if 'set' not in asked:
+            asked['set'] = bool(endpoint() if callable(endpoint) else endpoint)
+        return asked['set']
+
     steps = []
     for number, reference in enumerate(ordered, 1):
         document, kind = definitions[reference], _kind(reference)
@@ -270,6 +288,12 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
                 step['action'] = action = actions[reference] = 'blocked'
         if provided == 'freeze':
             notes.extend(_task_notes(definitions, reference, document))
+        if provided == 'generate' and action == 'build' and not has_endpoint():
+            step['action'] = action = actions[reference] = 'blocked'
+            step['blocked_by'] = [{'reference': reference, 'rebuild': 'endpoint', 'reason': NO_ENDPOINT}]
+            notes.append(f'{reference} is generated through a Pumas endpoint, and none is set on this machine.')
+            steps.append(step)
+            continue
         if action == 'blocked':
             found = causes(definitions, edges_from, reference)
             step['blocked_by'] = found[:CAUSE_LIMIT]
@@ -277,13 +301,16 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
         steps.append(step)
 
     blocked = {step['reference'] for step in steps if step['action'] == 'blocked'}
+    # A generate held by the missing endpoint stops the build wherever it stands, as a target or not.
+    held = [step['reference'] for step in steps if step['reference'] not in resolved
+            and any(cause['rebuild'] == 'endpoint' for cause in step['blocked_by'])]
     disk_gb, disk_unknown = _total(steps, 'disk_gb')
     wall_hours, wall_unknown = _total(steps, 'wall_hours')
     estimated_disk_gb, estimated_disk_steps = _estimated(steps, 'disk_bytes', 1000 ** 3)
     estimated_wall_hours, estimated_wall_steps = _estimated(steps, 'wall_seconds', 3600)
     return {'targets': resolved, 'every': every,
-            'buildable': not any(reference in blocked for reference in resolved),
-            'blocked_targets': [reference for reference in resolved if reference in blocked],
+            'buildable': not any(reference in blocked for reference in resolved) and not held,
+            'blocked_targets': [reference for reference in resolved if reference in blocked] + held,
             'counts': {action: sum(step['action'] == action for step in steps) for action in ACTIONS},
             'gpu_steps': sum(step['action'] == 'build' and step['resources']['gpu'] is True for step in steps),
             'disk_gb': disk_gb, 'disk_unknown': disk_unknown,
@@ -312,4 +339,4 @@ def build_plan(project, targets, *, every=False):
     local = {**environments.recorded_states(project._connection, project.schema),
              **{reference: entry['state'] for reference, entry in built.items()}}
     return make_plan(definitions, targets, every=every, local=local, built=built,
-                     estimates=builds.stored_estimates(project))
+                     estimates=builds.stored_estimates(project), endpoint=lambda: machine.pumas_endpoint() is not None)

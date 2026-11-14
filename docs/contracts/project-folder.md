@@ -191,7 +191,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `command` | unless `step` is given | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
-| `step` | no | datasets only: `import` or `freeze`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
+| `step` | no | datasets only: `import`, `freeze` or `generate`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
 | `environment` | when the first string of `command` is `python` | reference to `environments/` |
 | `inputs` | no | at most 32 entries; keys `^[a-z][a-z0-9_]{0,31}$`; values are inputs from `datasets/`, `recipes/` or `steps/` |
 | `settings` | no | object, free content, written to a file whose path replaces `{settings}`; not together with `settings_file` |
@@ -263,13 +263,13 @@ Example, `datasets/sinusoidal-v1.json`:
 
 #### Steps Tuldok provides
 
-A dataset's `run` names either a `command` or a `step`, one of `import` and
-`freeze`. A run with `step` has no `command`, `environment`, `outputs`,
+A dataset's `run` names either a `command` or a `step`, one of `import`,
+`freeze` and `generate`. A run with `step` has no `command`, `environment`, `outputs`,
 `settings_file`, `env` or `estimate`: the step's outputs are fixed, its
 settings are inline in `settings`, and it runs with Tuldok's own interpreter
 (see [The command and its environment](#the-command-and-its-environment)).
-It may have `resources` and `sources`. A plan shows it as `tuldok import` or
-`tuldok freeze`. It is planned, requested, approved, run, cancelled and
+It may have `resources` and `sources`. A plan shows it as `tuldok import`,
+`tuldok freeze` or `tuldok generate`. It is planned, requested, approved, run, cancelled and
 recorded like any build, from a commit as builds are. `check` reports a
 setting the step does not take, a required one missing and a value of the
 wrong form.
@@ -374,6 +374,72 @@ Example, `datasets/scene-photos.json` and `datasets/scene-photos-v1.json`:
     "inputs": {"records": "datasets/scene-photos"},
     "annotations": ["annotations/scene-quality"],
     "settings": {"seed": 7, "shares": {"train": 8, "validation": 1, "test": 1}}
+  }
+}
+```
+
+**`generate`** makes a dataset by asking a model that the machine's Pumas
+endpoint serves (see [The Pumas endpoint](#the-pumas-endpoint)): one request
+per item, over HTTP, the endpoint's address given by the build and never
+written in the folder. Its run takes no input, or one, `"inputs": {"prompts":
+"datasets/<name>"}`, and no `annotations`. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `make` | yes | `text` or `image` |
+| `model` | yes | the served model's alias: 1 to 256 bytes, no control characters, no spaces around it |
+| `profile` | no | the profile it is served with, 1 to 128 of `A-Z a-z 0-9 . _ -`; needed when the endpoint serves the model with more than one |
+| `prompt` | yes | 1 to 16,000 characters: the request, with `{n}` (the item's number from 1) and, with an input, `{text}` (the prompting record's text); `{{` and `}}` are literal braces |
+| `count` | without an input | how many to make, 1 to 100,000; not with an input |
+| `per` | no | with an input only: how many for each of its text records, 1 to 1,000, default 1 |
+| `seed` | no | 0 to 4,294,967,295; item `n` is asked with `seed + n − 1` when the capability takes a seed (it advertises a `seed` bound and its options kind has one: `image_generation`) |
+| `options` | no | at most 32 options of the capability, numbers: `max_tokens`, `temperature`, `top_p` for text, `width` and `height` (both required) for images; each must be advertised with a bound by the endpoint and within it, and `seed` is not one |
+| `rights` | yes | 1 to 1,000 characters: what may be done with what is made |
+
+Before anything is asked the step reads what the endpoint serves
+(`GET /v1/served-models`) and fails, saying why, when the model or profile is
+not served, no capability of it is available to make the output (`text`, or
+`png_base64` for an image) from a text, an option is not one the capability
+takes or is outside its advertised bounds, or a prompt (`input_characters`) or
+a seed is. The capability is the first of the model's available ones that
+makes the output, in the endpoint's order. A request refused before the
+provider took it (outcome `not_admitted`) is asked again after 1 s and after 2
+s more; a third refusal, or any other failure, fails the step with the item's
+number and the endpoint's reason. What was made stays in the failed run's
+directory and is no product. With an input, one request is made for each text
+record of its product (inline, or a UTF-8 file of at most 64 KiB) times `per`,
+in the product's order; records of other kinds are skipped and counted. An
+input shown through a `view` is refused.
+
+Its product holds `records.jsonl` and, for images and texts too long for one
+line, the files under `files/`:
+
+```
+{"id":"g000001","kind":"text","text":"Waves fold over.","sha256":"…","bytes":16,"rights":"…","origin":{"generated":{"model":"writer","profile":"writer-cpu","capability":"chat_generation","prompt":"Write line 1 of a short poem.","seed":null,"options":{"max_tokens":64},"input":null}}}
+{"id":"g000001","kind":"image","path":"files/g000001.png","sha256":"…","bytes":5120,"rights":"…","origin":{"generated":{"model":"painter","profile":"painter-gpu","capability":"image_generation","prompt":"A picture of a red ball, number 1.","seed":100,"options":{"width":64,"height":32},"input":"subjects.txt__1"}}}
+```
+
+`seed` is the seed the item was made with (for an image, the one the endpoint
+reports), null when the capability took none; `input` is the prompting
+record's id, or null. A generated dataset is built again only when its
+definition or its input changes; a model need not give the same content
+again, and annotations that no longer fit are then stale. Its run keeps the
+endpoint's address and reported version (`endpoint` of `run`; see
+[The run directory](#the-run-directory));
+on a machine with no endpoint set, a plan shows it `blocked`.
+
+Example, `datasets/poem-lines.json`:
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Poem lines",
+  "run": {
+    "step": "generate",
+    "settings": {"make": "text", "model": "writer", "prompt": "Write line {n} of a short poem.", "count": 3,
+                 "seed": 5, "options": {"max_tokens": 64, "temperature": 0.7},
+                 "rights": "Made by a model; anything may be done with it."}
   }
 }
 ```
@@ -1218,7 +1284,7 @@ reference), numbered from 1. Each step has one action:
 | `ready` | an environment in state `ready`; it is not counted as something to set up |
 | `build` | a dataset, recipe, step or benchmark in state `not-built`, `out-of-date`, `failed` or `running` (the text says why under the step; `build` refuses a step that is running) |
 | `built` | a dataset, recipe, step or benchmark in state `built`; it is not counted as work |
-| `blocked` | a definition in state `cannot-rebuild` or `needs-work`, and a benchmark with no subject to run |
+| `blocked` | a definition in state `cannot-rebuild` or `needs-work`, a benchmark with no subject to run, and a `generate` dataset to be built on a machine with no Pumas endpoint set |
 
 A blocked step is explained by its causes: the definitions whose own
 `earlier_work.rebuild` is `no` or `needs-work`, among the step itself and
@@ -1232,6 +1298,11 @@ skipped, with the reason; a subject with no recipe is run. The benchmark is
 `build` when at least one subject would run. It is never blocked because one of
 its subjects is; when no subject would run, it is `blocked` with no cause of
 its own.
+
+A `generate` held by the missing endpoint is its own cause, with `rebuild`
+`endpoint` and the reason; it is listed among `blocked_targets` whether it is
+a target or not, and the plan cannot be built. The settings file is read for
+this only when such a step is to be built.
 
 The plan can be built when no target is blocked. Blocked steps are listed but
 not counted in the totals.
@@ -1611,6 +1682,7 @@ is 32 hexadecimal characters:
 | `output/` | what `{output}` names, made empty before the command starts; a succeeded run's `output/` is its product |
 | `settings.json` | the inline `settings` as the run saw them, when the definition has them |
 | `tasks.json`, `annotations/` | a freeze's tasks and the line files it read |
+| `endpoint.json` | a generate's endpoint, `{address, version}`, as it found it; kept in the run's record as `endpoint` |
 | `stdout.log`, `stderr.log` | the command's standard output and error |
 | `cancel` | present when cancellation was asked for |
 | `outcome.json` | how the command ended, written when every process of the run is gone |
@@ -2223,6 +2295,11 @@ and result keys of each operation are in its contract.
 | `annotation` | inspect | Read one record's annotation under a task as it now is and as it is in the file, whether it is unsaved or stale, and the hash of the record's content. |
 | `set_annotation` | edit | Check annotations of a task's records, or their removal, and keep them as unsaved edits; one item that does not check refuses them all. |
 | `revert_annotations` | edit | Put back the saved annotations of a task's named records, or of all its records, in place of their unsaved edits. |
+| `endpoint` | inspect | Read the Pumas endpoint this machine uses: its address, whether it answered, and each model and profile it serves with its modalities, its capabilities and what Tuldok can make with it. |
+| `set_endpoint` | owner | Set the Pumas endpoint this machine uses once it has answered what it serves, or clear it with null. |
+| `find_endpoints` | owner | List the Pumas endpoints advertising themselves on this machine, for the owner to pick from. |
+| `suggestion_models` | inspect | List, for each kind of record in the product of a task's dataset, the models the Pumas endpoint serves that can suggest a value of the task. |
+| `suggest_annotation` | edit | Ask a model the Pumas endpoint serves for a value of a task for one record; nothing is stored, and an answer that is not a value of the task is refused. |
 
 `map` answers `groups` (in their order, each with `id`, `title`, `parent`,
 `description` and `models`, the number of recipes naming it), `models` (one per
@@ -2615,6 +2692,72 @@ Each call of `set_annotation` and `revert_annotations` writes one activity
 row whose target is the task's reference and whose detail says how many
 records it set, removed or reverted.
 
+**`suggestion_models`** takes `task` and answers `task`, `type`, `address`
+(the machine's endpoint, or null), `kinds` and `problem` (why nothing could
+be asked: no endpoint, or the endpoint's reason; else null). `kinds` maps
+each kind of record the product has that the task annotates to the served
+models that can suggest for it now: `{model, profile, capability}`. It is
+empty for a kind no model fits, and for every kind of a `review`, `boxes`,
+`spans` or `segments` task and of a point cloud, mesh, array or file.
+
+| Task | Record | Asked as |
+| --- | --- | --- |
+| `text` | image | `image_to_text`, `image_messages` with the instruction and the image |
+| `text` | audio | `audio_transcription`, the `audio` input (a 16-bit PCM WAVE of at most 30 s, sent as `pcm_s16le`), no options |
+| `text` | text | `chat_generation`, `messages`: the instruction as system, the text as user |
+| `class`, `tags` | text, image, audio | `decision` where an available one takes the record's modality: one `choice` over the vocabulary for `class`, one `noul` per term for `tags` (kept above 0.5); else, for text and images, `chat_generation` or `image_to_text` asked to answer with terms only, kept only when the answer is made of terms |
+
+**`suggest_annotation`** takes `task`, `record`, `model`, `profile` (needed
+when the endpoint serves the model with more than one) and `instruction`
+(optional, at most 4,000 characters; a caption and a summary have a default)
+and answers `task`, `record` and `suggestion`: `value`, in the task's form,
+and `from`, `{model, profile, capability}`. Nothing is stored and no activity
+row is written; a person who keeps the value passes `from` to
+`set_annotation`, so that its line in the annotations file names the model.
+It is refused `not-found` for a record the product does not have,
+`unavailable` when no endpoint is set, the endpoint does not answer or
+refuses, or the model cannot suggest for this record now, `invalid` for a
+record that cannot be sent (an image not PNG or JPEG or over the client's
+bounds, a sound not such a WAVE), and `unsuitable` for an answer that is not a
+value of the task, the model's words quoted. The record is read and the
+endpoint asked outside the service's lock; an answer not given within 300 s
+is given up.
+
+## The Pumas endpoint
+
+Generation and suggestions go through a Pumas endpoint, reached by HTTP
+only: nothing of Pumas is part of Tuldok. The address is a setting of the
+machine, `pumas_endpoint` in the settings file (see
+[The project directory on this machine](#the-project-directory-on-this-machine)),
+never in the folder or in a definition. Every offer and every check comes from
+what the endpoint says it serves at that moment (`GET /v1/served-models` of
+the Pumas 0.8.0 contract); an output Tuldok cannot keep as a record (anything
+but `text` and `png_base64`) is not offered. Every call is bounded in time
+and bytes as Tuldok's client bounds it and is made outside the service's lock.
+
+**`endpoint`** takes nothing and answers `address` (or null), `answered`,
+`version` (what its `/.well-known/pumas` reports, or null), `models` and
+`problem` (null when it answered). Each model is one served (model, profile):
+`model`, `profile`, `profile_required`, `model_id`, `provider`, `load_state`,
+`context_tokens`, `modalities` (`input`, `output`), `capabilities` (each with
+`capability`, `available`, `reason`, `input_formats`, `output_formats`,
+`input_modalities`, `output_modalities` and `option_bounds`, option to
+`{minimum, maximum}`) and `makes`: what a `generate` can make with it now,
+each `{make, capability, options (the options it takes, with their bounds),
+seed (whether it takes one)}`.
+
+**`set_endpoint`** takes `address`, or null to clear the setting. An address
+is asked once what it serves and kept only when it answered; it must be the
+numeric-loopback HTTP address Pumas 0.8.0 serves on, such as
+`http://127.0.0.1:8765`, without a path (refused `invalid` otherwise, and
+`unavailable` when it does not answer). It answers as `endpoint` does, and
+writes an activity row (`set` or `cleared`).
+
+**`find_endpoints`** takes nothing and answers `endpoints`, each `{address,
+version, component}`, the Pumas endpoints that advertise themselves on this
+machine's loopback listeners, and `rejected`, `{server_url, reason}` of those
+that answered with an advertisement Tuldok refuses.
+
 ## The project directory on this machine
 
 Everything a project keeps on one machine alone (installed environments, code
@@ -2631,10 +2774,12 @@ environment variable `TULDOK_SETTINGS` names. It is strict JSON as in
 [JSON rules](#json-rules), at most 64 KiB, and has no other fields:
 
 ```json
-{"format": "tuldok_settings_v1", "project_home": "/absolute/path"}
+{"format": "tuldok_settings_v1", "project_home": "/absolute/path", "pumas_endpoint": "http://127.0.0.1:8765"}
 ```
 
-`project_home` is optional and must be absolute. The file is read only when
+`project_home` is optional and must be absolute. `pumas_endpoint` is optional,
+an `http` or `https` address of at most 2,048 characters with no spaces; it is
+set by `set_endpoint` (see [The Pumas endpoint](#the-pumas-endpoint)). The file is read only when
 the environment variable does not decide. A settings file that cannot be read
 or is not valid stops the command with a message naming the file and the
 fault, exit status 2, and stops the app's start-up; Tuldok never falls back to

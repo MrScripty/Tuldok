@@ -18,7 +18,13 @@ holds of a task (its rows, the hashes kept for its product) is read under the
 lock, the product is read and hashed outside it (annotation_records), and
 what was computed is kept under the lock again; set_annotation finds and
 reads the records it names before it takes the lock to check and store them.
-Nothing here knows of HTTP or of the app's access layer.
+The five operations on the Pumas endpoint (spec-d5.md sections 2 and 4) call
+it outside the lock, through pumas.py: endpoint, set_endpoint and
+find_endpoints need no project at all (the address is a setting of the
+machine, in local.py's settings file), and suggestion_models and
+suggest_annotation find the task's product under the lock and read it and
+ask the endpoint after releasing it. Nothing here knows of HTTP or of the
+app's access layer.
 
 The worker (section 4) is one thread per service, started by start() and
 stopped by close(). It runs queued build requests one at a time while it
@@ -45,7 +51,8 @@ import jsonschema
 import psycopg
 
 from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
-               documents, environments, inside, inside_weights, launcher, local, operations, plan, store, workspace)
+               documents, environments, inside, inside_weights, launcher, local, operations, plan, pumas, store,
+               workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
@@ -78,6 +85,10 @@ INSIDE_READS = {
 }
 # The reads of annotations (spec-d4.md section 5): each takes the service's lock itself, only for its database work.
 ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
+# The calls to the Pumas endpoint (spec-d5.md): each is made outside the service's lock; those that read a project
+# take the lock themselves, only for their database work.
+OUTSIDE_LOCK = ANNOTATION_READS + ('endpoint', 'set_endpoint', 'find_endpoints', 'suggestion_models',
+                                   'suggest_annotation')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
@@ -145,6 +156,8 @@ def _detail(name, result):
         return f'{result["set"]} set, {result["removed"]} removed'
     if name == 'revert_annotations':
         return f'{result["reverted"]} reverted'
+    if name == 'set_endpoint':
+        return 'set' if result['address'] else 'cleared'
     return ''
 
 
@@ -317,12 +330,24 @@ class Service:
             with self._lock:
                 found = {key: self._product(arguments[key]) for key in PRODUCT_ARGUMENTS if key in arguments}
             return _plain(INSIDE_READS[name](found, dict(arguments)))
-        if name in ANNOTATION_READS:
-            problems = _argument_problems(operation, arguments)
-            if problems:
-                raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
-                                         problems=problems)
-            return _plain(getattr(self, f'_{name}')(dict(arguments), actor))
+        if name in OUTSIDE_LOCK:
+            try:
+                problems = _argument_problems(operation, arguments)
+                if problems:
+                    raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
+                                             problems=problems)
+                result = _plain(getattr(self, f'_{name}')(dict(arguments), actor))
+            except store.ProjectError as exc:
+                if operation.mutation:
+                    self._record_activity(actor, name, _target(arguments), exc.code, str(exc))
+                raise
+            except Exception as exc:
+                if operation.mutation:
+                    self._record_activity(actor, name, _target(arguments), 'error', f'{type(exc).__name__}: {exc}')
+                raise
+            if operation.mutation:
+                self._record_activity(actor, name, _target(arguments), 'done', _detail(name, result))
+            return result
         prepared = ()
         if name == 'set_annotation':  # the records are found and read before the lock is taken to store them
             try:
@@ -747,6 +772,109 @@ class Service:
             name, document = project.annotation_task(arguments['task'])
             reverted = project.revert_annotations(name, arguments.get('records'), document)
         return {'task': annotation_rows.reference(name), 'reverted': reverted}
+
+    # ------------------------------------------------------- the endpoint
+
+    def _endpoint(self, arguments, actor):
+        return pumas.observe(local.pumas_endpoint())
+
+    def _set_endpoint(self, arguments, actor):
+        """Ask the address once what it serves and keep it when it answered; null clears the setting."""
+        if arguments['address'] is None:
+            local.set_pumas_endpoint(None)
+            return pumas.observe(None)
+        try:
+            address = pumas.normalize(arguments['address'])
+        except pumas.PumasError as exc:
+            raise store.ProjectError(str(exc), exc.code) from None
+        seen = pumas.observe(address)
+        if not seen['answered']:
+            raise store.ProjectError(f'The Pumas endpoint at {address} did not answer, so it was not set: '
+                                     f'{seen["problem"]}', 'unavailable')
+        local.set_pumas_endpoint(address)
+        return seen
+
+    def _find_endpoints(self, arguments, actor):
+        try:
+            return pumas.find()
+        except pumas.PumasError as exc:
+            raise store.ProjectError(str(exc), exc.code) from None
+
+    def _task_product(self, task):
+        """(name, document, inside.Product or None, its record index or None) of a task: found under the lock."""
+        with self._lock, self._open() as project:
+            name, document = project.annotation_task(task)
+            located = self._located(project, document)
+        product, index = self._product_of(located)
+        return name, document, product, index
+
+    def _suggestion_models(self, arguments, actor):
+        name, document, _product, index = self._task_product(arguments['task'])
+        task = document.get('task')
+        kinds = sorted({record['kind'] for record in index.records} if index is not None else ())
+        kinds = [kind for kind in kinds if annotations.allows_kind(task, kind)]
+        result = {'task': annotation_rows.reference(name), 'type': task, 'address': local.pumas_endpoint(),
+                  'kinds': {kind: [] for kind in kinds}, 'problem': None}
+        if result['address'] is None:
+            result['problem'] = pumas.NO_ENDPOINT
+            return result
+        try:
+            listing = pumas.served(result['address'])
+        except pumas.PumasError as exc:
+            result['problem'] = str(exc)
+            return result
+        for kind in kinds:
+            for entry in listing['models']:
+                found = pumas.routes(entry, task, kind)
+                if found:
+                    result['kinds'][kind].append({'model': entry['model'], 'profile': entry['profile'],
+                                                  'capability': found[0]['capability']})
+        return result
+
+    def _suggest_annotation(self, arguments, actor):
+        """A value of the task for one record, asked of a served model; nothing is stored (spec-d5.md section 4)."""
+        record_id = arguments['record']
+        name, document, product, index = self._task_product(arguments['task'])
+        reference = annotation_rows.reference(name)
+        task, vocabulary = document.get('task'), document.get('vocabulary') or []
+        if index is None:
+            raise store.ProjectError(f'{document.get("dataset")} has no product to annotate; build it first.',
+                                     'not-found', references=[document.get('dataset')])
+        position = index.by_id.get(record_id)
+        if position is None:
+            raise store.ProjectError(f'The record {record_id!r} is not in the product of {document.get("dataset")}.',
+                                     'not-found', references=[reference])
+        record = index.records[position]
+        if not annotations.allows_kind(task, record['kind']):
+            raise store.ProjectError(f'A {task} task does not annotate records of kind {record["kind"]!r}.', 'invalid',
+                                     references=[reference])
+        address = local.pumas_endpoint()
+        if address is None:
+            raise store.ProjectError(pumas.NO_ENDPOINT, 'unavailable')
+        facts = annotation_records.facts(product, record, task)
+
+        def check(value):
+            errors, unknown = annotations.value_problems(task, vocabulary, 'draft', value, kind=record['kind'],
+                                                         size=facts['size'], length=facts['length'],
+                                                         duration=facts['duration'])
+            return errors + [f'The term {term!r} is not in the vocabulary of the task.' for term in unknown]
+
+        try:
+            listing = pumas.served(address)
+            entry = pumas.choose(listing, arguments['model'], arguments.get('profile'))
+            found = pumas.routes(entry, task, record['kind'])
+            if not found:
+                raise pumas.PumasError(f'{entry["model"]} ({entry["profile"]}) cannot suggest a value of a {task} task '
+                                       f'for a {record["kind"]} record now.', 'unavailable')
+            content = annotation_records.content(product, record, pumas.CONTENT_LIMIT)
+            value = pumas.suggest(address, listing, entry, found[0], task, vocabulary, content,
+                                  arguments.get('instruction'), request_id=f'tuldok-suggest:{os.urandom(8).hex()}',
+                                  check=check)
+        except pumas.PumasError as exc:
+            raise store.ProjectError(str(exc), exc.code, references=[reference]) from None
+        return {'task': reference, 'record': record_id,
+                'suggestion': {'value': value, 'from': {'model': entry['model'], 'profile': entry['profile'],
+                                                        'capability': found[0]['capability']}}}
 
     # ------------------------------------------------------------- changes
 
