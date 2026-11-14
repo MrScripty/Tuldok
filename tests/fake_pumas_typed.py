@@ -1,4 +1,11 @@
-"""Source-derived PR54 finite HTTP fixture, with 0.8.0 served-model listings; it is not the native gateway."""
+"""Source-derived PR54 finite HTTP fixture, with 0.8.0 served-model listings; it is not the native gateway.
+
+For spec-d5.md's tests the state may also hold: `modes`, a list of modes taken
+one per POST before `mode`; `respond(body)`, giving the `result` of a
+successful POST (a decision's `decisions`, an echo of the prompt); and
+`advertise`, a package version for which `/.well-known/pumas` answers with
+the advertisement fixture at this fake's own address.
+"""
 import base64
 import json
 import threading
@@ -24,6 +31,11 @@ def start():
             try: self.wfile.write(raw)
             except OSError: pass
         def do_GET(self):
+            if self.path == '/.well-known/pumas' and state.get('advertise'):
+                value = json.loads((FIXTURES.parent / 'pumas-http-pr51/advertisement.json').read_bytes())
+                value['endpoint'] = 'http://127.0.0.1:' + str(self.server.server_port)
+                value['build_info']['package_version'] = state['advertise']
+                return self.reply(value)
             if self.path == '/v1/served-models' and state.get('served_models_raw') is not None:
                 raw = state['served_models_raw']
                 self.send_response(200); self.send_header('Content-Length', str(len(raw))); self.end_headers()
@@ -54,7 +66,7 @@ def start():
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             state['requests'].append(body); state['entered'].set()
-            mode = state['mode']
+            mode = state['modes'].pop(0) if state.get('modes') else state['mode']
             if mode == 'hold':
                 state['release'].wait(3)
             if mode == 'delay': time.sleep(.2)
@@ -70,7 +82,9 @@ def start():
                 return self.reply({'contract_version': 1, 'request_id': None, 'error': {'code': 'invalid_request',
                     'outcome': 'not_admitted', 'message': 'request body is not valid JSON'}}, 400)
             result = {'kind': 'text', 'text': state['content'], 'finish_reason': 'stop'}
-            if body['capability'] == 'image_generation':
+            if state.get('respond') is not None:
+                result = state['respond'](body)
+            elif body['capability'] == 'image_generation':
                 import io
                 from PIL import Image
                 out = io.BytesIO(); Image.new('RGB', (body['options']['width'], body['options']['height']), (35,95,160)).save(out, 'PNG')

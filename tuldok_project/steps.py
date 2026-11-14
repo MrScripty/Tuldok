@@ -1,22 +1,30 @@
-"""The steps Tuldok provides: import files into a dataset, and freeze a dataset with splits from its annotations.
+"""The steps Tuldok provides: import files into a dataset, freeze a dataset with splits from its annotations,
+and generate a dataset by asking a model a Pumas endpoint serves.
 
-Owns section 6 of docs/plans/definition-first-projects/spec-d4.md. A dataset
-whose run names a step (run.step) is built by Tuldok's own interpreter running
+Owns section 6 of docs/plans/definition-first-projects/spec-d4.md and section
+3 of spec-d5.md. A dataset whose run names a step (run.step) is built by
+Tuldok's own interpreter running
 
     python -m tuldok_project.steps import <settings file> <output directory> --code <code root>
     python -m tuldok_project.steps freeze <settings file> <output directory> --records <input product> --tasks <file>
+    python -m tuldok_project.steps generate <settings file> <output directory> --endpoint <address>
+        --report <file> [--records <input product>]
 
 with Tuldok's code first on the module path and the snapshot's code off it
 (builds.py sets PYTHONSAFEPATH and PYTHONPATH). A step reads files and writes
 its output directory; it opens no database, follows no symbolic link out of
 its source, writes nowhere else and deletes nothing. It prints
 tuldok_progress_v1 lines and, at its end, what it counted, one plain line
-each. The standard library alone is used: the record rules it shares with
-inside.py (the kinds by extension, the pattern form, an id's characters) are
-repeated here and a test keeps the two equal.
+each. The standard library alone is used by import and freeze: the record
+rules they share with inside.py (the kinds by extension, the pattern form, an
+id's characters) are repeated here and a test keeps the two equal. generate
+reaches the endpoint only through pumas.py, the one module that imports
+Tuldok's client for it; it is given the machine's address by the build and
+writes the address and the endpoint's version to its report file, which the
+build keeps in the run's record.
 
-import_files and freeze_records are the steps as functions on directories;
-main() is the command line.
+import_files, freeze_records and generate_records are the steps as functions
+on directories; main() is the command line.
 """
 import argparse
 import hashlib
@@ -26,7 +34,9 @@ import re
 import shutil
 import stat
 import sys
+import threading
 import time
+import uuid
 
 from . import annotations
 
@@ -39,7 +49,7 @@ EXTENSIONS = {
     'mesh': ('.obj', '.stl'),
     'array': ('.npy', '.npz', '.safetensors'),
 }
-STEPS = ('import', 'freeze')
+STEPS = ('import', 'freeze', 'generate')
 RECORD_LIST = 'records.jsonl'
 FILES = 'files'
 DEFAULT_PATTERN = '**/*'
@@ -53,6 +63,9 @@ _ID = re.compile(r'[A-Za-z0-9._-]{1,200}')
 _NOT_ID = re.compile(r'[^A-Za-z0-9._-]')
 _SHA256 = re.compile(r'[0-9a-f]{64}')
 _CHUNK = 1 << 20
+MAKES = ('text', 'image')           # what generate makes (spec-d5.md section 3)
+GENERATE_LIMIT = 100_000            # items one generate makes
+RETRY_PAUSES = (1.0, 2.0)           # before asking again an item the endpoint did not admit; twice at most
 
 
 class StepError(Exception):
@@ -567,6 +580,174 @@ def _frozen(record, split, tasks, rows, root, output, placed, used_ids, counts):
     return text
 
 
+# ----------------------------------------------------------------- generate
+
+def prompt_parts(template):
+    """[('text', characters) or ('name', placeholder)] of a prompt; ValueError for a stray brace.
+
+    {n} and {text} are the placeholders; {{ and }} are literal braces.
+    """
+    parts, at = [], 0
+    while at < len(template):
+        if template.startswith('{{', at):
+            parts.append(('text', '{'))
+            at += 2
+        elif template.startswith('}}', at):
+            parts.append(('text', '}'))
+            at += 2
+        elif template[at] == '{':
+            end = template.find('}', at + 1)
+            if end < 0 or '{' in template[at + 1:end]:
+                raise ValueError('has a { that is not closed; write {{ for a brace')
+            parts.append(('name', template[at + 1:end]))
+            at = end + 1
+        elif template[at] == '}':
+            raise ValueError('has a } that is not opened; write }} for a brace')
+        else:
+            parts.append(('text', template[at]))
+            at += 1
+    return parts
+
+
+def fill_prompt(template, values):
+    """The prompt with each {name} replaced from values (KeyError naming one it does not hold)."""
+    return ''.join(text if part == 'text' else str(values[text]) for part, text in prompt_parts(template))
+
+
+def _prompt_texts(root, view, counts):
+    """[(record id, text)] of the text records of the input product, in its order."""
+    by_id = _input_records(root, view, counts)
+    found = []
+    for identifier, record in by_id.items():
+        if record['kind'] != 'text':
+            counts['not_text'] += 1
+            continue
+        if record.get('path') is None:
+            found.append((identifier, record['text']))
+            continue
+        full = _confined(root, record['path']) if '!' not in record['path'] else None
+        if full is None or os.path.getsize(full) > LINE_BYTES:
+            counts['unread'] += 1
+            continue
+        with open(full, 'rb') as handle:
+            raw = handle.read()
+        try:
+            found.append((identifier, raw.decode('utf-8')))
+        except UnicodeDecodeError:
+            counts['unread'] += 1
+    return found
+
+
+def _ask(pumas, endpoint, listing, prepared, prompt, seed, number, token, pauses, out):
+    """One item made, asking again (after a pause) what the endpoint refused before the provider took it."""
+    never = threading.Event()   # a cancel stops the whole step
+    for attempt in range(len(pauses) + 1):
+        try:
+            return pumas.make_one(endpoint, listing, prepared, prompt, seed, f'tuldok-generate:{token}:{number}:'
+                                  f'{attempt + 1}', never)
+        except pumas.PumasError as exc:
+            if exc.outcome != 'not_admitted' or attempt == len(pauses):
+                tries = f' (asked {attempt + 1} times)' if attempt else ''
+                raise StepError(f'Item {number} failed{tries}: {exc}') from None
+            out(f'Item {number} was not admitted ({exc.provider_code or "refused"}); asking again in '
+                f'{pauses[attempt]:g} s.')
+            time.sleep(pauses[attempt])
+
+
+def generate_records(settings, output, *, endpoint, records=None, view=None, report=None, out=print,
+                     pauses=RETRY_PAUSES):
+    """The generate step (spec-d5.md section 3): settings as the definition gives them, into output.
+
+    endpoint is the machine's Pumas address; records the input product of
+    prompts, or None; report a file to write {address, version} to. Nothing
+    is asked before what the endpoint serves has been read and every item
+    checked against it. Returns the counts.
+    """
+    from . import pumas   # the step's one way to the endpoint
+    make, template, rights = settings['make'], settings['prompt'], settings['rights']
+    seed = settings.get('seed')
+    counts = dict.fromkeys(('made', 'inputs', 'not_text', 'unread', 'bad_lines', 'retried', 'in_files'), 0)
+    if records is not None:
+        texts = _prompt_texts(os.path.realpath(records), view, counts)
+        counts['inputs'] = len(texts)
+        per = settings.get('per', 1)
+        items = [(identifier, text) for identifier, text in texts for _ in range(per)]
+    else:
+        items = [(None, None)] * settings['count']
+    if len(items) > GENERATE_LIMIT:
+        raise StepError(f'It would make {len(items):,} items; one generate makes at most {GENERATE_LIMIT:,}.')
+    try:
+        listing = pumas.served(endpoint)
+    except pumas.PumasError as exc:
+        raise StepError(f'The Pumas endpoint at {endpoint} did not say what it serves: {exc}') from None
+    if report is not None:
+        with open(report, 'w', encoding='utf-8') as handle:
+            json.dump({'address': endpoint, 'version': pumas.version(endpoint)}, handle)
+    try:
+        prepared = pumas.prepare_make(listing, settings)
+        asked = []
+        for number, (source, text) in enumerate(items, 1):
+            values = {'n': number} if source is None else {'n': number, 'text': text}
+            try:
+                prompt = fill_prompt(template, values)
+            except (KeyError, ValueError) as exc:
+                raise StepError(f'The prompt cannot be filled for item {number}: {exc}') from None
+            item_seed = seed + number - 1 if seed is not None and prepared['takes_seed'] else None
+            pumas.check_item(prepared, prompt, item_seed)
+            asked.append((source, prompt, item_seed))
+    except pumas.PumasError as exc:
+        raise StepError(f'Nothing was asked: {exc}') from None
+    entry, row = prepared['entry'], prepared['row']
+    sent = {key: value for key, value in (prepared['options'] or {}).items() if key != 'kind'}
+    token = uuid.uuid4().hex[:16]
+    progress = Progress('generate', len(asked), out)
+    progress(0, {})
+    out(f'Asking {entry["model"]} ({entry["profile"]}) by {row["capability"]} for {len(asked)} '
+        f'{"texts" if make == "text" else "images"}.')
+    used_ids = set()
+    with open(os.path.join(output, RECORD_LIST), 'x', encoding='utf-8') as listing_file:
+        for number, (source, prompt, item_seed) in enumerate(asked, 1):
+            made = _ask(pumas, endpoint, listing, prepared, prompt, item_seed, number, token, pauses, out)
+            identifier = unique(f'g{number:06d}', used_ids, ID_LIMIT)
+            origin = {'generated': {'model': entry['model'], 'profile': entry['profile'],
+                                    'capability': row['capability'], 'prompt': prompt,
+                                    'seed': made.get('seed', item_seed) if make == 'image' else None,
+                                    'options': sent, 'input': source}}
+            listing_file.write(_line(_generated_record(output, identifier, make, made, rights, origin, counts)))
+            listing_file.flush()
+            counts['made'] += 1
+            progress(number, {'made': counts['made']})
+    progress(len(asked), {'made': counts['made']}, final=True)
+    out(f'{counts["made"]} {"texts" if make == "text" else "images"} made by {entry["model"]}.')
+    _say(out, counts, (('not_text', 'records of the input are not text and were not used.'),
+                       ('unread', f'text records of the input could not be read (missing, over {LINE_BYTES} bytes '
+                                  'or not UTF-8) and were not used.'),
+                       ('bad_lines', f'lines of the input\'s {RECORD_LIST} are not records and were skipped.'),
+                       ('in_files', f'texts too long for one line ({LINE_BYTES} bytes) were written as files.')))
+    return counts
+
+
+def _generated_record(output, identifier, make, made, rights, origin, counts):
+    """The records.jsonl line of one made item; an image, or a text too long for a line, is a file under files/."""
+    if make == 'text':
+        data = made['text'].encode('utf-8', 'surrogatepass')
+        record = {'id': identifier, 'kind': 'text', 'text': made['text'], 'sha256': hashlib.sha256(data).hexdigest(),
+                  'bytes': len(data), 'rights': rights, 'origin': origin}
+        if len(_line(record).encode('utf-8', 'surrogatepass')) <= LINE_BYTES:
+            return record
+        counts['in_files'] += 1
+        address = f'{FILES}/{identifier}.txt'
+    else:
+        data = made['png']
+        address = f'{FILES}/{identifier}.png'
+    target = os.path.join(output, *address.split('/'))
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    with open(target, 'xb') as handle:
+        handle.write(data)
+    return {'id': identifier, 'kind': make, 'path': address, 'sha256': hashlib.sha256(data).hexdigest(),
+            'bytes': len(data), 'rights': rights, 'origin': origin}
+
+
 # --------------------------------------------------------------- command line
 
 def _arguments(argv):
@@ -578,6 +759,8 @@ def _arguments(argv):
     parser.add_argument('--code', help='the code root the run sees (for a relative source)')
     parser.add_argument('--records', help='freeze: the input product\'s directory')
     parser.add_argument('--tasks', help='freeze: a JSON file of the tasks and their line files')
+    parser.add_argument('--endpoint', help='generate: the Pumas endpoint this machine uses')
+    parser.add_argument('--report', help='generate: a file to write the endpoint\'s address and version to')
     return parser.parse_args(argv)
 
 
@@ -591,6 +774,11 @@ def main(argv=None):
             raise StepError(f'The output directory {arguments.output} does not exist.')
         if arguments.step == 'import':
             import_files(settings, arguments.output, code_root=arguments.code, out=out)
+        elif arguments.step == 'generate':
+            if arguments.endpoint is None:
+                raise StepError('generate needs --endpoint, the Pumas endpoint this machine uses.')
+            generate_records(settings, arguments.output, endpoint=arguments.endpoint, records=arguments.records,
+                             report=arguments.report, out=out)
         else:
             if arguments.records is None or arguments.tasks is None:
                 raise StepError('freeze needs --records and --tasks.')

@@ -32,6 +32,8 @@ MAX_IMAGE_JSON = 12 * 1024 * 1024
 MAX_DIMENSION = 2048
 MAX_PIXELS = 4194304
 MAX_MESSAGE = 600
+# The result kind of each output Tuldok asks for.
+RESULT_KINDS = {'text': 'text', 'png_base64': 'image', 'decisions': 'decisions'}
 # Capabilities Tuldok sends, with their fixed contract-version-1 semantic task.
 USED_CAPABILITIES = {'chat_generation': 'chat_generation', 'image_generation': 'text_to_image',
                      'image_to_text': 'image_to_text'}
@@ -581,7 +583,7 @@ def exchange(base, payload, stop, max_bytes):
                 # The typed error's `outcome` is authoritative; HTTP status is evidence only.
                 error.provider_http_status = response.status
                 raise
-            if value['kind'] != {'text': 'text', 'png_base64': 'image'}.get(payload['output']):
+            if value['kind'] != RESULT_KINDS.get(payload['output']):
                 raise OperationError('Typed result has the wrong output kind; no replay.', 'unknown', raw=raw)
             if response.status != 200:
                 raise OperationError('Unexpected typed HTTP status; provider outcome unknown, no replay.', 'unknown', raw=raw)
@@ -632,6 +634,11 @@ def result(raw, request_id):
             if projected['finish_reason'] != 'stop':
                 raise ValueError('Text did not finish with stop; partial output is not applied.')
             projected['text'].encode('utf-8')
+        elif projected.get('kind') == 'decisions':
+            # `answers` maps each question to its typed answer; the caller reads the answers it asked for.
+            response_fields(projected, ('kind', 'answers'))
+            if type(projected['answers']) is not dict:
+                raise ValueError('Invalid typed decisions result.')
         elif projected.get('kind') == 'image':
             response_fields(projected, ('kind', 'png_base64', 'seed'))
             if not isinstance(projected['png_base64'], str) or type(projected['seed']) is not int or not 0 <= projected['seed'] <= 4294967295:

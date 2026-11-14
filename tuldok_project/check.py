@@ -11,13 +11,15 @@ outputs, charts against their benchmark, cycles, paths into the code root
 compared_with, and map.chart, each annotations/<name>.jsonl against its
 task (spec-d4.md section 2; the rules of a line are annotations.py's), and
 the settings, inputs and tasks of a dataset whose run names a step Tuldok
-provides (section 6).
+provides (section 6; generate is spec-d5.md section 3).
 Problems are collected, never raised, so one bad file never hides another.
 """
 from dataclasses import dataclass, field
+import math
 import os
+import re
 
-from . import annotations, documents, folder as folder_reader, graph, results
+from . import annotations, documents, folder as folder_reader, graph, results, steps
 from .documents import Problem
 
 _SEVERITY_ORDER = {'error': 0, 'warning': 1}
@@ -130,8 +132,16 @@ def _check_view(view, path, add):
 
 # The settings of each step Tuldok provides (spec-d4.md section 6): {member: required}.
 STEP_SETTINGS = {'import': {'source': True, 'pattern': False, 'kind': False, 'rights': True, 'lines': False},
-                 'freeze': {'seed': True, 'shares': True, 'include': False}}
+                 'freeze': {'seed': True, 'shares': True, 'include': False},
+                 'generate': {'make': True, 'model': True, 'profile': False, 'prompt': True, 'count': False,
+                              'per': False, 'seed': False, 'options': False, 'rights': True}}
 SEED_LIMIT = 2 ** 63
+GENERATE_SEED_LIMIT = 2 ** 32       # a seed Pumas takes is unsigned 32-bit
+PROMPT_LIMIT = 16_000               # characters of a generate prompt
+PER_LIMIT = 1000
+OPTIONS_LIMIT = 32
+_OPTION_NAME = re.compile(r'^[a-z][a-z0-9_]{0,63}$')
+_PROFILE = re.compile(r'^[A-Za-z0-9_.-]{1,128}$')
 SHARES_LIMIT = 16
 SHARE_LIMIT = 1_000_000
 RIGHTS_LIMIT = 1000
@@ -157,12 +167,14 @@ def _check_step(run, path, add):
                     f'Add the required setting {key!r} of the step {step}.')
     settings = settings if isinstance(settings, dict) else {}
     where = lambda key: documents.pointer('run', 'settings', key)  # noqa: E731
+    if step in ('import', 'generate') and 'annotations' in run:
+        add('error', path, '/run/annotations', 'Only the step freeze reads annotations; remove annotations.')
     if step == 'import':
         _check_import(settings, path, where, add)
         if 'inputs' in run:
             add('error', path, '/run/inputs', 'The step import reads files, not other products; remove inputs.')
-        if 'annotations' in run:
-            add('error', path, '/run/annotations', 'Only the step freeze reads annotations; remove annotations.')
+    elif step == 'generate':
+        _check_generate(run, settings, path, where, add)
     else:
         _check_freeze(run, settings, path, where, add)
 
@@ -193,6 +205,78 @@ def _check_import(settings, path, where, add):
                                             'what may be done with the files.')
     if 'lines' in settings and not isinstance(settings['lines'], bool):
         add('error', path, where('lines'), 'lines must be true or false.')
+
+
+def _check_generate(run, settings, path, where, add):
+    """The settings and the one optional input (prompts) of the step generate (spec-d5.md section 3)."""
+    inputs = run.get('inputs')
+    with_input = 'inputs' in run
+    if with_input and (not isinstance(inputs, dict) or set(inputs) != {'prompts'}
+                       or not isinstance(inputs['prompts'], str) or not inputs['prompts'].startswith('datasets/')):
+        add('error', path, '/run/inputs', 'The step generate takes at most one input, prompts, naming a dataset: '
+                                          '"inputs": {"prompts": "datasets/<name>"}.')
+    if 'make' in settings and settings['make'] not in steps.MAKES:
+        add('error', path, where('make'), 'make must be ' + ' or '.join(steps.MAKES) + '.')
+    model = settings.get('model')
+    if 'model' in settings and not (isinstance(model, str) and model and model == model.strip()
+                                    and len(model.encode('utf-8', 'surrogatepass')) <= 256
+                                    and not any(ord(char) < 32 or ord(char) == 127 for char in model)):
+        add('error', path, where('model'), 'model must be the alias a Pumas endpoint serves: 1 to 256 bytes, with no '
+                                           'spaces around it and no control characters.')
+    if 'profile' in settings and not (isinstance(settings['profile'], str) and _PROFILE.match(settings['profile'])):
+        add('error', path, where('profile'), 'profile must be a Pumas profile: 1 to 128 of A-Z a-z 0-9 . _ -.')
+    prompt = settings.get('prompt')
+    if 'prompt' in settings:
+        if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > PROMPT_LIMIT:
+            add('error', path, where('prompt'), f'prompt must be a request of 1 to {PROMPT_LIMIT:,} characters.')
+        else:
+            allowed = ('n', 'text') if with_input else ('n',)
+            try:
+                names = [text for part, text in steps.prompt_parts(prompt) if part == 'name']
+            except ValueError as exc:
+                add('error', path, where('prompt'), f'The prompt {exc}.')
+            else:
+                for name in dict.fromkeys(name for name in names if name not in allowed):
+                    add('error', path, where('prompt'), f'The prompt uses {{{name}}}; it may use '
+                        + ' and '.join(f'{{{known}}}' for known in allowed)
+                        + ('' if with_input else ' ({text} needs an input of prompts)') + '.')
+    count, per = settings.get('count'), settings.get('per')
+    if with_input:
+        if 'count' in settings:
+            add('error', path, where('count'), 'With an input, one item is made for each of its text records '
+                                               '(times per); remove count.')
+        if 'per' in settings and (type(per) is not int or not 1 <= per <= PER_LIMIT):
+            add('error', path, where('per'), f'per must be a whole number from 1 to {PER_LIMIT:,}.')
+    else:
+        if 'count' not in settings:
+            add('error', path, where('count'), 'Add the required setting \'count\' of the step generate: how many to '
+                                               'make, without an input of prompts.')
+        elif type(count) is not int or not 1 <= count <= steps.GENERATE_LIMIT:
+            add('error', path, where('count'), f'count must be a whole number from 1 to {steps.GENERATE_LIMIT:,}.')
+        if 'per' in settings:
+            add('error', path, where('per'), 'per goes with an input of prompts; remove it or add the input.')
+    seed = settings.get('seed')
+    if 'seed' in settings and (type(seed) is not int or not 0 <= seed < GENERATE_SEED_LIMIT):
+        add('error', path, where('seed'), 'The seed must be a whole number from 0 to 4,294,967,295.')
+    options = settings.get('options')
+    if 'options' in settings:
+        if not isinstance(options, dict) or len(options) > OPTIONS_LIMIT:
+            add('error', path, where('options'), f'options must be an object of at most {OPTIONS_LIMIT} options of '
+                                                 'the capability, such as {"max_tokens": 256}.')
+        else:
+            for name, value in options.items():
+                pointer = documents.pointer('run', 'settings', 'options', name)
+                if name == 'seed':
+                    add('error', path, pointer, 'The seed is the setting seed, not an option; move it there.')
+                elif not _OPTION_NAME.match(name):
+                    add('error', path, pointer, f'The option name {name!r} must be 1 to 64 of a-z 0-9 _, starting '
+                                                'with a letter.')
+                elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                    add('error', path, pointer, f'The option {name} must be a number.')
+    rights = settings.get('rights')
+    if 'rights' in settings and (not isinstance(rights, str) or not rights.strip() or len(rights) > RIGHTS_LIMIT):
+        add('error', path, where('rights'), f'rights must be a sentence of 1 to {RIGHTS_LIMIT:,} characters on '
+                                            'what may be done with what is made.')
 
 
 def _check_freeze(run, settings, path, where, add):

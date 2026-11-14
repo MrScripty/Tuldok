@@ -268,9 +268,10 @@
         "step": {
           "enum": [
             "import",
-            "freeze"
+            "freeze",
+            "generate"
           ],
-          "description": "a step Tuldok provides: import or freeze"
+          "description": "a step Tuldok provides: import, freeze or generate"
         },
         "environment": {
           "type": "string",

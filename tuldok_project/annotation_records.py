@@ -12,6 +12,7 @@ into rows, checked with annotations.validate against the task, the
 vocabulary, the record's kind and what is cheap to know of it: an image's
 size (from its first bytes), a text's length (when its file is at most
 inside.COUNT_TEXT_BYTES) and a WAVE sound's length (from its header).
+content reads one record whole for a suggestion (spec-d5.md section 4).
 """
 import codecs
 import hashlib
@@ -186,6 +187,29 @@ def facts(product, record, task):
     except (ProjectError, *inside.DAMAGED):
         pass  # not known: the bound is not checked
     return found
+
+
+# ----------------------------------------------------- what a model is sent
+
+def content(product, record, limit):
+    """A record's content for a suggestion (spec-d5.md section 4): {kind, text} or {kind, data} (its bytes).
+
+    A record over limit bytes is refused invalid; one that cannot be read, not-found.
+    """
+    if record['path'] is None:
+        return {'kind': record['kind'], 'text': record['text'] or ''}
+    try:
+        place = inside_archive.locate(product.root, record['path'])
+        size = place.size or 0
+        if size > limit:
+            raise ProjectError(f'The record {record["id"]!r} is {size:,} bytes; at most {limit:,} are sent to a model.',
+                               'invalid')
+        data = place.head(size)
+    except inside.DAMAGED:
+        raise ProjectError(f'The record {record["id"]!r} cannot be read.', 'not-found') from None
+    if record['kind'] == 'text':
+        return {'kind': 'text', 'text': codecs.decode(data, 'utf-8', 'replace')}
+    return {'kind': record['kind'], 'data': data}
 
 
 # ------------------------------------------------------------------ the items
