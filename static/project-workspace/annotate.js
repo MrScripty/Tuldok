@@ -25,6 +25,7 @@ window.LabAnnotate = (() => {
   const FILTERS = [['all', 'All'], ['todo', 'To do'], ['accepted', 'Accepted'], ['needs-work', 'Needs work'], ['rejected', 'Rejected'], ['stale', 'Stale']];
   const DECISIONS = [['accepted', 'Accept', 'ok'], ['needs-work', 'Needs work', 'warn'], ['rejected', 'Reject', 'bad']];
   const STATE = { none: ['neutral', 'not annotated'], draft: ['neutral', 'draft'], accepted: ['good', 'accepted'], 'needs-work': ['warn', 'needs work'], rejected: ['serious', 'rejected'] };
+  const SUGGESTS = ['text', 'class', 'tags'];   // the tasks a served model can suggest a value of (spec-d5 section 4)
   const FORMAT = 'tuldok_definition_v1';
   const count = (n, one, many) => n.toLocaleString('en-GB') + ' ' + (n === 1 ? one : many || one + 's');
   const button = (cls, text, key, onClick) => { const b = h('button', cls, text); b.type = 'button'; if (key) b.dataset.key = key; if (onClick) b.addEventListener('click', onClick); return b; };
@@ -82,7 +83,9 @@ window.LabAnnotate = (() => {
     let id = ui.sel.get(t.task);
     if (!page.records.some(r => r.id === id)) id = page.records.length ? page.records[ui.selAt === -1 ? page.records.length - 1 : 0].id : null;
     ui.selAt = 0; if (id) ui.sel.set(t.task, id); else ui.sel.delete(t.task);
-    return { tasks, t, page, rec: page.records.find(r => r.id === id) || null };
+    // The models that can suggest (spec-d5 section 4), for a session that may annotate; none when they cannot be read.
+    const offers = A.may('edit') && SUGGESTS.includes(t.type) ? await P.read('suggestion_models', { task: t.task }).then(r => r.kinds || {}, () => ({})) : {};
+    return { tasks, t, page, rec: page.records.find(r => r.id === id) || null, offers };
   }
 
   // ---- The tab -----------------------------------------------------------------------------------------------------
@@ -114,7 +117,7 @@ window.LabAnnotate = (() => {
     if (kind === 'records') {
       keys.list = JSON.stringify([t.task, t.run, ui.filter, ui.page, got.page.total, got.page.records.map(r => [r.id, r.kind, r.path, r.preview || null, r.in_product, r.annotation && [r.annotation.state, r.annotation.stale, r.annotation.unsaved]])]);
       keys.view = rec ? JSON.stringify([t.task, t.type, t.run, rec.id, rec.kind, rec.in_product]) : 'none';   // its place in the list is set in place (place())
-      keys.form = rec ? JSON.stringify([t.task, t.type, t.vocabulary, rec.id, rec.kind, rec.in_product, rec.annotation, may]) : 'none';
+      keys.form = rec ? JSON.stringify([t.task, t.type, t.vocabulary, rec.id, rec.kind, rec.in_product, rec.annotation, may, (got.offers || {})[rec.kind] || []]) : 'none';
       const same = here.rec && rec && here.t && here.t.task === t.task && here.rec.id === rec.id;
       if (same && here.keys.form && keys.form !== here.keys.form && (drafts.get(draftKey(t, rec)) || {}).dirty) keys.form = here.keys.form;   // what is typed stays
     } else keys.msg = JSON.stringify([kind, t && [t.task, t.dataset], may, got.error ? got.error.message : null]);
@@ -126,7 +129,7 @@ window.LabAnnotate = (() => {
     } catch (error) { build.view = h('div', 'iv'); build.view.appendChild(A.refusal(error)); }
     if (main._paint !== mine || main._view !== view) return;
     main.removeAttribute('aria-busy');
-    here.t = t; here.page = got.page || null; here.rec = rec; here.tasks = got.tasks;
+    here.t = t; here.page = got.page || null; here.rec = rec; here.tasks = got.tasks; here.offers = got.offers || {};
     const fresh = !here.root || keys.shape !== here.keys.shape;
     if (fresh) {
       const root = h('div', 'annotate'); root.dataset.shape = kind;
@@ -153,6 +156,7 @@ window.LabAnnotate = (() => {
     } else put('msg', () => buildMessage(kind, t, got.error));
     if (fresh) putInPlace(main, here.root);
     main._painted = view;
+    if (here.focusAfter) { const k = here.focusAfter; here.focusAfter = null; A.focusKey(k); }
     if (here.focusSel) { here.focusSel = false; const b = here.root.querySelector('.rec[aria-pressed="true"]'); if (b) b.focus(); }
   }
 
@@ -285,6 +289,7 @@ window.LabAnnotate = (() => {
   function touch(list = true) {
     const d = cur(); if (!d) return; d.dirty = true;
     const m = here.root && here.root.querySelector('.ann-form .umark'); if (m && m.textContent !== 'not kept yet') { m.textContent = 'not kept yet'; m.classList.add('typed'); }
+    if (d.from) markSuggestion(d);
     if (list && here.relist) here.relist();
     if (here.repaint) here.repaint();
   }
@@ -538,6 +543,7 @@ window.LabAnnotate = (() => {
       box.appendChild(h('p', 'small', rec.in_product ? 'The annotation as it was made is below. Still right keeps it for the content as it is now; or change it and keep it.' : 'Remove the annotation, or keep it until the record comes back.'));
       form.appendChild(box);
     }
+    if (may && rec.in_product && ((here.offers || {})[rec.kind] || []).length) { const sb = h('div', 'ann-suggestbox'); sb.appendChild(suggestBox(t, rec)); form.appendChild(sb); }
     const f = h('div', 'form ann-fields');
     if (!rec.in_product) f.appendChild(h('p', 'note', 'Nothing can be set on a record that is not in the product.'));
     else if (rec.kind === 'file') f.appendChild(h('p', 'note', 'A file of no kind cannot be annotated.'));
@@ -560,7 +566,7 @@ window.LabAnnotate = (() => {
     const k = draftKey(t, rec), after = () => { drafts.delete(k); };
     form.appendChild(A.group('annotate:form', [
       { id: 'keep', label: 'Keep and next', cls: 'btn primary', who: 'edit', op: 'set_annotation', busy: 'Keeping…', hidden: !rec.in_product, title: 'Enter',
-        args: () => ({ task: t.task, items: [itemOf(t, rec, d)] }), done: () => { after(); move(1); } },
+        args: () => Object.assign({ task: t.task, items: [itemOf(t, rec, d)] }, d.from ? { from: d.from } : {}), done: () => { after(); move(1); } },
       { id: 'skip', label: 'Skip', cls: 'btn ghost', onClick: () => { if (move(1)) redraw(); } },
       { id: 'still', label: 'Still right', cls: 'btn', who: 'edit', op: 'set_annotation', busy: 'Keeping…', hidden: !(a && a.stale && rec.in_product),
         args: () => ({ task: t.task, items: [Object.assign({ record: rec.id, state: a.state, value: a.value }, a.note ? { note: a.note } : {})] }), done: after },
@@ -639,6 +645,115 @@ window.LabAnnotate = (() => {
       ul.appendChild(row);
     });
     return ul;
+  }
+
+  // ---- Suggestions (spec-d5 section 4) ----------------------------------------------------------------------------
+  // Suggest asks the chosen model (suggestion_models' offers for the record's kind) for a value of the task for the
+  // record on screen. The answer fills the record's draft with its `from`, marked as the model's suggestion until the
+  // person changes or keeps it; Keep sends `from` with set_annotation, so the saved line names the model. Cancel drops
+  // the answer when it comes (the endpoint is not told: no operation stops a suggestion). A refusal is shown beside the
+  // form, which is left as it was. Suggest for this page asks, one record after another, for the records on screen that
+  // have no annotation and no typed draft, and keeps each answer as a draft with its `from`. The model chosen is
+  // remembered per task and kind of record while the page is open. A reading never asks anything.
+  const sug = { choice: new Map(), asking: null, refusals: new Map(), batch: null, said: new Map(), turn: 0 };
+  const offerKey = o => o.model + '\u0000' + o.profile;
+  /** The model chosen for the task and kind: the one picked while the page is open, else the first offered. */
+  function chosen(t, kind) { const list = (here && here.offers || {})[kind] || [], k = sug.choice.get(t.task + '\n' + kind); return list.find(o => offerKey(o) === k) || list[0] || null; }
+  const fromWords = f => f.model + ' · ' + f.profile;
+  function suggestionLine(d) {
+    const same = JSON.stringify(valueOf(here.t, d)) === d.fromValue;
+    return [same ? 'Suggested by ' + fromWords(d.from) + ' (' + d.from.capability + '): check it, change it or keep it.' : 'Changed from the suggestion of ' + fromWords(d.from) + '; kept, the line still names it.', same];
+  }
+  /** Sets the suggestion's mark in place: a suggestion, or one the person changed. */
+  function markSuggestion(d) {
+    const m = here.root && here.root.querySelector('.ann-form .ann-sugmark'); if (!m) return;
+    const [text, same] = suggestionLine(d);
+    if (m.textContent !== text) m.textContent = text;
+    if (m.classList.contains('changed') === same) m.classList.toggle('changed', !same);
+  }
+  function suggestBox(t, rec) {
+    const box = h('div', 'ann-suggest'), list = here.offers[rec.kind] || [], k = draftKey(t, rec), d = drafts.get(k);
+    const asking = sug.asking && sug.asking.key === k ? sug.asking : null, batch = sug.batch && sug.batch.task === t.task ? sug.batch : null;
+    const row = h('div', 'ann-suggest-row');
+    const l = h('label', 'ann-suggest-model'); l.appendChild(document.createTextNode('Suggest with'));
+    const sel = h('select'); sel.dataset.key = 'ann:suggest-model'; const pick = chosen(t, rec.kind);
+    for (const o of list) { const op = h('option', null, fromWords(o) + ' (' + o.capability + ')'); op.value = offerKey(o); op.selected = !!pick && offerKey(o) === offerKey(pick); sel.appendChild(op); }
+    sel.disabled = !!asking || !!batch;
+    sel.addEventListener('change', () => { sug.choice.set(t.task + '\n' + rec.kind, sel.value); });
+    l.appendChild(sel); row.appendChild(l);
+    if (asking) {
+      const b = button('btn sm', 'Asking ' + asking.model + '…', 'ann:suggest'); b.disabled = true; b.setAttribute('aria-busy', 'true'); row.appendChild(b);
+      row.appendChild(button('btn sm ghost', 'Cancel', 'ann:suggest-cancel', () => { sug.asking = null; reboxed(t, rec, 'ann:suggest'); }));
+    } else { const b = button('btn sm', 'Suggest', 'ann:suggest', () => ask(t, rec)); b.disabled = !!batch || !!sug.asking; row.appendChild(b); }
+    box.appendChild(row);
+    if (d && d.from) { const [text, same] = suggestionLine(d); const m = h('p', 'small ann-sugmark' + (same ? '' : ' changed'), text); m.setAttribute('role', 'status'); box.appendChild(m); }
+    const refusal = sug.refusals.get(k);
+    if (refusal) { const r = A.refusal(refusal); r.classList.add('ann-sugrefusal'); r.insertBefore(h('p', 'small', 'No suggestion: the form is as it was.'), r.children[1] || null); box.appendChild(r); }
+    const page = h('div', 'ann-suggest-row ann-batch');
+    if (batch) {
+      const line = h('span', 'small ann-batch-line', batchWords(batch)); line.setAttribute('role', 'status'); page.appendChild(line);
+      const stop = button('btn sm ghost', batch.stop ? 'Stopping…' : 'Stop', 'ann:suggest-stop', () => { batch.stop = true; reboxed(t, rec, 'ann:suggest-stop'); }); stop.disabled = batch.stop; page.appendChild(stop);
+    } else {
+      const b = button('btn sm', 'Suggest for this page', 'ann:suggest-page', () => suggestPage(t)); b.disabled = !!sug.asking; page.appendChild(b);
+      const said = sug.said.get(t.task);
+      page.appendChild(h('span', 'small faint ann-batch-line', said || 'Asks for each record on this page with no annotation, one after another, and keeps each answer as a draft.'));
+    }
+    box.appendChild(page);
+    return box;
+  }
+  const shows = (t, rec) => !!(here && here.root && here.root.isConnected && here.t && here.rec && here.t.task === t.task && here.rec.id === rec.id);
+  /** The suggestion part of the form on screen, drawn again in place; the focus goes to focus when it was lost. */
+  function reboxed(t, rec, focus) {
+    if (!shows(t, rec)) return;
+    const w = here.parts.form && here.parts.form.querySelector('.ann-suggestbox'); if (!w) return;
+    const r = putInPlace(w, suggestBox(t, rec));
+    if (focus && (!r.inside || !r.found || document.activeElement === document.body)) A.focusKey(focus);
+  }
+  const rebox = focus => { if (here && here.t && here.rec) reboxed(here.t, here.rec, focus); };
+  async function ask(t, rec) {
+    const o = chosen(t, rec.kind); if (!o || sug.asking || sug.batch) return;
+    const k = draftKey(t, rec), mine = { key: k, model: o.model, n: ++sug.turn };
+    sug.asking = mine; sug.refusals.delete(k); reboxed(t, rec, 'ann:suggest-cancel');
+    let got = null, error = null;
+    try { got = await P.call('suggest_annotation', { task: t.task, record: rec.id, model: o.model, profile: o.profile }); } catch (e) { error = e; }
+    if (sug.asking !== mine) return;   // cancelled: the answer is dropped
+    sug.asking = null;
+    if (error) { sug.refusals.set(k, error); reboxed(t, rec, 'ann:suggest'); return; }
+    fill(t, rec, got.suggestion);
+    if (shows(t, rec)) { here.keys.form = null; here.focusAfter = 'ann:suggest'; redraw(); }
+  }
+  /** The suggestion in the record's draft, with its `from`; what was decided and noted stays. */
+  function fill(t, rec, s) {
+    const d = draftOf(t, rec);
+    if (t.type === 'text') d.value = typeof s.value === 'string' ? s.value : '';
+    else if (t.type === 'class') d.value = typeof s.value === 'string' ? s.value : null;
+    else if (t.type === 'tags') d.value = Array.isArray(s.value) ? s.value.slice() : [];
+    d.from = s.from; d.fromValue = JSON.stringify(valueOf(t, d)); d.dirty = true;
+  }
+  const batchWords = b => 'Asking for ' + Math.max(1, b.at) + ' of ' + count(b.total, 'record') + ' · ' + b.kept + ' kept, ' + b.refused + ' refused';
+  function progress(b) { const line = here && here.root && here.root.querySelector('.ann-form .ann-batch-line'); const text = batchWords(b); if (line && line.textContent !== text) line.textContent = text; }
+  /** Suggest for this page: each record on screen with no annotation and no typed draft, one after another, kept as a draft. */
+  async function suggestPage(t) {
+    if (sug.batch || sug.asking || !here.page) return;
+    const todo = here.page.records.filter(r => r.in_product && !r.annotation && chosen(t, r.kind) && !(drafts.get(draftKey(t, r)) || {}).dirty);
+    const b = sug.batch = { task: t.task, total: todo.length, at: 0, kept: 0, refused: 0, first: null, stop: false };
+    sug.said.delete(t.task); rebox('ann:suggest-stop');
+    for (const r of todo) {
+      if (b.stop) break;
+      b.at++; progress(b);
+      const o = chosen(t, r.kind);
+      try {
+        const got = await P.call('suggest_annotation', { task: t.task, record: r.id, model: o.model, profile: o.profile });
+        if (b.stop) break;   // stopped while it was asked: the answer is dropped
+        await P.call('set_annotation', { task: t.task, from: got.suggestion.from, items: [{ record: r.id, state: 'draft', value: got.suggestion.value }] });
+        b.kept++;
+        P.forgetBut(P.WATCHED); here.act.refresh();   // the grid shows the new draft
+      } catch (error) { b.refused++; if (!b.first) b.first = r.id + ': ' + error.message; }
+      progress(b);
+    }
+    sug.batch = null;
+    sug.said.set(t.task, (b.stop ? 'Stopped. ' : 'Done. ') + 'Kept ' + count(b.kept, 'draft') + ', ' + b.refused + ' refused, of ' + count(b.total, 'record') + ' with no annotation' + (b.first ? '. First refused: ' + b.first : '.'));
+    rebox('ann:suggest-page');
   }
 
   // ---- Keys --------------------------------------------------------------------------------------------------------
@@ -813,5 +928,7 @@ window.LabAnnotate = (() => {
   function choose(task) { ui.task = task; ui.page = 0; ui.filter = 'all'; }
 
   S.annotate = annotate;
-  return { choose, datasetForm };
+  // The drawer forms' parts, for the Generate form (generate.js).
+  const forms = { formDrawer, input, choice, header, slug, textOf };
+  return { choose, datasetForm, forms };
 })();

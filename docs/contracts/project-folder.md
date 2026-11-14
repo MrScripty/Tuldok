@@ -2161,7 +2161,11 @@ The page at `/` is the Map workspace: the tabs Map, Data, Annotate, Train,
 Benchmarks, Analysis and Overview over the project, read through the operations
 below. Annotate shows a task's records, one in its viewer, and the task's form,
 which keeps an annotation with `set_annotation`; Save writes the unsaved
-annotations with the unsaved definitions.
+annotations with the unsaved definitions. Its Suggest asks `suggest_annotation`
+of a model `suggestion_models` offers and fills the form, and a kept
+suggestion passes its `from`. Train shows the machine's Pumas endpoint
+(`endpoint`; for the owner `set_endpoint` and `find_endpoints`), and Data's
+Generate form keeps a dataset whose run is the step `generate`.
 Each of its controls calls one operation and is drawn only for a session that
 may call it, so a credential that may only inspect sees a page that changes
 nothing. The report is linked from the Overview tab. The page reads again
