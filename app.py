@@ -47,11 +47,14 @@ from metadata import Metadata, StorageError, CommitOutcomeUnknown, CatalogBusy
 from image_sources import ImageSources, Conflict, now, metadata, validate_annotation, CORNERS, VISIBILITY, SPLITS
 import tempfile
 import threading
+import time
 import zipfile
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
+
+from tuldok_project import serve_protocol
 
 from PIL import Image, ImageOps
 
@@ -416,6 +419,33 @@ def make_handler(dataset, observer=None):
                 result, status = {'error': 'The operation failed: ' + type(error).__name__ + '.', 'code': 'internal'}, 500
             return self.reply(result, status)
 
+        def _serve_post(self, path):
+            # A served model (docs/plans/training-and-curation/spec-t6.md, section 3): POST
+            # /api/serve/<name>/predict, a JSON object of inputs, behind the bound credential; no contract header.
+            parts = path.split('/')
+            if (len(parts) != 5 or parts[4] != 'predict' or not re.fullmatch('[a-z0-9][a-z0-9._-]{0,119}', parts[3])
+                    or urlsplit(self.path).query):
+                return self.reply({'error': 'Use POST /api/serve/<model>/predict.', 'code': 'not-found'}, 404)
+            lengths = self.headers.get_all('Content-Length', [])
+            if (self.headers.get_all('Transfer-Encoding', []) or len(lengths) != 1
+                    or not re.fullmatch('[0-9]{1,10}', lengths[0]) or int(lengths[0]) == 0):
+                return self.reply({'error': 'Send the body with one Content-Length.', 'code': 'invalid'}, 400)
+            if int(lengths[0]) > serve_protocol.REQUEST_LIMIT:
+                return self.reply({'error': 'A request to a served model may be at most 8 MiB.',
+                                   'code': 'too-large'}, 413)
+            if self.headers.get_content_type() != 'application/json':
+                return self.reply({'error': 'Send a JSON object {"inputs": {...}}.', 'code': 'invalid'}, 400)
+            raw = self.rfile.read(int(lengths[0]))
+            observe_request_bytes(observer, getattr(self, '_observation', None), len(raw))
+            try:
+                body = agent_api.decode(raw)
+            except agent_api.AgentAPIError:
+                return self.reply({'error': 'The body is not JSON.', 'code': 'invalid'}, 400)
+            self._observe_dispatch()
+            received = time.perf_counter()
+            status, answer = dataset.predict(parts[3], body, received=received, size=len(raw))
+            return self.reply(answer, status)
+
         def _project_folder_file(self):
             # The bytes of a product's file (spec-d1.md, section 5), for whoever may call an inspect operation.
             try:
@@ -495,6 +525,8 @@ def make_handler(dataset, observer=None):
                     except access.AccessError as error:
                         dataset.access.denial(error, 'http.post', path)
                         raise
+                    if path.startswith('/api/serve/') and getattr(dataset, 'project_folder_mode', False):
+                        return self._serve_post(path)
                     if path.startswith('/api/project/') or (getattr(dataset, 'project_folder_mode', False)
                                                             and not path.startswith('/api/access/')):
                         return self._project_folder_post(path)

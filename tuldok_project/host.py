@@ -6,7 +6,9 @@ the routes in app.py. A ProjectHost holds the catalog's Metadata and Access
 the folder. dispatch checks the caller's who rule with access.require inside
 the credential app.py has bound, passes the caller's identity to the service as
 its actor, and turns a ProjectError into a status and a refusal body;
-product_file does the same for the bytes of a product's file. This is
+product_file does the same for the bytes of a product's file, and predict
+for a served model's endpoint (docs/plans/training-and-curation/spec-t6.md
+section 3), whose refusals carry serve_protocol's statuses. This is
 the one module of the package that imports the app's kept layers (metadata,
 access, agent_api); access errors are left to app.py, which answers them.
 """
@@ -16,7 +18,7 @@ import agent_api
 from access import Access, AccessError
 from metadata import Metadata
 
-from . import local, operations, store
+from . import local, operations, serve_protocol, store
 from .service import Service
 
 REFUSAL_PROBLEMS = 50
@@ -91,6 +93,18 @@ class ProjectHost:
             return 200, self.service.product_file(run, address, range_header)
         except store.ProjectError as error:
             return refusal(error)
+
+    def predict(self, model, body, *, received, size):
+        """POST /api/serve/<model>/predict for the bound credential, which must be allowed to inspect:
+        (200, answer) or (status, refusal body)."""
+        self._require('inspect', 'serve.predict')
+        identity = self.access.identity()
+        actor = {key: identity[key] for key in ('actor_id', 'kind', 'label', 'scopes')}
+        try:
+            return 200, self.service.predict(model, body, actor, received=received, size=size)
+        except serve_protocol.ServeError as error:
+            return serve_protocol.STATUS.get(error.code, 409), {'error': str(error)[:MESSAGE_CHARACTERS],
+                                                                'code': error.code}
 
     def _require(self, who, action):
         if who == 'owner':

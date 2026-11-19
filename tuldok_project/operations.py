@@ -15,7 +15,10 @@ spec-t3.md (model_compare, benchmark_axes, intervals),
 the five of section 5 of spec-d4.md (annotation_tasks,
 annotated_records, annotation, set_annotation, revert_annotations) and the
 five of sections 2 and 4 of spec-d5.md (endpoint, set_endpoint,
-find_endpoints, suggestion_models, suggest_annotation).
+find_endpoints, suggestion_models, suggest_annotation), and the seven of
+section 6 of docs/plans/training-and-curation/spec-t6.md (served,
+serve_session, serve_start, serve_approve, serve_stop, serve_predict,
+serve_values).
 Each Operation names one operation project.<name>, the rule its caller must
 satisfy (who), whether it changes anything (mutation), a closed JSON Schema of
 its arguments and the result keys that are always present. service.py checks
@@ -42,6 +45,7 @@ GRAPH_MODULES = 2000        # modules named open or closed by one model_graph (s
 GRAPH_OVERLAYS = ('parameters', 'outputs', 'operations', 'change')
 COMPARED_MOST = 4           # recipes of one model_compare (spec-t3.md section 4)
 EMBEDDING_LIMIT = 1000      # rows of one list of curation by embeddings (spec-t5.md section 4)
+SERVE_MEASURES = ('total_ms', 'model_ms', 'queue_ms', 'total_s', 'model_s', 'queue_s')   # serve_protocol.MEASURES
 
 
 @dataclass(frozen=True)
@@ -127,6 +131,11 @@ _MODULE_PATHS = {'type': 'array', 'items': {'type': 'string', 'maxLength': 1024}
 _SET_NAME = {'type': 'string', 'minLength': 1, 'maxLength': 64}
 _SIMILARITY = {'type': 'number', 'minimum': 0.5, 'maximum': 1}
 EMBEDDING_SETS = ('dataset', 'run', 'sets')
+_SESSION = {'type': 'string', 'pattern': '^[0-9a-f]{32}$'}
+SESSION = ('id', 'model', 'title', 'backend', 'state', 'reason', 'problem', 'requested_by', 'requested_at',
+           'decided_by', 'expires_at', 'started_at', 'ready_at', 'ended_at', 'last_request_at', 'commit', 'scratch',
+           'product_run', 'product', 'environment', 'interpreter', 'pid', 'idle_minutes', 'requests',
+           'failed_requests', 'load_seconds', 'python', 'numpy', 'output_tail')
 EMBEDDING_MAP = ('name', 'rows', 'dimensions', 'model', 'method', 'explained', 'sample', 'ids', 'x_f32', 'y_f32',
                  'bounds', 'missing', 'colours', 'colour', 'grid', 'thin')
 
@@ -415,6 +424,29 @@ OPERATIONS = (
               CANCEL_RUN),
     Operation('stop_run', 'Kill what a run whose build is gone left running, and mark it unknown.', 'cancel', True,
               _arguments(['run'], run=_RUN), STOP_RUN),
+    # Serving a trained model (docs/plans/training-and-curation/spec-t6.md section 6).
+    Operation('served', 'List the serving sessions on this machine, newest first, the recipes that declare serve '
+              "with whether each is built, and the machine's limits.", 'inspect', False, _arguments(),
+              ('sessions', 'servable', 'most', 'idle_minutes')),
+    Operation('serve_session', "Read one serving session with its timing summary and its newest requests' lines.",
+              'inspect', False, _arguments(['session'], session=_SESSION), SESSION + ('summary', 'recent')),
+    Operation('serve_start', "Start serving a built recipe's model from its serve entry point: the owner's start "
+              "runs at once, an agent's waits for the owner's approval.", 'request', True,
+              _arguments(['model'], model=_REFERENCE, scratch=_FLAG), SESSION),
+    Operation('serve_approve', "Approve a serving session awaiting approval, which starts it.", 'owner', True,
+              _arguments(['session'], session=_SESSION), SESSION),
+    Operation('serve_stop', 'Stop a served model, or decline a serving session awaiting approval.', 'cancel', True,
+              _arguments(['session'], session=_SESSION), SESSION),
+    Operation('serve_predict', 'Pass inputs to a served model and read its outputs and the time taken; arrays are '
+              'objects of array float32, shape and base64.', 'inspect', False,
+              _arguments(['model', 'inputs'], model=_REFERENCE, inputs={'type': 'object'}),
+              ('model', 'session', 'outputs', 'timing')),
+    Operation('serve_values', "Import a serving session's request times as per-case values of a benchmark "
+              'subject, one case per request.', 'edit', True,
+              _arguments(['session', 'benchmark', 'subject'], session=_SESSION, benchmark=_NAME, subject=_NAME,
+                         metrics={'type': 'object', 'maxProperties': 64,
+                                  'additionalProperties': {'type': 'string', 'enum': list(SERVE_MEASURES)}}),
+              ('benchmark', 'subject', 'values', 'file')),
 )
 
 _BY_NAME = {operation.name: operation for operation in OPERATIONS}

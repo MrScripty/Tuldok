@@ -522,6 +522,7 @@ A recipe trains a model; its product is weights.
 | `change` | no | `training-policy`, `architecture`, `refinement` or `component`: the kind of change this model makes |
 | `derived_from` | no | reference to another recipe in `recipes/`: the model this one was branched from. Never the recipe itself, and following `derived_from` never comes back to where it started |
 | `compared_with` | no | at most 50 objects, each `recipe` (reference to another recipe, each once in the list), `explanation` (1 to 2,000 characters) and `excerpt` (optional, at most 2,000 characters); no other field |
+| `serve` | no | how Tuldok serves the model: `module_file` (a code path of a `.py` file, required), `function` (default `predict`), `load`, `backend` (`local`, the default and only one), `environment` (default `run.environment`; one of the two is required), `idle_minutes` (1 to 1,440), `start_seconds` (1 to 3,600), `request_seconds` (0.1 to 600), `gpu`, `example` (an object); see [Serving a model](#serving-a-model). Not an input: it never makes the model out of date |
 
 The label `short`, when a recipe has it, is the text of its node on the map
 (at most 16 characters are shown). `derived_from` and `compared_with` say how
@@ -2364,6 +2365,13 @@ and result keys of each operation are in its contract.
 | `cancel_build` | cancel | Cancel a build request, stopping its build when it is running. |
 | `cancel_run` | cancel | Ask a queued or running run to stop. |
 | `stop_run` | cancel | Kill what a run whose build is gone left running, and mark it unknown. |
+| `served` | inspect | List the serving sessions on this machine, newest first, the recipes that declare serve with whether each is built, and the machine's limits. |
+| `serve_session` | inspect | Read one serving session with its timing summary and its newest requests' lines. |
+| `serve_start` | request | Start serving a built recipe's model from its serve entry point: the owner's start runs at once, an agent's waits for the owner's approval. |
+| `serve_approve` | owner | Approve a serving session awaiting approval, which starts it. |
+| `serve_stop` | cancel | Stop a served model, or decline a serving session awaiting approval. |
+| `serve_predict` | inspect | Pass inputs to a served model and read its outputs and the time taken; arrays are objects of array float32, shape and base64. |
+| `serve_values` | edit | Import a serving session's request times as per-case values of a benchmark subject, one case per request. |
 | `annotation_tasks` | inspect | List the annotation tasks, each with its dataset, current product and counts of its records by the state of their annotations. |
 | `annotated_records` | inspect | Read one page of the records of a task's dataset with their annotations, optionally in one state or of one kind, with the counts. |
 | `annotation` | inspect | Read one record's annotation under a task as it now is and as it is in the file, whether it is unsaved or stale, and the hash of the record's content. |
@@ -3102,6 +3110,69 @@ value of the task, the model's words quoted. The record is read and the
 endpoint asked outside the service's lock; an answer not given within 300 s
 is given up.
 
+### Serving a model
+
+A recipe that declares `serve` can be served while Tuldok runs: the owner's
+`serve_start` (or an agent's, once the owner approves it with `serve_approve`)
+starts the project's own entry point in the environment, with the recipe's
+current product, from the committed code at HEAD (or the code as it is with
+`scratch`), and `POST /api/serve/<name>/predict` answers through it. The
+entry point is two functions of the project:
+
+```python
+def load(product):            # once, with the product directory; what it returns is model
+    ...
+def predict(model, inputs):   # per request: inputs is the request's object, outputs any JSON
+    ...
+```
+
+Tuldok runs them in a separate process through its adapter
+(`tuldok_project/serve_adapter.py`, run with `-I` by the environment's
+interpreter); Tuldok's server never imports the project's code. Standard
+output and standard error go to the session's log. The process gets
+`TULDOK_PRODUCT`, `TULDOK_SERVE_MODEL` and `TULDOK_RUN_ID=serve-<session>`,
+and `CUDA_VISIBLE_DEVICES` empty unless `gpu`.
+
+**The endpoint.** `POST /api/serve/<name>/predict` on Tuldok's own address
+(loopback by default; nothing new listens), with Tuldok's credential (a bearer
+credential, or the page's session with a same-origin request) allowed to
+`inspect`; no contract header. The body is `application/json`,
+`{"inputs": {...}}`, at most 8 MiB, nested at most 64 deep. An **array** is an
+object of exactly `array` (`"float32"`), `shape` (0 to 8 integers) and
+`base64` (the little-endian float32 values in C order, 4 × the product of the
+shape bytes, at most 2²⁴ values); `predict` receives it as a NumPy float32
+array when NumPy is in the environment, else as nested lists. Nested lists of
+numbers pass as they are. In the outputs, NumPy arrays are encoded as arrays
+and NumPy scalars as numbers. The answer is
+`{"model", "session", "outputs", "timing": {"queue_ms", "model_ms", "total_ms"}}`;
+refusals are 400 `invalid`, 401 or 403, 404 `not-served`, 409 `not-ready`,
+413 `too-large`, 422 `predict-failed` (the function raised), 502 `serve-failed`,
+503 `busy` (eight requests already wait), 504 `timed-out` (the session fails).
+One request is in the process at a time.
+
+**Sessions.** States `awaiting-approval` (an agent's start; expires after an
+hour), `starting`, `ready`, `failed`, `stopped`, `declined`, `expired`. A
+session stops when asked (`serve_stop`), after `idle_minutes` without a
+request, or when Tuldok stops; it fails when `load` raises or takes more than
+`start_seconds`, when a request takes more than `request_seconds`, or when the
+process ends. At most `serve_most` models are starting or ready on the
+machine (settings file, default 2), one session a model. Under the local home,
+`serving/<session>/` holds `session.json`, `output.log` (its first 4 MiB) and
+`requests.jsonl`: per request `n`, `at` (Unix time), `ok`, `status`,
+`queue_ms`, `model_ms`, `total_ms`, `bytes_in`, `bytes_out` and `error`.
+`serve_session` adds the timing summary: count, answered, failed, span,
+throughput, and the mean, p50, p95, p99 and max of each time.
+
+**As a benchmark subject.** `serve_values` writes a session's requests as a
+values file (one case `request-000001`, … per request; a failed request is a
+`null` value with its error as the reason) for a subject of a benchmark whose
+`recipe` is the served one, filling the metrics named in `metrics` (metric id
+to `total_ms`, `model_ms`, `queue_ms`, `total_s`, `model_s` or `queue_s`;
+by default each metric whose id is one of these), and imports it as
+`import_values` does. A benchmark of served latency may be one whose run is
+the project's own load script, or one marked `earlier_work.rebuild` `no`
+whose values come only from sessions.
+
 ## The Pumas endpoint
 
 Generation, suggestions and embeddings go through a Pumas endpoint, reached by HTTP
@@ -3177,7 +3248,9 @@ set by `set_endpoint` (see [The Pumas endpoint](#the-pumas-endpoint)). `embeddin
 characters), `embedding_profile` (1 to 128) and `embedding_prefix` (at most
 1,000) are optional and set by `set_embedder`: the embedder of an `embed`
 that names none, in place of EmbeddingGemma 2, and the text put before each
-record's text. The file is read only when
+record's text. `serve_most` (1 to 16, default 2) and `serve_idle_minutes`
+(1 to 1,440, default 30) are optional: how many models this machine serves at
+once, and the idle time of a served model whose `serve` names none. The file is read only when
 the environment variable does not decide. A settings file that cannot be read
 or is not valid stops the command with a message naming the file and the
 fault, exit status 2, and stops the app's start-up; Tuldok never falls back to
