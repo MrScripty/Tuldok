@@ -1,0 +1,10 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Samples of each kind",
+  "description": "Two texts, an image, a sound, a point cloud and a mesh, imported from code/samples (written by code/make_samples.py).",
+  "run": {
+    "step": "import",
+    "settings": {"source": "samples", "pattern": "**/*", "rights": "Made by make_samples.py for this example; free to use."}
+  }
+}

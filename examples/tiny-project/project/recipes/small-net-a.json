@@ -1,0 +1,20 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "recipe",
+  "title": "Small net, 6,000 updates",
+  "description": "Trains the small network on the training waves with Adam on mean squared error, on the GPU.",
+  "model": "models/small-net",
+  "run": {
+    "command": ["python", "train.py", "--data", "{inputs.training}", "--settings", "{settings}", "--output", "{output}"],
+    "environment": "environments/gpu",
+    "inputs": {"training": {"from": "datasets/waves", "output": "data"}},
+    "settings_file": "settings/small-net-a.json",
+    "env": {"CUBLAS_WORKSPACE_CONFIG": ":4096:8"},
+    "outputs": {
+      "weights": {"path": "model.pt", "role": "weights"},
+      "log": {"path": "log.json", "role": "log"}
+    },
+    "resources": {"gpu": true, "wall_hours": 0.1, "disk_gb": 0.1},
+    "sources": ["train.py", "net.py"]
+  }
+}

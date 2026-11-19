@@ -1,0 +1,6 @@
+{
+  "updates": 6000,
+  "batch": 256,
+  "learning_rate": 0.001,
+  "seed": 1
+}

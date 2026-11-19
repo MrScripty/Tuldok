@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "environment",
+  "title": "The interpreter running the tests",
+  "python": "3.12",
+  "device": "cpu",
+  "packages": {"jsonschema": "4.26.0"}
+}

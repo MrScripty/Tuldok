@@ -35,7 +35,10 @@ def listening_endpoints():
     return sorted(endpoints, key=lambda endpoint: (endpoint[1], endpoint[0]))
 
 
-def get_json(host, port, path, deadline, payload=None, max_response=MAX_RESPONSE, decode=json.loads, require_complete=False):
+def get_json(host, port, path, deadline, payload=None, max_response=MAX_RESPONSE, decode=json.loads, require_complete=False,
+             error=None):
+    """GET/POST bounded JSON. With `error`, a non-200 body is read under the same bounds
+    and passed to `error(status, raw)`, which raises a readable refusal."""
     timeout = min(1.5, deadline - time.monotonic())
     if timeout <= 0:
         raise TimeoutError()
@@ -64,7 +67,7 @@ def get_json(host, port, path, deadline, payload=None, max_response=MAX_RESPONSE
             expiry.daemon = True
             expiry.start()
         with connection.getresponse() as response:
-            if response.status != 200:
+            if response.status != 200 and error is None:
                 raise ValueError('Not a gateway response')
             if require_complete:
                 declared = response.getheader('Content-Length')
@@ -86,6 +89,9 @@ def get_json(host, port, path, deadline, payload=None, max_response=MAX_RESPONSE
                 raise ValueError('Pumas descriptor response ended before its declared length')
             if require_complete and time.monotonic() >= deadline:
                 raise TimeoutError()
+            if response.status != 200:
+                error(response.status, bytes(data))
+                raise ValueError('Not a gateway response')
             return decode(data)
     finally:
         if expiry is not None:
@@ -212,15 +218,20 @@ def scan_advertised():
         def observe(item):
             host, port = item
             address = '[' + host + ']' if ':' in host else host
+            url = f'http://{address}:{port}'
             try:
-                return inspect_advertised(f'http://{address}:{port}', deadline)
+                return inspect_advertised(url, deadline), None
+            except descriptor.Rejected as error:
+                # Pumas answered but its advertisement was refused: keep the reason for the user.
+                return None, {'server_url': url, 'reason': str(error)}
             except (OSError, ValueError, TypeError, http.client.HTTPException):
-                return None
+                return None, None
         with ThreadPoolExecutor(max_workers=32) as pool:
             results = list(pool.map(observe, endpoints))
         # Distinct IPv4/IPv6 services on one port must retain their library context.
-        found = {row['server_url']: row for row in results if row is not None}
-        return {'gateways': list(found.values()), 'qualification':
+        found = {row['server_url']: row for row, _ in results if row is not None}
+        rejected = [refusal for _, refusal in results if refusal is not None]
+        return {'gateways': list(found.values()), 'rejected': rejected, 'qualification':
                 'Read-only HTTP advertisements. Core ownership is not authenticated; compiled features do not prove model readiness.'}
     finally:
         SCAN_LOCK.release()

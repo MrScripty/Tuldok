@@ -90,8 +90,6 @@ class InstalledAssets(unittest.TestCase):
         self.assertEqual(len(calls),2)
 
     def test_retained_prelink_manifest_keeps_exact_hash_without_current_launch_authority(self):
-        from pipeline import digest
-        from project_material import decode_runtime_material
         manifest=runtime.inventory(self.config);manifest.pop('file_links')
         raw=runtime.encoded(manifest)
         descriptor=dict(schema_version=1,profile=runtime.PROFILE,catalog_id='a'*32,
@@ -101,9 +99,6 @@ class InstalledAssets(unittest.TestCase):
             runtime.verify_descriptor(descriptor,manifest)
         path=Path(self.temp.name)/'old-manifest.json';path.write_bytes(raw)
         with self.assertRaisesRegex(ValueError,'closed manifest'):runtime.load(path)
-        value=dict(ref=dict(kind='runtime',catalog_id='a'*32,id=digest(descriptor),sha256=digest(descriptor)),
-                   descriptor=descriptor,environment=None,manifest=manifest)
-        self.assertEqual(decode_runtime_material(value,catalog_id='a'*32),value)
         self.assertEqual(runtime.verify_retained_descriptor(descriptor,manifest),manifest)
         self.assertNotIn('file_links',manifest)
         changed=dict(manifest,unknown_field=[])

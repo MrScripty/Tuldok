@@ -1,0 +1,368 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/annotation.schema.json",
+  "title": "Tuldok annotation task definition",
+  "description": "One annotation task in annotations/<name>.json (tuldok_definition_v1). Its annotations are the lines of annotations/<name>.jsonl, checked in tuldok_project/annotations.py; the types of spec-t4.md section 1 are polygons to box3d.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title",
+    "dataset",
+    "task"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart",
+        "annotation"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "description": {
+      "$ref": "#/$defs/description"
+    },
+    "card": {
+      "$ref": "#/$defs/card"
+    },
+    "labels": {
+      "$ref": "#/$defs/labels"
+    },
+    "dataset": {
+      "type": "string",
+      "pattern": "^datasets/[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a reference to a dataset, such as datasets/<name>"
+    },
+    "task": {
+      "enum": [
+        "review",
+        "class",
+        "tags",
+        "text",
+        "boxes",
+        "spans",
+        "segments",
+        "polygons",
+        "mask",
+        "depth",
+        "keypoints",
+        "ranking",
+        "timeseries",
+        "track",
+        "points",
+        "box3d"
+      ]
+    },
+    "vocabulary": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/term"
+      },
+      "description": "1 to 500 different terms"
+    },
+    "keypoints": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/term"
+      },
+      "description": "the names of a keypoints task's points, in the order its values list them"
+    },
+    "skeleton": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "$ref": "#/$defs/term"
+        }
+      },
+      "description": "pairs of keypoint names joined when drawn"
+    },
+    "units": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]*$",
+      "description": "the units of a depth task's values, such as m"
+    },
+    "mask": {
+      "enum": [
+        "semantic",
+        "instance"
+      ],
+      "description": "whether a mask's pixel values are classes (semantic) or objects (instance); default semantic"
+    },
+    "sigma": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "the keypoint spread of a keypoints task's agreement (OKS); default 0.1"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "enum": [
+              "review",
+              "text",
+              "depth"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "vocabulary": {
+            "not": {},
+            "description": "A review, text or depth task has no vocabulary; remove it."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "enum": [
+              "class",
+              "tags",
+              "boxes",
+              "spans",
+              "segments",
+              "polygons",
+              "mask",
+              "keypoints",
+              "ranking",
+              "timeseries",
+              "track",
+              "points",
+              "box3d"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "vocabulary"
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "enum": [
+              "keypoints"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "keypoints"
+        ]
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "required": [
+            "task"
+          ],
+          "properties": {
+            "task": {
+              "enum": [
+                "keypoints"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "keypoints": {
+            "not": {},
+            "description": "Only a keypoints task names keypoints; remove it."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "required": [
+            "task"
+          ],
+          "properties": {
+            "task": {
+              "enum": [
+                "keypoints"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "skeleton": {
+            "not": {},
+            "description": "Only a keypoints task has a skeleton; remove it."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "required": [
+            "task"
+          ],
+          "properties": {
+            "task": {
+              "enum": [
+                "keypoints"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sigma": {
+            "not": {},
+            "description": "Only a keypoints task has a sigma; remove it."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "enum": [
+              "depth"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "units"
+        ]
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "required": [
+            "task"
+          ],
+          "properties": {
+            "task": {
+              "enum": [
+                "depth"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "units": {
+            "not": {},
+            "description": "Only a depth task has units; remove them."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "required": [
+            "task"
+          ],
+          "properties": {
+            "task": {
+              "enum": [
+                "mask"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "mask": {
+            "not": {},
+            "description": "Only a mask task says mask; remove it."
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "term": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]*$",
+      "description": "a term of 1 to 200 characters without control characters"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    }
+  }
+}

@@ -17,3 +17,6 @@ data/
 /output/
 /test-results/
 *.pdf
+
+# The workspace mockups' baked data file holds the Rheon Surrogate Lab's own model names and notes.
+/docs/plans/project-workspace-redesign/mockups/shared/data.js

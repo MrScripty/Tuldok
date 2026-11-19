@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "chart",
+  "title": "Rollout error in training order",
+  "benchmark": "benchmarks/rollout",
+  "form": "progression",
+  "metric": "rmse"
+}

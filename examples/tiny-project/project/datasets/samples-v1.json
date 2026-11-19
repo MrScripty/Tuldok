@@ -1,0 +1,12 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Samples v1, frozen",
+  "description": "The samples whose quality annotation is accepted, split three to one.",
+  "run": {
+    "step": "freeze",
+    "inputs": {"records": "datasets/samples"},
+    "annotations": ["annotations/sample-quality"],
+    "settings": {"seed": 7, "shares": {"train": 3, "test": 1}}
+  }
+}

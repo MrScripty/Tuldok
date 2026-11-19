@@ -1,0 +1,6 @@
+{"record":"clouds__ring.ply","sha256":"3de402a535f473fd002e7f74f88aba003dc18e7cc1d3b23195fc10b0c752dae8","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T09:30:00Z"}
+{"record":"images__shapes.png","sha256":"1ab3564df0659b467dc93b26be066accd4b19f5dbc0c0216831d856facec9372","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T09:30:00Z"}
+{"record":"meshes__pyramid.obj","sha256":"ebf7519500bc461c4856157e63bc2ab6661b56894c36f04f8da217bc2d05b593","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T09:30:00Z"}
+{"record":"sounds__two-tones.wav","sha256":"fd10d893427a1a9dd4a0005abc271e1c94ab22adfb7d222042b71929246880ff","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T09:30:00Z"}
+{"record":"texts__greeting.txt","sha256":"a9af2325f767d1c8d2e130f52d0c119e5d98831bb11d0a148e33c39b0874b15d","state":"accepted","value":"clean","by":"owner","at":"2026-11-13T09:30:00Z"}
+{"record":"texts__weather.txt","sha256":"43242d49e671a79209b537a360a4a11ef3112e9e4b7a394b02ed701c3ba677a5","state":"rejected","value":null,"note":"too short to be of use","by":"owner","at":"2026-11-13T09:30:00Z"}

@@ -1,0 +1,25 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "recipe",
+  "title": "Stepper on wave scenes",
+  "model": "models/stepper",
+  "labels": {"short": "K1"},
+  "group": "steppers",
+  "change": "training-policy",
+  "derived_from": "recipes/early-fit",
+  "compared_with": [
+    {"recipe": "recipes/early-fit", "explanation": "Same stepper, trained again with a recorded command and data."}
+  ],
+  "run": {
+    "command": ["python", "lab/train.py", "--data", "{inputs.training}", "--settings", "{settings}", "--out", "{output}"],
+    "environment": "environments/lab-cpu",
+    "inputs": {"training": "datasets/waves"},
+    "settings_file": "configs/train-k1.json",
+    "outputs": {
+      "weights": {"path": "model.pt", "role": "weights"},
+      "log": {"path": "log.jsonl", "role": "log"}
+    },
+    "resources": {"gpu": false, "cpu_threads": 4, "memory_gb": 2, "wall_hours": 0.5, "disk_gb": 0.1},
+    "sources": ["lab/train.py", "lab/model.py"]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "chart",
+  "title": "Every metric side by side",
+  "benchmark": "benchmarks/rollout",
+  "form": "comparison",
+  "metric": "rmse",
+  "statistic": "p90"
+}

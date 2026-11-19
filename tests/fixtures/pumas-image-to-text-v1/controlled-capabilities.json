@@ -7,14 +7,32 @@
   "max_request_bytes": 33554432,
   "max_response_bytes": 33554432,
   "max_stream_event_bytes": 262144,
+  "context_tokens": 8192,
+  "modalities": {
+    "input": [
+      "text",
+      "image"
+    ],
+    "output": [
+      "text"
+    ]
+  },
   "capabilities": [
     {
       "capability": "chat_generation",
       "semantic_task": "chat_generation",
       "input_formats": [
-        "messages_text"
+        "messages_text",
+        "messages_multimodal"
       ],
       "output_formats": [
+        "text"
+      ],
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
         "text"
       ],
       "streaming": true,
@@ -25,7 +43,7 @@
         {
           "option": "max_tokens",
           "minimum": 1.0,
-          "maximum": 4294967295.0
+          "maximum": 8192.0
         },
         {
           "option": "temperature",
@@ -36,6 +54,46 @@
           "option": "top_p",
           "minimum": 0.0,
           "maximum": 1.0
+        },
+        {
+          "option": "image_bytes",
+          "minimum": 1.0,
+          "maximum": 8388608.0
+        },
+        {
+          "option": "total_image_bytes",
+          "minimum": 1.0,
+          "maximum": 16777216.0
+        },
+        {
+          "option": "image_pixels",
+          "minimum": 1.0,
+          "maximum": 4194304.0
+        },
+        {
+          "option": "image_count",
+          "minimum": 0.0,
+          "maximum": 4.0
+        },
+        {
+          "option": "width",
+          "minimum": 1.0,
+          "maximum": 4096.0
+        },
+        {
+          "option": "height",
+          "minimum": 1.0,
+          "maximum": 4096.0
+        },
+        {
+          "option": "message_count",
+          "minimum": 1.0,
+          "maximum": 128.0
+        },
+        {
+          "option": "content_parts",
+          "minimum": 1.0,
+          "maximum": 128.0
         }
       ]
     },
@@ -48,6 +106,12 @@
       "output_formats": [
         "text"
       ],
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "text"
+      ],
       "streaming": true,
       "availability": {
         "state": "available"
@@ -56,7 +120,7 @@
         {
           "option": "max_tokens",
           "minimum": 1.0,
-          "maximum": 4294967295.0
+          "maximum": 8192.0
         },
         {
           "option": "temperature",
@@ -80,6 +144,12 @@
       "output_formats": [
         "embeddings_float32"
       ],
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "vector"
+      ],
       "streaming": false,
       "availability": {
         "state": "unavailable",
@@ -89,17 +159,7 @@
         {
           "option": "dimensions",
           "minimum": 1.0,
-          "maximum": 8192.0
-        },
-        {
-          "option": "input_count",
-          "minimum": 1.0,
-          "maximum": 128.0
-        },
-        {
-          "option": "input_characters",
-          "minimum": 0.0,
-          "maximum": 65536.0
+          "maximum": 4294967295.0
         }
       ]
     },
@@ -111,6 +171,12 @@
       ],
       "output_formats": [
         "png_base64"
+      ],
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "image"
       ],
       "streaming": false,
       "availability": {
@@ -150,16 +216,20 @@
       "output_formats": [
         "text"
       ],
+      "input_modalities": [],
+      "output_modalities": [
+        "text"
+      ],
       "streaming": false,
       "availability": {
         "state": "unavailable",
-        "reason": "unqualified_audio_runtime"
+        "reason": "unsupported_adapter"
       },
       "option_bounds": [
         {
           "option": "max_output_tokens",
-          "minimum": 512,
-          "maximum": 512
+          "minimum": 512.0,
+          "maximum": 512.0
         }
       ]
     },
@@ -173,10 +243,14 @@
       "output_formats": [
         "labels"
       ],
+      "input_modalities": [],
+      "output_modalities": [
+        "json"
+      ],
       "streaming": false,
       "availability": {
         "state": "unavailable",
-        "reason": "unqualified_audio_runtime"
+        "reason": "unsupported_adapter"
       },
       "option_bounds": []
     },
@@ -191,6 +265,13 @@
       "output_formats": [
         "text"
       ],
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ],
       "streaming": false,
       "availability": {
         "state": "available"
@@ -198,45 +279,197 @@
       "option_bounds": [
         {
           "option": "max_tokens",
-          "minimum": 1,
-          "maximum": 2048
+          "minimum": 1.0,
+          "maximum": 8192.0
         },
         {
           "option": "temperature",
-          "minimum": 0,
-          "maximum": 2
+          "minimum": 0.0,
+          "maximum": 2.0
         },
         {
           "option": "top_p",
-          "minimum": 0,
-          "maximum": 1
+          "minimum": 0.0,
+          "maximum": 1.0
         },
         {
           "option": "image_bytes",
-          "minimum": 1,
-          "maximum": 8388608
+          "minimum": 1.0,
+          "maximum": 8388608.0
+        },
+        {
+          "option": "total_image_bytes",
+          "minimum": 1.0,
+          "maximum": 16777216.0
         },
         {
           "option": "image_pixels",
-          "minimum": 1,
-          "maximum": 4194304
+          "minimum": 1.0,
+          "maximum": 4194304.0
         },
         {
           "option": "image_count",
-          "minimum": 1,
-          "maximum": 4
+          "minimum": 1.0,
+          "maximum": 4.0
         },
         {
           "option": "width",
-          "minimum": 1,
-          "maximum": 4096
+          "minimum": 1.0,
+          "maximum": 4096.0
         },
         {
           "option": "height",
-          "minimum": 1,
-          "maximum": 4096
+          "minimum": 1.0,
+          "maximum": 4096.0
+        },
+        {
+          "option": "message_count",
+          "minimum": 1.0,
+          "maximum": 128.0
+        },
+        {
+          "option": "content_parts",
+          "minimum": 1.0,
+          "maximum": 128.0
         }
       ]
+    },
+    {
+      "capability": "multimodal_embedding",
+      "semantic_task": "multimodal_embedding",
+      "input_formats": [
+        "png_base64",
+        "jpeg_base64",
+        "content_batch"
+      ],
+      "output_formats": [
+        "embeddings_float32"
+      ],
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "vector"
+      ],
+      "streaming": false,
+      "availability": {
+        "state": "unavailable",
+        "reason": "model_task_mismatch"
+      },
+      "option_bounds": [
+        {
+          "option": "dimensions",
+          "minimum": 1.0,
+          "maximum": 4294967295.0
+        },
+        {
+          "option": "image_bytes",
+          "minimum": 1.0,
+          "maximum": 8388608.0
+        },
+        {
+          "option": "total_image_bytes",
+          "minimum": 1.0,
+          "maximum": 16777216.0
+        },
+        {
+          "option": "image_pixels",
+          "minimum": 1.0,
+          "maximum": 4194304.0
+        },
+        {
+          "option": "image_count",
+          "minimum": 1.0,
+          "maximum": 4.0
+        },
+        {
+          "option": "width",
+          "minimum": 1.0,
+          "maximum": 4096.0
+        },
+        {
+          "option": "height",
+          "minimum": 1.0,
+          "maximum": 4096.0
+        }
+      ]
+    },
+    {
+      "capability": "decision",
+      "semantic_task": "decision",
+      "input_formats": [
+        "decision"
+      ],
+      "output_formats": [
+        "decisions"
+      ],
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "json"
+      ],
+      "streaming": false,
+      "availability": {
+        "state": "unavailable",
+        "reason": "model_task_mismatch"
+      },
+      "option_bounds": [
+        {
+          "option": "image_bytes",
+          "minimum": 1.0,
+          "maximum": 8388608.0
+        },
+        {
+          "option": "total_image_bytes",
+          "minimum": 1.0,
+          "maximum": 16777216.0
+        },
+        {
+          "option": "image_pixels",
+          "minimum": 1.0,
+          "maximum": 4194304.0
+        },
+        {
+          "option": "image_count",
+          "minimum": 0.0,
+          "maximum": 4.0
+        },
+        {
+          "option": "width",
+          "minimum": 1.0,
+          "maximum": 4096.0
+        },
+        {
+          "option": "height",
+          "minimum": 1.0,
+          "maximum": 4096.0
+        }
+      ]
+    },
+    {
+      "capability": "rerank",
+      "semantic_task": "rerank",
+      "input_formats": [
+        "rerank"
+      ],
+      "output_formats": [
+        "relevance_scores"
+      ],
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "json"
+      ],
+      "streaming": false,
+      "availability": {
+        "state": "unavailable",
+        "reason": "model_task_mismatch"
+      },
+      "option_bounds": []
     }
   ]
 }

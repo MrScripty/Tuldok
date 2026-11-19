@@ -1,0 +1,23 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "benchmark",
+  "title": "Held-out waves",
+  "description": "How well each subject predicts the next 16 samples of the 400 test waves, and how long it takes.",
+  "run": {
+    "command": ["python", "bench.py", "--data", "{inputs.cases}", "--subject", "{subject}", "--name", "{subject.name}", "--output", "{output}"],
+    "environment": "environments/gpu",
+    "inputs": {"cases": {"from": "datasets/waves", "output": "data"}},
+    "outputs": {"results": {"path": "results.json", "role": "results"}},
+    "resources": {"gpu": true},
+    "sources": ["bench.py", "net.py"]
+  },
+  "metrics": [
+    {"id": "error", "title": "Prediction error (RMSE)", "better": "lower"},
+    {"id": "time_ms", "title": "Time per wave", "units": "ms", "better": "lower"}
+  ],
+  "subjects": [
+    {"name": "small-net-a", "title": "Small net, 6,000 updates", "recipe": "recipes/small-net-a", "argument": "model:{recipe}/model.pt"},
+    {"name": "predict-zero", "title": "Predict zero: the error any model must beat", "argument": "zero"}
+  ],
+  "cases": {"dataset": "datasets/waves", "split": "test", "count": 400}
+}

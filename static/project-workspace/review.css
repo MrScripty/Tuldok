@@ -1,0 +1,35 @@
+/* Review mode of the Annotate tab (docs/plans/training-and-curation/spec-t4.md section 7). The three columns are
+   the Annotate tab's own (.ann-body, .ann-list, .ann-view, .ann-form in base.css); only what review adds is here. */
+.ann-mode { flex: 0 0 auto; }
+.rv-picks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-bottom: 8px; }
+.rv-pick, .rv-min { display: grid; grid-template-columns: 2.2em minmax(0, 1fr); gap: 6px; align-items: center; font-size: 12.5px; color: var(--ink-2); min-width: 0; }
+.rv-min { grid-template-columns: auto 5.5em; margin: 8px 0 12px; }
+.rv-pick select { min-width: 0; width: 100%; }
+.rv-mode { margin: 4px 0; }
+.rv-agree { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; background: var(--surface); min-width: 0; }
+.rv-agree .rv-score { display: block; font-size: 28px; line-height: 1.1; margin: 2px 0 4px; color: var(--ink); }
+.rv-figures { margin: 8px 0 0; }
+.rv-disputed { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 60vh; overflow-y: auto; }
+.rv-rec { display: grid; grid-template-columns: minmax(0, 1fr) 64px 3.2em; grid-template-areas: "id bar n" "miss miss miss"; gap: 2px 8px; align-items: center; width: 100%;
+  text-align: left; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--ink); font: inherit; cursor: pointer; min-width: 0; }
+.rv-rec[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-wash); }
+.rv-rec .rv-id { grid-area: id; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+.rv-rec .rv-bar { grid-area: bar; display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.rv-rec .rv-bar b { display: block; height: 100%; background: var(--serious); }
+.rv-rec .rv-dis { grid-area: n; text-align: right; }
+.rv-rec .faint { grid-area: miss; }
+.rv-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 8px; }
+.rv-sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 2px; }
+.rv-panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.rv-panels.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container (max-width: 700px) { .rv-panels.two { grid-template-columns: minmax(0, 1fr); } }
+.rv-panel { margin: 0; min-width: 0; }
+.rv-panel figcaption { margin-bottom: 4px; color: var(--ink-2); overflow-wrap: anywhere; }
+.rv-canvas { display: block; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+.rv-canvas:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.rv-frame { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; font-size: 12.5px; color: var(--ink-2); }
+.rv-frame input { flex: 1 1 160px; min-width: 0; }
+.rv-values dd { overflow-wrap: anywhere; white-space: pre-wrap; }
+.rv-decide .seg, .rv-decide .actions { flex-wrap: wrap; }
+.rv-kept { margin: 8px 0 12px; overflow-wrap: anywhere; }
+.rv-correct { border-top: 1px solid var(--line); padding-top: 10px; }

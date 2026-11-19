@@ -1,0 +1,14 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Scenes for the annotators",
+  "description": "Three images, two point clouds, an array of frames and a series, imported from code/scenes (written by code/make_scenes.py).",
+  "run": {
+    "step": "import",
+    "settings": {
+      "source": "scenes",
+      "pattern": "**/*",
+      "rights": "Made by make_scenes.py for this example; free to use."
+    }
+  }
+}

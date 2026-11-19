@@ -22,13 +22,18 @@
         "code": {
           "$ref": "#/$defs/ErrorCode"
         },
+        "message": {
+          "description": "Human-readable reason. Consumers display or log it; they branch on `code`.",
+          "type": "string"
+        },
         "outcome": {
           "$ref": "#/$defs/Outcome"
         }
       },
       "required": [
         "code",
-        "outcome"
+        "outcome",
+        "message"
       ],
       "type": "object"
     },

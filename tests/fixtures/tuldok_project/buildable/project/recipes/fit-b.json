@@ -1,0 +1,13 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "recipe",
+  "title": "Fit b, with inline settings",
+  "run": {
+    "command": ["python", "train.py", "--data", "{inputs.data}/numbers.json", "--settings", "{settings}", "--out", "{output}"],
+    "environment": "environments/test-python",
+    "inputs": {"data": "datasets/numbers"},
+    "settings": {"steps": 3, "scale": 0.5},
+    "outputs": {"weights": {"path": "weights.json", "role": "weights"}},
+    "sources": ["train.py", "common.py"]
+  }
+}

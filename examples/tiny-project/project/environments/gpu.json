@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "environment",
+  "title": "Python 3.14 with torch and CUDA",
+  "python": "3.14",
+  "device": "cuda",
+  "packages": {"torch": "2.14.0+cu132", "numpy": "2.5.3"}
+}

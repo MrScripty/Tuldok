@@ -1,0 +1,14 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "recipe",
+  "title": "Fit a, from a settings file",
+  "run": {
+    "command": ["python", "train.py", "--data", "{inputs.data}", "--settings", "{settings}", "--out", "{output}"],
+    "environment": "environments/test-python",
+    "inputs": {"data": {"from": "datasets/numbers", "output": "data"}},
+    "settings_file": "settings/fit-a.json",
+    "outputs": {"weights": {"path": "weights.json", "role": "weights"}},
+    "sources": ["train.py", "common.py"],
+    "estimate": {"command": ["python", "estimate.py", "--data", "{inputs.data}", "--settings", "{settings}", "--out", "{output}"]}
+  }
+}

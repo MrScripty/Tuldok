@@ -1,0 +1,9 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "annotation",
+  "title": "Sample quality",
+  "description": "Whether each sample is clean enough to keep.",
+  "dataset": "datasets/samples",
+  "task": "class",
+  "vocabulary": ["clean", "noisy", "broken"]
+}

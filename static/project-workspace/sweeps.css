@@ -1,0 +1,46 @@
+/* The Sweeps tab and the kind of change "sweep trial" (docs/plans/training-and-curation/spec-t7.md section 7), on
+   the tokens of base.css. The trial's colour is the purple of the training runs (--run-3), already checked beside
+   the other kinds' colours for colour-blind separation and contrast in both themes. */
+:root { --k-sweep-trial: #8a4fbf; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --k-sweep-trial: #9a72d8; } }
+:root[data-theme="dark"] { --k-sweep-trial: #9a72d8; }
+
+/* The kind of change wherever the others are drawn. */
+.chip.sweep-trial::before { background: var(--k-sweep-trial); }
+.chart .pt.sweep-trial { fill: var(--k-sweep-trial); }
+.tree-list .dot.sweep-trial { fill: var(--k-sweep-trial); }
+.lk-sweep-trial { stroke: var(--k-sweep-trial); }
+.tree-map .tpt.sweep-trial { fill: var(--k-sweep-trial); }
+.tree-map .node.sweep-trial circle { fill: var(--k-sweep-trial); }
+.tree-map .node.planned.sweep-trial circle { fill: var(--surface); stroke: var(--k-sweep-trial); }
+.tree-list .dot.planned.sweep-trial { fill: var(--surface); stroke: var(--k-sweep-trial); }
+.pc .pcl.sweep-trial { stroke: var(--k-sweep-trial); }
+
+/* The tab. */
+.sw-head { display: grid; gap: 8px; min-width: 0; }
+.sw-head .sect { margin-top: 6px; }
+.sw-what { margin: 0; max-width: 980px; overflow-wrap: anywhere; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.linkish:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sw-controls { margin-top: 12px; display: grid; gap: 6px; }
+.sw-controls .sw-ask { margin: 0; }
+.sw-state { margin-top: 14px; }
+.sw-dl { grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); }
+.sw-dl dd { min-width: 0; overflow-wrap: anywhere; }
+.sw-gap { margin-left: 6px; }
+.sw-meter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sw-meter .hair { position: relative; width: 160px; max-width: 40vw; height: 4px; background: var(--grid); border-radius: 2px; flex: none; overflow: hidden; }
+.sw-meter .hair i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); transition: width .3s; }
+.sw-pc, .sw-chart, .sw-trials { margin-top: 18px; }
+.sw-table tr.sw-row { cursor: pointer; }
+.sw-table tr.sw-row:hover td, .sw-table tr.sw-row.on td { background: var(--accent-wash); }
+.sw-table tr.sw-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.sw-new .sw-text { width: 100%; min-height: 280px; font-size: 12.5px; }
+
+/* The trials' lines in parallel coordinates, by how they ended. */
+.pc .pcl.tr-completed { stroke: var(--k-sweep-trial); }
+.pc .pcl.tr-running { stroke: var(--accent); stroke-width: 2.2; opacity: 1; }
+.pc .pcl.tr-pruned { stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.pc .pcl.tr-stopped { stroke: var(--ink-3); stroke-dasharray: 1 3; }
+.pc .pcl.tr-failed { stroke: var(--serious); stroke-dasharray: 4 3; }
+.pc .pcl.tr-pruned.out, .pc .pcl.tr-stopped.out, .pc .pcl.tr-failed.out, .pc .pcl.tr-completed.out { opacity: .08; }

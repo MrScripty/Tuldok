@@ -1,0 +1,431 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/step.schema.json",
+  "title": "Tuldok step definition",
+  "description": "One step definition in steps/<name>.json (tuldok_definition_v1). Rules JSON Schema cannot express are checked in tuldok_project/check.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart",
+        "annotation"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "description": {
+      "$ref": "#/$defs/description"
+    },
+    "card": {
+      "$ref": "#/$defs/card"
+    },
+    "labels": {
+      "$ref": "#/$defs/labels"
+    },
+    "earlier_work": {
+      "$ref": "#/$defs/earlier_work"
+    },
+    "run": {
+      "$ref": "#/$defs/run",
+      "properties": {
+        "step": {
+          "not": {},
+          "description": "Only a dataset's run may name a step Tuldok provides; give a command."
+        }
+      }
+    }
+  },
+  "if": {
+    "required": [
+      "earlier_work"
+    ],
+    "properties": {
+      "earlier_work": {
+        "type": "object",
+        "required": [
+          "rebuild"
+        ],
+        "properties": {
+          "rebuild": {
+            "const": "no"
+          }
+        }
+      }
+    }
+  },
+  "else": {
+    "required": [
+      "run"
+    ]
+  },
+  "$defs": {
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$",
+      "description": "a key of lowercase letters, digits and '_' that starts with a letter, at most 32 characters"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "string"
+      }
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "earlier_work": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rebuild"
+      ],
+      "properties": {
+        "rebuild": {
+          "enum": [
+            "yes",
+            "after-inputs",
+            "needs-work",
+            "no"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      },
+      "if": {
+        "required": [
+          "rebuild"
+        ],
+        "properties": {
+          "rebuild": {
+            "enum": [
+              "no",
+              "needs-work"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    },
+    "input_reference": {
+      "type": "string",
+      "pattern": "^(datasets|recipes|steps)/[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a reference to a definition in datasets/, recipes/ or steps/, such as datasets/<name>"
+    },
+    "input": {
+      "description": "a reference such as datasets/<name>, or {\"from\": <reference>, \"output\": <output name>}",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/input_reference"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "output"
+          ],
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/input_reference"
+            },
+            "output": {
+              "$ref": "#/$defs/key"
+            }
+          }
+        }
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/command"
+        },
+        "step": {
+          "enum": [
+            "import",
+            "freeze",
+            "generate",
+            "embed",
+            "select",
+            "annotate"
+          ],
+          "description": "a step Tuldok provides: import, freeze, generate, embed, select or annotate"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^environments/[a-z0-9][a-z0-9._-]{0,119}$",
+          "description": "a reference to an environment, such as environments/<name>"
+        },
+        "inputs": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {
+            "$ref": "#/$defs/key"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/input"
+          }
+        },
+        "settings": {
+          "type": "object"
+        },
+        "settings_file": {
+          "$ref": "#/$defs/path"
+        },
+        "env": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Z_][A-Z0-9_]*$",
+            "description": "an environment variable name of capital letters, digits and '_'"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/key"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "role"
+            ],
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/path"
+              },
+              "role": {
+                "enum": [
+                  "data",
+                  "weights",
+                  "results",
+                  "log",
+                  "report",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "gpu": {
+              "type": "boolean"
+            },
+            "cpu_threads": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "memory_gb": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "wall_hours": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "disk_gb": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "sources": {
+          "$ref": "#/$defs/sources"
+        },
+        "estimate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "$ref": "#/$defs/command"
+            }
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^annotations/[a-z0-9][a-z0-9._-]{0,119}$",
+            "description": "a reference to an annotation task, such as annotations/<name>"
+          }
+        }
+      },
+      "dependentSchemas": {
+        "settings": {
+          "properties": {
+            "settings_file": {
+              "not": {},
+              "description": "Use either settings or settings_file, not both; remove one."
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "command": {
+                "type": "array",
+                "minItems": 1,
+                "prefixItems": [
+                  {
+                    "const": "python"
+                  }
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "environment"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "step"
+            ]
+          },
+          "then": {
+            "properties": {
+              "outputs": {
+                "not": {},
+                "description": "A step's outputs are fixed by the step; remove outputs."
+              },
+              "settings_file": {
+                "not": {},
+                "description": "A step takes its settings inline; use settings, not settings_file."
+              },
+              "estimate": {
+                "not": {},
+                "description": "A step Tuldok provides has no estimate command; remove estimate."
+              }
+            }
+          },
+          "else": {
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "annotations": {
+                "not": {},
+                "description": "annotations belong to a run with step freeze or annotate; add step or remove annotations."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "step"
+            ],
+            "properties": {
+              "step": {
+                "enum": [
+                  "import",
+                  "freeze",
+                  "generate",
+                  "embed",
+                  "select"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "command": {
+                "not": {},
+                "description": "A run with step has no command; remove one of the two."
+              },
+              "environment": {
+                "not": {},
+                "description": "A step Tuldok provides runs with Tuldok's own interpreter; remove environment."
+              },
+              "env": {
+                "not": {},
+                "description": "A step Tuldok provides takes no environment variables; remove env."
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

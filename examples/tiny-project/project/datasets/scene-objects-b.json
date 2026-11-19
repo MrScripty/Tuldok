@@ -1,0 +1,28 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Segmentor B on scene-objects",
+  "description": "The stand-in segmentor at threshold 140: an annotation set for annotations/scene-objects.",
+  "run": {
+    "step": "annotate",
+    "inputs": {
+      "records": "datasets/scenes"
+    },
+    "annotations": [
+      "annotations/scene-objects"
+    ],
+    "command": [
+      "python",
+      "annotators/standin.py",
+      "140"
+    ],
+    "environment": "environments/cpu",
+    "settings": {
+      "by": {
+        "kind": "script",
+        "name": "stand-in segmentor B",
+        "version": "1"
+      }
+    }
+  }
+}

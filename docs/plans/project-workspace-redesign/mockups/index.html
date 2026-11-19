@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three layouts · Tuldok</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  body { padding: 36px 24px 60px; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 20px; }
+  .lede { color: var(--ink-2); margin: 4px 0 24px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .card { display: block; color: inherit; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+  .card:hover { text-decoration: none; border-color: var(--line-strong); }
+  .card img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line); }
+  .card .t { padding: 12px 14px 14px; }
+  .card h2 { font-size: 15px; }
+  .card h2 span { color: var(--ink-3); font-family: var(--mono); font-weight: 500; margin-right: 8px; }
+  .card p { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Three layouts for the project workspace</h1>
+  <p class="lede">Same screen, same data, three structures. Switch between them from any page.</p>
+  <div class="grid">
+    <a class="card" href="a-stages.html"><img src="preview/a.png" alt="Stages: left rail of pipeline stages, content, inspector on the right" width="1440" height="900"><div class="t"><h2><span>A</span>Stages</h2><p>Rail in pipeline order. Inspector on the right.</p></div></a>
+    <a class="card" href="b-map.html#models"><img src="preview/b.png" alt="Map: lineage timeline on top, model list below, drawer inspector" width="1440" height="900"><div class="t"><h2><span>B</span>Map</h2><p>Lineage map first, list under it. Drawer inspector.</p></div></a>
+    <a class="card" href="c-ledger.html"><img src="preview/c.png" alt="Ledger: one document with a table of contents" width="1440" height="900"><div class="t"><h2><span>C</span>Ledger</h2><p>One document. Detail opens beside the row.</p></div></a>
+  </div>
+</div>
+</body>
+</html>

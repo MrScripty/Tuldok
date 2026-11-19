@@ -1,0 +1,86 @@
+/* The Compare tab, parallel coordinates and intervals (docs/plans/training-and-curation/spec-t3.md section 5),
+   on the tokens of base.css, so light and dark follow it. */
+
+/* The compare set's fourth colour, and a model's colour in its column. */
+.cmp-chips .c.s4 i { background: var(--k-component); }
+.cmpv .swatch, .cmpv-colhead .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; margin-right: 6px; vertical-align: -1px; }
+.s1 > .swatch { background: var(--k-architecture); } .s2 > .swatch { background: var(--k-refinement); }
+.s3 > .swatch { background: var(--k-training-policy); } .s4 > .swatch { background: var(--k-component); }
+
+/* ---- The Compare tab ---- */
+.cmpv-head { display: grid; gap: 8px; min-width: 0; }
+.cmpv-head .cmp-chips .iv-field { margin-left: 8px; font-size: 12.5px; color: var(--ink-2); }
+.cmpv-empty { margin-top: 14px; }
+.cmpv-table { margin-top: 18px; }
+table.tv.cmpv { min-width: 100%; }
+table.tv.cmpv th.cmpv-col { text-align: left; min-width: 150px; vertical-align: bottom; }
+table.tv.cmpv th.cmpv-row { text-align: left; font-weight: 400; color: var(--ink-2); max-width: 340px; min-width: 120px; vertical-align: top; }
+table.tv.cmpv tr.cmpv-group th { text-align: left; padding-top: 16px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--line); }
+table.tv.cmpv tr.cmpv-group .sum { margin-left: 10px; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+table.tv.cmpv td { vertical-align: top; }
+.cmpv-path { display: block; overflow-wrap: anywhere; font-size: 12px; color: var(--ink); }
+.cmpv-kind { display: block; }
+td.cmpv-v { overflow-wrap: anywhere; max-width: 260px; font-size: 12px; }
+table.tv.cmpv td.n { text-align: left; }
+.cmpv-value { display: block; font-variant-numeric: tabular-nums; }
+td .ci { display: block; font-size: 11.5px; color: var(--ink-3); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmpv-n { display: block; }
+td.cmpv-on { color: var(--good); }
+td.cmpv-nsig { color: var(--warn); }
+.cmpv-out { margin-top: 26px; display: grid; gap: 10px; min-width: 0; }
+.cmpv-out .sect { margin-bottom: 0; flex-wrap: wrap; }
+.cmpv-outhead { display: grid; gap: 4px; min-width: 0; }
+.cmpv-outhead p { margin: 0; overflow-wrap: anywhere; }
+.cmpv-outhead select { max-width: min(520px, 100%); min-width: 0; }
+.cmpv-grid { position: relative; display: grid; gap: 10px; min-width: 0; }
+.cmpv-grid[aria-busy="true"] { cursor: progress; }
+.cmpv-cells { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 10px; min-width: 0; }
+.cmpv-colhead { font-size: 12.5px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; min-width: 0; }
+.cmpv-orow { display: grid; gap: 4px; min-width: 0; }
+.cmpv-otitle { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; min-width: 0; }
+.cmpv-barbox { flex: 1 1 180px; max-width: 360px; min-width: 0; }
+.cmpv-cell { margin: 0; min-width: 0; }
+.cmpv-missing { margin: 0; padding: 10px 0; }
+.cmpv-figs dl { margin: 0; display: grid; gap: 2px; font-size: 12px; }
+.cmpv-figs dl > div { display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
+.cmpv-figs dt { color: var(--ink-2); overflow-wrap: anywhere; }
+.cmpv-figs dd { margin: 0; font-variant-numeric: tabular-nums; }
+.cmpv-where { margin: 0; }
+
+/* ---- Intervals on the charts ---- */
+.chart .ci line { stroke: var(--ink-3); stroke-width: 1.25; }
+.chart .nsig { fill: none; stroke: var(--warn); stroke-width: 1.5; stroke-dasharray: 3 2; }
+
+/* ---- Parallel coordinates ---- */
+.pc { margin-top: 26px; min-width: 0; }
+.pc .sect { flex-wrap: wrap; }
+.pc-count { margin-left: auto; color: var(--ink-2); }
+.pc-draw { min-width: 0; }
+.pc-svg { display: block; width: 100%; height: auto; touch-action: none; }
+.pc .pcl { fill: none; stroke: var(--k-component); stroke-width: 1.4; opacity: .7; }
+.pc .pcl.training-policy { stroke: var(--k-training-policy); }
+.pc .pcl.architecture { stroke: var(--k-architecture); }
+.pc .pcl.refinement { stroke: var(--k-refinement); }
+.pc .pcl.other, .pc .pcl.unset { stroke: var(--ink-3); }
+.pc .pcl.out { opacity: .08; }
+.pc .pcl.on { stroke-width: 3; opacity: 1; }
+.pc .pc-line { stroke: var(--line-strong); stroke-width: 1; }
+.pc .pc-title { fill: var(--ink); font-size: 11.5px; font-weight: 600; font-family: var(--font); }
+.pc .pc-sub { fill: var(--ink-3); font-size: 10.5px; font-family: var(--font); }
+.pc .pc-tick { fill: var(--ink-2); font-size: 10.5px; font-family: var(--font); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.pc .pc-brush { fill: var(--accent); fill-opacity: .22; stroke: var(--accent); stroke-width: 1; }
+.pc .pc-hit { fill: transparent; cursor: ns-resize; }
+.pc-axes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.pc-ax { display: inline-flex; align-items: center; gap: 2px; padding: 1px 4px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; background: var(--surface); max-width: 100%; min-width: 0; }
+.pc-ax.metric { border-color: var(--line-strong); }
+.pc-ax .pc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 22ch; padding: 0 2px; }
+.pc-ax button { border: 0; background: none; color: var(--ink-3); cursor: pointer; padding: 0 3px; font: inherit; line-height: 1.4; }
+.pc-ax button:disabled { opacity: .3; cursor: default; }
+.pc-ax button[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
+.pc-choose { margin-top: 8px; font-size: 12.5px; }
+.pc-choose summary { cursor: pointer; color: var(--ink-2); }
+.pc-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; max-height: 260px; overflow: auto; }
+.pc-list label { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.pc-list label .mono { overflow-wrap: anywhere; min-width: 0; }
+.pc-filtered { margin: 0 0 6px; }
+.chart g.pc-out > :not(.hit) { opacity: .15; }

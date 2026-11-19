@@ -27,6 +27,32 @@
       ],
       "type": "string"
     },
+    "Capability": {
+      "oneOf": [
+        {
+          "enum": [
+            "chat_generation",
+            "text_generation",
+            "text_embedding",
+            "image_generation",
+            "image_to_text",
+            "audio_transcription",
+            "audio_classification"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "multimodal_embedding",
+          "description": "One embedding per image or per mixed text/image item, in the same\nvector space as the model's text embeddings.",
+          "type": "string"
+        },
+        {
+          "const": "decision",
+          "description": "Typed questions about a state answered with probabilities by a native\ndecision model (llama.cpp `/v1/systemone`, e.g. Kev, OpenJev).",
+          "type": "string"
+        }
+      ]
+    },
     "Content": {
       "anyOf": [
         {
@@ -40,12 +66,138 @@
         }
       ]
     },
+    "ContentItem": {
+      "additionalProperties": false,
+      "properties": {
+        "parts": {
+          "items": {
+            "$ref": "#/$defs/ImagePart"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "parts"
+      ],
+      "type": "object"
+    },
+    "DecisionImage": {
+      "additionalProperties": false,
+      "properties": {
+        "data_base64": {
+          "type": "string"
+        },
+        "encoding": {
+          "$ref": "#/$defs/ImageEncoding"
+        }
+      },
+      "required": [
+        "encoding",
+        "data_base64"
+      ],
+      "type": "object"
+    },
+    "DecisionQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": true,
+        "instructions": true,
+        "type": {
+          "$ref": "#/$defs/DecisionType"
+        }
+      },
+      "required": [
+        "type",
+        "instructions"
+      ],
+      "type": "object"
+    },
+    "DecisionType": {
+      "oneOf": [
+        {
+          "const": "choice",
+          "description": "Pick one option; `criteria` maps option to description (or null).",
+          "type": "string"
+        },
+        {
+          "const": "score",
+          "description": "Rate on a scale; `criteria` lists level descriptions, lowest first.",
+          "type": "string"
+        },
+        {
+          "const": "noul",
+          "description": "Probability that the answer is true; optional `criteria` describes\n`true` and `false`.",
+          "type": "string"
+        }
+      ]
+    },
     "ImageEncoding": {
       "enum": [
         "png",
         "jpeg"
       ],
       "type": "string"
+    },
+    "ImageMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "$ref": "#/$defs/ImagePart"
+          },
+          "type": "array"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "type": "object"
+    },
+    "ImagePart": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "text",
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "data_base64": {
+              "type": "string"
+            },
+            "encoding": {
+              "$ref": "#/$defs/ImageEncoding"
+            },
+            "kind": {
+              "const": "image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "encoding",
+            "data_base64"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "Input": {
       "oneOf": [
@@ -96,6 +248,27 @@
             "messages": {
               "items": {
                 "$ref": "#/$defs/ModalityMessage"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "kind",
+            "messages"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Messages whose content is a list of text and image parts.",
+          "properties": {
+            "kind": {
+              "const": "image_messages",
+              "type": "string"
+            },
+            "messages": {
+              "items": {
+                "$ref": "#/$defs/ImageMessage"
               },
               "type": "array"
             }
@@ -164,6 +337,57 @@
             "channels",
             "sample_count",
             "data_base64"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Items to embed together; each item produces one vector.",
+          "properties": {
+            "items": {
+              "items": {
+                "$ref": "#/$defs/ContentItem"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "const": "content_batch",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "items"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A state and typed questions for a native decision model.",
+          "properties": {
+            "images": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/DecisionImage"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "const": "decision",
+              "type": "string"
+            },
+            "questions": {
+              "additionalProperties": {
+                "$ref": "#/$defs/DecisionQuestion"
+              },
+              "type": "object"
+            },
+            "state": true
+          },
+          "required": [
+            "kind",
+            "state",
+            "questions"
           ],
           "type": "object"
         }
@@ -313,6 +537,19 @@
             "kind"
           ],
           "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "decision",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -323,7 +560,8 @@
         "png_base64",
         "labels",
         "pcm_s16le",
-        "pcm_f32le"
+        "pcm_f32le",
+        "decisions"
       ],
       "type": "string"
     },
@@ -425,7 +663,9 @@
         "text_to_image",
         "speech_to_text",
         "audio_classification",
-        "image_to_text"
+        "image_to_text",
+        "multimodal_embedding",
+        "decision"
       ],
       "type": "string"
     }
@@ -433,6 +673,18 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
+    "capability": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Capability"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional explicit capability. When present, resolution only considers it."
+    },
     "contract_version": {
       "format": "uint32",
       "minimum": 0,

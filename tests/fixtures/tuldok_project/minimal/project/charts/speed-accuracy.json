@@ -1,0 +1,9 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "chart",
+  "title": "Error against time",
+  "benchmark": "benchmarks/rollout",
+  "form": "tradeoff",
+  "metric": "rmse",
+  "metric_x": "seconds"
+}

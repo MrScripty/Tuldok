@@ -546,6 +546,23 @@ def decode_probe_observation(recipe,value,*,with_definition=False):
     return copy.deepcopy(value)
 
 
+# Finite wall-clock allowance of each phase of a built-in recipe's native run.
+NATIVE_PHASE_WALL_SECONDS = {'probe': 45, 'train': 600, 'verify': 90}
+NATIVE_PARENT_DRAIN_ALLOWANCE = 5
+
+
+def native_admission_wall_seconds():
+    """New material's finite probe/train/verifier and custody time allowance.
+
+    This budgets child/custodian phases, not a storage availability guarantee.
+    Cleanup already includes the custodian's TERM grace interval.
+    """
+    import recipe_process
+    overhead = (recipe_process.READY_SECONDS + recipe_process.GO_WAIT_SECONDS + recipe_process.CLEANUP_SECONDS
+                + NATIVE_PARENT_DRAIN_ALLOWANCE)
+    return sum(NATIVE_PHASE_WALL_SECONDS.values()) + len(NATIVE_PHASE_WALL_SECONDS) * overhead
+
+
 class Pipelines:
     def __init__(self, dataset):
         self.access = dataset.access
@@ -937,10 +954,6 @@ class Pipelines:
         # A native interpreter launch is execution even when its command only
         # reports runtime capability. Pure integrity recipes above never spawn.
         self.access.require('execute', 'pipeline.probe_native', recipe)
-        from project_native_preparation import preparation_owner
-        current=preparation_owner(self)
-        if current is not None:
-            return current.probe(self,recipe)
         worker_path = Path(adapter.__file__).resolve()
         executable = os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable
         try:
@@ -1205,7 +1218,6 @@ class Pipelines:
         capture_bytes=sum(map(len,payloads.values()))
         model_bytes=sum(item['blob']['bytes'] for item in model_body['source_closure'])+sum(model_body[key]['bytes'] for key in ('specification','preprocessing_policy','output_policy'))
         output_bytes=64*1024**2
-        from project_native_execution import native_admission_wall_seconds
         envelope={'attempt_slots':1,'admitted_wall_seconds':native_admission_wall_seconds(),'retained_bytes':capture_bytes+model_bytes+output_bytes+256*1024,
                   'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+256*1024}
         material={'format':'recipe_material_v1','catalog_id':self.db.dataset_id,'recipe_id':graph_id,'recipe_revision':revision,
@@ -1227,12 +1239,6 @@ class Pipelines:
             shutil.rmtree(staging,ignore_errors=True);raise
 
     def _prepare_builtin_recipe_material(self, value):
-        from project_native_preparation import preparation_owner
-        current=preparation_owner(self)
-        if current is not None:return current.current(self).capture_builtin(self,value)
-        return self._prepare_builtin_recipe_material_current(value)
-
-    def _prepare_builtin_recipe_material_current(self, value):
         from model_definitions import read_owned_blob, retained_json
         material=value['material'];sha=value['ref']['sha256']
         snapshot=retained_json(read_owned_blob(self.material_path,sha,material['recipe_document'],2*1024**2).decode(),2*1024**2)

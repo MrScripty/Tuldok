@@ -1,0 +1,12 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "step",
+  "title": "A stand-in GPU step (one); uses no GPU",
+  "run": {
+    "command": ["python", "hold.py", "--out", "{output}"],
+    "environment": "environments/test-python",
+    "outputs": {"times": {"path": "times.json", "role": "file"}},
+    "resources": {"gpu": true},
+    "sources": ["hold.py"]
+  }
+}
