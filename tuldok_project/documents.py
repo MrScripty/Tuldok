@@ -29,6 +29,7 @@ DIRECTORIES = {
     'environment': 'environments',
     'chart': 'charts',
     'annotation': 'annotations',
+    'sweep': 'sweeps',   # docs/plans/training-and-curation/spec-t7.md section 2
 }
 KINDS = {directory: kind for kind, directory in DIRECTORIES.items()}
 
@@ -48,6 +49,8 @@ ACCEPTS = {
     'annotations': ('annotations',),
     'derived': ('recipes',),
     'compared': ('recipes',),
+    'varies': ('recipes',),   # a sweep's recipe (spec-t7.md section 2)
+    'sweep': ('sweeps',),     # a trial's sweep
 }
 
 STATISTICS = ('mean', 'median', 'p10', 'p90', 'min', 'max')

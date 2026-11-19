@@ -63,7 +63,7 @@ import psycopg
 
 from . import (activity, annotation_records, annotation_review, annotation_rows, annotations, build_requests, builds,
                charts, check, comparing, documents, embeddings, environments, inside, inside_fields, inside_graph,
-               inside_weights, launcher, local, operations, plan, pumas, store, training, workspace)
+               inside_weights, launcher, local, operations, plan, pumas, store, sweeps, training, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
@@ -353,9 +353,13 @@ class Service:
 
         outcome = {}
         try:
-            outcome['done'] = builds.execute(self.folder, made, confirm=lambda _plan: True,
-                                             scratch=request['scratch'], dsn=self.dsn, expect=request['covers'],
-                                             stop=stop, on_event=on_event)
+            if made.get('sweep'):   # a sweep's trials, one after another (spec-t7.md section 5)
+                outcome['done'] = sweeps.execute(self.folder, made, request_id=request_id, scratch=request['scratch'],
+                                                 dsn=self.dsn, expect=request['covers'], stop=stop, on_event=on_event)
+            else:
+                outcome['done'] = builds.execute(self.folder, made, confirm=lambda _plan: True,
+                                                 scratch=request['scratch'], dsn=self.dsn, expect=request['covers'],
+                                                 stop=stop, on_event=on_event)
         except store.ProjectError as exc:
             outcome['problem'] = str(exc)
         except Exception as exc:
@@ -602,6 +606,14 @@ class Service:
 
     def _note(self, arguments, actor):
         return workspace.read_note(self.folder, arguments['path'])  # from disk; the project is not opened
+
+    def _sweeps(self, arguments, actor):
+        with self._open() as project:
+            return sweeps.listing(project)
+
+    def _sweep(self, arguments, actor):
+        with self._open() as project:
+            return sweeps.show(project, arguments['sweep'], arguments.get('run'))
 
     def _recipe_results(self, arguments, actor):
         recipe = 'recipes/' + _bare(arguments['recipe'], 'recipes')

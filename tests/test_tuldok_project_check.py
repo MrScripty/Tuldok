@@ -106,7 +106,8 @@ class Layout(FixtureCopy):
         report = check_folder(self.project)
         self.assertClean(report)
         self.assertEqual(report.project['code_root'], '../code')
-        self.assertEqual({d.kind for d in report.definitions.values()}, set(documents.DIRECTORIES))
+        # Every kind but a sweep, whose tests write their own projects (test_tuldok_project_sweeps).
+        self.assertEqual({d.kind for d in report.definitions.values()}, set(documents.DIRECTORIES) - {'sweep'})
         self.assertIn(graph.Edge('recipes/stepper-k2', 'recipes/stepper-k1', 'input:start'), report.edges)
         waves = report.definitions['datasets/waves']
         self.assertEqual((waves.kind, waves.name, waves.path), ('dataset', 'waves', 'datasets/waves.json'))

@@ -741,6 +741,8 @@ def check_map(project, definitions, add):
             add('error', folder_reader.PROJECT_FILE, '/map/chart',
                 f'{chart} has the form {target.document.get("form")!r}, not progression; '
                 'name a chart of the form progression.')
+    from . import sweeps   # here: sweeps imports store, which imports this module
+    sweeps.check_sweeps(definitions, add)
 
 
 def _check_results(files, definitions, unsound, add):
