@@ -7,7 +7,8 @@ section 3 of spec-d1.md (records, record, inside, array_slice, array_summary),
 the three of section 3 of spec-d2.md (weights, weights_compare,
 array_tiles), the two of section 2 of spec-d6.md (fields, field_compare), the three of
 section 3 of docs/plans/training-and-curation/spec-t2.md (model_graph,
-model_graph_overlay, model_graph_compare),
+model_graph_overlay, model_graph_compare), the three of section 4 of
+spec-t3.md (model_compare, benchmark_axes, intervals),
 the five of section 5 of spec-d4.md (annotation_tasks,
 annotated_records, annotation, set_annotation, revert_annotations) and the
 five of sections 2 and 4 of spec-d5.md (endpoint, set_endpoint,
@@ -36,6 +37,7 @@ ENDPOINT_CHARACTERS = 2048  # an address of a Pumas endpoint (local.ENDPOINT_LIM
 INSTRUCTION_CHARACTERS = 4000
 GRAPH_MODULES = 2000        # modules named open or closed by one model_graph (spec-t2.md section 3)
 GRAPH_OVERLAYS = ('parameters', 'outputs', 'operations', 'change')
+COMPARED_MOST = 4           # recipes of one model_compare (spec-t3.md section 4)
 
 
 @dataclass(frozen=True)
@@ -111,6 +113,7 @@ STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining',
 ENDPOINT = ('address', 'answered', 'version', 'models', 'problem')
 MODEL_GRAPH = ('path', 'format', 'complete', 'reason', 'method', 'torch', 'model', 'inputs', 'notes', 'counts',
                'modules', 'tensors', 'depth', 'open', 'nodes', 'edges')
+_STATISTIC = {'type': 'string', 'enum': ['mean', 'median', 'p10', 'p90', 'min', 'max']}
 _MODULE_PATHS = {'type': 'array', 'items': {'type': 'string', 'maxLength': 1024}, 'maxItems': GRAPH_MODULES}
 
 
@@ -243,6 +246,20 @@ OPERATIONS = (
     Operation('model_graph_compare', "Match the modules of two finished runs' model graphs by path: the same, "
               'changed (class or tensor shapes), added or missing.', 'inspect', False,
               _arguments(['run', 'other_run'], run=_RUN, other_run=_RUN), ('modules', 'counts')),
+    Operation('model_compare', 'Compare two to four recipes: the settings, data and parent that differ, their '
+              'metrics on every benchmark that measures them with bootstrap intervals from per-case values, and '
+              'where each sits on the frontier of its tradeoff charts.', 'inspect', False,
+              _arguments(['recipes'], recipes={'type': 'array', 'items': _REFERENCE, 'minItems': 2,
+                                               'maxItems': COMPARED_MOST}, statistic=_STATISTIC),
+              ('statistic', 'resamples', 'level', 'seed', 'models', 'differs', 'same', 'more', 'benchmarks')),
+    Operation('benchmark_axes', "Read a benchmark's subjects as lines through axes: its metrics and the numeric or "
+              'categorical recipe settings that vary between them, the settings that go most with the first metric '
+              'first.', 'inspect', False, _arguments(['benchmark'], benchmark=_NAME, statistic=_STATISTIC),
+              ('benchmark', 'statistic', 'metrics', 'settings', 'left_out', 'subjects')),
+    Operation('intervals', "Read bootstrap intervals of every statistic of a benchmark's subjects from the per-case "
+              'values held here, and whether neighbours on the frontier of its tradeoff charts are told apart.',
+              'inspect', False, _arguments(['benchmark'], benchmark=_NAME),
+              ('benchmark', 'resamples', 'level', 'seed', 'intervals', 'frontiers')),
     Operation('annotation_tasks', 'List the annotation tasks, each with its dataset, current product and counts of '
               'its records by the state of their annotations.', 'inspect', False, _arguments(), ('tasks',)),
     Operation('annotated_records', "Read one page of the records of a task's dataset with their annotations, "
