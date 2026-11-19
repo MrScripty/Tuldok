@@ -29,6 +29,9 @@ phase are random, and predict the next 16 samples of the clean wave.
 | `datasets/samples` | the step `import`: the files under `code/samples` (two texts, a PNG, a WAV, a PLY point cloud and an OBJ mesh, written by `make_samples.py`), one record each |
 | `annotations/sample-quality` | a `class` task on `datasets/samples`: whether each sample is clean; its annotations are `annotations/sample-quality.jsonl` |
 | `datasets/samples-v1` | the step `freeze`: the samples whose quality is accepted, split three to one from seed 7 |
+| `datasets/scenes` | the step `import`: the files under `code/scenes` (three images, two point clouds, an array of frames and a series, written by `make_scenes.py`) |
+| `annotations/scene-masks`, `annotations/scene-objects` | a `mask` task (instance masks of the images' objects) and a `points` task (the top of each point cloud) on `datasets/scenes` |
+| `datasets/scene-masks-a`, `-b`, `datasets/scene-objects-a`, `-b` | the step `annotate`: `code/annotators/standin.py`, a stand-in segmentor, run at two thresholds; each is an annotation set for its task |
 
 The benchmark has two subjects: `small-net-a`, the trained network, and
 `predict-zero`, which always predicts zero and shows the error any model has to
@@ -76,10 +79,11 @@ P=examples/tiny-project/project
 .venv/bin/python -m tuldok_project build $P --all
 ```
 
-The plan has five build steps after the two environments: `datasets/waves`,
-`recipes/small-net-a`, then `benchmarks/held-out` once for each subject, and
-`datasets/samples` and `datasets/samples-v1`, which Tuldok's own steps build
-in a moment with no environment.
+The plan has ten build steps after the two environments: `datasets/waves`,
+`recipes/small-net-a`, then `benchmarks/held-out` once for each subject,
+`datasets/samples`, `datasets/samples-v1` and `datasets/scenes`, which
+Tuldok's own steps build in a moment with no environment, and the four
+annotators, which run `standin.py` in `environments/cpu` in a moment each.
 
 | Step | Time |
 | --- | --- |
@@ -97,6 +101,17 @@ writes `annotations/sample-quality.jsonl`. `datasets/samples-v1` takes the
 records whose annotation is accepted, as committed, and splits them; build it
 again after committing a change to the annotations. To write the samples
 again, run `python make_samples.py` from `code/`: the bytes are the same.
+
+### Two segmentors, compared
+
+`datasets/scene-masks-a` and `-b` run the same stand-in segmentor at two
+thresholds, so their masks differ by a rim of a pixel; `scene-objects-a` and
+`-b` take slightly different tops of each cloud. On the Annotate tab, choose
+`annotations/scene-masks` and Review: the two sets' agreement (matched IoU),
+the records they disagree on most, each drawn over its image side by side or
+overlaid, and Keep A, Keep B or Reject both, which Save writes to
+`annotations/scene-masks.jsonl` and its mask to `annotations/scene-masks/`. To
+write the scenes again, run `python make_scenes.py` from `code/`.
 
 ### Watch the training
 

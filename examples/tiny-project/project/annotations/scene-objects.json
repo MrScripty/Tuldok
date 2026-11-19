@@ -1,0 +1,11 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "annotation",
+  "title": "The top of each point cloud",
+  "description": "The points of each cloud that belong to its top, made by the stand-in segmentors.",
+  "dataset": "datasets/scenes",
+  "task": "points",
+  "vocabulary": [
+    "top"
+  ]
+}

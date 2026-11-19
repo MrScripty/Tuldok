@@ -1,0 +1,12 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "annotation",
+  "title": "Objects in the scenes, as masks",
+  "description": "An instance mask of each dark object of the scenes' images, made by the stand-in segmentors.",
+  "dataset": "datasets/scenes",
+  "task": "mask",
+  "mask": "instance",
+  "vocabulary": [
+    "blob"
+  ]
+}
