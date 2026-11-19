@@ -88,22 +88,30 @@ window.LabScreens = (() => {
     const focus = planSel ? planSel.slice(5).split(',')[0] : E ? E.subject(raw) : raw, sel = focus && g.byId.has(focus) ? focus : null;
     const kinds = P.KINDS.map(k => k.id).concat(g.nodes.some(m => m.kind === P.UNSET) ? [P.UNSET] : []);
     const withValue = g.nodes.filter(m => m.value != null).length;
+    const named = [...new Set(g.nodes.map(m => m.generation).filter(Boolean))].sort();
+    const gens = named.length ? named.concat(g.nodes.some(m => !m.generation) ? [''] : []) : [];
     const buildBar = () => {
       const bar = h('div', 'filters');
       const q = h('input'); q.type = 'search'; q.placeholder = 'Find a model'; q.value = state.query || ''; q.setAttribute('aria-label', 'Find a model'); q.addEventListener('input', () => act.setQuery(q.value)); bar.appendChild(q);
       const grp = h('div', 'grp'); grp.setAttribute('role', 'group'); grp.setAttribute('aria-label', 'Kind of change');
       for (const k of kinds) { const b = h('button', 'btn sm chip ' + k, P.kindLabel(k)); b.type = 'button'; b.dataset.kind = k; b.setAttribute('aria-pressed', String(!state.kinds || state.kinds.has(k))); b.addEventListener('click', () => act.toggleKind(k, kinds)); grp.appendChild(b); }
       bar.appendChild(grp);
+      // Generation (spec-generations.md): one chip per data generation and one for the models without, when any has one.
+      if (gens.length) {
+        const gg = h('div', 'grp'); gg.setAttribute('role', 'group'); gg.setAttribute('aria-label', 'Data generation');
+        for (const k of gens) { const b = h('button', 'btn sm gen-f', k || 'no generation'); b.type = 'button'; b.dataset.generation = k; b.dataset.key = 'gen-' + k; b.setAttribute('aria-pressed', String(!state.generations || state.generations.has(k))); b.addEventListener('click', () => act.toggleGeneration(k, gens)); gg.appendChild(b); }
+        bar.appendChild(gg);
+      }
       if (g.track) { const tb = h('button', 'btn sm', 'Accuracy track'); tb.type = 'button'; tb.title = P.trackName(g.track) + ', ' + P.better(g.track); tb.setAttribute('aria-pressed', String(!!state.track)); tb.addEventListener('click', () => act.toggleTrack()); bar.appendChild(tb); }
       const z = h('div', 'zoomctl'); for (const [t, d, l] of [['−', -0.2, 'Zoom out'], ['+', 0.2, 'Zoom in']]) { const b = h('button', 'btn sm', t); b.type = 'button'; b.setAttribute('aria-label', l); b.addEventListener('click', () => act.zoom(d)); z.appendChild(b); } bar.appendChild(z);
       bar.appendChild(h('span', 'pop', g.nodes.length + ' models · ' + (g.track ? withValue + ' on the track' : 'no track')));
       return bar;
     };
     if (!g.nodes.length) { main.textContent = ''; main._tree = null; main.appendChild(h('p', 'empty', 'This project has no recipes, so there are no models to map.')); aside.textContent = ''; return false; }
-    const sig = JSON.stringify([state.kinds ? [...state.kinds] : null, state.query || '', state.zoom || 1, !!state.track]);
+    const sig = JSON.stringify([state.kinds ? [...state.kinds] : null, state.query || '', state.zoom || 1, !!state.track, state.generations ? [...state.generations] : null]);
     const prev = main._tree;
     // While a parent is being picked (editor.js), the next model pressed is the parent instead.
-    const common = { onSelect: id => { if (!(E && E.picked(id, act))) act.select(id); }, kinds: state.kinds, query: state.query };
+    const common = { onSelect: id => { if (!(E && E.picked(id, act))) act.select(id); }, kinds: state.kinds, query: state.query, generations: state.generations };
     if (prev && prev.sig === sig && prev.shaped === shaped && main.contains(prev.bar)) {
       // The same tree: only a new selection is drawn (spec-w4 R2, R6).
       if (sel !== prev.sel) { if (sel) { prev.map.scrollTo(sel, true); prev.list.scrollTo(sel, true); } prev.map.select(sel); prev.list.select(sel); prev.sel = sel; }
@@ -159,6 +167,7 @@ window.LabScreens = (() => {
     const meta = h('div', 'ins-meta'); meta.appendChild(h('span', 'chip ' + m.kind, P.kindLabel(m.kind))); meta.appendChild(modelState(m.state));
     meta.appendChild(h('span', 'small faint', m.trainedAt ? 'trained ' + P.day(m.trainedAt) : m.planned ? 'never built' : 'no training date'));
     meta.appendChild(Tree.mark(m));
+    const gc = Tree.genChip(g, m); if (gc) meta.appendChild(gc);
     hd.appendChild(meta); ins.appendChild(hd);
     if (E) E.decorate(hd);
     // Plan build, for a model to build (spec-w3 section 3.1): the plan view, never a request from here. A model
@@ -175,6 +184,8 @@ window.LabScreens = (() => {
     const lin = h('div', 'actions');
     const jump = (target, text) => { const b = h('button', 'btn sm ghost'); b.type = 'button'; b.appendChild(icon('branch')); b.appendChild(document.createTextNode(' ' + text)); b.addEventListener('click', () => act.select(target.id)); return b; };
     if (m.parent) lin.appendChild(jump(g.byId.get(m.parent), 'From ' + Tree.refName(g.byId.get(m.parent))));
+    const pg = m.parent && g.byId.get(m.parent).generation;
+    if (pg && m.generation && pg !== m.generation) lin.appendChild(h('span', 'small faint gen-from', 'from a model of ' + pg));
     else lin.appendChild(h('span', 'small faint', 'No recorded ancestry'));
     const kids = g.nodes.filter(n => n.parent === m.id);
     if (kids.length === 1) lin.appendChild(jump(kids[0], Tree.refName(kids[0]) + ' derives from it'));

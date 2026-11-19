@@ -178,6 +178,10 @@
           "type": "object"
         }
       }
+    },
+    "generations": {
+      "const": "mixed",
+      "description": "\"mixed\": a deliberate crossing of data generations"
     }
   },
   "if": {

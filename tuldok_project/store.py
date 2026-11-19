@@ -51,7 +51,7 @@ from psycopg.types.json import Jsonb
 from metadata import connection_info
 
 from . import (activity, annotation_rows, annotations, build_requests, builds, check, documents, environments,
-               folder as folder_reader, graph, result_rows, results)
+               folder as folder_reader, generations, graph, result_rows, results)
 from .documents import Problem
 
 PROJECT_ID = re.compile(r'^[a-f0-9]{32}$')
@@ -673,16 +673,23 @@ class Project:
                 'code_root': state['code_root'], 'kinds': dict(sorted(rows)), 'states': dict(sorted(states.items()))}
 
     def definitions(self, kind=None):
-        """One row per definition, sorted by reference: reference, kind, title, state, unsaved, removed."""
+        """One row per definition, sorted by reference: reference, kind, title, state, unsaved, removed, and
+        generation for a dataset, step, recipe or benchmark that has one (spec-generations.md)."""
         states = self._states()
         query = f'SELECT {_REFERENCE_SQL}, kind, title, unsaved, removed FROM {{schema}}.definitions'
         rows = (self._execute(query + ' WHERE kind = %s', (kind,)) if kind is not None else self._execute(query)).fetchall()
-        return [{'reference': reference, 'kind': row_kind, 'title': title, 'state': states[reference],
-                 'unsaved': unsaved, 'removed': removed}
-                for reference, row_kind, title, unsaved, removed in sorted(rows)]
+        labelled = generations.labelled(self._documents(removed=False))
+        found = [{'reference': reference, 'kind': row_kind, 'title': title, 'state': states[reference],
+                  'unsaved': unsaved, 'removed': removed}
+                 for reference, row_kind, title, unsaved, removed in sorted(rows)]
+        for row in found:   # only where there is one (spec-generations.md section 3)
+            if row['reference'] in labelled:
+                row['generation'] = labelled[row['reference']]
+        return found
 
     def definition(self, reference):
-        """The text, document and state of one definition, what it uses and what uses it (with roles)."""
+        """The text, document and state of one definition, what it uses and what uses it (with roles), and its
+        data generation when it has one (spec-generations.md)."""
         directory, name = _split(reference)
         row = self._execute('SELECT kind, title, text, document, unsaved, removed FROM {schema}.definitions '
                             'WHERE directory = %s AND name = %s', (directory, name)).fetchone()
@@ -693,10 +700,15 @@ class Project:
                              (reference,)).fetchall()
         used_by = self._execute('SELECT from_ref, role FROM {schema}.edges WHERE to_ref = %s ORDER BY from_ref, role',
                                 (reference,)).fetchall()
-        return {'reference': reference, 'kind': kind, 'title': title, 'text': text, 'document': document,
-                'state': self._states()[reference], 'unsaved': unsaved, 'removed': removed,
-                'uses': [{'reference': target, 'role': role} for target, role in uses],
-                'used_by': [{'reference': source, 'role': role} for source, role in used_by]}
+        found = {'reference': reference, 'kind': kind, 'title': title, 'text': text, 'document': document,
+                 'state': self._states()[reference], 'unsaved': unsaved, 'removed': removed,
+                 'uses': [{'reference': target, 'role': role} for target, role in uses],
+                 'used_by': [{'reference': source, 'role': role} for source, role in used_by]}
+        if kind in ('dataset', 'step', 'recipe', 'benchmark') and not removed:   # spec-generations.md section 3
+            generation = generations.labelled(self._documents(removed=False)).get(reference)
+            if generation is not None:
+                found['generation'] = generation
+        return found
 
     def graph(self):
         """The definitions not removed, with kind and state, and the edges between them."""

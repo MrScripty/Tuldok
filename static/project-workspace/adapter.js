@@ -178,6 +178,7 @@ window.TuldokProject = (() => {
       group: groups.has(m.group) ? m.group : null, kind: kinds.has(m.change) ? m.change : UNSET,
       parent: m.derived_from || null, trainedAt: m.trained_at, state: m.state, adopted: m.adopted, card: m.card,
       value: m.value, count: m.count, benchmarks: m.benchmarks, unsaved: !!m.unsaved,
+      generation: m.generation || null,   // its data generation, when it has one (spec-generations.md)
       // Never built: drawn hollow and dashed (spec-w3 section 3.2).
       planned: m.state === 'not-built' && !m.adopted && !m.trained_at
     }));
@@ -186,7 +187,7 @@ window.TuldokProject = (() => {
       id: d.reference, title: d.title, short: d.short || null, description: d.description || '',
       group: groups.has(d.group) ? d.group : null, kind: kinds.has(d.change) ? d.change : UNSET,
       parent: d.parent, trainedAt: null, state: 'draft', adopted: false, card: null,
-      value: null, count: null, benchmarks: 0, unsaved: false, planned: true, draft: true
+      value: null, count: null, benchmarks: 0, unsaved: false, planned: true, draft: true, generation: null
     });
     const byId = new Map(models.map(m => [m.id, m]));
     for (const m of models) if (m.parent && !byId.has(m.parent)) m.parent = null;

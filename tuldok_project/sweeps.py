@@ -343,7 +343,7 @@ def trial_document(sweep_reference, sweep, recipe_reference, recipe, number, val
     document = {'format': documents.DEFINITION_FORMAT, 'kind': 'recipe',
                 'title': f'{sweep["title"]} · trial {number}'[:200],
                 'description': f'Trial {number} of {sweep_reference}: {shown}.'[:4000]}
-    for key in ('model', 'group'):
+    for key in ('model', 'group', 'generations'):   # generations: the run's inputs come along (spec-generations.md)
         if key in recipe:
             document[key] = recipe[key]
     document['labels'] = {'short': f'T{number}'}
