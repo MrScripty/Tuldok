@@ -5,7 +5,9 @@ rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
 section 2 of spec-w3.md (draft_branch, revert_definition), the five of
 section 3 of spec-d1.md (records, record, inside, array_slice, array_summary),
 the three of section 3 of spec-d2.md (weights, weights_compare,
-array_tiles), the two of section 2 of spec-d6.md (fields, field_compare),
+array_tiles), the two of section 2 of spec-d6.md (fields, field_compare), the three of
+section 3 of docs/plans/training-and-curation/spec-t2.md (model_graph,
+model_graph_overlay, model_graph_compare),
 the five of section 5 of spec-d4.md (annotation_tasks,
 annotated_records, annotation, set_annotation, revert_annotations) and the
 five of sections 2 and 4 of spec-d5.md (endpoint, set_endpoint,
@@ -32,6 +34,8 @@ ANNOTATION_ITEMS = 200      # items of one set_annotation
 REVERT_RECORDS = 10_000     # records named by one revert_annotations
 ENDPOINT_CHARACTERS = 2048  # an address of a Pumas endpoint (local.ENDPOINT_LIMIT)
 INSTRUCTION_CHARACTERS = 4000
+GRAPH_MODULES = 2000        # modules named open or closed by one model_graph (spec-t2.md section 3)
+GRAPH_OVERLAYS = ('parameters', 'outputs', 'operations', 'change')
 
 
 @dataclass(frozen=True)
@@ -105,6 +109,9 @@ SAVE = ('written', 'deleted', 'results_written', 'results_deleted', 'annotations
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
 STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
 ENDPOINT = ('address', 'answered', 'version', 'models', 'problem')
+MODEL_GRAPH = ('path', 'format', 'complete', 'reason', 'method', 'torch', 'model', 'inputs', 'notes', 'counts',
+               'modules', 'tensors', 'depth', 'open', 'nodes', 'edges')
+_MODULE_PATHS = {'type': 'array', 'items': {'type': 'string', 'maxLength': 1024}, 'maxItems': GRAPH_MODULES}
 
 
 OPERATIONS = (
@@ -222,6 +229,20 @@ OPERATIONS = (
                          axis={'type': 'integer', 'minimum': 0, 'maximum': 3},
                          index={'type': 'array', 'items': {'type': 'integer', 'minimum': 0}, 'maxItems': 4},
                          mean_free=_FLAG), FIELD_COMPARE),
+    Operation('model_graph', "Read the structure a finished run's script recorded (model-graph.json): its "
+              'operations and the edges between them, folded to a depth of the module tree with modules opened or '
+              'closed by path, and the module tree.', 'inspect', False,
+              _arguments(['run'], run=_RUN, depth={'type': 'integer', 'minimum': 0, 'maximum': 64},
+                         open=_MODULE_PATHS, close=_MODULE_PATHS), MODEL_GRAPH),
+    Operation('model_graph_overlay', "Read a number per module and per operation of a finished run's model graph: "
+              'parameters, output values, operations, or the relative change of the weights under it against the '
+              'weights it started from or another run\'s.', 'inspect', False,
+              _arguments(['run', 'kind'], run=_RUN, kind={'type': 'string', 'enum': list(GRAPH_OVERLAYS)},
+                         against={'type': 'string', 'enum': ['start', 'run']}, other_run=_RUN, path=_ADDRESS,
+                         other_path=_ADDRESS), ('kind', 'unit', 'modules', 'nodes', 'low', 'high')),
+    Operation('model_graph_compare', "Match the modules of two finished runs' model graphs by path: the same, "
+              'changed (class or tensor shapes), added or missing.', 'inspect', False,
+              _arguments(['run', 'other_run'], run=_RUN, other_run=_RUN), ('modules', 'counts')),
     Operation('annotation_tasks', 'List the annotation tasks, each with its dataset, current product and counts of '
               'its records by the state of their annotations.', 'inspect', False, _arguments(), ('tasks',)),
     Operation('annotated_records', "Read one page of the records of a task's dataset with their annotations, "
