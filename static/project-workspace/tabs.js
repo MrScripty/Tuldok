@@ -103,11 +103,21 @@
     return Promise.all(defs.map(async d => { const full = await P.read('definition', { reference: d.reference }); const doc = full.document || {}; return { reference: d.reference, title: d.title, benchmark: typeof doc.benchmark === 'string' ? nameOfRef(doc.benchmark) : null, form: doc.form }; }));
   }
   async function benchmarkList() {
-    const [overview, defs] = await Promise.all([P.read('results_overview'), P.read('definitions', { kind: 'benchmark' })]);
+    const [overview, defs, charts] = await Promise.all([P.read('results_overview'), P.read('definitions', { kind: 'benchmark' }), chartIndex()]);
     const titles = new Map(defs.definitions.map(d => [nameOfRef(d.reference), d]));
-    return overview.benchmarks.map(b => ({ ...b, title: titles.has(b.benchmark) ? titles.get(b.benchmark).title : b.benchmark, state: titles.has(b.benchmark) ? titles.get(b.benchmark).state : null }));
+    return overview.benchmarks.map(b => ({ ...b, title: titles.has(b.benchmark) ? titles.get(b.benchmark).title : b.benchmark, state: titles.has(b.benchmark) ? titles.get(b.benchmark).state : null,
+      forms: charts.filter(c => c.benchmark === b.benchmark).map(c => c.form) }));
   }
-  const pickBenchmark = (list, wanted) => (list.find(b => b.benchmark === wanted) || list.find(b => b.subjects_with_results > 0) || list[0] || null);
+  /**
+   * The benchmark the tab shows: the one asked for; else, among those with
+   * results, the first with an accuracy-against-time chart, then the first
+   * with any chart, then the first; else the first of all.
+   */
+  const pickBenchmark = (list, wanted) => {
+    const withResults = list.filter(b => b.subjects_with_results > 0);
+    return list.find(b => b.benchmark === wanted) || withResults.find(b => (b.forms || []).includes('tradeoff'))
+      || withResults.find(b => (b.forms || []).length) || withResults[0] || list[0] || null;
+  };
   /**
    * One benchmark as the tab shows it: its metrics, its subjects (each with
    * the model of its recipe from the map, its values per metric for every

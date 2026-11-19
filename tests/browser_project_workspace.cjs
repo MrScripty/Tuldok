@@ -142,6 +142,14 @@ async function otherTabs(map) {
   for (const theme of ['light', 'dark']) {
     // Benchmarks: pick, hover and focus a point, sort, compare two, open one.
     await open(theme, 'benchmarks'); await settled('benchmarks');
+    if (theme === 'light') {   // opened without a choice: a benchmark with results and an accuracy-against-time chart, if there is one
+      const has = (name, form) => Object.values(chartBench).some(c => c.benchmark === name && (!form || c.form === form));
+      const withResults = overview.benchmarks.filter(b => b.subjects_with_results > 0);
+      const expected = (withResults.find(b => has(b.benchmark, 'tradeoff')) || withResults.find(b => has(b.benchmark)) || withResults[0] || overview.benchmarks[0]).benchmark;
+      const shown = await evaluate(`document.querySelector('#main select[data-key="benchmark"]').value`);
+      assert.equal(shown, expected, 'The tab opens on a benchmark with results and an accuracy-against-time chart');
+      check('Benchmarks opens on ' + shown);
+    }
     await choose('#main select[data-key="benchmark"]', bench);
     const drawn = await evaluate(`({ charts: document.querySelectorAll('#main .bench-chart').length, svgs: document.querySelectorAll('#main .bench-chart svg').length, rows: document.querySelectorAll('#main .bench-all tbody tr').length, coverage: document.querySelector('#main .coverage').innerText, heads: [...document.querySelectorAll('#main .bench-chart .sect')].map(e => e.innerText.replace(/\\n/g, ' ')) })`);
     assert.equal(drawn.charts, Object.values(chartBench).filter(c => c.benchmark === bench).length, 'One section per chart of ' + bench);
