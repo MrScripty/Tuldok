@@ -19,7 +19,7 @@
 // shows the conflict panel.
 (() => {
   const P = window.TuldokProject, S = window.LabScreens, A = window.LabActions;
-  const TABS = [['map', 'Map'], ['data', 'Data'], ['annotate', 'Annotate'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['compare', 'Compare'], ['analysis', 'Analysis'], ['overview', 'Overview']];
+  const TABS = [['map', 'Map'], ['data', 'Data'], ['annotate', 'Annotate'], ['train', 'Train'], ['sweeps', 'Sweeps'], ['benchmarks', 'Benchmarks'], ['compare', 'Compare'], ['analysis', 'Analysis'], ['overview', 'Overview']];
   const POLL_MS = 2000, IDLE_MS = 15000;   // how often the page asks again while something builds, and while nothing does
   const ACTIVE_RUN = ['queued', 'running'], ACTIVE_REQUEST = ['queued', 'running'];
   const $ = id => document.getElementById(id);
@@ -65,7 +65,7 @@
   };
   // The settings of the Analysis tab the address keeps, so that a reload opens it where it was (spec-d6 section 3).
   // And those of the Training block of a run's drawer (spec-t1 section 6): the runs compared, the series, smoothing, log scale, across.
-  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree', 'trWith', 'trSeries', 'trSmooth', 'trLog', 'trX', 'cmpCase', 'cmpAxis', 'cmpIndex', 'cmpMeanFree'];
+  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree', 'trWith', 'trSeries', 'trSmooth', 'trLog', 'trX', 'cmpCase', 'cmpAxis', 'cmpIndex', 'cmpMeanFree', 'sweep'];   // sweep: the Sweeps tab's (spec-t7)
   const COMPARE_MOST = 4;
   /** Writes the benchmark, the compare set and the Analysis tab's settings into the address without reloading, so the view can be shared. */
   function address() {

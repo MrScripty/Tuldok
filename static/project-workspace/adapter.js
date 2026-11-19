@@ -16,7 +16,8 @@ window.TuldokProject = (() => {
     { id: 'training-policy', label: 'Training policy' },
     { id: 'architecture', label: 'Architecture' },
     { id: 'refinement', label: 'Refinement' },
-    { id: 'component', label: 'Component' }
+    { id: 'component', label: 'Component' },
+    { id: 'sweep-trial', label: 'Sweep trial' }   // a trial a sweep made (spec-t7)
   ];
   const UNSET = 'unset';   // the class and filter key of a model without a kind of change
   const kindLabel = id => (KINDS.find(k => k.id === id) || { label: 'Kind not set' }).label;
