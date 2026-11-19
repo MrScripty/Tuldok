@@ -747,6 +747,9 @@ def execute(project_folder, made, *, request_id=None, extra_env=None, scratch=Fa
                               Jsonb(sweep['budget']), os.getpid(), builds.boot_id()))
         ended, problem = _run(build, folder, dsn, connection, schema, run_id, reference, sweep, recipe_reference,
                               recipe, made, stop, clock)
+        final = {'failed': 'failed', 'cancelled': 'cancelled'}.get(ended, 'finished')
+        connection.execute(_q(schema, '''UPDATE {schema}.sweep_runs SET state = %s, ended = %s, problem = %s,
+                                             finished_at = now() WHERE id = %s'''), (final, ended, problem, run_id))
     except BaseException as exc:
         connection.execute(_q(schema, '''UPDATE {schema}.sweep_runs SET state = 'failed', ended = 'failed',
                                              problem = %s, finished_at = now() WHERE id = %s'''),
@@ -757,10 +760,7 @@ def execute(project_folder, made, *, request_id=None, extra_env=None, scratch=Fa
     finally:
         with _ACTIVE_LOCK:
             _ACTIVE.discard(run_id)
-    final = {'failed': 'failed', 'cancelled': 'cancelled'}.get(ended, 'finished')
-    connection.execute(_q(schema, '''UPDATE {schema}.sweep_runs SET state = %s, ended = %s, problem = %s,
-                                         finished_at = now() WHERE id = %s'''), (final, ended, problem, run_id))
-    connection.close()
+        connection.close()
     result['ok'] = final == 'finished'
     return result
 
