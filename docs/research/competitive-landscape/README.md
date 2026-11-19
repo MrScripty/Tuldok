@@ -17,7 +17,7 @@ Researched 2026-11-18. Four areas were surveyed in parallel: annotation and data
 
 **Three things only Tuldok has**, confirmed by searching the code of the open tools and the documentation of the closed ones:
 
-1. **An accuracy-against-time chart with the Pareto frontier.** No tracker (MLflow, ClearML, DVC, ZenML, Aim: a code search for "pareto" finds nothing), no harness (lm-eval, HELM, Inspect, Promptfoo, MLPerf) and no physics benchmark (PDEBench, The Well, PhysicsNeMo-CFD) draws one. MLPerf sets an accuracy pass mark and then ranks by speed; HELM and Promptfoo add speed as a column; W&B can be made to draw one with a custom Vega panel. For a project with two targets, accuracy-first models and real-time models, this is the central view, and it is Tuldok's.
+1. **An accuracy-against-time chart with the Pareto frontier.** No tracker draws one (MLflow, ClearML, DVC, ZenML, Aim: the word "pareto" appears in MLflow only inside its GEPA prompt optimiser, and in ClearML's SDK only where `HyperParameterOptimizer` sorts multi-objective trials by successive Pareto fronts, a ranking with no chart; see section 5a), no harness (lm-eval, HELM, Inspect, Promptfoo, MLPerf) and no physics benchmark (PDEBench, The Well, PhysicsNeMo-CFD) draws one. MLPerf sets an accuracy pass mark and then ranks by speed; HELM and Promptfoo add speed as a column; W&B can be made to draw one with a custom Vega panel. For a project with two targets, accuracy-first models and real-time models, this is the central view, and it is Tuldok's.
 2. **A family tree of models.** Others draw how files were produced: W&B artifact lineage, ClearML parent tasks, ZenML pipeline DAGs, DVC `dvc dag`, Valohai data heritage, Ansys SimAI's 2026 R1 Build panel. None shows which model derives from which with the kind of change, groups and comparisons, as the Map does. The nearest real model tree is the Hugging Face Hub's `base_model` tree, outside these tools.
 3. **A project that is a Git folder of definitions only,** with the working copy in a database, weights and products kept out of Git on the machine, and no hash lockfiles. Only DVC (`dvc.yaml`, plots declared in files, experiments as Git refs) and Valohai (`valohai.yaml`) keep definitions in Git, and DVC rests on hash lockfiles. Charts declared as files: Tuldok and DVC only.
 
@@ -203,6 +203,24 @@ PhysicsNeMo and NeuralOperator models as a recipe's training code; PhiFlow, Warp
 - **Copyleft:** DeepXDE is LGPL-2.1 and BlenderProc is GPL-3.
 - **Source-available, not open source:** SDV is BSL, lakeFS is BSL from 2026-09-22, and the ClearML server is SSPL.
 - **Fine with attribution:** PhysicsNeMo, NeuralOperator, The Well, Netron, WeightWatcher, Label Studio's open edition, CVAT, FiftyOne's open edition and MLflow are permissive.
+
+## 5a. Checked by hand in the clones
+
+The four areas were researched by separate agents. The claims this document leans on were then checked again directly in the cloned code on 2026-11-18:
+
+| Claim | Where | Result |
+| --- | --- | --- |
+| CVAT removed its Git sync | `cvat/apps/dataset_repo/README.md` | Confirmed: "…synchronizing CVAT tasks with Git repositories, which was removed." |
+| No tracker draws an accuracy-vs-time Pareto chart | whole-word `pareto` in mlflow, clearml, dvc, aim, zenml | **Corrected.** Earlier wording said a search finds nothing. MLflow: only `genai/optimize/optimizers/gepa_optimizer.py`, `genai/judges/optimizers/gepa.py` and their protos and docs (prompt optimisation). ClearML: `automation/optimization.py:1207`, trials sorted by Pareto fronts. DVC, Aim, ZenML: none. No chart in any of them; a case-insensitive search also matches `compareTo…` names, which explains the agent's false positives |
+| Label Studio Community has no point clouds | `web/libs/editor/src`, for `lidar`, `pointcloud`, `.pcd` | Confirmed: no file |
+| PDEBench's metrics file is not MIT | `pdebench/models/metrics.py`, header | Confirmed: NEC Laboratories Europe copyright header, "All rights reserved" |
+| Netron reads pickles with its own reader | `netron/source/python.js:3895` | Confirmed: `registerType('pickle.Unpickler', …)` in JavaScript |
+| Argilla adds no new features | `argilla/README.md` | Confirmed: "we won't be adding new features going forward" |
+| MLflow has a built-in MCP server | `mlflow/mcp/server.py` | Confirmed |
+| The Well renders true / predicted / error videos | `the_well/benchmark/metrics/plottable_data.py:227` | Confirmed: `make_video` |
+| PhysicsNeMo's `benchmarks/` times library code | `physicsnemo/benchmarks/` | Confirmed: an ASV-style suite (`run_benchmarks.sh`), no model accuracy |
+
+Claims about closed products, prices and 2026 company events were not checked again beyond the sources each area cites. They are listed below where they could not be confirmed.
 
 ## 5. Not verified
 
