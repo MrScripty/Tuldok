@@ -29,7 +29,9 @@ it outside the lock, through pumas.py: endpoint, set_endpoint and
 find_endpoints need no project at all (the address is a setting of the
 machine, in local.py's settings file), and suggestion_models and
 suggest_annotation find the task's product under the lock and read it and
-ask the endpoint after releasing it. Nothing here knows of HTTP or of the
+ask the endpoint after releasing it. Two of the three comparisons of
+spec-t3.md (intervals, model_compare) read the project under the lock and
+resample its per-case values after releasing it (comparing.py). Nothing here knows of HTTP or of the
 app's access layer.
 
 The worker (section 4) is one thread per service, started by start() and
@@ -57,8 +59,8 @@ import jsonschema
 import psycopg
 
 from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
-               documents, environments, inside, inside_fields, inside_graph, inside_weights, launcher, local, operations, plan,
-               pumas, store, training, workspace)
+               comparing, documents, environments, inside, inside_fields, inside_graph, inside_weights, launcher, local,
+               operations, plan, pumas, store, training, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
@@ -116,8 +118,10 @@ TRAINING_READS = {
 ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
 # The calls to the Pumas endpoint (spec-d5.md): each is made outside the service's lock; those that read a project
 # take the lock themselves, only for their database work.
-OUTSIDE_LOCK = ANNOTATION_READS + ('endpoint', 'set_endpoint', 'find_endpoints', 'suggestion_models',
-                                   'suggest_annotation')
+# The comparisons of spec-t3.md that resample per-case values: read under the lock, computed outside it.
+COMPARING_READS = ('intervals', 'model_compare')
+OUTSIDE_LOCK = ANNOTATION_READS + COMPARING_READS + ('endpoint', 'set_endpoint', 'find_endpoints',
+                                                     'suggestion_models', 'suggest_annotation')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
@@ -489,6 +493,21 @@ class Service:
         if arguments.get('svg'):
             result['svg'] = charts.render_svg(data, theme=arguments.get('theme', 'light'))
         return result
+
+    def _intervals(self, arguments, actor):
+        with self._lock, self._open() as project:
+            gathered = comparing.gather_intervals(project, arguments['benchmark'])
+        return comparing.intervals(gathered)
+
+    def _model_compare(self, arguments, actor):
+        with self._lock, self._open() as project:
+            gathered = comparing.gather_compare(project, arguments['recipes'])
+        return comparing.model_compare(gathered, arguments.get('statistic', 'median'))
+
+    def _benchmark_axes(self, arguments, actor):
+        with self._open() as project:
+            gathered = comparing.gather_axes(project, arguments['benchmark'])
+        return comparing.benchmark_axes(gathered, arguments.get('statistic', 'median'))
 
     def _report(self, arguments, actor):
         with self._open() as project:

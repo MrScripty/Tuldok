@@ -21,6 +21,7 @@
   const { sect, cell, block, time, bytes, failure, modelState, graphFor, putInPlace, putDrawer, turn } = S.parts;
   const fmt = C.fmtSci;
   const STATISTICS = ['median', 'mean', 'p10', 'p90', 'min', 'max'];
+  const COMPARE_MOST = 4;   // models in the compare set (app.js keeps the same bound; spec-t3 section 5.1)
   const plural = (n, one, many) => n.toLocaleString('en-GB') + ' ' + (n === 1 ? one : many || one + 's');
   const nameOfRef = ref => ref.slice(ref.indexOf('/') + 1);
   const seconds = s => s == null ? '' : s < 1 ? '<1 s' : s < 90 ? Math.round(s) + ' s' : s < 5400 ? Math.round(s / 60) + ' min' : (s / 3600).toFixed(1) + ' h';
@@ -147,9 +148,19 @@
   // ---- Benchmarks: the screen -------------------------------------------------
   function benchmarks(main, aside, state, act, data) {
     const sel = state.sel.benchmarks || null, ui = state.ui;
-    paint(main, async () => { const list = await benchmarkList(); const b = pickBenchmark(list, state.benchmark); return { list, view: b ? await benchmarkView(b.benchmark, data.map) : null, picked: b }; }, (frag, { list, view, picked }, width) => {
+    const stat0 = STATISTICS.includes(ui.stat) ? ui.stat : 'median';
+    paint(main, async () => {
+      const list = await benchmarkList(), b = pickBenchmark(list, state.benchmark);
+      if (!b) return { list, view: null, picked: b };
+      // Parallel coordinates (parallel.js) are read with the tab; the intervals, which may take seconds to make the
+      // first time (spec-t3 section 2), only when they have already arrived: else after the tab is put in place.
+      const [view, axes] = await Promise.all([benchmarkView(b.benchmark, data.map), window.LabParallel ? P.read('benchmark_axes', { benchmark: b.benchmark, statistic: stat0 }).catch(error => ({ error })) : null]);
+      return { list, view, picked: b, axes, iv: P.peek('intervals', { benchmark: b.benchmark }) };
+    }, (frag, { list, view, picked, axes, iv }, width) => {
       if (!view) { frag.appendChild(h('p', 'empty', 'This project defines no benchmark.')); return; }
-      const stat = STATISTICS.includes(ui.stat) ? ui.stat : 'median', cmp = state.cmp.filter(k => view.byKey.has(k));
+      const stat = stat0, cmp = state.cmp.filter(k => view.byKey.has(k));
+      if (iv === undefined) P.read('intervals', { benchmark: view.name }).then(() => { if (state.screen === 'benchmarks' && main._view === 'benchmarks/') act.setUI('ivFor', view.name); }, () => { /* no intervals: the tab stays as it is */ });
+      const ivs = intervalIndex(iv);
       const bar = h('div', 'filters');
       bar.appendChild(select('Benchmark', list.map(b => [b.benchmark, b.title + ' · ' + plural(b.subjects_with_results, 'subject') + ' with results']), view.name, v => act.setBenchmark(v), 'benchmark'));
       bar.appendChild(kindChips(state, act, view.subjects.map(s => s.kind)));
@@ -170,11 +181,15 @@
       const show = visibleSubject(state), select_ = key => act.select(key === sel ? null : key);
       // Charts, by their form.
       if (!view.charts.length) frag.appendChild(h('p', 'empty bench-note', 'No chart is defined for this benchmark; every value is in the table below.'));
-      for (const c of view.charts) frag.appendChild(chartSection(c, view, { width, sel, onSelect: select_, show, frontierOnly: !!ui.frontierOnly, tables: !!ui.chartTables }));
+      for (const c of view.charts) frag.appendChild(chartSection(c, view, { width, sel, onSelect: select_, show, frontierOnly: !!ui.frontierOnly, tables: !!ui.chartTables, ivs }));
+      if (ivs.rows) frag.appendChild(h('p', 'small faint bench-desc bench-iv', 'Intervals: 95 % percentile bootstrap, ' + iv.resamples.toLocaleString('en-GB') + ' resamples of each subject\'s per-case values held here (seed ' + iv.seed + '); a dashed ring on the frontier: not told apart from a neighbour on both metrics.'));
+      // Parallel coordinates over the metrics and the recipe settings that vary (parallel.js, spec-t3 section 5.2).
+      if (axes && window.LabParallel && view.subjects.length >= 2) frag.appendChild(axes.error ? (() => { const d = h('section', 'pc'); d.appendChild(sect('Settings and metrics')); failure(d, axes.error); return d; })() : window.LabParallel.section(axes, view, state, act, width));
       // The compare set.
       if (cmp.length) frag.appendChild(compareSection(view, cmp, stat, act));
       // Every subject.
-      frag.appendChild(subjectTable(view, state, act, stat, sel, cmp));
+      frag.appendChild(subjectTable(view, state, act, stat, sel, cmp, ivs));
+      if (window.LabParallel) window.LabParallel.apply(frag, view, state);   // the ranges drawn on the axes
     });
     if (!sel) return closeDrawer(aside);
     benchmarkDrawer(aside, sel, state, act, data);
@@ -183,7 +198,7 @@
   /** The drawer of a selected subject: the model's drawer when it is made from a recipe of the map, with Compare. */
   function benchmarkDrawer(aside, sel, state, act, data) {
     const isModel = data.map.byId.has(sel);
-    if (isModel) S.inspectorModel(aside, sel, act, data, ins => compareActs(ins, sel, state, act, true));
+    if (isModel) S.inspectorModel(aside, sel, act, data, ins => compareActs(ins, sel, state, act, 'benchmarks'));
     else if (aside._for !== sel || aside._again) {
       const name = sel.startsWith('subject:') ? sel.slice('subject:'.length) : sel;
       drawer(aside, sel, async () => { const list = await benchmarkList(); const b = pickBenchmark(list, state.benchmark); return b ? benchmarkView(b.benchmark, data.map) : null; }, (ins, view) => {
@@ -193,20 +208,35 @@
         ins.appendChild(h('p', 'note', s.recipe ? 'Made from ' + s.recipe + ', which is not on the map.' : 'Not made from a recipe of this project.'));
         const dl = h('dl', 'metrics'); for (const m of view.metrics) dl.appendChild(cell(m.title, fmt(valueOf(s, m.id, 'median')), m.units && m.units !== '1' ? m.units : '')); ins.appendChild(dl);
         ins.appendChild(h('p', 'note', 'Medians over ' + (s.count == null ? 'no cases' : plural(s.count, 'case')) + ' of ' + view.title + '.'));
-        compareActs(ins, sel, state, act, false);
+        compareActs(ins, sel, state, act, 'subject');
       });
     }
-    const ins = aside.querySelector('.inspector'); if (ins) compareActs(ins, sel, state, act, isModel);
+    const ins = aside.querySelector('.inspector'); if (ins) compareActs(ins, sel, state, act, isModel ? 'benchmarks' : 'subject');
   }
-  /** Compare, kept current on every render (a drawer is built once per selection). */
-  function compareActs(ins, sel, state, act, isModel) {
+  /**
+   * Compare, kept current on every render (a drawer is built once per selection), in a model's drawer on the
+   * Benchmarks tab, the Map and the Compare tab (where: 'benchmarks', 'subject', 'map', 'compare'): adds the model
+   * to the compare set or takes it out, opens the Compare tab once the set holds two, and On the map.
+   */
+  function compareActs(ins, sel, state, act, where) {
     const old = ins.querySelector('.bench-acts'); if (old) old.remove();
     const acts = h('div', 'actions bench-acts'), on = state.cmp.includes(sel);
-    const b = button('btn', on ? 'Remove from compare' : 'Compare', () => act.toggleCompare(sel)); b.disabled = !on && state.cmp.length >= 3; acts.appendChild(b);
-    if (isModel) acts.appendChild(button('btn ghost', 'On the map', () => act.go('map', sel)));
+    const b = button('btn', on ? 'Remove from compare' : 'Compare', () => act.toggleCompare(sel)); b.disabled = !on && state.cmp.length >= COMPARE_MOST; b.dataset.key = 'cmp-toggle-' + sel; acts.appendChild(b);
+    if (where !== 'compare' && state.cmp.length >= 2) { const o = button('btn ghost', 'Open Compare · ' + state.cmp.length, () => act.go('compare')); o.dataset.key = 'cmp-open'; acts.appendChild(o); }
+    if (where !== 'map' && where !== 'subject') acts.appendChild(button('btn ghost', 'On the map', () => act.go('map', sel)));
     const head = ins.querySelector('header'); head.after(acts);
   }
+  S.compareActs = compareActs;
 
+  /**
+   * The intervals answer (spec-t3 section 4) as the tab looks it up: of(subject, metric, statistic) gives [low, high]
+   * or null, frontiers by chart reference; rows is how many there are (0 while they have not arrived).
+   */
+  function intervalIndex(iv) {
+    const by = new Map(), frontiers = new Map();
+    if (iv) { for (const r of iv.intervals) by.set(r.subject + '\u0000' + r.metric, r); for (const f of iv.frontiers) frontiers.set(f.chart, f); }
+    return { rows: by.size, frontiers, of: (subject, metric, stat) => { const r = by.get(subject + '\u0000' + metric); return r && r[stat] ? r[stat] : null; } };
+  }
   /** One chart: its heading and population in words, the drawing by form (a panel per group value), and its table when asked. */
   function chartSection(c, view, o) {
     const sec = h('section', 'bench-chart'); sec.dataset.chart = c.reference;
@@ -230,15 +260,17 @@
       if (!s.points.length) { sec.appendChild(h('p', 'empty', 'No subject has a value here.')); continue; }
       sec.appendChild(host);
       if (d.form === 'tradeoff') {
-        const pts = s.points.map(p => ({ ...point(p), x: p.x, y: p.value, frontier: p.frontier, rows: tipRows(p, [{ v: fmt(p.x), l: d.metric_x.title + units(d.metric_x) }, { l: p.frontier ? 'on the frontier' : '' }]) }));
+        const front = !d.group && o.ivs.frontiers.get(c.reference), apart = p => front ? front.pairs.filter(q => q.separated === false && q.subjects.includes(p.subject)).map(q => q.subjects.find(x => x !== p.subject)) : [];
+        const pts = s.points.map(p => { const away = p.frontier ? apart(p) : []; return { ...point(p), x: p.x, y: p.value, frontier: p.frontier, nsig: away.length > 0, rows: tipRows(p, [{ v: fmt(p.x), l: d.metric_x.title + units(d.metric_x) }, { l: p.frontier ? 'on the frontier' + (away.length ? ', not told apart from ' + away.join(', ') : '') : '' }]) }; });
         C.scatter(host, pts, { width: o.width, height: 340, xTitle: d.metric_x.title + units(d.metric_x), yTitle: d.metric.title + units(d.metric), xName: d.metric_x.title, yName: d.metric.title, xBetter: d.metric_x.better, yBetter: d.metric.better, selected: o.sel, onSelect: o.onSelect, dimOff: o.frontierOnly });
-        host.appendChild(legend(pts, 'Line: the frontier, where no other subject is at least as good on both and better on one'));
+        host.appendChild(legend(pts, 'Line: the frontier, where no other subject is at least as good on both and better on one' + (pts.some(p => p.nsig) ? '; dashed ring: not told apart from a neighbour by the per-case values' : '')));
       } else if (d.form === 'progression') {
         const pts = s.points.map(p => ({ ...point(p), y: p.value, best: p.best_so_far, rows: tipRows(p, [{ v: fmt(p.best_so_far), l: 'best so far' }, { l: p.trained_at ? 'trained ' + P.day(p.trained_at) : 'no training date' }]) }));
         C.progression(host, pts, { width: o.width, height: 240, yTitle: d.metric.title + units(d.metric), selected: o.sel, onSelect: o.onSelect });
         host.appendChild(legend(pts, 'Step line: the best so far, ' + better(d.metric)));
       } else {
-        const pts = s.points.map(p => ({ ...point(p), y: p.value, rows: tipRows(p) }));
+        const ci = p => !d.group && o.ivs.of(p.subject, d.metric.id, d.statistic);
+        const pts = s.points.map(p => { const e = ci(p); return { ...point(p), y: p.value, lo: e ? e[0] : null, hi: e ? e[1] : null, rows: tipRows(p, e ? [{ v: fmt(e[0]) + ' – ' + fmt(e[1]), l: '95 % interval' }] : []) }; });
         C.ranking(host, pts, { width: o.width, yTitle: d.metric.title + units(d.metric), selected: o.sel, onSelect: o.onSelect });
         host.appendChild(legend(pts, 'Best first, ' + better(d.metric)));
       }
@@ -285,13 +317,15 @@
     t.appendChild(tb); const w = wrapTable(t);
     const foot = h('p', 'small faint bench-desc', 'Marked: the best value of each column.'); const box = h('div'); box.appendChild(w); box.appendChild(foot); return box;
   }
-  /** Up to three subjects side by side: every metric, with the change from the first. */
+  /** Up to four subjects side by side: every metric, with the change from the first. */
   function compareSection(view, cmp, stat, act) {
-    const sec = h('section', 'bench-cmp'); sec.appendChild(sect('Compare', cmp.length + ' of 3'));
+    const sec = h('section', 'bench-cmp'); sec.appendChild(sect('Compare', cmp.length + ' of ' + COMPARE_MOST));
     const list = cmp.map(k => view.byKey.get(k));
     const chips = h('div', 'cmp-chips');
     list.forEach((s, i) => { const c = h('span', 'c s' + (i + 1)); c.appendChild(h('i')); c.appendChild(document.createTextNode(s.full)); const x = button(null, '×', () => act.toggleCompare(s.key)); x.setAttribute('aria-label', 'Remove ' + s.full); c.appendChild(x); chips.appendChild(c); });
-    chips.appendChild(button('btn sm ghost', 'Clear', () => act.clearCompare())); sec.appendChild(chips);
+    chips.appendChild(button('btn sm ghost', 'Clear', () => act.clearCompare()));
+    if (cmp.length >= 2) { const o = button('btn sm', 'Open Compare', () => act.go('compare')); o.dataset.key = 'bench-open-compare'; chips.appendChild(o); }
+    sec.appendChild(chips);
     const t = h('table', 'tv cmpt'); t.appendChild(headRow([['']].concat(list.map(s => [s.full, 'n'])))); const tb = h('tbody'), base = list[0];
     for (const m of view.metrics) {
       const tr = h('tr'); tr.appendChild(h('td', null, m.title + units(m) + ' · ' + stat));
@@ -309,7 +343,7 @@
     return sec;
   }
   /** Every subject of the benchmark, sortable by any column; a row opens the subject, its box adds it to the compare set. */
-  function subjectTable(view, state, act, stat, sel, cmp) {
+  function subjectTable(view, state, act, stat, sel, cmp, ivs) {
     const sec = h('section', 'bench-all'), show = visibleSubject(state);
     const rows = view.subjects.filter(s => show(s) && (!state.ui.resultsOnly || view.metrics.some(m => valueOf(s, m.id, stat) != null)));
     const sort = state.ui.sort || { key: view.metrics.length ? 'm:' + view.metrics[0].id : 'full', dir: 1 };
@@ -332,13 +366,17 @@
     const tb = h('tbody');
     for (const s of rows) {
       const row = h('tr', 'rowbtn' + (s.key === sel ? ' is-sel' : '')); row.dataset.subject = s.name; row.addEventListener('click', () => act.select(s.key === sel ? null : s.key));
-      const tdc = h('td'), cb = h('input'); cb.type = 'checkbox'; cb.checked = cmp.includes(s.key); cb.disabled = !cb.checked && cmp.length >= 3; cb.dataset.key = 'cmp-' + s.key; cb.setAttribute('aria-label', 'Compare ' + s.full);
+      const tdc = h('td'), cb = h('input'); cb.type = 'checkbox'; cb.checked = cmp.includes(s.key); cb.disabled = !cb.checked && state.cmp.length >= COMPARE_MOST; cb.dataset.key = 'cmp-' + s.key; cb.setAttribute('aria-label', 'Compare ' + s.full);
       cb.addEventListener('click', ev => { ev.stopPropagation(); act.toggleCompare(s.key); }); tdc.appendChild(cb); row.appendChild(tdc);
       row.appendChild(h('td', 'ck', s.model && s.model.short ? s.model.short : ''));
       const nt = h('td'); const nb = button('linkish', s.model ? s.model.title : s.title, ev => { ev.stopPropagation(); act.select(s.key === sel ? null : s.key); }); nb.dataset.key = 'open-' + s.key; nt.appendChild(nb); row.appendChild(nt);
       const kt = h('td'); kt.appendChild(s.model ? h('span', 'chip ' + s.kind, P.kindLabel(s.kind)) : h('span', 'small faint', 'not on the map')); row.appendChild(kt);
       row.appendChild(h('td', 'small faint nowrap grp', s.group));
-      for (const m of view.metrics) row.appendChild(h('td', 'n', valueOf(s, m.id, stat) == null ? '' : fmt(valueOf(s, m.id, stat))));
+      for (const m of view.metrics) {
+        const v = valueOf(s, m.id, stat), td = h('td', 'n', v == null ? '' : fmt(v)), e = v == null ? null : ivs.of(s.name, m.id, stat);
+        if (e) { const ci = h('span', 'ci', fmt(e[0]) + ' – ' + fmt(e[1])); ci.title = 'The 95 % interval of the ' + stat + ' from the per-case values'; td.appendChild(ci); td.dataset.low = String(e[0]); td.dataset.high = String(e[1]); }
+        row.appendChild(td);
+      }
       row.appendChild(h('td', 'n', s.count == null ? '' : String(s.count))); row.appendChild(h('td', 'small faint', s.perCase ? 'held here' : ''));
       tb.appendChild(row);
     }

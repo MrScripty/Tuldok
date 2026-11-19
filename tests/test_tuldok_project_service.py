@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 69)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, of section 3 of spec-t2.md, and of section 4 of spec-t1.md
+        self.assertEqual(len(names), 72)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, of section 3 of spec-t2.md, of section 4 of spec-t1.md, and of section 4 of spec-t3.md
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -220,6 +220,8 @@ class Reads(ServiceCase):
             'training': {'run': run_id}, 'training_series': {'run': run_id, 'series': [{'name': 'loss'}]},
             'training_histograms': {'run': run_id, 'name': 'w', 'kind': 'weights'},
             'training_samples': {'run': run_id}, 'training_sample': {'run': run_id, 'index': 0},
+            'model_compare': {'recipes': ['recipes/fit-a', 'recipes/fit-b']}, 'benchmark_axes': {'benchmark': 'score'},
+            'intervals': {'benchmark': 'benchmarks/score'},
             'annotation_tasks': {}, 'annotated_records': {'task': 'none-here'},
             'annotation': {'task': 'none-here', 'record': 'r1'},
             'endpoint': {}, 'find_endpoints': {}, 'suggestion_models': {'task': 'none-here'},

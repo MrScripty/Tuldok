@@ -56,6 +56,25 @@ window.LabFields = (() => {
    * person's place in it and its first slice.
    */
   async function read(recipe, ui) {
+    const found = await keptCases(recipe);
+    if (!found || found.none) return found;
+    const cases = found.cases;
+    const chosen = cases.find(c => c.key === ui.anaCase) || cases.find(c => c.comparable) || cases[0];
+    const out = { cases, chosen, view: null, cmp: null, error: null };
+    if (chosen.comparable) {
+      out.view = viewFor(chosen, !ui.anaCase || chosen.key === ui.anaCase ? ui : {});
+      try { out.cmp = await R.fieldCompare(chosen.run, argsOf(chosen, out.view)); } catch (error) { out.error = error; }
+    }
+    return out;
+  }
+
+  /**
+   * The cases kept by every current product of a recipe's model: null when it has no current product, { none } when
+   * none of them keeps fields (with the first refusal, or empty when an index lists no case), else { cases }, each
+   * case as fields lists it with its run, subject, key, the run's reported figures and a label. Shared with the
+   * Compare tab (compare.js, spec-t3 section 5.1).
+   */
+  async function keptCases(recipe) {
     if (!recipe) return null;
     const products = (await P.read('products', { reference: recipe })).products.filter(p => p.run_id);
     if (!products.length) return null;
@@ -65,13 +84,7 @@ window.LabFields = (() => {
     const several = kept.length > 1;
     const cases = kept.flatMap(g => g.f.cases.map(c => Object.assign({}, c, { run: g.p.run_id, subject: g.p.subject || '', key: keyOf(g.p.run_id, c.entry, c.case), reported: g.f.reported, label: c.name + (several && g.p.subject ? ' · ' + g.p.subject : '') })));
     if (!cases.length) return { none: true, empty: true, run: kept[0].p.run_id };
-    const chosen = cases.find(c => c.key === ui.anaCase) || cases.find(c => c.comparable) || cases[0];
-    const out = { cases, chosen, view: null, cmp: null, error: null };
-    if (chosen.comparable) {
-      out.view = viewFor(chosen, !ui.anaCase || chosen.key === ui.anaCase ? ui : {});
-      try { out.cmp = await R.fieldCompare(chosen.run, argsOf(chosen, out.view)); } catch (error) { out.error = error; }
-    }
-    return out;
+    return { cases };
   }
 
   // ---- The section ----------------------------------------------------------------------------------------------------
@@ -263,5 +276,8 @@ window.LabFields = (() => {
     ctx.figs.replaceChildren(...items);
   }
 
-  return { read, section };
+  // The parts the Compare tab draws its outputs with (compare.js): the cases, the person's place in one, the request's
+  // arguments, the axes' names and the colour scales.
+  const parts = { keptCases, viewFor, argsOf, axisNames, fixedAxes, sequential, diverging, PANEL_MOST };
+  return { read, section, parts };
 })();

@@ -797,6 +797,9 @@ def make_handler(dataset, observer=None):
                 })
                 assets.update({'/project-workspace': ('project-workspace.html', 'text/html'),
                                '/project-workspace/base.css': ('project-workspace/base.css', 'text/css'),
+                               '/project-workspace/compare.css': ('project-workspace/compare.css', 'text/css'),
+                               '/project-workspace/compare.js': ('project-workspace/compare.js', 'text/javascript'),
+                               '/project-workspace/parallel.js': ('project-workspace/parallel.js', 'text/javascript'),
                                '/project-workspace/adapter.js': ('project-workspace/adapter.js', 'text/javascript'),
                                '/project-workspace/charts.js': ('project-workspace/charts.js', 'text/javascript'),
                                '/project-workspace/markdown.js': ('project-workspace/markdown.js', 'text/javascript'),
