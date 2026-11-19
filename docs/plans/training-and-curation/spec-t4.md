@@ -177,3 +177,50 @@ Updating in place (spec-w4): the disputed list, the record and the decision are 
 ## 10. Out of scope
 
 A drawing editor (drawing masks, polygons, keypoints or 3-D boxes by hand); video files as records (frames are an array); agreement for `review` tasks; exporting sets to COCO or other formats; per-term confusion matrices; a set made by a person outside the kept set (a second person's set is an annotator's product like any other); weighting annotators.
+
+## As built
+
+What differs from the text above, and what was chosen where it was silent.
+
+### T4a, the types and the sidecars
+
+- **The fields a task's values are checked against** (`keypoints`, `skeleton`, `units`, `mask`, `sigma`) are passed as `annotations.task_fields(document)`; `value_problems`, `validate` and `read` take them, and the working copy's fingerprint of a task now includes them (the fingerprint of a task without them is unchanged, so no row is judged again on upgrade). `check` also refuses a skeleton naming a point that is not in `keypoints`.
+- **Sidecar names** are the first 16 hexadecimal characters of the SHA-256 and `.png` or `.npy`. The folder reader lists `annotations/<task>/` (names and sizes, nothing read); a file not named that way is an error, as a link or a subdirectory is. The store's listing skips such a directory when its task exists, and never compares it for changes on disk: content-addressed files are never rewritten.
+- **The byte formats** are in a new pure module, `annotation_payloads.py` (the step process imports it): a PNG reader for 8- and 16-bit greyscale with every row filter, a PNG writer, runs (`[value, count]`, row by row), and an `.npy` reader and writer (C order, floats and whole numbers; never unpickled). `rle` in a value is checked for its shape in a line, and against the image's size only where the size is known (an edit, a set's line in the step).
+- **A test changed:** `test_tuldok_project_annotations.py` used `polygons` as its example of an unknown task; it now uses `video`.
+- **Not checked against the record:** a JPEG's size in the step (PNG only); a sound's length in the step (the set reader in Tuldok checks it as before for `segments`; `timeseries` on a sound is checked when kept); `rle` in the folder check (the image's size is not known there).
+
+### T4b, the step `annotate`
+
+- **`run` in all four run schemas:** `step` gains `annotate`; `command`, `environment` and `env` are refused only for `import`, `freeze` and `generate`; `annotations` belongs to `freeze` or `annotate`. `check` asks for one input `records`, one task, exactly one of `run.command` and `settings.pumas`, `by` as section 3, `limit` and `options` in their bounds, and that the task annotates the input.
+- **The command's process.** Tuldok's step process (`python -m tuldok_project.steps annotate … --command-json …`) runs the command with `subprocess.call`, from the code snapshot, its argv filled and its program found as a build's are (`python` is the environment's interpreter). The command's environment is the run's without `PYTHONSAFEPATH` and `PYTHONPATH` (which make Tuldok's own code importable to the step); a `PYTHONPATH` the run's `env` set is given back to it. Its output goes to the run's log, so its progress lines are the run's. The task file is `<run>/tasks.json` (`{reference, document}`) and `<run>/task.json` (the document) for the command.
+- **Resume** takes the latest run of the same reference whose state is neither succeeded, running nor queued and whose definition text is the same, when its output holds `annotations.jsonl`.
+- **What is dropped and counted:** a line that is not JSON, not a line of section 3 (unknown keys, no record, no value), a record the input lacks, a value the task does not allow (null included), a sidecar missing, outside `files/` or not of the record's size or point count; a record annotated twice keeps its last valid line.
+- **The Pumas route** asks `pumas.suggest` record by record (`by.model` records model, profile and capability); `boxes` and `polygons` on an image are asked of `image_to_text` with an instruction naming the image's size and the terms, and the first JSON list in the answer (a fenced block too) is kept when it is a value of the task. The step fails when each of the first `min(10, records)` is refused. `pumas.routes` now offers this route to `suggest_annotation` and `suggestion_models` as well; the page still asks only for `text`, `class` and `tags` (`test_tuldok_project_pumas.py`'s table of routes was brought up to date). A plan marks an `annotate` with `pumas` blocked when no endpoint is set, as a `generate`.
+- **Not verified:** a real Pumas; polygons asked of a model (only boxes against the fake); cancelling a run while its command runs (the launcher stops the process group, as for any run); a set of many records.
+
+### T4c, agreement
+
+- As section 5. **Polygon IoU** is exact to the grid (1 px cells up to 128 px across, coarser above). **3-D IoU** clips the footprints with Sutherland–Hodgman. **Greedy matching** above 64 objects a term per side. A pair's figures are pooled over its records: mean IoU weighted by matches, F1 averaged per record.
+- **Not measured:** time on large sets. Masks and depth maps are compared pixel by pixel in Python (a second or so per megapixel, by estimate).
+
+### T4d, the operations
+
+- **`keep_annotation`** reads the sets outside the service's lock, stages a kept sidecar in a new table `annotation_sidecars` (task, name, bytes), then goes through `_prepare_annotations` and `_set_annotation` as `set_annotation` does: the same checks against the record, one activity row (`"<record> accepted"` or `rejected`). `from` is `{"set", "run", "by"}` for one set, `{"both": [...]}` for two, `{"rejected": [...]}` for none, each cut to the 2 KiB `from` allows (first `by.settings`, then `by`). Keeping both tracks renames the second set's repeated track ids (`-2`, …).
+- **Save** writes a task's staged sidecars that its saved lines name, removes from `annotations/<task>/` the content-named files no saved line names (and the directory when empty), and drops the task's staged rows. A revert leaves staged rows until that task's next Save.
+- **The kept set** for agreement and review is the working copy's annotations with a value and not rejected, unsaved ones included, stale ones not left out.
+- **Operations:** 76 (four new, `keep_annotation` a mutation); the catalog profile is unchanged.
+
+### T4e, the page
+
+- **Review** is a mode of the Annotate tab (`Annotate | Review` in the bar, offered when a task has a set made by an annotator); `review.js` (`window.LabReview`) draws it into the tab's own three columns, and `review.css` styles it (base.css is untouched). `annotate.js` gained the nine types (New task asks for keypoints, units and the mask's kind), the mode, and, for the new types in Annotate mode, the kept value in words and drawn read-only over an image or a point cloud.
+- **Colours:** A is `--ramp-neg`, B `--ramp-pos`, both `--good`; one set alone is coloured by term. Overlaid, an object with no counterpart of the same term at a box IoU of 0.5 is drawn dashed (a quick greedy test in the page, for marking only); masks are coloured A only, B only and both by pixel; depth maps show A − B on the diverging ramp.
+- **inside.js** exports `space` and `turned`; `space` draws `m.lines` (wireframes) and, with `m.select` and `st.selecting`, a dragged rectangle whose shown points it reports (`stride` is accounted for by the caller).
+- Each panel carries `data-drawn` (what it drew per set), read by the browser check.
+- **Not covered:** keyboard-only correction of polygons (the vertex is chosen and dragged by pointer; Delete needs the canvas focused); a session that may only inspect (the decision buttons are hidden by the usual rule); more than 200 disputed records listed (the list says how many are not); screen readers.
+
+### T4f, the example and the checks
+
+- `examples/tiny-project` gained `code/make_scenes.py` (writing `code/scenes`, 3,897 bytes: three 24 × 16 images, two point clouds of 20 and 30 points, 6 frames of 16 × 20, a series of 48 × 2), `code/annotators/standin.py` (one stand-in for mask, polygons, depth, keypoints, points, box3d, timeseries and track), `datasets/scenes`, `annotations/scene-masks` and `scene-objects`, and four annotators. `check` reports nothing. The example's annotators were not built here: its environment `cpu` needs numpy, which this checkout's interpreter lacks; the same stand-in is built by the browser check in an environment of its own.
+- **Tests:** `test_tuldok_project_annotation_kinds.py` 15, `test_tuldok_project_annotate_step.py` 6, `test_tuldok_project_annotation_agreement.py` 21; project suite 828 (786 before), agent interface 43 (4 skipped). `tests/browser_project_workspace_annotation_kinds.cjs` passes (steps 1 to 6 of its header, 4b being the point correction; 4b's rectangle happens to take all nine points of the kept object, so a partial removal is not shown).
+- **Regression checks:** `browser_project_workspace.cjs` passes (24). `browser_project_workspace_inside.cjs`, `_annotate.cjs` and `_endpoint.cjs` fail here exactly as they do on the base of this branch (`7a0b3665`, run from an archive of it): at 1000 px the page overflows sideways by 65 px (`page` 65, the main area 0), and `_annotate.cjs` also still expects the tab list without phase 3's Compare. With that one expectation updated (in a throwaway copy), `_annotate.cjs` passes the same nine steps before the same overflow on both trees; `_inside.cjs` and `_endpoint.cjs` pass six steps on both. The overflow is not this phase's and was not fixed here.
