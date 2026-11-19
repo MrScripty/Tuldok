@@ -126,6 +126,11 @@ window.TuldokProject = (() => {
     // and signed error with the error's figures (asked for each time the person moves through it unless kept).
     fields: run => read('fields', { run }),
     fieldCompare: (run, { entry, case: one, axis, index, mean_free }, fresh = false) => (fresh ? call : read)('field_compare', defined({ run, entry, case: one, axis, index, mean_free })),
+    // A model's structure (spec-t2.md, structure.js): its graph folded by the person's choices, a number per module
+    // and operation, and the matching of two graphs' modules. Kept like the rest until a reading finds a change.
+    graph: (run, { depth, open, close } = {}) => read('model_graph', defined({ run, depth, open: open && open.length ? open : null, close: close && close.length ? close : null })),
+    graphOverlay: (run, { kind, against, other_run, path, other_path }) => read('model_graph_overlay', defined({ run, kind, against, other_run, path, other_path })),
+    graphCompare: (run, otherRun) => read('model_graph_compare', { run, other_run: otherRun }),
     /** The address of an image's or a sound's bytes (GET /api/project/file), as the record operation gives it. */
     fileUrl: (run, path) => '/api/project/file?run=' + encodeURIComponent(run) + '&path=' + encodeURIComponent(path)
   };

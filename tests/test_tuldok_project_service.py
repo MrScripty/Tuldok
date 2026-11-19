@@ -234,8 +234,8 @@ class Reads(ServiceCase):
                     # test_tuldok_project_inside and test_tuldok_project_weights
                     self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
                     continue
-                if operation.name in ('model_graph', 'model_graph_overlay', 'model_graph_compare'):  # fit-a has
-                    # no model-graph.json; test_tuldok_project_model_graph
+                if operation.name in ('model_graph_overlay', 'model_graph_compare'):  # fit-a has no
+                    # model-graph.json (model_graph answers path null); test_tuldok_project_model_graph
                     self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
                     continue
                 if operation.name == 'field_compare':  # fit-a keeps no fields; test_tuldok_project_fields

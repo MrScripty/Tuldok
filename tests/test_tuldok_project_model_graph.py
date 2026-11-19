@@ -243,8 +243,13 @@ class Refusals(ReaderCase):
         self.assertIn('at most 1 are read', self.check(hand_graph(), NODE_TENSORS=1))
         self.assertIn('bytes', self.check(hand_graph(), code='too-large', FILE_BYTES=100))
 
-    def test_no_file_is_not_found(self):
-        self.refused('not-found', inside_graph.model_graph, self.product)
+    def test_no_file(self):
+        answer = inside_graph.model_graph(self.product)
+        self.assertEqual((answer['path'], answer['complete'], answer['nodes'], answer['modules']),
+                         (None, False, [], None))
+        self.assertTrue(set(operations.MODEL_GRAPH) <= set(answer))
+        self.refused('not-found', inside_graph.model_graph_overlay, self.product, kind='parameters')
+        self.refused('not-found', inside_graph.model_graph_compare, self.product, other=self.product)
 
     def test_a_module_tree_alone(self):
         document = hand_graph()

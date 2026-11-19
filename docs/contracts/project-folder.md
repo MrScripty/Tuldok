@@ -2788,7 +2788,11 @@ same two shown nodes are one, with `count`; an edge inside a group is
 dropped; each carries the `shape` and `dtype` of the first value it carries.
 The answer also gives the file's `path`, `complete`, `reason`, `method`,
 `torch`, `model`, `inputs`, `notes`, `counts`, the `modules` tree, the
-`tensors`, the `depth` used and `open` (the modules open in effect).
+`tensors`, the `depth` used and `open` (the modules open in effect). A run
+with no graph file is not refused: `path` is null, `modules` null and the
+rest empty (as `fields` answers `kept` false), so a page can ask every
+model's product. `model_graph_overlay` and `model_graph_compare` refuse such
+a run `not-found`.
 
 **`model_graph_overlay`** takes `kind`: `parameters` (a module's from the
 tree; an operation's, the sizes of its tensors that are parameters),

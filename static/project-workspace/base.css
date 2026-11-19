@@ -746,6 +746,59 @@ tr.wts-row:has(+ tr.wts-open) > td { background: var(--accent-wash); }
 .wts-pager { margin: 0; flex-wrap: wrap; }
 .wts-reason { margin: 0; }
 
+/* ---- A model's structure (structure.js, docs/plans/training-and-curation/spec-t2.md section 4). ---- */
+.st { display: grid; gap: 10px; min-width: 0; }
+.st > h3 { margin-bottom: 0; }
+.st p { margin: 0; }
+.st-size, .st-how, .st-reason { overflow-wrap: anywhere; }
+.st-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; min-width: 0; }
+.st-pick { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); min-width: 0; max-width: 100%; }
+.st-pick select { max-width: 100%; min-width: 0; }
+.st-folds { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-draw { min-width: 0; }
+.st-scroll { overflow: auto; max-height: 380px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
+.st-scroll svg { display: block; font-family: var(--font); }
+.st-scroll.fit svg { height: auto; }
+.st-edge { fill: none; stroke: var(--line-strong); stroke-width: 1.3; }
+.st-edge.back { stroke-dasharray: 3 3; }
+.st-arrowhead { fill: var(--line-strong); }
+.st-node { cursor: pointer; }
+.st-node:focus { outline: none; }
+.st-node .st-box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1; }
+.st-node.group .st-box { stroke: var(--ink-3); }
+.st-node .st-inner { fill: none; stroke: var(--line-strong); stroke-dasharray: 2 2; }
+.st-node.input .st-box, .st-node.output .st-box { fill: var(--accent-wash); stroke: var(--accent); }
+.st-node .st-label { font-size: 12px; font-weight: 600; fill: var(--ink); }
+.st-node .st-subl { font-size: 11px; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
+.st-node.deep .st-label, .st-node.deep .st-subl { fill: var(--surface); }
+.st-node:hover .st-box { stroke: var(--accent); }
+.st-node:focus-visible .st-box, .st-node.selected .st-box { stroke: var(--accent); stroke-width: 2.5; }
+.st-node.mark-added .st-box, .st-node.mark-changed .st-box, .st-node.mark-inside .st-box { stroke: var(--warn); stroke-width: 2; stroke-dasharray: 5 3; }
+.st-node.mark-added .st-box { stroke-dasharray: none; }
+.st-badge { fill: var(--warn); }
+.st-legend { display: grid; gap: 4px; }
+.st-ramp { display: block; height: 10px; border-radius: 3px; background: linear-gradient(to right, var(--ramp-lo), var(--ramp-hi)); }
+.st-detail { display: grid; gap: 8px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.st-dtitle { overflow-wrap: anywhere; }
+.st-facts { font-size: 12.5px; }
+.st-facts dd { overflow-wrap: anywhere; }
+.st-tensors { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 12.5px; }
+.st-tensors li { overflow-wrap: anywhere; }
+.st .linkish { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.st-detail .btn { justify-self: start; }
+.st-sub { font-size: 13px; color: var(--ink-2); font-weight: 600; margin: 4px 0 0; overflow-wrap: anywhere; }
+.st-difflist { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 3px; font-size: 12.5px; }
+.st-difflist li { overflow-wrap: anywhere; padding-left: 8px; border-left: 3px solid var(--warn); }
+.st-difflist li.st-d-missing { border-left-color: var(--line-strong); }
+.st-outline { min-width: 0; }
+.st-tree { list-style: none; margin: 0; padding: 0 0 0 12px; }
+.st-outline > .st-tree { padding-left: 0; }
+.st-row { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; min-width: 0; padding: 1px 0; }
+.st-toggle { display: inline-flex; gap: 4px; align-items: baseline; font: inherit; font-size: 12.5px; color: var(--ink); background: none; border: 0; padding: 2px 0; cursor: pointer; min-width: 0; overflow-wrap: anywhere; text-align: left; }
+.st-toggle:hover { color: var(--accent); }
+.st-caret { color: var(--ink-3); width: 10px; flex: none; }
+.st-m-missing { border-color: var(--line-strong); color: var(--ink-2); background: var(--surface-2); }
+
 /* ---- Annotating (annotate.js, spec-d4.md section 7); from the mockup's Annotate tab. ---- */
 .annotate { container-type: inline-size; min-width: 0; }
 .ann-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 14px; }

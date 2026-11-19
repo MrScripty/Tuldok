@@ -406,5 +406,23 @@ window.LabWeights = (() => {
     legend.replaceChildren(ramp, ends, say);
   }
 
-  return { block };
+  /**
+   * Opens the tensor called array in the Weights block of model id (structure.js's link from a node of the graph):
+   * its layer opened with that tensor, drawn in place, then scrolled to and focused. Resolves to whether it was
+   * found among the layers of the file shown.
+   */
+  async function reveal(id, array) {
+    const st = places.get(id), ctx = st && st.ctx;
+    if (!ctx || !ctx.box.isConnected) return false;
+    const dot = array.lastIndexOf('.'), layer = dot > 0 ? array.slice(0, dot) : array;
+    Object.assign(st, { layer, tensor: array });
+    await again(ctx);
+    const button = [...ctx.box.querySelectorAll('[data-key]')].find(e => e.dataset.key === 'wts-layer-' + layer);
+    if (!button) return false;
+    button.closest('tr').scrollIntoView({ block: 'start', behavior: 'auto' });
+    button.focus({ preventScroll: true });
+    return true;
+  }
+
+  return { block, reveal };
 })();

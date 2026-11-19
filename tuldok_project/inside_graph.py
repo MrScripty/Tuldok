@@ -420,8 +420,24 @@ def _head(place, graph):
                        'modules': len(graph.modules), 'tensors': len(graph.tensors)}}
 
 
+def _none(product):
+    """model_graph's answer for a run with no graph file: path null and everything else empty."""
+    return {'path': None, 'format': FORMAT, 'complete': False, 'reason': f'Run {product.run_id} has no {FILE}.',
+            'method': None, 'torch': None, 'model': None, 'inputs': [], 'notes': [],
+            'counts': {'nodes': 0, 'edges': 0, 'operations': 0, 'modules': 0, 'tensors': 0}, 'modules': None,
+            'tensors': {}, 'depth': 0, 'open': [], 'nodes': [], 'edges': []}
+
+
 @inside.reading
 def model_graph(product, *, depth=None, opened=(), closed=()):
+    """The run's graph folded; a run with no graph file is answered with path null (as fields answers kept
+    false), so that a page asking every model's products learns it without a refusal."""
+    try:
+        _graph_place(product)
+    except ProjectError as error:
+        if error.code == 'not-found':
+            return _none(product)
+        raise
     place, graph = graph_of(product)
     return {**_head(place, graph), 'modules': graph.tree, 'tensors': graph.tensors,
             **fold(graph, depth, opened, closed)}
