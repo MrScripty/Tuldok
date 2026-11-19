@@ -2,7 +2,7 @@
 
 **Status: approved by the owner on 2026-11-13, with the changes under "The owner's answer" below.**
 
-**Built, 2026-11-13:** phases 1 to 5, on `feat/definition-first-projects`, not pushed; the specs `spec-d1.md` to `spec-d5.md` say what was built and what was not verified, and the [ledger](execution-ledger.md) has the record. **Not built:** phase 6. **Not run:** anything against a real Pumas endpoint, which waits for the owner's word (decision 3). The owner has not yet looked at these pages.
+**Built:** phases 1 to 5 on 2026-11-13 and phase 6 on 2026-11-18, on `feat/definition-first-projects`, not pushed; the specs `spec-d1.md` to `spec-d6.md` say what was built and what was not verified, and the [ledger](execution-ledger.md) has the record. **Not run:** anything against a real Pumas endpoint, which waits for the owner's word (decision 3).
 
 ## The owner's answer
 

@@ -684,3 +684,23 @@ Everything that speaks to Pumas was checked against a fake endpoint built from t
 **Not built:** phase 6, native, predicted and signed error side by side in the Analysis tab.
 
 **Next:** the owner looks at the pages; on the owner's word, the run against a real endpoint.
+
+## 2026-11-18: the Benchmarks tab opens on an accuracy-against-time chart; phase 6 is built
+
+**Owner, 2026-11-18:** "I agree to the changes. After that complete and test phase 6."
+
+**The Benchmarks tab** opened on the first benchmark with results, which in the lab defines no chart, so the accuracy-against-time chart was out of sight. It now opens, when no benchmark is asked for, on the first with results and a `tradeoff` chart, then the first with any chart (`36061650`; a step in `browser_project_workspace.cjs` checks it). The lab gained the same chart for its 127 earlier pressure models (`charts/pressure-models-error-against-speed.json`, lab commit `0cd5aaf72`): 127 points, 19 on the frontier.
+
+**Phase 6** (`4ff0ad42`, [spec-d6.md](spec-d6.md) with its "As built"): a product that holds `field-index.json` keeps fields; `fields` lists its cases and `field_compare` gives a slice of the native, predicted and signed error fields with whole-field figures; the Analysis tab shows them as three panels under "Kept fields", with the axis, the position, "Remove the mean" and the run's own reported figures.
+
+| Claim | Evidence | Result |
+| --- | --- | --- |
+| The readers and operations | `test_tuldok_project_fields` | 16 pass |
+| Nothing else in the project folder's code changed in behaviour | the project suite on a disposable PostgreSQL | 735 pass |
+| Catalog mode's manifest is unchanged | `test_agent_api`, `test_agent_negotiation`, `test_agent_http` | 43 pass, 4 skipped |
+| The page | `browser_project_workspace_fields.cjs` (seven steps of spec section 5) and, again, `_weights`, `_inside` and `browser_project_workspace` | all pass |
+| The lab's runs | `fields` and `field_compare` through the service on the owner's database, read only | 83 runs keep fields, all comparable; for run `7a700731…` Tuldok's mean-free relative L2 is 0.00286561549674967 and the run reported 0.0028656154967496624 |
+
+**Not verified:** masks in the page (no lab run has one); 1-D, 2-D and 4-D fields in the page; a field near the 16,777,216-value bound. In the lab, Analysis opens on the first subject of a benchmark, which may keep no fields: choose an earlier pressure model that does (83 of the 150 fits).
+
+**The data tools plan is built:** phases 1 to 6. **Not run:** anything against a real Pumas endpoint, which waits for the owner's word.
