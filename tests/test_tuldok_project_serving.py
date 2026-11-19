@@ -308,7 +308,13 @@ class Supervisor(SupervisorCase):
         self.assertLessEqual(answer['timing']['model_ms'], answer['timing']['total_ms'])
         encoded = self.predict({'a': array([2, 2], [1, 2, 3, 4.5])})['outputs']
         self.assertEqual(encoded['sum'], 10.5)
-        self.assertEqual(encoded['echo'], [[1.0, 2.0], [3.0, 4.5]])   # no NumPy: decoded to lists, sent as lists
+        # Without NumPy the array arrives as nested lists and goes back as lists; with NumPy (as on CI) predict gets a
+        # float32 array and the answer encodes it again as an array.
+        try:
+            import numpy  # noqa: F401
+            self.assertEqual(encoded['echo'], array([2, 2], [1, 2, 3, 4.5]))
+        except ImportError:
+            self.assertEqual(encoded['echo'], [[1.0, 2.0], [3.0, 4.5]])
         with self.assertRaises(ServeError) as refused:
             self.predict({'fail': True})
         self.assertEqual(refused.exception.code, 'predict-failed')
