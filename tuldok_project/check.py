@@ -15,6 +15,7 @@ provides (section 6; generate is spec-d5.md section 3).
 Problems are collected, never raised, so one bad file never hides another.
 """
 from dataclasses import dataclass, field
+import json
 import math
 import os
 import re
@@ -80,7 +81,7 @@ def check_folder(folder, *, code=True):
     check_cycles(definitions, add)
     check_map(project, definitions, add)
     _check_results(read.results, definitions, unsound, add)
-    _check_annotations(read.annotations, definitions, unsound, add)
+    _check_annotations(read.annotations, definitions, unsound, add, read.sidecars)
 
     problems.sort(key=lambda p: (p.path, p.pointer, _SEVERITY_ORDER.get(p.severity, 2), p.message))
     decoded = {reference: d.document for reference, d in definitions.items() if d.document is not None}
@@ -135,6 +136,7 @@ STEP_SETTINGS = {'import': {'source': True, 'pattern': False, 'kind': False, 'ri
                  'freeze': {'seed': True, 'shares': True, 'include': False, 'records': False},
                  'generate': {'make': True, 'model': True, 'profile': False, 'prompt': True, 'count': False,
                               'per': False, 'seed': False, 'options': False, 'rights': True},
+                 'annotate': {'by': True, 'pumas': False, 'limit': False, 'options': False},
                  # docs/plans/training-and-curation/spec-t5.md section 5
                  'embed': {'model': False, 'profile': False, 'prefix': False, 'dimensions': False, 'name': False,
                            'batch': False},
@@ -144,6 +146,9 @@ EMBED_PREFIX_LIMIT = 1000
 EMBED_DIMENSIONS_LIMIT = 4096
 EMBED_BATCH_LIMIT = 256
 _SET_NAME = re.compile(r'^[a-z0-9][a-z0-9._-]{0,63}$')
+BY_KINDS = ('model', 'script', 'person')        # what made an annotation set (spec-t4.md section 3)
+BY_TEXT_LIMIT = 200
+OPTIONS_BYTES = 8 * 1024
 SEED_LIMIT = 2 ** 63
 GENERATE_SEED_LIMIT = 2 ** 32       # a seed Pumas takes is unsigned 32-bit
 PROMPT_LIMIT = 16_000               # characters of a generate prompt
@@ -178,13 +183,16 @@ def _check_step(run, path, add):
     settings = settings if isinstance(settings, dict) else {}
     where = lambda key: documents.pointer('run', 'settings', key)  # noqa: E731
     if step in ('import', 'generate', 'embed', 'select') and 'annotations' in run:
-        add('error', path, '/run/annotations', 'Only the step freeze reads annotations; remove annotations.')
+        add('error', path, '/run/annotations', 'Only the steps freeze and annotate name tasks; remove annotations.')
+
     if step == 'import':
         _check_import(settings, path, where, add)
         if 'inputs' in run:
             add('error', path, '/run/inputs', 'The step import reads files, not other products; remove inputs.')
     elif step == 'generate':
         _check_generate(run, settings, path, where, add)
+    elif step == 'annotate':
+        _check_annotate(run, settings, path, where, add)
     elif step in ('embed', 'select'):
         _check_records_input(run, step, path, add)
         if step == 'embed':
@@ -295,6 +303,46 @@ def _check_generate(run, settings, path, where, add):
                                             'what may be done with what is made.')
 
 
+def _check_annotate(run, settings, path, where, add):
+    """The input, task, annotator and settings of the step annotate (spec-t4.md section 4)."""
+    inputs = run.get('inputs')
+    if not isinstance(inputs, dict) or set(inputs) != {'records'} or not isinstance(inputs['records'], str) \
+            or not inputs['records'].startswith('datasets/'):
+        add('error', path, '/run/inputs', 'The step annotate takes one input, records, naming the dataset of its '
+                                          'task: "inputs": {"records": "datasets/<name>"}.')
+    tasks = run.get('annotations')
+    if not isinstance(tasks, list) or len(tasks) != 1:
+        add('error', path, '/run/annotations', 'The step annotate makes a set for one task: '
+                                               '"annotations": ["annotations/<name>"].')
+    if ('command' in run) == ('pumas' in settings):
+        add('error', path, '/run', 'An annotate runs either the project\'s command (run.command) or a model of the '
+                                   'Pumas endpoint (settings.pumas); give exactly one.')
+    by = settings.get('by')
+    if 'by' in settings:
+        wrong = not isinstance(by, dict) or set(by) - {'kind', 'name', 'version'} or by.get('kind') not in BY_KINDS \
+            or not isinstance(by.get('name'), str) or not 1 <= len(by['name']) <= BY_TEXT_LIMIT \
+            or ('version' in by and not (isinstance(by['version'], str) and len(by['version']) <= BY_TEXT_LIMIT))
+        if wrong:
+            add('error', path, where('by'), 'by must say what makes the annotations: {"kind": "model", "script" or '
+                                            f'"person", "name": 1 to {BY_TEXT_LIMIT} characters, and an optional '
+                                            '"version"}.')
+    asked = settings.get('pumas')
+    if 'pumas' in settings and not (isinstance(asked, dict) and set(asked) <= {'model', 'profile', 'instruction'}
+                                    and isinstance(asked.get('model'), str) and asked['model']
+                                    and (not isinstance(asked.get('profile'), str) or _PROFILE.match(asked['profile']))
+                                    and all(isinstance(asked.get(key, ''), str) for key in ('profile', 'instruction'))
+                                    and len(asked.get('instruction', '')) <= PROMPT_LIMIT):
+        add('error', path, where('pumas'), 'pumas must name the served model: {"model", and optionally "profile" and '
+                                           f'"instruction" (at most {PROMPT_LIMIT:,} characters)}}.')
+    limit = settings.get('limit')
+    if 'limit' in settings and (type(limit) is not int or not 1 <= limit <= steps.ANNOTATE_LIMIT):
+        add('error', path, where('limit'), f'limit must be a whole number from 1 to {steps.ANNOTATE_LIMIT:,}.')
+    if 'options' in settings:
+        options = settings['options']
+        if not isinstance(options, dict) or len(json.dumps(options, separators=(',', ':'))) > OPTIONS_BYTES:
+            add('error', path, where('options'), f'options must be an object of at most {OPTIONS_BYTES:,} bytes.')
+
+
 def _check_records_input(run, step, path, add):
     inputs = run.get('inputs')
     if not isinstance(inputs, dict) or set(inputs) != {'records'} or not isinstance(inputs['records'], str) \
@@ -387,7 +435,7 @@ def check_steps(definitions, add):
     check_references' problem)."""
     for definition in definitions.values():
         run = definition.document.get('run') if isinstance(definition.document, dict) else None
-        if definition.kind != 'dataset' or not isinstance(run, dict) or run.get('step') != 'freeze':
+        if definition.kind != 'dataset' or not isinstance(run, dict) or run.get('step') not in ('freeze', 'annotate'):
             continue
         inputs = run.get('inputs') if isinstance(run.get('inputs'), dict) else {}
         used = inputs.get('records') if isinstance(inputs.get('records'), str) else None
@@ -398,7 +446,7 @@ def check_steps(definitions, add):
                 continue
             if used is not None and target.document.get('dataset') != used:
                 add('error', definition.path, documents.pointer('run', 'annotations', index),
-                    f'{task} annotates {target.document.get("dataset")}, not {used}, the input of this freeze; '
+                    f'{task} annotates {target.document.get("dataset")}, not {used}, the input of this {run["step"]}; '
                     'name a task of its input.')
 
 
@@ -711,8 +759,29 @@ def _check_results(files, definitions, unsound, add):
             add(severity, file.path, pointer, message)
 
 
-def _check_annotations(files, definitions, unsound, add):
-    """Each line file against its task: a file with no task is an error; a task with errors leaves it unchecked."""
+def _check_annotations(files, definitions, unsound, add, sidecars=None):
+    """Each line file against its task: a file with no task is an error; a task with errors leaves it unchecked.
+
+    The sidecars of a task (spec-t4.md section 2): a directory with no task
+    is an error, a line naming a sidecar that is not there is an error, and a
+    sidecar no line names is a warning.
+    """
+    sidecars = dict(sidecars or {})
+    for name in sorted(sidecars):
+        task = definitions.get(documents.reference(folder_reader.ANNOTATIONS, name))
+        if task is None:
+            add('error', f'{folder_reader.ANNOTATIONS}/{name}', '',
+                f'There is no {folder_reader.ANNOTATIONS}/{name}.json, the task of these sidecars; add the task or '
+                'remove the directory.')
+    for definition in definitions.values():
+        document = definition.document
+        if definition.kind == 'annotation' and isinstance(document, dict) and document.get('task') == 'keypoints':
+            names = document.get('keypoints') if isinstance(document.get('keypoints'), list) else []
+            for index, pair in enumerate(document.get('skeleton') or []):
+                if isinstance(pair, list) and any(point not in names for point in pair):
+                    add('error', definition.path, documents.pointer('skeleton', index),
+                        'A pair of the skeleton names a point that is not in keypoints; name two of the keypoints.')
+    named = {}
     for file in files:
         name = file.path[len(f'{folder_reader.ANNOTATIONS}/'):-len(folder_reader.LINES_SUFFIX)]
         task = definitions.get(documents.reference(folder_reader.ANNOTATIONS, name))
@@ -725,6 +794,23 @@ def _check_annotations(files, definitions, unsound, add):
         if task.path in unsound:
             add('warning', file.path, '', f'Not checked, because {task.path} has errors; fix those first.')
             continue
-        parsed = annotations.read(file.raw, task.document['task'], task.document.get('vocabulary', []))
+        parsed = annotations.read(file.raw, task.document['task'], task.document.get('vocabulary', []),
+                                  annotations.task_fields(task.document))
         for problem in parsed.reported():
             add(problem.severity, file.path, problem.pointer, problem.message)
+        held = sidecars.get(name, {})
+        used = named.setdefault(name, set())
+        for number, row in parsed.rows:
+            for sidecar in annotations.sidecars(task.document['task'], row.get('value')):
+                used.add(sidecar)
+                if sidecar not in held:
+                    add('error', file.path, f'line {number}', f'The sidecar {folder_reader.ANNOTATIONS}/{name}/'
+                                                              f'{sidecar} is not there; add it or change the line.')
+    for name, held in sorted(sidecars.items()):
+        if documents.reference(folder_reader.ANNOTATIONS, name) not in definitions:
+            continue
+        unused = sorted(set(held) - named.get(name, set()))
+        if unused:
+            add('warning', f'{folder_reader.ANNOTATIONS}/{name}', '',
+                f'{len(unused)} sidecar{"s" if len(unused) > 1 else ""} no annotation names ({", ".join(unused[:5])}'
+                f'{", …" if len(unused) > 5 else ""}); the next Save of this task removes them.')

@@ -64,6 +64,10 @@ _REQUEST = {'type': 'string', 'minLength': 6, 'maxLength': 128}
 _TEXT = {'type': 'string'}
 _FLAG = {'type': 'boolean'}
 _OFFSET = {'type': 'integer', 'minimum': 0}
+# An annotation set (spec-t4.md section 6): 'kept' or the reference of a dataset that annotates the task.
+_SETS = {'type': 'array', 'minItems': 2, 'maxItems': 8,
+         'items': {'type': 'string', 'minLength': 1, 'maxLength': 200}}
+_CONFIDENCE = {'type': 'number', 'minimum': 0, 'maximum': 1}
 _THEME = {'type': 'string', 'enum': ['light', 'dark']}
 _TARGETS = {'type': 'array', 'items': _REFERENCE, 'maxItems': TARGET_LIMIT}
 _ADDRESS = {'type': 'string', 'minLength': 1, 'maxLength': 4096}   # a path in a product; '!' names an archive member
@@ -364,6 +368,27 @@ OPERATIONS = (
                          profile={'type': 'string', 'minLength': 1, 'maxLength': 128},
                          instruction={'type': 'string', 'minLength': 1, 'maxLength': INSTRUCTION_CHARACTERS}),
               ('task', 'record', 'suggestion')),
+    # spec-t4.md section 6: the sets of a task, their agreement, one record compared, and the decision kept.
+    Operation('annotation_sets', "List a task's annotation sets: the kept set and each annotator's product, with "
+              'what made it and how many records it annotates.', 'inspect', False,
+              _arguments(['task'], task=_NAME), ('task', 'type', 'sets')),
+    Operation('annotation_agreement', "Measure how far two or more of a task's annotation sets agree, per pair and "
+              'per record, with the records they disagree on most first.', 'inspect', False,
+              _arguments(['task'], task=_NAME, sets=_SETS, min_confidence=_CONFIDENCE, offset=_OFFSET,
+                         limit=_limit(200)),
+              ('task', 'type', 'measure', 'sets', 'pairs', 'fleiss', 'records', 'disputed', 'total', 'offset',
+               'limit', 'truncated', 'problems')),
+    Operation('annotation_compare', "Read one record's annotation in each of the named sets, ready to draw, and "
+              'how far each pair agrees on it.', 'inspect', False,
+              _arguments(['task', 'record', 'sets'], task=_NAME, record=_RECORD_ID,
+                         sets={**_SETS, 'minItems': 1}, min_confidence=_CONFIDENCE),
+              ('task', 'type', 'record', 'in_product', 'size', 'sets', 'pairs', 'frames', 'series', 'problem')),
+    Operation('keep_annotation', "Keep one set's annotation of a record, two sets' together, or reject them, as an "
+              'unsaved edit of the kept annotations.', 'edit', True,
+              _arguments(['task', 'record', 'keep', 'sets'], task=_NAME, record=_RECORD_ID,
+                         keep={'type': 'string', 'enum': ['one', 'both', 'none']}, sets={**_SETS, 'minItems': 1},
+                         note={'type': 'string', 'maxLength': 4000}),
+              ('task', 'record', 'state', 'unsaved')),
     Operation('set_definition', "Check a definition's text and keep it as an unsaved edit.", 'edit', True,
               _arguments(['reference', 'text'], reference=_REFERENCE, text=_TEXT), DEFINITION),
     Operation('remove_definition', 'Mark a definition that nothing uses as removed, until the project is saved.',

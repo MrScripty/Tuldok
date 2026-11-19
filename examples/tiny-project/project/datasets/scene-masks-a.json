@@ -1,0 +1,28 @@
+{
+  "format": "tuldok_definition_v1",
+  "kind": "dataset",
+  "title": "Segmentor A on scene-masks",
+  "description": "The stand-in segmentor at threshold 160: an annotation set for annotations/scene-masks.",
+  "run": {
+    "step": "annotate",
+    "inputs": {
+      "records": "datasets/scenes"
+    },
+    "annotations": [
+      "annotations/scene-masks"
+    ],
+    "command": [
+      "python",
+      "annotators/standin.py",
+      "160"
+    ],
+    "environment": "environments/cpu",
+    "settings": {
+      "by": {
+        "kind": "script",
+        "name": "stand-in segmentor A",
+        "version": "1"
+      }
+    }
+  }
+}

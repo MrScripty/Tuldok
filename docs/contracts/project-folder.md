@@ -49,6 +49,7 @@ environments/<name>.json
 charts/<name>.json
 annotations/<name>.json
 annotations/<name>.jsonl   the annotations of task <name>
+annotations/<name>/        their sidecars: masks and arrays too large for a line
 results/<benchmark name>.csv
 notes/...
 ```
@@ -201,7 +202,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | `resources` | no | any of `gpu` (boolean), `cpu_threads` (integer ≥ 1), `memory_gb`, `wall_hours`, `disk_gb` (numbers > 0) |
 | `sources` | no | at most 64 code paths (files or directories); a change in them means the code changed |
 | `estimate` | no | `{"command": [...]}`, 1 to 64 strings; the command prints one JSON object with any of `disk_bytes`, `wall_seconds`, `items` |
-| `annotations` | with `step: "freeze"` only | 1 to 32 different references to `annotations/`: the tasks a freeze reads |
+| `annotations` | with `step: "freeze"` or `"annotate"` only | 1 to 32 different references to `annotations/`: the tasks a freeze reads, or the one task an annotate makes a set for |
 
 A **code path** is a path relative to the code root, at most 1,024 characters.
 `settings_file`, `sources`, a model's `config_file` and `sources`, and an
@@ -264,12 +265,13 @@ Example, `datasets/sinusoidal-v1.json`:
 #### Steps Tuldok provides
 
 A dataset's `run` names either a `command` or a `step`, one of `import`,
-`freeze`, `generate`, `embed` and `select`. A run with `step` has no `command`, `environment`, `outputs`,
-`settings_file`, `env` or `estimate`: the step's outputs are fixed, its
+`freeze`, `generate`, `embed`, `select` and `annotate`. A run with `step` has no `command`, `environment`, `outputs`,
+`settings_file`, `env` or `estimate` (an `annotate` may have `command`, `environment` and `env`; see
+below): the step's outputs are fixed, its
 settings are inline in `settings`, and it runs with Tuldok's own interpreter
 (see [The command and its environment](#the-command-and-its-environment)).
 It may have `resources` and `sources`. A plan shows it as `tuldok import`,
-`tuldok freeze`, `tuldok generate`, `tuldok embed` or `tuldok select`. It is planned, requested, approved, run, cancelled and
+`tuldok freeze`, `tuldok generate`, `tuldok embed`, `tuldok select` or `tuldok annotate`. It is planned, requested, approved, run, cancelled and
 recorded like any build, from a commit as builds are. `check` reports a
 setting the step does not take, a required one missing and a value of the
 wrong form.
@@ -486,6 +488,54 @@ order, each line as the input has it (its `split` and `annotations` kept),
 its file linked under `files/`, its hash added when the input has none. An
 id the input does not have fails the step. A selection on the map becomes
 such a dataset.
+
+##### `annotate`: an annotation set made by an annotator
+
+A dataset whose run is `"step": "annotate"` makes an **annotation set**: the
+annotations of one annotator (a project's script, or a model behind the
+Pumas endpoint) for one task, beside the task's own annotations in Git. Its
+run takes one input, `"inputs": {"records": "datasets/<name>"}`, the task's
+dataset, and `"annotations": ["annotations/<task>"]`. Unlike the other steps
+it may have `command`, `environment` and `env`: the command is the project's
+annotator, run in its environment from the code snapshot. Exactly one of
+`run.command` and `settings.pumas`. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `by` | yes | `{"kind": "model", "script" or "person", "name": 1 to 200 characters, "version"?}`: what makes the annotations |
+| `pumas` | no | `{"model", "profile"?, "instruction"?}`: ask this model of the machine's Pumas endpoint instead of a command; for `text`, `class` and `tags` as a suggestion is asked, for `boxes` and `polygons` on images as a JSON list asked of a vision model |
+| `limit` | no | at most this many records, 1 to 1,000,000 |
+| `options` | no | an object of at most 8 KiB, given to the command as `TULDOK_ANNOTATE_OPTIONS` |
+
+**The command's contract.** It runs with these variables: `TULDOK_RECORDS`
+(the input product), `TULDOK_TODO` (a file of the input's record lines still
+to annotate, their paths made absolute), `TULDOK_TASK` (the task's
+definition), `TULDOK_ANNOTATIONS` (the file to append lines to),
+`TULDOK_FILES` (the directory for sidecars) and `TULDOK_ANNOTATE_OPTIONS`.
+It appends one line per record, `{"record", "value", "confidence"?,
+"note"?}`, in any order, writes the sidecars its values name under
+`TULDOK_FILES`, and may print progress lines. When it ends with status 0 the
+step keeps the last valid line of each record of the input, drops and counts
+the rest, and writes the product:
+
+```
+annotator.json      {"format": "tuldok_annotator_v1", "task", "by": {"kind", "name", "version"?, "settings"}, "records", "made", "at"}
+annotations.jsonl   {"record", "sha256", "value", "confidence"?, "note"?} per record, sorted by record
+files/              the sidecars the lines name
+```
+
+`by.settings` is the run's settings without `by`. A run of the same
+definition that failed or was cancelled is resumed by the next build: its
+valid lines (and sidecars) whose records are unchanged are kept, and only the
+other records are given to the command (or asked of the model).
+
+The sets of a task (the kept set, `annotations/<task>.jsonl`, and every
+annotate's product for it) are compared on the Annotate tab (Review): their
+agreement per pair and per record, the most disputed records, each drawn
+over the record, and a decision (keep one set's annotation, keep two sets'
+together, or reject them) kept as an unsaved edit of `annotations/<task>.jsonl`
+whose `from` names the set, its run and what made it; a kept sidecar is
+copied into `annotations/<task>/` by Save.
 
 ### `model`
 
@@ -705,8 +755,13 @@ plans its dataset in its place.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `dataset` | yes | reference to `datasets/` |
-| `task` | yes | `review`, `class`, `tags`, `text`, `boxes`, `spans` or `segments` |
-| `vocabulary` | for `class`, `tags`, `boxes`, `spans` and `segments`; not allowed for `review` and `text` | 1 to 500 different **terms**, each 1 to 200 characters without control characters |
+| `task` | yes | `review`, `class`, `tags`, `text`, `boxes`, `spans`, `segments`, `polygons`, `mask`, `depth`, `keypoints`, `ranking`, `timeseries`, `track`, `points` or `box3d` |
+| `vocabulary` | for every task but `review`, `text` and `depth`, which allow none | 1 to 500 different **terms**, each 1 to 200 characters without control characters; for `ranking`, the candidates ranked |
+| `keypoints` | for `keypoints` only, required | 1 to 100 different names: the points of one instance, in the order its values list them |
+| `skeleton` | for `keypoints` only | pairs of those names, joined when drawn |
+| `sigma` | for `keypoints` only | a number above 0: the spread of the agreement measure (OKS); default 0.1 |
+| `units` | for `depth` only, required | the units of the depth values, 1 to 40 characters, such as `m` |
+| `mask` | for `mask` only | `semantic` (a pixel's value is its class) or `instance` (each value is one object); default `semantic` |
 
 `earlier_work` is not allowed here. `card` is where the guide for the people
 and agents who annotate is written.
@@ -723,7 +778,18 @@ What an annotation's `value` is, by task, and which records it may describe:
 | `spans` | a list of `{"term", "start", "end"}`, whole numbers of characters (code points) of the text; 0 ≤ `start` < `end` ≤ the text's length | `text` |
 | `segments` | a list of `{"term", "start", "end"}` with an optional `"text"` (a string of at most 64 KiB), numbers of seconds; 0 ≤ `start` < `end` ≤ the sound's length | `audio` |
 
-A list holds at most 1,000 items, and an item no other key. The value may be
+| `polygons` | a list of `{"term", "points": [[x, y], …]}`: 3 to 10,000 points in pixels, inside the image | `image` |
+| `mask` | `{"file": <sidecar .png>, "classes"}` or `{"rle": [[value, count], …], "classes"}`: `classes` maps a pixel value (`"1"` to `"65535"`) to a term, 0 is nothing; `rle` gives the pixels row by row from the top left and covers the image | `image` |
+| `depth` | `{"file": <sidecar .npy>}`: a 2-D array (height, width) of float32, float64 or uint16 in the task's units; 0 and non-finite values are no depth | `image` |
+| `keypoints` | a list of `{"term", "points"}`, one point per name of the task's `keypoints`: `[x, y]`, `[x, y, v]` (v 0, 1 or 2) or null | `image` |
+| `ranking` | a list of different terms, best first | any but `file` |
+| `timeseries` | a list of `{"term", "start", "end"}`, 0 ≤ `start` < `end`: seconds of a sound, or positions along the first axis of an array | `audio`, `array` |
+| `track` | a list of `{"track", "term", "frames": [{"frame", "x", "y", "w", "h"}, …]}`: `track` an id of 1 to 64 characters, once per annotation; frames whole numbers increasing, below the array's first axis; boxes inside its frames | `array` |
+| `points` | a list of `{"term", "indices": [i, …]}` (indices increasing, below the cloud's point count), or `{"file": <sidecar .npy>, "classes"}`, a 1-D array of one whole number per point (0: no object) | `pointcloud` |
+| `box3d` | a list of `{"term", "center": [x, y, z], "size": [l, w, h], "yaw"}`, sizes above 0, `yaw` in radians about z | `pointcloud` |
+
+An item of a list value, and an object value, may also carry `"confidence"`, a
+number from 0 to 1. A list holds at most 1,000 items, and an item no other key. The value may be
 null in any state but `accepted`. The record's kind, an image's size, a text's
 length and a sound's length are known only from the dataset's product, so the
 folder check cannot apply those rules; Tuldok applies them when an annotation
@@ -766,8 +832,10 @@ changed annotation:
 - lines sorted by `record`, comparing the bytes of its UTF-8;
 - each line written compact (`,` and `:` with no spaces), with characters
   other than ASCII written as themselves rather than as `\u` escapes, the keys
-  in the order above and the keys of a `boxes`, `spans` or `segments` item in
-  the order of the table of tasks;
+  in the order above and the keys of an item in the order `track`, `frame`,
+  `term`, `x`, `y`, `w`, `h`, `start`, `end`, `text`, `points`, `indices`,
+  `center`, `size`, `yaw`, `frames`, `confidence` (an object value: `file`,
+  `rle`, `classes`, `confidence`; `classes` by number);
 - each line ending with `\n`, the last one included.
 
 A file with no line left is deleted when it is saved. The JSON rules above
@@ -789,6 +857,18 @@ Example, `annotations/scene-quality.jsonl`:
 {"record":"scene-0002","sha256":null,"state":"rejected","value":null,"note":"blurry","by":"owner","at":"2026-11-13T10:02:40Z"}
 {"record":"scene-0003","sha256":null,"state":"draft","value":"noisy","by":"agent:helper","at":"2026-11-13T10:05:02Z"}
 ```
+
+#### Sidecars
+
+A `mask`, `depth` or `points` value naming a `file` names a **sidecar** in
+`annotations/<name>/`, beside the task: a file named by the first 16
+hexadecimal characters of its SHA-256 and `.png` or `.npy` (so a name never
+changes meaning and a file is never rewritten). The directory holds such
+files only. A mask PNG is 8- or 16-bit greyscale, not interlaced, of the
+image's size; an `.npy` is a C-order array of floats or whole numbers, never
+pickled. The check reports a directory with no task, and a line naming a
+sidecar that is not there, as errors, and a sidecar no line names as a
+warning; Save removes those of a task it writes. Each is at most 64 MiB.
 
 ## Results files
 

@@ -59,6 +59,7 @@ from psycopg.types.json import Jsonb
 
 from . import annotations, documents, environments, graph, launcher, local, result_rows, snapshot, store
 from . import folder as folder_reader
+from . import steps as steps_module
 
 BUILT_KINDS = ('dataset', 'recipe', 'step', 'benchmark')
 ACTIVE = ('queued', 'running')
@@ -783,6 +784,8 @@ class _Build:
             for key, value in (run.get('env') or {}).items():
                 env[key] = _fill(value, values, missing, f'The value of env {key}')
             env.update(self.extra_env)
+            if step == 'annotate' and 'PYTHONPATH' in env:   # the annotator command's own, given back to it
+                env['TULDOK_ANNOTATE_PYTHONPATH'] = env['PYTHONPATH']
             if step is not None:
                 # Tuldok's own code first; the snapshot's code (the working directory) never importable.
                 env.update(PYTHONSAFEPATH='1', PYTHONPATH=TULDOK_ROOT)
@@ -832,8 +835,10 @@ class _Build:
         if step == 'select':
             self._records_input(project, run, values, step)
             return argv + ['--records', values['inputs.records']]
+        if step == 'annotate':
+            return argv + self._annotate_argv(project, reference, run, values, prepared)
         if step != 'freeze':
-            raise StepProblem(f'Tuldok provides no step {step!r}; use import, freeze, generate, embed or select.')
+            raise StepProblem(f'Tuldok provides no step {step!r}; use import, freeze, generate, embed, select or annotate.')
         inputs = _declared_inputs({'run': run})
         used = inputs.get('records', (None, None))[0]
         if 'inputs.records' not in values or used is None:
@@ -926,6 +931,46 @@ class _Build:
                 raise StepProblem(f'Its input prompts ({used}) is shown through a view, and generate reads only a '
                                   "product's records.jsonl or its files.")
             argv += ['--records', values['inputs.prompts']]
+        return argv
+
+    def _annotate_argv(self, project, reference, run, values, prepared):
+        """The arguments of an annotate (spec-t4.md section 4): its input, task, command or endpoint, and resume."""
+        used = _declared_inputs({'run': run}).get('records', (None, None))[0]
+        tasks = run.get('annotations') if isinstance(run.get('annotations'), list) else []
+        if 'inputs.records' not in values or used is None or len(tasks) != 1:
+            raise StepProblem('An annotate reads the records of its input records for one task; declare '
+                              'run.inputs.records and one task in run.annotations.')
+        row = project._execute(f'SELECT document FROM {{schema}}.definitions WHERE NOT removed AND '
+                               f'{store._REFERENCE_SQL} = %s', (tasks[0],)).fetchone()
+        if row is None or not isinstance(row[0], dict):
+            raise StepProblem(f'Its task {tasks[0]} does not exist.')
+        if row[0].get('dataset') != used:
+            raise StepProblem(f'Its task {tasks[0]} annotates {row[0].get("dataset")}, not its input {used}.')
+        task_file = os.path.join(prepared['directory'], STEP_TASKS_FILE)
+        prepared['files'][task_file] = (json.dumps({'reference': tasks[0], 'document': row[0]}, ensure_ascii=False,
+                                                   indent=2) + '\n').encode('utf-8')
+        argv = ['--records', values['inputs.records'], '--task', task_file, '--run-directory', prepared['directory'],
+                '--code', self.code.code_root]
+        command = list(run.get('command') or [])
+        if command:
+            filled = [_fill(part, values, {}, f'The command word {part!r}') for part in command]
+            filled[0] = self._program(command, filled, prepared['environment'])
+            argv += ['--command-json', json.dumps(filled, ensure_ascii=False)]
+        else:
+            try:
+                address = local.pumas_endpoint()
+            except local.SettingsError as exc:
+                raise StepProblem(str(exc)) from None
+            if address is None:
+                raise StepProblem('No Pumas endpoint is set on this machine, so the model cannot be asked; the owner '
+                                  'sets one, then build again.')
+            prepared['endpoint'] = {'address': address, 'version': None}
+            argv += ['--endpoint', address]
+        earlier = project._execute("SELECT directory FROM {schema}.runs WHERE reference = %s AND definition = %s "
+                                   "AND state <> 'succeeded' AND state <> 'running' AND state <> 'queued' "
+                                   'ORDER BY queued_at DESC LIMIT 1', (reference, prepared['definition'])).fetchone()
+        if earlier is not None and os.path.isfile(os.path.join(earlier[0], OUTPUT, steps_module.ANNOTATED)):
+            argv += ['--resume', os.path.join(earlier[0], OUTPUT)]
         return argv
 
     def _line_file(self, project, file):

@@ -205,6 +205,9 @@ def _list_definitions(root):
                 tasks = {name for name, entry_kind in listed if entry_kind == 'file'}
                 for name, entry_kind in listed:
                     path = f'{directory}/{name}'
+                    if (directory == folder_reader.ANNOTATIONS and entry_kind == 'directory'
+                            and documents.is_name(name) and name + '.json' in tasks):
+                        continue   # a task's sidecars (spec-t4.md section 2): named by content, never rewritten
                     if (directory == folder_reader.ANNOTATIONS and name.endswith(folder_reader.LINES_SUFFIX)
                             and entry_kind == 'file'
                             and name[:-len(folder_reader.LINES_SUFFIX)] + '.json' in tasks):
@@ -605,7 +608,8 @@ class Project:
                 problems.append(Problem('error', where, '', f'There is no {annotation_rows.reference(name)}.json, '
                                                             'the task of these annotations.'))
                 continue
-            parsed = annotations.read(raw, task.document.get('task'), task.document.get('vocabulary', []))
+            parsed = annotations.read(raw, task.document.get('task'), task.document.get('vocabulary', []),
+                                      annotations.task_fields(task.document))
             errors = [Problem(item.severity, where, item.pointer, item.message)
                       for item in parsed.reported() if item.severity == 'error']
             if errors:
@@ -1005,16 +1009,21 @@ class Project:
                     _write_path(root, folder_reader.RESULTS, f'{name}.csv', text.encode('utf-8'))
                     results_written.append(name)
         annotations_written, annotations_deleted = [], []
-        for name, data, must_change, _ in lines_plan:
+        for name, data, must_change, lines in lines_plan:
             if must_change and data is None:
                 _delete_path(root, folder_reader.ANNOTATIONS, name + folder_reader.LINES_SUFFIX)
                 annotations_deleted.append(annotation_rows.path(name))
             elif must_change:
                 _write_path(root, folder_reader.ANNOTATIONS, name + folder_reader.LINES_SUFFIX, data)
                 annotations_written.append(annotation_rows.path(name))
+            if must_change:
+                _save_sidecars(root, name, lines if data is not None else [],
+                               annotation_rows.staged_sidecars(self._connection, self.schema, name))
         with self._connection.transaction():
-            for name, data, _, lines in lines_plan:
+            for name, data, must_change, lines in lines_plan:
                 annotation_rows.mark_saved(self._connection, self.schema, name, lines)
+                if must_change:
+                    annotation_rows.drop_staged(self._connection, self.schema, name)
                 if data is None:
                     annotation_rows.forget_file(self._connection, self.schema, name)
                 else:  # the file now holds data: its digest is known, its size and time are read
@@ -1303,6 +1312,28 @@ def _write_path(root, directory, filename, data):
 def _delete_file(root, reference):
     directory, name = documents.parse_reference(reference)
     _delete_path(root, directory, f'{name}.json')
+
+
+def _save_sidecars(root, name, lines, staged):
+    """annotations/<name>/ holding exactly the sidecars the saved lines name (spec-t4.md section 2).
+
+    A named sidecar not there is written from those kept here (staged); one
+    there that no line names is removed, and the directory when it is left
+    empty. Only files named by content are touched.
+    """
+    from .annotation_payloads import is_kept_name
+    directory = f'{folder_reader.ANNOTATIONS}/{name}'
+    full = os.path.join(root, directory)
+    named = annotation_rows.named_sidecars(lines)
+    present = set(os.listdir(full)) if os.path.isdir(full) and not os.path.islink(full) else set()
+    for file in sorted(named - present):
+        if file in staged and is_kept_name(file):
+            _write_path(root, directory, file, staged[file])
+    for file in sorted(present - named):
+        if is_kept_name(file):
+            _delete_path(root, directory, file)
+    if os.path.isdir(full) and not os.listdir(full):
+        os.rmdir(full)
 
 
 def _delete_path(root, directory, filename):

@@ -253,9 +253,10 @@
             "freeze",
             "generate",
             "embed",
-            "select"
+            "select",
+            "annotate"
           ],
-          "description": "a step Tuldok provides: import, freeze, generate, embed or select"
+          "description": "a step Tuldok provides: import, freeze, generate, embed, select or annotate"
         },
         "environment": {
           "type": "string",
@@ -413,14 +414,6 @@
           },
           "then": {
             "properties": {
-              "command": {
-                "not": {},
-                "description": "A run with step has no command; remove one of the two."
-              },
-              "environment": {
-                "not": {},
-                "description": "A step Tuldok provides runs with Tuldok's own interpreter; remove environment."
-              },
               "outputs": {
                 "not": {},
                 "description": "A step's outputs are fixed by the step; remove outputs."
@@ -428,10 +421,6 @@
               "settings_file": {
                 "not": {},
                 "description": "A step takes its settings inline; use settings, not settings_file."
-              },
-              "env": {
-                "not": {},
-                "description": "A step Tuldok provides takes no environment variables; remove env."
               },
               "estimate": {
                 "not": {},
@@ -446,7 +435,41 @@
             "properties": {
               "annotations": {
                 "not": {},
-                "description": "annotations belong to a run with step freeze; add step or remove annotations."
+                "description": "annotations belong to a run with step freeze or annotate; add step or remove annotations."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "step"
+            ],
+            "properties": {
+              "step": {
+                "enum": [
+                  "import",
+                  "freeze",
+                  "generate",
+                  "embed",
+                  "select"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "command": {
+                "not": {},
+                "description": "A run with step has no command; remove one of the two."
+              },
+              "environment": {
+                "not": {},
+                "description": "A step Tuldok provides runs with Tuldok's own interpreter; remove environment."
+              },
+              "env": {
+                "not": {},
+                "description": "A step Tuldok provides takes no environment variables; remove env."
               }
             }
           }

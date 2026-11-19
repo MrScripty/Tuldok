@@ -43,6 +43,8 @@ NO_ENDPOINT = ('No Pumas endpoint is set on this machine, so this dataset cannot
                'one, then it can be built.')
 NO_ENDPOINT_EMBED = ('No Pumas endpoint is set on this machine, so this dataset cannot be embedded here; the owner '
                      'sets one, then it can be built.')
+NO_ENDPOINT_ANNOTATE = ('No Pumas endpoint is set on this machine, so this dataset cannot be annotated here; the owner '
+                        'sets one, then it can be built.')
 _CAUSE_LABELS = ('no', 'needs-work')
 
 
@@ -139,7 +141,7 @@ def _inputs(document):
 
 def _tasks(run):
     """The tasks a freeze step reads (run.annotations), in order; empty for any other run."""
-    tasks = run.get('annotations') if run.get('step') == 'freeze' else None
+    tasks = run.get('annotations') if run.get('step') in ('freeze', 'annotate') else None
     return [task for task in (tasks if isinstance(tasks, list) else ()) if isinstance(task, str)]
 
 
@@ -150,13 +152,14 @@ def _task_notes(definitions, reference, document):
     never a step. Such a freeze fails before it runs.
     """
     used = _inputs(document).get('records', {}).get('reference')
+    verb = 'freezes by' if _run(document).get('step') == 'freeze' else 'annotates for'
     notes = []
     for task in _tasks(_run(document)):
         target = definitions.get(task)
         if target is None:
-            notes.append(f'{reference} freezes by {task}, which does not exist; it fails when built.')
+            notes.append(f'{reference} {verb} {task}, which does not exist; it fails when built.')
         elif target.get('dataset') != used:
-            notes.append(f'{reference} freezes by {task}, which annotates {target.get("dataset")}, not its input '
+            notes.append(f'{reference} {verb} {task}, which annotates {target.get("dataset")}, not its input '
                          f'{used}; it fails when built.')
     return notes
 
@@ -289,14 +292,15 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
             if action == 'build' and not step['subjects']['run']:
                 # Nothing would run: blocked, though by no cause of its own.
                 step['action'] = action = actions[reference] = 'blocked'
-        if provided == 'freeze':
+        if provided in ('freeze', 'annotate'):
             notes.extend(_task_notes(definitions, reference, document))
-        if provided in ('generate', 'embed') and action == 'build' and not has_endpoint():
+        asks_pumas = provided in ('generate', 'embed') or (provided == 'annotate' and 'command' not in (document.get('run') or {}))
+        if asks_pumas and action == 'build' and not has_endpoint():
             step['action'] = action = actions[reference] = 'blocked'
-            step['blocked_by'] = [{'reference': reference, 'rebuild': 'endpoint',
-                                   'reason': NO_ENDPOINT if provided == 'generate' else NO_ENDPOINT_EMBED}]
-            notes.append(f'{reference} is {"generated" if provided == "generate" else "embedded"} through a Pumas '
-                         'endpoint, and none is set on this machine.')
+            reason, done = {'generate': (NO_ENDPOINT, 'generated'), 'embed': (NO_ENDPOINT_EMBED, 'embedded'),
+                            'annotate': (NO_ENDPOINT_ANNOTATE, 'annotated')}[provided]
+            step['blocked_by'] = [{'reference': reference, 'rebuild': 'endpoint', 'reason': reason}]
+            notes.append(f'{reference} is {done} through a Pumas endpoint, and none is set on this machine.')
             steps.append(step)
             continue
         if action == 'blocked':
