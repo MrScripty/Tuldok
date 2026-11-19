@@ -116,7 +116,8 @@ COMPARE = ('tensors', 'total', 'only_here', 'only_there', 'reshaped', 'unread')
 SAVE = ('written', 'deleted', 'results_written', 'results_deleted', 'annotations_written', 'annotations_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
 STOP_RUN = ('id', 'reference', 'subject', 'was', 'state', 'killed', 'remaining', 'marked_unknown')
-ENDPOINT = ('address', 'answered', 'version', 'models', 'problem')
+ENDPOINT = ('address', 'answered', 'version', 'models', 'problem', 'embedder')
+EMBEDDER = ('model', 'profile', 'prefix', 'named_by', 'default', 'chosen', 'problem', 'embedders')
 MODEL_GRAPH = ('path', 'format', 'complete', 'reason', 'method', 'torch', 'model', 'inputs', 'notes', 'counts',
                'modules', 'tensors', 'depth', 'open', 'nodes', 'edges')
 _MODULE_PATHS = {'type': 'array', 'items': {'type': 'string', 'maxLength': 1024}, 'maxItems': GRAPH_MODULES}
@@ -377,6 +378,11 @@ OPERATIONS = (
                                                'maxLength': ENDPOINT_CHARACTERS}), ENDPOINT),
     Operation('find_endpoints', 'List the Pumas endpoints advertising themselves on this machine, for the owner to '
               'pick from.', 'owner', False, _arguments(), ('endpoints', 'rejected')),
+    Operation('set_embedder', "Set the model this machine embeds with when a definition names none, and the "
+              'text put before each record\'s text; null keeps EmbeddingGemma 2 and the default prefix.', 'owner', True,
+              _arguments(['model'], model={'type': ['string', 'null'], 'minLength': 1, 'maxLength': 256},
+                         profile={'type': ['string', 'null'], 'minLength': 1, 'maxLength': 128},
+                         prefix={'type': ['string', 'null'], 'maxLength': 1000}), EMBEDDER),
     Operation('request_build', "Ask for a build of the targets: the owner's request is queued, an agent's waits for "
               "the owner's approval (read build_request for its state), and a queued request not started by "
               'its expires_at expires.', 'request', True,

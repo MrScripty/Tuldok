@@ -26,7 +26,7 @@ A product holds a set of embeddings `<name>` (1 to 64 characters of `a-z 0-9 . _
  "notes": ["2 point clouds were not embedded: no model the endpoint serves takes them."]}
 ```
 
-- `records`: the record ids in row order, 1 to 50,000 different ids of spec-d1 (1 to 200 of `A-Z a-z 0-9 . _ -`).
+- `records`: the record ids in row order, 1 to 50,000 different ids of 1 to 600 characters without control characters (a product read from its files names its records by their addresses, spec-d1).
 - `dimensions`: 1 to 4,096, the second axis of the `.npy`. `metric`: `cosine` (the only one).
 - `model`: an object with `name` (1 to 256 characters) and any other short facts (strings, numbers, booleans or null), shown as given.
 - `prefix`: the text put before each record's text, or null. EmbeddingGemma expects a task prefix (Pumas: "task prefixes … are part of the caller's text").

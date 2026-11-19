@@ -9,6 +9,7 @@ only what the selected serving declared.
 import hashlib
 import http.client
 import json
+import math
 import re
 import socket
 import threading
@@ -33,7 +34,7 @@ MAX_DIMENSION = 2048
 MAX_PIXELS = 4194304
 MAX_MESSAGE = 600
 # The result kind of each output Tuldok asks for.
-RESULT_KINDS = {'text': 'text', 'png_base64': 'image', 'decisions': 'decisions'}
+RESULT_KINDS = {'text': 'text', 'png_base64': 'image', 'decisions': 'decisions', 'embeddings_float32': 'embeddings'}
 # Capabilities Tuldok sends, with their fixed contract-version-1 semantic task.
 USED_CAPABILITIES = {'chat_generation': 'chat_generation', 'image_generation': 'text_to_image',
                      'image_to_text': 'image_to_text'}
@@ -639,6 +640,16 @@ def result(raw, request_id):
             response_fields(projected, ('kind', 'answers'))
             if type(projected['answers']) is not dict:
                 raise ValueError('Invalid typed decisions result.')
+        elif projected.get('kind') == 'embeddings':
+            # One finite vector per item asked, all of one length; the caller checks the count against its batch.
+            response_fields(projected, ('kind', 'vectors'))
+            vectors = projected['vectors']
+            if type(vectors) is not list or not vectors or any(type(vector) is not list or not vector
+                                                                for vector in vectors):
+                raise ValueError('Invalid typed embeddings result.')
+            if len({len(vector) for vector in vectors}) != 1 or not all(
+                    type(value) in (int, float) and math.isfinite(value) for vector in vectors for value in vector):
+                raise ValueError('Typed embeddings must be finite vectors of one length.')
         elif projected.get('kind') == 'image':
             response_fields(projected, ('kind', 'png_base64', 'seed'))
             if not isinstance(projected['png_base64'], str) or type(projected['seed']) is not int or not 0 <= projected['seed'] <= 4294967295:

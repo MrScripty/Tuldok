@@ -136,7 +136,7 @@ ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
 # The calls to the Pumas endpoint (spec-d5.md): each is made outside the service's lock; those that read a project
 # take the lock themselves, only for their database work.
 OUTSIDE_LOCK = ANNOTATION_READS + ('endpoint', 'set_endpoint', 'find_endpoints', 'suggestion_models',
-                                   'suggest_annotation', 'embeddings')
+                                   'suggest_annotation', 'embeddings', 'set_embedder')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
@@ -206,6 +206,8 @@ def _detail(name, result):
         return f'{result["reverted"]} reverted'
     if name == 'set_endpoint':
         return 'set' if result['address'] else 'cleared'
+    if name == 'set_embedder':
+        return 'set' if result['model'] else 'default'
     return ''
 
 
@@ -902,19 +904,43 @@ class Service:
 
     # ------------------------------------------------------- the endpoint
 
+    @staticmethod
+    def _embedder_setting():
+        try:
+            return local.embedder_settings()
+        except local.SettingsError as exc:
+            raise store.ProjectError(str(exc), 'invalid') from None
+
     def _endpoint(self, arguments, actor):
-        return pumas.observe(local.pumas_endpoint())
+        return pumas.observe(local.pumas_endpoint(), self._embedder_setting())
+
+    def _set_embedder(self, arguments, actor):
+        """Keep the machine's embedder once the endpoint serves it with an embedding capability (spec-t5.md
+        section 2); a null model is EmbeddingGemma 2, which needs no check."""
+        model, profile, prefix = arguments['model'], arguments.get('profile'), arguments.get('prefix')
+        if model is None and profile is not None:
+            raise store.ProjectError('A profile goes with a model; name the model too, or clear both.', 'invalid')
+        if model is not None:
+            address = local.pumas_endpoint()
+            if address is None:
+                raise store.ProjectError(pumas.NO_ENDPOINT, 'unavailable')
+            try:
+                pumas.choose_embedder(pumas.served(address), model, profile)
+            except pumas.PumasError as exc:
+                raise store.ProjectError(str(exc), exc.code) from None
+        local.set_embedder(model, profile, prefix)
+        return self._endpoint({}, actor)['embedder']
 
     def _set_endpoint(self, arguments, actor):
         """Ask the address once what it serves and keep it when it answered; null clears the setting."""
         if arguments['address'] is None:
             local.set_pumas_endpoint(None)
-            return pumas.observe(None)
+            return pumas.observe(None, self._embedder_setting())
         try:
             address = pumas.normalize(arguments['address'])
         except pumas.PumasError as exc:
             raise store.ProjectError(str(exc), exc.code) from None
-        seen = pumas.observe(address)
+        seen = pumas.observe(address, self._embedder_setting())
         if not seen['answered']:
             raise store.ProjectError(f'The Pumas endpoint at {address} did not answer, so it was not set: '
                                      f'{seen["problem"]}', 'unavailable')

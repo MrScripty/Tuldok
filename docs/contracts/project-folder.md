@@ -191,7 +191,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `command` | unless `step` is given | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
-| `step` | no | datasets only: `import`, `freeze` or `generate`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
+| `step` | no | datasets only: `import`, `freeze`, `generate`, `embed` or `select`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
 | `environment` | when the first string of `command` is `python` | reference to `environments/` |
 | `inputs` | no | at most 32 entries; keys `^[a-z][a-z0-9_]{0,31}$`; values are inputs from `datasets/`, `recipes/` or `steps/` |
 | `settings` | no | object, free content, written to a file whose path replaces `{settings}`; not together with `settings_file` |
@@ -264,12 +264,12 @@ Example, `datasets/sinusoidal-v1.json`:
 #### Steps Tuldok provides
 
 A dataset's `run` names either a `command` or a `step`, one of `import`,
-`freeze` and `generate`. A run with `step` has no `command`, `environment`, `outputs`,
+`freeze`, `generate`, `embed` and `select`. A run with `step` has no `command`, `environment`, `outputs`,
 `settings_file`, `env` or `estimate`: the step's outputs are fixed, its
 settings are inline in `settings`, and it runs with Tuldok's own interpreter
 (see [The command and its environment](#the-command-and-its-environment)).
 It may have `resources` and `sources`. A plan shows it as `tuldok import`,
-`tuldok freeze` or `tuldok generate`. It is planned, requested, approved, run, cancelled and
+`tuldok freeze`, `tuldok generate`, `tuldok embed` or `tuldok select`. It is planned, requested, approved, run, cancelled and
 recorded like any build, from a commit as builds are. `check` reports a
 setting the step does not take, a required one missing and a value of the
 wrong form.
@@ -318,6 +318,7 @@ their annotations. Its run takes one input, `"inputs": {"records":
 | `seed` | yes | an integer of at most 63 bits |
 | `shares` | yes | 1 to 16 splits and their relative sizes, integers from 0 to 1,000,000, at least one above 0, for example `{"train": 8, "validation": 1, "test": 1}` |
 | `include` | no | the states of the first task's annotations that take a record in; default `["accepted"]` |
+| `records` | no | 1 to 20,000 different record ids of the input: only those are taken, before the first task's states decide (a selection on the map); an id the input does not have fails the step |
 
 It reads each task's line file from the commit the build uses, at the
 project folder's place in the code's Git repository (a scratch build reads
@@ -443,6 +444,48 @@ Example, `datasets/poem-lines.json`:
   }
 }
 ```
+
+**`embed`** writes embeddings of its input's records (see
+[A dataset's embeddings](#a-datasets-embeddings)) by asking the embedder the
+machine's Pumas endpoint serves. Its run takes one input, `"inputs":
+{"records": "datasets/<name>"}`, and no `annotations`. Every setting is
+optional:
+
+| Setting | Rule |
+| --- | --- |
+| `model`, `profile` | the served alias (and its profile) to embed with. Without one, the machine's `embedding_model` (see [The project directory on this machine](#the-project-directory-on-this-machine)); without that, **EmbeddingGemma 2**: the served model whose alias or model id holds `embeddinggemma-2` (ignoring case), `unsloth/embeddinggemma-2-GGUF` first. When none is served the step fails naming the embedders the endpoint does serve; another model is never chosen in its stead |
+| `prefix` | at most 1,000 characters put before each text; default the machine's `embedding_prefix`, else `task: clustering \| query: ` |
+| `dimensions` | 1 to 4,096, asked as `{"kind": "embeddings", "dimensions": d}` (Pumas truncates and renormalises); checked against an advertised bound |
+| `name` | the set's name, 1 to 64 of `a-z 0-9 . _ -`; default the input's name |
+| `batch` | records a request carries, 1 to 256, default 32, at most the advertised `input_count` (and `image_count`, 4 when none, for images) |
+
+Texts (inline, or UTF-8 files of at most 64 KiB) are asked by
+`text_embedding` with `{"kind": "text_batch", "texts": [...]}`; PNG and JPEG
+images of at most 8 MiB by `multimodal_embedding` with `{"kind":
+"content_batch", "items": [{"parts": [{"kind": "image", ...}]}]}`; other
+records are not embedded and are said so in the index's `notes`. The
+answer must hold one finite vector per item, all of one length. Before
+anything is asked the step reads what the endpoint serves and fails when the
+model is not served, cannot embed any kind the input holds, or `dimensions`
+is past its bound. A request refused before the provider took it is asked
+again after 1 s and 2 s; anything else fails the step with the batch's first
+record. Every batch answered is kept in the run's output as it comes; when
+the dataset's last run failed, the next build takes the rows that run was
+answered, asked with the same input run, model, prefix and dimensions, and
+asks only for the rest. Its product holds only `embeddings/<name>.npy` and
+`.json`, `source` naming the input and its run, `model` what answered
+(`name`, `model_id`, `profile`, `capability`, `dimensions_asked`,
+`named_by`: `definition`, `setting` or `default`, `via: "pumas"`). Like a
+`generate`, its run keeps the endpoint it asked, and a plan on a machine with
+no endpoint shows it `blocked`.
+
+**`select`** takes some of its input's records: `"inputs": {"records":
+"datasets/<name>"}` and `"settings": {"records": [ids]}` (1 to 20,000
+different ids). Its product holds exactly those records in the input's
+order, each line as the input has it (its `split` and `annotations` kept),
+its file linked under `files/`, its hash added when the input has none. An
+id the input does not have fails the step. A selection on the map becomes
+such a dataset.
 
 ### `model`
 
@@ -1682,7 +1725,8 @@ is 32 hexadecimal characters:
 | `output/` | what `{output}` names, made empty before the command starts; a succeeded run's `output/` is its product |
 | `settings.json` | the inline `settings` as the run saw them, when the definition has them |
 | `tasks.json`, `annotations/` | a freeze's tasks and the line files it read |
-| `endpoint.json` | a generate's endpoint, `{address, version}`, as it found it; kept in the run's record as `endpoint` |
+| `endpoint.json` | a generate's or an embed's endpoint, `{address, version}`, as it found it; kept in the run's record as `endpoint` |
+| `embed.json` | what an embed is told: its input's reference and run, the machine's embedder and prefix, and the output of the last run when it failed |
 | `stdout.log`, `stderr.log` | the command's standard output and error |
 | `cancel` | present when cancellation was asked for |
 | `outcome.json` | how the command ended, written when every process of the run is gone |
@@ -2322,6 +2366,7 @@ and result keys of each operation are in its contract.
 | `endpoint` | inspect | Read the Pumas endpoint this machine uses: its address, whether it answered, and each model and profile it serves with its modalities, its capabilities and what Tuldok can make with it. |
 | `set_endpoint` | owner | Set the Pumas endpoint this machine uses once it has answered what it serves, or clear it with null. |
 | `find_endpoints` | owner | List the Pumas endpoints advertising themselves on this machine, for the owner to pick from. |
+| `set_embedder` | owner | Set the model this machine embeds with when a definition names none, and the text put before each record's text; null keeps EmbeddingGemma 2 and the default prefix. |
 | `suggestion_models` | inspect | List, for each kind of record in the product of a task's dataset, the models the Pumas endpoint serves that can suggest a value of the task. |
 | `suggest_annotation` | edit | Ask a model the Pumas endpoint serves for a value of a task for one record; nothing is stored, and an answer that is not a value of the task is refused. |
 
@@ -2917,7 +2962,7 @@ is two files under `embeddings/` at the top of the product:
 ```
 
 `records` are the record ids in row order (1 to 50,000 different ids of 1 to
-200 of `A-Z a-z 0-9 . _ -`); `dimensions` 1 to 4,096; `metric` is `cosine`;
+600 characters without control characters, as products name records); `dimensions` 1 to 4,096; `metric` is `cosine`;
 `model` an object with a `name` (1 to 256 characters) and other short facts;
 `prefix` the text put before each record's text, or null; `source` which
 records the rows are: `dataset` (null for the product's own records) and
@@ -3053,7 +3098,7 @@ is given up.
 
 ## The Pumas endpoint
 
-Generation and suggestions go through a Pumas endpoint, reached by HTTP
+Generation, suggestions and embeddings go through a Pumas endpoint, reached by HTTP
 only: nothing of Pumas is part of Tuldok. The address is a setting of the
 machine, `pumas_endpoint` in the settings file (see
 [The project directory on this machine](#the-project-directory-on-this-machine)),
@@ -3081,6 +3126,20 @@ numeric-loopback HTTP address Pumas 0.8.0 serves on, such as
 `unavailable` when it does not answer). It answers as `endpoint` does, and
 writes an activity row (`set` or `cleared`).
 
+`endpoint` and `set_endpoint` also answer `embedder`: the machine's
+`model`, `profile` and `prefix` (the default prefix when none is set),
+`named_by` (`setting` or `default`), `default` (`embeddinggemma-2`),
+`chosen` (the served `model`, `profile`, `model_id` and `capabilities` it
+resolves to now, or null), `problem` (why none, or null) and `embedders`
+(every served model and profile with an embedding capability available:
+`model`, `profile`, `model_id`, `capabilities`, `dimensions`).
+
+**`set_embedder`** (owner) takes `model` (an alias, or null for
+EmbeddingGemma 2), `profile` and `prefix` (null for the default), keeps them
+in the settings file once the endpoint serves the model with an embedding
+capability (refused `not-found` otherwise), writes an activity row (`set` or
+`default`), and answers `embedder`.
+
 **`find_endpoints`** takes nothing and answers `endpoints`, each `{address,
 version, component}`, the Pumas endpoints that advertise themselves on this
 machine's loopback listeners, and `rejected`, `{server_url, reason}` of those
@@ -3102,12 +3161,17 @@ environment variable `TULDOK_SETTINGS` names. It is strict JSON as in
 [JSON rules](#json-rules), at most 64 KiB, and has no other fields:
 
 ```json
-{"format": "tuldok_settings_v1", "project_home": "/absolute/path", "pumas_endpoint": "http://127.0.0.1:8765"}
+{"format": "tuldok_settings_v1", "project_home": "/absolute/path", "pumas_endpoint": "http://127.0.0.1:8765",
+ "embedding_model": "nomic-embed", "embedding_prefix": "task: clustering | query: "}
 ```
 
 `project_home` is optional and must be absolute. `pumas_endpoint` is optional,
 an `http` or `https` address of at most 2,048 characters with no spaces; it is
-set by `set_endpoint` (see [The Pumas endpoint](#the-pumas-endpoint)). The file is read only when
+set by `set_endpoint` (see [The Pumas endpoint](#the-pumas-endpoint)). `embedding_model` (1 to 256
+characters), `embedding_profile` (1 to 128) and `embedding_prefix` (at most
+1,000) are optional and set by `set_embedder`: the embedder of an `embed`
+that names none, in place of EmbeddingGemma 2, and the text put before each
+record's text. The file is read only when
 the environment variable does not decide. A settings file that cannot be read
 or is not valid stops the command with a message naming the file and the
 fault, exit status 2, and stops the app's start-up; Tuldok never falls back to

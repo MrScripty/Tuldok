@@ -49,7 +49,6 @@ FORMAT = 'tuldok_embeddings_v1'
 DIRECTORY = 'embeddings'
 NAME = re.compile(r'[a-z0-9][a-z0-9._-]{0,63}')
 _PROJECTION_FILE = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.npy')
-_ID = re.compile(r'[A-Za-z0-9._-]{1,200}')
 INDEX_BYTES = 16 * 1024 * 1024
 ROWS_LIMIT = 50_000
 DIMENSIONS_LIMIT = 4096
@@ -91,6 +90,13 @@ def _fact(value):
         or (isinstance(value, str) and len(value) <= FACT_CHARACTERS)
 
 
+def _record_id(item):
+    """A record's id as products have them: 1 to 600 characters, no control characters (an address when the
+    records are a product's files)."""
+    return isinstance(item, str) and 1 <= len(item) <= 600 and not any(ord(char) < 32 or ord(char) == 127
+                                                                        for char in item)
+
+
 def check_index(value, name):
     """The problems of an index (a decoded JSON value) for the set name: a list of sentences, empty when none."""
     if not isinstance(value, dict):
@@ -102,9 +108,10 @@ def check_index(value, name):
     if not isinstance(records, list) or not 1 <= len(records) <= ROWS_LIMIT:
         problems.append(f'records must be a list of 1 to {ROWS_LIMIT:,} record ids.')
     else:
-        bad = next((item for item in records if not isinstance(item, str) or not _ID.fullmatch(item)), None)
+        bad = next((item for item in records if not _record_id(item)), None)
         if bad is not None:
-            problems.append(f'The record id {str(bad)[:80]!r} is not 1 to 200 characters of A-Z a-z 0-9 . _ -.')
+            problems.append(f'The record id {str(bad)[:80]!r} is not 1 to 600 characters without control '
+                            'characters.')
         elif len(set(records)) != len(records):
             seen, twice = set(), None
             for item in records:

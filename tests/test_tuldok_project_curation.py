@@ -26,8 +26,14 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from tuldok_project import embeddings, inside  # noqa: E402
+import hashlib  # noqa: E402
+import subprocess  # noqa: E402
+import uuid  # noqa: E402
+
+import agent_api  # noqa: E402
+from tuldok_project import builds, check, embeddings, inside, local, operations, plan, pumas, store  # noqa: E402
 from tuldok_project.store import ProjectError  # noqa: E402
+import test_tuldok_project_pumas as fixtures  # noqa: E402
 
 DIMENSIONS = 24
 
@@ -153,7 +159,7 @@ class Contract(Product):
             with self.subTest(key):
                 self.assertIn(words, str(self.refusal(**{key: value})))
         self.assertIn('records must be a list', str(self.refusal(records=KeyError)))
-        self.assertIn('is not 1 to 200 characters', str(self.refusal(records=['a/b'])))
+        self.assertIn('is not 1 to 600 characters', str(self.refusal(records=['a\tb'])))
 
     def test_the_vectors_and_the_projection(self):
         ids, rows, _, _ = fixture()
@@ -394,6 +400,428 @@ class Searched(Product):
                 handle.write(json.dumps(record) + '\n')
         drawn = embeddings.embedding_map(self.product(), inside.Product('run-records', other), 'texts')
         self.assertEqual(drawn['missing'], 84)
+
+
+# ======================================================================= T5b
+
+def embedder(model, model_id, *, text=True, image=False, profile=None, dimensions=768, input_count=16):
+    capabilities = []
+    if text:
+        capabilities.append(fixtures._capability('text_embedding', ['text', 'text_batch'], ['embeddings_float32'],
+                                                 ['text'], ['vector'],
+                                                 [{'option': 'dimensions', 'minimum': 1.0, 'maximum': float(dimensions)},
+                                                  {'option': 'input_count', 'minimum': 1.0,
+                                                   'maximum': float(input_count)}]))
+    if image:
+        capabilities.append(fixtures._capability('multimodal_embedding', ['png_base64', 'jpeg_base64', 'content_batch'],
+                                                 ['embeddings_float32'], ['text', 'image'], ['vector'],
+                                                 [{'option': 'dimensions', 'minimum': 1.0, 'maximum': float(dimensions)},
+                                                  {'option': 'image_count', 'minimum': 1.0, 'maximum': 4.0}]))
+    entry = fixtures._model(model, profile or f'{model}-gpu', capabilities, ['text'] + (['image'] if image else []),
+                            ['vector'])
+    entry['model_id'] = model_id
+    return entry
+
+
+def embedding_listing(*extra, gemma=True):
+    value = fixtures.listing()
+    if gemma:
+        value['models'].append(embedder('embeddinggemma-2', 'unsloth/embeddinggemma-2-GGUF', image=True))
+    value['models'].append(embedder('nomic-embed', 'nomic-ai/nomic-embed-text-v1.5-GGUF'))
+    value['models'] += list(extra)
+    return value
+
+
+def decoded(raw):
+    import pumas_operations
+    return pumas_operations.decode_served_models(json.dumps(raw).encode())
+
+
+def vector_of(content, size):
+    digest = hashlib.sha256(content.encode('utf-8') if isinstance(content, str) else content).digest()
+    return [(digest[i % 32] / 255.0 - 0.5) + 0.01 * i for i in range(size)]
+
+
+def embed_respond(body):
+    """The fake's answer to an embeddings request: a vector made from each item's text or image."""
+    size = (body.get('options') or {}).get('dimensions', 12)
+    if body['input']['kind'] == 'text_batch':
+        items = body['input']['texts']
+    else:
+        items = [base64.b64decode(item['parts'][0]['data_base64']) for item in body['input']['items']]
+    return {'kind': 'embeddings', 'vectors': [vector_of(item, size) for item in items]}
+
+
+class Embedder(unittest.TestCase):
+    """Section 2: EmbeddingGemma 2 by default, never another model silently."""
+
+    def test_embeddinggemma_2_is_chosen_by_alias_or_model_id_the_released_gguf_first(self):
+        listing = decoded(embedding_listing())
+        entry, named_by = pumas.choose_embedder(listing)
+        self.assertEqual((entry['model'], entry['model_id'], named_by),
+                         ('embeddinggemma-2', 'unsloth/embeddinggemma-2-GGUF', 'default'))
+        # By its model id alone, and the released GGUF before another build of it.
+        other = embedder('gemma-embed-q8', 'someone/EmbeddingGemma-2-Q8')
+        listing = decoded(embedding_listing(other, embedder('local-gemma', 'unsloth/EmbeddingGemma-2-GGUF'),
+                                            gemma=False))
+        self.assertEqual(pumas.choose_embedder(listing)[0]['model'], 'local-gemma')
+        listing = decoded(embedding_listing(other, gemma=False))
+        self.assertEqual(pumas.choose_embedder(listing)[0]['model'], 'gemma-embed-q8')
+        # A named model comes first.
+        self.assertEqual(pumas.choose_embedder(decoded(embedding_listing()), 'nomic-embed')[0]['model'],
+                         'nomic-embed')
+
+    def test_refused_when_not_served_naming_the_served_embedders(self):
+        listing = decoded(embedding_listing(gemma=False))
+        with self.assertRaises(pumas.PumasError) as raised:
+            pumas.choose_embedder(listing)
+        self.assertEqual(raised.exception.code, 'not-found')
+        message = str(raised.exception)
+        self.assertIn('does not serve EmbeddingGemma 2', message)
+        self.assertIn('nomic-embed (nomic-ai/nomic-embed-text-v1.5-GGUF, nomic-embed-gpu)', message)
+        self.assertIn('Tuldok does not choose another', message)
+        # A served EmbeddingGemma 2 whose capability is unavailable is not chosen either.
+        down = embedder('embeddinggemma-2', 'unsloth/embeddinggemma-2-GGUF')
+        down['capabilities'][0]['availability'] = {'state': 'unavailable', 'reason': 'not_loaded'}
+        with self.assertRaises(pumas.PumasError):
+            pumas.choose_embedder(decoded(embedding_listing(down, gemma=False)))
+        with self.assertRaises(pumas.PumasError) as raised:
+            pumas.choose_embedder(decoded(embedding_listing()), 'writer')
+        self.assertIn('has no embedding capability', str(raised.exception))
+        shown = pumas.embedder_shown(listing, {'model': None, 'profile': None, 'prefix': None})
+        self.assertEqual((shown['chosen'], shown['named_by'], shown['prefix'], len(shown['embedders'])),
+                         (None, 'default', 'task: clustering | query: ', 1))
+        self.assertIn('does not serve EmbeddingGemma 2', shown['problem'])
+
+    def test_routes_batches_and_the_result(self):
+        listing = decoded(embedding_listing())
+        entry = pumas.choose_embedder(listing)[0]
+        routes = pumas.embedding_routes(entry)
+        self.assertEqual({kind: route[:2] for kind, route in routes.items()},
+                         {'text': ('text_embedding', 'text_batch'), 'image': ('multimodal_embedding', 'content_batch')})
+        self.assertEqual((pumas.batch_size('text', routes['text'][2], 32), pumas.batch_size('image', routes['image'][2], 32)),
+                         (16, 4))
+        with self.assertRaises(pumas.PumasError) as raised:
+            pumas.check_dimensions(routes, 1024)
+        self.assertIn('dimensions 1024 is outside the bound 1 to 768', str(raised.exception))
+        import pumas_operations
+        value = pumas_operations.result(json.dumps({'contract_version': 1, 'request_id': 'r', 'result': {
+            'kind': 'embeddings', 'vectors': [[0.5, 1.0], [1, 2]]}}).encode(), 'r')
+        self.assertEqual(value['vectors'], [[0.5, 1.0], [1, 2]])
+        for vectors in ([[1.0], [1.0, 2.0]], [], [[]]):
+            with self.assertRaises(pumas_operations.OperationError):
+                pumas_operations.result(json.dumps({'contract_version': 1, 'request_id': 'r', 'result': {
+                    'kind': 'embeddings', 'vectors': vectors}}).encode(), 'r')
+
+
+class Settings(unittest.TestCase):
+
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.file = Path(directory.name) / 'settings.json'
+        patcher = mock.patch.dict(os.environ, {local.SETTINGS_VARIABLE: str(self.file)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_the_machines_embedder_beside_the_endpoint(self):
+        local.set_pumas_endpoint('http://127.0.0.1:8765')
+        local.set_embedder('nomic-embed', None, 'task: search result | query: ')
+        self.assertEqual(local.embedder_settings(), {'model': 'nomic-embed', 'profile': None,
+                                                     'prefix': 'task: search result | query: '})
+        local.set_pumas_endpoint(None)
+        self.assertEqual(local.embedder_settings()['model'], 'nomic-embed')
+        local.set_embedder(None, None, None)
+        self.assertEqual(json.loads(self.file.read_text()), {'format': local.SETTINGS_FORMAT})
+        self.file.write_text(json.dumps({'format': local.SETTINGS_FORMAT, 'embedding_model': ''}))
+        with self.assertRaises(local.SettingsError):
+            local.embedder_settings()
+
+
+def _embed(settings=None, source='datasets/notes'):
+    return {'format': 'tuldok_definition_v1', 'kind': 'dataset', 'title': 'Embedded',
+            'run': {'step': 'embed', 'inputs': {'records': source}, 'settings': dict(settings or {})}}
+
+
+def _select(records, source='datasets/notes'):
+    return {'format': 'tuldok_definition_v1', 'kind': 'dataset', 'title': 'Picked',
+            'run': {'step': 'select', 'inputs': {'records': source}, 'settings': {'records': list(records)}}}
+
+
+CURATION = {
+    'datasets/notes': fixtures._import({'source': 'data/notes'}),
+    'datasets/notes-embedded': _embed({'dimensions': 8, 'batch': 2}),
+    'datasets/notes-named': _embed({'model': 'nomic-embed', 'name': 'by-nomic', 'prefix': ''}),
+    'datasets/picked': _select(['c.txt', 'a.txt', 'photo.png']),
+    'datasets/picked-wrong': _select(['a.txt', 'nobody.txt']),
+    'annotations/quality': fixtures._task('datasets/notes', 'class', ['good', 'bad'], title='Quality'),
+    'datasets/notes-frozen': {'format': 'tuldok_definition_v1', 'kind': 'dataset', 'title': 'Frozen',
+                              'run': {'step': 'freeze', 'inputs': {'records': 'datasets/notes'},
+                                      'annotations': ['annotations/quality'],
+                                      'settings': {'seed': 7, 'shares': {'train': 1},
+                                                   'records': ['a.txt', 'b.txt', 'd.txt']}}},
+}
+NOTES = {'a.txt': 'A note about apples.', 'b.txt': 'A note about boats.', 'c.txt': 'A note about cats.',
+         'd.txt': 'A note about dogs.', 'e.txt': 'A note about eels.'}
+
+
+def write_curation_project(root, project_id):
+    folder, code = root / 'project', root / 'code'
+    for directory in ('datasets', 'annotations'):
+        (folder / directory).mkdir(parents=True)
+    (folder / 'tuldok.json').write_text(json.dumps({'format': 'tuldok_project_v1', 'id': project_id,
+                                                    'name': 'Curation test project', 'code_root': '../code'},
+                                                   indent=2) + '\n', encoding='utf-8')
+    for reference, document in CURATION.items():
+        (folder / f'{reference}.json').write_text(json.dumps(document, indent=2) + '\n', encoding='utf-8')
+    lines = ''.join(json.dumps({'record': name, 'sha256': None, 'state': 'accepted' if name != 'b.txt' else 'rejected',
+                                'value': 'good' if name != 'b.txt' else None, 'by': 'owner',
+                                'at': '2026-11-19T10:00:00Z'}, separators=(',', ':')) + '\n'
+                    for name in ('a.txt', 'b.txt', 'c.txt', 'd.txt'))
+    (folder / 'annotations' / 'quality.jsonl').write_text(lines, encoding='utf-8')
+    notes = code / 'data' / 'notes'
+    notes.mkdir(parents=True)
+    for name, text in NOTES.items():
+        (notes / name).write_text(text, encoding='utf-8')
+    (notes / 'photo.png').write_bytes(fixtures.png())
+    (notes / 'shape.xyz').write_text('0 0 0\n1 1 1\n', encoding='utf-8')
+
+
+class Checked(unittest.TestCase):
+    """check on the settings of embed, select and freeze's records."""
+
+    def problems(self, document):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_curation_project(root, uuid.uuid4().hex)
+            (root / 'project' / 'datasets' / 'probe.json').write_text(json.dumps(document), encoding='utf-8')
+            report = check.check_folder(root / 'project')
+        return {(problem.pointer, problem.severity) for problem in report.problems
+                if problem.path == 'datasets/probe.json'}
+
+    def test_the_curation_project_checks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_curation_project(root, uuid.uuid4().hex)
+            report = check.check_folder(root / 'project')
+        self.assertEqual([problem for problem in report.problems if problem.severity == 'error'], [])
+
+    def test_settings_refused(self):
+        self.assertEqual(self.problems(_embed()), set())
+        self.assertEqual(self.problems(_embed({'dimensions': 0, 'batch': 999, 'name': 'Bad Name', 'prefix': 3,
+                                               'profile': 'p', 'colour': 1})),
+                         {('/run/settings/dimensions', 'error'), ('/run/settings/batch', 'error'),
+                          ('/run/settings/name', 'error'), ('/run/settings/prefix', 'error'),
+                          ('/run/settings/profile', 'error'), ('/run/settings/colour', 'error')})
+        document = _embed()
+        document['run']['inputs'] = {'prompts': 'datasets/notes'}
+        self.assertIn(('/run/inputs', 'error'), self.problems(document))
+        self.assertEqual(self.problems(_select(['a.txt'])), set())
+        self.assertEqual(self.problems(_select([])), {('/run/settings/records', 'error')})
+        self.assertEqual(self.problems(_select(['a.txt', 'a.txt'])), {('/run/settings/records', 'error')})
+        self.assertEqual(self.problems(_select(['a\nb'])), {('/run/settings/records/0', 'error')})
+        frozen = json.loads(json.dumps(CURATION['datasets/notes-frozen']))
+        frozen['run']['settings']['records'] = 'a.txt'
+        self.assertEqual(self.problems(frozen), {('/run/settings/records', 'error')})
+
+
+@unittest.skipUnless(fixtures.DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
+class Built(fixtures.Endpoint):
+    """embed, select and freeze's records built for real by builds.execute against the fake."""
+
+    def setUp(self):
+        super().setUp()
+        self.fake['served_models'] = embedding_listing()
+        self.fake['respond'] = embed_respond
+        self.root = self.temporary / 'repository'
+        self.root.mkdir()
+        self.project_id = uuid.uuid4().hex
+        write_curation_project(self.root, self.project_id)
+        self.folder = self.root / 'project'
+        self.git('init', '-q')
+        self.git('add', '-A')
+        self.git('commit', '-q', '-m', 'The project.')
+        self.addCleanup(store.drop_project, self.project_id)
+        from tuldok_project.service import Service
+        self.service = Service(self.folder)
+        self.addCleanup(self.service.close)
+        self.addCleanup(embeddings.forget)
+
+    git = fixtures.Project.git
+    call = fixtures.Project.call
+    refused = fixtures.Project.refused
+    build = fixtures.Project.build
+    product = fixtures.Project.product
+
+    def set_endpoint(self):
+        return self.call('set_endpoint', {'address': self.base})
+
+    def stdout(self, item):
+        return (Path(item['directory']) / 'stdout.log').read_text(encoding='utf-8')
+
+    def test_text_and_images_embedded_by_embeddinggemma_2_in_batches(self):
+        self.set_endpoint()
+        done = self.build('datasets/notes-embedded')
+        notes = self.product('datasets/notes')
+        made = self.product('datasets/notes-embedded')
+        files = sorted(str(path.relative_to(made['directory'])) for path in Path(made['directory']).rglob('*')
+                       if path.is_file())
+        self.assertEqual(files, ['embeddings/notes.json', 'embeddings/notes.npy'])
+        index = json.loads((Path(made['directory']) / 'embeddings' / 'notes.json').read_text())
+        self.assertEqual(index['records'], ['a.txt', 'b.txt', 'c.txt', 'd.txt', 'e.txt', 'photo.png'])
+        self.assertEqual((index['dimensions'], index['prefix'], index['source']),
+                         (8, 'task: clustering | query: ', {'dataset': 'datasets/notes', 'run': notes['run_id']}))
+        self.assertEqual(index['model'], {'name': 'embeddinggemma-2', 'model_id': 'unsloth/embeddinggemma-2-GGUF',
+                                          'profile': 'embeddinggemma-2-gpu',
+                                          'capability': 'multimodal_embedding, text_embedding', 'dimensions_asked': 8,
+                                          'named_by': 'default', 'via': 'pumas'})
+        self.assertEqual(index['notes'], ['1 pointcloud records were not embedded: Pumas 0.8.0 embeds texts and images.'])
+        posts = self.posts()
+        self.assertEqual([(body['capability'], body['input']['kind'], len(body['input'].get('texts') or
+                                                                           body['input'].get('items')))
+                          for body in posts],
+                         [('text_embedding', 'text_batch', 2), ('text_embedding', 'text_batch', 2),
+                          ('text_embedding', 'text_batch', 1), ('multimodal_embedding', 'content_batch', 1)])
+        self.assertEqual(posts[0]['input']['texts'], ['task: clustering | query: A note about apples.',
+                                                      'task: clustering | query: A note about boats.'])
+        self.assertEqual((posts[0]['output'], posts[0]['options'], posts[0]['model'], posts[0]['profile']),
+                         ('embeddings_float32', {'kind': 'embeddings', 'dimensions': 8}, 'embeddinggemma-2',
+                          'embeddinggemma-2-gpu'))
+        self.assertEqual(posts[3]['input']['items'][0]['parts'][0]['encoding'], 'png')
+        # The rows are the vectors the endpoint answered, in the index's order.
+        product = inside.Product(made['run_id'], made['directory'])
+        analysis = embeddings.analysis(product, 'notes')
+        expected = unit(vector_of('task: clustering | query: A note about cats.', 8))
+        self.assertLess(max(abs(a - b) for a, b in zip(analysis.row(2), expected)), 1e-6)
+        self.assertIn('"stage":"embed","completed":6,"total":6', self.stdout(done['steps'][-1]))
+        self.assertEqual(fixtures.Project.run_row(self, done['steps'][-1]['run_id'])['endpoint'],
+                         {'address': self.base, 'version': '0.8.0'})
+        # Found from the dataset it describes, and read through the operations.
+        listed = self.call('embeddings', {'dataset': 'notes'}, actor=fixtures.EDITOR)
+        self.assertEqual((listed['dataset'], listed['run']), ('datasets/notes', notes['run_id']))
+        [found] = listed['sets']
+        self.assertEqual({key: found[key] for key in ('run', 'holder', 'name', 'rows', 'dimensions', 'records_run',
+                                                      'current', 'problem')},
+                         {'run': made['run_id'], 'holder': 'datasets/notes-embedded', 'name': 'notes', 'rows': 6,
+                          'dimensions': 8, 'records_run': notes['run_id'], 'current': True, 'problem': None})
+        drawn = self.call('embedding_map', {'run': made['run_id'], 'name': 'notes', 'records_run': notes['run_id'],
+                                            'colour': 'kind'}, actor=fixtures.EDITOR)
+        self.assertEqual((drawn['rows'], drawn['missing'], drawn['method']), (6, 0, 'pca'))
+        self.assertEqual([item['name'] for item in drawn['colour']['categories']], ['text', 'image'])
+        near = self.call('embedding_neighbours', {'run': made['run_id'], 'name': 'notes',
+                                                  'records_run': notes['run_id'], 'record': 'a.txt', 'limit': 2})
+        self.assertEqual(len(near['neighbours']), 2)
+        self.assertEqual(self.call('embeddings', {'dataset': 'datasets/notes-embedded'})['sets'], [])
+        self.assertEqual(self.refused('embeddings', {'dataset': 'nothing'}).code, 'not-found')
+        # Built again only when the definition or its input changes.
+        self.assertEqual(self.call('plan', {'targets': ['datasets/notes-embedded']})['steps'][-1]['action'], 'built')
+
+    def test_the_machines_embedder_then_the_definitions_model(self):
+        self.set_endpoint()
+        shown = self.call('endpoint')['embedder']
+        self.assertEqual((shown['named_by'], shown['chosen']['model'], shown['prefix']),
+                         ('default', 'embeddinggemma-2', 'task: clustering | query: '))
+        self.assertEqual(self.refused('set_embedder', {'model': 'writer'}).code, 'not-found')
+        self.assertEqual(self.refused('set_embedder', {'model': 'nomic-embed'}, actor=fixtures.EDITOR).code,
+                         'forbidden')
+        kept = self.call('set_embedder', {'model': 'nomic-embed', 'prefix': 'task: search result | query: '})
+        self.assertEqual((kept['named_by'], kept['chosen']['model'], kept['prefix']),
+                         ('setting', 'nomic-embed', 'task: search result | query: '))
+        self.assertEqual(json.loads(self.settings.read_text())['embedding_model'], 'nomic-embed')
+        self.build('datasets/notes-embedded')
+        made = self.product('datasets/notes-embedded')
+        index = json.loads((Path(made['directory']) / 'embeddings' / 'notes.json').read_text())
+        self.assertEqual((index['model']['name'], index['model']['named_by'], index['prefix']),
+                         ('nomic-embed', 'setting', 'task: search result | query: '))
+        self.assertEqual(index['records'], ['a.txt', 'b.txt', 'c.txt', 'd.txt', 'e.txt'])
+        self.assertIn('1 records were not embedded: nomic-embed does not embed image.', index['notes'])
+        # The definition's model and prefix come before the machine's.
+        self.call('set_embedder', {'model': None})
+        self.build('datasets/notes-named')
+        made = self.product('datasets/notes-named')
+        index = json.loads((Path(made['directory']) / 'embeddings' / 'by-nomic.json').read_text())
+        self.assertEqual((index['model']['named_by'], index['prefix']), ('definition', None))
+        self.assertEqual(self.posts()[-1]['input']['texts'][0], 'A note about apples.')
+        with store.open_project(self.folder) as project:
+            rows = project._execute("SELECT operation, outcome, detail FROM {schema}.activity WHERE operation = "
+                                    "'set_embedder' ORDER BY at, id").fetchall()
+        self.assertEqual([tuple(row[:2]) for row in rows], [('set_embedder', 'not-found'), ('set_embedder', 'done'),
+                                                           ('set_embedder', 'done')])
+
+    def test_embeddinggemma_2_not_served_fails_before_anything_is_asked(self):
+        self.fake['served_models'] = embedding_listing(gemma=False)
+        self.set_endpoint()
+        done = self.build('datasets/notes-embedded', ok=False)
+        problem = (Path(done['steps'][-1]['directory']) / 'stderr.log').read_text(encoding='utf-8')
+        self.assertIn('does not serve EmbeddingGemma 2', problem)
+        self.assertIn('nomic-embed (nomic-ai/nomic-embed-text-v1.5-GGUF', problem)
+        self.assertEqual(self.posts(), [])
+
+    def test_a_failure_part_way_then_a_build_that_asks_only_for_the_rest(self):
+        self.set_endpoint()
+        self.fake['modes'] = ['not_admitted', 'success', 'success', 'unknown']
+        done = self.build('datasets/notes-embedded', ok=False)
+        failed = done['steps'][-1]
+        self.assertIn('Batch 3, from the record e.txt, failed', (Path(failed['directory']) / 'stderr.log').read_text())
+        self.assertIn('Batch 1 was not admitted', self.stdout(failed))
+        self.assertEqual(len(self.posts()), 4)
+        first_ids = [body['request_id'] for body in self.posts()]
+        self.assertTrue(first_ids[0].endswith(':1:1') and first_ids[1].endswith(':1:2'), first_ids)
+        self.fake['requests'].clear()
+        done = self.build('datasets/notes-embedded')
+        self.assertIn('4 rows were taken from the failed run before', self.stdout(done['steps'][-1]))
+        posts = self.posts()
+        self.assertEqual([body['input'].get('texts') or len(body['input']['items']) for body in posts],
+                         [['task: clustering | query: A note about eels.'], 1])
+        made = self.product('datasets/notes-embedded')
+        index = json.loads((Path(made['directory']) / 'embeddings' / 'notes.json').read_text())
+        self.assertEqual(index['records'], ['a.txt', 'b.txt', 'c.txt', 'd.txt', 'e.txt', 'photo.png'])
+        analysis = embeddings.analysis(inside.Product(made['run_id'], made['directory']), 'notes')
+        for row, name in enumerate(index['records'][:5]):
+            expected = unit(vector_of('task: clustering | query: ' + NOTES[name], 8))
+            self.assertLess(max(abs(a - b) for a, b in zip(analysis.row(row), expected)), 1e-6)
+
+    def test_no_endpoint_the_plan_says_so(self):
+        self.build('datasets/notes')
+        made = self.call('plan', {'targets': ['datasets/notes-embedded']})
+        self.assertFalse(made['buildable'])
+        self.assertEqual(made['steps'][-1]['blocked_by'][0]['reason'], plan.NO_ENDPOINT_EMBED)
+
+    def test_select_and_freeze_take_exactly_the_records_named(self):
+        self.build('datasets/picked')
+        made = self.product('datasets/picked')
+        listed = fixtures.records_of(made['directory'])
+        self.assertEqual([record['id'] for record in listed], ['a.txt', 'c.txt', 'photo.png'])
+        self.assertEqual(listed[0]['sha256'], hashlib.sha256(NOTES['a.txt'].encode()).hexdigest())
+        self.assertEqual(listed[2]['path'], 'files/photo.png')
+        self.assertTrue((Path(made['directory']) / 'files' / 'photo.png').is_file())
+        done = self.build('datasets/picked-wrong', ok=False)
+        self.assertIn("The record 'nobody.txt' is not in the input",
+                      (Path(done['steps'][-1]['directory']) / 'stderr.log').read_text())
+        self.build('datasets/notes-frozen')
+        frozen = fixtures.records_of(self.product('datasets/notes-frozen')['directory'])
+        # a and d are named and accepted; b is named but rejected; c is accepted but not named.
+        self.assertEqual(sorted(record['id'] for record in frozen), ['a.txt', 'd.txt'])
+        self.assertEqual({record['split'] for record in frozen}, {'train'})
+
+
+class Published(unittest.TestCase):
+
+    def test_the_seven_are_in_the_project_folder_profile_and_not_in_the_catalog(self):
+        names = ('embeddings', 'embedding_map', 'embedding_neighbours', 'embedding_duplicates', 'embedding_outliers',
+                 'embedding_leakage', 'set_embedder')
+        from tuldok_project import service
+        for name in names[1:-1]:
+            self.assertEqual((operations.by_name(name).who, operations.by_name(name).mutation), ('inspect', False))
+            self.assertIn(name, service.INSIDE_READS)
+        self.assertEqual((operations.by_name('set_embedder').who, operations.by_name('set_embedder').mutation),
+                         ('owner', True))
+        folder = {item['id'] for item in agent_api.capabilities('b' * 32, profile='project_folder')['operations']}
+        catalog = agent_api.capabilities('b' * 32)
+        self.assertTrue({'project.' + name for name in names} <= folder)
+        self.assertFalse({'project.' + name for name in names} & {item['id'] for item in catalog['operations']})
+        self.assertEqual((len(catalog['operations']), hashlib.sha256(agent_api.encoded(catalog)).hexdigest()),
+                         (110, 'ad5cc7ac91646b39b7a20b9dfca5ec79ed96ded4b5e36732fcf1145f1cc24460'))
 
 
 if __name__ == '__main__':

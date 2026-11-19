@@ -320,9 +320,11 @@
           "enum": [
             "import",
             "freeze",
-            "generate"
+            "generate",
+            "embed",
+            "select"
           ],
-          "description": "a step Tuldok provides: import, freeze or generate"
+          "description": "a step Tuldok provides: import, freeze, generate, embed or select"
         },
         "environment": {
           "type": "string",
