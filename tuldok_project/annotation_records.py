@@ -11,7 +11,8 @@ bytes is not hashed (None). check_items turns the items of set_annotation
 into rows, checked with annotations.validate against the task, the
 vocabulary, the record's kind and what is cheap to know of it: an image's
 size (from its first bytes), a text's length (when its file is at most
-inside.COUNT_TEXT_BYTES) and a WAVE sound's length (from its header).
+inside.COUNT_TEXT_BYTES), a WAVE sound's length (from its header), a point
+cloud's count and an .npy array's shape (spec-t4.md section 1).
 content reads one record whole for a suggestion (spec-d5.md section 4).
 """
 import codecs
@@ -19,13 +20,14 @@ import hashlib
 import os
 import struct
 
-from . import annotation_rows, annotations, inside, inside_archive, inside_shapes
+from . import annotation_rows, annotations, inside, inside_archive, inside_arrays, inside_shapes
 from .store import ProjectError
 
 HASH_LIMIT = 1 << 30            # bytes of a record hashed; a larger one is tied by its id alone
 ITEM_LIMIT = 200                # items of one set_annotation
 WAVE_HEAD = 64 * 1024           # read for a sound's length
 _CHUNK = 1 << 20
+SIZED = ('boxes', 'polygons', 'mask', 'depth', 'keypoints')   # tasks checked against an image's size
 
 
 # ------------------------------------------------------------- the product
@@ -166,9 +168,9 @@ def _wave_seconds(head, size):
 
 def facts(product, record, task):
     """{kind, size, length, duration} of a record, as far as task needs them and they are cheap to know."""
-    found = {'kind': record['kind'], 'size': None, 'length': None, 'duration': None}
+    found = {'kind': record['kind'], 'size': None, 'length': None, 'duration': None, 'points': None, 'shape': None}
     try:
-        if task == 'boxes' and record['kind'] == 'image' and record['path'] is not None:
+        if task in SIZED and record['kind'] == 'image' and record['path'] is not None:
             content = inside_shapes.image_content(inside_archive.locate(product.root, record['path']))
             if content['width'] is not None:
                 found['size'] = (content['width'], content['height'])
@@ -180,10 +182,15 @@ def facts(product, record, task):
                 if (place.size or 0) <= inside.COUNT_TEXT_BYTES:
                     raw = place.head(place.size or 0)
                     found['length'] = len(codecs.decode(raw, 'utf-8', 'surrogateescape'))
-        elif (task == 'segments' and record['kind'] == 'audio' and record['path'] is not None
+        elif (task in ('segments', 'timeseries') and record['kind'] == 'audio' and record['path'] is not None
               and record['path'].lower().endswith('.wav')):
             place = inside_archive.locate(product.root, record['path'])
             found['duration'] = _wave_seconds(place.head(WAVE_HEAD), place.size or 0)
+        elif task in ('points', 'box3d') and record['kind'] == 'pointcloud' and record['path'] is not None:
+            found['points'] = inside_shapes.pointcloud_content(inside_archive.locate(product.root, record['path']))['count']
+        elif (task in ('track', 'timeseries') and record['kind'] == 'array' and record['path'] is not None
+              and record['path'].lower().endswith('.npy')):
+            found['shape'] = inside_arrays.read_header(inside_archive.locate(product.root, record['path'])).shape
     except (ProjectError, *inside.DAMAGED):
         pass  # not known: the bound is not checked
     return found
@@ -253,7 +260,9 @@ def check_items(document, items, known, *, by, at, origin=None):
         if origin is not None:
             row['from'] = origin
         errors = annotations.validate(task, vocabulary, row, kind=info['kind'], size=info['size'],
-                                      length=info['length'], duration=info['duration'])
+                                      length=info['length'], duration=info['duration'],
+                                      fields=annotations.task_fields(document), points=info.get('points'),
+                                      shape=info.get('shape'))
         if not errors and annotation_rows.has_nul(row):
             errors.append('It holds the character U+0000, which Tuldok cannot keep.')
         if errors:

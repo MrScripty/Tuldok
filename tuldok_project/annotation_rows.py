@@ -68,15 +68,17 @@ def fingerprint(document):
     """What of a task decides whether a value fits it: its task and vocabulary, as one digest."""
     if not isinstance(document, dict):
         return None
-    shown = json.dumps([document.get('task'), document.get('vocabulary') or []], ensure_ascii=False,
-                       separators=(',', ':'))
+    fields = annotations.task_fields(document)
+    shown = json.dumps([document.get('task'), document.get('vocabulary') or []] + ([fields] if fields else []),
+                       ensure_ascii=False, separators=(',', ':'), sort_keys=True)
     return hashlib.sha256(shown.encode('utf-8', 'surrogatepass')).hexdigest()
 
 
 def fits(document, row):
     """Whether a row's value is one the task document allows (the record's kind is not judged here)."""
     errors, unknown = annotations.value_problems(document.get('task'), document.get('vocabulary') or [],
-                                                 row.get('state'), row.get('value'))
+                                                 row.get('state'), row.get('value'),
+                                                 fields=annotations.task_fields(document))
     return not errors and not unknown
 
 

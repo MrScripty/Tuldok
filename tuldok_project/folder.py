@@ -66,6 +66,7 @@ class Folder:
     project: File | None = None
     definitions: list = field(default_factory=list)
     annotations: list = field(default_factory=list)   # File per annotations/<name>.jsonl, document None
+    sidecars: dict = field(default_factory=dict)      # task name -> {file name: size} of annotations/<name>/ (spec-t4)
     results: list = field(default_factory=list)
     notes: frozenset = frozenset()
     problems: list = field(default_factory=list)
@@ -165,6 +166,9 @@ def _read_definitions(folder, root_fd, directory):
         for name, entry_kind in entries(fd):
             path = f'{directory}/{name}'
             lines = directory == ANNOTATIONS and name.endswith(LINES_SUFFIX)
+            if directory == ANNOTATIONS and entry_kind == 'directory' and documents.is_name(name):
+                _read_sidecars(folder, fd, name, path)
+                continue
             if entry_kind != 'file' or not (name.endswith('.json') or lines):
                 allowed = ('<name>.json files, one task each, and their <name>.jsonl annotations'
                            if directory == ANNOTATIONS else '<name>.json files, one definition each')
@@ -184,6 +188,26 @@ def _read_definitions(folder, root_fd, directory):
             loaded = _load(folder, fd, name, path, DEFINITION_LIMIT, decode=True)
             if loaded is not None:
                 folder.definitions.append(Definition(**vars(loaded), kind=kind, name=stem))
+    finally:
+        os.close(fd)
+
+
+def _read_sidecars(folder, parent_fd, name, path):
+    """List annotations/<name>/, a task's sidecars (spec-t4.md section 2): regular files named by their content."""
+    from .annotation_payloads import is_kept_name
+    fd = _open_directory(folder, parent_fd, name, path)
+    if fd is None:
+        return
+    found = folder.sidecars.setdefault(name, {})
+    try:
+        for file, entry_kind in entries(fd):
+            if entry_kind != 'file' or not is_kept_name(file):
+                folder.problems.append(Problem('error', f'{path}/{file}', '', (
+                    _wrong_type(entry_kind, 'file') if entry_kind == 'link' else
+                    f'{path}/ may hold only sidecars named by the first 16 hexadecimal characters of their SHA-256 '
+                    'and .png or .npy; move or remove this.')))
+                continue
+            found[file] = os.stat(file, dir_fd=fd, follow_symlinks=False).st_size
     finally:
         os.close(fd)
 

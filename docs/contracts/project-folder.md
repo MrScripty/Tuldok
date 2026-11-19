@@ -49,6 +49,7 @@ environments/<name>.json
 charts/<name>.json
 annotations/<name>.json
 annotations/<name>.jsonl   the annotations of task <name>
+annotations/<name>/        their sidecars: masks and arrays too large for a line
 results/<benchmark name>.csv
 notes/...
 ```
@@ -662,8 +663,13 @@ plans its dataset in its place.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `dataset` | yes | reference to `datasets/` |
-| `task` | yes | `review`, `class`, `tags`, `text`, `boxes`, `spans` or `segments` |
-| `vocabulary` | for `class`, `tags`, `boxes`, `spans` and `segments`; not allowed for `review` and `text` | 1 to 500 different **terms**, each 1 to 200 characters without control characters |
+| `task` | yes | `review`, `class`, `tags`, `text`, `boxes`, `spans`, `segments`, `polygons`, `mask`, `depth`, `keypoints`, `ranking`, `timeseries`, `track`, `points` or `box3d` |
+| `vocabulary` | for every task but `review`, `text` and `depth`, which allow none | 1 to 500 different **terms**, each 1 to 200 characters without control characters; for `ranking`, the candidates ranked |
+| `keypoints` | for `keypoints` only, required | 1 to 100 different names: the points of one instance, in the order its values list them |
+| `skeleton` | for `keypoints` only | pairs of those names, joined when drawn |
+| `sigma` | for `keypoints` only | a number above 0: the spread of the agreement measure (OKS); default 0.1 |
+| `units` | for `depth` only, required | the units of the depth values, 1 to 40 characters, such as `m` |
+| `mask` | for `mask` only | `semantic` (a pixel's value is its class) or `instance` (each value is one object); default `semantic` |
 
 `earlier_work` is not allowed here. `card` is where the guide for the people
 and agents who annotate is written.
@@ -680,7 +686,18 @@ What an annotation's `value` is, by task, and which records it may describe:
 | `spans` | a list of `{"term", "start", "end"}`, whole numbers of characters (code points) of the text; 0 ≤ `start` < `end` ≤ the text's length | `text` |
 | `segments` | a list of `{"term", "start", "end"}` with an optional `"text"` (a string of at most 64 KiB), numbers of seconds; 0 ≤ `start` < `end` ≤ the sound's length | `audio` |
 
-A list holds at most 1,000 items, and an item no other key. The value may be
+| `polygons` | a list of `{"term", "points": [[x, y], …]}`: 3 to 10,000 points in pixels, inside the image | `image` |
+| `mask` | `{"file": <sidecar .png>, "classes"}` or `{"rle": [[value, count], …], "classes"}`: `classes` maps a pixel value (`"1"` to `"65535"`) to a term, 0 is nothing; `rle` gives the pixels row by row from the top left and covers the image | `image` |
+| `depth` | `{"file": <sidecar .npy>}`: a 2-D array (height, width) of float32, float64 or uint16 in the task's units; 0 and non-finite values are no depth | `image` |
+| `keypoints` | a list of `{"term", "points"}`, one point per name of the task's `keypoints`: `[x, y]`, `[x, y, v]` (v 0, 1 or 2) or null | `image` |
+| `ranking` | a list of different terms, best first | any but `file` |
+| `timeseries` | a list of `{"term", "start", "end"}`, 0 ≤ `start` < `end`: seconds of a sound, or positions along the first axis of an array | `audio`, `array` |
+| `track` | a list of `{"track", "term", "frames": [{"frame", "x", "y", "w", "h"}, …]}`: `track` an id of 1 to 64 characters, once per annotation; frames whole numbers increasing, below the array's first axis; boxes inside its frames | `array` |
+| `points` | a list of `{"term", "indices": [i, …]}` (indices increasing, below the cloud's point count), or `{"file": <sidecar .npy>, "classes"}`, a 1-D array of one whole number per point (0: no object) | `pointcloud` |
+| `box3d` | a list of `{"term", "center": [x, y, z], "size": [l, w, h], "yaw"}`, sizes above 0, `yaw` in radians about z | `pointcloud` |
+
+An item of a list value, and an object value, may also carry `"confidence"`, a
+number from 0 to 1. A list holds at most 1,000 items, and an item no other key. The value may be
 null in any state but `accepted`. The record's kind, an image's size, a text's
 length and a sound's length are known only from the dataset's product, so the
 folder check cannot apply those rules; Tuldok applies them when an annotation
@@ -723,8 +740,10 @@ changed annotation:
 - lines sorted by `record`, comparing the bytes of its UTF-8;
 - each line written compact (`,` and `:` with no spaces), with characters
   other than ASCII written as themselves rather than as `\u` escapes, the keys
-  in the order above and the keys of a `boxes`, `spans` or `segments` item in
-  the order of the table of tasks;
+  in the order above and the keys of an item in the order `track`, `frame`,
+  `term`, `x`, `y`, `w`, `h`, `start`, `end`, `text`, `points`, `indices`,
+  `center`, `size`, `yaw`, `frames`, `confidence` (an object value: `file`,
+  `rle`, `classes`, `confidence`; `classes` by number);
 - each line ending with `\n`, the last one included.
 
 A file with no line left is deleted when it is saved. The JSON rules above
@@ -746,6 +765,18 @@ Example, `annotations/scene-quality.jsonl`:
 {"record":"scene-0002","sha256":null,"state":"rejected","value":null,"note":"blurry","by":"owner","at":"2026-11-13T10:02:40Z"}
 {"record":"scene-0003","sha256":null,"state":"draft","value":"noisy","by":"agent:helper","at":"2026-11-13T10:05:02Z"}
 ```
+
+#### Sidecars
+
+A `mask`, `depth` or `points` value naming a `file` names a **sidecar** in
+`annotations/<name>/`, beside the task: a file named by the first 16
+hexadecimal characters of its SHA-256 and `.png` or `.npy` (so a name never
+changes meaning and a file is never rewritten). The directory holds such
+files only. A mask PNG is 8- or 16-bit greyscale, not interlaced, of the
+image's size; an `.npy` is a C-order array of floats or whole numbers, never
+pickled. The check reports a directory with no task, and a line naming a
+sidecar that is not there, as errors, and a sidecar no line names as a
+warning; Save removes those of a task it writes. Each is at most 64 MiB.
 
 ## Results files
 

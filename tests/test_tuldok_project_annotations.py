@@ -98,7 +98,7 @@ class Tasks(FolderCase):
             ('no dataset', {'dataset': None}, '/dataset'),
             ('dataset in another directory', {'dataset': 'recipes/stepper-k1'}, '/dataset'),
             ('dataset missing', {'dataset': 'datasets/nowhere'}, '/dataset'),
-            ('unknown task', {'task': 'polygons'}, '/task'),
+            ('unknown task', {'task': 'video'}, '/task'),
             ('class needs a vocabulary', {'vocabulary': None}, '/vocabulary'),
             ('review takes none', {'task': 'review'}, '/vocabulary'),
             ('text takes none', {'task': 'text'}, '/vocabulary'),
@@ -132,7 +132,7 @@ class Tasks(FolderCase):
         self.assertOnly(('error', 'datasets/waves.jsonl', ''))
 
     def test_a_task_with_errors_leaves_its_lines_unchecked(self):
-        self.task(task='polygons')
+        self.task(task='video')
         self.lines('not json')
         self.assertEqual(self.problems(), [('error', 'annotations/wave-quality.json', '/task'),
                                            ('warning', 'annotations/wave-quality.jsonl', '')])

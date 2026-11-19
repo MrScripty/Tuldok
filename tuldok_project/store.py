@@ -205,6 +205,9 @@ def _list_definitions(root):
                 tasks = {name for name, entry_kind in listed if entry_kind == 'file'}
                 for name, entry_kind in listed:
                     path = f'{directory}/{name}'
+                    if (directory == folder_reader.ANNOTATIONS and entry_kind == 'directory'
+                            and documents.is_name(name) and name + '.json' in tasks):
+                        continue   # a task's sidecars (spec-t4.md section 2): named by content, never rewritten
                     if (directory == folder_reader.ANNOTATIONS and name.endswith(folder_reader.LINES_SUFFIX)
                             and entry_kind == 'file'
                             and name[:-len(folder_reader.LINES_SUFFIX)] + '.json' in tasks):
@@ -605,7 +608,8 @@ class Project:
                 problems.append(Problem('error', where, '', f'There is no {annotation_rows.reference(name)}.json, '
                                                             'the task of these annotations.'))
                 continue
-            parsed = annotations.read(raw, task.document.get('task'), task.document.get('vocabulary', []))
+            parsed = annotations.read(raw, task.document.get('task'), task.document.get('vocabulary', []),
+                                      annotations.task_fields(task.document))
             errors = [Problem(item.severity, where, item.pointer, item.message)
                       for item in parsed.reported() if item.severity == 'error']
             if errors:

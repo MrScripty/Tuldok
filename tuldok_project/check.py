@@ -80,7 +80,7 @@ def check_folder(folder, *, code=True):
     check_cycles(definitions, add)
     check_map(project, definitions, add)
     _check_results(read.results, definitions, unsound, add)
-    _check_annotations(read.annotations, definitions, unsound, add)
+    _check_annotations(read.annotations, definitions, unsound, add, read.sidecars)
 
     problems.sort(key=lambda p: (p.path, p.pointer, _SEVERITY_ORDER.get(p.severity, 2), p.message))
     decoded = {reference: d.document for reference, d in definitions.items() if d.document is not None}
@@ -644,8 +644,29 @@ def _check_results(files, definitions, unsound, add):
             add(severity, file.path, pointer, message)
 
 
-def _check_annotations(files, definitions, unsound, add):
-    """Each line file against its task: a file with no task is an error; a task with errors leaves it unchecked."""
+def _check_annotations(files, definitions, unsound, add, sidecars=None):
+    """Each line file against its task: a file with no task is an error; a task with errors leaves it unchecked.
+
+    The sidecars of a task (spec-t4.md section 2): a directory with no task
+    is an error, a line naming a sidecar that is not there is an error, and a
+    sidecar no line names is a warning.
+    """
+    sidecars = dict(sidecars or {})
+    for name in sorted(sidecars):
+        task = definitions.get(documents.reference(folder_reader.ANNOTATIONS, name))
+        if task is None:
+            add('error', f'{folder_reader.ANNOTATIONS}/{name}', '',
+                f'There is no {folder_reader.ANNOTATIONS}/{name}.json, the task of these sidecars; add the task or '
+                'remove the directory.')
+    for definition in definitions.values():
+        document = definition.document
+        if definition.kind == 'annotation' and isinstance(document, dict) and document.get('task') == 'keypoints':
+            names = document.get('keypoints') if isinstance(document.get('keypoints'), list) else []
+            for index, pair in enumerate(document.get('skeleton') or []):
+                if isinstance(pair, list) and any(point not in names for point in pair):
+                    add('error', definition.path, documents.pointer('skeleton', index),
+                        'A pair of the skeleton names a point that is not in keypoints; name two of the keypoints.')
+    named = {}
     for file in files:
         name = file.path[len(f'{folder_reader.ANNOTATIONS}/'):-len(folder_reader.LINES_SUFFIX)]
         task = definitions.get(documents.reference(folder_reader.ANNOTATIONS, name))
@@ -658,6 +679,23 @@ def _check_annotations(files, definitions, unsound, add):
         if task.path in unsound:
             add('warning', file.path, '', f'Not checked, because {task.path} has errors; fix those first.')
             continue
-        parsed = annotations.read(file.raw, task.document['task'], task.document.get('vocabulary', []))
+        parsed = annotations.read(file.raw, task.document['task'], task.document.get('vocabulary', []),
+                                  annotations.task_fields(task.document))
         for problem in parsed.reported():
             add(problem.severity, file.path, problem.pointer, problem.message)
+        held = sidecars.get(name, {})
+        used = named.setdefault(name, set())
+        for number, row in parsed.rows:
+            for sidecar in annotations.sidecars(task.document['task'], row.get('value')):
+                used.add(sidecar)
+                if sidecar not in held:
+                    add('error', file.path, f'line {number}', f'The sidecar {folder_reader.ANNOTATIONS}/{name}/'
+                                                              f'{sidecar} is not there; add it or change the line.')
+    for name, held in sorted(sidecars.items()):
+        if documents.reference(folder_reader.ANNOTATIONS, name) not in definitions:
+            continue
+        unused = sorted(set(held) - named.get(name, set()))
+        if unused:
+            add('warning', f'{folder_reader.ANNOTATIONS}/{name}', '',
+                f'{len(unused)} sidecar{"s" if len(unused) > 1 else ""} no annotation names ({", ".join(unused[:5])}'
+                f'{", …" if len(unused) > 5 else ""}); the next Save of this task removes them.')
