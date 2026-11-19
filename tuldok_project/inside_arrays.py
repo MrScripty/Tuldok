@@ -369,6 +369,38 @@ def array_summary(blob, header, name, *, bins=64):
             'std': std, 'zeros': finite.count(0), 'histogram': {'low': low, 'high': high, 'counts': counts}}
 
 
+def to_c_order(values, shape):
+    """values (an array('d') of a Fortran-ordered array of shape, in storage order) in C order."""
+    reordered = array('d', bytes(8 * len(values)))
+    # C position of the value at Fortran position f: walk the Fortran order with its C strides.
+    c_steps, step = [0] * len(shape), 1
+    for axis in reversed(range(len(shape))):
+        c_steps[axis] = step
+        step *= shape[axis]
+    position, counters = 0, [0] * len(shape)
+    for value in values:
+        reordered[position] = value
+        for axis in range(len(shape)):
+            counters[axis] += 1
+            position += c_steps[axis]
+            if counters[axis] < shape[axis]:
+                break
+            position -= c_steps[axis] * shape[axis]
+            counters[axis] = 0
+    return reordered
+
+
+def c_order_values(blob, header, name):
+    """Every value of an array as array('d'), in C order whichever order it is stored in."""
+    header.require(name)
+    check_length(blob, header, name)
+    size = header.itemsize
+    values = array('d', decode(gather(blob.view, header.offset, size, header.count, size), header))
+    if header.fortran and len(header.shape) >= 2:
+        return to_c_order(values, header.shape)
+    return values
+
+
 def columns(blob, header, name, wanted, most):
     """The first wanted columns of a two-axis array (N, at least wanted), every stride-th row, at most most rows.
 

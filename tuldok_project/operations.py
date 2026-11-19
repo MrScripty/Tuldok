@@ -5,7 +5,8 @@ rows of section 2 of spec-w1.md (map, note, recipe_results) and the two of
 section 2 of spec-w3.md (draft_branch, revert_definition), the five of
 section 3 of spec-d1.md (records, record, inside, array_slice, array_summary),
 the three of section 3 of spec-d2.md (weights, weights_compare,
-array_tiles), the five of section 5 of spec-d4.md (annotation_tasks,
+array_tiles), the two of section 2 of spec-d6.md (fields, field_compare),
+the five of section 5 of spec-d4.md (annotation_tasks,
 annotated_records, annotation, set_annotation, revert_annotations) and the
 five of sections 2 and 4 of spec-d5.md (endpoint, set_endpoint,
 find_endpoints, suggestion_models, suggest_annotation).
@@ -97,6 +98,8 @@ SUMMARY_OF_ARRAY = ('shape', 'dtype', 'count', 'min', 'max', 'mean', 'std', 'zer
                     'stride')
 TILES = ('shape', 'dtype', 'across', 'axes', 'index', 'first', 'tiles', 'rows', 'columns', 'stride', 'values_f32',
          'min', 'max', 'nonfinite')
+FIELD_COMPARE = ('entry', 'case', 'shape', 'dtype', 'axes', 'axis', 'index', 'rows', 'columns', 'stride',
+                 'mean_free', 'reference_f32', 'predicted_f32', 'error_f32', 'range', 'error_limit', 'figures')
 COMPARE = ('tensors', 'total', 'only_here', 'only_there', 'reshaped', 'unread')
 SAVE = ('written', 'deleted', 'results_written', 'results_deleted', 'annotations_written', 'annotations_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
@@ -210,6 +213,15 @@ OPERATIONS = (
                          axes={'type': 'array', 'items': _AXIS, 'minItems': 2, 'maxItems': 2},
                          index={'type': 'array', 'items': {'type': 'integer', 'minimum': 0}, 'maxItems': 64},
                          first=_OFFSET, most=_limit(64)), TILES),
+    Operation('fields', "List the fields a finished run's product kept: each case's native and predicted files, its "
+              'name, shape and whether the two can be compared, and the figures the run reported itself.', 'inspect',
+              False, _arguments(['run'], run=_RUN), ('kept', 'cases', 'reported')),
+    Operation('field_compare', "Read a slice of one kept case's native field, predicted field and signed error as "
+              '32-bit floats, with the figures of the error over the whole field.', 'inspect', False,
+              _arguments(['run', 'entry', 'case'], run=_RUN, entry=_OFFSET, case=_OFFSET,
+                         axis={'type': 'integer', 'minimum': 0, 'maximum': 3},
+                         index={'type': 'array', 'items': {'type': 'integer', 'minimum': 0}, 'maxItems': 4},
+                         mean_free=_FLAG), FIELD_COMPARE),
     Operation('annotation_tasks', 'List the annotation tasks, each with its dataset, current product and counts of '
               'its records by the state of their annotations.', 'inspect', False, _arguments(), ('tasks',)),
     Operation('annotated_records', "Read one page of the records of a task's dataset with their annotations, "

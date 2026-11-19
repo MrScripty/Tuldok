@@ -49,7 +49,9 @@
     toggleKind: (k, all) => { if (!state.kinds) state.kinds = new Set([k]); else if (state.kinds.has(k)) { state.kinds.delete(k); if (!state.kinds.size) state.kinds = null; } else { state.kinds.add(k); if (state.kinds.size === all.length) state.kinds = null; } render(); },
     toggleTrack: () => { state.track = !state.track; render(); },
     // The other tabs: their own settings (state.ui), and the benchmark and compare set, which the address keeps (?benchmark=, ?cmp=).
-    setUI: (k, v) => { state.ui[k] = v; render(); },
+    setUI: (k, v) => { state.ui[k] = v; if (ADDRESSED.includes(k)) address(); render(); },
+    /** Keeps a setting of the tab that a view has already drawn in place (fields.js's slider): into the address, and nothing drawn again. */
+    keepUI: (k, v) => { state.ui[k] = v; if (ADDRESSED.includes(k)) address(); },
     setBenchmark: name => { state.benchmark = name; state.cmp = []; address(); render(); },
     toggleCompare: id => { const i = state.cmp.indexOf(id); if (i >= 0) state.cmp.splice(i, 1); else if (state.cmp.length < 3) state.cmp.push(id); address(); render(); },
     clearCompare: () => { state.cmp = []; address(); render(); },
@@ -60,11 +62,14 @@
     /** Draws the drawer afresh. */
     reopen: () => { $('aside')._for = null; render(); }
   };
-  /** Writes the benchmark and compare set into the address without reloading, so the view can be shared. */
+  // The settings of the Analysis tab the address keeps, so that a reload opens it where it was (spec-d6 section 3).
+  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree'];
+  /** Writes the benchmark, the compare set and the Analysis tab's settings into the address without reloading, so the view can be shared. */
   function address() {
     const q = new URLSearchParams(location.search);
     if (state.benchmark) q.set('benchmark', state.benchmark); else q.delete('benchmark');
     if (state.cmp.length) q.set('cmp', state.cmp.join(',')); else q.delete('cmp');
+    for (const k of ADDRESSED) { const v = state.ui[k]; if (v === null || v === undefined || v === '' || v === false) q.delete(k); else q.set(k, String(v)); }
     const text = q.toString().replace(/%2C/g, ',').replace(/%2F/g, '/');   // references read as they are
     history.replaceState(null, '', location.pathname + (text ? '?' + text : '') + location.hash);
   }
@@ -316,7 +321,7 @@
     window.addEventListener('focus', () => { if (data.summary || failed) reread('focus'); });
     // Who may use a control comes from the session: draw the controls again when it changes.
     window.addEventListener('tuldok-session', () => { if (failed) reread('focus'); else { $('aside')._for = null; if (data.map) act.redraw(); else { strip(); render(); } } });
-    { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, 3); }
+    { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, 3); for (const k of ADDRESSED) if (q.get(k)) state.ui[k] = q.get(k); }
     // The tab bar, once (spec-w4 R5): render() sets which link is current.
     for (const [id, label] of TABS) { const a = document.createElement('a'); a.href = '#' + id; a.textContent = label; a.dataset.tab = id; $('tabs').appendChild(a); }
     parse(); strip(); render(); first();

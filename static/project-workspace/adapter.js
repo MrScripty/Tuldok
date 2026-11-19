@@ -122,6 +122,10 @@ window.TuldokProject = (() => {
     weights: run => read('weights', { run }),
     compare: (run, path, otherRun, otherPath) => read('weights_compare', { run, path, other_run: otherRun, other_path: otherPath }),
     tiles: (run, { path, array, across, axes, index, first, most }, fresh = false) => (fresh ? call : read)('array_tiles', defined({ run, path, array, across, axes, index, first, most })),
+    // The fields a run kept (spec-d6.md, fields.js): its cases, and one slice of a case's native field, prediction
+    // and signed error with the error's figures (asked for each time the person moves through it unless kept).
+    fields: run => read('fields', { run }),
+    fieldCompare: (run, { entry, case: one, axis, index, mean_free }, fresh = false) => (fresh ? call : read)('field_compare', defined({ run, entry, case: one, axis, index, mean_free })),
     /** The address of an image's or a sound's bytes (GET /api/project/file), as the record operation gives it. */
     fileUrl: (run, path) => '/api/project/file?run=' + encodeURIComponent(run) + '&path=' + encodeURIComponent(path)
   };

@@ -2283,6 +2283,8 @@ and result keys of each operation are in its contract.
 | `weights` | inspect | List the weights files of a finished run's product, each with its size, the file it started from and, when Tuldok reads it, its layers and parameter count. |
 | `weights_compare` | inspect | Compare, array by array, a weights file of a finished run's product with one of the same or another finished run: norms, relative change, cosine and largest change. |
 | `array_tiles` | inspect | Read tiles of two axes of an array in a finished run's product, one per position along a third axis, as 32-bit floats. |
+| `fields` | inspect | List the fields a finished run's product kept: each case's native and predicted files, its name, shape and whether the two can be compared, and the figures the run reported itself. |
+| `field_compare` | inspect | Read a slice of one kept case's native field, predicted field and signed error as 32-bit floats, with the figures of the error over the whole field. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -2392,7 +2394,7 @@ project stay command-line actions.
 A **product** is the `output` directory of a run in state `succeeded` or
 `adopted`, named by its run id (or an unambiguous prefix of it). The
 operations `records`, `record`, `inside`, `array_slice`, `array_summary`,
-`array_tiles`, `weights` and `weights_compare` read it; each takes `run`, and a run that does not exist, has not finished or
+`array_tiles`, `weights`, `weights_compare`, `fields` and `field_compare` read it; each takes `run`, and a run that does not exist, has not finished or
 has no output directory is refused `not-found`. Like every operation they
 open the project for a moment, to find the run and the view of its dataset;
 they read the product after closing it and write nothing: no file, no row.
@@ -2639,6 +2641,85 @@ element by element in C order, whichever order each is stored in. At most
 32,000,000 values are read in all (both files together) and at most 10,000
 tensors per file; beyond either the call is refused `too-large`, saying how
 many there are.
+
+### The fields a run kept
+
+`fields` and `field_compare` read a product as the operations above do: the
+same confinement, nothing written, a damaged file refused `unsupported`.
+Nothing runs a model or a solver; only kept files are read.
+
+**A product keeps fields** when the top of its directory holds
+`field-index.json`:
+
+```json
+[{"run_id": "…", "cases": [{"member_ordinal": 0,
+   "predicted": {"name": "pressure-prediction.npy", "bytes": 32896, "sha256": "…"},
+   "reference": {"name": "pressure-reference.npy",  "bytes": 32896, "sha256": "…"},
+   "mask": null, "time_units": "not_applicable"}]}]
+```
+
+- A list of entries, each an object with a list `cases`; anything else is a
+  damaged index, refused `unsupported` (an index over 4 MiB is refused
+  `too-large`). Each case names a `predicted` and a `reference` file by
+  `name`: a plain file name at the top of the same product (no `/`, `\`, `!`
+  or `..`), an `.npy`.
+- Every other key of a case is optional and kept as given for display
+  (`details`). `sha256` is not checked. `bytes`, when given, is compared with
+  the file's size, and a mismatch is shown (`bytes_mismatch`), not refused.
+- `mask`: null, or `{"name": …}` of a boolean or integer `.npy` of the same
+  shape; true or non-zero is inside. With a mask the figures are over the
+  inside only, and the outside is NaN in the slices.
+- Both files are `.npy` of a number type (floats or integers, not booleans),
+  of the same shape, of one to four axes and at most 16,777,216 values each.
+  A case that is not so is listed with the reason, and `field_compare`
+  refuses it `unsupported` (`too-large` for one over the size).
+- **Which case it is.** When the product holds `probe.json` of `format`
+  `probe_v1`, a case's `member_ordinal` is looked up among its `members` (by
+  each member's `ordinal`, else its position): the case is named by the
+  member's `frozen_reference.member_id`, and its split is
+  `frozen_reference.split`, else the member's `split`, else the probe's.
+  Otherwise a case is named by its position, `case N` (`entry E case N` past
+  the first entry), and has no split.
+- **What the run reported.** Every JSON file at the top of the product (at
+  most 4 MiB) whose `format` ends `_diagnostic_v1` gives its top-level
+  numeric fields whose names end `relative_l2`, as `reported`. They are shown,
+  never used to compute anything.
+
+**`fields`** takes only `run` and answers `kept` (whether there is an index),
+`cases` and `reported` (each `{file, field, value}`), and `more` (true when
+more than 10,000 cases are held; the first 10,000 are listed). Each case has
+`entry` and `case` (its positions), `name`, `split` (or null), `predicted`,
+`reference` and `mask` (file names, or null), `shape` and `dtype` (null when
+the files could not be read as far as that; `dtype` is "float32 / float64"
+when the two differ), `comparable`, `details`, and `reason` when it is not
+comparable and `bytes_mismatch` (the names) when a size differs.
+
+**`field_compare`** takes `entry`, `case`, `axis` (the axis cut across; by
+default the last), `index` (one position per axis, as `array_slice` takes it;
+those of the axes drawn are ignored; by default the middle) and `mean_free`
+(false by default). A one-axis field is drawn as one row (`axes` `[0]`), a
+two-axis field whole (`axes` `[0, 1]`); `axis` is then null. A field of three
+or four axes is drawn through the last two axes other than `axis`, the
+positions on the others given by `index`. Beyond 256 rows or columns the slice
+is subsampled by one stride, as `array_slice` is. It answers `entry`, `case`,
+`shape`, `dtype`, `axes`, `axis`, `index`, `rows`, `columns`, `stride`,
+`mean_free`, `reference_f32`, `predicted_f32` and `error_f32` (base64 of
+little-endian 32-bit floats, row by row; cells outside the mask NaN), `range`
+(the lowest and highest finite value of the reference and the prediction in
+the slice together, or null), `error_limit` (the largest absolute finite
+error in the slice, or null) and `figures`. The error is predicted minus
+reference; with `mean_free` each field's mean (over the inside) is taken from
+it first, in the error only: the two fields are shown as they are.
+
+`figures` are over the whole field, not the slice: the cells inside the mask
+whose two values are finite. `count` (those cells), `nonfinite` (non-finite
+values inside, of either field, left out), `max_abs_error`, `mean_error`,
+`rmse`, `relative_l2` (the error's norm over the reference's; null when that
+is zero) and `mean_free_relative_l2` (the same with each field's mean removed
+first; null when the reference is constant). They are computed in 64-bit
+floats with `math.fsum` and `math.sumprod`; a figure that would overflow is
+null, as all of them are when no cell counts. A case's figures are kept while
+its files are unchanged, so asking for another slice reads only the slice.
 
 ### Annotating
 

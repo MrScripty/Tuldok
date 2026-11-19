@@ -7,7 +7,8 @@
 // reading that found something changed) keeps the scroll, inside tables too,
 // and the focus; a drawer read again for its subject stays on screen until
 // its new content replaces it whole (spec-w4.md). Data, Benchmarks and Analysis
-// only read. Train draws the controls of spec-w3.md section 3.1 (actions.js):
+// only read; Analysis shows, below the per-case values, the fields the subject's
+// run kept (fields.js, spec-d6.md). Train draws the controls of spec-w3.md section 3.1 (actions.js):
 // Plan build, a build request's Approve, Decline and Cancel, a run's Cancel
 // run and Stop, an environment's Check again, Connect and Disconnect, and it
 // shows a running run live, and the machine's Pumas endpoint beside the environments (generate.js);
@@ -716,20 +717,25 @@
       const subject = view.byName.get(ui.anaSubject) || view.subjects.find(s => s.perCase) || view.subjects[0] || null;
       const metric = view.metrics.find(m => m.id === ui.anaMetric) || view.metrics[0] || null;
       const page = Math.max(0, ui.anaPage || 0);
-      const values = subject && metric ? await P.read('values', { benchmark: view.name, subject: subject.name, metric: metric.id, offset: page * PAGE, limit: PAGE }) : null;
-      return { list, b, view, subject, metric, page, values };
-    }, (frag, { list, view, subject, metric, page, values }, width) => {
+      const [values, kept] = await Promise.all([subject && metric ? P.read('values', { benchmark: view.name, subject: subject.name, metric: metric.id, offset: page * PAGE, limit: PAGE }) : null,
+        // The fields the subject's run kept (spec-d6, fields.js): read with the rest, so the tab is put in place in one step.
+        subject && window.LabFields ? window.LabFields.read(subject.recipe, ui).catch(error => ({ none: true, error })) : null]);
+      return { list, b, view, subject, metric, page, values, kept };
+    }, (frag, { list, view, subject, metric, page, values, kept }, width) => {
       if (!view) { frag.appendChild(h('p', 'empty', 'This project defines no benchmark.')); return; }
       const bar = h('div', 'viewer-bar');
-      bar.appendChild(select('Benchmark', list.map(x => [x.benchmark, x.title + (x.subjects_with_values ? ' · ' + x.subjects_with_values + ' with per-case values' : '')]), view.name, v => { state.ui.anaSubject = null; state.ui.anaPage = 0; act.setUI('anaBench', v); }, 'ana-bench'));
-      if (view.subjects.length) bar.appendChild(select('Subject', view.subjects.map(s => [s.name, s.full + (s.perCase ? ' · per-case values' : '')]), subject.name, v => { state.ui.anaPage = 0; act.setUI('anaSubject', v); }, 'ana-subject'));
+      const fieldsLeft = () => { state.ui.anaCase = null; state.ui.anaAxis = null; state.ui.anaIndex = null; };   // a case belongs to its subject
+      bar.appendChild(select('Benchmark', list.map(x => [x.benchmark, x.title + (x.subjects_with_values ? ' · ' + x.subjects_with_values + ' with per-case values' : '')]), view.name, v => { state.ui.anaSubject = null; state.ui.anaPage = 0; fieldsLeft(); act.setUI('anaBench', v); }, 'ana-bench'));
+      if (view.subjects.length) bar.appendChild(select('Subject', view.subjects.map(s => [s.name, s.full + (s.perCase ? ' · per-case values' : '')]), subject.name, v => { state.ui.anaPage = 0; fieldsLeft(); act.setUI('anaSubject', v); }, 'ana-subject'));
       if (view.metrics.length) bar.appendChild(select('Metric', view.metrics.map(m => [m.id, m.title + units(m)]), metric.id, v => { state.ui.anaPage = 0; act.setUI('anaMetric', v); }, 'ana-metric'));
       frag.appendChild(bar);
-      if (!subject || !metric) { frag.appendChild(h('p', 'empty', 'This benchmark has no ' + (subject ? 'metric' : 'subject') + '.')); return; }
+      // Kept fields (fields.js), below Per case: absent when the subject's model has no product.
+      const fields = () => { const f = window.LabFields && window.LabFields.section(kept, act); if (f) frag.appendChild(f); };
+      if (!subject || !metric) { frag.appendChild(h('p', 'empty', 'This benchmark has no ' + (subject ? 'metric' : 'subject') + '.')); if (subject) fields(); return; }
       if (!values.total) {
         frag.appendChild(sect('Per case', metric.title + units(metric) + ' · ' + subject.full));
         const p = h('p', 'empty ana-none'); p.appendChild(document.createTextNode('This machine holds no per-case values of ' + subject.full + ' for ' + metric.title + ' on ' + view.title + '; its summaries are on the '));
-        const a = h('a', null, 'Benchmarks tab'); a.href = '#benchmarks'; a.addEventListener('click', ev => { ev.preventDefault(); act.setBenchmark(view.name); act.go('benchmarks'); }); p.appendChild(a); p.appendChild(document.createTextNode('.')); frag.appendChild(p); return;
+        const a = h('a', null, 'Benchmarks tab'); a.href = '#benchmarks'; a.addEventListener('click', ev => { ev.preventDefault(); act.setBenchmark(view.name); act.go('benchmarks'); }); p.appendChild(a); p.appendChild(document.createTextNode('.')); frag.appendChild(p); fields(); return;
       }
       const rows = values.rows.map(r => ({ ...r, id: r.case + (r.group ? ' · ' + r.group : ''), label: r.case + (r.group ? ' · ' + r.group.replace(/;/g, ', ') : '') }));
       const pages = Math.ceil(values.total / PAGE), first = page * PAGE + 1, last = page * PAGE + rows.length;
@@ -754,6 +760,7 @@
       const t = h('table', 'tv cases-t'); t.appendChild(headRow([['Case'], ['Group'], [metric.title + units(metric), 'n'], ['Why no value']])); const tb = h('tbody');
       for (const r of rows) { const tr = h('tr', 'rowbtn' + (r.id === sel ? ' is-sel' : '')); tr.addEventListener('click', () => act.select(r.id === sel ? null : r.id)); tr.appendChild(h('td', 'ck', r.case)); tr.appendChild(h('td', 'small faint', r.group || '')); tr.appendChild(h('td', 'n', r.value == null ? '—' : fmt(r.value))); tr.appendChild(h('td', 'small faint', r.reason || '')); tb.appendChild(tr); }
       t.appendChild(tb); sec.appendChild(wrapTable(t)); frag.appendChild(sec);
+      fields();
     });
     return closeDrawer(aside);
   }

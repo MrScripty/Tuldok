@@ -212,24 +212,7 @@ def _reader(tensor, label, logical):
         return array('d', inside_arrays.decode(raw, header))
     if not logical or not header.fortran or len(header.shape) < 2:
         return piece
-    whole = piece(0, header.count)
-    shape = header.shape
-    reordered = array('d', bytes(8 * header.count))
-    # C position of the value at Fortran position f: walk the Fortran order with its C strides.
-    c_steps, step = [0] * len(shape), 1
-    for axis in reversed(range(len(shape))):
-        c_steps[axis] = step
-        step *= shape[axis]
-    position, counters = 0, [0] * len(shape)
-    for value in whole:
-        reordered[position] = value
-        for axis in range(len(shape)):
-            counters[axis] += 1
-            position += c_steps[axis]
-            if counters[axis] < shape[axis]:
-                break
-            position -= c_steps[axis] * shape[axis]
-            counters[axis] = 0
+    reordered = inside_arrays.to_c_order(piece(0, header.count), header.shape)
     return lambda first, count: reordered[first:first + count]
 
 
