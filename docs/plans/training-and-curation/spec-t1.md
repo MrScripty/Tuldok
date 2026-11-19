@@ -255,8 +255,9 @@ What differs from the text above, and what was found while building it.
   sample name, weights or gradients and "Show all" are kept by the page for the run while it lives, not in the
   address.
 - **The check** (`tests/browser_project_workspace_training.cjs`, with the stand-in `tests/project_training_stand_in.py`,
-  plain Python, logging through `tuldok_log` put on the run's `PYTHONPATH` by the recipe's `env`): 7 PASS, run
-  three times while building and twice at the end. In step 4 the live run (50 steps, 0.25 s each) grew 10 → 18 →
+  plain Python, logging through `tuldok_log` put on the run's `PYTHONPATH` by the recipe's `env`): 7 PASS, on
+  the last two runs (once before its commit, once at the end; the earlier runs failed on the check's own timing and
+  on the block's first way of adding names, both fixed). In step 4 the live run (50 steps, 0.25 s each) grew 10 → 18 →
   27 → 35 points across readings with the block, its chart and its strips the same elements and no node added or
   removed outside the samples strip; the marker is set once the run has logged every name it will (from its tenth
   step), since a first name is drawn by adding its control.
