@@ -39,7 +39,8 @@ STATISTICS = results.STATISTICS
 IDENTITY = ('format', 'kind', 'title', 'description', 'card', 'labels', 'earlier_work', 'compared_with')
 # Keys compared on rows of their own, first.
 _OWN_ROWS = {'group': 'group', 'change': 'change', 'derived_from': 'parent'}
-_KIND_ORDER = {'group': 0, 'change': 1, 'parent': 2, 'data': 3, 'setting': 4}
+_KIND_ORDER = {'group': 0, 'change': 1, 'parent': 2, 'data': 3, 'setting': 4, 'code': 5}
+_CODE = ('run.command', 'run.sources')   # the code a run ran: compared, never an axis
 _QUOTED = re.compile(r'[.\[\]" ]')
 
 
@@ -83,11 +84,13 @@ def flatten(document, *, leaves=LEAVES, depth=DEPTH):
 
 
 def kind_of(path):
-    """group, change, parent, data (under run.inputs) or setting."""
+    """group, change, parent, data (under run.inputs), code (run.command, run.sources) or setting."""
     if path in _OWN_ROWS:
         return _OWN_ROWS[path]
     if path == 'run.inputs' or path.startswith(('run.inputs.', 'run.inputs[')):
         return 'data'
+    if any(path == code or path.startswith((code + '.', code + '[')) for code in _CODE):
+        return 'code'
     return 'setting'
 
 
@@ -491,7 +494,7 @@ def benchmark_axes(gathered, statistic_name='median', *, most=SETTINGS):
     leading = next((values for values in metric_values.values() if len(values) >= 3), None)
     candidates = []
     for path, values in by_path.items():
-        if len(values) < 2 or len({_canon(value) for value in values.values()}) < 2:
+        if kind_of(path) == 'code' or len(values) < 2 or len({_canon(value) for value in values.values()}) < 2:
             continue
         if all(_number(value) for value in values.values()):
             axis = {'path': path, 'kind': 'number', 'categories': None,
@@ -512,11 +515,15 @@ def benchmark_axes(gathered, statistic_name='median', *, most=SETTINGS):
         if leading is not None:
             both = [name for name in positions if name in leading]
             axis['association'] = spearman([positions[name] for name in both], [leading[name] for name in both])
+            weight = abs(axis['association'] or 0) * len(both) / max(1, len(leading))
         else:
-            axis['association'] = None
-        candidates.append((axis, positions))
-    candidates.sort(key=lambda pair: (pair[0]['association'] is None, -abs(pair[0]['association'] or 0),
-                                      -pair[0]['count'], _natural(pair[0]['path'])))
+            axis['association'], weight = None, 0
+        candidates.append((axis, positions, weight))
+    # The strongest association first, weighed by the share of the measured subjects it is made over, so a path
+    # that six of 150 subjects have does not lead on a chance correlation (spec-t3, as built).
+    candidates.sort(key=lambda item: (item[0]['association'] is None, -item[2], -item[0]['count'],
+                                      _natural(item[0]['path'])))
+    candidates = [(axis, positions) for axis, positions, _ in candidates]
     chosen = candidates[:most]
     rows = []
     for item in subjects:

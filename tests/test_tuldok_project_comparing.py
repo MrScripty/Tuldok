@@ -79,8 +79,9 @@ class Flattening(unittest.TestCase):
             'run.settings[""]': 2, 'run.settings["with space"].x': True, 'run.settings.empty': {},
             'run.inputs.training': 'datasets/w'})
         self.assertEqual([comparing.kind_of(path) for path in ('group', 'change', 'derived_from',
-                                                                 'run.inputs.training', 'run.settings.lr')],
-                         ['group', 'change', 'parent', 'data', 'setting'])
+                                                                 'run.inputs.training', 'run.settings.lr',
+                                                                 'run.sources[3]', 'run.command[0]')],
+                         ['group', 'change', 'parent', 'data', 'setting', 'code', 'code'])
 
     def test_bounds(self):
         document = {'run': {'settings': {f'k{i}': i for i in range(10)}}}
@@ -237,8 +238,20 @@ class Axes(unittest.TestCase):
         flag = axes['run.settings.flag']
         self.assertEqual((flag['kind'], flag['categories']), ('category', [False, True]))
         self.assertAlmostEqual(flag['association'], spearman([0, 0, 0, 1, 1], ys))
-        order = [abs(axis['association']) for axis in got['settings'] if axis['association'] is not None]
-        self.assertEqual(order, sorted(order, reverse=True))
+        # Ordered by |association| weighed by the share of the 5 measured subjects it is made over.
+        weighed = [abs(axis['association']) * sum(1 for row in got['subjects'][:5]
+                                                   if row['settings'][axis['path']] is not None) / 5
+                   for axis in got['settings'] if axis['association'] is not None]
+        self.assertEqual(weighed, sorted(weighed, reverse=True))
+        sparse = [dict(recipe) for recipe in recipes]
+        sparse[0] = {**sparse[0], 'rare': 1}
+        sparse[1] = {**sparse[1], 'rare': 2}
+        sparse[2] = {**sparse[2], 'rare': 3}   # perfectly associated, but over 3 of 5 subjects
+        sparse[3] = {**sparse[3], 'run': {**sparse[3]['run'], 'sources': ['a.py']}}
+        sparse[4] = {**sparse[4], 'run': {**sparse[4]['run'], 'sources': ['b.py']}}
+        paths = [axis['path'] for axis in comparing.benchmark_axes(self.gathered(sparse, errors))['settings']]
+        self.assertNotIn('run.sources[0]', paths)    # code is never an axis
+        self.assertLess(paths.index('run.settings.width'), paths.index('rare'))
         self.assertEqual(got['subjects'][1]['settings']['run.settings.opt'], 1)   # sgd, second category
         self.assertEqual(got['subjects'][5]['metrics'], {'err': None})
         self.assertEqual(got['metrics'][0]['positive'], True)
