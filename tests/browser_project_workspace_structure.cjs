@@ -267,6 +267,14 @@ const nodes = (which = 'this') => evaluate(`[...document.querySelectorAll('#asid
   await shot('light-1440-3b-fit');
   await press(byKey('st-fit')); await settled('actual size');
   assert.ok(await evaluate(`(() => { const sc = document.querySelector('#aside .st-draw[data-which="this"] .st-scroll'); return sc.scrollWidth - sc.clientWidth > 100; })()`), 'Actual size scrolls again');
+  // Open wide: the same view over the page at the window's width; Escape closes it.
+  await press(byKey('st-wide'));
+  await until(() => evaluate(`!!document.querySelector('.st-overlay .st-draw[data-which="this"] svg')`), 'the wide view');
+  const wide4 = await evaluate(`(() => { const sc = document.querySelector('.st-overlay .st-draw[data-which="this"] .st-scroll'), d = document.querySelector('#aside .st-scroll'); return { wide: sc.clientWidth, drawer: d ? d.clientWidth : 0 }; })()`);
+  assert.ok(wide4.wide > 2 * wide4.drawer, 'The wide view is much wider than the drawer: ' + JSON.stringify(wide4));
+  await shot('light-1440-3c-wide');
+  await evaluate(`(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); return true; })()`);
+  await until(() => evaluate(`!document.querySelector('.st-overlay')`), 'the wide view closed');
   check('4. Coloured by parameters (' + fills4.size + ' fills, each value the server\'s), then by the change from the starting weights (stem ' + n4b.find(n => n.id === stem.id).value.toFixed(4) + ', the fixture\'s ' + X.against_initial.stem.toFixed(4) + ')');
 
   // ---- 5. Compared with the parent ------------------------------------------------------------------------------------------

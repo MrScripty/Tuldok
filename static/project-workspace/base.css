@@ -776,6 +776,9 @@ tr.wts-row:has(+ tr.wts-open) > td { background: var(--accent-wash); }
 .st-scroll { overflow: auto; max-height: 380px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
 .st-scroll svg { display: block; font-family: var(--font); }
 .st-scroll.fit svg { height: auto; }
+/* "Open wide": the Structure block over the page, under the top bar, at the window's width. */
+.st-overlay { position: fixed; inset: 48px 0 0 0; z-index: 60; overflow: auto; padding: 16px 20px 24px; background: var(--page); border-top: 1px solid var(--line); }
+.st-overlay .st-scroll { max-height: calc(100vh - 280px); }
 .st-edge { fill: none; stroke: var(--line-strong); stroke-width: 1.3; }
 .st-edge.back { stroke-dasharray: 3 3; }
 .st-arrowhead { fill: var(--line-strong); }

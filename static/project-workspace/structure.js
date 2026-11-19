@@ -67,6 +67,23 @@ window.LabStructure = (() => {
     putInPlace(ctx.box, root || h('div'), ctx.scroller);
   }
 
+  /** The Structure block drawn again over the page, full width; Escape or "Back to the drawer" closes it. */
+  function openWide(ctx) {
+    if (ctx.st.wideCtx) return;
+    const box = h('div', 'st-overlay'); box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Structure, full width');
+    document.body.appendChild(box);
+    const w = { ...ctx, box, scroller: box, turn: 0, wide: true, base: ctx };
+    w.esc = ev => { if (ev.key === 'Escape') closeWide(w); };
+    document.addEventListener('keydown', w.esc);
+    ctx.st.wideCtx = w;
+    again(w).then(() => { const b = box.querySelector('[data-key="st-wide"]'); if (b) b.focus(); });
+  }
+  function closeWide(w) {
+    document.removeEventListener('keydown', w.esc);
+    w.box.remove(); w.st.wideCtx = null;
+    again(w.base).then(() => { const b = w.base.box.querySelector('[data-key="st-wide"]'); if (b) b.focus(); });
+  }
+
   /** The other models it can be compared with: the model it derives from and those derived from it, with a graph. */
   async function choicesFor(m, g) {
     const refs = [m.parent].filter(p => p && g.byId.has(p)).map(p => ['parent', p]).concat(g.nodes.filter(n => n.parent === m.id).map(n => ['child', n.id]));
@@ -115,7 +132,10 @@ window.LabStructure = (() => {
     const one = button('btn sm', 'Fold to depth 1', () => { Object.assign(st, { depth: 1, open: [], close: [] }); again(ctx); }); one.dataset.key = 'st-fold-1';
     const fit = button('btn sm', 'Fit to width', () => { st.fit = !st.fit; again(ctx); }); fit.dataset.key = 'st-fit'; fit.setAttribute('aria-pressed', String(st.fit));
     fit.title = 'Shrink the drawings to the drawer\'s width, for an overview; press again for their actual size';
-    folds.appendChild(all); folds.appendChild(one); folds.appendChild(fit); bar.appendChild(folds);
+    // The drawer is narrow: the same view, with the same state, opens over the page at its full width.
+    const wide = button('btn sm', ctx.wide ? 'Back to the drawer' : 'Open wide', () => (ctx.wide ? closeWide(ctx) : openWide(ctx)));
+    wide.dataset.key = 'st-wide';
+    folds.appendChild(all); folds.appendChild(one); folds.appendChild(fit); folds.appendChild(wide); bar.appendChild(folds);
     root.appendChild(bar);
     // The overlay and the comparison, read in full before anything is drawn.
     let overlay = null, overlayError = null;
