@@ -90,6 +90,7 @@ TULDOK_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STEP_TASKS_FILE = 'tasks.json'          # <run>/tasks.json: what a freeze is told of its tasks
 STEP_LINES = 'annotations'              # <run>/annotations/<name>.jsonl: the line files a freeze read
 STEP_REPORT = 'endpoint.json'           # <run>/endpoint.json: the endpoint a generate asked, and its version
+STEP_FACTS = 'embed.json'               # <run>/embed.json: what an embed is told (spec-t5.md section 5)
 REPORT_LIMIT = 4096
 
 TABLES = (
@@ -829,10 +830,15 @@ class _Build:
             return argv + ['--code', self.code.code_root]
         if step == 'generate':
             return argv + self._generate_argv(project, run, values, prepared)
+        if step == 'embed':
+            return argv + self._embed_argv(project, reference, run, values, prepared)
+        if step == 'select':
+            self._records_input(project, run, values, step)
+            return argv + ['--records', values['inputs.records']]
         if step == 'annotate':
             return argv + self._annotate_argv(project, reference, run, values, prepared)
         if step != 'freeze':
-            raise StepProblem(f'Tuldok provides no step {step!r}; use import, freeze, generate or annotate.')
+            raise StepProblem(f'Tuldok provides no step {step!r}; use import, freeze, generate, embed, select or annotate.')
         inputs = _declared_inputs({'run': run})
         used = inputs.get('records', (None, None))[0]
         if 'inputs.records' not in values or used is None:
@@ -868,17 +874,55 @@ class _Build:
         prepared['annotations'] = read
         return argv + ['--records', values['inputs.records'], '--tasks', tasks_file]
 
-    def _generate_argv(self, project, run, values, prepared):
-        """The arguments of a generate after its settings and output: the machine's endpoint, the report, the input."""
+    def _endpoint_argv(self, prepared, doing='generated'):
+        """--endpoint and --report: the machine's Pumas endpoint, which the run's record keeps."""
         try:
             address = local.pumas_endpoint()
         except local.SettingsError as exc:
             raise StepProblem(str(exc)) from None
         if address is None:
-            raise StepProblem('No Pumas endpoint is set on this machine, so nothing can be generated; the owner sets '
+            raise StepProblem(f'No Pumas endpoint is set on this machine, so nothing can be {doing}; the owner sets '
                               'one, then build again.')
         prepared['endpoint'] = {'address': address, 'version': None}
-        argv = ['--endpoint', address, '--report', os.path.join(prepared['directory'], STEP_REPORT)]
+        return ['--endpoint', address, '--report', os.path.join(prepared['directory'], STEP_REPORT)]
+
+    def _records_input(self, project, run, values, step):
+        """The reference of a step's input records, which must have a product that is not shown through a view."""
+        used = _declared_inputs({'run': run}).get('records', (None, None))[0]
+        if 'inputs.records' not in values or used is None:
+            raise StepProblem(f'A {step} reads the records of its input records; declare run.inputs.records.')
+        row = project._execute(f'SELECT document FROM {{schema}}.definitions WHERE NOT removed AND '
+                               f'{store._REFERENCE_SQL} = %s', (used,)).fetchone()
+        if row is not None and isinstance(row[0], dict) and row[0].get('view') is not None:
+            raise StepProblem(f'Its input records ({used}) is shown through a view, and {step} reads only a '
+                              "product's records.jsonl or its files.")
+        return used
+
+    def _embed_argv(self, project, reference, run, values, prepared):
+        """The arguments of an embed: the endpoint, its input, and the facts file (spec-t5.md section 5): the
+        input's reference and run, the machine's embedder, and the output of the last run when it failed."""
+        argv = self._endpoint_argv(prepared, 'embedded')
+        used = self._records_input(project, run, values, 'embed')
+        source = _current_product(project, used)
+        try:
+            machine = local.embedder_settings()
+        except local.SettingsError as exc:
+            raise StepProblem(str(exc)) from None
+        last = project._execute('SELECT state, directory FROM {schema}.runs WHERE reference = %s '
+                                'ORDER BY queued_at DESC LIMIT 1', (reference,)).fetchone()
+        resume = None
+        if last is not None and last[0] == 'failed' and last[1] and os.path.isdir(os.path.join(last[1], OUTPUT)):
+            resume = os.path.join(last[1], OUTPUT)
+        facts = {'source': {'dataset': used, 'run': source['run_id'] if source else None},
+                 'name': documents.parse_reference(used)[1][:64], 'model': machine['model'],
+                 'profile': machine['profile'], 'prefix': machine['prefix'], 'resume': resume}
+        file = os.path.join(prepared['directory'], STEP_FACTS)
+        prepared['files'][file] = (json.dumps(facts, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+        return argv + ['--records', values['inputs.records'], '--facts', file]
+
+    def _generate_argv(self, project, run, values, prepared):
+        """The arguments of a generate after its settings and output: the machine's endpoint, the report, the input."""
+        argv = self._endpoint_argv(prepared)
         used = _declared_inputs({'run': run}).get('prompts', (None, None))[0]
         if used is not None:
             row = project._execute(f'SELECT document FROM {{schema}}.definitions WHERE NOT removed AND '

@@ -126,6 +126,10 @@ window.LabInside = (() => {
     const products = prods.products.filter(p => p.run_id);
     if (!products.length) return { def, products };
     const product = products.find(p => p.run_id === v.run) || products[0]; v.run = product.run_id;
+    // The dataset's embeddings (curation.js, spec-t5): with any that can be read, Map joins Records and Files.
+    const em = window.LabCuration ? await window.LabCuration.sets(c.ref) : null;
+    const mapped = !!em && window.LabCuration.usable(em).length > 0;
+    if (v.mode === 'map' && !mapped) v.mode = 'records';
     const args = { offset: v.page * PER_PAGE, limit: PER_PAGE, kind: v.kind, split: v.split };
     let page = await R.records(v.run, args);
     if (!page.records.length && v.page > 0 && page.total) { v.page = Math.floor((page.total - 1) / PER_PAGE); args.offset = v.page * PER_PAGE; page = await R.records(v.run, args); }
@@ -133,9 +137,9 @@ window.LabInside = (() => {
     if (v.mode === 'files') tree = await R.inside(v.run, { path: v.path, offset: v.treeOffset, limit: TREE_LIMIT }).catch(error => ({ error }));
     if (v.mode === 'records' && !page.records.some(r => r.id === v.sel)) v.sel = page.records.length ? page.records[v.selAt === -1 ? page.records.length - 1 : 0].id : null;
     v.selAt = 0;
-    const target = v.mode === 'files' ? v.treeTarget : v.sel ? { record: v.sel } : null;
+    const target = v.mode === 'files' ? v.treeTarget : v.mode === 'map' ? v.mapTarget || null : v.sel ? { record: v.sel } : null;
     const viewer = target ? await viewerFor(c, v, target) : null;
-    return { def, products, product, page, tree, viewer };
+    return { def, products, product, page, tree, viewer, em, mapped };
   }
 
   /** Draws the whole view (first: not on screen yet), built off the page and put in place in one step. */
@@ -184,7 +188,7 @@ window.LabInside = (() => {
     // The Files switch, the kinds and the splits as filters.
     const bar = h('div', 'filters');
     const seg = h('div', 'seg'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Show');
-    for (const [mode, label] of [['records', 'Records'], ['files', 'Files']]) { const b = button(null, label, () => { if (v.mode !== mode) { v.mode = mode; draw(c, false); } }); b.setAttribute('aria-pressed', String(v.mode === mode)); b.dataset.key = 'inside-mode-' + mode; seg.appendChild(b); }
+    for (const [mode, label] of [['records', 'Records'], ['files', 'Files']].concat(got.mapped ? [['map', 'Map']] : [])) { const b = button(null, label, () => { if (v.mode !== mode) { v.mode = mode; draw(c, false); } }); b.setAttribute('aria-pressed', String(v.mode === mode)); b.dataset.key = 'inside-mode-' + mode; seg.appendChild(b); }
     bar.appendChild(seg);
     if (v.mode === 'records') {
       const all = Object.values(page.kinds).reduce((a, b) => a + b, 0);
@@ -193,12 +197,15 @@ window.LabInside = (() => {
       if (splits.length) bar.appendChild(chips('Split', [[null, 'All', null]].concat(splits.map(([s, n]) => [s, s, n])), v.split, s => { v.split = s; v.page = 0; v.sel = null; draw(c, false); }, 'split'));
     }
     root.appendChild(bar);
-    const body = h('div', 'ds-body');
+    const body = h('div', 'ds-body' + (v.mode === 'map' ? ' cur-body' : ''));
     const left = h('div', 'inside-list');
-    if (v.mode === 'records') records(c, v, page, left); else files(c, v, tree, left);
+    if (v.mode === 'records') records(c, v, page, left);
+    else if (v.mode === 'map') left.appendChild(window.LabCuration.panel({ ref: c.ref, em: got.em, act: c.act, live: () => here(c),
+      show: (id, run) => { v.mapTarget = { record: id, run }; showIn(c, v, v.mapTarget); } }));
+    else files(c, v, tree, left);
     body.appendChild(left);
     const panel = h('section', 'viewer'); panel.setAttribute('aria-label', 'Viewer');
-    panel.appendChild(got.viewer || h('p', 'empty', v.mode === 'files' ? 'Choose a file or an array in the tree.' : 'Choose a record.'));
+    panel.appendChild(got.viewer || h('p', 'empty', v.mode === 'files' ? 'Choose a file or an array in the tree.' : v.mode === 'map' ? 'Rest on a point, or open one, to see its record.' : 'Choose a record.'));
     body.appendChild(panel); root.appendChild(body);
   }
   function chips(label, items, value, pick, key) {
@@ -356,9 +363,9 @@ window.LabInside = (() => {
    * {path, array, kind, arrays}. A refusal is shown as the server's sentence.
    */
   async function viewerFor(c, v, target) {
-    const run = v.run, el = h('div', 'iv');
+    const run = target.run || v.run, el = h('div', 'iv');
     try {
-      if (target.record != null) await recordView(c, v, el, await R.record(run, target.record));
+      if (target.record != null) await recordView(c, target.run ? { ...v, run } : v, el, await R.record(run, target.record));
       else await placeView(c, v, el, target);
     } catch (error) {
       el.replaceChildren(heading(target.record != null ? target.record : target.path + (target.array ? ' · ' + target.array : ''), null));

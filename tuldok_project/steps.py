@@ -1,14 +1,19 @@
 """The steps Tuldok provides: import files into a dataset, freeze a dataset with splits from its annotations,
-and generate a dataset by asking a model a Pumas endpoint serves.
+generate a dataset by asking a model a Pumas endpoint serves, embed a dataset's records through that endpoint,
+and select some of a dataset's records.
 
-Owns section 6 of docs/plans/definition-first-projects/spec-d4.md and section
-3 of spec-d5.md. A dataset whose run names a step (run.step) is built by
+Owns section 6 of docs/plans/definition-first-projects/spec-d4.md, section
+3 of spec-d5.md and section 5 of docs/plans/training-and-curation/spec-t5.md
+(embed, select, and freeze's records). A dataset whose run names a step (run.step) is built by
 Tuldok's own interpreter running
 
     python -m tuldok_project.steps import <settings file> <output directory> --code <code root>
     python -m tuldok_project.steps freeze <settings file> <output directory> --records <input product> --tasks <file>
     python -m tuldok_project.steps generate <settings file> <output directory> --endpoint <address>
         --report <file> [--records <input product>]
+    python -m tuldok_project.steps embed <settings file> <output directory> --endpoint <address>
+        --report <file> --records <input product> --facts <file>
+    python -m tuldok_project.steps select <settings file> <output directory> --records <input product>
 
 with Tuldok's code first on the module path and the snapshot's code off it
 (builds.py sets PYTHONSAFEPATH and PYTHONPATH). A step reads files and writes
@@ -23,8 +28,14 @@ Tuldok's client for it; it is given the machine's address by the build and
 writes the address and the endpoint's version to its report file, which the
 build keeps in the run's record.
 
-import_files, freeze_records and generate_records are the steps as functions
-on directories; main() is the command line.
+embed reaches the endpoint the same way; the facts file the build writes
+tells it which records it embeds (the input's reference and run), the
+machine's embedder and prefix, and the output of the dataset's last run when
+that run failed, from which it takes the rows already answered.
+
+import_files, freeze_records, generate_records, embed_records and
+select_records are the steps as functions on directories; main() is the
+command line.
 """
 import argparse
 import hashlib
@@ -49,7 +60,7 @@ EXTENSIONS = {
     'mesh': ('.obj', '.stl'),
     'array': ('.npy', '.npz', '.safetensors'),
 }
-STEPS = ('import', 'freeze', 'generate', 'annotate')
+STEPS = ('import', 'freeze', 'generate', 'embed', 'select', 'annotate')
 RECORD_LIST = 'records.jsonl'
 FILES = 'files'
 DEFAULT_PATTERN = '**/*'
@@ -73,6 +84,10 @@ TODO = 'todo.jsonl'                 # the records an annotator command is to ann
 ANNOTATE_LIMIT = 1_000_000          # records one annotate annotates
 ANNOTATE_LINE_BYTES = 64 * 1024 * 1024   # one line a command writes (a large polygon list)
 GIVE_UP_AFTER = 10                  # Pumas: every one of the first this many records refused fails the step
+EMBED_BATCH = 32                    # records one embed request carries, unless the definition says
+EMBED_TEXT_BYTES = LINE_BYTES       # a text record embedded (inline, or a UTF-8 file)
+EMBED_IMAGE_BYTES = 8 * 1024 * 1024 # an image embedded (the release's bound on one image)
+SELECT_LIMIT = 20_000               # records one select (or freeze's records) names
 
 
 class StepError(Exception):
@@ -496,7 +511,7 @@ def freeze_records(settings, output, *, records, tasks, view=None, out=print):
         raise StepError('freeze needs at least one task.')
     root = os.path.realpath(records)
     counts = dict.fromkeys(('records', 'included', 'stale', 'excluded', 'unannotated', 'invalid', 'stale_other',
-                            'missing_files', 'too_long', 'bad_lines', 'copied'), 0)
+                            'missing_files', 'too_long', 'bad_lines', 'copied', 'not_named'), 0)
     by_id = _input_records(root, view, counts)
     counts['records'] = len(by_id)
     rows = []
@@ -505,6 +520,15 @@ def freeze_records(settings, output, *, records, tasks, view=None, out=print):
         rows.append(found)
         counts['invalid'] += invalid
     first, first_name = rows[0], tasks[0]['reference'].split('/', 1)[1]
+    if settings.get('records') is not None:
+        # Only the records named (a selection on the map, spec-t5.md section 5), before the states decide.
+        named = set(settings['records'])
+        absent = next((identifier for identifier in settings['records'] if identifier not in by_id), None)
+        if absent is not None:
+            raise StepError(f'The record {absent!r} named in records is not in the input.')
+        counts['not_named'] = sum(1 for identifier in first if identifier not in named)
+        first = {identifier: row for identifier, row in first.items() if identifier in named}
+        by_id = {identifier: record for identifier, record in by_id.items() if identifier in named}
     progress = Progress('freeze', len(first), out)
     progress(0, {})
     chosen = []
@@ -534,6 +558,7 @@ def freeze_records(settings, output, *, records, tasks, view=None, out=print):
     _say(out, counts, (('stale', f'annotations of {first_name} are stale (the record is gone or its content '
                                  'differs) and were left out.'),
                        ('excluded', f'records were left out by their state under {first_name}.'),
+                       ('not_named', 'annotated records were left out since records does not name them.'),
                        ('unannotated', f'records have no annotation under {first_name} and were left out.'),
                        ('invalid', 'annotations are not valid for their task and were not read.'),
                        ('stale_other', 'stale annotations of the other tasks were not carried.'),
@@ -1076,6 +1101,347 @@ def annotate_records(settings, output, *, records, task, run_directory, command=
     return counts
 
 
+# ------------------------------------------------------------------- select
+
+def select_records(settings, output, *, records, view=None, out=print):
+    """The select step (spec-t5.md section 5): the named records of the input product, in its order, each line as
+    the input has it (split and annotations kept), its file linked under files/. Returns the counts."""
+    wanted = settings['records']
+    root = os.path.realpath(records)
+    counts = dict.fromkeys(('records', 'selected', 'missing_files', 'too_long', 'bad_lines', 'copied'), 0)
+    by_id = _input_records(root, view, counts)
+    counts['records'] = len(by_id)
+    absent = next((identifier for identifier in wanted if identifier not in by_id), None)
+    if absent is not None:
+        raise StepError(f'The record {absent!r} is not in the input, which holds {len(by_id):,} records.')
+    named = set(wanted)
+    progress = Progress('select', len(named), out)
+    progress(0, {})
+    used_ids, placed = set(), {}
+    with open(os.path.join(output, RECORD_LIST), 'x', encoding='utf-8') as listing:
+        for record in by_id.values():
+            if record['id'] not in named:
+                continue
+            line = _selected(record, root, output, placed, used_ids, counts)
+            if line is not None:
+                listing.write(line)
+                counts['selected'] += 1
+            progress(counts['selected'], {'selected': counts['selected']})
+    progress(counts['selected'], {'selected': counts['selected']}, final=True)
+    out(f'{counts["selected"]} of {counts["records"]} records selected.')
+    _say(out, counts, (('missing_files', 'records whose file is missing from the input were left out.'),
+                       ('too_long', f'records too long for one line ({LINE_BYTES} bytes) were left out.'),
+                       ('bad_lines', f'lines of the input\'s {RECORD_LIST} are not records and were skipped.'),
+                       ('copied', 'files were copied, since they could not be linked.')))
+    return counts
+
+
+def _selected(record, root, output, placed, used_ids, counts):
+    """The records.jsonl line of one selected record, as the input has it, its file linked under files/."""
+    keys = (*_FROZEN_KEYS, 'split', 'annotations')
+    line = {key: record[key] for key in keys if record.get(key) is not None}
+    extra = {key: value for key, value in record.items() if key not in keys and key != 'hash'}
+    if extra:
+        line['meta'] = {**extra, **(line.get('meta') or {})}
+    line['sha256'] = _record_hash(root, record)
+    if line['sha256'] is None:
+        del line['sha256']
+    if record.get('path') is not None:
+        outer = record['path'].split('!', 1)[0]
+        source = _confined(root, outer)
+        if source is None:
+            counts['missing_files'] += 1
+            return None
+        target = outer if outer.startswith(f'{FILES}/') else f'{FILES}/{outer}'
+        if target not in placed:
+            if _place(source, os.path.join(output, *target.split('/'))) == 'copy':
+                counts['copied'] += 1
+            placed[target] = os.path.getsize(source)
+        line['path'] = target + record['path'][len(outer):]
+        if '!' not in record['path'] and not isinstance(line.get('bytes'), int):
+            line['bytes'] = placed[target]
+    identifier = record['id'] if _ID.fullmatch(record['id']) else id_from(record['id'])
+    line['id'] = unique(identifier, used_ids, ID_LIMIT)
+    if identifier != record['id']:
+        line.setdefault('meta', {})['selected_from'] = record['id']
+    ordered = {key: line[key] for key in keys if key in line}
+    text = _line(ordered)
+    if len(text.encode('utf-8')) > LINE_BYTES:
+        counts['too_long'] += 1
+        return None
+    return text
+
+
+# -------------------------------------------------------------------- embed
+
+def _embeddable(root, record, counts):
+    """(kind, what is sent: a text or image bytes) of one input record, or None (counted) when it is not sent."""
+    kind = record['kind']
+    if kind == 'text':
+        if record.get('path') is None:
+            text = record['text']
+        else:
+            full = _confined(root, record['path']) if '!' not in record['path'] else None
+            if full is None or os.path.getsize(full) > EMBED_TEXT_BYTES:
+                counts['unread'] += 1
+                return None
+            with open(full, 'rb') as handle:
+                try:
+                    text = handle.read().decode('utf-8')
+                except UnicodeDecodeError:
+                    counts['unread'] += 1
+                    return None
+        if not text.strip() or len(text.encode('utf-8', 'surrogatepass')) > EMBED_TEXT_BYTES:
+            counts['unread'] += 1
+            return None
+        return 'text', text
+    if kind == 'image':
+        full = _confined(root, record['path']) if record.get('path') and '!' not in record['path'] else None
+        if full is None or os.path.getsize(full) > EMBED_IMAGE_BYTES:
+            counts['unread'] += 1
+            return None
+        with open(full, 'rb') as handle:
+            data = handle.read()
+        if not (data.startswith(b'\x89PNG\r\n\x1a\n') or data.startswith(b'\xff\xd8')):
+            counts['unread'] += 1
+            return None
+        return 'image', data
+    counts['other_kinds'] += 1
+    counts.setdefault('kinds', {})
+    counts['kinds'][kind] = counts['kinds'].get(kind, 0) + 1
+    return None
+
+
+class _Partial:
+    """The rows answered so far, appended as they come: embeddings/.<name>.partial (32-bit floats, little-endian),
+    .<name>.partial.ids (one id a line) and .<name>.partial.json (what they were asked with)."""
+
+    def __init__(self, directory, name):
+        self.rows = os.path.join(directory, f'.{name}.partial')
+        self.ids = os.path.join(directory, f'.{name}.partial.ids')
+        self.meta = os.path.join(directory, f'.{name}.partial.json')
+
+    def read(self, expected):
+        """{id: row bytes} of a partial whose meta equals expected; {} when there is none or it differs."""
+        try:
+            with open(self.meta, encoding='utf-8') as handle:
+                meta = json.load(handle)
+            if meta != expected:
+                return {}
+            with open(self.ids, encoding='utf-8') as handle:
+                ids = [line.rstrip('\n') for line in handle if line.endswith('\n')]
+            width = meta['width'] * 4 if meta.get('width') else None
+            with open(self.rows, 'rb') as handle:
+                data = handle.read()
+        except (OSError, ValueError, KeyError, TypeError):
+            return {}
+        if not width:
+            return {}
+        count = min(len(ids), len(data) // width)
+        return {ids[i]: data[i * width:(i + 1) * width] for i in range(count)}
+
+
+def _float_bytes(vector):
+    import array as array_module
+    packed = array_module.array('f', vector)
+    if sys.byteorder != 'little':
+        packed.byteswap()
+    return packed.tobytes()
+
+
+def embed_records(settings, output, *, endpoint, records, facts, report=None, out=print, pauses=RETRY_PAUSES):
+    """The embed step (spec-t5.md section 5): one vector per text and image record of the input product, asked of
+    the embedder the endpoint serves, written as embeddings/<name>.npy and .json.
+
+    facts: {source: {dataset, run}, name (the default set name), model,
+    profile, prefix (the machine's), resume (a failed run's output, or
+    None)}. Nothing is asked before what the endpoint serves has been read and
+    every kind of record checked against it. Returns the counts.
+    """
+    from . import embeddings, pumas   # the step's one way to the endpoint, and the contract's writer
+    root = os.path.realpath(records)
+    counts = dict.fromkeys(('embedded', 'resumed', 'records', 'unread', 'other_kinds', 'bad_lines', 'no_route'), 0)
+    by_id = _input_records(root, None, counts)
+    counts['records'] = len(by_id)
+    items = []
+    for identifier, record in by_id.items():
+        found = _embeddable(root, record, counts)
+        if found is not None:
+            items.append((identifier, *found))
+    if not items:
+        raise StepError('Nothing in the input can be embedded: Pumas 0.8.0 embeds texts and PNG or JPEG images, '
+                        f'and its {len(by_id):,} records hold none that can be sent.')
+    try:
+        listing = pumas.served(endpoint)
+    except pumas.PumasError as exc:
+        raise StepError(f'The Pumas endpoint at {endpoint} did not say what it serves: {exc}') from None
+    if report is not None:
+        with open(report, 'w', encoding='utf-8') as handle:
+            json.dump({'address': endpoint, 'version': pumas.version(endpoint)}, handle)
+    named = settings.get('model')
+    model = named if named is not None else facts.get('model')
+    profile = settings.get('profile') if named is not None else facts.get('profile')
+    dimensions = settings.get('dimensions')
+    try:
+        entry, named_by = pumas.choose_embedder(listing, model, profile)
+        routes = pumas.embedding_routes(entry)
+        pumas.check_dimensions(routes, dimensions)
+    except pumas.PumasError as exc:
+        raise StepError(f'Nothing was asked: {exc}') from None
+    if named_by == 'named':
+        named_by = 'definition' if named is not None else 'setting'
+    kinds = {kind for _, kind, _ in items}
+    if not kinds & set(routes):
+        raise StepError(f'Nothing was asked: {entry["model"]} ({entry["profile"]}) cannot embed '
+                        + ' or '.join(sorted(kinds)) + ' now; it embeds ' + (' and '.join(sorted(routes)) or 'nothing')
+                        + '.')
+    for kind in sorted(kinds - set(routes)):
+        counts['no_route'] += sum(1 for item in items if item[1] == kind)
+        counts.setdefault('unrouted', []).append(kind)
+    items = [item for item in items if item[1] in routes]
+    prefix = settings['prefix'] if 'prefix' in settings else facts.get('prefix')
+    if prefix is None:
+        prefix = pumas.DEFAULT_PREFIX
+    name = settings.get('name') or facts['name']
+    directory = os.path.join(output, embeddings.DIRECTORY)
+    os.makedirs(directory, exist_ok=True)
+    partial = _Partial(directory, name)
+    asked = {'source_run': facts['source'].get('run'), 'model': entry['model'], 'profile': entry['profile'],
+             'model_id': entry['model_id'], 'prefix': prefix, 'dimensions': dimensions}
+    taken = {}
+    if facts.get('resume'):
+        earlier = _Partial(os.path.join(facts['resume'], embeddings.DIRECTORY), name)
+        try:
+            with open(earlier.meta, encoding='utf-8') as handle:
+                width = json.load(handle).get('width')
+        except (OSError, ValueError, AttributeError):
+            width = None
+        if width:
+            taken = earlier.read({**asked, 'width': width})
+            asked['width'] = width
+    wanted = {identifier for identifier, _, _ in items}
+    taken = {identifier: row for identifier, row in taken.items() if identifier in wanted}
+    width = asked.get('width') if taken else None
+    rows_file = open(partial.rows, 'xb')
+    ids_file = open(partial.ids, 'x', encoding='utf-8')
+    written = 0
+
+    def keep(identifiers, rows):
+        nonlocal written
+        rows_file.write(b''.join(rows))
+        rows_file.flush()
+        ids_file.write(''.join(identifier + '\n' for identifier in identifiers))
+        ids_file.flush()
+        written += len(identifiers)
+
+    def meta(found_width):
+        with open(partial.meta, 'w', encoding='utf-8') as handle:
+            json.dump({**asked, 'width': found_width}, handle)
+
+    try:
+        if taken:
+            meta(width)
+            order = [identifier for identifier, _, _ in items if identifier in taken]
+            keep(order, [taken[identifier] for identifier in order])
+            counts['resumed'] = len(order)
+            out(f'{len(order)} rows were taken from the failed run before, asked with the same model, prefix and '
+                'dimensions; the rest are asked for.')
+        remaining = [item for item in items if item[0] not in taken]
+        progress = Progress('embed', len(items), out)
+        progress(counts['resumed'], {'embedded': counts['resumed'], 'resumed': counts['resumed']})
+        out(f'Asking {entry["model"]} ({entry["profile"]}) for {len(remaining)} vectors'
+            + (f' of {dimensions} dimensions' if dimensions else '') + '.')
+        token = uuid.uuid4().hex[:16]
+        size = settings.get('batch', EMBED_BATCH)
+        number = 0
+        for kind in ('text', 'image'):
+            route = routes.get(kind)
+            mine = [item for item in remaining if item[1] == kind]
+            if route is None or not mine:
+                continue
+            most = pumas.batch_size(kind, route[2], size)
+            at = 0
+            while at < len(mine):
+                chunk = mine[at:at + most]
+                if kind == 'image':   # at most the release's bytes in one request
+                    while len(chunk) > 1 and sum(len(data) for _, _, data in chunk) * 4 // 3 > pumas.IMAGE_REQUEST_BYTES:
+                        chunk = chunk[:-1]
+                at += len(chunk)
+                number += 1
+                try:
+                    sent = ([prefix + text for _, _, text in chunk] if kind == 'text'
+                            else [pumas.image_part(data) for _, _, data in chunk])
+                except pumas.PumasError as exc:
+                    raise StepError(f'The record {chunk[0][0]} cannot be sent: {exc}') from None
+                vectors = _ask_vectors(pumas, endpoint, listing, entry, route, sent, dimensions, number, token,
+                                       pauses, out, chunk[0][0])
+                if width is None:
+                    width = len(vectors[0])
+                    meta(width)
+                elif len(vectors[0]) != width:
+                    raise StepError(f'The endpoint answered vectors of {len(vectors[0])} dimensions for the record '
+                                    f'{chunk[0][0]}; earlier ones had {width}.')
+                keep([identifier for identifier, _, _ in chunk], [_float_bytes(vector) for vector in vectors])
+                counts['embedded'] += len(chunk)
+                progress(counts['embedded'] + counts['resumed'],
+                         {'embedded': counts['embedded'] + counts['resumed'], 'resumed': counts['resumed']})
+    finally:
+        rows_file.close()
+        ids_file.close()
+    total = counts['embedded'] + counts['resumed']
+    progress(total, {'embedded': total, 'resumed': counts['resumed']}, final=True)
+    with open(partial.ids, encoding='utf-8') as handle:
+        ids = [line.rstrip('\n') for line in handle]
+    notes = []
+    if counts['other_kinds']:
+        notes.append(', '.join(f'{count} {kind}' for kind, count in sorted(counts['kinds'].items()))
+                     + ' records were not embedded: Pumas 0.8.0 embeds texts and images.')
+    if counts['no_route']:
+        notes.append(f'{counts["no_route"]} records were not embedded: {entry["model"]} does not embed '
+                     + ' or '.join(counts['unrouted']) + '.')
+    if counts['unread']:
+        notes.append(f'{counts["unread"]} records could not be sent (a text over {EMBED_TEXT_BYTES} bytes, not '
+                     f'UTF-8 or empty; an image over {EMBED_IMAGE_BYTES} bytes, not PNG or JPEG, or missing).')
+    header = "{'descr': '<f4', 'fortran_order': False, 'shape': (%d, %d), }" % (len(ids), width)
+    padding = 64 - (10 + len(header) + 1) % 64
+    text = (header + ' ' * padding + '\n').encode('latin-1')
+    with open(os.path.join(directory, f'{name}.npy'), 'xb') as target, open(partial.rows, 'rb') as source:
+        target.write(b'\x93NUMPY\x01\x00' + len(text).to_bytes(2, 'little') + text)
+        shutil.copyfileobj(source, target)
+    used = sorted({routes[kind][0] for _, kind, _ in items})
+    index = {'format': embeddings.FORMAT, 'records': ids, 'dimensions': width, 'metric': 'cosine',
+             'model': {'name': entry['model'], 'model_id': entry['model_id'], 'profile': entry['profile'],
+                       'capability': ', '.join(used), 'dimensions_asked': dimensions, 'named_by': named_by,
+                       'via': 'pumas'},
+             'prefix': prefix if prefix and any(kind == 'text' for _, kind, _ in items) else None,
+             'source': {'dataset': facts['source'].get('dataset'), 'run': facts['source'].get('run')},
+             'notes': notes}
+    with open(os.path.join(directory, f'{name}.json'), 'x', encoding='utf-8') as handle:
+        json.dump(index, handle, ensure_ascii=False, separators=(',', ':'))
+    for path in (partial.rows, partial.ids, partial.meta):
+        os.unlink(path)
+    out(f'{total} records embedded by {entry["model"]} ({width} dimensions)'
+        + (f', {counts["resumed"]} of them taken from the failed run before' if counts['resumed'] else '') + '.')
+    for note in notes:
+        out(note)
+    return counts
+
+
+def _ask_vectors(pumas, endpoint, listing, entry, route, sent, dimensions, number, token, pauses, out, first):
+    """One batch's vectors, asking again (after a pause) what the endpoint refused before the provider took it."""
+    for attempt in range(len(pauses) + 1):
+        try:
+            return pumas.embed_batch(endpoint, listing, entry, route, sent, dimensions,
+                                     f'tuldok-embed:{token}:{number}:{attempt + 1}')
+        except pumas.PumasError as exc:
+            if exc.outcome != 'not_admitted' or attempt == len(pauses):
+                tries = f' (asked {attempt + 1} times)' if attempt else ''
+                raise StepError(f'Batch {number}, from the record {first}, failed{tries}: {exc}') from None
+            out(f'Batch {number} was not admitted ({exc.provider_code or "refused"}); asking again in '
+                f'{pauses[attempt]:g} s.')
+            time.sleep(pauses[attempt])
+
+
 # --------------------------------------------------------------- command line
 
 def _arguments(argv):
@@ -1093,6 +1459,7 @@ def _arguments(argv):
     parser.add_argument('--command-json', help='annotate: the annotator command\'s argv as JSON')
     parser.add_argument('--resume', help='annotate: the output of an earlier run of the same definition')
     parser.add_argument('--run-directory', help='annotate: the run\'s directory')
+    parser.add_argument('--facts', help='embed: a JSON file of the source, the machine\'s embedder and what to resume')
     return parser.parse_args(argv)
 
 
@@ -1115,6 +1482,17 @@ def main(argv=None):
                              run_directory=arguments.run_directory,
                              command=json.loads(arguments.command_json) if arguments.command_json else None,
                              code=arguments.code, endpoint=arguments.endpoint, resume=arguments.resume, out=out)
+        elif arguments.step == 'embed':
+            if arguments.endpoint is None or arguments.records is None or arguments.facts is None:
+                raise StepError('embed needs --endpoint, --records and --facts.')
+            with open(arguments.facts, encoding='utf-8') as handle:
+                facts = json.load(handle)
+            embed_records(settings, arguments.output, endpoint=arguments.endpoint, records=arguments.records,
+                          facts=facts, report=arguments.report, out=out)
+        elif arguments.step == 'select':
+            if arguments.records is None:
+                raise StepError('select needs --records.')
+            select_records(settings, arguments.output, records=arguments.records, out=out)
         elif arguments.step == 'generate':
             if arguments.endpoint is None:
                 raise StepError('generate needs --endpoint, the Pumas endpoint this machine uses.')

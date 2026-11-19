@@ -136,16 +136,26 @@ def shown(entry):
             'makes': makes(entry)}
 
 
-def observe(address):
-    """{address, answered, version, models, problem}: what the endpoint at address serves now, asked once."""
+def observe(address, embedder=None):
+    """{address, answered, version, models, problem}: what the endpoint at address serves now, asked once.
+
+    With embedder (the machine's setting, local.embedder_settings()), also
+    embedder: what it resolves to (embedder_shown)."""
     if address is None:
-        return {'address': None, 'answered': False, 'version': None, 'models': [], 'problem': NO_ENDPOINT}
-    try:
-        listing = served(address)
-    except PumasError as exc:
-        return {'address': address, 'answered': False, 'version': None, 'models': [], 'problem': str(exc)}
-    return {'address': address, 'answered': True, 'version': version(address),
-            'models': [shown(entry) for entry in listing['models']], 'problem': None}
+        found = {'address': None, 'answered': False, 'version': None, 'models': [], 'problem': NO_ENDPOINT}
+        listing = None
+    else:
+        try:
+            listing = served(address)
+        except PumasError as exc:
+            found = {'address': address, 'answered': False, 'version': None, 'models': [], 'problem': str(exc)}
+            listing = None
+        else:
+            found = {'address': address, 'answered': True, 'version': version(address),
+                     'models': [shown(entry) for entry in listing['models']], 'problem': None}
+    if embedder is not None:
+        found['embedder'] = embedder_shown(listing, embedder, found['problem'])
+    return found
 
 
 def find():
@@ -551,3 +561,149 @@ def _decided(task, vocabulary, answers):
         if probability > 0.5:
             chosen.append(term)
     return chosen, words
+
+
+# ------------------------------------------------------------- embeddings
+
+# Curation by embeddings (docs/plans/training-and-curation/spec-t5.md sections 2 and 5). The default embedder is
+# EmbeddingGemma 2 (the owner, 2026-11-19): a served model whose alias or model id holds DEFAULT_EMBEDDER, the
+# released GGUF first. Another model is used only when a definition or the machine's setting names it.
+DEFAULT_EMBEDDER = 'embeddinggemma-2'
+PREFERRED_EMBEDDER_ID = 'unsloth/embeddinggemma-2-GGUF'
+DEFAULT_EMBEDDER_TITLE = 'EmbeddingGemma 2'
+DEFAULT_PREFIX = 'task: clustering | query: '
+EMBEDDING_OUTPUT = 'embeddings_float32'
+# What each kind of record is embedded by: (capability, the request's input kind).
+EMBEDDING_ROUTES = {'text': ('text_embedding', 'text_batch'), 'image': ('multimodal_embedding', 'content_batch')}
+EMBED_RESPONSE_BYTES = 64 * 1024 * 1024
+IMAGES_PER_REQUEST = 4                  # the release's image bound when none is advertised
+IMAGE_REQUEST_BYTES = 16 * 1024 * 1024
+
+
+def embedding_capabilities(entry):
+    """The embedding capabilities of a served entry that are available now, in the endpoint's order."""
+    return [row['capability'] for row in entry['capabilities']
+            if row['capability'] in ('text_embedding', 'multimodal_embedding')
+            and row['availability']['state'] == 'available' and EMBEDDING_OUTPUT in row['output_formats']]
+
+
+def embedders(listing):
+    """Every served (model, profile) with an embedding capability available: model, profile, model_id,
+    capabilities, dimensions (the advertised bound, or None)."""
+    found = []
+    for entry in listing['models']:
+        names = embedding_capabilities(entry)
+        if names:
+            bound = next((_descriptor(entry, name)['option_bounds'].get('dimensions') for name in names
+                          if _descriptor(entry, name)['option_bounds'].get('dimensions')), None)
+            found.append({'model': entry['model'], 'profile': entry['profile'], 'model_id': entry['model_id'],
+                          'capabilities': names, 'dimensions': bound})
+    return found
+
+
+def _listed(listing):
+    rows = embedders(listing)
+    return ', '.join(f'{row["model"]} ({row["model_id"]}, {row["profile"]})' for row in rows) or 'none'
+
+
+def choose_embedder(listing, model=None, profile=None):
+    """(served entry, named_by) of the embedder: model (and profile) when named, else EmbeddingGemma 2.
+
+    named_by is 'named' or 'default'. PumasError not-found when the named
+    model, or EmbeddingGemma 2, is not served with an embedding capability
+    available; another model is never chosen in its stead.
+    """
+    if model is not None:
+        entry = choose(listing, model, profile)
+        if not embedding_capabilities(entry):
+            raise PumasError(f'{entry["model"]} ({entry["profile"]}) has no embedding capability available now; '
+                             f'the endpoint embeds with: {_listed(listing)}.', 'not-found')
+        return entry, 'named'
+    wanted = DEFAULT_EMBEDDER.lower()
+    found = [entry for entry in listing['models'] if embedding_capabilities(entry)
+             and (wanted in entry['model'].lower() or wanted in entry['model_id'].lower())]
+    found.sort(key=lambda entry: entry['model_id'].lower() != PREFERRED_EMBEDDER_ID.lower())
+    if not found:
+        raise PumasError(f'No embedding model is named and the endpoint does not serve {DEFAULT_EMBEDDER_TITLE} '
+                         f'(an alias or model id holding {DEFAULT_EMBEDDER}, such as {PREFERRED_EMBEDDER_ID}), the '
+                         f'default embedder; Tuldok does not choose another. It embeds with: {_listed(listing)}. '
+                         'Name one as the model, or set the machine\'s embedder.', 'not-found')
+    return found[0], 'default'
+
+
+def embedder_shown(listing, setting, problem=None):
+    """The embedder as endpoint shows it: the setting, what it resolves to now and the served embedders."""
+    named_by = 'setting' if setting.get('model') else 'default'
+    shown_ = {'model': setting.get('model'), 'profile': setting.get('profile'),
+              'prefix': setting.get('prefix') if setting.get('prefix') is not None else DEFAULT_PREFIX,
+              'named_by': named_by, 'default': DEFAULT_EMBEDDER, 'chosen': None, 'problem': problem,
+              'embedders': embedders(listing) if listing is not None else []}
+    if listing is not None:
+        try:
+            entry, _ = choose_embedder(listing, setting.get('model'), setting.get('profile'))
+        except PumasError as exc:
+            shown_['problem'] = str(exc)
+        else:
+            shown_['chosen'] = {'model': entry['model'], 'profile': entry['profile'], 'model_id': entry['model_id'],
+                                'capabilities': embedding_capabilities(entry)}
+    return shown_
+
+
+def embedding_routes(entry):
+    """{kind: (capability, input kind, its descriptor)} of the kinds of record entry can embed now."""
+    found = {}
+    for kind, (capability, input_kind) in EMBEDDING_ROUTES.items():
+        if capability in client.available_capabilities(entry, input_kind, EMBEDDING_OUTPUT):
+            found[kind] = (capability, input_kind, _descriptor(entry, capability))
+    return found
+
+
+def check_dimensions(routes, dimensions):
+    """Refuse (PumasError invalid) dimensions outside a bound a route's capability advertises."""
+    if dimensions is None:
+        return
+    for _, _, row in routes.values():
+        _bound(row, 'dimensions', dimensions, 'The')
+
+
+def batch_size(kind, row, wanted):
+    """How many records one request of this route carries: wanted, within the advertised input_count (and
+    image_count for images, IMAGES_PER_REQUEST when none is advertised)."""
+    most = wanted
+    for name in ('input_count',) + (('image_count',) if kind == 'image' else ()):
+        bound = row['option_bounds'].get(name)
+        if bound is not None:
+            most = min(most, max(1, int(bound['maximum'])))
+    if kind == 'image' and 'image_count' not in row['option_bounds']:
+        most = min(most, IMAGES_PER_REQUEST)
+    return max(1, most)
+
+
+def image_part(data):
+    """The content part of PNG or JPEG bytes, as the release takes it (PumasError invalid otherwise)."""
+    part, _ = _image(data)
+    return part
+
+
+def embed_batch(address, listing, entry, route, items, dimensions, request_id, stop=None):
+    """Ask for one vector per item (texts, or image parts); the vectors, checked, or PumasError.
+
+    route is (capability, input kind, descriptor) of embedding_routes.
+    """
+    capability, input_kind, row = route
+    if input_kind == 'text_batch':
+        input_value = {'kind': 'text_batch', 'texts': list(items)}
+    else:
+        input_value = {'kind': 'content_batch', 'items': [{'parts': [part]} for part in items]}
+    options = {'kind': 'embeddings'}
+    if dimensions is not None:
+        options['dimensions'] = dimensions
+    request = _request(entry, row, request_id, input_value, EMBEDDING_OUTPUT, options)
+    vectors = _exchange(address, listing, request, stop or threading.Event(), EMBED_RESPONSE_BYTES)['vectors']
+    if len(vectors) != len(items):
+        raise PumasError(f'The endpoint answered {len(vectors)} vectors for {len(items)} items.', 'unavailable',
+                         outcome='unknown')
+    if dimensions is not None and len(vectors[0]) != dimensions:
+        raise PumasError(f'The endpoint answered vectors of {len(vectors[0])} dimensions; {dimensions} were asked.',
+                         'unavailable', outcome='unknown')
+    return vectors

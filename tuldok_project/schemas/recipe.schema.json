@@ -252,9 +252,11 @@
             "import",
             "freeze",
             "generate",
+            "embed",
+            "select",
             "annotate"
           ],
-          "description": "a step Tuldok provides: import, freeze, generate or annotate"
+          "description": "a step Tuldok provides: import, freeze, generate, embed, select or annotate"
         },
         "environment": {
           "type": "string",
@@ -448,7 +450,9 @@
                 "enum": [
                   "import",
                   "freeze",
-                  "generate"
+                  "generate",
+                  "embed",
+                  "select"
                 ]
               }
             }

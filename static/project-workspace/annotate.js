@@ -908,7 +908,19 @@ window.LabAnnotate = (() => {
           }
           putInPlace(ofTasks, box);
         };
-        f.appendChild(choice(s, key, 'dataset', 'The dataset whose records are frozen', sets.map(d => [d.reference, d.title + ' · ' + d.reference]), sets.length ? sets[0].reference : '', drawTasks));
+        const named = h('div', 'ann-field');
+        // Records chosen on a map of embeddings (curation.js, spec-t5 section 5): only those are frozen.
+        const drawNamed = ds => {
+          const box = h('div');
+          if (Array.isArray(s.text.records) && s.text.recordsOf === ds) {
+            box.appendChild(h('p', 'small frz-records', 'Only the ' + s.text.records.length.toLocaleString('en-GB') + ' records chosen on the map: ' + s.text.records.slice(0, 3).join(', ') + (s.text.records.length > 3 ? ', …' : '') + '.'));
+            const b = h('button', 'btn sm ghost', 'Freeze every record instead'); b.type = 'button'; b.dataset.key = key + ':field:records-clear';
+            b.addEventListener('click', () => { s.text.records = null; drawNamed(ds); }); box.appendChild(b);
+          }
+          putInPlace(named, box);
+        };
+        f.appendChild(choice(s, key, 'dataset', 'The dataset whose records are frozen', sets.map(d => [d.reference, d.title + ' · ' + d.reference]), sets.length ? sets[0].reference : '', ds => { drawTasks(ds); drawNamed(ds); }));
+        f.appendChild(named); drawNamed(s.text.dataset);
         f.appendChild(ofTasks); drawTasks(s.text.dataset);
         const two = h('div', 'two');
         two.appendChild(input(s, key, 'seed', 'Seed (required)', { type: 'number', value: '7', hint: 'an integer' }));
@@ -953,10 +965,14 @@ window.LabAnnotate = (() => {
     const seed = Number(String(x.seed || '').trim());
     if (!Number.isInteger(seed) || String(x.seed || '').trim() === '') throw Object.assign(Error('The seed is a whole number.'), { code: 'invalid' });
     const settings = { seed, shares };
+    if (Array.isArray(x.records) && x.records.length && x.recordsOf === x.dataset) settings.records = x.records.slice();
     const include = (x.include || []).slice().sort((a, b) => ['accepted', 'needs-work', 'rejected', 'draft'].indexOf(a) - ['accepted', 'needs-work', 'rejected', 'draft'].indexOf(b));
     if (!(include.length === 1 && include[0] === 'accepted')) settings.include = include;
     return { format: FORMAT, kind: 'dataset', title: (x.title || '').trim(), run: { step: 'freeze', inputs: { records: x.dataset }, annotations: (x.tasks || []).slice(), settings } };
   }
+
+  /** The Freeze form filled in with records chosen on a map (curation.js): the dataset and only those records. */
+  function fillFreeze(dataset, records) { const s = A.slot('newfreeze'); s.text.dataset = dataset; s.text.records = records.slice(); s.text.recordsOf = dataset; s.text.tasks = null; }
 
   /** Needs you: the Annotate tab opens on this task. */
   function choose(task) { ui.task = task; ui.page = 0; ui.filter = 'all'; }
@@ -964,5 +980,5 @@ window.LabAnnotate = (() => {
   S.annotate = annotate;
   // The drawer forms' parts, for the Generate form (generate.js).
   const forms = { formDrawer, input, choice, header, slug, textOf };
-  return { choose, datasetForm, forms, redraw };
+  return { choose, datasetForm, forms, fillFreeze, redraw };
 })();
