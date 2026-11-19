@@ -76,6 +76,7 @@ def check_folder(folder, *, code=True):
 
     check_references(definitions, add)
     check_steps(definitions, add)
+    check_serve(definitions, add)
     check_charts(definitions, unsound, add)
     check_cycles(definitions, add)
     check_map(project, definitions, add)
@@ -494,6 +495,9 @@ def _code_paths(document):
         source = settings.get('source') if run.get('step') == 'import' and isinstance(settings, dict) else None
         if isinstance(source, str) and source and not source.startswith('/'):
             yield '/run/settings/source', source   # relative to the code root, read from the commit
+    serve = document.get('serve')
+    if isinstance(serve, dict) and 'module_file' in serve:
+        yield '/serve/module_file', serve['module_file']   # the entry point a served model runs (spec-t6.md)
     if 'config_file' in document:
         yield '/config_file', document['config_file']
     yield from sources(document)
@@ -565,6 +569,28 @@ def check_references(definitions, add):
                 name = use.role.split(':', 1)[1]
                 add('error', definition.path, documents.pointer('run', 'inputs', name, 'output'),
                     f'{use.target} declares no output named {use.output!r}; use one of its run.outputs or declare it there.')
+
+
+def check_serve(definitions, add):
+    """Report a recipe's serve (spec-t6.md section 1): a .py module file, and an environment that exists."""
+    for definition in definitions.values():
+        document = definition.document
+        serve = document.get('serve') if isinstance(document, dict) else None
+        if definition.kind != 'recipe' or not isinstance(serve, dict):
+            continue
+        module_file = serve.get('module_file')
+        if isinstance(module_file, str) and not module_file.endswith('.py'):
+            add('error', definition.path, '/serve/module_file',
+                f'The module file {module_file!r} must be a Python file ending in .py.')
+        run = document.get('run') if isinstance(document.get('run'), dict) else {}
+        environment = serve.get('environment', run.get('environment'))
+        if not isinstance(environment, str):
+            add('error', definition.path, '/serve',
+                'A served model runs in an environment; name one in serve.environment or run.environment.')
+        elif ('environment' in serve and (documents.parse_reference(environment) or ('',))[0] == 'environments'
+              and environment not in definitions):
+            add('error', definition.path, '/serve/environment',
+                f'{environment} does not exist; add {environment}.json or fix the reference.')
 
 
 def _sound_benchmark(chart, definitions, unsound):
