@@ -132,9 +132,18 @@ def _check_view(view, path, add):
 
 # The settings of each step Tuldok provides (spec-d4.md section 6): {member: required}.
 STEP_SETTINGS = {'import': {'source': True, 'pattern': False, 'kind': False, 'rights': True, 'lines': False},
-                 'freeze': {'seed': True, 'shares': True, 'include': False},
+                 'freeze': {'seed': True, 'shares': True, 'include': False, 'records': False},
                  'generate': {'make': True, 'model': True, 'profile': False, 'prompt': True, 'count': False,
-                              'per': False, 'seed': False, 'options': False, 'rights': True}}
+                              'per': False, 'seed': False, 'options': False, 'rights': True},
+                 # docs/plans/training-and-curation/spec-t5.md section 5
+                 'embed': {'model': False, 'profile': False, 'prefix': False, 'dimensions': False, 'name': False,
+                           'batch': False},
+                 'select': {'records': True}}
+SELECT_LIMIT = 20_000               # records named by a select or a freeze's records
+EMBED_PREFIX_LIMIT = 1000
+EMBED_DIMENSIONS_LIMIT = 4096
+EMBED_BATCH_LIMIT = 256
+_SET_NAME = re.compile(r'^[a-z0-9][a-z0-9._-]{0,63}$')
 SEED_LIMIT = 2 ** 63
 GENERATE_SEED_LIMIT = 2 ** 32       # a seed Pumas takes is unsigned 32-bit
 PROMPT_LIMIT = 16_000               # characters of a generate prompt
@@ -152,8 +161,9 @@ def _check_step(run, path, add):
     step = run['step']
     settings = run.get('settings')
     if 'settings' not in run:
+        needed = [key for key, required in STEP_SETTINGS[step].items() if required]
         add('error', path, '/run/settings', f'Add the required field \'settings\'; the step {step} needs '
-                                            + ' and '.join(key for key, needed in STEP_SETTINGS[step].items() if needed)
+                                            + (' and '.join(needed) if needed else 'it, {} when no setting is given')
                                             + '.')
     if isinstance(settings, dict):
         for key in settings:
@@ -167,7 +177,7 @@ def _check_step(run, path, add):
                     f'Add the required setting {key!r} of the step {step}.')
     settings = settings if isinstance(settings, dict) else {}
     where = lambda key: documents.pointer('run', 'settings', key)  # noqa: E731
-    if step in ('import', 'generate') and 'annotations' in run:
+    if step in ('import', 'generate', 'embed', 'select') and 'annotations' in run:
         add('error', path, '/run/annotations', 'Only the step freeze reads annotations; remove annotations.')
     if step == 'import':
         _check_import(settings, path, where, add)
@@ -175,6 +185,12 @@ def _check_step(run, path, add):
             add('error', path, '/run/inputs', 'The step import reads files, not other products; remove inputs.')
     elif step == 'generate':
         _check_generate(run, settings, path, where, add)
+    elif step in ('embed', 'select'):
+        _check_records_input(run, step, path, add)
+        if step == 'embed':
+            _check_embed(settings, path, where, add)
+        elif 'records' in settings:
+            _check_record_ids(settings['records'], path, where, add)
     else:
         _check_freeze(run, settings, path, where, add)
 
@@ -279,6 +295,55 @@ def _check_generate(run, settings, path, where, add):
                                             'what may be done with what is made.')
 
 
+def _check_records_input(run, step, path, add):
+    inputs = run.get('inputs')
+    if not isinstance(inputs, dict) or set(inputs) != {'records'} or not isinstance(inputs['records'], str) \
+            or not inputs['records'].startswith('datasets/'):
+        add('error', path, '/run/inputs', f'The step {step} takes one input, records, naming a dataset: '
+                                          '"inputs": {"records": "datasets/<name>"}.')
+
+
+def _check_record_ids(records, path, where, add):
+    """records of a select or a freeze: 1 to SELECT_LIMIT different record ids (spec-t5.md section 5)."""
+    if not isinstance(records, list) or not 1 <= len(records) <= SELECT_LIMIT:
+        add('error', path, where('records'), f'records must be a list of 1 to {SELECT_LIMIT:,} record ids.')
+        return
+    for index, item in enumerate(records):
+        if not isinstance(item, str) or not 1 <= len(item) <= 600 or any(ord(char) < 32 or ord(char) == 127
+                                                                         for char in item):
+            add('error', path, documents.pointer('run', 'settings', 'records', str(index)),
+                'A record id is 1 to 600 characters with no control characters.')
+            return
+    if len(set(records)) != len(records):
+        add('error', path, where('records'), 'records names a record more than once.')
+
+
+def _check_embed(settings, path, where, add):
+    """The settings of the step embed (spec-t5.md section 5); every one is optional."""
+    model = settings.get('model')
+    if 'model' in settings and not (isinstance(model, str) and model and model == model.strip()
+                                    and len(model.encode('utf-8', 'surrogatepass')) <= 256
+                                    and not any(ord(char) < 32 or ord(char) == 127 for char in model)):
+        add('error', path, where('model'), 'model must be the alias a Pumas endpoint serves: 1 to 256 bytes, with no '
+                                           'spaces around it and no control characters.')
+    if 'profile' in settings and not (isinstance(settings['profile'], str) and _PROFILE.match(settings['profile'])):
+        add('error', path, where('profile'), 'profile must be a Pumas profile: 1 to 128 of A-Z a-z 0-9 . _ -.')
+    if 'profile' in settings and 'model' not in settings:
+        add('error', path, where('profile'), 'profile goes with model; name the model too.')
+    prefix = settings.get('prefix')
+    if 'prefix' in settings and (not isinstance(prefix, str) or len(prefix) > EMBED_PREFIX_LIMIT):
+        add('error', path, where('prefix'), f'prefix must be a string of at most {EMBED_PREFIX_LIMIT:,} characters.')
+    dimensions = settings.get('dimensions')
+    if 'dimensions' in settings and (type(dimensions) is not int or not 1 <= dimensions <= EMBED_DIMENSIONS_LIMIT):
+        add('error', path, where('dimensions'), f'dimensions must be a whole number from 1 to '
+                                                f'{EMBED_DIMENSIONS_LIMIT:,}.')
+    if 'name' in settings and not (isinstance(settings['name'], str) and _SET_NAME.match(settings['name'])):
+        add('error', path, where('name'), 'name must be 1 to 64 of a-z 0-9 . _ -, starting with a letter or digit.')
+    batch = settings.get('batch')
+    if 'batch' in settings and (type(batch) is not int or not 1 <= batch <= EMBED_BATCH_LIMIT):
+        add('error', path, where('batch'), f'batch must be a whole number from 1 to {EMBED_BATCH_LIMIT}.')
+
+
 def _check_freeze(run, settings, path, where, add):
     inputs = run.get('inputs')
     if not isinstance(inputs, dict) or set(inputs) != {'records'} or not isinstance(inputs['records'], str) \
@@ -307,6 +372,8 @@ def _check_freeze(run, settings, path, where, add):
                         f'The share of {name!r} must be an integer from 0 to {SHARE_LIMIT:,}.')
             if all(type(size) is int for size in shares.values()) and not any(shares.values()):
                 add('error', path, where('shares'), 'At least one share must be above 0.')
+    if 'records' in settings:
+        _check_record_ids(settings['records'], path, where, add)
     include = settings.get('include')
     if 'include' in settings:
         if not isinstance(include, list) or not include or len(set(map(str, include))) != len(include) \

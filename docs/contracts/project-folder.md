@@ -191,7 +191,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `command` | unless `step` is given | 1 to 64 strings, the program and its arguments; run in the code root. When the first string is exactly `python` it means the environment's interpreter |
-| `step` | no | datasets only: `import`, `freeze` or `generate`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
+| `step` | no | datasets only: `import`, `freeze`, `generate`, `embed` or `select`, a step Tuldok provides in place of a command; see [Steps Tuldok provides](#steps-tuldok-provides) |
 | `environment` | when the first string of `command` is `python` | reference to `environments/` |
 | `inputs` | no | at most 32 entries; keys `^[a-z][a-z0-9_]{0,31}$`; values are inputs from `datasets/`, `recipes/` or `steps/` |
 | `settings` | no | object, free content, written to a file whose path replaces `{settings}`; not together with `settings_file` |
@@ -264,12 +264,12 @@ Example, `datasets/sinusoidal-v1.json`:
 #### Steps Tuldok provides
 
 A dataset's `run` names either a `command` or a `step`, one of `import`,
-`freeze` and `generate`. A run with `step` has no `command`, `environment`, `outputs`,
+`freeze`, `generate`, `embed` and `select`. A run with `step` has no `command`, `environment`, `outputs`,
 `settings_file`, `env` or `estimate`: the step's outputs are fixed, its
 settings are inline in `settings`, and it runs with Tuldok's own interpreter
 (see [The command and its environment](#the-command-and-its-environment)).
 It may have `resources` and `sources`. A plan shows it as `tuldok import`,
-`tuldok freeze` or `tuldok generate`. It is planned, requested, approved, run, cancelled and
+`tuldok freeze`, `tuldok generate`, `tuldok embed` or `tuldok select`. It is planned, requested, approved, run, cancelled and
 recorded like any build, from a commit as builds are. `check` reports a
 setting the step does not take, a required one missing and a value of the
 wrong form.
@@ -318,6 +318,7 @@ their annotations. Its run takes one input, `"inputs": {"records":
 | `seed` | yes | an integer of at most 63 bits |
 | `shares` | yes | 1 to 16 splits and their relative sizes, integers from 0 to 1,000,000, at least one above 0, for example `{"train": 8, "validation": 1, "test": 1}` |
 | `include` | no | the states of the first task's annotations that take a record in; default `["accepted"]` |
+| `records` | no | 1 to 20,000 different record ids of the input: only those are taken, before the first task's states decide (a selection on the map); an id the input does not have fails the step |
 
 It reads each task's line file from the commit the build uses, at the
 project folder's place in the code's Git repository (a scratch build reads
@@ -443,6 +444,48 @@ Example, `datasets/poem-lines.json`:
   }
 }
 ```
+
+**`embed`** writes embeddings of its input's records (see
+[A dataset's embeddings](#a-datasets-embeddings)) by asking the embedder the
+machine's Pumas endpoint serves. Its run takes one input, `"inputs":
+{"records": "datasets/<name>"}`, and no `annotations`. Every setting is
+optional:
+
+| Setting | Rule |
+| --- | --- |
+| `model`, `profile` | the served alias (and its profile) to embed with. Without one, the machine's `embedding_model` (see [The project directory on this machine](#the-project-directory-on-this-machine)); without that, **EmbeddingGemma 2**: the served model whose alias or model id holds `embeddinggemma-2` (ignoring case), `unsloth/embeddinggemma-2-GGUF` first. When none is served the step fails naming the embedders the endpoint does serve; another model is never chosen in its stead |
+| `prefix` | at most 1,000 characters put before each text; default the machine's `embedding_prefix`, else `task: clustering \| query: ` |
+| `dimensions` | 1 to 4,096, asked as `{"kind": "embeddings", "dimensions": d}` (Pumas truncates and renormalises); checked against an advertised bound |
+| `name` | the set's name, 1 to 64 of `a-z 0-9 . _ -`; default the input's name |
+| `batch` | records a request carries, 1 to 256, default 32, at most the advertised `input_count` (and `image_count`, 4 when none, for images) |
+
+Texts (inline, or UTF-8 files of at most 64 KiB) are asked by
+`text_embedding` with `{"kind": "text_batch", "texts": [...]}`; PNG and JPEG
+images of at most 8 MiB by `multimodal_embedding` with `{"kind":
+"content_batch", "items": [{"parts": [{"kind": "image", ...}]}]}`; other
+records are not embedded and are said so in the index's `notes`. The
+answer must hold one finite vector per item, all of one length. Before
+anything is asked the step reads what the endpoint serves and fails when the
+model is not served, cannot embed any kind the input holds, or `dimensions`
+is past its bound. A request refused before the provider took it is asked
+again after 1 s and 2 s; anything else fails the step with the batch's first
+record. Every batch answered is kept in the run's output as it comes; when
+the dataset's last run failed, the next build takes the rows that run was
+answered, asked with the same input run, model, prefix and dimensions, and
+asks only for the rest. Its product holds only `embeddings/<name>.npy` and
+`.json`, `source` naming the input and its run, `model` what answered
+(`name`, `model_id`, `profile`, `capability`, `dimensions_asked`,
+`named_by`: `definition`, `setting` or `default`, `via: "pumas"`). Like a
+`generate`, its run keeps the endpoint it asked, and a plan on a machine with
+no endpoint shows it `blocked`.
+
+**`select`** takes some of its input's records: `"inputs": {"records":
+"datasets/<name>"}` and `"settings": {"records": [ids]}` (1 to 20,000
+different ids). Its product holds exactly those records in the input's
+order, each line as the input has it (its `split` and `annotations` kept),
+its file linked under `files/`, its hash added when the input has none. An
+id the input does not have fails the step. A selection on the map becomes
+such a dataset.
 
 ### `model`
 
@@ -1682,7 +1725,8 @@ is 32 hexadecimal characters:
 | `output/` | what `{output}` names, made empty before the command starts; a succeeded run's `output/` is its product |
 | `settings.json` | the inline `settings` as the run saw them, when the definition has them |
 | `tasks.json`, `annotations/` | a freeze's tasks and the line files it read |
-| `endpoint.json` | a generate's endpoint, `{address, version}`, as it found it; kept in the run's record as `endpoint` |
+| `endpoint.json` | a generate's or an embed's endpoint, `{address, version}`, as it found it; kept in the run's record as `endpoint` |
+| `embed.json` | what an embed is told: its input's reference and run, the machine's embedder and prefix, and the output of the last run when it failed |
 | `stdout.log`, `stderr.log` | the command's standard output and error |
 | `cancel` | present when cancellation was asked for |
 | `outcome.json` | how the command ended, written when every process of the run is gone |
@@ -2164,8 +2208,14 @@ which keeps an annotation with `set_annotation`; Save writes the unsaved
 annotations with the unsaved definitions. Its Suggest asks `suggest_annotation`
 of a model `suggestion_models` offers and fills the form, and a kept
 suggestion passes its `from`. Train shows the machine's Pumas endpoint
-(`endpoint`; for the owner `set_endpoint` and `find_endpoints`), and Data's
-Generate form keeps a dataset whose run is the step `generate`.
+(`endpoint`; for the owner `set_endpoint` and `find_endpoints`, and the
+machine's embedder by `set_embedder`), and Data's
+Generate form keeps a dataset whose run is the step `generate`. A dataset
+opened on Data shows a Map beside its records and files when `embeddings`
+lists a set for it (`embedding_map` and the four searches); a region chosen on
+the map is kept as a dataset whose run is the step `select`, or fills the
+Freeze form's `records`; Data's Embed form keeps a dataset whose run is the
+step `embed`.
 Each of its controls calls one operation and is drawn only for a session that
 may call it, so a credential that may only inspect sees a page that changes
 nothing. The report is linked from the Overview tab. The page reads again
@@ -2293,6 +2343,12 @@ and result keys of each operation are in its contract.
 | `training_histograms` | inspect | Read one tensor's histograms of weights or gradients over the steps of a run's training, re-binned onto one grid. |
 | `training_samples` | inspect | List one page of the samples a run's training script kept, optionally of one name. |
 | `training_sample` | inspect | Read one sample a run's training script kept: an image's size and address, or an array's slice as 32-bit floats. |
+| `embeddings` | inspect | List a dataset's embeddings sets: those in its own products and in the products of the datasets that take it as an input, each with its model, rows and the run whose records they are. |
+| `embedding_map` | inspect | Read a map of an embeddings set's records in two dimensions (the script's own projection, or principal components Tuldok computes), each record's colour by a field, the map's cells and its thin regions. |
+| `embedding_neighbours` | inspect | List the records of an embeddings set most like one of them, by cosine, exactly. |
+| `embedding_duplicates` | inspect | List the pairs of an embeddings set's records at or above a cosine, most alike first, and whether every record was examined. |
+| `embedding_outliers` | inspect | List the records of an embeddings set farthest from their k-th nearest record, and whether every record was examined. |
+| `embedding_leakage` | inspect | List the records of an embeddings set outside the training split that have a near-copy in it, at or above a cosine. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -2316,6 +2372,7 @@ and result keys of each operation are in its contract.
 | `endpoint` | inspect | Read the Pumas endpoint this machine uses: its address, whether it answered, and each model and profile it serves with its modalities, its capabilities and what Tuldok can make with it. |
 | `set_endpoint` | owner | Set the Pumas endpoint this machine uses once it has answered what it serves, or clear it with null. |
 | `find_endpoints` | owner | List the Pumas endpoints advertising themselves on this machine, for the owner to pick from. |
+| `set_embedder` | owner | Set the model this machine embeds with when a definition names none, and the text put before each record's text; null keeps EmbeddingGemma 2 and the default prefix. |
 | `suggestion_models` | inspect | List, for each kind of record in the product of a task's dataset, the models the Pumas endpoint serves that can suggest a value of the task. |
 | `suggest_annotation` | edit | Ask a model the Pumas endpoint serves for a value of a task for one record; nothing is stored, and an answer that is not a value of the task is refused. |
 
@@ -2882,6 +2939,78 @@ directory answers `training` with `present` false and the other four
 `not-found`. `GET /api/project/file` serves a file under `training/` of a run
 in any state that has a directory; any other file only of a finished run.
 
+### A dataset's embeddings
+
+A product may hold **embeddings** of records: a vector per record, written by
+a project's own script or by the step `embed` (see
+[Steps Tuldok provides](#steps-tuldok-provides)). Tuldok computes no
+embedding; it reads them to draw a dataset as a map and to search it for
+near-duplicates, outliers, thin regions and leakage between splits. A set
+named `<name>` (1 to 64 of `a-z 0-9 . _ -`, starting with a letter or digit)
+is two files under `embeddings/` at the top of the product:
+
+- **`embeddings/<name>.npy`**: shape `(rows, dimensions)`, floats (`float32`
+  as written by Tuldok; `float16` and `float64` are read too), C order, every
+  value finite, no row all zeros.
+- **`embeddings/<name>.json`**, the index, UTF-8 JSON of at most 16 MiB:
+
+```json
+{"format": "tuldok_embeddings_v1",
+ "records": ["a1", "a2", "a3"],
+ "dimensions": 256,
+ "metric": "cosine",
+ "model": {"name": "embeddinggemma-2", "model_id": "unsloth/embeddinggemma-2-GGUF", "profile": "embed-gpu",
+           "capability": "text_embedding", "via": "pumas"},
+ "prefix": "task: clustering | query: ",
+ "source": {"dataset": "datasets/photos", "run": null},
+ "projection": {"file": "photos.map.npy", "method": "umap"},
+ "notes": []}
+```
+
+`records` are the record ids in row order (1 to 50,000 different ids of 1 to
+600 characters without control characters, as products name records); `dimensions` 1 to 4,096; `metric` is `cosine`;
+`model` an object with a `name` (1 to 256 characters) and other short facts;
+`prefix` the text put before each record's text, or null; `source` which
+records the rows are: `dataset` (null for the product's own records) and
+`run` (null when the script cannot know it). `projection`, optional, names a
+`(rows, 2)` `.npy` beside the index that the script made (any method); Tuldok
+draws it instead of its own map. `notes`, optional, at most 64 sentences.
+Other keys are ignored. At most 40,000,000 values a set and 64 sets a
+product are read.
+
+A dataset's sets are found in its own current products and in those of every
+dataset whose `run.inputs` names it (a script that embeds its input writes
+`source.dataset`). The records a set describes are those of `source.run`
+when given; else of the product holding it when they are its own; else of the
+run that the holding run recorded for that input.
+
+Tuldok makes the rows unit length (cosine is their dot product) and computes,
+in 64-bit floats with the standard library, the mean and up to eight leading
+principal components of an evenly spaced sample of the rows (at most
+`max(256, 2^19 / dimensions)` of them) by subspace power iteration on the
+sample's covariance; the map is every row's coordinates on the first two.
+The pair searches use each row's coordinates on all of them and the length of
+what they leave out, which bound the distance of two rows from below, to rule
+pairs out without reading them, and compute the rest exactly: what they list
+is never approximate. Each search examines rows in a fixed shuffled order and
+stops after 20,000,000 comparisons of coordinates or 400,000,000 values
+multiplied exactly; a row is examined whole or not at all, and `complete`
+says whether every row was. What is computed is kept while the files are
+unchanged.
+
+| Operation | Arguments | Result |
+| --- | --- | --- |
+| `embeddings` | `dataset` | `dataset`, `run` (its current product, or null), `sets`: each `run` (holding it), `holder`, `name`, `rows`, `dimensions`, `model`, `prefix`, `source`, `records_run`, `current`, `projection` (its method), `notes`, `problem` |
+| `embedding_map` | `run`, `name`, `records_run` (default `run`), `colour` (`split`, `kind`, `annotation:<task>`, `field:<key of meta>`), `cells` (8 to 64, default 24), `thin` (0 to 1, default 0.25) | `name`, `rows`, `dimensions`, `model`, `method` (`pca` or the script's), `explained`, `sample`, `ids`, `x_f32`, `y_f32`, `bounds` (`[x0, x1, y0, y1]`), `missing` (rows whose record is not in the records' product), `colours`, `colour` (`by`, `type` `category` with `categories` and `codes_u16` (65535 for none), or `number` with `low`, `high` and `values_f32`), `grid` (`cells`, `counts`, rows from the lowest y), `thin` (cells holding some points but at most `thin` times the median count of the cells holding any: `cell`, `count`, `x`, `y`, `records`) |
+| `embedding_neighbours` | `run`, `name`, `records_run`, `record`, `limit` (default 12, at most 200) | `record`, `neighbours` (`id`, `cosine`, `split`, `kind`), most alike first |
+| `embedding_duplicates` | `run`, `name`, `records_run`, `threshold` (0.5 to 1, default 0.98), `limit` (default 200, at most 1,000) | `threshold`, `pairs` (`a`, `b`, `cosine`, `a_split`, `b_split`), `total`, `groups` (records in some pair), `complete`, `examined`, `rows` |
+| `embedding_outliers` | `run`, `name`, `records_run`, `k` (1 to 50, default 5), `limit` (default 50) | `k`, `outliers` (`id`, `distance` (one minus the cosine to its k-th nearest), `nearest`, `split`), farthest first, `median`, `complete`, `examined`, `rows` |
+| `embedding_leakage` | `run`, `name`, `records_run`, `threshold` (default 0.95), `train` (default `train`), `limit` | `threshold`, `train`, `splits`, `pairs` (`record` of another split, `split`, `near` (the training record), `cosine`), `total`, `leaked`, `complete`, `examined`, `rows` |
+
+A set that breaks a rule is listed by `embeddings` with its `problem` and
+refused `unsupported` by the reads (`too-large` past a bound); a record not
+in the set is `not-found`.
+
 ### Annotating
 
 The five operations on annotations (see [Annotations in the database](#annotations-in-the-database))
@@ -2975,7 +3104,7 @@ is given up.
 
 ## The Pumas endpoint
 
-Generation and suggestions go through a Pumas endpoint, reached by HTTP
+Generation, suggestions and embeddings go through a Pumas endpoint, reached by HTTP
 only: nothing of Pumas is part of Tuldok. The address is a setting of the
 machine, `pumas_endpoint` in the settings file (see
 [The project directory on this machine](#the-project-directory-on-this-machine)),
@@ -3003,6 +3132,20 @@ numeric-loopback HTTP address Pumas 0.8.0 serves on, such as
 `unavailable` when it does not answer). It answers as `endpoint` does, and
 writes an activity row (`set` or `cleared`).
 
+`endpoint` and `set_endpoint` also answer `embedder`: the machine's
+`model`, `profile` and `prefix` (the default prefix when none is set),
+`named_by` (`setting` or `default`), `default` (`embeddinggemma-2`),
+`chosen` (the served `model`, `profile`, `model_id` and `capabilities` it
+resolves to now, or null), `problem` (why none, or null) and `embedders`
+(every served model and profile with an embedding capability available:
+`model`, `profile`, `model_id`, `capabilities`, `dimensions`).
+
+**`set_embedder`** (owner) takes `model` (an alias, or null for
+EmbeddingGemma 2), `profile` and `prefix` (null for the default), keeps them
+in the settings file once the endpoint serves the model with an embedding
+capability (refused `not-found` otherwise), writes an activity row (`set` or
+`default`), and answers `embedder`.
+
 **`find_endpoints`** takes nothing and answers `endpoints`, each `{address,
 version, component}`, the Pumas endpoints that advertise themselves on this
 machine's loopback listeners, and `rejected`, `{server_url, reason}` of those
@@ -3024,12 +3167,17 @@ environment variable `TULDOK_SETTINGS` names. It is strict JSON as in
 [JSON rules](#json-rules), at most 64 KiB, and has no other fields:
 
 ```json
-{"format": "tuldok_settings_v1", "project_home": "/absolute/path", "pumas_endpoint": "http://127.0.0.1:8765"}
+{"format": "tuldok_settings_v1", "project_home": "/absolute/path", "pumas_endpoint": "http://127.0.0.1:8765",
+ "embedding_model": "nomic-embed", "embedding_prefix": "task: clustering | query: "}
 ```
 
 `project_home` is optional and must be absolute. `pumas_endpoint` is optional,
 an `http` or `https` address of at most 2,048 characters with no spaces; it is
-set by `set_endpoint` (see [The Pumas endpoint](#the-pumas-endpoint)). The file is read only when
+set by `set_endpoint` (see [The Pumas endpoint](#the-pumas-endpoint)). `embedding_model` (1 to 256
+characters), `embedding_profile` (1 to 128) and `embedding_prefix` (at most
+1,000) are optional and set by `set_embedder`: the embedder of an `embed`
+that names none, in place of EmbeddingGemma 2, and the text put before each
+record's text. The file is read only when
 the environment variable does not decide. A settings file that cannot be read
 or is not valid stops the command with a message naming the file and the
 fault, exit status 2, and stops the app's start-up; Tuldok never falls back to

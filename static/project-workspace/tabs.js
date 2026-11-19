@@ -685,7 +685,8 @@
       if (window.LabAnnotate) { head.appendChild(h('span', 'spacer')); head.appendChild(A.group('data:new', [
         { id: 'import', label: 'Import files', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:import' ? null : 'new:import') },
         { id: 'freeze', label: 'Freeze a dataset', cls: 'btn sm', who: 'edit', onClick: () => act.select(sel === 'new:freeze' ? null : 'new:freeze') },
-        { id: 'generate', label: 'Generate', cls: 'btn sm', who: 'edit', hidden: !window.LabGenerate, onClick: () => act.select(sel === 'new:generate' ? null : 'new:generate') }], { inline: true })); }
+        { id: 'generate', label: 'Generate', cls: 'btn sm', who: 'edit', hidden: !window.LabGenerate, onClick: () => act.select(sel === 'new:generate' ? null : 'new:generate') },
+        { id: 'embed', label: 'Embed', cls: 'btn sm', who: 'edit', hidden: !window.LabCuration, onClick: () => act.select(sel === 'new:embed' ? null : 'new:embed') }], { inline: true })); }
       frag.appendChild(head);
       if (!sets.length) { frag.appendChild(h('p', 'empty', 'The project defines no dataset.')); return; }
       const grid = h('div', 'ds-grid');
@@ -714,6 +715,7 @@
     });
     if (!sel) return closeDrawer(aside);
     if (raw === 'new:generate' && window.LabGenerate && window.LabAnnotate) { window.LabGenerate.form(aside, act); return true; }
+    if (raw === 'new:embed' && window.LabCuration && window.LabAnnotate) { window.LabCuration.form(aside, act); return true; }   // spec-t5, curation.js
     if (raw.startsWith('new:') && window.LabAnnotate) { window.LabAnnotate.datasetForm(aside, raw.slice(4), act); return true; }
     if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'data'); return true; }
     drawer(aside, sel, () => Promise.all([P.read('definition', { reference: sel }), P.read('products', { reference: sel })]), (ins, [d, p]) => {

@@ -21,7 +21,8 @@ With what was built on this machine (spec-m6.md section 5), a step that is
 built has the action built and is not work; one that is out-of-date or failed
 is built again, and its reasons say why. build_plan reads those states from
 builds.status, which looks at the code root's Git history only when some
-product exists. A generate step (spec-d5.md section 3) to be built on a
+product exists. A generate step (spec-d5.md section 3), or an embed step
+(docs/plans/training-and-curation/spec-t5.md section 5), to be built on a
 machine with no Pumas endpoint set is blocked, says so, and keeps the plan
 from being buildable, as an environment that is not ready keeps it from
 running; the settings file is read for that only when such a step is to be
@@ -40,6 +41,8 @@ RESOURCES = ('gpu', 'cpu_threads', 'memory_gb', 'wall_hours', 'disk_gb')
 CAUSE_LIMIT = 5
 NO_ENDPOINT = ('No Pumas endpoint is set on this machine, so this dataset cannot be generated here; the owner sets '
                'one, then it can be built.')
+NO_ENDPOINT_EMBED = ('No Pumas endpoint is set on this machine, so this dataset cannot be embedded here; the owner '
+                     'sets one, then it can be built.')
 _CAUSE_LABELS = ('no', 'needs-work')
 
 
@@ -288,10 +291,12 @@ def make_plan(definitions, targets, *, every=False, local=None, built=None, esti
                 step['action'] = action = actions[reference] = 'blocked'
         if provided == 'freeze':
             notes.extend(_task_notes(definitions, reference, document))
-        if provided == 'generate' and action == 'build' and not has_endpoint():
+        if provided in ('generate', 'embed') and action == 'build' and not has_endpoint():
             step['action'] = action = actions[reference] = 'blocked'
-            step['blocked_by'] = [{'reference': reference, 'rebuild': 'endpoint', 'reason': NO_ENDPOINT}]
-            notes.append(f'{reference} is generated through a Pumas endpoint, and none is set on this machine.')
+            step['blocked_by'] = [{'reference': reference, 'rebuild': 'endpoint',
+                                   'reason': NO_ENDPOINT if provided == 'generate' else NO_ENDPOINT_EMBED}]
+            notes.append(f'{reference} is {"generated" if provided == "generate" else "embedded"} through a Pumas '
+                         'endpoint, and none is set on this machine.')
             steps.append(step)
             continue
         if action == 'blocked':

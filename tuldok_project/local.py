@@ -12,6 +12,10 @@ Environments that Tuldok installs go to <local home>/environments/<name>/.
 The settings file also holds pumas_endpoint, the address of the Pumas endpoint
 this machine uses (spec-d5.md section 2), or nothing; it is never part of a
 project folder. pumas.py checks an address before set_pumas_endpoint keeps it.
+It may hold the machine's embedder too (docs/plans/training-and-curation/
+spec-t5.md section 2): embedding_model and embedding_profile, the served
+alias used in place of EmbeddingGemma 2 when a definition names none, and
+embedding_prefix, the text put before each record's text.
 Working out a path never creates anything; a directory is made only when a
 caller asks for it with create=True, or by set_project_home.
 """
@@ -29,7 +33,9 @@ DEFAULT_HOME = os.path.join('~', '.local', 'share', 'tuldok', 'projects')
 DEFAULT_SETTINGS = os.path.join('~', '.local', 'share', 'tuldok', 'settings.json')
 SETTINGS_FORMAT = 'tuldok_settings_v1'
 SETTINGS_LIMIT = 64 * 1024
-SETTINGS_FIELDS = ('format', 'project_home', 'pumas_endpoint')
+SETTINGS_FIELDS = ('format', 'project_home', 'pumas_endpoint', 'embedding_model', 'embedding_profile',
+                   'embedding_prefix')
+EMBEDDER_LIMITS = {'embedding_model': 256, 'embedding_profile': 128, 'embedding_prefix': 1000}
 ENDPOINT_LIMIT = 2048          # characters of pumas_endpoint
 ENVIRONMENTS = 'environments'
 _PROJECT_DIRECTORY = re.compile(r'^[a-f0-9]{32}$')
@@ -71,7 +77,31 @@ def read_settings():
     if 'pumas_endpoint' in settings and endpoint_problem(settings['pumas_endpoint']):
         raise SettingsError(f'The settings file {path} is not valid: its pumas_endpoint '
                             f'{endpoint_problem(settings["pumas_endpoint"])}.')
+    for key, most in EMBEDDER_LIMITS.items():
+        value = settings.get(key)
+        if key in settings and not (isinstance(value, str) and len(value) <= most and (value or key ==
+                                                                                       'embedding_prefix')):
+            raise SettingsError(f'The settings file {path} is not valid: its {key} must be a string of '
+                                f'{"0" if key == "embedding_prefix" else "1"} to {most} characters.')
     return settings
+
+
+def embedder_settings():
+    """{model, profile, prefix} of the machine's embedder: each None when the settings file names none."""
+    settings = read_settings()
+    return {'model': settings.get('embedding_model'), 'profile': settings.get('embedding_profile'),
+            'prefix': settings.get('embedding_prefix')}
+
+
+def set_embedder(model, profile, prefix):
+    """Keep the machine's embedder (None removes a key); the caller has checked the model. The file's path."""
+    settings = {key: value for key, value in read_settings().items() if key not in EMBEDDER_LIMITS}
+    for key, value in (('embedding_model', model), ('embedding_profile', profile), ('embedding_prefix', prefix)):
+        if value is not None:
+            if not isinstance(value, str) or len(value) > EMBEDDER_LIMITS[key]:
+                raise ValueError(f'{key} must be a string of at most {EMBEDDER_LIMITS[key]} characters.')
+            settings[key] = value
+    return _write_settings(settings)
 
 
 def endpoint_problem(value):
