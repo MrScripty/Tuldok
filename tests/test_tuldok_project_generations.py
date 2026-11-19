@@ -102,15 +102,55 @@ class Resolve(unittest.TestCase):
         self.assertEqual(self.problems(generations.resolve(definitions)),
                          [('datasets/relabelled', 'error', '/generation')])
 
-    def test_a_declaration_equal_to_the_inputs_and_unlabelled_inputs_are_fine(self):
-        definitions = {**_two_sources(), 'datasets/plain': _dataset(),
-                       'datasets/same': _dataset('rheon-v2', a='datasets/new'),
-                       'datasets/with-plain': _dataset(a='datasets/new', b='datasets/plain')}
+    def test_a_declaration_equal_to_the_inputs_is_fine(self):
+        definitions = {**_two_sources(), 'datasets/same': _dataset('rheon-v2', a='datasets/new')}
         resolved = generations.resolve(definitions)
         self.assertEqual(resolved.problems, [])
         self.assertEqual(resolved.generation['datasets/same'], 'rheon-v2')
+
+    def test_unlabelled_data_taken_by_a_labelled_dataset_or_step_is_a_warning(self):
+        definitions = {**_two_sources(), 'datasets/plain': _dataset(), 'steps/plain': _step(),
+                       'datasets/with-plain': _dataset(a='datasets/new', b='datasets/plain'),
+                       'datasets/declared': _dataset('rheon-v2', b='datasets/plain', c='datasets/plain'),
+                       'steps/labelled': {**_step('rheon-v2'), 'run': {'command': ['make'],
+                                                                       'inputs': {'s': {'from': 'steps/plain', 'output': 'x'}}}}}
+        resolved = generations.resolve(definitions)
+        self.assertEqual(self.problems(resolved), [('datasets/declared', 'warning', '/run/inputs/b'),
+                                                   ('datasets/with-plain', 'warning', '/run/inputs/b'),
+                                                   ('steps/labelled', 'warning', '/run/inputs/s/from')])
+        self.assertEqual(resolved.problems[1][3],
+                         'Takes unlabelled data datasets/plain; label it with the generation it comes from.')
+        # The unlabelled input does not decide the generation; it stays without one.
         self.assertEqual(resolved.generation['datasets/with-plain'], 'rheon-v2')
         self.assertIsNone(resolved.generation['datasets/plain'])
+
+    def test_unlabelled_data_of_a_recipe_and_a_benchmark_is_a_warning(self):
+        definitions = {**_two_sources(), 'datasets/plain': _dataset(),
+                       'recipes/fit': _recipe(training='datasets/new', extra='datasets/plain'),
+                       'recipes/mixed': _recipe(mixed=True, old='datasets/old', new='datasets/new',
+                                                extra='datasets/plain'),
+                       'benchmarks/bench': _benchmark(cases='datasets/plain', generation='rheon-v2'),
+                       'benchmarks/inherited': {**_benchmark(cases='datasets/new'),
+                                                'run': {'command': ['b'], 'inputs': {'more': 'datasets/plain'}}}}
+        resolved = generations.resolve(definitions)
+        self.assertEqual(self.problems(resolved), [
+            ('recipes/fit', 'warning', '/run/inputs/extra'),
+            ('recipes/mixed', 'warning', '/generations'),
+            ('recipes/mixed', 'warning', '/run/inputs/extra'),
+            ('benchmarks/bench', 'warning', '/cases/dataset'),
+            ('benchmarks/inherited', 'warning', '/run/inputs/more')])
+
+    def test_no_warning_for_an_input_without_generation_because_of_its_own_error(self):
+        definitions = {**_two_sources(), 'datasets/both': _dataset(a='datasets/old', b='datasets/new'),
+                       'recipes/fit': _recipe(training='datasets/new', also='datasets/both')}
+        resolved = generations.resolve(definitions)
+        self.assertEqual(self.problems(resolved), [('datasets/both', 'error', '/run/inputs/a')])
+
+    def test_unlabelled_only_has_no_warning(self):
+        definitions = {'datasets/a': _dataset(), 'datasets/b': _dataset(a='datasets/a'),
+                       'recipes/r': _recipe(training='datasets/b', more='datasets/a'),
+                       'benchmarks/x': _benchmark('recipes/r', cases='datasets/a')}
+        self.assertEqual(generations.resolve(definitions).problems, [])
 
     def test_a_recipe_on_two_generations_is_an_error(self):
         definitions = {**_two_sources(), 'recipes/fit': _recipe(old='datasets/old', new='datasets/new')}
@@ -192,17 +232,29 @@ class Folder(check_base.FixtureCopy):
     def test_the_schema_holds_the_name_rule(self):
         for value in ('mixed', 'Rheon-V2', '', 'x' * 65, 'a b'):
             with self.subTest(value=value):
-                self.edit('datasets/waves.json', '/generation', value)
-                self.assertProblem(check_folder(self.project), 'datasets/waves.json', '/generation')
-        self.edit('datasets/waves.json', '/generation', 'rheon-v2.1_b')
+                self.edit('steps/solver.json', '/generation', value)
+                self.assertProblem(check_folder(self.project), 'steps/solver.json', '/generation')
+        self.edit('steps/solver.json', '/generation', 'rheon-v2.1_b')
         self.edit('recipes/stepper-k1.json', '/generations', 'all')
         self.assertProblem(check_folder(self.project), 'recipes/stepper-k1.json', '/generations')
 
-    def test_a_recipe_mixing_two_generations(self):
-        waves = json.loads((self.project / 'datasets' / 'waves.json').read_text(encoding='utf-8'))
+    def test_a_label_on_the_dataset_alone_warns_of_its_unlabelled_solver(self):
         self.edit('datasets/waves.json', '/generation', 'rheon-reference-v1')
-        waves['generation'] = 'rheon-v2'
+        problem = self.assertProblem(check_folder(self.project), 'datasets/waves.json', '/run/inputs/solver/from',
+                                     'warning')
+        self.assertIn('Takes unlabelled data steps/solver', problem.message)
+
+    def _second_source(self):
+        """steps/solver of rheon-reference-v1, and steps/solver-new of rheon-v2 making datasets/waves-new."""
+        solver = json.loads((self.project / 'steps' / 'solver.json').read_text(encoding='utf-8'))
+        self.edit('steps/solver.json', '/generation', 'rheon-reference-v1')
+        self.write('steps/solver-new.json', json.dumps({**solver, 'generation': 'rheon-v2'}, indent=2) + '\n')
+        waves = json.loads((self.project / 'datasets' / 'waves.json').read_text(encoding='utf-8'))
+        waves['run']['inputs']['solver']['from'] = 'steps/solver-new'
         self.write('datasets/waves-new.json', json.dumps(waves, indent=2) + '\n')
+
+    def test_a_recipe_mixing_two_generations(self):
+        self._second_source()
         self.edit('recipes/stepper-k1.json', '/run/inputs/newer', 'datasets/waves-new')
         report = check_folder(self.project)
         self.assertEqual(report.count('error'), 1)

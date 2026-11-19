@@ -1020,8 +1020,13 @@ checks as before, and nothing without a generation is reported.
   generation of its **data inputs**: the entries of `run.inputs` that name a
   dataset or a step, whatever made it (`freeze`, `select`, `embed`, `annotate`,
   `import` with dataset inputs, or the project's own command). Inputs without a
-  generation are left out; a dataset or step none of whose inputs has one has
+  generation do not decide it; a dataset or step none of whose inputs has one has
   none.
+- **Warning:** a dataset, step, recipe or benchmark that has a generation
+  (declared, inherited or `mixed`) and takes a data input that has none ("takes
+  unlabelled data <reference>; label it with the generation it comes from"). An
+  input without a generation because its own inputs disagree is not named (it
+  has its error). A project that labels nothing gets no such warning.
 - **Error:** a dataset or step whose data inputs have more than one generation
   (the message names each input and its generation), and one whose declared
   generation differs from an input's. Data has no escape: declaring one does

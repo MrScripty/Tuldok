@@ -6,8 +6,9 @@ step). A recipe's generation is computed from its data inputs; a benchmark's
 is declared or its cases' data. resolve() is pure: it takes {reference:
 decoded document} (documents need not be valid) and returns every computed
 generation and every problem, so the checker and the working copy's reads
-share one rule. Inputs without a generation are left out; nothing without a
-labelled input gets a generation.
+share one rule. Inputs without a generation do not decide one, but a labelled
+definition that takes one is warned; nothing without a labelled input gets a
+generation.
 """
 from dataclasses import dataclass, field
 
@@ -55,6 +56,17 @@ def resolve(definitions):
     resolved = Resolved()
     data = {}
     walking = set()
+    conflicted = set()   # datasets and steps without a generation because their inputs disagree (an error already)
+
+    def unlabelled(reference, inputs):
+        """A warning per data input of a labelled definition that has no generation of its own (section 1)."""
+        seen = set()
+        for pointer, target in inputs:
+            if target in seen or data.get(target) is not None or target in conflicted:
+                continue
+            seen.add(target)
+            resolved.problems.append((reference, 'warning', pointer,
+                                      f'Takes unlabelled data {target}; label it with the generation it comes from.'))
 
     def of_data(reference):
         """The generation of a dataset or step (None: unlabelled, or its inputs disagree), walked once each."""
@@ -64,7 +76,8 @@ def resolve(definitions):
             return None
         walking.add(reference)
         document = definitions[reference]
-        labelled = [(pointer, target, of_data(target)) for pointer, target in _data_inputs(document, definitions)]
+        inputs = _data_inputs(document, definitions)
+        labelled = [(pointer, target, of_data(target)) for pointer, target in inputs]
         walking.discard(reference)
         labelled = [(pointer, target, value) for pointer, target, value in labelled if value is not None]
         declared = _declared(document)
@@ -82,9 +95,12 @@ def resolve(definitions):
                                       f'Its inputs come from different data generations: '
                                       f'{_listed((t, v) for _, t, v in labelled)}; make it from one generation.'))
             value = None
+            conflicted.add(reference)
         else:
             value = names[0] if names else None
         data[reference] = value
+        if value is not None:
+            unlabelled(reference, inputs)
         return value
 
     for reference in sorted(definitions):
@@ -96,7 +112,8 @@ def resolve(definitions):
         document, directory = definitions[reference], _directory(reference)
         if directory != 'recipes' or not isinstance(document, dict):
             continue
-        labelled = [(pointer, target, data.get(target)) for pointer, target in _data_inputs(document, definitions)]
+        inputs = _data_inputs(document, definitions)
+        labelled = [(pointer, target, data.get(target)) for pointer, target in inputs]
         labelled = [item for item in labelled if item[2] is not None]
         names = sorted({value for _, _, value in labelled})
         mixed = document.get('generations') == MIXED
@@ -113,17 +130,20 @@ def resolve(definitions):
             resolved.generation[reference] = MIXED
         else:
             resolved.generation[reference] = names[0] if names else None
+        if resolved.generation[reference] is not None:
+            unlabelled(reference, inputs)
 
     for reference in sorted(definitions):
         document, directory = definitions[reference], _directory(reference)
         if directory != 'benchmarks' or not isinstance(document, dict):
             continue
-        cases, seen = [], set()
+        cases, seen, inputs = [], set(), []
         for use in graph.uses(document):
-            if ((use.role == 'cases' or use.role.startswith('input:')) and data.get(use.target) is not None
-                    and use.target not in seen):
-                seen.add(use.target)
-                cases.append((use.pointer, use.target, data[use.target]))
+            if (use.role == 'cases' or use.role.startswith('input:')) and use.target in data:
+                inputs.append((use.pointer, use.target))
+                if data[use.target] is not None and use.target not in seen:
+                    seen.add(use.target)
+                    cases.append((use.pointer, use.target, data[use.target]))
         declared = _declared(document)
         names = sorted({value for _, _, value in cases})
         if declared is not None:
@@ -142,6 +162,8 @@ def resolve(definitions):
         else:
             value = names[0] if names else None
         resolved.generation[reference] = value
+        if value is not None:
+            unlabelled(reference, inputs)
         subjects = document.get('subjects') if isinstance(document.get('subjects'), list) else []
         spanned = {}
         for subject in subjects:
