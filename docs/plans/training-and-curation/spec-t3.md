@@ -96,3 +96,34 @@ The tab, for the models of the set that are recipes on the map (a benchmark subj
 ## 8. Out of scope
 
 Running anything to make a prediction; comparing more than four models; intervals for grouped rows (by horizon, say) and for results read from a file; multiple-comparison corrections; settings read from a recipe's settings file; brushing on the Map; a hyperparameter search's own view (phase 7 reuses this).
+
+## As built
+
+What differs from the text above, and what was found. Built on `feat/t3-compare` beside phase 1, which owns the Train tab and `tuldok_log/`; neither is touched here. Edits to shared files are small: `app.js` (the tab, the bound of four, the address), `tabs.js` (Compare in drawers, intervals, the parallel-coordinates hook), `screens.js` (Compare in the Map's drawer), `adapter.js` (`peek`), `charts.js` (whiskers, ring), `operations.py`, `service.py`, the service test's count (64 to 67). `base.css` and `docs/contracts/project-folder.md` are not changed: the styles are in a new `compare.css`, and no file contract is added.
+
+### T3a, the reader and the operations
+
+- **The setting axes are ordered by the association weighed by its coverage**: `|ρ| × (subjects with both) / (subjects with a value of the first metric)`, then by count and path. Section 3 said the plain `|ρ|`. On the lab's 150 pressure fits the plain order led with list positions of `run.sources` that six subjects hold, at |ρ| 0.88 to 0.95 by chance. For the same reason **`run.command` and `run.sources` are of a sixth kind, `code`**: listed in what differs (last), never an axis. `association` in the answer is still the plain ρ.
+- **Categories are ordered** numbers first by value, then `false`, `true`, then texts, then the rest (written into section 3 before the build: ordering by JSON text put `"wide"` before `16` and `8` after `40`).
+- **`model_compare` resamples only for its statistic.** Its intervals equal those of `intervals` for that statistic (the draws are the same sequence; the browser check compares them).
+- **The intervals of a benchmark are kept** by comparing what was gathered with what was kept (no hash), 8 benchmarks.
+- **Tests:** `tests/test_tuldok_project_comparing.py`, 13 (three with the database, through `Service`): flattening and its bounds, the differences, every statistic's interval and the paired and independent differences against the test's own seeded resampling and percentiles, the frontier pairs (separated, not separated, unknown, grouped, `touching`), the axes (number, category with mixed values, constant and 13-text paths left out, ρ against the test's own Spearman, the weighed order, code never an axis, `left_out`), the three operations on the minimal fixture with its values imported, refusals, and the catalog digest unchanged. In the minimal fixture's tradeoff chart only one point is on the frontier, so its pairs are tested on hand-made chart data.
+
+### T3b and T3c, the page
+
+- **The tab is `#compare`, after Benchmarks.** Its drawer is the model's drawer with Compare. Choosing another benchmark keeps the set (it used to empty it).
+- **The intervals arrive after the tab:** the Benchmarks tab is put in place without them; when `intervals` answers, the tab is drawn again in place (`act.setUI('ivFor', …)`, the whole tab built off the page with its scroll, focus and ranges kept); afterwards the kept answer is peeked (`P.peek`) and the tab draws them at once. A line under the charts says how they are made.
+- **The frontier mark** is a dashed ring round each point (not a dashed segment of the line).
+- **Brushing is by pointer only**; the axes' move, log and remove buttons and the chooser are buttons and checkboxes, but a range cannot be set from the keyboard (doubt; a pair of number fields per axis would do). The lines are SVG paths with a `<title>`, not focusable.
+- **The outputs** take the shape and the first slice from the first model that kept the chosen case; a model that kept it in another shape says so in its cells. The colour bars sit with each row's title; under each column, relative L2, mean-free relative L2, RMSE and the largest error over the whole field.
+- **Files beyond section 6's list:** `compare.css`, and the fixture writes recipes, a benchmark, two charts, values files and three products.
+
+### Runs (a disposable PostgreSQL, no GPU)
+
+Project suite 768 OK (755 before, and the 13 new); agent interface 43 OK (4 skipped); `browser_project_workspace_compare.cjs` 6 PASS (twice); unchanged `_fields.cjs` 8 PASS, `_structure.cjs` 8 PASS, `browser_project_workspace.cjs` 24 PASS. The page did not overflow sideways at 390 px on the Compare and Benchmarks tabs in the check.
+
+### On the lab folder (read only, no database)
+
+`benchmark_axes`' computation over `150-pressure-fits-complete-gpu-requests-128-consumed-cases`, from the folder's definitions and its results file only (a script giving `comparing.benchmark_axes` what `gather_axes` would read), in 0.03 s: 150 subjects, all 150 recipes found, 5 metric axes, 48 settings offered (39 more left out). The first settings: `run.resources.wall_hours`, `run.settings.training.learning_rate` (144 subjects, ρ 0.72 with the equation residual), `run.settings.resources.wall_seconds`, `run.settings.training.schedule[0].learning_rate`, the seeds, `group`, the datasets. Keeping the best tenth by mean-free pressure error (≤ 1.05e-4: 16 subjects) shows `wall_hours` 0.5 for all 16, and for the 10 of them that have it learning rate 1e-5, schedule learning rate 1e-6, `wall_seconds` 1800; 6 have no `run.settings.training` (their settings are elsewhere in their recipes). Not run in the browser on the lab folder.
+
+**Not verified:** the kept-fields comparison of three lab models (the owner, on his database); the time of `intervals` on the lab's real per-case values (estimated 20 s the first time for 150 subjects, five metrics and 128 cases: 25 ms a subject and metric measured); four models in the browser (three were checked); a case kept in two shapes; a refused `field_compare` in a column; the slider dragged quickly; a grouped tradeoff chart (no pairs, by design); the chooser past twelve axes and many axes at 390 px (titles are cut to the space between axes); Tab order and focus rings, by eye in the screenshots only.
