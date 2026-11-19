@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 61)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, and of section 2 of spec-d6.md
+        self.assertEqual(len(names), 64)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, and of section 3 of spec-t2.md
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -215,6 +215,8 @@ class Reads(ServiceCase):
                                 'other_path': 'weights.json'},
             'array_tiles': {'run': run_id, 'path': 'weights.npy'},
             'fields': {'run': run_id}, 'field_compare': {'run': run_id, 'entry': 0, 'case': 0},
+            'model_graph': {'run': run_id}, 'model_graph_overlay': {'run': run_id, 'kind': 'parameters'},
+            'model_graph_compare': {'run': run_id, 'other_run': run_id},
             'annotation_tasks': {}, 'annotated_records': {'task': 'none-here'},
             'annotation': {'task': 'none-here', 'record': 'r1'},
             'endpoint': {}, 'find_endpoints': {}, 'suggestion_models': {'task': 'none-here'},
@@ -230,6 +232,10 @@ class Reads(ServiceCase):
                     continue
                 if operation.name in ('array_slice', 'array_summary', 'array_tiles'):  # no arrays here; tested in
                     # test_tuldok_project_inside and test_tuldok_project_weights
+                    self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
+                    continue
+                if operation.name in ('model_graph', 'model_graph_overlay', 'model_graph_compare'):  # fit-a has
+                    # no model-graph.json; test_tuldok_project_model_graph
                     self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
                     continue
                 if operation.name == 'field_compare':  # fit-a keeps no fields; test_tuldok_project_fields

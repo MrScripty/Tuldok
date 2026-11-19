@@ -2285,6 +2285,9 @@ and result keys of each operation are in its contract.
 | `array_tiles` | inspect | Read tiles of two axes of an array in a finished run's product, one per position along a third axis, as 32-bit floats. |
 | `fields` | inspect | List the fields a finished run's product kept: each case's native and predicted files, its name, shape and whether the two can be compared, and the figures the run reported itself. |
 | `field_compare` | inspect | Read a slice of one kept case's native field, predicted field and signed error as 32-bit floats, with the figures of the error over the whole field. |
+| `model_graph` | inspect | Read the structure a finished run's script recorded (model-graph.json): its operations and the edges between them, folded to a depth of the module tree with modules opened or closed by path, and the module tree. |
+| `model_graph_overlay` | inspect | Read a number per module and per operation of a finished run's model graph: parameters, output values, operations, or the relative change of the weights under it against the weights it started from or another run's. |
+| `model_graph_compare` | inspect | Match the modules of two finished runs' model graphs by path: the same, changed (class or tensor shapes), added or missing. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -2394,7 +2397,8 @@ project stay command-line actions.
 A **product** is the `output` directory of a run in state `succeeded` or
 `adopted`, named by its run id (or an unambiguous prefix of it). The
 operations `records`, `record`, `inside`, `array_slice`, `array_summary`,
-`array_tiles`, `weights`, `weights_compare`, `fields` and `field_compare` read it; each takes `run`, and a run that does not exist, has not finished or
+`array_tiles`, `weights`, `weights_compare`, `fields`, `field_compare`,
+`model_graph`, `model_graph_overlay` and `model_graph_compare` read it; each takes `run`, and a run that does not exist, has not finished or
 has no output directory is refused `not-found`. Like every operation they
 open the project for a moment, to find the run and the view of its dataset;
 they read the product after closing it and write nothing: no file, no row.
@@ -2720,6 +2724,91 @@ first; null when the reference is constant). They are computed in 64-bit
 floats with `math.fsum` and `math.sumprod`; a figure that would overflow is
 null, as all of them are when no cell counts. A case's figures are kept while
 its files are unchanged, so asking for another slice reads only the slice.
+
+### A model's structure
+
+A run's **model graph** is the file `model-graph.json` at the top of its
+product, or beside one of its weights files (see above). The project's own
+training script writes it, once, with an example input, where the model's
+code runs: Tuldok never imports or runs a project's model. The optional
+helper `tuldok_log.graph.export_graph(model, example_inputs, path)` writes it
+for a PyTorch model (with `torch.export`, else `torch.fx`, else the module
+tree alone); a script may also write it itself.
+
+```json
+{"format": "tuldok_model_graph_v1", "complete": true, "reason": null,
+ "method": "torch.export", "torch": "2.8.0+cpu", "model": "nets.Net",
+ "inputs": [{"name": "x", "shape": [2, 1, 8, 8], "dtype": "float32"}],
+ "tensors": {"stem.weight": {"shape": [4, 1, 3, 3], "dtype": "float32", "kind": "parameter"}},
+ "nodes": [{"id": "conv2d", "kind": "operation", "operation": "aten.conv2d.default",
+            "module": "stem", "tensors": ["stem.weight", "stem.bias"],
+            "inputs": [{"shape": [2, 1, 8, 8], "dtype": "float32"}],
+            "outputs": [{"shape": [2, 4, 8, 8], "dtype": "float32"}],
+            "attributes": {"padding": [1, 1]}}],
+ "edges": [{"from": "x", "to": "conv2d", "input": 0}],
+ "modules": {"path": "", "class": "nets.Net", "parameters": 1234, "children": [
+   {"path": "stem", "class": "torch.nn.modules.conv.Conv2d", "parameters": 40, "children": []}]},
+ "notes": []}
+```
+
+- Required: `format` (`tuldok_model_graph_v1`), `complete`, `tensors`,
+  `nodes`, `edges`, `modules`. `complete` false means only the module tree
+  was written; `reason` says why, and `nodes` and `edges` are not read.
+- `tensors` are the model's parameters and buffers by the names of its
+  `state_dict` (the names of its weights file), each `shape`, `dtype` and
+  `kind` (`parameter`, `buffer` or `constant`).
+- `nodes`, each after the nodes it reads: `id` (unique, not beginning
+  `module:`), `kind` (`input`, `operation` or `output`), `operation`,
+  `module` (the path of the deepest module it ran in, `""` for the model; a
+  path the tree does not list is read as its nearest listed parent),
+  `tensors` (names in `tensors` it reads), `inputs` and `outputs` (each
+  `shape` and `dtype`; a size is a whole number, or the name of a symbol),
+  `attributes` (optional: numbers, booleans, strings, null or short lists of
+  those). `edges` go `from` a node `to` a node; `input` is the position among
+  the values of `to`.
+- `modules` is the tree of the model's modules, rooted at path `""`; each
+  child's path extends its parent's; `parameters` counts every parameter
+  under a module.
+- Bounds: 32 MiB (refused `too-large` beyond), 20,000 nodes, 100,000 edges,
+  20,000 modules, 64 deep, 100,000 tensors, 64 tensor names and 16 inputs or
+  outputs per node, 16 axes, 16 attributes, 1,024 characters per string. A
+  file that is not UTF-8 JSON (`NaN` and `Infinity` are not JSON), not of the
+  format, or past a bound is refused `unsupported`, saying what.
+
+**`model_graph`** takes `depth` (0 to 64; by default 1 when the graph has more
+than 200 operations, else 64), `open` and `close` (module paths, at most
+2,000 each). A module's depth is its count of dotted parts; it is open when
+named in `open`, or when its depth is at most `depth` and it is not named in
+`close`. An operation inside a closed module is shown as the shallowest
+closed module on its path: a node of kind `group`, id `module:<path>`, with
+`operations` (how many it holds), `tensors` (those its operations read, at
+most 64, and `tensor_count`), `parameters` (the module's), and `inputs` and
+`outputs` (the values that cross into and out of it). Edges between the
+same two shown nodes are one, with `count`; an edge inside a group is
+dropped; each carries the `shape` and `dtype` of the first value it carries.
+The answer also gives the file's `path`, `complete`, `reason`, `method`,
+`torch`, `model`, `inputs`, `notes`, `counts`, the `modules` tree, the
+`tensors`, the `depth` used and `open` (the modules open in effect).
+
+**`model_graph_overlay`** takes `kind`: `parameters` (a module's from the
+tree; an operation's, the sizes of its tensors that are parameters),
+`outputs` (the values an operation gives; a module's, the sum over its
+operations; null for a symbolic size), `operations` (how many run in a
+module), or `change`, with `against` `start` (the `initial-` file beside the
+weights file) or `run` (with `other_run`), and optionally `path` and
+`other_path` (weights files; by default the first readable one). The change
+of a module is computed from `weights_compare`'s rows of the tensors under
+it, `sqrt(sum difference_norm^2) / sqrt(sum other_norm^2)`, null when none
+is compared, when the other's norm is zero or a norm is not finite. It
+answers `kind`, `unit`, `modules` and `nodes` (a number or null each),
+`low` and `high`, and for `change` `against`.
+
+**`model_graph_compare`** takes `other_run` and matches the two trees'
+modules by path: each module of either, in this tree's order then the
+other's, with `status` `same`, `changed` (its class differs, or a tensor
+directly in it changed shape or is on one side only), `added` (here only) or
+`missing` (there only), both classes and parameter counts, `reshaped`,
+`only_here` and `only_there`; and `counts` by status.
 
 ### Annotating
 

@@ -8,10 +8,12 @@ returns a JSON-plain object. Calls are answered one at a time under one lock
 of the service. Every mutating call that passed the actor check writes one
 activity row, done or refused. The six operations on build requests are
 passed to build_requests. The five reads inside a product (spec-d1.md), the
-three reads of a model's weights (spec-d2.md) and the two of the fields a run
-kept (spec-d6.md) find the finished run (and for weights_compare the other
-run) with the project open for a moment and read its output directory
-through inside.py, inside_weights.py and inside_fields.py after closing it;
+three reads of a model's weights (spec-d2.md), the two of the fields a run
+kept (spec-d6.md) and the three of a model's graph (spec-t2.md) find the
+finished run (and for weights_compare and the graph's overlay and comparison
+the other run) with the project open for a moment and read its output
+directory through inside.py, inside_weights.py, inside_fields.py and
+inside_graph.py after closing it;
 product_file does the same for the file route; those reads run outside the
 lock, so a long one holds up no other call. The five operations
 on annotations (spec-d4.md section 5) work the same way: what the database
@@ -52,13 +54,13 @@ import jsonschema
 import psycopg
 
 from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
-               documents, environments, inside, inside_fields, inside_weights, launcher, local, operations, plan,
+               documents, environments, inside, inside_fields, inside_graph, inside_weights, launcher, local, operations, plan,
                pumas, store, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
 
-# The reads inside a product (spec-d1.md, spec-d2.md, spec-d6.md), each a function of
+# The reads inside a product (spec-d1.md, spec-d2.md, spec-d6.md, and spec-t2.md's model graph), each a function of
 # ({argument: inside.Product}, arguments):
 # the products of the arguments in PRODUCT_ARGUMENTS that the call gives. call() finds them under the service's lock
 # and reads outside it: decompressing a large member, parsing a large mesh or comparing two large weights files takes
@@ -88,6 +90,12 @@ INSIDE_READS = {
     'field_compare': lambda found, a: inside_fields.field_compare(found['run'], entry=a['entry'], case=a['case'],
                                                                   axis=a.get('axis'), index=a.get('index'),
                                                                   mean_free=a.get('mean_free', False)),
+    'model_graph': lambda found, a: inside_graph.model_graph(found['run'], depth=a.get('depth'),
+                                                             opened=a.get('open', ()), closed=a.get('close', ())),
+    'model_graph_overlay': lambda found, a: inside_graph.model_graph_overlay(
+        found['run'], kind=a['kind'], against=a.get('against'), other=found.get('other_run'), path=a.get('path'),
+        other_path=a.get('other_path')),
+    'model_graph_compare': lambda found, a: inside_graph.model_graph_compare(found['run'], other=found['other_run']),
 }
 # The reads of annotations (spec-d4.md section 5): each takes the service's lock itself, only for its database work.
 ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
