@@ -174,3 +174,116 @@ In the run's drawer on the Train tab, a block **Training**, after "Latest progre
 ## 9. Out of scope
 
 A lab converter of `history.json` (a lab script, deferred); TensorBoard event files or any other format; logging from inside Tuldok's server; text or audio samples; comparing histograms of two runs; alerts on a diverging run; the Analysis or Benchmarks tabs; any change to how runs are started or to the lab's runs.
+
+## As built
+
+What differs from the text above, and what was found while building it.
+
+### T1a, the reader and the operations
+
+- **`tuldok_project/training.py`** holds the reader; `service.py` gains `TRAINING_READS` beside `INSIDE_READS`. The
+  run is found under the service's lock (`_training_run`, any state, its `directory`) and its files read outside
+  it. A run of any state with an output directory is read; one without (a queued run) answers `training` with
+  `present` false and the other four `not-found`.
+- **`training_histograms` also answers `totals`** (each row's count before re-binning), which the page uses to shade
+  each column by its share. It is in the contract text.
+- **Damaged lines.** A line that is not JSON, not an object, has no integer `step` or finite `time` (metrics), or
+  fails the histogram, sample or checkpoint checks is counted in `bad_lines`; past the bound on series or tensor
+  pairs the dropped name is reported once in `problems` but not counted as a bad line. A line longer than the bound
+  is skipped up to its newline even when that arrives in a later read. A number too large for a float
+  (`1e400` as an integer) is a non-finite value, a gap.
+- **What is kept per file:** the metrics as arrays (step, time, epoch, and per series its line positions and
+  values) with each series' least, greatest and last finite value kept as lines arrive, so `training` costs a
+  `stat` and the appended bytes, not a pass over the series; a histogram line as its offset and length; samples and
+  checkpoints as small dicts. 64 file states (four a run) are kept, least recently used dropped.
+- **A symlink** under `training/` that leads outside the output directory is treated as absent.
+- **`GET /api/project/file`** serves a `training/` address (no `!`) of a run in any state with a directory through
+  `service.product_file`; `app.py` is unchanged.
+- **Tests:** `tests/test_tuldok_project_training.py`, 18 (15 without a database, 3 with); the read test and the
+  operation count (61 to 66) in `test_tuldok_project_service.py`. The catalog's digest is unchanged
+  (`ad5cc7ac…`, 110 operations), checked in the new file and by the agent interface tests.
+
+### T1b, `tuldok_log`
+
+- As section 3, with `Logger.elapsed()` public and `log_sample` returning the path it wrote. `autolog` logs the
+  first optimizer step as well as every `every`-th, so a curve starts at step 1. Gradient histograms are written in
+  the optimizer's pre-step hook (gradients may be zeroed after the step), weight histograms after it; both carry the
+  step number after the step.
+- **The loss module's forward hook counts every call of the module**, so a script that also calls the same loss
+  module for validation mixes those values into `loss`. The docstring says to pass the module or call `note()`;
+  a separate validation loss module (or `note(val_loss=…)`) avoids it. Not otherwise guarded.
+- `note()` scalars other than the loss are written with the next logged line and then forgotten; a note made on a
+  step that is not logged waits for the next one.
+- **Tests:** `tests/test_tuldok_log.py`, 8: 6 with the standard library (read back through the reader), and 2 of
+  `autolog` that need PyTorch, skipped in Tuldok's environment. Run with the lab's interpreter
+  (`<lab>/.venv/bin/python -m unittest tests/test_tuldok_log.py`, PyTorch 2.8.0+cpu, `PYTHONDONTWRITEBYTECODE=1`,
+  read only, nothing installed): 8 OK on the CPU. The grad norm is checked against the test's own norm taken in a
+  pre-step hook of its own; the loss against the mean of the losses it saw.
+
+### T1c, the block
+
+- **Where.** The block is in the run's drawer, after "Latest progress", read with the drawer (`LabTraining.read`
+  in `runDrawer`'s load) and built with it (`LabTraining.block`). A failure to read it shows one line in the block,
+  not a failed drawer. `tabs.js`'s `S.tick` calls `LabTraining.tick()` first on every reading.
+- **One chart a series** rather than one chart with a series chooser: series of different scales (loss and learning
+  rate) are never drawn on one axis. Up to four series and four runs. Runs are told apart by colour and a legend
+  (swatch, model's short name, start of the run id, state), and the hover tip names each run with its value, step
+  and time; there are no direct labels at the ends of the lines (the drawer is narrow). The four colours are new
+  tokens `--run-1` … `--run-4` in `base.css`, light and dark, checked with the dataviz palette validator (lightness,
+  chroma, colour-blind separation, contrast: all pass in both modes).
+- **The overlay chooser** lists the project's other runs that are not queued (the run's own model's first), up to
+  fifty; runs that logged nothing draw no line but stay in the legend.
+- **Smoothing on a log scale** smooths the logarithms, so a falling loss is not pulled up by its early values. A
+  value of 0 or less is left out on the log scale and a line under the chart says so; the same line says when a
+  series is reduced (each point a mean of N, the band their range) and when it is smoothed.
+- **Histograms**: one strip a tensor for the kind chosen (weights or gradients), 32 bins and at most 120 steps, each
+  column shaded by the square root of its share of its column's total. The common range over all steps means a
+  distribution that narrows a lot is drawn in a few bins at the end (visible in the check's gradients); a per-column
+  range was not built. A strip is read when it comes on screen, and again when histograms were added since.
+- **Live updates in place.** A reading asks `training` for each active run in view; new lines ask
+  `training_series` from the last bucket held, and the charts are redrawn in their canvases; new histogram lines
+  read again the strips already read; new samples are appended to the strip (the oldest removed past twelve). A
+  name that was not there before (a validation loss first logged at step 10, the first samples, new tensors) adds
+  its chooser button or draws its part again (histograms, samples); only a run that had logged nothing before draws
+  the block's content anew. Texts (where the run is, a chart's caption) are set as the data of their text node, so
+  a reading adds or removes no node. When the run ends, the page draws the drawer again (as before this phase),
+  and the block is built again from what is held, without "Reading…" and without reading the series again.
+- **The page reads every two seconds only while it knows a build runs** (spec-w4 R1): a build asked for elsewhere
+  is seen on the next reading, up to fifteen seconds later, and only then is the block read live. The check makes
+  that reading at once by a return to the window. Opening a run's drawer does not by itself start fast reading.
+- **The address** keeps `trWith`, `trSeries`, `trSmooth`, `trLog`, `trX` (`app.js`'s `ADDRESSED`). The chosen
+  sample name, weights or gradients and "Show all" are kept by the page for the run while it lives, not in the
+  address.
+- **The check** (`tests/browser_project_workspace_training.cjs`, with the stand-in `tests/project_training_stand_in.py`,
+  plain Python, logging through `tuldok_log` put on the run's `PYTHONPATH` by the recipe's `env`): 7 PASS, run
+  three times while building and twice at the end. In step 4 the live run (50 steps, 0.25 s each) grew 10 → 18 →
+  27 → 35 points across readings with the block, its chart and its strips the same elements and no node added or
+  removed outside the samples strip; the marker is set once the run has logged every name it will (from its tenth
+  step), since a first name is drawn by adding its control.
+- **Files beyond section 7's list:** `tests/project_training_stand_in.py`; `adapter.js` was not changed (the block
+  calls `P.call` and keeps its own answers by run, since a running run's answers must not be kept by the adapter).
+
+### Runs at the end
+
+Disposable PostgreSQL under `/tmp/claude-1000/t1`, `TULDOK_PROJECT_HOME` and `TULDOK_SETTINGS` there:
+
+- `PYTHONPATH=tests .venv/bin/python -m unittest discover -s tests -p 'test_tuldok_project_*.py'`: 753 OK (735
+  before, plus the 18 of `test_tuldok_project_training`).
+- `PYTHONPATH=tests .venv/bin/python -m unittest test_agent_api test_agent_negotiation test_agent_http`: 43 OK, 4
+  skipped.
+- `tests/test_tuldok_log.py`: 8 OK with the lab's interpreter (PyTorch on the CPU); 6 OK, 2 skipped with Tuldok's.
+- Browser: `browser_project_workspace_training.cjs` 7 PASS; unchanged `browser_project_workspace.cjs` 24 PASS,
+  `browser_project_workspace_fields.cjs` 8 PASS, `browser_project_workspace_still.cjs` 6 PASS (the run drawer
+  changed).
+
+### Not verified
+
+A real training run (nothing was trained; `autolog` was exercised on a tiny model for ten steps on the CPU); the
+lab's earlier runs (the converter of `history.json` is deferred and nothing was written into the lab); a metrics
+file near the bound of 1,000,000 lines (its memory, about 16 bytes a line and 16 a value, and the first read's
+time); bucket sizes above 1 in the page (the check's series are shorter than 800 points; the reader's buckets are
+unit-tested); `training_histograms` past `most` in the page; a sample `.npy` of three or more axes in the page;
+several parameter groups or the overlay of a run that is itself running; the hover tip in the check (drawn, not
+asserted); keyboard order and focus rings beyond the screenshots; a theme changed while the drawer is open (each
+theme is loaded); the coding-standards guidance (the Standards Engine answered that its guidance is awaiting
+publication, so none was read).
