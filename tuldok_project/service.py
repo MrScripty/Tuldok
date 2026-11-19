@@ -9,11 +9,14 @@ of the service. Every mutating call that passed the actor check writes one
 activity row, done or refused. The six operations on build requests are
 passed to build_requests. The five reads inside a product (spec-d1.md), the
 three reads of a model's weights (spec-d2.md), the two of the fields a run
-kept (spec-d6.md) and the three of a model's graph (spec-t2.md) find the
+kept (spec-d6.md), the three of a model's graph (spec-t2.md) and the five of
+an embeddings set (docs/plans/training-and-curation/spec-t5.md) find the
 finished run (and for weights_compare and the graph's overlay and comparison
-the other run) with the project open for a moment and read its output
-directory through inside.py, inside_weights.py, inside_fields.py and
-inside_graph.py after closing it;
+the other run, for an embeddings set the run of its records) with the project
+open for a moment and read its output directory through inside.py,
+inside_weights.py, inside_fields.py, inside_graph.py and embeddings.py after
+closing it; embeddings, which lists a dataset's sets, finds the products
+under the lock and reads their indexes after;
 product_file does the same for the file route; those reads run outside the
 lock, so a long one holds up no other call. The five reads of what a
 training script logged (docs/plans/training-and-curation/spec-t1.md) do the
@@ -57,7 +60,7 @@ import jsonschema
 import psycopg
 
 from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
-               documents, environments, inside, inside_fields, inside_graph, inside_weights, launcher, local, operations, plan,
+               documents, embeddings, environments, inside, inside_fields, inside_graph, inside_weights, launcher, local, operations, plan,
                pumas, store, training, workspace)
 from .documents import Problem
 
@@ -69,7 +72,7 @@ CHECK_PROBLEMS = 200
 # and reads outside it: decompressing a large member, parsing a large mesh or comparing two large weights files takes
 # seconds, and the other calls (the page's own readings among them) must not wait for it. inside.py guards what it
 # keeps.
-PRODUCT_ARGUMENTS = ('run', 'other_run')
+PRODUCT_ARGUMENTS = ('run', 'other_run', 'records_run')
 INSIDE_READS = {
     'records': lambda found, a: inside.records(found['run'], offset=a.get('offset', 0), limit=a.get('limit', 50),
                                                kind=a.get('kind'), split=a.get('split')),
@@ -99,6 +102,22 @@ INSIDE_READS = {
         found['run'], kind=a['kind'], against=a.get('against'), other=found.get('other_run'), path=a.get('path'),
         other_path=a.get('other_path')),
     'model_graph_compare': lambda found, a: inside_graph.model_graph_compare(found['run'], other=found['other_run']),
+    # Curation by embeddings (docs/plans/training-and-curation/spec-t5.md section 4): a set in run's product, the
+    # records it describes in records_run's (default run's).
+    'embedding_map': lambda found, a: embeddings.embedding_map(
+        found['run'], found.get('records_run', found['run']), a['name'], colour=a.get('colour'),
+        cells=a.get('cells', 24), thin=a.get('thin', 0.25)),
+    'embedding_neighbours': lambda found, a: embeddings.embedding_neighbours(
+        found['run'], found.get('records_run', found['run']), a['name'], record=a['record'],
+        limit=a.get('limit', 12)),
+    'embedding_duplicates': lambda found, a: embeddings.embedding_duplicates(
+        found['run'], found.get('records_run', found['run']), a['name'], threshold=a.get('threshold', 0.98),
+        limit=a.get('limit', 200)),
+    'embedding_outliers': lambda found, a: embeddings.embedding_outliers(
+        found['run'], found.get('records_run', found['run']), a['name'], k=a.get('k', 5), limit=a.get('limit', 50)),
+    'embedding_leakage': lambda found, a: embeddings.embedding_leakage(
+        found['run'], found.get('records_run', found['run']), a['name'], threshold=a.get('threshold', 0.95),
+        train=a.get('train', 'train'), limit=a.get('limit', 200)),
 }
 # The reads of what a training script logged (docs/plans/training-and-curation/spec-t1.md section 4), each a function
 # of (training.Run, arguments): the run is found under the service's lock, whatever its state, and its files are read
@@ -117,7 +136,7 @@ ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
 # The calls to the Pumas endpoint (spec-d5.md): each is made outside the service's lock; those that read a project
 # take the lock themselves, only for their database work.
 OUTSIDE_LOCK = ANNOTATION_READS + ('endpoint', 'set_endpoint', 'find_endpoints', 'suggestion_models',
-                                   'suggest_annotation')
+                                   'suggest_annotation', 'embeddings')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
@@ -593,6 +612,62 @@ class Service:
                                      'not-found')
         return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view,
                               recorded[0] if recorded else None)
+
+    def _embeddings(self, arguments, actor):
+        """A dataset's embeddings sets (spec-t5.md section 3): the products are found under the lock, read after."""
+        reference = arguments['dataset']
+        reference = reference if reference.startswith('datasets/') else f'datasets/{reference}'
+        with self._lock:
+            with self._open() as project:
+                if project._execute('SELECT 1 FROM {schema}.definitions WHERE directory = %s AND name = %s AND '
+                                    'NOT removed', ('datasets', reference.split('/', 1)[1])).fetchone() is None:
+                    raise store.ProjectError(f'There is no dataset {reference}.', 'not-found')
+                holders = [reference]
+                for name, document in project._execute(
+                        'SELECT name, document FROM {schema}.definitions WHERE directory = %s AND NOT removed '
+                        'ORDER BY name', ('datasets',)).fetchall():
+                    run = document.get('run') if isinstance(document, dict) else None
+                    inputs = run.get('inputs') if isinstance(run, dict) else None
+                    if isinstance(inputs, dict) and reference in inputs.values() and f'datasets/{name}' != reference:
+                        holders.append(f'datasets/{name}')
+                found = [(holder, product) for holder in holders for product in builds.products(project, holder)
+                         if product['run_id']]
+                recorded = {row[0]: row[1] or {} for row in project._execute(
+                    'SELECT id, inputs FROM {schema}.runs WHERE id = ANY(%s)',
+                    ([product['run_id'] for _, product in found],)).fetchall()}
+        own = [product['run_id'] for holder, product in found if holder == reference]
+        sets = []
+        for holder, product in found:
+            try:
+                listed = embeddings.sets(inside.Product(product['run_id'], product['directory']))
+            except store.ProjectError:
+                continue
+            for item in listed:
+                entry = {'run': product['run_id'], 'holder': holder, 'name': item['name'], 'rows': None,
+                         'dimensions': None, 'model': None, 'prefix': None, 'source': None, 'records_run': None,
+                         'current': False, 'projection': None, 'notes': [], 'problem': item['problem']}
+                if item['index'] is not None:
+                    entry.update(embeddings.described(item['index']))
+                    source = entry['source']
+                    named = source['dataset'] or holder
+                    if named != reference:
+                        continue
+                    if source['run']:
+                        entry['records_run'] = source['run']
+                    elif named == holder:
+                        entry['records_run'] = product['run_id']
+                    else:
+                        used = [value.get('run_id') for value in recorded.get(product['run_id'], {}).values()
+                                if isinstance(value, dict) and value.get('reference') == reference]
+                        entry['records_run'] = used[0] if used else None
+                        if not used:
+                            entry['problem'] = (f'The run {product["run_id"][:12]} that holds it recorded no input '
+                                                f'{reference}, so its records cannot be found.')
+                    entry['current'] = entry['records_run'] in own
+                elif holder != reference:
+                    continue
+                sets.append(entry)
+        return {'dataset': reference, 'run': own[0] if own else None, 'sets': sets}
 
     def _training_run(self, run):
         """The training.Run of a run in any state, read with the project open for a moment (spec-t1.md)."""

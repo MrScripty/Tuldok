@@ -2293,6 +2293,12 @@ and result keys of each operation are in its contract.
 | `training_histograms` | inspect | Read one tensor's histograms of weights or gradients over the steps of a run's training, re-binned onto one grid. |
 | `training_samples` | inspect | List one page of the samples a run's training script kept, optionally of one name. |
 | `training_sample` | inspect | Read one sample a run's training script kept: an image's size and address, or an array's slice as 32-bit floats. |
+| `embeddings` | inspect | List a dataset's embeddings sets: those in its own products and in the products of the datasets that take it as an input, each with its model, rows and the run whose records they are. |
+| `embedding_map` | inspect | Read a map of an embeddings set's records in two dimensions (the script's own projection, or principal components Tuldok computes), each record's colour by a field, the map's cells and its thin regions. |
+| `embedding_neighbours` | inspect | List the records of an embeddings set most like one of them, by cosine, exactly. |
+| `embedding_duplicates` | inspect | List the pairs of an embeddings set's records at or above a cosine, most alike first, and whether every record was examined. |
+| `embedding_outliers` | inspect | List the records of an embeddings set farthest from their k-th nearest record, and whether every record was examined. |
+| `embedding_leakage` | inspect | List the records of an embeddings set outside the training split that have a near-copy in it, at or above a cosine. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -2881,6 +2887,78 @@ edge of the chosen rows, a bin's count shared by overlap. A run with no
 directory answers `training` with `present` false and the other four
 `not-found`. `GET /api/project/file` serves a file under `training/` of a run
 in any state that has a directory; any other file only of a finished run.
+
+### A dataset's embeddings
+
+A product may hold **embeddings** of records: a vector per record, written by
+a project's own script or by the step `embed` (see
+[Steps Tuldok provides](#steps-tuldok-provides)). Tuldok computes no
+embedding; it reads them to draw a dataset as a map and to search it for
+near-duplicates, outliers, thin regions and leakage between splits. A set
+named `<name>` (1 to 64 of `a-z 0-9 . _ -`, starting with a letter or digit)
+is two files under `embeddings/` at the top of the product:
+
+- **`embeddings/<name>.npy`**: shape `(rows, dimensions)`, floats (`float32`
+  as written by Tuldok; `float16` and `float64` are read too), C order, every
+  value finite, no row all zeros.
+- **`embeddings/<name>.json`**, the index, UTF-8 JSON of at most 16 MiB:
+
+```json
+{"format": "tuldok_embeddings_v1",
+ "records": ["a1", "a2", "a3"],
+ "dimensions": 256,
+ "metric": "cosine",
+ "model": {"name": "embeddinggemma-2", "model_id": "unsloth/embeddinggemma-2-GGUF", "profile": "embed-gpu",
+           "capability": "text_embedding", "via": "pumas"},
+ "prefix": "task: clustering | query: ",
+ "source": {"dataset": "datasets/photos", "run": null},
+ "projection": {"file": "photos.map.npy", "method": "umap"},
+ "notes": []}
+```
+
+`records` are the record ids in row order (1 to 50,000 different ids of 1 to
+200 of `A-Z a-z 0-9 . _ -`); `dimensions` 1 to 4,096; `metric` is `cosine`;
+`model` an object with a `name` (1 to 256 characters) and other short facts;
+`prefix` the text put before each record's text, or null; `source` which
+records the rows are: `dataset` (null for the product's own records) and
+`run` (null when the script cannot know it). `projection`, optional, names a
+`(rows, 2)` `.npy` beside the index that the script made (any method); Tuldok
+draws it instead of its own map. `notes`, optional, at most 64 sentences.
+Other keys are ignored. At most 40,000,000 values a set and 64 sets a
+product are read.
+
+A dataset's sets are found in its own current products and in those of every
+dataset whose `run.inputs` names it (a script that embeds its input writes
+`source.dataset`). The records a set describes are those of `source.run`
+when given; else of the product holding it when they are its own; else of the
+run that the holding run recorded for that input.
+
+Tuldok makes the rows unit length (cosine is their dot product) and computes,
+in 64-bit floats with the standard library, the mean and up to eight leading
+principal components of an evenly spaced sample of the rows (at most
+`max(256, 2^19 / dimensions)` of them) by subspace power iteration on the
+sample's covariance; the map is every row's coordinates on the first two.
+The pair searches use each row's coordinates on all of them and the length of
+what they leave out, which bound the distance of two rows from below, to rule
+pairs out without reading them, and compute the rest exactly: what they list
+is never approximate. Each search examines rows in a fixed shuffled order and
+stops after 20,000,000 comparisons of coordinates or 400,000,000 values
+multiplied exactly; a row is examined whole or not at all, and `complete`
+says whether every row was. What is computed is kept while the files are
+unchanged.
+
+| Operation | Arguments | Result |
+| --- | --- | --- |
+| `embeddings` | `dataset` | `dataset`, `run` (its current product, or null), `sets`: each `run` (holding it), `holder`, `name`, `rows`, `dimensions`, `model`, `prefix`, `source`, `records_run`, `current`, `projection` (its method), `notes`, `problem` |
+| `embedding_map` | `run`, `name`, `records_run` (default `run`), `colour` (`split`, `kind`, `annotation:<task>`, `field:<key of meta>`), `cells` (8 to 64, default 24), `thin` (0 to 1, default 0.25) | `name`, `rows`, `dimensions`, `model`, `method` (`pca` or the script's), `explained`, `sample`, `ids`, `x_f32`, `y_f32`, `bounds` (`[x0, x1, y0, y1]`), `missing` (rows whose record is not in the records' product), `colours`, `colour` (`by`, `type` `category` with `categories` and `codes_u16` (65535 for none), or `number` with `low`, `high` and `values_f32`), `grid` (`cells`, `counts`, rows from the lowest y), `thin` (cells holding some points but at most `thin` times the median count of the cells holding any: `cell`, `count`, `x`, `y`, `records`) |
+| `embedding_neighbours` | `run`, `name`, `records_run`, `record`, `limit` (default 12, at most 200) | `record`, `neighbours` (`id`, `cosine`, `split`, `kind`), most alike first |
+| `embedding_duplicates` | `run`, `name`, `records_run`, `threshold` (0.5 to 1, default 0.98), `limit` (default 200, at most 1,000) | `threshold`, `pairs` (`a`, `b`, `cosine`, `a_split`, `b_split`), `total`, `groups` (records in some pair), `complete`, `examined`, `rows` |
+| `embedding_outliers` | `run`, `name`, `records_run`, `k` (1 to 50, default 5), `limit` (default 50) | `k`, `outliers` (`id`, `distance` (one minus the cosine to its k-th nearest), `nearest`, `split`), farthest first, `median`, `complete`, `examined`, `rows` |
+| `embedding_leakage` | `run`, `name`, `records_run`, `threshold` (default 0.95), `train` (default `train`), `limit` | `threshold`, `train`, `splits`, `pairs` (`record` of another split, `split`, `near` (the training record), `cosine`), `total`, `leaked`, `complete`, `examined`, `rows` |
+
+A set that breaks a rule is listed by `embeddings` with its `problem` and
+refused `unsupported` by the reads (`too-large` past a bound); a record not
+in the set is `not-found`.
 
 ### Annotating
 

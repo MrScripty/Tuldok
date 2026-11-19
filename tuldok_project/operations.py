@@ -39,6 +39,7 @@ ENDPOINT_CHARACTERS = 2048  # an address of a Pumas endpoint (local.ENDPOINT_LIM
 INSTRUCTION_CHARACTERS = 4000
 GRAPH_MODULES = 2000        # modules named open or closed by one model_graph (spec-t2.md section 3)
 GRAPH_OVERLAYS = ('parameters', 'outputs', 'operations', 'change')
+EMBEDDING_LIMIT = 1000      # rows of one list of curation by embeddings (spec-t5.md section 4)
 
 
 @dataclass(frozen=True)
@@ -119,6 +120,16 @@ ENDPOINT = ('address', 'answered', 'version', 'models', 'problem')
 MODEL_GRAPH = ('path', 'format', 'complete', 'reason', 'method', 'torch', 'model', 'inputs', 'notes', 'counts',
                'modules', 'tensors', 'depth', 'open', 'nodes', 'edges')
 _MODULE_PATHS = {'type': 'array', 'items': {'type': 'string', 'maxLength': 1024}, 'maxItems': GRAPH_MODULES}
+_SET_NAME = {'type': 'string', 'minLength': 1, 'maxLength': 64}
+_SIMILARITY = {'type': 'number', 'minimum': 0.5, 'maximum': 1}
+EMBEDDING_SETS = ('dataset', 'run', 'sets')
+EMBEDDING_MAP = ('name', 'rows', 'dimensions', 'model', 'method', 'explained', 'sample', 'ids', 'x_f32', 'y_f32',
+                 'bounds', 'missing', 'colours', 'colour', 'grid', 'thin')
+
+
+def _embedding_arguments(required=(), **properties):
+    """The arguments of a read of one embeddings set: run (holding it), name, records_run (whose records)."""
+    return _arguments(['run', 'name', *required], run=_RUN, name=_SET_NAME, records_run=_RUN, **properties)
 
 
 OPERATIONS = (
@@ -250,6 +261,31 @@ OPERATIONS = (
     Operation('model_graph_compare', "Match the modules of two finished runs' model graphs by path: the same, "
               'changed (class or tensor shapes), added or missing.', 'inspect', False,
               _arguments(['run', 'other_run'], run=_RUN, other_run=_RUN), ('modules', 'counts')),
+    Operation('embeddings', "List a dataset's embeddings sets: those in its own products and in the products of "
+              'the datasets that take it as an input, each with its model, rows and the run whose records they are.',
+              'inspect', False, _arguments(['dataset'], dataset=_REFERENCE), EMBEDDING_SETS),
+    Operation('embedding_map', "Read a map of an embeddings set's records in two dimensions (the script's own "
+              "projection, or principal components Tuldok computes), each record's colour by a field, the map's "
+              'cells and its thin regions.', 'inspect', False,
+              _embedding_arguments(colour={'type': 'string', 'minLength': 1, 'maxLength': 300},
+                                   cells={'type': 'integer', 'minimum': 8, 'maximum': 64},
+                                   thin={'type': 'number', 'minimum': 0, 'maximum': 1}), EMBEDDING_MAP),
+    Operation('embedding_neighbours', "List the records of an embeddings set most like one of them, by cosine, "
+              'exactly.', 'inspect', False,
+              _embedding_arguments(['record'], record=_RECORD_ID, limit=_limit(200)), ('record', 'neighbours')),
+    Operation('embedding_duplicates', "List the pairs of an embeddings set's records at or above a cosine, most "
+              'alike first, and whether every record was examined.', 'inspect', False,
+              _embedding_arguments(threshold=_SIMILARITY, limit=_limit(EMBEDDING_LIMIT)),
+              ('threshold', 'pairs', 'total', 'groups', 'complete', 'examined', 'rows')),
+    Operation('embedding_outliers', "List the records of an embeddings set farthest from their k-th nearest "
+              'record, and whether every record was examined.', 'inspect', False,
+              _embedding_arguments(k={'type': 'integer', 'minimum': 1, 'maximum': 50}, limit=_limit(EMBEDDING_LIMIT)),
+              ('k', 'outliers', 'median', 'complete', 'examined', 'rows')),
+    Operation('embedding_leakage', "List the records of an embeddings set outside the training split that have a "
+              'near-copy in it, at or above a cosine.', 'inspect', False,
+              _embedding_arguments(threshold=_SIMILARITY, train={'type': 'string', 'minLength': 1, 'maxLength': 200},
+                                   limit=_limit(EMBEDDING_LIMIT)),
+              ('threshold', 'train', 'splits', 'pairs', 'total', 'leaked', 'complete', 'examined', 'rows')),
     Operation('training', "List what a run's training script logged, while it runs or after: its scalar series, the "
               'tensors whose histograms it kept, its samples and checkpoints, and the lines it could not read.',
               'inspect', False, _arguments(['run'], run=_RUN), TRAINING),
