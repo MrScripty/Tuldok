@@ -2208,8 +2208,14 @@ which keeps an annotation with `set_annotation`; Save writes the unsaved
 annotations with the unsaved definitions. Its Suggest asks `suggest_annotation`
 of a model `suggestion_models` offers and fills the form, and a kept
 suggestion passes its `from`. Train shows the machine's Pumas endpoint
-(`endpoint`; for the owner `set_endpoint` and `find_endpoints`), and Data's
-Generate form keeps a dataset whose run is the step `generate`.
+(`endpoint`; for the owner `set_endpoint` and `find_endpoints`, and the
+machine's embedder by `set_embedder`), and Data's
+Generate form keeps a dataset whose run is the step `generate`. A dataset
+opened on Data shows a Map beside its records and files when `embeddings`
+lists a set for it (`embedding_map` and the four searches); a region chosen on
+the map is kept as a dataset whose run is the step `select`, or fills the
+Freeze form's `records`; Data's Embed form keeps a dataset whose run is the
+step `embed`.
 Each of its controls calls one operation and is drawn only for a session that
 may call it, so a credential that may only inspect sees a page that changes
 nothing. The report is linked from the Overview tab. The page reads again

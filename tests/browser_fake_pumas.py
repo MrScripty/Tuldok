@@ -13,6 +13,10 @@ JSON object and is answered with one JSON line:
 
 A text dataset asked by text (generate) is answered "made: <the prompt>", an
 image a PNG of the asked size. Nothing else is contacted; it ends with stdin.
+
+With --embedders (tests/browser_project_workspace_curation.cjs) it also serves the embedders of
+tests/test_tuldok_project_curation.py (embeddinggemma-2, the default embedder, and nomic-embed) and answers an
+embeddings request with a vector made from each item.
 """
 import io
 import json
@@ -29,10 +33,16 @@ from test_tuldok_project_pumas import listing  # noqa: E402
 def main():
     server, base, state = fake_pumas_typed.start()
     state['served_models'] = listing()
+    embedders = '--embedders' in sys.argv[1:]
+    if embedders:
+        from test_tuldok_project_curation import embed_respond, embedding_listing
+        state['served_models'] = embedding_listing()
     state['advertise'] = '0.8.0'
     said = {'answer': 'A short text.', 'answers': {}}
 
     def respond(body):
+        if embedders and body['output'] == 'embeddings_float32':
+            return embed_respond(body)
         if body['capability'] == 'decision':
             return {'kind': 'decisions', 'answers': said['answers'], 'input_tokens': 7}
         if body['capability'] == 'image_generation':

@@ -103,6 +103,7 @@ window.LabGenerate = (() => {
       ins.appendChild(dl);
       ins.appendChild(h('p', 'note', 'The address is kept in Tuldok\'s settings file on this machine, never in the project folder. Generation and suggestions go to it over HTTP; nothing of Pumas runs inside Tuldok.'));
       ins.appendChild(A.group('endpoint:again', [{ id: 'again', label: 'Ask it again', cls: 'btn sm', onClick: () => { P.forget(['endpoint']); act.refresh(); } }]));
+      if (window.LabCuration) window.LabCuration.embedderPart(ins, ep);   // the machine's embedder (spec-t5 section 2)
       if (!A.may('owner')) { ins.appendChild(h('p', 'note', 'Only the owner of this Tuldok sets the endpoint.')); return; }
       const set = h('div', 'ep-part'); set.appendChild(h('h3', null, ep.address ? 'Set another address' : 'Set the address'));
       set.appendChild(h('p', 'note', 'A numeric loopback HTTP address, such as http://127.0.0.1:8765, without a path. Tuldok asks it once what it serves and keeps it only when it answers.'));
