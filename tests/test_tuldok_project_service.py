@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 83)  # the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, of section 3 of spec-t2.md, of section 4 of spec-t1.md, of sections 2 to 4 of spec-t3.md and spec-t5.md (7), and of section 6 of spec-t4.md (4)
+        self.assertEqual(len(names), 90)  # spec-t6.md section 6 (7), and the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, of section 3 of spec-t2.md, of section 4 of spec-t1.md, of sections 2 to 4 of spec-t3.md and spec-t5.md (7), and of section 6 of spec-t4.md (4)
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -80,10 +80,11 @@ class Table(unittest.TestCase):
                                      'import_values', 'check_environment', 'connect_environment',
                                      'disconnect_environment', 'request_build', 'approve_build', 'decline_build',
                                      'cancel_build', 'cancel_run', 'stop_run', 'set_annotation', 'revert_annotations',
-                                     'set_endpoint', 'set_embedder', 'keep_annotation'})
+                                     'set_endpoint', 'set_embedder', 'keep_annotation',
+                                     'serve_start', 'serve_approve', 'serve_stop', 'serve_values'})
         owner = {operation.name for operation in operations.OPERATIONS if operation.who == 'owner'}
         self.assertEqual(owner, {'connect_environment', 'disconnect_environment', 'approve_build', 'decline_build',
-                                 'set_endpoint', 'find_endpoints', 'set_embedder'})
+                                 'set_endpoint', 'find_endpoints', 'set_embedder', 'serve_approve'})
 
     def test_error_status(self):
         self.assertEqual([operations.error_status(code) for code in
@@ -222,6 +223,8 @@ class Reads(ServiceCase):
             'training_samples': {'run': run_id}, 'training_sample': {'run': run_id, 'index': 0},
             'model_compare': {'recipes': ['recipes/fit-a', 'recipes/fit-b']}, 'benchmark_axes': {'benchmark': 'score'},
             'intervals': {'benchmark': 'benchmarks/score'},
+            'served': {}, 'serve_session': {'session': 'a' * 32},
+            'serve_predict': {'model': 'fit-a', 'inputs': {}},
             'annotation_tasks': {}, 'annotated_records': {'task': 'none-here'},
             'annotation': {'task': 'none-here', 'record': 'r1'},
             'annotation_sets': {'task': 'none-here'}, 'annotation_agreement': {'task': 'none-here'},
@@ -273,6 +276,10 @@ class Reads(ServiceCase):
                     continue
                 if operation.name.startswith('embedding_'):  # no embeddings here; test_tuldok_project_curation
                     self.assertEqual(self.refused(operation.name, arguments[operation.name]).code, 'not-found')
+                    continue
+                if operation.name in ('serve_session', 'serve_predict'):  # nothing served; test_tuldok_project_serving
+                    self.assertIn(self.refused(operation.name, arguments[operation.name]).code,
+                                  ('not-found', 'not-served'))
                     continue
                 if operation.name == 'note':  # this fixture has no notes; read in test_tuldok_project_workspace
                     self.assertEqual(self.refused(operation.name, arguments['note']).code, 'not-found')

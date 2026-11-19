@@ -11,7 +11,7 @@
 // run kept (fields.js, spec-d6.md). Train draws the controls of spec-w3.md section 3.1 (actions.js):
 // Plan build, a build request's Approve, Decline and Cancel, a run's Cancel
 // run and Stop, an environment's Check again, Connect and Disconnect, and it
-// shows a running run live, and the machine's Pumas endpoint beside the environments (generate.js);
+// shows a running run live, the models served (serving.js), and the machine's Pumas endpoint beside the environments (generate.js);
 // it lists first what is planned (the page's drafts
 // and the models never built, spec-w3 section 3.2). Data's drawer has Edit;
 // the editor itself is editor.js's. Rule: the chrome holds no project words; titles,
@@ -396,12 +396,12 @@
   function train(main, aside, state, act, data) {
     const sel = state.sel.train || null;
     paint(main, async () => {
-      const [recipes, runs, requests, envs, endpoint] = await Promise.all([P.read('definitions', { kind: 'recipe' }), P.read('runs'), P.read('build_requests'), P.read('environments'),
-        window.LabGenerate ? P.read('endpoint').catch(error => ({ error })) : null]);
+      const [recipes, runs, requests, envs, endpoint, served] = await Promise.all([P.read('definitions', { kind: 'recipe' }), P.read('runs'), P.read('build_requests'), P.read('environments'),
+        window.LabGenerate ? P.read('endpoint').catch(error => ({ error })) : null, window.LabServing ? P.call('served').catch(error => ({ error })) : null]);
       const running = runs.runs.filter(r => r.state === 'running');
       const progress = new Map(await Promise.all(running.map(r => P.call('progress', { run: r.id }).then(p => [r.id, p.event], () => [r.id, null]))));
-      return { recipes: recipes.definitions, runs: runs.runs, requests: requests.requests, envs: envs.environments, progress, endpoint };
-    }, (frag, { recipes, runs, requests, envs, progress, endpoint }) => {
+      return { recipes: recipes.definitions, runs: runs.runs, requests: requests.requests, envs: envs.environments, progress, endpoint, served };
+    }, (frag, { recipes, runs, requests, envs, progress, endpoint, served }) => {
       const g = graphFor(data.map), deviceOf = new Map(envs.map(e => [e.reference, e.device]));
       // Planned (spec-w3 section 3.2): the drafts of this page, then the models never built.
       const E = window.LabEditor, drafts = g.nodes.filter(m => m.draft);
@@ -444,6 +444,8 @@
         }
         frag.appendChild(ul);
       }
+      // Served models (serving.js, spec-t6 section 7).
+      if (served) window.LabServing.section(frag, served, sel, act);
       // Runs, newest first.
       const bar = h('div', 'filters gap'); bar.appendChild(searchBox(state, act, 'Find a run')); bar.appendChild(kindChips(state, act, g.nodes.map(m => m.kind)));
       bar.appendChild(h('span', 'pop', plural(runs.length, 'run') + ' on this machine'));
@@ -496,6 +498,7 @@
     else if (sel.startsWith('request:')) requestDrawer(aside, sel, act, data);
     else if (sel.startsWith('plan:')) A.planView(aside, sel, act.go, () => { const one = sel.slice(5); act.select(data.map.byId.has(one) ? one : null); });
     else if (sel.startsWith('env:')) envDrawer(aside, sel, act, data);
+    else if (sel.startsWith('serve:') && window.LabServing) window.LabServing.drawer(aside, sel, act);
     else if (window.LabEditor && window.LabEditor.owns(sel, data)) window.LabEditor.drawer(aside, sel, act, data, 'train');
     else if (data.map.byId.has(sel)) S.inspectorModel(aside, sel, act, data);
     else if (aside._for !== sel) { aside.textContent = ''; aside._for = sel; aside.appendChild(h('p', 'empty', 'There is no ' + sel + ' here.')); }

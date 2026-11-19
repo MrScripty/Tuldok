@@ -98,6 +98,61 @@
           }
         }
       }
+    },
+    "serve": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module_file"
+      ],
+      "description": "How Tuldok serves this recipe's model (docs/plans/training-and-curation/spec-t6.md section 1).",
+      "properties": {
+        "backend": {
+          "enum": [
+            "local"
+          ],
+          "description": "how the model is served: local, the project's own entry point run by Tuldok"
+        },
+        "module_file": {
+          "$ref": "#/$defs/path"
+        },
+        "function": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+          "description": "a Python name: letters, digits and '_', not starting with a digit, at most 64 characters"
+        },
+        "load": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+          "description": "a Python name: letters, digits and '_', not starting with a digit, at most 64 characters"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^environments/[a-z0-9][a-z0-9._-]{0,119}$",
+          "description": "a reference to an environment, such as environments/<name>"
+        },
+        "idle_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440
+        },
+        "start_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "request_seconds": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 600
+        },
+        "gpu": {
+          "type": "boolean"
+        },
+        "example": {
+          "type": "object"
+        }
+      }
     }
   },
   "if": {

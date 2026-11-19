@@ -34,8 +34,14 @@ machine, in local.py's settings file), and suggestion_models and
 suggest_annotation find the task's product under the lock and read it and
 ask the endpoint after releasing it. Two of the three comparisons of
 spec-t3.md (intervals, model_compare) read the project under the lock and
-resample its per-case values after releasing it (comparing.py). Nothing here knows of HTTP or of the
-app's access layer.
+resample its per-case values after releasing it (comparing.py). The seven
+operations of serving (docs/plans/training-and-curation/spec-t6.md section 6)
+are answered outside the lock too: serve_start and serve_approve work out
+what a served process needs with the project open (its product, its
+environment's interpreter, the code snapshot) and leave the process to
+serving.Supervisor, which the service holds and closes; serve_predict never
+opens the project; serve_values imports values under the lock. Nothing here
+knows of HTTP or of the app's access layer.
 
 The worker (section 4) is one thread per service, started by start() and
 stopped by close(). It runs queued build requests one at a time while it
@@ -57,13 +63,15 @@ import logging
 import math
 import os
 import threading
+import time
 
 import jsonschema
 import psycopg
 
 from . import (activity, annotation_records, annotation_review, annotation_rows, annotations, build_requests, builds,
                charts, check, comparing, documents, embeddings, environments, inside, inside_fields, inside_graph,
-               inside_weights, launcher, local, operations, plan, pumas, store, training, workspace)
+               inside_weights, launcher, local, operations, plan, pumas, serve_protocol, serving, snapshot, store,
+               training, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
@@ -141,14 +149,17 @@ ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation',
 # The comparisons of spec-t3.md that resample per-case values: read under the lock, computed outside it.
 COMPARING_READS = ('intervals', 'model_compare')
 # keep_annotation reads the sets outside the lock, then keeps its decision as set_annotation does (spec-t4.md).
-OUTSIDE_LOCK = ANNOTATION_READS + COMPARING_READS + ('keep_annotation', 'endpoint', 'set_endpoint', 'find_endpoints',
-                                                     'suggestion_models', 'suggest_annotation',
-                                                     'embeddings', 'set_embedder')
+# Serving (spec-t6.md section 6): each takes the lock itself, only to read or change the project.
+SERVING_CALLS = ('served', 'serve_session', 'serve_start', 'serve_approve', 'serve_stop', 'serve_predict',
+                 'serve_values')
+OUTSIDE_LOCK = ANNOTATION_READS + COMPARING_READS + SERVING_CALLS + (
+    'keep_annotation', 'endpoint', 'set_endpoint', 'find_endpoints', 'suggestion_models', 'suggest_annotation',
+    'embeddings', 'set_embedder')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
 WORKER_LOCK = 'build-requests.lock'
 _LOG = logging.getLogger(__name__)
-_TARGET_ARGUMENTS = ('reference', 'run', 'request', 'task')
+_TARGET_ARGUMENTS = ('reference', 'run', 'request', 'task', 'session')
 
 
 def _plain(value):
@@ -249,6 +260,7 @@ class Service:
         with builds.opened(self.folder, dsn) as project:
             self.project_id = project.project_id
             self.schema = project.schema
+        self.serving = serving.Supervisor(self.project_id)
 
     # ------------------------------------------------------------ lifecycle
 
@@ -270,6 +282,7 @@ class Service:
         ends. When the thread does not end in time it is left to finish (and
         to release the worker lock) on its own.
         """
+        self.serving.close()   # every served model is stopped (spec-t6.md section 2)
         thread, self._thread = self._thread, None
         self._worker = 'stopped'
         if thread is None:
@@ -413,7 +426,8 @@ class Service:
                     self._record_activity(actor, name, _target(arguments), 'error', f'{type(exc).__name__}: {exc}')
                 raise
             if operation.mutation:
-                self._record_activity(actor, name, _target(arguments), 'done', _detail(name, result))
+                target = result.get('model', '') if name == 'serve_start' else _target(arguments)
+                self._record_activity(actor, name, target, 'done', _detail(name, result))
             return result
         prepared = ()
         if name == 'set_annotation':  # the records are found and read before the lock is taken to store them
@@ -1151,3 +1165,214 @@ class Service:
 
     def _stop_run(self, arguments, actor):
         return builds.stop(self.folder, arguments['run'], dsn=self.dsn)
+
+    # ------------------------------------------------------------- serving
+
+    @staticmethod
+    def _serve_error(error):
+        """A serving.ServeError as the ProjectError the caller sees, with the same code."""
+        return store.ProjectError(str(error), error.code)
+
+    def _served_recipe(self, project, model):
+        """(reference, title, document, serve) of a recipe that declares serve; ProjectError otherwise."""
+        reference = 'recipes/' + _bare(model, 'recipes')
+        found = project.definition(reference)
+        if found['kind'] != 'recipe' or found['removed']:
+            raise store.ProjectError(f'There is no recipe {reference}.', 'not-found', references=[reference])
+        document = found['document'] or {}
+        serve = document.get('serve')
+        if not isinstance(serve, dict):
+            raise store.ProjectError(f'{reference} declares no serve; add one to serve its model.', 'not-servable',
+                                     references=[reference])
+        return reference, found['title'], document, serve
+
+    def _launch_of(self, model, scratch):
+        """Everything a served process of model needs (serving.Launch); ProjectError when it cannot start."""
+        with self._lock:
+            with self._open() as project:
+                reference, _title, document, serve = self._served_recipe(project, model)
+                product = builds._current_product(project, reference)
+                if product is None:
+                    raise store.ProjectError(f'{reference} has no current product to serve; build it first.',
+                                             'not-built', references=[reference])
+                run = document.get('run') if isinstance(document.get('run'), dict) else {}
+                environment = serve.get('environment') or run.get('environment')
+                try:
+                    shown = environments.check(project, environment)
+                except store.ProjectError as exc:
+                    if exc.code != 'not-set-up':
+                        raise
+                    raise store.ProjectError(f'{environment} is not set up on this machine; set it up or connect '
+                                             'an interpreter, then serve again.', 'not-ready',
+                                             references=[environment]) from None
+                if not shown['ok']:
+                    raise store.ProjectError(f'{environment} is not ready: its check found '
+                                             + '; '.join(shown['problems']), 'not-ready', references=[environment])
+                state = project._state()
+                code_paths = (store._read_project_file(state['folder']) or {}).get('code_paths')
+                code_root = builds._code_root(project)
+                home = local.home(project.project_id, create=True)
+        try:
+            code = snapshot.prepare(code_root, code_paths, home=home, scratch=scratch)
+        except snapshot.SnapshotError as exc:
+            raise builds._snapshot_error(exc) from None
+        if not os.path.isfile(os.path.join(code.code_root, serve['module_file'])):
+            raise store.ProjectError(f'The module file {serve["module_file"]} is not in the code'
+                                     + ('' if scratch else f' at commit {code.commit[:12]}') + '.', 'invalid')
+        return serving.Launch(model=reference, serve=dict(serve), product=product['directory'],
+                              product_run=product['run_id'], environment=environment,
+                              interpreter=shown['interpreter'], code_root=code.code_root, commit=code.commit,
+                              scratch=scratch)
+
+    def _served(self, arguments, actor):
+        limits = local.serve_settings()
+        sessions = self.serving.sessions()
+        latest = {}
+        for session in sessions:   # newest first
+            latest.setdefault(session['model'], session)
+        servable = []
+        with self._lock:
+            with self._open() as project:
+                for row in project.definitions('recipe'):
+                    if row['removed']:
+                        continue
+                    document = project.definition(row['reference'])['document'] or {}
+                    serve = document.get('serve')
+                    if not isinstance(serve, dict):
+                        continue
+                    run = document.get('run') if isinstance(document.get('run'), dict) else {}
+                    product = builds._current_product(project, row['reference'])
+                    found = latest.get(row['reference'])
+                    servable.append({'model': row['reference'], 'title': row['title'],
+                                     'module_file': serve.get('module_file'),
+                                     'backend': serve.get('backend', serving.BACKEND),
+                                     'environment': serve.get('environment') or run.get('environment'),
+                                     'built': product is not None,
+                                     'product_run': product['run_id'] if product else None,
+                                     'example': serve.get('example'),
+                                     'idle_minutes': serve.get('idle_minutes', limits['idle_minutes']),
+                                     'session': found})
+        return {'sessions': sessions, 'servable': servable, 'most': limits['most'],
+                'idle_minutes': limits['idle_minutes']}
+
+    def _serve_session(self, arguments, actor):
+        try:
+            session = self.serving.get(arguments['session'])
+        except serving.ServeError as error:
+            raise self._serve_error(error) from None
+        lines = self.serving.requests(session['id'])
+        return {**session, 'summary': serve_protocol.summary(lines), 'recent': lines[-serving.RECENT:][::-1]}
+
+    def _serve_start(self, arguments, actor):
+        scratch = arguments.get('scratch', False)
+        limits = local.serve_settings()
+        awaiting = actor.get('kind') != 'owner'
+        if awaiting:   # an agent's start: what it names is checked now, the process worked out at approval
+            with self._lock:
+                with self._open() as project:
+                    reference, title, _document, serve = self._served_recipe(project, arguments['model'])
+                    if builds._current_product(project, reference) is None:
+                        raise store.ProjectError(f'{reference} has no current product to serve; build it first.',
+                                                 'not-built', references=[reference])
+            launch = None
+        else:
+            launch = self._launch_of(arguments['model'], scratch)
+            reference, serve = launch.model, launch.serve
+            with self._lock:
+                with self._open() as project:
+                    title = project.definition(reference)['title']
+        try:
+            session = self.serving.open_session(reference, title, actor=actor, scratch=scratch,
+                                                backend=serve.get('backend', serving.BACKEND),
+                                                idle_minutes=serve.get('idle_minutes', limits['idle_minutes']),
+                                                most=limits['most'], awaiting=awaiting)
+            return session if launch is None else self.serving.launch(session['id'], launch)
+        except serving.ServeError as error:
+            raise self._serve_error(error) from None
+
+    def _serve_approve(self, arguments, actor):
+        try:
+            model, scratch = self.serving.awaiting(arguments['session'])
+            launch = self._launch_of(model, scratch)
+            self.serving.approve(arguments['session'], actor, local.serve_settings()['most'])
+            return self.serving.launch(arguments['session'], launch)
+        except serving.ServeError as error:
+            raise self._serve_error(error) from None
+
+    def _serve_stop(self, arguments, actor):
+        try:
+            return self.serving.stop(arguments['session'], actor)
+        except serving.ServeError as error:
+            raise self._serve_error(error) from None
+
+    def _serve_predict(self, arguments, actor, received=None, size=None):
+        """Pass inputs to a served model; received and size are the HTTP route's (time read, bytes)."""
+        received = time.perf_counter() if received is None else received
+        reference = 'recipes/' + _bare(arguments['model'], 'recipes')
+        try:
+            inputs = serve_protocol.check_request({'inputs': arguments['inputs']})
+            return self.serving.predict(reference, inputs, received, size)
+        except serving.ServeError as error:
+            raise self._serve_error(error) from None
+
+    def predict(self, model, body, actor, *, received, size):
+        """POST /api/serve/<model>/predict (host.py): the body is {inputs}; ServeError for every refusal."""
+        if not _allowed('inspect', actor):
+            raise serving.ServeError('This credential may not call a served model.', 'forbidden')
+        inputs = serve_protocol.check_request(body)
+        reference = 'recipes/' + _bare(model, 'recipes')
+        return _plain(self.serving.predict(reference, inputs, received, size))
+
+    def _serve_values(self, arguments, actor):
+        try:
+            session = self.serving.get(arguments['session'])
+        except serving.ServeError as error:
+            raise self._serve_error(error) from None
+        benchmark = _bare(arguments['benchmark'], 'benchmarks')
+        with self._lock:
+            with self._open() as project:
+                document = project.definition('benchmarks/' + benchmark)['document'] or {}
+        subject = next((item for item in document.get('subjects') or []
+                        if isinstance(item, dict) and item.get('name') == arguments['subject']), None)
+        if subject is None:
+            raise store.ProjectError(f'benchmarks/{benchmark} has no subject {arguments["subject"]}.', 'not-found')
+        if isinstance(subject.get('recipe'), str) and subject['recipe'] != session['model']:
+            raise store.ProjectError(f'The subject {subject["name"]} is {subject["recipe"]}, not the served model '
+                                     f'{session["model"]}.', 'invalid')
+        metric_ids = [m.get('id') for m in document.get('metrics') or [] if isinstance(m, dict)]
+        metrics = arguments.get('metrics')
+        if metrics is None:
+            metrics = {m: m for m in metric_ids if m in serve_protocol.MEASURES}
+        unknown = sorted(set(metrics) - set(metric_ids))
+        if unknown or not metrics:
+            raise store.ProjectError(
+                f'benchmarks/{benchmark} has no metric {unknown[0]}.' if unknown else
+                f'Name the metrics of benchmarks/{benchmark} to fill (none of its metrics is one of '
+                + ', '.join(serve_protocol.MEASURES) + ').', 'invalid')
+        lines = self.serving.requests(session['id'])
+        if not lines:
+            raise store.ProjectError(f'Session {session["id"]} answered no request.', 'invalid')
+        values = []
+        for line in lines:
+            case = 'request-%06d' % line.get('n', 0)
+            for metric, measure in sorted(metrics.items()):
+                if line.get('ok'):
+                    values.append({'case': case, 'metric': metric, 'value': serve_protocol.measure(line, measure)})
+                else:
+                    values.append({'case': case, 'metric': metric, 'value': None,
+                                   'reason': ('The request failed: ' + str(line.get('error') or '?'))[:400]})
+        last = max(line.get('at', 0) for line in lines)
+        produced = datetime.datetime.fromtimestamp(last, datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        commit = session.get('commit') or ''
+        text = json.dumps({'format': 'tuldok_results_v1', 'benchmark': benchmark, 'subject': subject['name'],
+                           'commit': commit if len(commit) == 40 else '', 'produced': produced,
+                           'values': values}, indent=1) + '\n'
+        path = os.path.join(self.serving.directory(create=True), session['id'],
+                            f'values-{benchmark}-{subject["name"]}.json')
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as handle:
+            handle.write(text)
+        with self._lock:
+            with self._open() as project:
+                done = project.import_values(text, path=path)
+        return {**done, 'file': path}

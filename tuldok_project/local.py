@@ -15,7 +15,8 @@ project folder. pumas.py checks an address before set_pumas_endpoint keeps it.
 It may hold the machine's embedder too (docs/plans/training-and-curation/
 spec-t5.md section 2): embedding_model and embedding_profile, the served
 alias used in place of EmbeddingGemma 2 when a definition names none, and
-embedding_prefix, the text put before each record's text.
+embedding_prefix, the text put before each record's text. serve_most and
+serve_idle_minutes bound the models this machine serves (spec-t6.md section 4).
 Working out a path never creates anything; a directory is made only when a
 caller asks for it with create=True, or by set_project_home.
 """
@@ -34,7 +35,9 @@ DEFAULT_SETTINGS = os.path.join('~', '.local', 'share', 'tuldok', 'settings.json
 SETTINGS_FORMAT = 'tuldok_settings_v1'
 SETTINGS_LIMIT = 64 * 1024
 SETTINGS_FIELDS = ('format', 'project_home', 'pumas_endpoint', 'embedding_model', 'embedding_profile',
-                   'embedding_prefix')
+                   'embedding_prefix', 'serve_most', 'serve_idle_minutes')
+# The serving limits of the machine (docs/plans/training-and-curation/spec-t6.md section 4): (least, most, default).
+SERVE_LIMITS = {'serve_most': (1, 16, 2), 'serve_idle_minutes': (1, 1440, 30)}
 EMBEDDER_LIMITS = {'embedding_model': 256, 'embedding_profile': 128, 'embedding_prefix': 1000}
 ENDPOINT_LIMIT = 2048          # characters of pumas_endpoint
 ENVIRONMENTS = 'environments'
@@ -83,7 +86,19 @@ def read_settings():
                                                                                        'embedding_prefix')):
             raise SettingsError(f'The settings file {path} is not valid: its {key} must be a string of '
                                 f'{"0" if key == "embedding_prefix" else "1"} to {most} characters.')
+    for key, (least, most, _default) in SERVE_LIMITS.items():
+        value = settings.get(key)
+        if key in settings and not (isinstance(value, int) and not isinstance(value, bool) and least <= value <= most):
+            raise SettingsError(f'The settings file {path} is not valid: its {key} must be an integer from {least} '
+                                f'to {most}.')
     return settings
+
+
+def serve_settings():
+    """{most, idle_minutes}: how many models this machine serves at once and their default idle time."""
+    settings = read_settings()
+    return {'most': settings.get('serve_most', SERVE_LIMITS['serve_most'][2]),
+            'idle_minutes': settings.get('serve_idle_minutes', SERVE_LIMITS['serve_idle_minutes'][2])}
 
 
 def embedder_settings():

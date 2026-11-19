@@ -1,0 +1,19 @@
+/* Serving a trained model (docs/plans/training-and-curation/spec-t6.md section 7), on the tokens of base.css, so light
+   and dark follow it. */
+.srv { display: grid; gap: 8px; min-width: 0; }
+.srv-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+.srv-line { color: var(--ink-2); overflow-wrap: anywhere; min-width: 0; }
+.srv-address { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
+.srv-acts:empty { display: none; }
+.srv-fail p { margin: 0 0 6px; color: var(--serious); }
+.srv-tail { max-height: 180px; }
+.srv h4, .srv-times h4 { margin: 4px 0 2px; font-size: 13px; }
+.srv-summary { font-size: 12.5px; }
+.srv-try { display: grid; gap: 6px; min-width: 0; }
+.srv-inputs { width: 100%; min-width: 0; font: 12px/1.5 var(--mono); padding: 8px; white-space: pre; overflow: auto; box-sizing: border-box; }
+.srv-try .actions { margin: 0; }
+.srv-answer { min-width: 0; }
+.srv-timing { margin: 0 0 4px; color: var(--ink-2); }
+.srv-outputs { max-height: 220px; }
+.srv-rows .srv-row .sub.mono { overflow-wrap: anywhere; }
+.srv-box { min-width: 0; }

@@ -293,6 +293,7 @@ def _cross_problems(merged, unsound=frozenset(), project=None):
         problems.append(Problem(severity, path, pointer, message))
 
     check.check_references(merged, add)
+    check.check_serve(merged, add)
     check.check_charts(merged, set(unsound), add)
     check.check_cycles(merged, add)
     check.check_map(project, merged, add)
