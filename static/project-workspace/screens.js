@@ -214,6 +214,11 @@ window.LabScreens = (() => {
       const stb = h('div', 'st-box'); stb.hidden = true; ins.insertBefore(stb, uses2);
       reads.push(window.LabStructure.block(stb, m, g, aside.parentElement, live).catch(error => { if (!live()) return; stb.hidden = false; stb.replaceChildren(h('h3', null, 'Structure'), A.refusal(error)); }));
     }
+    // Serving (serving.js, spec-t6 section 7), after Structure: shown only when its recipe declares serve.
+    if (window.LabServing) {
+      const sv = h('div', 'srv-box'); sv.hidden = true; ins.insertBefore(sv, uses2);
+      reads.push(window.LabServing.block(sv, m, live).catch(error => { if (!live()) return; sv.hidden = false; sv.replaceChildren(h('h3', null, 'Serving'), A.refusal(error)); }));
+    }
     if (more) more(ins);
     if (!same) aside.appendChild(ins);   // first shown: at once, its blocks filled as they come
     const fill = (b, build) => p => { if (!live()) return; b.lastChild.remove(); try { build(b, p); } catch (error) { failure(b, error); } };
