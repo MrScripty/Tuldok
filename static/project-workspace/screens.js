@@ -124,7 +124,13 @@ window.LabScreens = (() => {
     if (E) E.decorate(main);
     if (planSel) { window.LabActions.planView(aside, planSel, act.go, sel ? () => act.select(sel) : null); return true; }
     if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'map'); return true; }
-    if (sel) { inspectorModel(aside, sel, act, data); return true; }
+    if (sel) {
+      // Compare (spec-t3 section 5.1): the model into the page's compare set, kept current on every render (tabs.js).
+      const more = window.LabScreens.compareActs ? ins => window.LabScreens.compareActs(ins, sel, state, act, 'map') : undefined;
+      inspectorModel(aside, sel, act, data, more);
+      const ins = aside.querySelector('.inspector'); if (ins && more) more(ins);
+      return true;
+    }
     aside.textContent = ''; aside._for = null; return false;
   }
 

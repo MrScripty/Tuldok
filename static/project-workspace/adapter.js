@@ -69,7 +69,7 @@ window.TuldokProject = (() => {
     const key = keyOf(name, args);
     if (!kept.has(key)) {
       const entry = { text: null };
-      entry.answer = call(name, args).then(value => { entry.text = JSON.stringify(value); return value; }, error => { if (kept.get(key) === entry) kept.delete(key); throw error; });
+      entry.answer = call(name, args).then(value => { entry.text = JSON.stringify(value); entry.value = value; return value; }, error => { if (kept.get(key) === entry) kept.delete(key); throw error; });
       kept.set(key, entry);
     }
     return kept.get(key).answer;
@@ -96,6 +96,8 @@ window.TuldokProject = (() => {
     }
     return changed;
   }
+  /** The kept answer of a read when it has arrived, else undefined; asks nothing (the Benchmarks tab's intervals, spec-t3 section 5.2). */
+  function peek(name, args = {}) { const entry = kept.get(keyOf(name, args)); return entry && entry.text !== null ? (entry.value !== undefined ? entry.value : JSON.parse(entry.text)) : undefined; }
   function forget(names) { for (const key of [...kept.keys()]) if (names.includes(key.split(' ')[0])) kept.delete(key); }
   /** Forgets every kept answer whose operation is not named. */
   function forgetBut(names) { for (const key of [...kept.keys()]) if (!names.includes(key.split(' ')[0])) kept.delete(key); }
@@ -297,5 +299,5 @@ window.TuldokProject = (() => {
     return out;
   }
 
-  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day, product, annotations, annotationsUnsaved };
+  return { KINDS, UNSET, WATCHED, kindLabel, stateWord, call, read, peek, again, forget, forgetBut, forgetAll, map, setDrafts, trackName, better, units, standing, needs, titleOf, day, product, annotations, annotationsUnsaved };
 })();

@@ -130,6 +130,7 @@ window.LabCharts = (() => {
       const g = el('g'), cx = X(p.x), cy = Y(p.y);
       const hit = el('circle', { cx, cy, r: 11, class: 'hit', tabindex: 0, role: 'button', 'data-id': p.id, 'aria-label': p.name + ', ' + opts.yTitle + ' ' + fmtSci(p.y) + ', ' + opts.xTitle + ' ' + fmtSci(p.x) + (p.frontier ? ', on the frontier' : '') });
       g.appendChild(hit); g.appendChild(el('circle', { cx, cy, r: 6, class: 'pt ' + p.kind + ((opts.dimOff && !p.frontier) || p.dim ? ' dim' : '') }));
+      if (p.nsig) g.appendChild(el('circle', { cx, cy, r: 10, class: 'nsig' }));   // on the frontier, not told apart from a neighbour (spec-t3)
       if (p.id === opts.selected) g.appendChild(el('circle', { cx, cy, r: 9, class: 'sel' }));
       interactive(hit, host, svg, () => [cx, cy], p.rows, opts.onSelect && (() => opts.onSelect(p.id)));
       svg.appendChild(g);
@@ -182,11 +183,11 @@ window.LabCharts = (() => {
     host.appendChild(svg);
   }
 
-  /** Subjects best first {id, name, y, kind, rows}: one row each, a dot on the value axis with a hairline from its start. */
+  /** Subjects best first {id, name, y, kind, rows, lo, hi}: one row each, a dot on the value axis with a hairline from its start, and a whisker from lo to hi when given (an interval, spec-t3). */
   function ranking(host, points, opts) {
     host.textContent = ''; host.classList.add('chart'); host._tip = null;
     const n = points.length, RH = n > 60 ? 16 : 20, W = Math.max(360, opts.width), L = Math.min(260, Math.max(120, W * 0.24)), R = 64, T = 26, H = T + n * RH + 8;
-    const xa = axis(points.map(p => p.y)), X = v => L + xa.at(v) * (W - L - R);
+    const xa = axis(points.map(p => p.y).concat(points.map(p => p.lo), points.map(p => p.hi))), X = v => L + xa.at(v) * (W - L - R);
     const svg = frame(W, H, axisWords(opts.yTitle, xa) + ' for ' + n + ' subjects, best first');
     const grid = el('g', { class: 'grid' }), ax = el('g', { class: 'axis' });
     xa.ticks.forEach((v, i) => { grid.appendChild(el('line', { x1: X(v), y1: T - 4, x2: X(v), y2: H - 8 })); ax.appendChild(el('text', { x: X(v), y: T - 10, 'text-anchor': i === xa.ticks.length - 1 && xa.ticks.length > 1 ? 'end' : 'middle' }, xa.label(v))); });
@@ -196,8 +197,10 @@ window.LabCharts = (() => {
       const max = Math.floor((L - 14) / 6.6), t = p.name.length > max ? p.name.slice(0, max - 1) + '…' : p.name;
       g.appendChild(el('text', { x: L - 10, y: cy + 4, 'text-anchor': 'end', class: 'rk' + (p.id === opts.selected ? ' on' : '') }, t));
       g.appendChild(el('line', { x1: L, y1: cy, x2: cx, y2: cy, class: 'stem' }));
-      const hit = el('rect', { x: 0, y: cy - RH / 2, width: W, height: RH, class: 'hit band', tabindex: 0, role: 'button', 'data-id': p.id, 'aria-label': p.name + ', ' + opts.yTitle + ' ' + fmtSci(p.y) });
+      const ci = p.lo != null && p.hi != null;
+      const hit = el('rect', { x: 0, y: cy - RH / 2, width: W, height: RH, class: 'hit band', tabindex: 0, role: 'button', 'data-id': p.id, 'aria-label': p.name + ', ' + opts.yTitle + ' ' + fmtSci(p.y) + (ci ? ', 95% interval ' + fmtSci(p.lo) + ' to ' + fmtSci(p.hi) : '') });
       g.insertBefore(hit, g.firstChild);
+      if (ci) { const a = X(p.lo), b = X(p.hi), w = el('g', { class: 'ci', 'data-lo': p.lo, 'data-hi': p.hi }); w.appendChild(el('line', { x1: a, y1: cy, x2: b, y2: cy })); w.appendChild(el('line', { x1: a, y1: cy - 4, x2: a, y2: cy + 4 })); w.appendChild(el('line', { x1: b, y1: cy - 4, x2: b, y2: cy + 4 })); g.appendChild(w); }
       g.appendChild(el('circle', { cx, cy, r: 4.5, class: 'pt ' + p.kind + (p.dim ? ' dim' : '') }));
       if (p.id === opts.selected) g.appendChild(el('circle', { cx, cy, r: 8, class: 'sel' }));
       g.appendChild(el('text', { x: W - 4, y: cy + 4, 'text-anchor': 'end', class: 'rv' }, fmtSci(p.y)));

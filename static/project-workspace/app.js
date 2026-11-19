@@ -19,7 +19,7 @@
 // shows the conflict panel.
 (() => {
   const P = window.TuldokProject, S = window.LabScreens, A = window.LabActions;
-  const TABS = [['map', 'Map'], ['data', 'Data'], ['annotate', 'Annotate'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['analysis', 'Analysis'], ['overview', 'Overview']];
+  const TABS = [['map', 'Map'], ['data', 'Data'], ['annotate', 'Annotate'], ['train', 'Train'], ['benchmarks', 'Benchmarks'], ['compare', 'Compare'], ['analysis', 'Analysis'], ['overview', 'Overview']];
   const POLL_MS = 2000, IDLE_MS = 15000;   // how often the page asks again while something builds, and while nothing does
   const ACTIVE_RUN = ['queued', 'running'], ACTIVE_REQUEST = ['queued', 'running'];
   const $ = id => document.getElementById(id);
@@ -52,8 +52,9 @@
     setUI: (k, v) => { state.ui[k] = v; if (ADDRESSED.includes(k)) address(); render(); },
     /** Keeps a setting of the tab that a view has already drawn in place (fields.js's slider): into the address, and nothing drawn again. */
     keepUI: (k, v) => { state.ui[k] = v; if (ADDRESSED.includes(k)) address(); },
-    setBenchmark: name => { state.benchmark = name; state.cmp = []; address(); render(); },
-    toggleCompare: id => { const i = state.cmp.indexOf(id); if (i >= 0) state.cmp.splice(i, 1); else if (state.cmp.length < 3) state.cmp.push(id); address(); render(); },
+    // The compare set is the page's, of up to COMPARE_MOST models from any benchmark or the map (spec-t3 section 5.1): another benchmark keeps it.
+    setBenchmark: name => { state.benchmark = name; address(); render(); },
+    toggleCompare: id => { const i = state.cmp.indexOf(id); if (i >= 0) state.cmp.splice(i, 1); else if (state.cmp.length < COMPARE_MOST) state.cmp.push(id); address(); render(); },
     clearCompare: () => { state.cmp = []; address(); render(); },
     /** Reads everything again (a control's answer came, or a view asks for it). */
     refresh: () => changed(),
@@ -63,7 +64,8 @@
     reopen: () => { $('aside')._for = null; render(); }
   };
   // The settings of the Analysis tab the address keeps, so that a reload opens it where it was (spec-d6 section 3).
-  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree'];
+  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree', 'cmpCase', 'cmpAxis', 'cmpIndex', 'cmpMeanFree'];
+  const COMPARE_MOST = 4;
   /** Writes the benchmark, the compare set and the Analysis tab's settings into the address without reloading, so the view can be shared. */
   function address() {
     const q = new URLSearchParams(location.search);
@@ -321,7 +323,7 @@
     window.addEventListener('focus', () => { if (data.summary || failed) reread('focus'); });
     // Who may use a control comes from the session: draw the controls again when it changes.
     window.addEventListener('tuldok-session', () => { if (failed) reread('focus'); else { $('aside')._for = null; if (data.map) act.redraw(); else { strip(); render(); } } });
-    { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, 3); for (const k of ADDRESSED) if (q.get(k)) state.ui[k] = q.get(k); }
+    { const q = new URLSearchParams(location.search); state.benchmark = q.get('benchmark') || null; state.cmp = (q.get('cmp') || '').split(',').filter(Boolean).slice(0, COMPARE_MOST); for (const k of ADDRESSED) if (q.get(k)) state.ui[k] = q.get(k); }
     // The tab bar, once (spec-w4 R5): render() sets which link is current.
     for (const [id, label] of TABS) { const a = document.createElement('a'); a.href = '#' + id; a.textContent = label; a.dataset.tab = id; $('tabs').appendChild(a); }
     parse(); strip(); render(); first();
