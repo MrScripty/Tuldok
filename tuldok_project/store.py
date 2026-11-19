@@ -362,9 +362,10 @@ class Project:
                                         (self.schema,)).fetchone() is not None
 
     def _create_schema(self):
+        from . import sweeps   # here: sweeps imports store
         self._connection.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(self.schema)))
         for statement in (*_TABLES, *environments.TABLES, *builds.TABLES, *activity.TABLES, *build_requests.TABLES,
-                          *_MIGRATIONS):
+                          *sweeps.TABLES, *_MIGRATIONS):
             self._execute(statement)
 
     def _state(self):

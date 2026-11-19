@@ -48,7 +48,7 @@ class Table(unittest.TestCase):
 
     def test_every_operation_is_declared_once(self):
         names = [operation.name for operation in operations.OPERATIONS]
-        self.assertEqual(len(names), 90)  # spec-t6.md section 6 (7), and the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, of section 3 of spec-t2.md, of section 4 of spec-t1.md, of sections 2 to 4 of spec-t3.md and spec-t5.md (7), and of section 6 of spec-t4.md (4)
+        self.assertEqual(len(names), 92)  # spec-t6.md section 6 (7), spec-t7.md (2), and the rows of spec-m7.md section 2, of section 2 of spec-w1.md and spec-w3.md, of section 3 of spec-d1.md and spec-d2.md, of section 5 of spec-d4.md, of sections 2 and 4 of spec-d5.md, of section 2 of spec-d6.md, of section 3 of spec-t2.md, of section 4 of spec-t1.md, of sections 2 to 4 of spec-t3.md and spec-t5.md (7), and of section 6 of spec-t4.md (4)
         self.assertEqual(len(set(names)), len(names))
         for name in REQUEST_OPERATIONS:
             self.assertIsNotNone(operations.by_name(name))
@@ -237,6 +237,8 @@ class Reads(ServiceCase):
             'embedding_duplicates': {'run': run_id, 'name': 'none-here'},
             'embedding_outliers': {'run': run_id, 'name': 'none-here'},
             'embedding_leakage': {'run': run_id, 'name': 'none-here'},
+            'sweeps': {},
+            'sweep': {'sweep': 'none-here'},
         }
         reads = [operation for operation in operations.OPERATIONS if not operation.mutation]
         arguments['build_requests'] = {'state': 'queued', 'limit': 5}
@@ -280,6 +282,9 @@ class Reads(ServiceCase):
                 if operation.name in ('serve_session', 'serve_predict'):  # nothing served; test_tuldok_project_serving
                     self.assertIn(self.refused(operation.name, arguments[operation.name]).code,
                                   ('not-found', 'not-served'))
+                    continue
+                if operation.name == 'sweep':  # this fixture has no sweep; read in test_tuldok_project_sweeps
+                    self.assertEqual(self.refused(operation.name, arguments['sweep']).code, 'not-found')
                     continue
                 if operation.name == 'note':  # this fixture has no notes; read in test_tuldok_project_workspace
                     self.assertEqual(self.refused(operation.name, arguments['note']).code, 'not-found')

@@ -105,7 +105,8 @@ def covers(project, made, targets, *, every, scratch):
             subjects = [name for name in step['subjects']['run'] if (held.get(name) or {}).get('state') != 'built']
         steps.append({'reference': step['reference'], 'subjects': subjects})
     references = sorted({step['reference'] for step in made['steps']}
-                        | {task for step in made['steps'] for task in step.get('annotations') or ()})
+                        | {task for step in made['steps'] for task in step.get('annotations') or ()}
+                        | {step['recipe'] for step in made['steps'] if step['kind'] == 'sweep'})   # spec-t7.md
     texts = dict(project._execute(f'SELECT {store._REFERENCE_SQL}, text FROM {{schema}}.definitions '
                                   f'WHERE NOT removed AND {store._REFERENCE_SQL} = ANY(%s)', (references,)).fetchall())
     return {'targets': list(targets), 'every': bool(every), 'scratch': bool(scratch),

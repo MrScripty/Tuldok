@@ -1,0 +1,335 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tuldok.invalid/schemas/sweep.schema.json",
+  "title": "Tuldok sweep definition",
+  "description": "One sweep definition in sweeps/<name>.json (tuldok_definition_v1): a search over a recipe's settings (docs/plans/training-and-curation/spec-t7.md section 2). Rules JSON Schema cannot express are checked in tuldok_project/sweeps.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "kind",
+    "title",
+    "recipe",
+    "parameters",
+    "strategy",
+    "objectives",
+    "budget"
+  ],
+  "properties": {
+    "format": {
+      "const": "tuldok_definition_v1"
+    },
+    "kind": {
+      "enum": [
+        "dataset",
+        "model",
+        "recipe",
+        "benchmark",
+        "step",
+        "environment",
+        "chart",
+        "annotation",
+        "sweep"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "card": {
+      "type": "string",
+      "pattern": "^notes/",
+      "description": "a path under notes/, such as notes/<name>.md"
+    },
+    "labels": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "recipe": {
+      "type": "string",
+      "pattern": "^recipes/[a-z0-9][a-z0-9._-]{0,119}$",
+      "description": "a reference to a recipe, such as recipes/<name>"
+    },
+    "parameters": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/parameter"
+      }
+    },
+    "strategy": {
+      "$ref": "#/$defs/strategy"
+    },
+    "objectives": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/objective"
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trials"
+      ],
+      "properties": {
+        "trials": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "minutes": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10080
+        },
+        "concurrency": {
+          "const": 1,
+          "description": "1: trials run one after another on this machine"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "series": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "better": {
+      "enum": [
+        "lower",
+        "higher"
+      ]
+    },
+    "scalar": {
+      "type": [
+        "number",
+        "string",
+        "boolean",
+        "null"
+      ]
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400,
+          "pattern": "^[^.]+(\\.[^.]+)*$",
+          "description": "a dotted path into the recipe's run.settings, such as training.learning_rate"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/scalar"
+          }
+        },
+        "low": {
+          "type": "number"
+        },
+        "high": {
+          "type": "number"
+        },
+        "scale": {
+          "enum": [
+            "linear",
+            "log"
+          ]
+        },
+        "integer": {
+          "type": "boolean"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 64
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "values"
+          ],
+          "properties": {
+            "low": {
+              "not": {}
+            },
+            "high": {
+              "not": {}
+            },
+            "scale": {
+              "not": {}
+            },
+            "integer": {
+              "not": {}
+            },
+            "count": {
+              "not": {}
+            }
+          }
+        },
+        {
+          "required": [
+            "low",
+            "high"
+          ],
+          "properties": {
+            "values": {
+              "not": {}
+            }
+          }
+        }
+      ],
+      "description": "a parameter with a path and either values, or low and high (with scale, integer and count)"
+    },
+    "strategy": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "grid",
+            "random",
+            "halving"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "grid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "kind": true
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "random"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "seed"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "kind": true,
+              "seed": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "halving"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "seed",
+              "metric",
+              "better",
+              "min"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "kind": true,
+              "seed": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              },
+              "metric": {
+                "$ref": "#/$defs/series"
+              },
+              "better": {
+                "$ref": "#/$defs/better"
+              },
+              "unit": {
+                "enum": [
+                  "step",
+                  "time"
+                ]
+              },
+              "min": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "factor": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 8
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric",
+        "better"
+      ],
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/series"
+        },
+        "take": {
+          "enum": [
+            "last",
+            "best"
+          ]
+        },
+        "better": {
+          "$ref": "#/$defs/better"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    }
+  }
+}

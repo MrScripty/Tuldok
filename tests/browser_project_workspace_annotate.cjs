@@ -236,7 +236,7 @@ let folder;
   await load('light', 'annotate');
 
   // ---- 1. Stale annotations, marked and put right -----------------------------------------------------------------
-  assert.equal(await evaluate(`[...document.querySelectorAll('#tabs a')].map(a => a.textContent).join(' ')`), 'Map Data Annotate Train Benchmarks Compare Analysis Overview');
+  assert.equal(await evaluate(`[...document.querySelectorAll('#tabs a')].map(a => a.textContent).join(' ')`), 'Map Data Annotate Train Sweeps Benchmarks Compare Analysis Overview');
   assert.equal(await evaluate(`document.querySelector('[data-key="ann:task"]').value`), 'annotations/quality');
   await filter('stale');
   let t = await tiles();

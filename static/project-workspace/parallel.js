@@ -67,10 +67,10 @@ window.LabParallel = (() => {
   function fill(ctx) {
     const { data, state, sec, all } = ctx, ui = state.ui, axes = shownAxes(all, ui), keep = keptOf(data, all, ui);
     const items = [];
-    const head = S.parts.sect('Settings and metrics', data.subjects.length + ' subjects · ' + axes.length + ' of ' + all.length + ' axes');
+    const head = S.parts.sect('Settings and metrics', data.subjects.length + ' ' + (ctx.view.noun || 'subjects') + ' · ' + axes.length + ' of ' + all.length + ' axes');
     const count = h('span', 'pc-count small'); count.setAttribute('aria-live', 'polite'); head.appendChild(count); ctx.count = count;
     items.push(head);
-    items.push(h('p', 'small faint bench-desc', 'One line per subject through its metrics (the ' + data.statistic + ' over its cases) and the recipe settings that vary between subjects. Drag along an axis to keep the subjects inside a range; the table and the charts above follow. ' + (data.left_out ? data.left_out + ' more settings are not offered.' : '')));
+    items.push(h('p', 'small faint bench-desc', ctx.view.lead ? ctx.view.lead + (data.left_out ? ' ' + data.left_out + ' more settings are not offered.' : '') : 'One line per subject through its metrics (the ' + data.statistic + ' over its cases) and the recipe settings that vary between subjects. Drag along an axis to keep the subjects inside a range; the table and the charts above follow. ' + (data.left_out ? data.left_out + ' more settings are not offered.' : '')));
     const host = h('div', 'pc-draw'); ctx.host = host; items.push(host);
     items.push(axisControls(ctx, axes));
     items.push(chooser(ctx, axes));
@@ -95,7 +95,7 @@ window.LabParallel = (() => {
     const scales = axes.map(a => scaleOf(a, ui));
     // The lines.
     const lines = el('g', { class: 'pc-lines' });
-    const sel = state.sel.benchmarks || null;
+    const sel = view.selected !== undefined ? view.selected : state.sel.benchmarks || null;   // a sweep's view gives its own
     for (const row of data.subjects) {
       const s = view.byName.get(row.subject), kind = s ? s.kind : 'other';
       let d = '', open = false;

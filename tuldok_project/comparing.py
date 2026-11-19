@@ -36,7 +36,7 @@ KEPT = 8                    # benchmarks whose intervals are kept
 STATISTICS = results.STATISTICS
 
 # Keys of a definition that say who a model is, not how it is made (left out of the comparison).
-IDENTITY = ('format', 'kind', 'title', 'description', 'card', 'labels', 'earlier_work', 'compared_with')
+IDENTITY = ('format', 'kind', 'title', 'description', 'card', 'labels', 'earlier_work', 'compared_with', 'sweep')
 # Keys compared on rows of their own, first.
 _OWN_ROWS = {'group': 'group', 'change': 'change', 'derived_from': 'parent'}
 _KIND_ORDER = {'group': 0, 'change': 1, 'parent': 2, 'data': 3, 'setting': 4, 'code': 5}

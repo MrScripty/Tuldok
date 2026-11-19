@@ -29,7 +29,7 @@ from dataclasses import dataclass
 
 WHO = ('inspect', 'edit', 'cancel', 'request', 'owner')
 REQUEST_STATES = ('awaiting-approval', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'declined', 'expired')
-KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart', 'annotation')
+KINDS = ('dataset', 'model', 'recipe', 'benchmark', 'step', 'environment', 'chart', 'annotation', 'sweep')
 CHANGES = ('training-policy', 'architecture', 'refinement', 'component')   # a recipe's kind of change
 RECORD_KINDS = ('text', 'image', 'audio', 'pointcloud', 'mesh', 'array', 'file')   # the kinds of a product's record
 TARGET_LIMIT = 50
@@ -130,6 +130,8 @@ ENDPOINT = ('address', 'answered', 'version', 'models', 'problem', 'embedder')
 EMBEDDER = ('model', 'profile', 'prefix', 'named_by', 'default', 'chosen', 'problem', 'embedders')
 MODEL_GRAPH = ('path', 'format', 'complete', 'reason', 'method', 'torch', 'model', 'inputs', 'notes', 'counts',
                'modules', 'tensors', 'depth', 'open', 'nodes', 'edges')
+SWEEP = ('reference', 'title', 'description', 'recipe', 'parameters', 'strategy', 'objectives', 'budget', 'state',
+         'changed', 'request', 'run', 'runs', 'trials', 'best', 'frontier', 'rungs', 'axes')
 _STATISTIC = {'type': 'string', 'enum': ['mean', 'median', 'p10', 'p90', 'min', 'max']}
 _MODULE_PATHS = {'type': 'array', 'items': {'type': 'string', 'maxLength': 1024}, 'maxItems': GRAPH_MODULES}
 _SET_NAME = {'type': 'string', 'minLength': 1, 'maxLength': 64}
@@ -344,6 +346,13 @@ OPERATIONS = (
               'values held here, and whether neighbours on the frontier of its tradeoff charts are told apart.',
               'inspect', False, _arguments(['benchmark'], benchmark=_NAME),
               ('benchmark', 'resamples', 'level', 'seed', 'intervals', 'frontiers')),
+    # docs/plans/training-and-curation/spec-t7.md section 6: the sweeps of the project and one sweep's trials.
+    Operation('sweeps', "List the project's sweeps, each with its state and its latest run in brief: how many of its "
+              'trials ended each way, and the best.', 'inspect', False, _arguments(), ('sweeps',)),
+    Operation('sweep', "Read one sweep: its definition, its latest run (or the one named) with each trial's values, "
+              'state, rungs and objectives, the best, the frontier of two objectives, and the trials as axes.',
+              'inspect', False,
+              _arguments(['sweep'], sweep=_NAME, run={'type': 'string', 'minLength': 1, 'maxLength': 128}), SWEEP),
     Operation('annotation_tasks', 'List the annotation tasks, each with its dataset, current product and counts of '
               'its records by the state of their annotations.', 'inspect', False, _arguments(), ('tasks',)),
     Operation('annotated_records', "Read one page of the records of a task's dataset with their annotations, "

@@ -187,13 +187,15 @@ def project_map(project):
                 comparisons.append({'from': reference, 'to': item['recipe'], 'explanation': item.get('explanation'),
                                     'excerpt': item.get('excerpt')})
 
+    from . import sweeps   # a sweep's trials are a group of their own on the map (spec-t7.md section 6)
+    swept = sweeps.map_groups(definitions, models)
     counts = {}
     for model in models:
         if model['group'] is not None:
             counts[model['group']] = counts.get(model['group'], 0) + 1
     groups = [{'id': group['id'], 'title': group['title'], 'parent': group.get('parent'),
                'description': group.get('description'), 'models': counts.get(group['id'], 0)}
-              for group in tuldok.get('groups', []) if isinstance(group, dict)]
+              for group in tuldok.get('groups', []) if isinstance(group, dict)] + swept
     return {'groups': groups, 'models': models, 'edges': edges, 'comparisons': comparisons, 'track': track}
 
 

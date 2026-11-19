@@ -20,7 +20,7 @@ import heapq
 from . import documents
 
 # Roles that record how recipes relate on the map, not what a build needs.
-MAP_ROLES = ('derived', 'compared')
+MAP_ROLES = ('derived', 'compared', 'varies', 'sweep')   # the last two: a sweep and its trials (spec-t7.md)
 
 
 @dataclass(frozen=True, order=True)
@@ -88,6 +88,10 @@ def uses(document):
         found.append(Use('benchmark', '/benchmark', document['benchmark']))
     if kind == 'annotation' and isinstance(document.get('dataset'), str):
         found.append(Use('dataset', '/dataset', document['dataset']))
+    if kind == 'recipe' and isinstance(document.get('sweep'), dict) and isinstance(document['sweep'].get('definition'), str):
+        found.append(Use('sweep', '/sweep/definition', document['sweep']['definition']))
+    if kind == 'sweep' and isinstance(document.get('recipe'), str):
+        found.append(Use('varies', '/recipe', document['recipe']))
     return found
 
 

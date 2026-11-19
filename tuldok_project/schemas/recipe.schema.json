@@ -67,11 +67,36 @@
         "training-policy",
         "architecture",
         "refinement",
-        "component"
+        "component",
+        "sweep-trial"
       ]
     },
     "derived_from": {
       "$ref": "#/$defs/recipe_reference"
+    },
+    "sweep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition",
+        "trial",
+        "values"
+      ],
+      "properties": {
+        "definition": {
+          "type": "string",
+          "pattern": "^sweeps/[a-z0-9][a-z0-9._-]{0,119}$",
+          "description": "a reference to a sweep, such as sweeps/<name>"
+        },
+        "trial": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "values": {
+          "type": "object",
+          "maxProperties": 16
+        }
+      }
     },
     "compared_with": {
       "type": "array",

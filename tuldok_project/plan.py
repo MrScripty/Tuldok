@@ -344,6 +344,9 @@ def build_plan(project, targets, *, every=False):
                                references=[reference])
         if reference not in definitions:
             raise ProjectError(f'There is no definition {reference}.', 'not-found', references=[reference])
+    if any(reference.startswith('sweeps/') for reference in targets):   # a sweep is planned alone (spec-t7.md)
+        from . import sweeps
+        return sweeps.plan(project, list(targets), every=every)
     built = builds.status(project)
     local = {**environments.recorded_states(project._connection, project.schema),
              **{reference: entry['state'] for reference, entry in built.items()}}
