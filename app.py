@@ -809,6 +809,7 @@ def make_handler(dataset, observer=None):
                                '/project-workspace/weights.js': ('project-workspace/weights.js', 'text/javascript'),
                                '/project-workspace/structure.js': ('project-workspace/structure.js', 'text/javascript'),
                                '/project-workspace/fields.js': ('project-workspace/fields.js', 'text/javascript'),
+                               '/project-workspace/training.js': ('project-workspace/training.js', 'text/javascript'),
                                '/project-workspace/annotate.js': ('project-workspace/annotate.js', 'text/javascript'),
                                '/project-workspace/generate.js': ('project-workspace/generate.js', 'text/javascript'),
                                '/project-workspace/app.js': ('project-workspace/app.js', 'text/javascript'),

@@ -8,6 +8,9 @@ the three of section 3 of spec-d2.md (weights, weights_compare,
 array_tiles), the two of section 2 of spec-d6.md (fields, field_compare), the three of
 section 3 of docs/plans/training-and-curation/spec-t2.md (model_graph,
 model_graph_overlay, model_graph_compare),
+the five of section 4 of docs/plans/training-and-curation/spec-t1.md
+(training, training_series, training_histograms, training_samples,
+training_sample),
 the five of section 5 of spec-d4.md (annotation_tasks,
 annotated_records, annotation, set_annotation, revert_annotations) and the
 five of sections 2 and 4 of spec-d5.md (endpoint, set_endpoint,
@@ -104,6 +107,10 @@ TILES = ('shape', 'dtype', 'across', 'axes', 'index', 'first', 'tiles', 'rows', 
          'min', 'max', 'nonfinite')
 FIELD_COMPARE = ('entry', 'case', 'shape', 'dtype', 'axes', 'axis', 'index', 'rows', 'columns', 'stride',
                  'mean_free', 'reference_f32', 'predicted_f32', 'error_f32', 'range', 'error_limit', 'figures')
+TRAINING = ('run', 'present', 'started_at', 'series', 'lines', 'last_step', 'last_time', 'other_keys', 'histograms',
+            'histogram_lines', 'samples', 'sample_lines', 'checkpoints', 'problems', 'bad_lines', 'truncated')
+TRAINING_HISTOGRAMS = ('name', 'kind', 'rows', 'stride', 'low', 'high', 'bins', 'counts', 'totals', 'nonfinite')
+TRAINING_SERIES = 16       # series of one training_series
 COMPARE = ('tensors', 'total', 'only_here', 'only_there', 'reshaped', 'unread')
 SAVE = ('written', 'deleted', 'results_written', 'results_deleted', 'annotations_written', 'annotations_deleted')
 CANCEL_RUN = ('id', 'reference', 'subject', 'state', 'cancel_file', 'already_asked')
@@ -243,6 +250,33 @@ OPERATIONS = (
     Operation('model_graph_compare', "Match the modules of two finished runs' model graphs by path: the same, "
               'changed (class or tensor shapes), added or missing.', 'inspect', False,
               _arguments(['run', 'other_run'], run=_RUN, other_run=_RUN), ('modules', 'counts')),
+    Operation('training', "List what a run's training script logged, while it runs or after: its scalar series, the "
+              'tensors whose histograms it kept, its samples and checkpoints, and the lines it could not read.',
+              'inspect', False, _arguments(['run'], run=_RUN), TRAINING),
+    Operation('training_series', "Read scalar series a run's training script logged, in buckets of a power of two "
+              'points (mean, least and greatest), from the bucket the caller holds when its bucket size is the same.',
+              'inspect', False,
+              _arguments(['run', 'series'], run=_RUN,
+                         series={'type': 'array', 'minItems': 1, 'maxItems': TRAINING_SERIES,
+                                 'items': {'type': 'object',
+                                           'properties': {'name': {'type': 'string', 'minLength': 1,
+                                                                   'maxLength': 200},
+                                                          'size': {'type': 'integer', 'minimum': 0},
+                                                          'since': _OFFSET},
+                                           'required': ['name'], 'additionalProperties': False}},
+                         most=_limit(4000)), ('series', 'lines')),
+    Operation('training_histograms', "Read one tensor's histograms of weights or gradients over the steps of a run's "
+              'training, re-binned onto one grid.', 'inspect', False,
+              _arguments(['run', 'name', 'kind'], run=_RUN, name={'type': 'string', 'minLength': 1, 'maxLength': 1000},
+                         kind={'type': 'string', 'enum': ['weights', 'gradients']}, most=_limit(500),
+                         bins=_limit(128)), TRAINING_HISTOGRAMS),
+    Operation('training_samples', "List one page of the samples a run's training script kept, optionally of one "
+              'name.', 'inspect', False,
+              _arguments(['run'], run=_RUN, name={'type': 'string', 'minLength': 1, 'maxLength': 200},
+                         offset=_OFFSET, limit=_limit(200)), ('samples', 'total')),
+    Operation('training_sample', "Read one sample a run's training script kept: an image's size and address, or an "
+              "array's slice as 32-bit floats.", 'inspect', False,
+              _arguments(['run', 'index'], run=_RUN, index=_OFFSET), ('sample', 'content')),
     Operation('annotation_tasks', 'List the annotation tasks, each with its dataset, current product and counts of '
               'its records by the state of their annotations.', 'inspect', False, _arguments(), ('tasks',)),
     Operation('annotated_records', "Read one page of the records of a task's dataset with their annotations, "

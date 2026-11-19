@@ -63,7 +63,8 @@
     reopen: () => { $('aside')._for = null; render(); }
   };
   // The settings of the Analysis tab the address keeps, so that a reload opens it where it was (spec-d6 section 3).
-  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree'];
+  // And those of the Training block of a run's drawer (spec-t1 section 6): the runs compared, the series, smoothing, log scale, across.
+  const ADDRESSED = ['anaBench', 'anaSubject', 'anaMetric', 'anaCase', 'anaAxis', 'anaIndex', 'anaMeanFree', 'trWith', 'trSeries', 'trSmooth', 'trLog', 'trX'];
   /** Writes the benchmark, the compare set and the Analysis tab's settings into the address without reloading, so the view can be shared. */
   function address() {
     const q = new URLSearchParams(location.search);
