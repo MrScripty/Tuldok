@@ -18,10 +18,13 @@ window.LabAnnotate = (() => {
   const P = window.TuldokProject, S = window.LabScreens, A = window.LabActions, C = window.LabCharts, h = C.h, V = window.LabInside.viewers;
   const { sect, putInPlace, putDrawer, turn, time, bytes } = S.parts;
   const PER_PAGE = 48;
-  const TYPES = ['review', 'class', 'tags', 'text', 'boxes', 'spans', 'segments'];
-  const TYPE_WORD = { review: 'Review', class: 'Class: one term', tags: 'Tags: any of the terms', text: 'Text: a caption or a transcript', boxes: 'Boxes on an image', spans: 'Spans of a text', segments: 'Segments of a sound' };
-  const NEEDS_TERMS = ['class', 'tags', 'boxes', 'spans', 'segments'];
-  const ONLY = { boxes: 'image', spans: 'text', segments: 'audio' };   // the one kind of record these tasks describe
+  const TYPES = ['review', 'class', 'tags', 'text', 'boxes', 'spans', 'segments', 'polygons', 'mask', 'depth', 'keypoints', 'ranking', 'timeseries', 'track', 'points', 'box3d'];
+  const TYPE_WORD = { review: 'Review', class: 'Class: one term', tags: 'Tags: any of the terms', text: 'Text: a caption or a transcript', boxes: 'Boxes on an image', spans: 'Spans of a text', segments: 'Segments of a sound',
+    polygons: 'Polygons on an image', mask: 'A mask of an image', depth: 'A depth map of an image', keypoints: 'Keypoints on an image', ranking: 'A ranking of candidates', timeseries: 'Stretches of a series or a sound', track: 'Tracks across frames', points: 'Point objects of a point cloud', box3d: '3-D boxes in a point cloud' };
+  const NEEDS_TERMS = ['class', 'tags', 'boxes', 'spans', 'segments', 'polygons', 'mask', 'keypoints', 'ranking', 'timeseries', 'track', 'points', 'box3d'];
+  // The kinds of record a task describes (spec-d4, spec-t4 section 1); the others take any kind but file.
+  const ONLY = { boxes: ['image'], spans: ['text'], segments: ['audio'], polygons: ['image'], mask: ['image'], depth: ['image'], keypoints: ['image'], timeseries: ['audio', 'array'], track: ['array'], points: ['pointcloud'], box3d: ['pointcloud'] };
+  const GENERATED = ['polygons', 'mask', 'depth', 'keypoints', 'ranking', 'timeseries', 'track', 'points', 'box3d'];   // reviewed, not drawn here
   const FILTERS = [['all', 'All'], ['todo', 'To do'], ['accepted', 'Accepted'], ['needs-work', 'Needs work'], ['rejected', 'Rejected'], ['stale', 'Stale']];
   const DECISIONS = [['accepted', 'Accept', 'ok'], ['needs-work', 'Needs work', 'warn'], ['rejected', 'Reject', 'bad']];
   const STATE = { none: ['neutral', 'not annotated'], draft: ['neutral', 'draft'], accepted: ['good', 'accepted'], 'needs-work': ['warn', 'needs work'], rejected: ['serious', 'rejected'] };
@@ -37,13 +40,13 @@ window.LabAnnotate = (() => {
   const textOf = doc => JSON.stringify(doc, null, 2) + '\n';
 
   // ---- What is kept in this page ------------------------------------------------------------------------------------
-  const ui = { task: null, filter: 'all', page: 0, sel: new Map(), selAt: 0, terms: new Map() };   // sel and terms: per task
+  const ui = { task: null, filter: 'all', page: 0, sel: new Map(), selAt: 0, terms: new Map(), mode: 'annotate' };   // sel and terms: per task
   const drafts = new Map();   // task + '\n' + record -> { state, value, note, dirty }
   const store = new Map();    // the viewers' settings (inside.js), per record
   let here = null;            // the tab on screen: { main, act, root, keys, parts, t, page, rec, pick, repaint, relist }
 
   const draftKey = (t, rec) => t.task + '\n' + rec.id;
-  function emptyValue(type) { return type === 'class' || type === 'review' ? null : type === 'text' ? '' : []; }
+  function emptyValue(type) { return type === 'class' || type === 'review' || GENERATED.includes(type) ? null : type === 'text' ? '' : []; }
   /** A draft from the annotation as it is (not typed yet), or the one typed. */
   function draftOf(t, rec, fresh) {
     const k = draftKey(t, rec), had = drafts.get(k);
@@ -85,7 +88,9 @@ window.LabAnnotate = (() => {
     ui.selAt = 0; if (id) ui.sel.set(t.task, id); else ui.sel.delete(t.task);
     // The models that can suggest (spec-d5 section 4), for a session that may annotate; none when they cannot be read.
     const offers = A.may('edit') && SUGGESTS.includes(t.type) ? await P.read('suggestion_models', { task: t.task }).then(r => r.kinds || {}, () => ({})) : {};
-    return { tasks, t, page, rec: page.records.find(r => r.id === id) || null, offers };
+    // The task's annotation sets (spec-t4 section 6): Review is offered when an annotator made one.
+    const sets = await P.read('annotation_sets', { task: t.task }).then(r => r.sets, () => []);
+    return { tasks, t, page, rec: page.records.find(r => r.id === id) || null, offers, sets };
   }
 
   // ---- The tab -----------------------------------------------------------------------------------------------------
@@ -111,9 +116,10 @@ window.LabAnnotate = (() => {
     main.setAttribute('aria-busy', 'true');
     let got; try { got = await load(); } catch (error) { got = { error }; }
     if (main._paint !== mine || main._view !== view) return;
-    const kind = got.error ? 'error' : !got.tasks.length ? 'none' : !got.t.run ? 'unbuilt' : 'records';
+    const reviewing = !got.error && got.t && got.t.run && ui.mode === 'review' && reviewable(got.sets);
+    const kind = got.error ? 'error' : !got.tasks.length ? 'none' : !got.t.run ? 'unbuilt' : reviewing ? 'review' : 'records';
     const t = got.t || null, rec = got.rec || null, may = A.may('edit');
-    const keys = { shape: kind, bar: kind === 'error' ? 'error' : JSON.stringify([got.tasks.map(x => [x.task, x.title, x.type]), t && [t.task, t.run, t.records, t.counts, t.dataset], ui.filter, may]) };
+    const keys = { shape: kind, bar: kind === 'error' ? 'error' : JSON.stringify([got.tasks.map(x => [x.task, x.title, x.type]), t && [t.task, t.run, t.records, t.counts, t.dataset], ui.filter, may, ui.mode, reviewable(got.sets)]) };
     if (kind === 'records') {
       keys.list = JSON.stringify([t.task, t.run, ui.filter, ui.page, got.page.total, got.page.records.map(r => [r.id, r.kind, r.path, r.preview || null, r.in_product, r.annotation && [r.annotation.state, r.annotation.stale, r.annotation.unsaved]])]);
       keys.view = rec ? JSON.stringify([t.task, t.type, t.run, rec.id, rec.kind, rec.in_product]) : 'none';   // its place in the list is set in place (place())
@@ -129,12 +135,13 @@ window.LabAnnotate = (() => {
     } catch (error) { build.view = h('div', 'iv'); build.view.appendChild(A.refusal(error)); }
     if (main._paint !== mine || main._view !== view) return;
     main.removeAttribute('aria-busy');
-    here.t = t; here.page = got.page || null; here.rec = rec; here.tasks = got.tasks; here.offers = got.offers || {};
+    here.t = t; here.page = got.page || null; here.rec = rec; here.tasks = got.tasks; here.offers = got.offers || {}; here.sets = got.sets || [];
     const fresh = !here.root || keys.shape !== here.keys.shape;
     if (fresh) {
       const root = h('div', 'annotate'); root.dataset.shape = kind;
       here.parts = { bar: h('div', 'ann-barbox') }; root.appendChild(here.parts.bar);
-      if (kind === 'records') { const body = h('div', 'ann-body'); for (const p of ['list', 'view', 'form']) { here.parts[p] = h('div', 'ann-' + p); body.appendChild(here.parts[p]); } here.parts.view.classList.add('viewer'); here.parts.view.setAttribute('aria-label', 'The record'); root.appendChild(body); }
+      if (kind === 'review') { here.parts.review = h('div', 'ann-review'); root.appendChild(here.parts.review); }
+      else if (kind === 'records') { const body = h('div', 'ann-body'); for (const p of ['list', 'view', 'form']) { here.parts[p] = h('div', 'ann-' + p); body.appendChild(here.parts[p]); } here.parts.view.classList.add('viewer'); here.parts.view.setAttribute('aria-label', 'The record'); root.appendChild(body); }
       else { here.parts.msg = h('div', 'ann-msg'); root.appendChild(here.parts.msg); }
       here.keys = { shape: kind };
       here.root = root;
@@ -144,7 +151,13 @@ window.LabAnnotate = (() => {
       here.keys[name] = keys[name];
       const content = make(); if (fresh) here.parts[name].replaceChildren(content); else putInPlace(here.parts[name], content, main);
     };
-    put('bar', () => kind === 'error' ? h('div') : buildBar(got.tasks, t));
+    put('bar', () => kind === 'error' ? h('div') : buildBar(got.tasks, t, got.sets));
+    if (kind === 'review') {
+      if (fresh) putInPlace(main, here.root);
+      main._painted = view;
+      await window.LabReview.draw(here.parts.review, t, got.sets, here.act);
+      return;
+    }
     if (kind === 'records') {
       put('list', () => buildList(t, got.page));
       put('view', () => { const hooks = build.view._hooks || {}; here.repaint = hooks.repaint || null; here.textOf = hooks.textOf || null; here.play = hooks.play || null; return build.view; });
@@ -174,7 +187,9 @@ window.LabAnnotate = (() => {
   }
 
   // ---- The bar -----------------------------------------------------------------------------------------------------
-  function buildBar(tasks, t) {
+  /** Review needs a set made by an annotator besides the kept set. */
+  const reviewable = sets => (sets || []).some(x => x.set !== 'kept');
+  function buildBar(tasks, t, sets) {
     const bar = h('div', 'ann-bar');
     if (tasks.length) {
       const l = h('label', 'ann-task'); l.appendChild(document.createTextNode('Task'));
@@ -184,6 +199,12 @@ window.LabAnnotate = (() => {
       l.appendChild(s); bar.appendChild(l);
     }
     bar.appendChild(A.group('annotate:new', [{ id: 'new', label: 'New task', cls: 'btn sm', who: 'edit', onClick: () => here.act.select('new-task') }], { inline: true }));
+    if (t && t.run && reviewable(sets)) {
+      const seg = h('div', 'seg ann-mode'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Annotate or review the annotators\' sets');
+      for (const [id, label] of [['annotate', 'Annotate'], ['review', 'Review']]) { const b = button(null, label, 'ann:mode-' + id, () => { if (ui.mode !== id) { ui.mode = id; redraw(); } }); b.setAttribute('aria-pressed', String(ui.mode === id)); seg.appendChild(b); }
+      bar.appendChild(seg);
+    }
+    if (t && t.run && ui.mode === 'review' && reviewable(sets)) return bar;
     if (t && t.run) {
       const c = t.counts, n = { all: null, todo: c.unannotated + c.draft, accepted: c.accepted, 'needs-work': c['needs-work'], rejected: c.rejected, stale: c.stale };
       const seg = h('div', 'seg ann-filter'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Show the records');
@@ -277,6 +298,7 @@ window.LabAnnotate = (() => {
     if (t.type === 'boxes' && rec.kind === 'image') boxView(el, got, t, rec);
     else if (t.type === 'spans' && rec.kind === 'text') spanView(el, got, t, rec);
     else if (t.type === 'segments' && rec.kind === 'audio') segmentView(el, got, t, rec);
+    else if (GENERATED.includes(t.type) && (draftOf(t, rec).value != null) && (el.appendChild(heading(rec.id, 'The kept annotation drawn over the record')), window.LabReview.overlay(el, got, t, draftOf(t, rec).value))) { /* drawn */ }
     else await V.record(el, got, t.run, store);
     return el;
   }
@@ -525,7 +547,7 @@ window.LabAnnotate = (() => {
   // ---- The form ----------------------------------------------------------------------------------------------------
   function buildForm(t, rec, detail) {
     here.relist = null;
-    const d = draftOf(t, rec, true), a = rec.annotation, may = A.may('edit'), fits = !ONLY[t.type] || rec.kind === ONLY[t.type];
+    const d = draftOf(t, rec, true), a = rec.annotation, may = A.may('edit'), fits = !ONLY[t.type] || ONLY[t.type].includes(rec.kind);
     const form = h('div', 'inspector ann-formbox');
     const hd = h('header'); hd.appendChild(h('span', 'kicker', t.title + ' · ' + t.type));
     const t2 = h('h2', 'mono', rec.id); t2.tabIndex = -1; hd.appendChild(t2);
@@ -547,7 +569,7 @@ window.LabAnnotate = (() => {
     const f = h('div', 'form ann-fields');
     if (!rec.in_product) f.appendChild(h('p', 'note', 'Nothing can be set on a record that is not in the product.'));
     else if (rec.kind === 'file') f.appendChild(h('p', 'note', 'A file of no kind cannot be annotated.'));
-    else if (!fits) f.appendChild(h('p', 'note', 'This task annotates ' + ONLY[t.type] + ' records; this record is ' + (V.WORD[rec.kind] || rec.kind).toLowerCase() + ', so only a decision and a note can be kept for it.'));
+    else if (!fits) f.appendChild(h('p', 'note', 'This task annotates ' + ONLY[t.type].join(' or ') + ' records; this record is ' + (V.WORD[rec.kind] || rec.kind).toLowerCase() + ', so only a decision and a note can be kept for it.'));
     if (rec.in_product && rec.kind !== 'file' && fits) valueControls(f, t, rec, d, may);
     // The decision.
     const dl = h('div', 'ann-field'); dl.appendChild(h('h3', null, 'Decision'));
@@ -583,6 +605,12 @@ window.LabAnnotate = (() => {
   /** The controls of the value, by task. */
   function valueControls(f, t, rec, d, may) {
     if (t.type === 'review') return;
+    if (GENERATED.includes(t.type)) {   // spec-t4: made by annotators and reviewed; the value is shown, not drawn here
+      const box = h('div', 'ann-field'); box.appendChild(h('h3', null, 'Value'));
+      box.appendChild(h('p', null, window.LabReview.summary(t, d.value)));
+      box.appendChild(h('p', 'small faint', here.sets && here.sets.some(x => x.set !== 'kept') ? 'This task\'s annotations are made by annotators: choose Review in the bar to compare their sets and keep one.' : 'This task\'s annotations are made by annotators (a dataset with the step annotate); the decision and the note can be kept here.'));
+      f.appendChild(box); return;
+    }
     if (t.type === 'text') {
       const l = h('label'); l.appendChild(document.createTextNode('Text'));
       const area = h('textarea'); area.rows = 5; area.value = d.value || ''; area.dataset.key = 'ann:text'; area.disabled = !may; area.placeholder = 'a caption, a transcript or a summary';
@@ -819,9 +847,12 @@ window.LabAnnotate = (() => {
       if (!sets.length) f.appendChild(h('p', 'failure', 'The project has no dataset: a task annotates the records of one.'));
       f.appendChild(choice(s, key, 'dataset', 'Dataset', sets.map(d => [d.reference, d.title + ' · ' + d.reference]), sets.length ? sets[0].reference : ''));
       const vocab = input(s, key, 'vocabulary', 'Vocabulary: one term per line', { area: 5, hint: '1 to 500 different terms of 1 to 200 characters', placeholder: 'clean\nnoisy\nbroken' });
-      const showVocab = type => { vocab.hidden = !NEEDS_TERMS.includes(type); };
+      const points = input(s, key, 'keypoints', 'Keypoints: one name per line', { area: 4, hint: 'the points of one instance, in the order its values list them', placeholder: 'head\ntail' });
+      const units = input(s, key, 'units', 'Units of depth', { max: 40, placeholder: 'm' });
+      const mode = choice(s, key, 'mask', 'A pixel\'s value is', [['semantic', 'its class (semantic)'], ['instance', 'one object (instance)']], 'semantic');
+      const showVocab = type => { vocab.hidden = !NEEDS_TERMS.includes(type); points.hidden = type !== 'keypoints'; units.hidden = type !== 'depth'; mode.hidden = type !== 'mask'; };
       f.appendChild(choice(s, key, 'task', 'Task', TYPES.map(x => [x, x + ' · ' + TYPE_WORD[x]]), 'class', showVocab));
-      showVocab(s.text.task); f.appendChild(vocab);
+      f.appendChild(vocab); f.appendChild(points); f.appendChild(units); f.appendChild(mode); showVocab(s.text.task);
       ins.appendChild(f);
       const reference = () => 'annotations/' + (s.text.name || '').trim();
       ins.appendChild(A.group(key, [
@@ -829,6 +860,9 @@ window.LabAnnotate = (() => {
           args: st => {
             const doc = { format: FORMAT, kind: 'annotation', title: (st.text.title || '').trim(), dataset: st.text.dataset, task: st.text.task };
             if (NEEDS_TERMS.includes(st.text.task)) doc.vocabulary = lines(st.text.vocabulary);
+            if (st.text.task === 'keypoints') doc.keypoints = lines(st.text.keypoints);
+            if (st.text.task === 'depth') doc.units = (st.text.units || '').trim();
+            if (st.text.task === 'mask' && st.text.mask === 'instance') doc.mask = 'instance';
             return { reference: reference(), text: textOf(doc) };
           },
           done: r => { ui.task = r.reference; ui.page = 0; ui.filter = 'all'; act.select(null); } },
@@ -930,5 +964,5 @@ window.LabAnnotate = (() => {
   S.annotate = annotate;
   // The drawer forms' parts, for the Generate form (generate.js).
   const forms = { formDrawer, input, choice, header, slug, textOf };
-  return { choose, datasetForm, forms };
+  return { choose, datasetForm, forms, redraw };
 })();

@@ -800,6 +800,8 @@ def make_handler(dataset, observer=None):
                                '/project-workspace/compare.css': ('project-workspace/compare.css', 'text/css'),
                                '/project-workspace/compare.js': ('project-workspace/compare.js', 'text/javascript'),
                                '/project-workspace/parallel.js': ('project-workspace/parallel.js', 'text/javascript'),
+                               '/project-workspace/review.css': ('project-workspace/review.css', 'text/css'),
+                               '/project-workspace/review.js': ('project-workspace/review.js', 'text/javascript'),
                                '/project-workspace/adapter.js': ('project-workspace/adapter.js', 'text/javascript'),
                                '/project-workspace/charts.js': ('project-workspace/charts.js', 'text/javascript'),
                                '/project-workspace/markdown.js': ('project-workspace/markdown.js', 'text/javascript'),

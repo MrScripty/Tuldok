@@ -482,13 +482,26 @@ window.LabInside = (() => {
         }
       }
       ctx.putImageData(img, 0, 0);
+      // Wireframes (spec-t4: 3-D boxes): m.lines is [[x, y, z, x, y, z, [r, g, b]], ...], drawn over the points.
+      const project = (x, y, z) => { x -= centre[0]; y -= centre[1]; z -= centre[2]; const x1 = x * cy - y * sy, y1 = x * sy + y * cy; return [W / 2 + x1 * s, H / 2 - (-y1 * sp + z * cp) * s]; };
+      for (const l of m.lines || []) { const a = project(l[0], l[1], l[2]), b = project(l[3], l[4], l[5]); ctx.strokeStyle = 'rgb(' + l[6].join(',') + ')'; ctx.lineWidth = Math.max(1, (window.devicePixelRatio || 1) * 1.5); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+      if (pick) { const k = W / cv.clientWidth; ctx.strokeStyle = 'rgb(' + token('--serious').join(',') + ')'; ctx.setLineDash([4, 3]); ctx.strokeRect(pick.x0 * k, pick.y0 * k, (pick.x1 - pick.x0) * k, (pick.y1 - pick.y0) * k); ctx.setLineDash([]); }
+      shown = { X, Y, W };
     };
     const later = () => { if (!frame) frame = requestAnimationFrame(draw); };
     paints(cv, draw);
-    let drag = null;
-    cv.addEventListener('pointerdown', e => { if (e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; cv.setPointerCapture(e.pointerId); cv.classList.add('dragging'); });
-    cv.addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.id) return; st.yaw += (e.clientX - drag.x) * 0.01; st.pitch = Math.max(-1.55, Math.min(1.55, st.pitch + (e.clientY - drag.y) * 0.01)); drag.x = e.clientX; drag.y = e.clientY; later(); });
-    const end = e => { if (drag && e.pointerId === drag.id) { drag = null; cv.classList.remove('dragging'); } };
+    let drag = null, pick = null, shown = null;
+    // With m.select and st.selecting, a drag draws a rectangle and m.select gets the indices of the points shown in it.
+    cv.addEventListener('pointerdown', e => { if (e.button !== 0) return; const q = cv.getBoundingClientRect(); if (m.select && st.selecting) { pick = { x0: e.clientX - q.left, y0: e.clientY - q.top, x1: e.clientX - q.left, y1: e.clientY - q.top, id: e.pointerId, left: q.left, top: q.top }; cv.setPointerCapture(e.pointerId); later(); return; } drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; cv.setPointerCapture(e.pointerId); cv.classList.add('dragging'); });
+    cv.addEventListener('pointermove', e => { if (pick && e.pointerId === pick.id) { pick.x1 = e.clientX - pick.left; pick.y1 = e.clientY - pick.top; later(); return; } if (!drag || e.pointerId !== drag.id) return; st.yaw += (e.clientX - drag.x) * 0.01; st.pitch = Math.max(-1.55, Math.min(1.55, st.pitch + (e.clientY - drag.y) * 0.01)); drag.x = e.clientX; drag.y = e.clientY; later(); });
+    const end = e => {
+      if (pick && e.pointerId === pick.id) {
+        const k = shown ? shown.W / cv.clientWidth : 1, [x0, x1] = [Math.min(pick.x0, pick.x1) * k, Math.max(pick.x0, pick.x1) * k], [y0, y1] = [Math.min(pick.y0, pick.y1) * k, Math.max(pick.y0, pick.y1) * k], found = [];
+        if (shown) for (let i = 0; i < shown.X.length; i++) if (shown.X[i] >= x0 && shown.X[i] <= x1 && shown.Y[i] >= y0 && shown.Y[i] <= y1) found.push(i);
+        pick = null; later(); m.select(found); return;
+      }
+      if (drag && e.pointerId === drag.id) { drag = null; cv.classList.remove('dragging'); }
+    };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
     cv.addEventListener('wheel', e => { e.preventDefault(); st.zoom = Math.max(0.2, Math.min(25, st.zoom * Math.exp(-e.deltaY * 0.0015))); later(); }, { passive: false });
     cv.addEventListener('keydown', e => {
@@ -699,6 +712,6 @@ window.LabInside = (() => {
    * `record` (run: the product's run; store: a Map that keeps each viewer's settings, as a dataset opened here does),
    * and the parts its own drawing surfaces share with these viewers.
    */
-  const viewers = { record: (el, got, run, store) => recordView(null, { run, viewers: store }, el, got), wave, paints, fit, token, glyph, WORD };
+  const viewers = { record: (el, got, run, store) => recordView(null, { run, viewers: store }, el, got), wave, paints, fit, token, glyph, WORD, space, turned };
   return { open, leave, PER_PAGE, viewers, drawing: { floats, token, ramp, paints, fit, heat, contain, ordinal } };
 })();
