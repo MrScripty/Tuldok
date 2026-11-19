@@ -202,7 +202,7 @@ object. It is required unless `earlier_work.rebuild` is `no`.
 | `resources` | no | any of `gpu` (boolean), `cpu_threads` (integer ≥ 1), `memory_gb`, `wall_hours`, `disk_gb` (numbers > 0) |
 | `sources` | no | at most 64 code paths (files or directories); a change in them means the code changed |
 | `estimate` | no | `{"command": [...]}`, 1 to 64 strings; the command prints one JSON object with any of `disk_bytes`, `wall_seconds`, `items` |
-| `annotations` | with `step: "freeze"` only | 1 to 32 different references to `annotations/`: the tasks a freeze reads |
+| `annotations` | with `step: "freeze"` or `"annotate"` only | 1 to 32 different references to `annotations/`: the tasks a freeze reads, or the one task an annotate makes a set for |
 
 A **code path** is a path relative to the code root, at most 1,024 characters.
 `settings_file`, `sources`, a model's `config_file` and `sources`, and an
@@ -265,7 +265,7 @@ Example, `datasets/sinusoidal-v1.json`:
 #### Steps Tuldok provides
 
 A dataset's `run` names either a `command` or a `step`, one of `import`,
-`freeze` and `generate`. A run with `step` has no `command`, `environment`, `outputs`,
+`freeze`, `generate` and `annotate`. A run with `step` has no `command`, `environment`, `outputs`,
 `settings_file`, `env` or `estimate`: the step's outputs are fixed, its
 settings are inline in `settings`, and it runs with Tuldok's own interpreter
 (see [The command and its environment](#the-command-and-its-environment)).
@@ -444,6 +444,46 @@ Example, `datasets/poem-lines.json`:
   }
 }
 ```
+
+##### `annotate`: an annotation set made by an annotator
+
+A dataset whose run is `"step": "annotate"` makes an **annotation set**: the
+annotations of one annotator (a project's script, or a model behind the
+Pumas endpoint) for one task, beside the task's own annotations in Git. Its
+run takes one input, `"inputs": {"records": "datasets/<name>"}`, the task's
+dataset, and `"annotations": ["annotations/<task>"]`. Unlike the other steps
+it may have `command`, `environment` and `env`: the command is the project's
+annotator, run in its environment from the code snapshot. Exactly one of
+`run.command` and `settings.pumas`. Settings:
+
+| Setting | Required | Rule |
+| --- | --- | --- |
+| `by` | yes | `{"kind": "model", "script" or "person", "name": 1 to 200 characters, "version"?}`: what makes the annotations |
+| `pumas` | no | `{"model", "profile"?, "instruction"?}`: ask this model of the machine's Pumas endpoint instead of a command; for `text`, `class` and `tags` as a suggestion is asked, for `boxes` and `polygons` on images as a JSON list asked of a vision model |
+| `limit` | no | at most this many records, 1 to 1,000,000 |
+| `options` | no | an object of at most 8 KiB, given to the command as `TULDOK_ANNOTATE_OPTIONS` |
+
+**The command's contract.** It runs with these variables: `TULDOK_RECORDS`
+(the input product), `TULDOK_TODO` (a file of the input's record lines still
+to annotate, their paths made absolute), `TULDOK_TASK` (the task's
+definition), `TULDOK_ANNOTATIONS` (the file to append lines to),
+`TULDOK_FILES` (the directory for sidecars) and `TULDOK_ANNOTATE_OPTIONS`.
+It appends one line per record, `{"record", "value", "confidence"?,
+"note"?}`, in any order, writes the sidecars its values name under
+`TULDOK_FILES`, and may print progress lines. When it ends with status 0 the
+step keeps the last valid line of each record of the input, drops and counts
+the rest, and writes the product:
+
+```
+annotator.json      {"format": "tuldok_annotator_v1", "task", "by": {"kind", "name", "version"?, "settings"}, "records", "made", "at"}
+annotations.jsonl   {"record", "sha256", "value", "confidence"?, "note"?} per record, sorted by record
+files/              the sidecars the lines name
+```
+
+`by.settings` is the run's settings without `by`. A run of the same
+definition that failed or was cancelled is resumed by the next build: its
+valid lines (and sidecars) whose records are unchanged are kept, and only the
+other records are given to the command (or asked of the model).
 
 ### `model`
 

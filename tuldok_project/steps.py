@@ -49,7 +49,7 @@ EXTENSIONS = {
     'mesh': ('.obj', '.stl'),
     'array': ('.npy', '.npz', '.safetensors'),
 }
-STEPS = ('import', 'freeze', 'generate')
+STEPS = ('import', 'freeze', 'generate', 'annotate')
 RECORD_LIST = 'records.jsonl'
 FILES = 'files'
 DEFAULT_PATTERN = '**/*'
@@ -66,6 +66,13 @@ _CHUNK = 1 << 20
 MAKES = ('text', 'image')           # what generate makes (spec-d5.md section 3)
 GENERATE_LIMIT = 100_000            # items one generate makes
 RETRY_PAUSES = (1.0, 2.0)           # before asking again an item the endpoint did not admit; twice at most
+ANNOTATED = 'annotations.jsonl'     # an annotation set's lines (spec-t4.md section 3)
+ANNOTATOR = 'annotator.json'        # what made the set
+ANNOTATOR_FORMAT = 'tuldok_annotator_v1'
+TODO = 'todo.jsonl'                 # the records an annotator command is to annotate, in the run's directory
+ANNOTATE_LIMIT = 1_000_000          # records one annotate annotates
+ANNOTATE_LINE_BYTES = 64 * 1024 * 1024   # one line a command writes (a large polygon list)
+GIVE_UP_AFTER = 10                  # Pumas: every one of the first this many records refused fails the step
 
 
 class StepError(Exception):
@@ -748,6 +755,327 @@ def _generated_record(output, identifier, make, made, rights, origin, counts):
             'bytes': len(data), 'rights': rights, 'origin': origin}
 
 
+# ---------------------------------------------------------------- annotate
+
+def _record_facts(root, record, task):
+    """What the value of task on record is checked against, as far as the step can tell from the file's head."""
+    from . import annotation_payloads as payloads
+    facts = {'kind': record['kind'], 'size': None, 'points': None, 'shape': None}
+    path = record.get('path')
+    full = _confined(root, path) if isinstance(path, str) and '!' not in path else None
+    if full is None:
+        return facts
+    try:
+        with open(full, 'rb') as handle:
+            head = handle.read(64 * 1024)
+        if record['kind'] == 'image' and head.startswith(b'\x89PNG'):
+            facts['size'] = payloads.png_size(head)[:2]
+        elif record['kind'] == 'array' and head.startswith(b'\x93NUMPY'):
+            facts['shape'] = payloads.npy_header(head)[0]
+        elif record['kind'] == 'pointcloud' and task in ('points', 'box3d'):
+            facts['points'] = _cloud_count(full, head)
+    except (OSError, payloads.PayloadError):
+        pass
+    return facts
+
+
+def _cloud_count(full, head):
+    """The points of a .ply (its vertex element), an .npy (its first axis) or an .xyz (its rows of numbers)."""
+    from . import annotation_payloads as payloads
+    if head.startswith(b'ply'):
+        for line in head.split(b'end_header', 1)[0].decode('ascii', 'replace').splitlines():
+            words = line.split()
+            if len(words) == 3 and words[:2] == ['element', 'vertex'] and words[2].isdigit():
+                return int(words[2])
+        return None
+    if head.startswith(b'\x93NUMPY'):
+        return payloads.npy_header(head)[0][0]
+    count = 0
+    with open(full, 'rb') as handle:
+        for line in handle:
+            words = line.decode('utf-8', 'replace').replace(',', ' ').split()
+            if len(words) >= 3 and not words[0].startswith('#'):
+                try:
+                    [float(word) for word in words[:3]]
+                except ValueError:
+                    continue
+                count += 1
+    return count
+
+
+def _set_line(raw, task, by_id, root, output, facts_of, counts):
+    """(record, line to keep) from one line an annotator wrote, or None with the reason counted."""
+    from . import annotation_payloads as payloads
+    try:
+        value = json.loads(raw)
+    except (ValueError, RecursionError):
+        counts['not_json'] += 1
+        return None
+    if not isinstance(value, dict) or not isinstance(value.get('record'), str) or 'value' not in value \
+            or set(value) - {'record', 'sha256', 'value', 'confidence', 'note'}:
+        counts['not_lines'] += 1
+        return None
+    record = by_id.get(value['record'])
+    if record is None:
+        counts['unknown_records'] += 1
+        return None
+    confidence, note = value.get('confidence'), value.get('note')
+    if (confidence is not None and not (isinstance(confidence, (int, float)) and not isinstance(confidence, bool)
+                                        and 0 <= confidence <= 1)) \
+            or (note is not None and not (isinstance(note, str) and len(note) <= annotations.NOTE_LIMIT)):
+        counts['invalid'] += 1
+        return None
+    facts = facts_of(record)
+    document = task['document']
+    errors, unknown = annotations.value_problems(
+        document['task'], document.get('vocabulary') or [], 'accepted', value['value'], kind=record['kind'],
+        size=facts['size'], fields=annotations.task_fields(document), points=facts['points'], shape=facts['shape'])
+    if errors or unknown or value['value'] is None:
+        counts['invalid'] += 1
+        return None
+    for name in annotations.sidecars(document['task'], value['value']):
+        full = os.path.realpath(os.path.join(output, FILES, *name.split('/')))
+        if not _inside(full, os.path.join(os.path.realpath(output), FILES)) or not os.path.isfile(full):
+            counts['missing_sidecars'] += 1
+            return None
+        with open(full, 'rb') as handle:
+            data = handle.read(payloads.SIDECAR_LIMIT + 1)
+        if payloads.sidecar_problem(document['task'], data, size=facts['size'], points=facts['points']):
+            counts['invalid'] += 1
+            return None
+    line = {'record': value['record'], 'sha256': _record_hash(root, record), 'value': value['value']}
+    if confidence is not None:
+        line['confidence'] = confidence
+    if note is not None:
+        line['note'] = note
+    return value['record'], line
+
+
+def _set_text(line):
+    """One line of an annotation set: record, sha256, value (its keys as a line file orders them), confidence, note."""
+    ordered = {'record': line['record'], 'sha256': line['sha256'], 'value': annotations.ordered_value(line['value'])}
+    for key in ('confidence', 'note'):
+        if key in line:
+            ordered[key] = line[key]
+    return json.dumps(ordered, ensure_ascii=False, separators=(',', ':')) + '\n'
+
+
+def _read_written(path, task, by_id, root, output, facts_of, counts):
+    """The lines an annotator appended to path, the last valid one of each record kept."""
+    kept = {}
+    if not os.path.isfile(path):
+        return kept
+    with open(path, 'rb') as handle:
+        for raw in handle:
+            if len(raw) > ANNOTATE_LINE_BYTES:
+                counts['not_lines'] += 1
+                continue
+            if not raw.strip():
+                continue
+            found = _set_line(raw, task, by_id, root, output, facts_of, counts)
+            if found is not None:
+                if found[0] in kept:
+                    counts['repeated'] += 1
+                kept[found[0]] = found[1]
+    return kept
+
+
+def _resumed(resume, task, by_id, root, output, facts_of, counts):
+    """The valid lines (and their sidecars) of an earlier run of this definition whose records' hashes still hold."""
+    kept = {}
+    path = os.path.join(resume, ANNOTATED)
+    if not os.path.isfile(path):
+        return kept
+    with open(path, 'rb') as handle:
+        for raw in handle:
+            try:
+                value = json.loads(raw)
+            except (ValueError, RecursionError):
+                continue
+            if not isinstance(value, dict) or value.get('record') not in by_id:
+                continue
+            record = by_id[value['record']]
+            if value.get('sha256') is not None and value.get('sha256') != _record_hash(root, record):
+                continue
+            for name in annotations.sidecars(task['document']['task'], value.get('value')):
+                parts = str(name).split('/')
+                if str(name).startswith('/') or '..' in parts or '' in parts:
+                    continue
+                source = os.path.realpath(os.path.join(resume, FILES, *parts))
+                if _inside(source, os.path.join(os.path.realpath(resume), FILES)) and os.path.isfile(source):
+                    target = os.path.join(output, FILES, *parts)
+                    os.makedirs(os.path.dirname(target), exist_ok=True)
+                    shutil.copyfile(source, target)
+            found = _set_line(raw, task, by_id, root, output, facts_of, counts)
+            if found is not None:
+                kept[found[0]] = found[1]
+    counts['resumed'] = len(kept)
+    return kept
+
+
+def _child_env(variables):
+    """The environment of an annotator command: the run's, without what makes Tuldok's own code importable."""
+    env = {key: value for key, value in os.environ.items() if key not in ('PYTHONSAFEPATH', 'PYTHONPATH')}
+    if os.environ.get('TULDOK_ANNOTATE_PYTHONPATH'):
+        env['PYTHONPATH'] = env.pop('TULDOK_ANNOTATE_PYTHONPATH')
+    env.update(variables)
+    return env
+
+
+def _ask_pumas(settings, task, todo, by_id, root, output, endpoint, lines, facts_of, counts, out, progress):
+    """Annotate the records of todo by asking a served model, appending a line for each answer that fits."""
+    from . import pumas
+    document = task['document']
+    asked = settings['pumas']
+    try:
+        listing = pumas.served(endpoint)
+        entry = pumas.choose(listing, asked['model'], asked.get('profile'))
+    except pumas.PumasError as exc:
+        raise StepError(f'The Pumas endpoint at {endpoint} cannot be asked: {exc}') from None
+    capability = None
+    token = uuid.uuid4().hex[:16]
+    for number, record_id in enumerate(todo, 1):
+        record = by_id[record_id]
+        found = pumas.routes(entry, document['task'], record['kind'])
+        if not found:
+            counts['refused'] += 1
+        else:
+            capability = found[0]['capability']
+            facts = facts_of(record)
+            try:
+                content = _record_content(root, record)
+                value = pumas.suggest(
+                    endpoint, listing, entry, found[0], document['task'], document.get('vocabulary') or [],
+                    content, asked.get('instruction'), request_id=f'tuldok-annotate:{token}:{number}',
+                    size=facts['size'],
+                    check=lambda v: _fits(document, record, facts, v))
+            except pumas.PumasError as exc:
+                if exc.code not in ('unsuitable', 'invalid'):
+                    raise StepError(f'Record {record_id!r}: {exc}') from None
+                counts['refused'] += 1
+                out(f'Record {record_id}: {exc}')
+            else:
+                line = {'record': record_id, 'sha256': _record_hash(root, record), 'value': value}
+                lines.write(_set_text(line))
+                lines.flush()
+                counts['made'] += 1
+        if number == min(GIVE_UP_AFTER, len(todo)) and not counts['made'] and counts['refused'] == number:
+            raise StepError(f'The model refused or could not answer every one of the first {number} records.')
+        progress(number, {'made': counts['made'], 'refused': counts['refused']})
+    return {'kind': 'model', 'name': entry['model'], 'version': entry['profile'],
+            'capability': capability}
+
+
+def _fits(document, record, facts, value):
+    """The problems of a model's answer as a value of the task, terms outside the vocabulary included."""
+    errors, unknown = annotations.value_problems(document['task'], document.get('vocabulary') or [], 'accepted', value,
+                                                 kind=record['kind'], size=facts['size'],
+                                                 fields=annotations.task_fields(document))
+    return errors + [f'The term {term!r} is not in the vocabulary of the task.' for term in unknown]
+
+
+def _record_content(root, record):
+    """{kind, text} or {kind, data} of a record, read whole up to the bound a suggestion sends."""
+    if record.get('path') is None:
+        return {'kind': record['kind'], 'text': record.get('text') or ''}
+    full = _confined(root, record['path']) if '!' not in record['path'] else None
+    if full is None:
+        from . import pumas
+        raise pumas.PumasError(f'The record {record["id"]!r} cannot be read here.', 'invalid')
+    with open(full, 'rb') as handle:
+        data = handle.read(16 * 1024 * 1024 + 1)
+    if record['kind'] == 'text':
+        return {'kind': 'text', 'text': data.decode('utf-8', 'replace')}
+    return {'kind': record['kind'], 'data': data}
+
+
+def annotate_records(settings, output, *, records, task, run_directory, command=None, code=None, endpoint=None,
+                     resume=None, out=print):
+    """The annotate step (spec-t4.md section 4): an annotation set of task for the records of the input product.
+
+    task is {'reference', 'document'}; command the annotator's argv (run from
+    code), or None to ask the model settings.pumas names at endpoint; resume
+    the output directory of an earlier run of the same definition. Returns
+    the counts.
+    """
+    root = os.path.realpath(records)
+    counts = dict.fromkeys(('bad_lines', 'resumed', 'made', 'refused', 'not_json', 'not_lines', 'unknown_records',
+                            'invalid', 'missing_sidecars', 'repeated'), 0)
+    by_id = _input_records(root, None, counts)
+    facts_cache = {}
+
+    def facts_of(record):
+        if record['id'] not in facts_cache:
+            facts_cache[record['id']] = _record_facts(root, record, task['document']['task'])
+        return facts_cache[record['id']]
+    os.makedirs(os.path.join(output, FILES), exist_ok=True)
+    kept = _resumed(resume, task, by_id, root, output, facts_of, counts) if resume else {}
+    limit = settings.get('limit', ANNOTATE_LIMIT)
+    todo = [record_id for record_id in by_id if record_id not in kept and annotations.allows_kind(
+        task['document']['task'], by_id[record_id]['kind'])][:max(0, limit - len(kept))]
+    out(f'{len(todo)} records to annotate for {task["reference"]}' + (f'; {len(kept)} kept from the run before'
+                                                                     if kept else '') + '.')
+    progress = Progress('annotate', len(todo), out)
+    progress(0, {})
+    path = os.path.join(output, ANNOTATED)
+    with open(path, 'w', encoding='utf-8') as lines:
+        for record_id in sorted(kept, key=annotations.sort_key):
+            lines.write(_set_text(kept[record_id]))
+    by = dict(settings['by'])
+    if command is not None:
+        todo_path = os.path.join(run_directory, TODO)
+        with open(todo_path, 'w', encoding='utf-8') as handle:
+            for record_id in todo:
+                record = dict(by_id[record_id])
+                record.pop('hash', None)
+                if record.get('path') is not None and '!' not in record['path']:
+                    record['path'] = os.path.join(root, *record['path'].split('/'))
+                handle.write(_line(record))
+        task_path = os.path.join(run_directory, 'task.json')
+        with open(task_path, 'w', encoding='utf-8') as handle:
+            json.dump(dict(task['document'], reference=task['reference']), handle, ensure_ascii=False, indent=2)
+        import subprocess
+        env = _child_env({'TULDOK_RECORDS': root, 'TULDOK_TODO': todo_path, 'TULDOK_TASK': task_path,
+                          'TULDOK_ANNOTATIONS': os.path.abspath(path),
+                          'TULDOK_FILES': os.path.abspath(os.path.join(output, FILES)),
+                          'TULDOK_ANNOTATE_OPTIONS': json.dumps(settings.get('options') or {})})
+        status = subprocess.call(command, cwd=code or run_directory, env=env, stdin=subprocess.DEVNULL)
+        if status != 0:
+            raise StepError(f'The annotator command ended with status {status}; what it wrote is kept for the next '
+                            'build to resume from.')
+    else:
+        if endpoint is None:
+            raise StepError('An annotate asking a model needs --endpoint, the Pumas endpoint this machine uses.')
+        with open(path, 'a', encoding='utf-8') as lines:
+            made = _ask_pumas(settings, task, todo, by_id, root, output, endpoint, lines, facts_of, counts, out,
+                              progress)
+        by.setdefault('kind', 'model')
+        by.setdefault('name', made['name'])
+        by['model'] = {'model': made['name'], 'profile': made['version'], 'capability': made['capability']}
+    final = _read_written(path, task, by_id, root, output, facts_of, counts)
+    with open(path, 'w', encoding='utf-8') as lines:
+        for record_id in sorted(final, key=annotations.sort_key):
+            lines.write(_set_text(final[record_id]))
+    by['settings'] = {key: value for key, value in settings.items() if key != 'by'}
+    annotator = {'format': ANNOTATOR_FORMAT, 'task': task['reference'], 'by': by, 'records': len(by_id),
+                 'made': len(final), 'at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+    with open(os.path.join(output, ANNOTATOR), 'w', encoding='utf-8') as handle:
+        json.dump(annotator, handle, ensure_ascii=False, indent=2)
+        handle.write('\n')
+    counts['kept'] = len(final)
+    progress(len(todo), {'kept': len(final)}, final=True)
+    out(f'{len(final)} records annotated for {task["reference"]}.')
+    _say(out, counts, (('refused', 'records the model could not annotate were skipped.'),
+                       ('not_json', 'lines the annotator wrote are not JSON and were dropped.'),
+                       ('not_lines', 'lines the annotator wrote are not annotation lines and were dropped.'),
+                       ('unknown_records', 'lines name a record the input does not have and were dropped.'),
+                       ('invalid', 'lines hold a value the task does not allow and were dropped.'),
+                       ('missing_sidecars', 'lines name a sidecar that is not under files/ and were dropped.'),
+                       ('repeated', 'records were annotated more than once; the last line of each is kept.'),
+                       ('bad_lines', f'lines of the input\'s {RECORD_LIST} are not records and were skipped.')))
+    return counts
+
+
 # --------------------------------------------------------------- command line
 
 def _arguments(argv):
@@ -761,6 +1089,10 @@ def _arguments(argv):
     parser.add_argument('--tasks', help='freeze: a JSON file of the tasks and their line files')
     parser.add_argument('--endpoint', help='generate: the Pumas endpoint this machine uses')
     parser.add_argument('--report', help='generate: a file to write the endpoint\'s address and version to')
+    parser.add_argument('--task', help='annotate: a JSON file {reference, document} of the task')
+    parser.add_argument('--command-json', help='annotate: the annotator command\'s argv as JSON')
+    parser.add_argument('--resume', help='annotate: the output of an earlier run of the same definition')
+    parser.add_argument('--run-directory', help='annotate: the run\'s directory')
     return parser.parse_args(argv)
 
 
@@ -774,6 +1106,15 @@ def main(argv=None):
             raise StepError(f'The output directory {arguments.output} does not exist.')
         if arguments.step == 'import':
             import_files(settings, arguments.output, code_root=arguments.code, out=out)
+        elif arguments.step == 'annotate':
+            if arguments.records is None or arguments.task is None or arguments.run_directory is None:
+                raise StepError('annotate needs --records, --task and --run-directory.')
+            with open(arguments.task, encoding='utf-8') as handle:
+                task = json.load(handle)
+            annotate_records(settings, arguments.output, records=arguments.records, task=task,
+                             run_directory=arguments.run_directory,
+                             command=json.loads(arguments.command_json) if arguments.command_json else None,
+                             code=arguments.code, endpoint=arguments.endpoint, resume=arguments.resume, out=out)
         elif arguments.step == 'generate':
             if arguments.endpoint is None:
                 raise StepError('generate needs --endpoint, the Pumas endpoint this machine uses.')

@@ -223,3 +223,39 @@ def write_npy(shape, values, descr):
     if not _LITTLE:
         packed.byteswap()
     return _NPY + b'\x01\x00' + struct.pack('<H', len(text)) + text + packed.tobytes()
+
+
+# --------------------------------------------------------------- sidecars
+
+def sidecar_problem(task, data, *, size=None, points=None):
+    """A sentence when data is not a sidecar task's value may name (spec-t4.md section 1), else None.
+
+    size is (width, height) of the image a mask or depth map covers, points
+    the count of the cloud a point-id file covers; each is checked when given.
+    """
+    if len(data) > SIDECAR_LIMIT:
+        return f'The sidecar is over {SIDECAR_LIMIT:,} bytes.'
+    try:
+        if task == 'mask':
+            width, height, depth, colour, interlace = png_size(data)
+            if colour != 0 or depth not in (8, 16) or interlace:
+                return 'A mask PNG must be 8- or 16-bit greyscale and not interlaced.'
+            if size is not None and (width, height) != tuple(size):
+                return f'The mask is {width} by {height} pixels; the image is {size[0]} by {size[1]}.'
+            return None
+        shape, kind, _itemsize, _little, _offset = npy_header(data)
+        if task == 'depth':
+            if len(shape) != 2:
+                return f'A depth map must be a 2-D array; this one has shape {tuple(shape)}.'
+            if size is not None and (shape[1], shape[0]) != tuple(size):
+                return f'The depth map is {shape[1]} by {shape[0]}; the image is {size[0]} by {size[1]}.'
+            if shape[0] * shape[1] > PIXEL_LIMIT:
+                return f'The depth map is over {PIXEL_LIMIT:,} values.'
+            return None
+        if len(shape) != 1 or kind == 'f':
+            return 'A point-id file must be a 1-D array of whole numbers.'
+        if points is not None and shape[0] != points:
+            return f'The point-id file has {shape[0]} values; the cloud has {points} points.'
+        return None
+    except PayloadError as exc:
+        return str(exc)

@@ -549,6 +549,9 @@ def _ordered_value(value):
     return [_ordered_object(item) if isinstance(item, dict) else item for item in value]
 
 
+ordered_value = _ordered_value
+
+
 def encode(row):
     """One row as its line, without the line end: keys in KEYS order, compact, not ASCII-escaped.
 

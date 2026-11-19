@@ -325,9 +325,13 @@ class Routes(unittest.TestCase):
         self.assertEqual(self.capabilities('writer', 'writer-cpu', 'class', 'text'), ['chat_generation'])
         self.assertEqual(self.capabilities(*vision, 'tags', 'image'), ['image_to_text'])
         self.assertEqual(self.capabilities('writer', 'writer-cpu', 'class', 'audio'), [])
-        for task in ('review', 'boxes', 'spans', 'segments'):
+        for task in ('review', 'spans', 'segments'):
             for model in self.models:
                 self.assertEqual(self.capabilities(*model, task, 'image'), [])
+        for task in ('boxes', 'polygons'):   # spec-t4.md section 4: regions asked of a vision model as JSON
+            self.assertEqual(self.capabilities(*vision, task, 'image'), ['image_to_text'])
+            self.assertEqual(self.capabilities('writer', 'writer-cpu', task, 'image'), [])
+            self.assertEqual(self.capabilities(*vision, task, 'text'), [])
         for kind in ('pointcloud', 'mesh', 'array', 'file'):
             for model in self.models:
                 self.assertEqual(self.capabilities(*model, 'text', kind), [])

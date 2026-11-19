@@ -318,6 +318,11 @@ def routes(entry, task, kind):
         fallback = {'text': ('messages', 'chat_generation'), 'image': ('image_messages', 'image_to_text')}.get(kind)
         if fallback and fallback[1] in client.available_capabilities(entry, fallback[0], 'text'):
             found.append({'capability': fallback[1], 'input': fallback[0], 'output': 'text', 'terms': True})
+    elif task in ('boxes', 'polygons') and kind == 'image':
+        # spec-t4.md section 4: regions asked of a vision model as JSON, kept only when they are values of the task
+        if 'image_to_text' in client.available_capabilities(entry, 'image_messages', 'text'):
+            found.append({'capability': 'image_to_text', 'input': 'image_messages', 'output': 'text', 'terms': False,
+                          'regions': True})
     return found
 
 
@@ -392,13 +397,39 @@ def _terms(task, vocabulary, answer):
     return [term for term in vocabulary if term in found]
 
 
+def _regions_instruction(task, vocabulary, instruction, size):
+    shape = ('{"term": <term>, "x": <left>, "y": <top>, "w": <width>, "h": <height>}' if task == 'boxes'
+             else '{"term": <term>, "points": [[<x>, <y>], ...]} with at least three points')
+    where = f' of {size[0]} by {size[1]} pixels' if size else ''
+    return ((instruction + '\n\n' if instruction else '')
+            + f'Find the regions of this image{where} that show one of these terms. Answer with a JSON list of '
+            f'objects {shape}, in pixels from the top left corner, and nothing else; answer [] when there is none. '
+            'The terms:\n' + '\n'.join(vocabulary))
+
+
+def _regions(words):
+    """The JSON list a regions answer holds (fenced or not), or None."""
+    text = words.strip()
+    if text.startswith('```'):
+        text = text.strip('`')
+        text = text[text.find('\n') + 1:] if '\n' in text else text
+    start, end = text.find('['), text.rfind(']')
+    if start < 0 or end < start:
+        return None
+    try:
+        value = json.loads(text[start:end + 1])
+    except ValueError:
+        return None
+    return value if isinstance(value, list) else None
+
+
 def _quoted(words):
     words = ' '.join(str(words).split())
     return '“' + words[:WORDS_SHOWN] + ('…' if len(words) > WORDS_SHOWN else '') + '”'
 
 
 def suggest(address, listing, entry, route, task, vocabulary, content, instruction=None, *, request_id, stop=None,
-            check=None):
+            check=None, size=None):
     """Ask entry for a value of task for one record's content, by route; the value, or PumasError.
 
     content is {'kind', 'text'} or {'kind', 'data'}. check(value) returns the
@@ -423,6 +454,8 @@ def suggest(address, listing, entry, route, task, vocabulary, content, instructi
     else:
         if route['terms']:
             asked = _terms_instruction(task, vocabulary, instruction)
+        elif route.get('regions'):
+            asked = _regions_instruction(task, vocabulary, instruction, size)
         else:
             asked = instruction or (DEFAULT_CAPTION if kind == 'image' else DEFAULT_SUMMARY)
         input_value = _text_input(row, route, content, asked)
@@ -433,11 +466,15 @@ def suggest(address, listing, entry, route, task, vocabulary, content, instructi
         finally:
             timer.cancel()
         words = value['text']
-        suggestion = _terms(task, vocabulary, words) if route['terms'] else words.strip()
+        suggestion = (_terms(task, vocabulary, words) if route['terms'] else _regions(words) if route.get('regions')
+                      else words.strip())
+        if route.get('regions') and suggestion is None:
+            raise PumasError(f'The answer of {entry["model"]} is not a JSON list of regions. It answered '
+                             f'{_quoted(words)}.', 'unsuitable')
         if route['terms'] and suggestion is None:
             raise PumasError(f'The answer of {entry["model"]} is not made of the task\'s terms, so it is not a '
                              f'suggestion. It answered {_quoted(words)}.', 'unsuitable')
-        if not route['terms'] and not suggestion:
+        if not route['terms'] and not route.get('regions') and not suggestion:
             raise PumasError(f'{entry["model"]} answered with nothing.', 'unsuitable')
     problems = check(suggestion) if check is not None else []
     if problems:
