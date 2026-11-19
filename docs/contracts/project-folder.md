@@ -50,6 +50,7 @@ charts/<name>.json
 annotations/<name>.json
 annotations/<name>.jsonl   the annotations of task <name>
 annotations/<name>/        their sidecars: masks and arrays too large for a line
+sweeps/<name>.json         a search over a recipe's settings
 results/<benchmark name>.csv
 notes/...
 ```
@@ -57,7 +58,7 @@ notes/...
 - `tuldok.json` is required. Every other entry is optional.
 - Any other top-level entry is an error. Move such files into `notes/` or out of
   the folder.
-- The eight **definition directories** (`datasets/` to `annotations/`) hold only
+- The nine **definition directories** (`datasets/` to `annotations/`, and `sweeps/`) hold only
   `<name>.json` files, one definition each, and no subdirectories.
   `annotations/` also holds `<name>.jsonl`, the annotations of the task in
   `<name>.json`, which must exist.
@@ -225,7 +226,7 @@ directory) and may not lead outside it through a symbolic link.
 Any other placeholder is an error, and so is a brace without its partner. Write
 `{{` and `}}` for literal braces.
 
-## The eight kinds
+## The nine kinds
 
 The examples below come from one project. References in them point at the other
 examples, except `environments/cuda-torch`, a second environment not shown.
@@ -569,9 +570,10 @@ A recipe trains a model; its product is weights.
 | `run` | unless `earlier_work.rebuild` is `no` | see the `run` block |
 | `model` | no | reference to `models/` |
 | `group` | no | the `id` of one of the project's `groups` in `tuldok.json`: the section of the map it is shown in |
-| `change` | no | `training-policy`, `architecture`, `refinement` or `component`: the kind of change this model makes |
+| `change` | no | `training-policy`, `architecture`, `refinement`, `component` or `sweep-trial`: the kind of change this model makes |
 | `derived_from` | no | reference to another recipe in `recipes/`: the model this one was branched from. Never the recipe itself, and following `derived_from` never comes back to where it started |
 | `compared_with` | no | at most 50 objects, each `recipe` (reference to another recipe, each once in the list), `explanation` (1 to 2,000 characters) and `excerpt` (optional, at most 2,000 characters); no other field |
+| `sweep` | no | a trial of a sweep (see [`sweep`](#sweep)): `definition` (reference to `sweeps/`), `trial` (its number, 1 or more) and `values` (the settings it was given, by path, at most 16); written by Tuldok when it runs the sweep |
 
 The label `short`, when a recipe has it, is the text of its node on the map
 (at most 16 characters are shown). `derived_from` and `compared_with` say how
@@ -869,6 +871,51 @@ image's size; an `.npy` is a C-order array of floats or whole numbers, never
 pickled. The check reports a directory with no task, and a line naming a
 sidecar that is not there, as errors, and a sidecar no line names as a
 warning; Save removes those of a task it writes. Each is at most 64 MiB.
+
+### `sweep`
+
+A sweep searches the settings of one recipe on this machine, trial after
+trial (docs/plans/training-and-curation/spec-t7.md). Each trial is a recipe
+Tuldok writes, derived from the varied one; a sweep is built by asking for a
+build of it alone, and one approval covers its whole budget.
+
+| Field | Required | Rule |
+| --- | --- | --- |
+| `recipe` | yes | reference to `recipes/`: the recipe whose `run.settings` it varies. That recipe has `run.command` and its settings written in it (not `settings_file`) |
+| `parameters` | yes | 1 to 16 objects: `path`, a dotted path into `run.settings` (a part of digits indexes a list; every part but the last exists in the recipe as an object or a list), and either `values` (1 to 64 distinct numbers, texts, booleans or null) or a range `low` < `high` with `scale` (`linear`, the default, or `log`, then `low` > 0), `integer` (whole numbers) and `count` (2 to 64 points, for a grid). Each path once |
+| `strategy` | yes | `{"kind": "grid"}` (every range has `count`; at most 100,000 points), `{"kind": "random", "seed"}`, or `{"kind": "halving", "seed", "metric", "better", "unit", "min", "factor"}`: random draws, and a trial stops early at a rung `min × factor^k` (in `step`s, the default, or seconds of `time`) where it is not among the best `1/factor` of the values of `metric` recorded there (`factor` 2 to 8, default 3) |
+| `objectives` | yes | one or two objects with distinct `metric` (a series the trials log in `training/metrics.jsonl`, or `time` or `step`, the last logged), `better` (`lower` or `higher`), `take` (`last`, the default, or `best`) and an optional `title` |
+| `budget` | yes | `trials` (1 to 1,000), optional `minutes` (above 0, at most 10,080) and `concurrency` (only 1: trials run one after another) |
+
+A grid with more points than `budget.trials` is a warning: the first in order
+are run. The edge from a sweep to its recipe has the role `varies`, and a
+trial's edge to its sweep the role `sweep`; like `derived`, building never
+follows them.
+
+**A trial** is `recipes/<sweep name>-<NNN>` (then `-2`, `-3`, … when that name
+holds something else; a trial is never overwritten), with the recipe's `run`
+and its values set in `run.settings`, `derived_from` the recipe, `change`
+`sweep-trial`, the label `short` `T<n>` and the `sweep` field. It is kept as
+an unsaved edit and saved like any other. A trial of the same sweep with the
+same text that is built already is reused, not run again.
+
+Example, `sweeps/lr-width.json`:
+
+```json
+{
+  "format": "tuldok_definition_v1",
+  "kind": "sweep",
+  "title": "Learning rate and width",
+  "recipe": "recipes/pilot-dense-k1",
+  "parameters": [
+    {"path": "training.learning_rate", "low": 0.0001, "high": 0.01, "scale": "log"},
+    {"path": "model.width", "values": [16, 32, 64]}
+  ],
+  "strategy": {"kind": "halving", "seed": 7, "metric": "val/loss", "better": "lower", "min": 200, "factor": 3},
+  "objectives": [{"metric": "val/loss", "take": "best", "better": "lower"}, {"metric": "time", "better": "lower"}],
+  "budget": {"trials": 24, "minutes": 120}
+}
+```
 
 ## Results files
 
@@ -3181,6 +3228,55 @@ bounds, a sound not such a WAVE), and `unsuitable` for an answer that is not a
 value of the task, the model's words quoted. The record is read and the
 endpoint asked outside the service's lock; an answer not given within 300 s
 is given up.
+
+### Sweeps
+
+A build of a sweep (`request_build` with the sweep as its only target) is
+planned as what its recipe needs and one step of kind `sweep`, built, or
+blocked when the recipe cannot be built for a reason other than its own
+`earlier_work` label; what a request covers holds the recipe's text too. The
+worker runs it trial after trial with one snapshot of the code and one plan
+id, so Cancel on the request stops the trial running. While a trial runs
+Tuldok reads its `training/metrics.jsonl` (as `training` does) every quarter
+second, and stops it through its cancel file when halving prunes it or the
+budget's minutes are spent; the run then ends `cancelled`, its problem saying
+why. The request succeeds when the sweep finished (its schedule or a budget
+spent). What each run of a sweep did is kept in the database (the tables
+`sweep_runs` and `sweep_trials`), never in the folder.
+
+**`sweeps`** takes nothing and answers `sweeps`, each with `reference`,
+`title`, `recipe`, `strategy` (its kind), `objectives`, `budget`, `state`
+(`not-built`, `running`, `built` when its last run finished with the sweep and
+its recipe as they are now, or `failed`) and `run`: null, or the latest run's
+`id`, `state` (`running`, `finished`, `cancelled`, `failed`), `ended`
+(`schedule`, `trials`, `minutes`, `cancelled`, `failed`), `started_at`,
+`finished_at`, `counts` (trials by state: `running`, `completed`, `pruned`,
+`stopped`, `failed`) and `best` (`number`, `reference`, `value` of the first
+objective among the completed trials, or null).
+
+**`sweep`** takes `sweep` (its reference or name) and an optional `run` (an id;
+default the latest) and answers the sweep's `reference`, `title`,
+`description`, `recipe`, `parameters`, `strategy`, `objectives`, `budget` and
+`state`; `changed` (the run shown ran another text of the sweep); `request`
+(the newest build request naming it alone: `id`, `state`, `requested_by`,
+`requested_at`, or null); `run` (as in `sweeps` with `problem`, `seconds`,
+`trials` and `request_id`); `runs` (the last 20: `id`, `state`, `started_at`,
+`trials`); `trials` (each `number`, `reference`, `values`, `state`, `reused`,
+`run_id`, `started_at`, `finished_at`, `seconds`, `rungs` (each `rung`, `at`,
+`value`, `n`, `kept`, `goes_on`), `objectives` (by metric; a running trial's
+as far as it has logged), `latest` (`step`, `time`, `values`), `problem` and
+`defined`); `best`; `frontier` (the numbers of the completed trials on the
+frontier of two objectives, the second across); `rungs` (the rung points up to
+the last reached and one more); and `axes`, the trials as `benchmark_axes`
+answers a benchmark's subjects: `metrics` the objectives, `settings` the
+parameters, `subjects` the trials (`subject` and `recipe` the trial's
+reference, `number`, `state`, `metrics`, `settings`).
+
+**`map`** answers a group per sweep that has trials (`id` the sweep's
+reference, `title` its title, `parent` the group of its recipe, `sweep` true),
+after the folder's groups, and a trial's model gains `sweep` (the sweep's
+reference) and has its sweep's group as `group` in the answer. Other groups
+and models are answered as before, without `sweep`.
 
 ## The Pumas endpoint
 
