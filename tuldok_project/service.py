@@ -13,7 +13,10 @@ kept (spec-d6.md) find the finished run (and for weights_compare the other
 run) with the project open for a moment and read its output directory
 through inside.py, inside_weights.py and inside_fields.py after closing it;
 product_file does the same for the file route; those reads run outside the
-lock, so a long one holds up no other call. The five operations
+lock, so a long one holds up no other call. The five reads of what a
+training script logged (docs/plans/training-and-curation/spec-t1.md) do the
+same for a run in any state that has a directory (training.py), and
+product_file serves a file under training/ of such a run. The five operations
 on annotations (spec-d4.md section 5) work the same way: what the database
 holds of a task (its rows, the hashes kept for its product) is read under the
 lock, the product is read and hashed outside it (annotation_records), and
@@ -53,7 +56,7 @@ import psycopg
 
 from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
                documents, environments, inside, inside_fields, inside_weights, launcher, local, operations, plan,
-               pumas, store, workspace)
+               pumas, store, training, workspace)
 from .documents import Problem
 
 CHECK_PROBLEMS = 200
@@ -88,6 +91,18 @@ INSIDE_READS = {
     'field_compare': lambda found, a: inside_fields.field_compare(found['run'], entry=a['entry'], case=a['case'],
                                                                   axis=a.get('axis'), index=a.get('index'),
                                                                   mean_free=a.get('mean_free', False)),
+}
+# The reads of what a training script logged (docs/plans/training-and-curation/spec-t1.md section 4), each a function
+# of (training.Run, arguments): the run is found under the service's lock, whatever its state, and its files are read
+# outside it, as the reads inside a product are.
+TRAINING_READS = {
+    'training': lambda run, a: training.overview(run),
+    'training_series': lambda run, a: training.series(run, a['series'], most=a.get('most', 1000)),
+    'training_histograms': lambda run, a: training.histograms(run, name=a['name'], kind=a['kind'],
+                                                              most=a.get('most', 120), bins=a.get('bins', 48)),
+    'training_samples': lambda run, a: training.samples(run, name=a.get('name'), offset=a.get('offset', 0),
+                                                        limit=a.get('limit', 50)),
+    'training_sample': lambda run, a: training.sample(run, index=a['index']),
 }
 # The reads of annotations (spec-d4.md section 5): each takes the service's lock itself, only for its database work.
 ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
@@ -336,6 +351,14 @@ class Service:
             with self._lock:
                 found = {key: self._product(arguments[key]) for key in PRODUCT_ARGUMENTS if key in arguments}
             return _plain(INSIDE_READS[name](found, dict(arguments)))
+        if name in TRAINING_READS:
+            problems = _argument_problems(operation, arguments)
+            if problems:
+                raise store.ProjectError(f'The arguments of project.{name} do not match its schema.', 'invalid',
+                                         problems=problems)
+            with self._lock:
+                run = self._training_run(arguments['run'])
+            return _plain(TRAINING_READS[name](run, dict(arguments)))
         if name in OUTSIDE_LOCK:
             try:
                 problems = _argument_problems(operation, arguments)
@@ -563,10 +586,25 @@ class Service:
         return inside.Product(run_id, os.path.join(directory, builds.OUTPUT), view,
                               recorded[0] if recorded else None)
 
+    def _training_run(self, run):
+        """The training.Run of a run in any state, read with the project open for a moment (spec-t1.md)."""
+        with self._open() as project:
+            run_id = builds.find_run(project, run)
+            state, directory = project._execute('SELECT state, directory FROM {schema}.runs WHERE id = %s',
+                                                (run_id,)).fetchone()
+        return training.Run(run_id, state, os.path.join(directory, builds.OUTPUT) if directory else None)
+
     def product_file(self, run, address, range_header=None):
-        """The inside.FileResponse of GET /api/project/file; the caller has checked the right to inspect."""
+        """The inside.FileResponse of GET /api/project/file; the caller has checked the right to inspect.
+
+        A file under training/ is served for a run in any state that has an output directory (a running run's
+        samples, spec-t1.md section 4); any other file only for a finished run's product.
+        """
         with self._lock:
-            product = self._product(run)
+            if isinstance(address, str) and address.startswith(training.DIRECTORY + '/') and '!' not in address:
+                product = self._training_run(run).product()
+            else:
+                product = self._product(run)
         return inside.file_response(product, address, range_header)
 
     # ---------------------------------------------------------- annotations

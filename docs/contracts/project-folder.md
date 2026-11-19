@@ -2285,6 +2285,11 @@ and result keys of each operation are in its contract.
 | `array_tiles` | inspect | Read tiles of two axes of an array in a finished run's product, one per position along a third axis, as 32-bit floats. |
 | `fields` | inspect | List the fields a finished run's product kept: each case's native and predicted files, its name, shape and whether the two can be compared, and the figures the run reported itself. |
 | `field_compare` | inspect | Read a slice of one kept case's native field, predicted field and signed error as 32-bit floats, with the figures of the error over the whole field. |
+| `training` | inspect | List what a run's training script logged, while it runs or after: its scalar series, the tensors whose histograms it kept, its samples and checkpoints, and the lines it could not read. |
+| `training_series` | inspect | Read scalar series a run's training script logged, in buckets of a power of two points (mean, least and greatest), from the bucket the caller holds when its bucket size is the same. |
+| `training_histograms` | inspect | Read one tensor's histograms of weights or gradients over the steps of a run's training, re-binned onto one grid. |
+| `training_samples` | inspect | List one page of the samples a run's training script kept, optionally of one name. |
+| `training_sample` | inspect | Read one sample a run's training script kept: an image's size and address, or an array's slice as 32-bit floats. |
 | `set_definition` | edit | Check a definition's text and keep it as an unsaved edit. |
 | `remove_definition` | edit | Mark a definition that nothing uses as removed, until the project is saved. |
 | `revert_definition` | edit | Put back the file in the folder in place of a definition's unsaved edit or removal, or drop a definition the folder has no file for. |
@@ -2720,6 +2725,70 @@ first; null when the reference is constant). They are computed in 64-bit
 floats with `math.fsum` and `math.sumprod`; a figure that would overflow is
 null, as all of them are when no cell counts. A case's figures are kept while
 its files are unchanged, so asking for another slice reads only the slice.
+
+### What a training script logged
+
+A run's own script may log its training into `training/` of its output
+directory (`{output}/training/`), by hand or through the helper `tuldok_log`
+(the package of that name at the top of the Tuldok repository, standard
+library only, PyTorch only for `autolog`). Every file is optional. Tuldok
+reads them; it never runs, imports or unpickles anything of the project's.
+Unlike the reads above, these read a run **in any state** that has a
+directory, while it runs as well as after: a file being appended to is read
+up to its last complete line (a partial last line is left for the next read),
+and what has been read is kept with its offset, so reading again reads only
+what was appended. A file that became shorter, or was replaced, is read again
+from its start. JSON is UTF-8, one object per line; `NaN` and `Infinity` are
+read as non-finite.
+
+- **`training/metrics.jsonl`**, one line per log:
+  `{"step": 120, "time": 14.2, "epoch": 3, "loss": 0.0213, "lr": 0.001}`.
+  `step` an integer of 0 or more, `time` seconds since the run started (0 or
+  more) are required; `epoch` is optional. Every other key whose value is a
+  number is a scalar series of that name (1 to 200 characters); `null` or a
+  non-finite number is a gap, counted as `nonfinite`. Keys whose value is not
+  a number are kept and listed by name (`other_keys`), not drawn.
+- **`training/histograms.jsonl`**, one line per tensor per log:
+  `{"step": 100, "time": 12.1, "name": "encoder.0.weight", "kind": "weights", "edges": […], "counts": […]}`.
+  `kind` is `weights` or `gradients`; `edges` n + 1 finite numbers in order,
+  `counts` n numbers of 0 or more, 1 ≤ n ≤ 1,024; optional `nonfinite`.
+- **`training/samples.jsonl`** and the files under `training/samples/`: one
+  line per sample, `{"step": 120, "time": 14.2, "name": "prediction", "path": "samples/000000120-prediction.png"}`,
+  `path` relative to `training/` and under `samples/`. A `.png`, `.jpg`,
+  `.jpeg` or `.webp` is an image; an `.npy` an array (read as `array_slice`
+  reads one). A sample's file is written whole before its line.
+- **`training/checkpoints.jsonl`**: `{"step": 1000, "time": 120.5, "path": "checkpoints/step-1000.safetensors", "loss": 0.012}`,
+  `path` relative to the output directory; the other numeric keys are the
+  checkpoint's figures. Listed and marked on the curves, not opened. A run's
+  final weights are still its declared outputs (see [A model's weights](#a-models-weights)).
+- **`training/training.json`**: `{"format": "tuldok_training_v1", "started_at": "<ISO 8601>"}`, shown.
+
+A line that is not as above is counted (`bad_lines`) and reported with its
+file and number (the first 20, `problems`); the rest are read. Bounds: 64 KiB
+a line (256 KiB in `histograms.jsonl`), 1,000,000 metrics lines and 1,000,000
+histogram lines (`truncated` beyond), 200 series, 2,000 tensor and kind
+pairs, 100,000 samples, 10,000 checkpoints.
+
+| Operation | Arguments | Result |
+| --- | --- | --- |
+| `training` | `run` | `run` (`id`, `state`, `active`), `present`, `started_at`, `series` (`name`, `points`, `nonfinite`, `first_step`, `last_step`, `last`, `min`, `max`), `lines`, `last_step`, `last_time`, `other_keys`, `histograms` (`name`, `kind`, `rows`, `first_step`, `last_step`), `histogram_lines`, `samples` (`name`, `count`, `last_step`), `sample_lines`, `checkpoints` (the last 200), `problems`, `bad_lines`, `truncated` |
+| `training_series` | `run`, `series` (1 to 16 of `{name, size, since}`), `most` (default 1,000, at most 4,000) | `series` (`name`, `points`, `nonfinite`, `size`, `first`, `buckets`), `lines` |
+| `training_histograms` | `run`, `name`, `kind`, `most` (rows, default 120, at most 500), `bins` (default 48, at most 128) | `name`, `kind`, `rows` (`step`, `time`), `stride`, `low`, `high`, `bins`, `counts`, `totals`, `nonfinite` |
+| `training_samples` | `run`, `name`, `offset`, `limit` (at most 200) | `samples` (`index`, `step`, `time`, `name`, `path`, `kind`, `bytes`, `problem`, and `url` for an image), `total` |
+| `training_sample` | `run`, `index` | `sample` and `content`: an image's `width`, `height` and `url`; an array's slice (the last two axes, at most 128 by 128) as `array_slice` answers |
+
+A series of n points is sent in **buckets** of `size` consecutive points,
+`size` the smallest power of two that makes at most `most` buckets (1 while
+n ≤ `most`); a bucket is `[first_step, last_step, last_time, mean, min, max]`
+of its finite values (null when it has none). A caller that holds buckets
+sends the `size` it holds and `since`; when the size is still the same the
+answer begins at bucket `since` (`first`), otherwise at 0. A tensor's
+histogram rows are chosen evenly past `most` (the first and the last kept),
+and each is re-binned onto `bins` equal bins between the lowest and highest
+edge of the chosen rows, a bin's count shared by overlap. A run with no
+directory answers `training` with `present` false and the other four
+`not-found`. `GET /api/project/file` serves a file under `training/` of a run
+in any state that has a directory; any other file only of a finished run.
 
 ### Annotating
 
