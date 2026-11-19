@@ -58,7 +58,7 @@ import threading
 import jsonschema
 import psycopg
 
-from . import (activity, annotation_records, annotation_rows, annotations, build_requests, builds, charts, check,
+from . import (activity, annotation_records, annotation_review, annotation_rows, annotations, build_requests, builds, charts, check,
                comparing, documents, environments, inside, inside_fields, inside_graph, inside_weights, launcher, local,
                operations, plan, pumas, store, training, workspace)
 from .documents import Problem
@@ -115,12 +115,14 @@ TRAINING_READS = {
     'training_sample': lambda run, a: training.sample(run, index=a['index']),
 }
 # The reads of annotations (spec-d4.md section 5): each takes the service's lock itself, only for its database work.
-ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation')
+ANNOTATION_READS = ('annotation_tasks', 'annotated_records', 'annotation',
+                    'annotation_sets', 'annotation_agreement', 'annotation_compare')   # the last three: spec-t4
 # The calls to the Pumas endpoint (spec-d5.md): each is made outside the service's lock; those that read a project
 # take the lock themselves, only for their database work.
 # The comparisons of spec-t3.md that resample per-case values: read under the lock, computed outside it.
 COMPARING_READS = ('intervals', 'model_compare')
-OUTSIDE_LOCK = ANNOTATION_READS + COMPARING_READS + ('endpoint', 'set_endpoint', 'find_endpoints',
+# keep_annotation reads the sets outside the lock, then keeps its decision as set_annotation does (spec-t4.md).
+OUTSIDE_LOCK = ANNOTATION_READS + COMPARING_READS + ('keep_annotation', 'endpoint', 'set_endpoint', 'find_endpoints',
                                                      'suggestion_models', 'suggest_annotation')
 POLL_SECONDS = 1.0          # how often the worker looks for a queued request
 CLOSE_SECONDS = 30.0        # how long close() waits for the worker
@@ -191,6 +193,8 @@ def _detail(name, result):
         return f'{result["reverted"]} reverted'
     if name == 'set_endpoint':
         return 'set' if result['address'] else 'cleared'
+    if name == 'keep_annotation':
+        return f'{result["record"]} {result["state"]}'
     return ''
 
 
@@ -946,6 +950,39 @@ class Service:
         return {'task': reference, 'record': record_id,
                 'suggestion': {'value': value, 'from': {'model': entry['model'], 'profile': entry['profile'],
                                                         'capability': found[0]['capability']}}}
+
+    # --------------------------------------------- annotation sets (spec-t4.md)
+
+    def _review(self, task):
+        """What the database holds of a task's sets (annotation_review.gather), read under the lock."""
+        with self._lock, self._open() as project:
+            name, document = project.annotation_task(task)
+            return annotation_review.gather(project, name, document, self._located(project, document))
+
+    def _annotation_sets(self, arguments, actor):
+        return annotation_review.sets_answer(self._review(arguments['task']))
+
+    def _annotation_agreement(self, arguments, actor):
+        return annotation_review.agreement_answer(self._review(arguments['task']), arguments)
+
+    def _annotation_compare(self, arguments, actor):
+        gathered = self._review(arguments['task'])
+        product, index = self._product_of(gathered['located'])
+        return annotation_review.compare_answer(gathered, arguments, product, index)
+
+    def _keep_annotation(self, arguments, actor):
+        """A decision on one record kept through set_annotation's own path, its sidecars staged first."""
+        gathered = self._review(arguments['task'])
+        item, origin, staged = annotation_review.keep_items(gathered, arguments)
+        if staged:
+            with self._lock, self._open() as project:
+                for file, data in staged.items():
+                    annotation_rows.stage_sidecar(project._connection, project.schema, gathered['name'], file, data)
+        setting = {'task': arguments['task'], 'items': [item], 'from': origin}
+        prepared = self._prepare_annotations(setting)
+        with self._lock:
+            done = self._set_annotation(setting, actor, prepared)
+        return {'task': done['task'], 'record': arguments['record'], 'state': item['state'], 'unsaved': done['unsaved']}
 
     # ------------------------------------------------------------- changes
 

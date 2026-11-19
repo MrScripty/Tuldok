@@ -9,16 +9,25 @@ then asked of a Service on the stand-in segmentors' sets of
 test_tuldok_project_annotate_step (database only).
 """
 import itertools
+import json
 import math
+import os
 from pathlib import Path
 import random
+import subprocess
 import sys
+import tempfile
 import unittest
+from unittest import mock
+import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from tuldok_project import annotation_agreement as agree, annotation_payloads as payloads  # noqa: E402
+from tuldok_project import builds, check, environments, local, plan, store  # noqa: E402
+from tuldok_project.service import Service  # noqa: E402
+from tuldok_project.store import ProjectError  # noqa: E402
 
 
 def entry(value, confidence=None):
@@ -227,6 +236,143 @@ class Sets(unittest.TestCase):
             agree.agreement({'task': 'review'}, {'a': {}, 'b': {}})
         with self.assertRaises(agree.AgreementProblem):
             agree.agreement({'task': 'class'}, {'a': {}})
+
+
+DATABASE = os.environ.get('TULDOK_DATABASE_URL')
+OWNER = {'actor_id': 'owner-1', 'kind': 'owner', 'label': 'The owner',
+         'scopes': ['approve-execution', 'cancel', 'edit', 'execute', 'inspect']}
+READER = {'actor_id': 'agent-2', 'kind': 'agent', 'label': 'reader', 'scopes': ['inspect']}
+
+
+@unittest.skipUnless(DATABASE, 'TULDOK_DATABASE_URL is not set; database tests need a disposable cluster.')
+class Operations(unittest.TestCase):
+    """annotation_sets, annotation_agreement, annotation_compare and keep_annotation on the stand-ins' sets."""
+
+    @classmethod
+    def setUpClass(cls):
+        import test_tuldok_project_annotate_step as stand_ins
+        cls.stand_ins = stand_ins
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        cls.temporary = Path(directory.name)
+        cls.root = cls.temporary / 'repository'
+        cls.root.mkdir()
+        patcher = mock.patch.dict(os.environ, {local.HOME_VARIABLE: str(cls.temporary / 'home'),
+                                               local.SETTINGS_VARIABLE: str(cls.temporary / 'settings.json')})
+        patcher.start()
+        cls.addClassCleanup(patcher.stop)
+        cls.addClassCleanup(stand_ins._writable, cls.temporary / 'home')
+        cls.project_id = uuid.uuid4().hex
+        cls.folder = stand_ins.make_project(cls.root, cls.project_id)
+        for arguments in (['init', '-q'], ['add', '-A'], ['commit', '-q', '-m', 'The project.']):
+            subprocess.run([*stand_ins.GIT, '-C', str(cls.root), *arguments], check=True)
+        cls.addClassCleanup(store.drop_project, cls.project_id)
+        with store.open_project(cls.folder) as project:
+            environments.connect(project, 'environments/test-python', sys.executable)
+            made = plan.build_plan(project, ['datasets/masks-a', 'datasets/masks-b', 'datasets/objects-a',
+                                             'datasets/objects-b', 'datasets/shapes-a', 'datasets/shapes-b'])
+        done = builds.execute(cls.folder, made, confirm=lambda given: True)
+        assert done['ok'], done
+        cls.service = Service(cls.folder)
+        cls.addClassCleanup(cls.service.close)
+
+    def call(self, name, arguments, actor=OWNER):
+        return self.service.call(name, arguments, actor)
+
+    def refused(self, name, arguments, actor=OWNER):
+        with self.assertRaises(ProjectError) as raised:
+            self.call(name, arguments, actor)
+        return raised.exception
+
+    def test_a_sets(self):
+        found = self.call('annotation_sets', {'task': 'masks'}, READER)
+        self.assertEqual(found['type'], 'mask')
+        self.assertEqual([(s['set'], s['annotated']) for s in found['sets']],
+                         [('kept', 0), ('datasets/masks-a', 4), ('datasets/masks-b', 4)])
+        self.assertEqual(found['sets'][1]['by']['name'], 'segment-a')
+
+    def test_b_agreement_against_the_arithmetic(self):
+        found = self.call('annotation_agreement', {'task': 'masks', 'sets': ['datasets/masks-a', 'datasets/masks-b']},
+                          READER)
+        rows = {row['record']: row['disagreement'] for row in found['disputed']}
+        # a.png: red 30 of 56 pixels, blue 49 of 81, both matched; d.png: no object in either: 1.
+        self.assertAlmostEqual(1 - rows['images__a.png'], (30 / 56 + 49 / 81) / 2)
+        self.assertAlmostEqual(rows['images__d.png'], 0.0)
+        # b.png: one red 10 x 8 against 12 x 10. c.png: the stand-in gives one id per colour, so its two blue
+        # rectangles are one object: 4 x 4 + 5 x 9 against 6 x 6 + 7 x 11.
+        self.assertAlmostEqual(1 - rows['images__b.png'], 80 / 120)
+        self.assertAlmostEqual(1 - rows['images__c.png'], (16 + 45) / (36 + 77))
+        self.assertEqual([row['record'] for row in found['disputed']],
+                         sorted(rows, key=lambda record: (-rows[record], record)))
+        pair = found['pairs'][0]
+        self.assertAlmostEqual(pair['agreement'], sum(1 - value for value in rows.values()) / 4)
+        objects = self.call('annotation_agreement', {'task': 'objects'}, READER)
+        self.assertEqual([p['a'] + ' ' + p['b'] for p in objects['pairs']],
+                         ['kept datasets/objects-a', 'kept datasets/objects-b', 'datasets/objects-a datasets/objects-b'])
+        rows = {row['record']: row for row in objects['disputed']}
+        self.assertAlmostEqual(rows['clouds__p.ply']['pairs']['datasets/objects-a|datasets/objects-b'], 9 / 10)
+        self.assertEqual(rows['clouds__p.ply']['missing'], ['kept'])
+        # The confidence filter: the shapes' polygons carry 0.9 (red) and 0.8 (blue).
+        strict = self.call('annotation_agreement', {'task': 'shapes', 'sets': ['datasets/shapes-a', 'datasets/shapes-b'],
+                                                    'min_confidence': 0.85}, READER)
+        loose = self.call('annotation_agreement', {'task': 'shapes', 'sets': ['datasets/shapes-a', 'datasets/shapes-b']},
+                          READER)
+        self.assertNotEqual(strict['pairs'][0]['agreement'], loose['pairs'][0]['agreement'])
+
+    def test_c_compare(self):
+        found = self.call('annotation_compare', {'task': 'masks', 'record': 'images__a.png',
+                                                 'sets': ['datasets/masks-a', 'datasets/masks-b']}, READER)
+        self.assertEqual(found['size'], [24, 16])
+        drawn = found['sets'][0]['drawn']
+        self.assertEqual((drawn['width'], drawn['height']), (24, 16))
+        self.assertEqual(sum(n for v, n in drawn['runs'] if v == 1), 30)
+        self.assertAlmostEqual(found['pairs'][0]['agreement'], (30 / 56 + 49 / 81) / 2)
+        refused = self.refused('annotation_compare', {'task': 'masks', 'record': 'images__a.png',
+                                                      'sets': ['datasets/nobody']}, READER)
+        self.assertEqual(refused.code, 'not-found')
+
+    def test_d_keep_and_save(self):
+        self.assertEqual(self.refused('keep_annotation', {'task': 'masks', 'record': 'images__a.png', 'keep': 'one',
+                                                          'sets': ['datasets/masks-a']}, READER).code, 'forbidden')
+        self.assertEqual(self.refused('keep_annotation', {'task': 'masks', 'record': 'images__a.png', 'keep': 'both',
+                                                          'sets': ['datasets/masks-a', 'datasets/masks-b']}).code,
+                         'invalid')   # a mask is not a list
+        kept = self.call('keep_annotation', {'task': 'masks', 'record': 'images__a.png', 'keep': 'one',
+                                             'sets': ['datasets/masks-b'], 'note': 'the wider one'})
+        self.assertEqual((kept['state'], kept['unsaved']), ('accepted', 1))
+        line = self.call('annotation', {'task': 'masks', 'record': 'images__a.png'})['annotation']
+        self.assertEqual(line['from']['set'], 'datasets/masks-b')
+        self.assertEqual(line['from']['by']['name'], 'segment-b')
+        self.assertTrue(payloads.is_kept_name(line['value']['file']))
+        # The kept set now agrees with b on a.png, and its sidecar is read from the working copy.
+        found = self.call('annotation_compare', {'task': 'masks', 'record': 'images__a.png',
+                                                 'sets': ['kept', 'datasets/masks-b']})
+        self.assertEqual(found['pairs'][0]['agreement'], 1.0)
+        self.call('keep_annotation', {'task': 'masks', 'record': 'images__b.png', 'keep': 'none',
+                                      'sets': ['datasets/masks-a', 'datasets/masks-b']})
+        saved = self.call('save', {})
+        self.assertIn('annotations/masks.jsonl', saved['annotations_written'])
+        sidecar = self.folder / 'annotations' / 'masks' / line['value']['file']
+        self.assertTrue(sidecar.is_file())
+        written = (self.folder / 'annotations' / 'masks.jsonl').read_text().splitlines()
+        self.assertEqual([json.loads(text)['state'] for text in written], ['accepted', 'rejected'])
+        self.assertEqual(check.check_folder(self.folder).problems, [])
+        # Both polygon sets kept together, then the mask replaced by a's: Save removes b's sidecar.
+        both = self.call('keep_annotation', {'task': 'shapes', 'record': 'images__c.png', 'keep': 'both',
+                                             'sets': ['datasets/shapes-a', 'datasets/shapes-b']})
+        self.assertEqual(both['state'], 'accepted')
+        value = self.call('annotation', {'task': 'shapes', 'record': 'images__c.png'})['annotation']['value']
+        self.assertEqual(len(value), 2)
+        self.call('keep_annotation', {'task': 'masks', 'record': 'images__a.png', 'keep': 'one',
+                                      'sets': ['datasets/masks-a']})
+        self.call('save', {})
+        files = sorted(path.name for path in (self.folder / 'annotations' / 'masks').iterdir())
+        now = self.call('annotation', {'task': 'masks', 'record': 'images__a.png'})['annotation']['value']['file']
+        self.assertEqual(files, [now])
+        self.assertEqual(check.check_folder(self.folder).problems, [])
+        activity = [row for row in self.call('activity', {'limit': 20})['items']
+                    if row['operation'] == 'keep_annotation' and row['outcome'] == 'done']
+        self.assertEqual(len(activity), 4)
 
 
 if __name__ == '__main__':

@@ -485,6 +485,14 @@ definition that failed or was cancelled is resumed by the next build: its
 valid lines (and sidecars) whose records are unchanged are kept, and only the
 other records are given to the command (or asked of the model).
 
+The sets of a task (the kept set, `annotations/<task>.jsonl`, and every
+annotate's product for it) are compared on the Annotate tab (Review): their
+agreement per pair and per record, the most disputed records, each drawn
+over the record, and a decision (keep one set's annotation, keep two sets'
+together, or reject them) kept as an unsaved edit of `annotations/<task>.jsonl`
+whose `from` names the set, its run and what made it; a kept sidecar is
+copied into `annotations/<task>/` by Save.
+
 ### `model`
 
 A model is an architecture. It produces nothing by itself; recipes train it.

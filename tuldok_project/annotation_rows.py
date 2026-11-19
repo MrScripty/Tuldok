@@ -44,6 +44,10 @@ TABLES = (
     '''CREATE TABLE IF NOT EXISTS {schema}.record_hashes (
            run_id text NOT NULL, record text NOT NULL, sha256 text,
            PRIMARY KEY (run_id, record))''',
+    # Sidecars kept from an annotation set and not yet saved to annotations/<task>/ (spec-t4.md section 2).
+    '''CREATE TABLE IF NOT EXISTS {schema}.annotation_sidecars (
+           task text NOT NULL, name text NOT NULL, data bytea NOT NULL,
+           PRIMARY KEY (task, name))''',
 )
 
 _LINE_COLUMNS = 'record, sha256, state, value, note, "by", "at", origin'
@@ -372,3 +376,45 @@ def mark_saved(connection, schema, name, lines):
                                      WHERE a.task = %s AND a.record = given.record
                                        AND (a.unsaved OR a.saved IS DISTINCT FROM given.line)'''),
                        ([record for record, _ in lines], [line for _, line in lines], name))
+
+
+# ---------------------------------------------------------------- sidecars (spec-t4.md section 2)
+
+def kept_values(connection, schema, name):
+    """{record: value} of the task's annotations as they now are, with a value and not rejected: the kept set."""
+    return {record: value for record, value in connection.execute(
+        _q(schema, "SELECT record, value FROM {schema}.annotations WHERE task = %s AND state IS NOT NULL "
+                   "AND state <> 'rejected' AND value IS NOT NULL AND value <> 'null'::jsonb"), (name,))}
+
+
+def stage_sidecar(connection, schema, name, file, data):
+    """Keep a sidecar's bytes until Save writes annotations/<name>/<file> (its name is its content's)."""
+    connection.execute(_q(schema, 'INSERT INTO {schema}.annotation_sidecars (task, name, data) VALUES (%s, %s, %s) '
+                                  'ON CONFLICT (task, name) DO NOTHING'), (name, file, data))
+
+
+def staged_sidecar(connection, schema, name, file):
+    """The bytes of a sidecar kept and not yet saved, or None."""
+    row = connection.execute(_q(schema, 'SELECT data FROM {schema}.annotation_sidecars WHERE task = %s AND name = %s'),
+                             (name, file)).fetchone()
+    return None if row is None else bytes(row[0])
+
+
+def staged_sidecars(connection, schema, name):
+    """{file: bytes} of every sidecar of the task kept and not yet saved."""
+    return {file: bytes(data) for file, data in connection.execute(
+        _q(schema, 'SELECT name, data FROM {schema}.annotation_sidecars WHERE task = %s'), (name,))}
+
+
+def drop_staged(connection, schema, name):
+    connection.execute(_q(schema, 'DELETE FROM {schema}.annotation_sidecars WHERE task = %s'), (name,))
+
+
+def named_sidecars(lines):
+    """The sidecar files the lines of a task's file name ([(record, line text)])."""
+    found = set()
+    for _record, text in lines:
+        value = json.loads(text).get('value')
+        if isinstance(value, dict) and isinstance(value.get('file'), str):
+            found.add(value['file'])
+    return found
