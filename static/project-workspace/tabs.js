@@ -454,7 +454,7 @@
     });
     if (!sel) return closeDrawer(aside);
     if (sel === 'endpoint' && window.LabGenerate) window.LabGenerate.drawer(aside, act);
-    else if (sel.startsWith('run:')) runDrawer(aside, sel, act, data);
+    else if (sel.startsWith('run:')) runDrawer(aside, sel, act, data, state);
     else if (sel.startsWith('request:')) requestDrawer(aside, sel, act, data);
     else if (sel.startsWith('plan:')) A.planView(aside, sel, act.go, () => { const one = sel.slice(5); act.select(data.map.byId.has(one) ? one : null); });
     else if (sel.startsWith('env:')) envDrawer(aside, sel, act, data);
@@ -509,6 +509,7 @@
    * again and its drawer is drawn again in place.
    */
   S.tick = async () => {
+    if (window.LabTraining) await window.LabTraining.tick();   // the open run's Training block, in place (training.js)
     const aside = document.getElementById('aside');
     if (!live || aside._for !== live.key) { live = null; return; }
     const mine = live;
@@ -519,9 +520,12 @@
       if (pr.ended) { live = null; mine.ended(); }   // not awaited: the reading it starts waits for the one calling this
     } catch (error) { /* the next tick asks again; the strip says what fails */ }
   };
-  function runDrawer(aside, key, act, data) {
-    const id = key.slice(4);
-    drawer(aside, key, () => Promise.all([P.read('run', { run: id }), P.call('progress', { run: id })]), (ins, [r, pr]) => {
+  /** A run's name in the Training block: its model's short name (or its definition) and the start of its id. */
+  const runLabel = (runs, data) => id => { const r = runs.find(x => x.id === id), m = r && graphFor(data.map).byId.get(r.reference); return (m ? Tree.refName(m) : r ? nameOfRef(r.reference) : 'run') + (r && r.subject ? ' · ' + r.subject : '') + ' · ' + id.slice(0, 8); };
+  function runDrawer(aside, key, act, data, state) {
+    const id = key.slice(4), T = window.LabTraining;
+    drawer(aside, key, () => Promise.all([P.read('run', { run: id }), P.call('progress', { run: id }),
+      T ? T.read(id, state.ui).catch(error => ({ error })) : null, T ? P.read('runs').then(a => a.runs, () => []) : []]), (ins, [r, pr, tr, runs]) => {
       const m = graphFor(data.map).byId.get(r.reference);
       const hd = h('header'); hd.appendChild(h('span', 'kicker', 'run ' + r.id)); const t2 = h('h2', null, (m ? Tree.nameOf(m) : r.reference) + (r.subject ? ' · ' + r.subject : '')); t2.tabIndex = -1; hd.appendChild(t2);
       const meta = h('div', 'ins-meta'); if (m) meta.appendChild(h('span', 'chip ' + m.kind, P.kindLabel(m.kind))); meta.appendChild(runState(r.state)); if (r.scratch) meta.appendChild(h('span', 'small faint', 'from the code as it is')); hd.appendChild(meta); ins.appendChild(hd);
@@ -557,6 +561,9 @@
       const progBlock = block('Latest progress', prog); if (!pr.event && !active) progBlock.hidden = true;
       // A run read live shows its progress and logs first; an ended one its record first.
       ins.appendChild(progBlock);
+      // What its training script logged, drawn live while it runs (training.js, spec-t1.md section 6).
+      if (tr && tr.error) ins.appendChild(block('Training', h('p', 'note', 'Its training could not be read: ' + tr.error.message)));
+      else if (tr) ins.appendChild(T.block(tr, act, runLabel(runs, data), runs));
       if (!active) ins.appendChild(su.dl);
       const logs = {};
       for (const [name, title] of [['stdout', 'Standard output'], ['stderr', 'Standard error']]) {
