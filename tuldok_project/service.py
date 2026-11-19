@@ -1245,10 +1245,13 @@ class Service:
         servable = []
         with self._lock:
             with self._open() as project:
+                # Every document read at once: definition() works out the whole project's states each time it is
+                # asked, which on a project of 200 recipes took 13 s for a list that needs only `serve`.
+                documents_by_reference = project._documents(removed=False)
                 for row in project.definitions('recipe'):
                     if row['removed']:
                         continue
-                    document = project.definition(row['reference'])['document'] or {}
+                    document = documents_by_reference.get(row['reference']) or {}
                     serve = document.get('serve')
                     if not isinstance(serve, dict):
                         continue
