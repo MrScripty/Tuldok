@@ -157,6 +157,15 @@
           }
         }
       }
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(?!mixed$)[a-z0-9._-]{1,64}$",
+      "description": "a data generation: 1 to 64 characters of a-z, 0-9, '.', '_' and '-', not \"mixed\""
+    },
+    "generations": {
+      "const": "mixed",
+      "description": "\"mixed\": a deliberate crossing of data generations"
     }
   },
   "if": {

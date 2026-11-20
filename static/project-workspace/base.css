@@ -613,6 +613,15 @@ textarea { font: inherit; resize: vertical; }
 /* The unsaved mark, and "not kept yet" where something typed is not kept. */
 .umark { font-size: 11.5px; color: var(--warn); font-weight: 500; white-space: nowrap; }
 .umark:empty { display: none; }
+/* A data generation (spec-generations.md): a small outlined chip; dashed when the model's parent has another. */
+.gen { display: inline-block; vertical-align: 1px; font: 11px/16px var(--mono); padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--ink-2); white-space: nowrap; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; }
+.gen.crosses { border-style: dashed; }
+.tree-list .trow .nm.has-gen { display: flex; align-items: center; min-width: 0; }
+.tree-list .trow .nm.has-gen .nmt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree-list .trow .nm.has-gen > .umark, .tree-list .trow .nm .gen { flex: none; }
+.tree-list .trow .nm .gen { margin-left: 8px; }
+@media (max-width: 600px) { .tree-list .trow .nm .gen { display: none; } }   /* narrow: the name first; the drawer shows the chip */
+.btn.gen-f { font-family: var(--mono); font-size: 11.5px; }
 .umark.typed { color: var(--accent); }
 .tree-list .trow .nm .umark, .row .title .umark { margin-left: 8px; }
 /* The editor. */

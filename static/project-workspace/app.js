@@ -23,7 +23,7 @@
   const POLL_MS = 2000, IDLE_MS = 15000;   // how often the page asks again while something builds, and while nothing does
   const ACTIVE_RUN = ['queued', 'running'], ACTIVE_REQUEST = ['queued', 'running'];
   const $ = id => document.getElementById(id);
-  const state = { screen: 'map', sel: {}, kinds: null, query: '', zoom: 1, track: false, ui: {}, benchmark: null, cmp: [] };
+  const state = { screen: 'map', sel: {}, kinds: null, generations: null, query: '', zoom: 1, track: false, ui: {}, benchmark: null, cmp: [] };
   const data = { summary: null, map: null, standing: null, needs: null, status: null, readAt: '', polling: false };
   let failed = null, conflict = null, pollTimer = null, pollFast = false, states = null, opener = null;
   const clock = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -48,6 +48,8 @@
     zoom: d => { state.zoom = Math.round(Math.min(1.6, Math.max(0.5, (state.zoom || 1) + d)) * 10) / 10; render(); },
     toggleKind: (k, all) => { if (!state.kinds) state.kinds = new Set([k]); else if (state.kinds.has(k)) { state.kinds.delete(k); if (!state.kinds.size) state.kinds = null; } else { state.kinds.add(k); if (state.kinds.size === all.length) state.kinds = null; } render(); },
     toggleTrack: () => { state.track = !state.track; render(); },
+    // The Map's Generation filter (spec-generations.md): as the kinds, '' for the models without one.
+    toggleGeneration: (g, all) => { if (!state.generations) state.generations = new Set([g]); else if (state.generations.has(g)) { state.generations.delete(g); if (!state.generations.size) state.generations = null; } else { state.generations.add(g); if (state.generations.size === all.length) state.generations = null; } render(); },
     // The other tabs: their own settings (state.ui), and the benchmark and compare set, which the address keeps (?benchmark=, ?cmp=).
     setUI: (k, v) => { state.ui[k] = v; if (ADDRESSED.includes(k)) address(); render(); },
     /** Keeps a setting of the tab that a view has already drawn in place (fields.js's slider): into the address, and nothing drawn again. */

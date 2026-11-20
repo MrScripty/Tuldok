@@ -9,8 +9,8 @@ outputs, charts against their benchmark, cycles, paths into the code root
 (in definitions and in the code_paths of tuldok.json), the map's fields
 (spec-w1.md section 1): groups, a recipe's group, derived_from and
 compared_with, and map.chart, each annotations/<name>.jsonl against its
-task (spec-d4.md section 2; the rules of a line are annotations.py's), and
-the settings, inputs and tasks of a dataset whose run names a step Tuldok
+task (spec-d4.md section 2; the rules of a line are annotations.py's), the
+data generations (generations.py, spec-generations.md), and the settings, inputs and tasks of a dataset whose run names a step Tuldok
 provides (section 6; generate is spec-d5.md section 3).
 Problems are collected, never raised, so one bad file never hides another.
 """
@@ -20,7 +20,7 @@ import math
 import os
 import re
 
-from . import annotations, documents, folder as folder_reader, graph, results, steps
+from . import annotations, documents, folder as folder_reader, generations, graph, results, steps
 from .documents import Problem
 
 _SEVERITY_ORDER = {'error': 0, 'warning': 1}
@@ -769,6 +769,7 @@ def check_map(project, definitions, add):
                 'name a chart of the form progression.')
     from . import sweeps   # here: sweeps imports store, which imports this module
     sweeps.check_sweeps(definitions, add)
+    generations.check_generations(definitions, add)   # spec-generations.md
 
 
 def _check_results(files, definitions, unsound, add):

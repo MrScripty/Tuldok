@@ -703,6 +703,7 @@
         card.appendChild(pv);
         const t = h('div', 't'); t.appendChild(h('div', 'title', d.title));
         const meta = h('div', 'meta'); meta.appendChild(h('span', null, outputs.length ? plural(outputs.length, 'output') + ' · ' + bytes(size) : whole ? 'a directory · ' + bytes(size) : 'no files here'));
+        if (d.generation) { const gc = h('span', 'gen', d.generation); gc.dataset.generation = d.generation; gc.title = 'Data generation ' + d.generation; meta.appendChild(gc); }   // spec-generations.md
         const st = ps.some(p => p.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state); st.classList.add('glyphs'); meta.appendChild(st); t.appendChild(meta);
         const used = [...(users.get(d.reference) || [])].sort();
         t.appendChild(h('div', 'uses', used.length ? 'used by ' + used.length + ': ' + used.map(nameOfRef).join(', ') : 'used by nothing'));
@@ -723,7 +724,9 @@
     if (E && E.owns(raw, data)) { E.drawer(aside, raw, act, data, 'data'); return true; }
     drawer(aside, sel, () => Promise.all([P.read('definition', { reference: sel }), P.read('products', { reference: sel })]), (ins, [d, p]) => {
       const hd = h('header'); hd.appendChild(h('span', 'kicker', d.reference)); const t2 = h('h2', null, d.title); t2.tabIndex = -1; hd.appendChild(t2);
-      const meta = h('div', 'ins-meta'); meta.appendChild(p.products.some(x => x.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state)); meta.appendChild(Tree.mark({ id: d.reference, unsaved: d.unsaved })); hd.appendChild(meta); ins.appendChild(hd);
+      const meta = h('div', 'ins-meta'); meta.appendChild(p.products.some(x => x.adopted) ? S.stateEl('good', 'adopted') : modelState(d.state)); meta.appendChild(Tree.mark({ id: d.reference, unsaved: d.unsaved }));
+      if (d.generation) { const gc = h('span', 'gen', d.generation); gc.dataset.generation = d.generation; gc.title = 'Data generation ' + d.generation; meta.appendChild(gc); }
+      hd.appendChild(meta); ins.appendChild(hd);
       // Edit (spec-w3 section 3.2): the editor, in the text view.
       if (p.products.some(x => x.run_id)) { const look = h('div', 'actions'); look.appendChild(lookInside(d.reference, act)); ins.appendChild(look); }
       const doc = d.document || {};

@@ -574,7 +574,9 @@ class Running(SweepCase):
         return refused.exception.code
 
     def test_minutes_stop_a_sweep(self):
-        self.write('recipes/base', recipe({**self.SETTINGS, 'steps': 30, 'sleep': 0.1}, group='small'))
+        # Each trial would take 60 s, far past the 3.6 s budget, so the budget always ends inside a trial (on a slow
+        # runner, trials of about the budget's length could finish just before it ran out, leaving none stopped).
+        self.write('recipes/base', recipe({**self.SETTINGS, 'steps': 600, 'sleep': 0.1}, group='small'))
         self.commit('Slower.')
         self.keep('sweeps/m', sweep(budget={'trials': 10, 'minutes': 0.06}))
         served = self.service()

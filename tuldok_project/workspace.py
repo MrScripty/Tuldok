@@ -25,7 +25,7 @@ import re
 
 from psycopg import sql
 
-from . import builds, charts, documents, environments, folder as folder_reader, graph, result_rows, results
+from . import builds, charts, documents, environments, folder as folder_reader, generations, graph, result_rows, results
 from .store import ProjectError, _REFERENCE_SQL
 
 NOTE_LIMIT = 1024 * 1024
@@ -151,6 +151,7 @@ def project_map(project):
             with_rows.setdefault(recipe, set()).add(benchmark)
 
     finished = _product_finish_times(project)
+    labelled = generations.labelled(documents_by_reference)
 
     recipes = sorted(reference for reference, item in definitions.items() if item['kind'] == 'recipe')
     models = []
@@ -168,6 +169,8 @@ def project_map(project):
             'card': _text(document.get('card')), 'value': value, 'count': count,
             'benchmarks': len(with_rows.get(reference, ())),
         })
+        if labelled.get(reference) is not None:   # only where there is one (spec-generations.md section 3)
+            models[-1]['generation'] = labelled[reference]
     models.sort(key=lambda model: (model['trained_at'] is None, model['trained_at'] or '', model['reference']))
 
     recipe_documents = {reference: definitions[reference]['document'] for reference in recipes}
@@ -317,7 +320,7 @@ def _settings_object(code_root, path):
 def draft_branch(project, recipe, title, *, name=None, change=None, description=None):
     """{reference, text, parent, inlined, problems}: a new recipe branched from recipe, stored nowhere (spec-w3.md).
 
-    The text carries the parent's model, group and run, its kind of change
+    The text carries the parent's model, group, generations and run, its kind of change
     unless change is given, and derived_from naming the parent; not its card,
     labels, earlier_work or comparisons. A run whose settings_file is a JSON
     object under the code root carries it as settings, and inlined names the
@@ -350,7 +353,7 @@ def draft_branch(project, recipe, title, *, name=None, change=None, description=
     document = {'format': parent['format'], 'kind': 'recipe', 'title': title}
     if description is not None:
         document['description'] = description
-    for field in ('model', 'group'):
+    for field in ('model', 'group', 'generations'):   # generations: the run's inputs come along
         if field in parent:
             document[field] = parent[field]
     if change is not None or 'change' in parent:

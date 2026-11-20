@@ -80,11 +80,20 @@ window.LabTree = (() => {
     if (!q) return true; q = q.toLowerCase();
     return [m.title, m.short, m.description, m.groupTitle, m.id].some(s => s && s.toLowerCase().includes(q));
   }
-  const visibleFor = (kinds, query) => m => (!kinds || kinds.has(m.kind)) && matches(m, query);
+  // generations: null (every model) or a Set of generation names, '' for a model without one (spec-generations.md).
+  const visibleFor = (kinds, query, generations) => m => (!kinds || kinds.has(m.kind)) && (!generations || generations.has(m.generation || '')) && matches(m, query);
+  /** The small chip of a model's data generation, dashed when its parent's is another; null without one. */
+  function genChip(graph, m) {
+    if (!m.generation) return null;
+    const p = m.parent && graph.byId.get(m.parent), other = p && p.generation && p.generation !== m.generation ? p.generation : null;
+    const s = h('span', 'gen' + (other ? ' crosses' : ''), m.generation); s.dataset.generation = m.generation;
+    s.title = 'Data generation ' + m.generation + (other ? '; derived from a model of ' + other : '');
+    return s;
+  }
   const trackText = (graph, m) => m.value == null ? 'no value' : C.fmtSci(m.value) + P.units(graph.track);
 
   // ---- Vertical list -------------------------------------------------------
-  function renderList(container, graph, { selected = null, onSelect = () => {}, kinds = null, query = '' } = {}) {
+  function renderList(container, graph, { selected = null, onSelect = () => {}, kinds = null, query = '', generations = null } = {}) {
     container.textContent = '';
     const laneW = 16, pad = 10, gw = pad * 2 + laneW * Math.max(1, graph.laneCount - 1) + 8, rowH = 30;
     const shortest = Math.max(3, ...graph.nodes.map(m => (shortOf(m) || '').length));
@@ -93,7 +102,7 @@ window.LabTree = (() => {
     const ul = h('ul', 'tree-list'); ul.setAttribute('role', 'listbox'); ul.setAttribute('aria-label', 'Models by section, in training order');
     const active = t => graph.families.filter(f => f.start < t && t <= f.end);
     const laneX = l => pad + 4 + l * laneW;
-    const visible = visibleFor(kinds, query);
+    const visible = visibleFor(kinds, query, generations);
     const rows = new Map(); let shown = 0;
     for (const s of graph.sections) {
       const list = graph.nodes.slice(s.start, s.end + 1).filter(visible);
@@ -124,7 +133,8 @@ window.LabTree = (() => {
         svg.appendChild(dot); b.appendChild(svg);
         b.appendChild(h('span', 'ck', shortOf(m) || '—'));
         // The name, with the mark of an unsaved edit (or, from editor.js, of typing not kept yet).
-        const nm = h('span', 'nm'); nm.appendChild(document.createTextNode(m.title)); nm.appendChild(mark(m)); b.appendChild(nm);
+        // With a generation, the name is cut before the chip, so that the chip stays in sight (spec-generations.md).
+        const nm = h('span', 'nm'), gc = genChip(graph, m); nm.appendChild(gc ? h('span', 'nmt', m.title) : document.createTextNode(m.title)); nm.appendChild(mark(m)); if (gc) { nm.classList.add('has-gen'); nm.appendChild(gc); } b.appendChild(nm);
         b.appendChild(h('span', 'pu', m.description));
         b.appendChild(h('span', 'chip ' + m.kind + (m.draft ? ' draft' : ''), m.draft ? 'draft' : P.kindLabel(m.kind)));
         const bar = h('span', 'mbar' + (m.value == null ? ' none' : ''));
@@ -152,7 +162,7 @@ window.LabTree = (() => {
   // ---- Horizontal lane map, with the track beneath when asked ----------------
   const labelWidth = text => text.length * 7 + 24;   // 12px semibold section titles, with room
   const nodeLabelWidth = text => text.length * 6.4;  // 10.5px mono
-  function renderMap(container, graph, { selected = null, onSelect = () => {}, kinds = null, query = '', zoom = 1, track = false } = {}) {
+  function renderMap(container, graph, { selected = null, onSelect = () => {}, kinds = null, query = '', zoom = 1, track = false, generations = null } = {}) {
     container.textContent = '';
     const dx = 30, left = 70, top = 44, laneH = 52, plotH = 120;
     // Each section is as wide as its models or its title, whichever is wider.
@@ -168,7 +178,7 @@ window.LabTree = (() => {
     const x = m => xOf.get(m.id), y = m => top + 20 + m.lane * laneH;
     const inner = h('div', 'inner'); inner.style.width = W + 'px'; inner.style.height = H + 'px'; inner.style.transform = 'scale(' + zoom + ')';
     const svg = el('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Model lineage: sections left to right in training order, branches in lanes' + (showTrack ? ', with ' + trackLabel + ' beneath' : '') });
-    const visible = visibleFor(kinds, query);
+    const visible = visibleFor(kinds, query, generations);
     graph.sections.forEach((s, i) => {
       const x1 = sx[i], width = (sx[i + 1] || cursor) - x1;
       svg.appendChild(el('line', { x1, y1: 8, x2: x1, y2: H - 8, class: 'band' }));
@@ -211,6 +221,7 @@ window.LabTree = (() => {
       rows.push(graph.track ? { v: m.value == null ? '—' : C.fmtSci(m.value) + P.units(graph.track), l: P.trackName(graph.track) } : { l: 'The project names no track' });
       rows.push({ l: m.draft ? 'a draft, not kept yet' : m.trainedAt ? 'trained ' + P.day(m.trainedAt) : m.planned ? 'never built' : 'no training date' });
       rows.push({ v: P.kindLabel(m.kind), l: m.parent ? 'from ' + refName(graph.byId.get(m.parent)) : '' });
+      if (m.generation) rows.push({ v: m.generation, l: 'data generation' });
       const [px, py] = at(ev); tip.show(px, py, rows);
     };
     const nodeEls = new Map();
@@ -280,5 +291,5 @@ window.LabTree = (() => {
     };
     api.select(selected); return api;
   }
-  return { build, renderList, renderMap, related, comparisons, matches, nameOf, refName, mark };
+  return { build, renderList, renderMap, related, comparisons, matches, nameOf, refName, mark, genChip };
 })();

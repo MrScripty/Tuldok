@@ -238,6 +238,7 @@ examples, except `environments/cuda-torch`, a second environment not shown.
 | `run` | unless `earlier_work.rebuild` is `no` | see the `run` block |
 | `splits` | no | object, split name to a number of items (integer ≥ 0) |
 | `view` | no | how its product is shown as records; see [Looking inside a product](#looking-inside-a-product) |
+| `generation` | no | the data generation its data comes from, 1 to 64 characters of `a-z`, `0-9`, `.`, `_` and `-`, not `mixed`; without it, its inputs' (see [Data generations](#data-generations)) |
 
 A dataset's run may name a `step` instead of a `command`: see
 [Steps Tuldok provides](#steps-tuldok-provides).
@@ -575,6 +576,7 @@ A recipe trains a model; its product is weights.
 | `compared_with` | no | at most 50 objects, each `recipe` (reference to another recipe, each once in the list), `explanation` (1 to 2,000 characters) and `excerpt` (optional, at most 2,000 characters); no other field |
 | `serve` | no | how Tuldok serves the model: `module_file` (a code path of a `.py` file, required), `function` (default `predict`), `load`, `backend` (`local`, the default and only one), `environment` (default `run.environment`; one of the two is required), `idle_minutes` (1 to 1,440), `start_seconds` (1 to 3,600), `request_seconds` (0.1 to 600), `gpu`, `example` (an object); see [Serving a model](#serving-a-model). Not an input: it never makes the model out of date |
 | `sweep` | no | a trial of a sweep (see [`sweep`](#sweep)): `definition` (reference to `sweeps/`), `trial` (its number, 1 or more) and `values` (the settings it was given, by path, at most 16); written by Tuldok when it runs the sweep |
+| `generations` | no | only `"mixed"`: it trains on data of more than one generation on purpose (see [Data generations](#data-generations)); a branch and a sweep's trial carry it |
 
 The label `short`, when a recipe has it, is the text of its node on the map
 (at most 16 characters are shown). `derived_from` and `compared_with` say how
@@ -613,6 +615,7 @@ solver.
 | Field | Required | Rule |
 | --- | --- | --- |
 | `run` | unless `earlier_work.rebuild` is `no` | see the `run` block |
+| `generation` | no | the data generation of what it makes (a solver, a source), 1 to 64 characters of `a-z`, `0-9`, `.`, `_` and `-`, not `mixed`; without it, its inputs' (see [Data generations](#data-generations)) |
 
 Example, `steps/reference-solver.json`:
 
@@ -643,6 +646,8 @@ Its command runs once per subject.
 | `subjects` | yes | 0 to 1,000 objects, see below |
 | `cases` | no | `{"dataset"?: reference to datasets/, "split"?: non-empty string, "count"?: integer ≥ 0}` |
 | `summary` | no | `{"group_by"?: up to 8 distinct ids, "statistics"?: distinct names from mean, median, p10, p90, min, max}` |
+| `generation` | no | the data generation its cases come from, 1 to 64 characters of `a-z`, `0-9`, `.`, `_` and `-`, not `mixed`; without it, its cases' data's (see [Data generations](#data-generations)) |
+| `generations` | no | only `"mixed"`: its subjects may come from different data generations |
 
 A metric is `{"id", "title", "units"?, "better"}`: `id` matches
 `^[a-z][a-z0-9_]{0,63}$` and is unique in the benchmark; `title` is 1 to 200
@@ -1000,6 +1005,47 @@ pilot-dense-k1,velocity_error_final,cells_per_metre=8,4,0,0.195,0.175,0.129,0.27
    group and no group is its own ancestor; a recipe is never derived from or
    compared with itself; following `derived_from` never comes back to where it
    started; `map.chart` is a chart of the form `progression`.
+8. Data generations do not mix unless a recipe or benchmark says so; see
+   [Data generations](#data-generations).
+
+### Data generations
+
+A **data generation** names the source a project's data comes from: the
+solver, simulator, sensor or corpus release that made it (`rheon-reference-v1`,
+`rheon-v2`). It keeps data of one generation for the models of that generation,
+and says so when they cross. The label is opt-in: a folder that writes none
+checks as before, and nothing without a generation is reported.
+
+- A dataset or step may declare `generation`. One that declares none takes the
+  generation of its **data inputs**: the entries of `run.inputs` that name a
+  dataset or a step, whatever made it (`freeze`, `select`, `embed`, `annotate`,
+  `import` with dataset inputs, or the project's own command). Inputs without a
+  generation do not decide it; a dataset or step none of whose inputs has one has
+  none.
+- **Warning:** a dataset, step, recipe or benchmark that has a generation
+  (declared, inherited or `mixed`) and takes a data input that has none ("takes
+  unlabelled data <reference>; label it with the generation it comes from"). An
+  input without a generation because its own inputs disagree is not named (it
+  has its error). A project that labels nothing gets no such warning.
+- **Error:** a dataset or step whose data inputs have more than one generation
+  (the message names each input and its generation), and one whose declared
+  generation differs from an input's. Data has no escape: declaring one does
+  not settle inputs that disagree.
+- A recipe's generation is computed: that of its data inputs. **Error:** a
+  recipe whose data inputs have more than one generation ("mixes data
+  generations"), unless it declares `"generations": "mixed"`, a deliberate
+  cross-generation experiment, which is then a **warning**; its generation is
+  then `mixed`. A recipe input (a model to start from) is not data: a recipe
+  derived from, or fine-tuned from, a model of another generation is fine, and
+  the Map shows it.
+- A benchmark's generation is its declared `generation`, else that of its cases'
+  data (`cases.dataset` and the data inputs of its run). Its cases' data is
+  checked against the declaration as a dataset's inputs are (**error**).
+  **Warning:** its subjects' recipes have more than one generation (`mixed`
+  counts as one), unless it declares `"generations": "mixed"`.
+- The reads of the database copy add `generation` where there is one: to a
+  model of `map`, to a dataset, step, recipe or benchmark of `definition`, and
+  to its row of `definitions`.
 
 ## Checking a folder
 
